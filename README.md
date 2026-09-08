@@ -62,3 +62,17 @@ archival corpus. wince-api's own headers and tools (MIT, © 2026 Akari
 API contributors) are separate original work written only from these
 pages' *facts* (interface names, Requirements rows, documented
 semantics) and live in the wince-api repository.
+
+## Tree provenance notes (M52)
+
+* `pagesw/` -- desktop Win32 reference pages fetched from
+  learn.microsoft.com/windows/win32/api (fixed-ABI value sources for
+  the wince-api M52 derived-value policy; per-item derivation paths in
+  wince-api docs/inventory.md M52).
+* `pageswm/` -- Windows Mobile 6.5 documentation pages extracted from
+  the official Microsoft Download Center CHM
+  (https://download.microsoft.com/download/d/5/3/d532530a-507f-488e-9747-1f8757071d92/windowsmobile6.5.chm,
+  linked from https://learn.microsoft.com/en-us/previous-versions/windows/embedded/dn887939(v=msdn.10)).
+  The CHM is not committed (63 MB); the URL is the durable official
+  source.  Pages are named wm65-&lt;title&gt;.html after their CHM topic
+  titles.
