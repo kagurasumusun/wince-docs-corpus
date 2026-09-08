@@ -76,3 +76,24 @@ semantics) and live in the wince-api repository.
   The CHM is not committed (63 MB); the URL is the durable official
   source.  Pages are named wm65-&lt;title&gt;.html after their CHM topic
   titles.
+
+## M53 (2026-09-09)
+
+- pages5 +82: the CE 5.0 Standard Shell Reference book
+  (`tools/manifests/stdshell.manifest` in wince-api: 21 functions +
+  2 callbacks, 10 structures, 33 interface-method pages, SHGNO, 2
+  macros, 17 messages).
+- pages6 +2: ee504556 (SHGNO) and ee505480 (SHFILEOPSTRUCT) twins
+  grounding the M53 held-value analysis.  Observation recorded: the
+  WM 6.5 SHRecognizeGesture page's "Windows Embedded CE 6.0 R3" GUID
+  link now resolves to a Consolidated 2013 revision at
+  ee503202(v=winembedded.80) with the same body; the corpus keeps the
+  generation-correct ee503202(v=winembedded.60) CE 6.0 page (verified
+  still live 2026-09-09).
+- pagesw +14: the desktop Win32 derivation-source pages for the M53
+  fixed-ABI value derivations (list:
+  `tools/manifests/stdshell-desktop.manifest` in wince-api).
+- pageswm +3: wm65-NMRGINFO, wm65-GN_CONTEXTMENU,
+  wm65-NM_RECOGNIZEGESTURE (the sole official sources for the M53
+  gesture supplement; no CE-side page exists).
+- rows.json 2151 -> 2233 (+82).  INDEX 9828 -> 9929.
