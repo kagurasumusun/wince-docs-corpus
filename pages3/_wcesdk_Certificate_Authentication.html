@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Certificate Authentication</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Certificate Authentication" />
+<MSHelp:RLTitle Title="Certificate Authentication (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="authentication, certificate" />
+<MSHelp:Keyword Index="K" Term="certificate authentication" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Certificate_Authentication" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="winsock.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923613">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_certificate_authentication"></A>Certificate Authentication</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Authentication is the process of determining if a remote host can be trusted. To establish its trustworthiness, the remote host must provide an acceptable authentication certificate.</P>
+
+<P>Remote hosts establish their trustworthiness by obtaining a certificate from a Certification Authority (CA). The CA may, in turn, have certification from a higher authority, and so on, creating a chain of trust. To determine whether a certificate is trustworthy, an application must determine the identity of the root CA, and then determine if it is trustworthy.</P>
+
+<P>Windows CE maintains a database of trusted CAs. When a secure connection is attempted by an application, Windows CE extracts the root certificate from the certification chain and checks it against the CA database. It delivers the root certificate to the application through a certificate validation callback function, along with the results of the comparison against the CA database.</P>
+
+<P>Applications bear ultimate responsibility for verifying that a certificate is acceptable. Applications can accept or reject any certificate. If a certificate is rejected, the connection is not completed. At a minimum, a certificate should meet two requirements: The certificate is current, and the identity contained in the certificate matches the root CA identity.</P>
+
+<P>The following root certificate authorities are included in the Windows CE 2.1x Schannel Certificate Authority database: 
+
+<UL type="disc">
+	<LI>VeriSign/RSA Commercial</li>
+
+	<LI>VeriSign/RSA Secure Server</li>
+
+	<LI>VeriSign Class 2 Public Primary CA</li>
+
+	<LI>VeriSign Class 3 Public Primary CA</li>
+
+	<LI>VeriSign Class 4 Public Primary CA</li>
+
+	<LI>Keywitness Canada, Inc.</li>
+
+	<LI>GTE Cybertrust ROOT</li>
+
+	<LI>Thawte Server CA</li>
+
+	<LI>Thawte Premium Server CA</li>
+
+	<LI>Thawte Personal Basic CA</li>
+
+	<LI>Thawte Personal Freemail CA</li>
+
+	<LI>Thawte Personal Premium CA</li>
+
+	<LI>Microsoft Root Authority</li>
+
+	<LI>Root SGC Authority</li>
+</UL>
+
+<P class="labelproc"><B>To add certificates to the CA database through the registry:</B>
+
+<OL type="1">
+	<LI>Create the key <B>HKLM\Comm\SecurityProviders\SCHANNEL\CAs</B> if one does not already exist.</li>
+
+	<LI>Create a subkey with the name of the certificate, for example <B>My Certificate</B>.</li>
+
+	<LI>Create the following values under the <B>My Certificate</B> key.
+<PRE class="code">DWORD:Enabled = 1
+DWORD:Type = 1
+BINARY:CACert = X509 certificate bytes</PRE>
+</li>
+</OL>
+
+<P>Schannel will pick up the root certificate next time it is loaded.</P>
+
+<P>The certificate validation callback function must be implemented by all client applications that use secure sockets. The value it returns determines if the connection will be completed by Winsock. It must have the following syntax:</P>
+
+<PRE class="code">int SslValidate (
+         DWORD      dwType
+         LPVOID     pvArg
+         DWORD      dwChainLen
+         LPBLOB     pCertChain
+         DWORD      dwFlags
+);</PRE>
+
+<P>The parameters contain the following data:
+
+<UL type="disc">
+	<LI>The <I>dwType</I> parameter specifies the data type pointed to by <I>pCertChain</I>. This must be SSL_CERT_X.509, specifying that <I>pCertChain</I> is a pointer to an X.509 style certificate.</li>
+
+	<LI>The <I>pvArg</I> parameter is the application-defined context, passed by the <B>SSLVALIDATECERTHOOK</B> structure.</li>
+
+	<LI>The <I>dwChainLen</I> parameter is the number of certificates pointed to by <I>pCertChain</I>. It will always be equal to one.</li>
+
+	<LI>The <I>pCertChain</I> parameter is a pointer to the root certificate. The BLOB struct is defined in Sslsock.h in the SDK. The <B>pBlobData</B> field points to a X.509 certificate (ISO standard). The certificate is not the root certificate but the server certificate. The caller must parse the certificate to extract the pertinent data like the subject and issuer names.</li>
+
+	<LI>If the root issuer of the certificate could not be found in the CA database, the <I>dwFlags</I> parameter will contain SSL_CERT_FLAG_ISSUER_UNKNOWN. The application can either attempt to verify the issuer itself, or return SSL_ERR_CERT_UNKNOWN.</li>
+</UL>
+
+<P>The following table shows values returned by the callback function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Return value</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>SSL_ERR_BAD_DATA</TD>
+<TD width=62%>The certificate is not properly formatted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>SSL_ERR_BAD_SIG</TD>
+<TD width=62%>The signature check failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>SSL_ERR_CERT_EXPIRED</TD>
+<TD width=62%>The certificate has expired.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>SSL_ERR_CERT_REVOKED</TD>
+<TD width=62%>The certificate has been revoked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>SSL_ERR_CERT_UNKNOWN</TD>
+<TD width=62%>The issuer is unknown, or some unspecified problem arose in the certificate processing, rendering it unacceptable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>SSL_ERR_OKAY</TD>
+<TD width=62%>The certificate is acceptable.</TD>
+</TR>
+</table></div>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

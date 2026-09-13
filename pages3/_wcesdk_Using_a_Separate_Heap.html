@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using a Separate Heap</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Using a Separate Heap" />
+<MSHelp:RLTitle Title="Using a Separate Heap (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Using a Separate Heap" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Using_a_Separate_Heap" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="memmanag.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922239">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_using_a_separate_heap"></A>Using a Separate Heap</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Instead of adding more size to the local heap, it is usually more efficient to create several small heaps. For example, a word processor might have a separate heap for each document file. </P>
+
+<P class="labelproc"><B>To allocate and deallocate memory on a separate heap</B>
+
+<UL type="disc">
+	<LI>Call the <B>HeapCreate</B> function.</li>
+
+	<LI>The <B>HeapCreate</B> function returns a handle. Use this handle to reference the heap that you are using in the following steps.</li>
+
+	<LI>Windows CE does not allocate or reserve any memory when creating a heap. Memory is only reserved and committed when the first block of the heap is allocated.</li>
+
+	<LI>Call the <B>HeapAlloc</B> function to allocate memory from the heap to your application.</li>
+
+	<LI>Windows CE does not place any limits on the size of a separate heap. As long as you have virtual and physical memory addresses available, you can allocate memory from the separate heap.</li>
+
+	<LI>Use the memory that is allocated to your application.</li>
+
+	<LI>If necessary, call the <B>HeapSize</B> and <B>HeapReAlloc</B> functions to reallocate the separate heap memory.</li>
+
+	<LI>To increase the size of a block, call the <B>HeapSize</B> function to determine if the block contains enough space. Then, call the <B>HeapReAlloc</B> function either to add memory to the top of the allocation or to move the block to a larger area.</li>
+
+	<LI>To deallocate the memory back to Windows CE when finished, call the <B>HeapFree</B> function.</li>
+
+	<LI>Like the local heap, Windows CE deallocates a page only if all of the blocks that are within that page are deallocated also. This can result in fragmentation within the separate heap.</li>
+
+	<LI>To return all of the heap memory to Windows CE when you have finished using the heap, call the <B>HeapDestroy</B> function.</li>
+
+	<LI>You do not have to call the <B>HeapFree</B> function on all of the blocks within the separate heap before you call the <B>HeapDestroy</B> function.</li>
+</UL>
+
+<P>The following code example shows how to create a new heap.</P>
+
+<PRE class="code">LPBYTE pbMyPointer = NULL;
+HANDLE hMyNewHeap = NULL;
+LPVOID lpHeapMemory = NULL;
+LPVOID lpHeapMem2 = NULL;
+UINT uiSize;
+BOOL bResult;
+
+hMyNewHeap = HeapCreate (0,     // *do* serialize
+                         35000, // 35,000 bytes wanted
+                         0);    // Unsupported in Windows CE</PRE>
+
+<P>The following code example shows how to allocate memory from the heap, even when the heap is very small, by using the <B>HeapAlloc</B> function.</P>
+
+<PRE class="code">lpHeapMemory = HeapAlloc (hMyNewHeap,       // Specify the heap
+                          HEAP_ZERO_MEMORY, // Zero the memory
+                          42);              // Number of bytes
+if (lpHeapMemory == NULL)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// The return value is actually the address of the memory.
+pbMyPointer = (LPBYTE)lpHeapMemory;
+
+// Your code to use the memory goes here.
+// SomeFunctionCall (pbMyPointer, and so on)
+// . . .</PRE>
+
+<P>The following code example shows how to check the size of part of the heap by using the <B>HeapSize</B> function.</P>
+
+<PRE class="code">uiSize = HeapSize (hMyNewHeap,    // Specify the heap
+                   0,             // No flags
+                   lpHeapMemory); // Specify which memory
+if (uiSize == 0)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}</PRE>
+
+<P>The following code example shows how to change the size of part of the heap by using the <B>HeapReAlloc</B> function.</P>
+
+<PRE class="code">lpHeapMem2 = HeapReAlloc (hMyNewHeap,   // Specify which heap
+                          0,            // Options (none)
+                          lpHeapMemory, // Existing memory
+                          100);         // New size, in bytes
+if (lpHeapMem2 == NULL)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// The return value is actually the address of the memory.
+pbMyPointer = (LPBYTE)lpHeapMem2;</PRE>
+
+<P>The following code example shows how to free memory from the heap by using the <B>HeapFree</B> function.</P>
+
+<PRE class="code">bResult = HeapFree (hMyNewHeap,       // Specify which heap
+                    0,                // Options (none)
+                    lpHeapMem2);      // Specify what to free
+if (!bResult)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// Always zero the caller's pointer after freeing memory.
+lpHeapMem2 = NULL;</PRE>
+
+<P>The following code example shows how to destroy the heap by using the <B>HeapDestroy</B> function.</P>
+
+<PRE class="code">bResult = HeapDestroy (hMyNewHeap);
+
+if (!bResult)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+</BLOCKQUOTE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

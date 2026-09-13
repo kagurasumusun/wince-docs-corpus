@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Generating Notifications</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Generating Notifications" />
+<MSHelp:RLTitle Title="Generating Notifications" />
+<MSHelp:Keyword Index="K" Term="notifications, generating" />
+<MSHelp:Keyword Index="A" Term="_wcepb_Generating_Notifications" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwce50" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="os_notif.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925927">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcepb_generating_notifications"></A>Generating Notifications</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>To generate notifications, Windows CE facilitates communication between the base notification engine and your notification UI. When an event occurs, the base notification engine creates a <B>NotifyPacket</B> structure in RAM containing notification parameters in the <I>sPacket</I> member. It then passes a handle to this structure to your notification UI through the <B>CeNotifyPublic_NewPacket</B> function. Your notification UI is then responsible for handling the notification.</P>
+
+<P class="labelproc"><B>To handle a notification with your notification UI</B>
+
+<OL type="1">
+	<LI>Examine the <B>NotifyPacket</B> structure. 
+<P>This step requires your notification UI to lock the notification database with the <B>CeNotifyPrivate_Lock</B> function.
+</li>
+
+	<LI>Obtain a pointer to the structure by calling the <B>CeNotifyPrivate_TranslateOID</B> function. 
+<P>If this function returns NULL, the notification has been handled and the request to dismiss the UI has already been dispatched. 
+</li>
+
+	<LI>Present the requested UI feature. 
+<P>For example, launch a dialog box, play a sound, or launch the appropriate application if no UI is required for the notification.
+</li>
+
+	<LI>Unlock the notification database by calling the <B>CeNotifyPrivate_Unlock</B> function. 
+<P>If your notification UI creates a dialog box, set GWL_USERDATA to M_WORD to correctly dispatch dialog box messages. The notification subsystem uses the value defined by M_WORD to clearly identify its windows and message-related processing.
+</li>
+</OL>
+
+<P>For a sample implementation of this procedure, see the <B>NewPacket</B> function in \Public\Common\Oak\Notify\Notifext.cxx.</P>
+
+<P>You should not maintain or use the <B>NotifyPacket</B> structure while the notification database is unlocked. Use a notification handle instead, and translate it to a <B>NotifyPacket</B> structure when locking the database. While the notification database is locked, the base notification engine is not functional. Consequently, do not lock the database for extended periods of time.</P>
+
+<P>If a user issues a request to postpone a notification, your notification UI can reschedule the notification with the <B>CeNotifyPrivate_Reschedule</B> function. Once a notification is handled, your notification UI should call the <B>CeNotifyPrivate_DeleteNotification</B> function, which causes the base notification engine to delete the database record and remove the <B>NotifyPacket</B> structure from the list of active notifications. <B>CeNotifyPrivate_DeleteNotification</B> will not free the structure itself, but will return it to the notification UI through the <B>CeNotifyPublic_DisposeOfPacket</B> function. The notification UI should then dismiss any UI features that are associated with the notification and free the pointer to the <B>NotifyPacket</B> structure with the <B>LocalFree</B> function.</P>
+
+<P>For an example of how to clear notification responses, see the <B>DisposeOfPacket</B> function in Public\Common\Oak\Notify\Notifext.cxx.</P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisIMInitializeDeviceInstanceEx</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="NdisIMInitializeDeviceInstanceEx" />
+<MSHelp:RLTitle Title="NdisIMInitializeDeviceInstanceEx" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_NdisIMInitializeDeviceInstanceEx" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928655">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_ndisiminitializedeviceinstanceex"></A>NdisIMInitializeDeviceInstanceEx</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P><B>NdisIMInitializeDeviceInstanceEx</B> calls an NDIS intermediate driver's <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A> function to initialize the driver's virtual network adapter and optionally to set up state information about the driver's virtual network adapter for subsequently bound protocols.</P>
+
+<PRE class="syntax"><B>NDIS_STATUS</B>
+<B>NdisIMInitializeDeviceInstanceEx(</B>
+<B>IN NDIS_HANDLE</B> <I>DriverHandle</I>,
+<B>IN PNDIS_STRING</B> <I>DriverInstance</I>,
+<B>IN NDIS_HANDLE</B> <I>DeviceContext </I>OPTIONAL <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>DriverHandle</I> </DT>
+
+<DD>Specifies the handle returned by <A HREF="_wcesdk_ndisimregisterlayeredminiport.htm">NdisIMRegisterLayeredMiniport</A>. </dd>
+
+<DT><I>DriverInstance</I> </DT>
+
+<DD>Points to a buffered, caller-initialized counted string in the system-default character set, naming the registry key in which the driver stores information about its virtual network adapter and, possibly, binding-specific information. 
+
+<P>The intermediate driver's installation script created its key designated by DeviceInstance in the <B>HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services</B> registry tree. 
+</dd>
+
+<DT><I>DeviceContext</I> </DT>
+
+<DD>Points to caller-supplied memory to be set up with driver-defined device context information about the virtual network adapter, which still higher level protocols that subsequently bind themselves to this virtual network adapter can use. This parameter can be NULL if the intermediate driver has no such device context area. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P><B>NdisIMInitializeDeviceInstanceEx</B> can return either of the following: 
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS </DT>
+
+<DD>The intermediate driver's virtual network adapter was successfully initialized. </dd>
+
+<DT>NDIS_STATUS_NOT_ACCEPTED </DT>
+
+<DD><B>NdisIMInitializeDeviceInstanceEx</B> failed because the device specified by <I>DriverHandle</I> has already been initialized. </dd>
+</DL>
+
+<P class="label"><B>Comments</B></P>
+
+<P>An NDIS intermediate driver should call <B>NdisIMInitializeDeviceInstanceEx</B> from its <A HREF="_wcesdk_protocolbindadapter.htm">ProtocolBindAdapter</A> function, thereby controlling when NDIS calls the driver's <B>MiniportInitialize</B> function to set up the driver's virtual network adapter. A failure to call <B>NdisIMInitializeDeviceInstanceEx</B> or <A HREF="_wcesdk_ndisiminitializedeviceinstance.htm">NdisIMInitializeDeviceInstance</A> from an NDIS intermediate driver effectively prevents that driver from loading itself successfully. Such a driver cannot make its virtual network adapter operational for still higher level protocols unless its <B>MiniportInitialize</B> function runs.</P>
+
+<P>Before it calls <B>NdisIMInitializeDeviceInstanceEx</B>, the intermediate driver's <B>ProtocolBindAdapter</B> function must make a successful call to <A HREF="_wcesdk_ndisopenadapter.htm">NdisOpenAdapter</A>, thereby binding the intermediate driver as a protocol to the underlying network adapter miniport. The <B>ProtocolBindAdapter</B> function can allocate an area at <I>DeviceContext</I> as well, possibly setting it up with intermediate driver-determined information about the capabilities of the underlying network adapter, collected by <B>ProtocolBindAdapter</B>. The intermediate driver's <B>MiniportInitialize</B> function might use such information subsequently to set up this context area with information about the driver's virtual network adapter.</P>
+
+<P>After its successful call to <B>NdisOpenAdapter</B>, the intermediate driver's subsequent call to <B>NdisIMInitializeDeviceInstanceEx</B> causes NDIS to call the intermediate driver's <B>MiniportInitialize</B> function. <B>MiniportInitialize</B> allocates any resources the driver needs to carry out network I/O operations, such as calling <A HREF="_wcesdk_ndismsetattributesex.htm">NdisMSetAttributesEx</A>, and to initialize the driver's virtual network adapter to an operational state. Then, still higher level protocols can bind themselves to its virtual network adapter when the intermediate driver's initialization is completed successfully. The intermediate driver's <B>MiniportInitialize</B> function can call <A HREF="_wcesdk_ndisimgetdevicecontext.htm">NdisIMGetDeviceContext</A> to gain access to the area at <I>DeviceContext</I> if such an area is provided by its <B>ProtocolBindAdapter</B> function. </P>
+
+<P>After <B>MiniportInitialize</B> returns control, the intermediate driver's device context area, if any, can contain any intermediate-driver-defined data that subsequently allows all higher level protocols bound to the same virtual network adapter to access information in that context area. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>3.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ndislib.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>, <A HREF="#_wcesdk_ndisiminitializedeviceinstanceex">NdisIMDeInitializeDeviceInstanceEx</A>, <A HREF="_wcesdk_ndisimgetdevicecontext.htm">NdisIMGetDeviceContext</A>, <A HREF="_wcesdk_ndisiminitializedeviceinstance.htm">NdisIMInitializeDeviceInstance</A>, <A HREF="#_wcesdk_ndisiminitializedeviceinstanceex">NdisIMInitializeDeviceInstanceEx</A>, <A HREF="_wcesdk_ndisimregisterlayeredminiport.htm">NdisIMRegisterLayeredMiniport</A>, <A HREF="_wcesdk_ndismsetattributesex.htm">NdisMSetAttributesEx</A>,<B> </B><A HREF="_wcesdk_ndisopenadapter.htm">NdisOpenAdapter</A>, <A HREF="_wcesdk_protocolbindadapter.htm">ProtocolBindAdapter</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Define and Instantiate Your Filter Class (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="The following steps show you how to define and instantiate your filter class.     Determine the base classes from which to derive your filter class (and pin classes, if necessary)."/>
+<xml>
+<MSHelp:TOCTitle Title="Define and Instantiate Your Filter Class" />
+<MSHelp:RLTitle Title="Define and Instantiate Your Filter Class (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_define_and_instantiate_your_filter_class" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924118">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_define_and_instantiate_your_filter_class"></A>Define and Instantiate Your Filter Class</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The following steps show you how to define and instantiate your filter class. </P>
+
+<P>Determine the base classes from which to derive your filter class (and pin classes, if necessary). Typically, your transform filter class derives from the <a href="wcesdkrctransformfilter_class.htm">CTransformFilter</a>, <a href="wcesdkrctransinplacefilter_class.htm">CTransInPlaceFilter</a>, or <a href="wcesdkrcvideotransformfilter_class.htm">CVideoTransformFilter</a> transform base classes, or from the more generic <a href="wcesdkrcbasefilter_class.htm">CBaseFilter</a> class. If you want to transform video media (especially AVI data), derive from <B>CVideoTransformFilter</B>. If your filter must copy the input media samples, derive from <B>CTransformFilter</B>. If your filter can transform the sampled media in place, derive from <B>CTransInPlaceFilter</B>. If you don't want the simple transform filter support provided in the transform base classes, but prefer to implement your own member functions, derive from <B>CBaseFilter</B>. See <A HREF="wcegmm_dshow_determine_which_base_classes_to_use.htm">Determine Which Base Classes to Use</A> for more information. </P>
+
+<P>In the following example, the filter class derives from <B>CTransInPlaceFilter</B>. </P>
+
+<PRE class="code">    class CMyFilter  : public CTransInPlaceFilter</PRE>
+
+<P>Implement the <a href="_wcesdk_com_IUnknown.htm">IUnknown</a> interface for your object. </P>
+
+<P>In the public section of your filter class definition, create an instance of <a href="wcesdkrcunknown_class.htm">CUnknown</a>, and then call the <a href="wcesdkriunknown_macro__declare_iunknown.htm">DECLARE_IUNKNOWN</a> macro. </P>
+
+<PRE class="code">    public:
+        static CUnknown *WINAPI CreateInstance(LPUNKNOWN punk, HRESULT 
+    *phr);
+        DECLARE_IUNKNOWN;</PRE>
+
+<P>Define your constructor. Also, define your <B>Transform</B> and <B>CheckInputType</B> functions (this does not apply if your filter class is derived from <B>CBaseFilter</B>). </P>
+
+<P>In the private section of your filter class definition, define your constructor by calling the constructor of the transform filter class you derived from, and then add code to perform the transform and check the input type. For example: </P>
+
+<PRE class="code">    // Define your constructor by calling the constructor of 
+    // CTransInPlaceFilter.
+    CMyFilter(TCHAR *tszName, LPUNKNOWN punk, HRESULT *phr)
+    : CTransInPlaceFilter (tszName, punk, CLSID_MyFilter, phr)
+    { }
+
+    // Add the transform code.
+    HRESULT Transform(IMediaSample *pSample){ 
+    // Transform code here
+    }
+
+    // Add code to check the input type.
+    HRESULT CheckInputType(const CMediaType* mtIn) { 
+    // Input checking code here
+    }</PRE>
+
+<P>Implement <B>CreateInstance</B> for your filter object. Typically, <B>CreateInstance</B> calls the constructor of your filter class. For example: </P>
+
+<PRE class="code">    CUnknown * WINAPI CMyFilter::CreateInstance(LPUNKNOWN punk, HRESULT *phr) {
+    CMyFilter *pNewObject = new CMyFilter(NAME("Description of My Filter"), 
+        punk, phr );
+    if (pNewObject == NULL) {
+        *phr = E_OUTOFMEMORY;
+    }
+    return pNewObject;
+    } </PRE>
+
+<P>Declare a global array <I>g_Templates</I> of <a href="wcesdkrcfactorytemplate_class.htm">CFactoryTemplate</a> objects to inform the default class factory code how to access the <B>CreateInstance</B> function: </P>
+
+<PRE class="code">    CFactoryTemplate g_Templates[]=
+        {   { L"My Filter"          
+            , &amp;CLSID_MyFilter
+            , CMyFilter::CreateInstance  // function called by class factory
+            , NULL
+            , &amp;sudMyFilter }     // address of the AMOVIESETUP_FILTER structure,
+                                 //   or NULL if no structure exists
+    };
+    int g_cTemplates = sizeof(g_Templates)/sizeof(g_Templates[0]);  </PRE>
+
+<P>The <I>g_cTemplates</I> variable defines the number of class factory templates for the filter. Each of these templates provides a link between COM and the filter and are used to create the base object for the filter. At a minimum, the filter has one template that provides the address of its own <B>CreateInstance</B> function, which, when called, creates the base object. </P>
+
+<P>For information about using <B>CFactoryTemplate</B> in registration, see <A HREF="wcegmm_dshow_how_to_register_directshow_filters.htm">How to Register DirectShow Filters</A>. </P>
+
+<P>Generate a GUID for your filter object. </P>
+
+<P>For information about generating GUIDs in general, see "GUID Creation and Optimizations" and "The uuidgen Utility" in the Platform SDK. </P>
+
+<P>To generate a GUID in Microsoft Visual C++ 5.<I>x</I>, choose <B>Create GUID</B> from the <B>Tools</B> menu. By default, the <B>GUID</B> is in DEFINE_GUID format, which is the format you want. Click the <B>Copy</B> button. Put the cursor in your source file beneath the include statements, and choose <B>Paste</B> from the <B>Edit</B> menu. The inserted code will look like the following example, except that it will have its own unique number and CLSID. Insert the code before your class definition in the header file or main file. </P>
+
+<PRE class="code">    // {3FA5D260-AF2F-11d0-AE9C-00A0C91F0841}
+    DEFINE_GUID(CLSID_MyFilter, 
+    0x3fa5d260, 0xaf2f, 0x11d0, 0xae, 0x9c, 0x0, 0xa0, 0xc9, 0x1f, 0x8, 0x41);</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

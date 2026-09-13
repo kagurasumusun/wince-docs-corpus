@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Registering a Custom File Type (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="This article describes how to register a new file type so that file-reader source filters can recognize it."/>
+<xml>
+<MSHelp:TOCTitle Title="Registering a Custom File Type" />
+<MSHelp:RLTitle Title="Registering a Custom File Type (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_registering_a_custom_file_type" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924154">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_registering_a_custom_file_type"></A>Registering a Custom File Type</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This article describes how to register a new file type so that file-reader source filters can recognize it. The mechanism used here is taken from the Microsoft Win32 <a href="_wcesdk_COM_GetClassFile.htm">GetClassFile</a> function, which is used to return the CLSID associated with the given file name. Microsoft DirectShow media types use the same quadruple set of values in the registry that are used for <B>GetClassFile</B> FileType registrations, but associate a file matching this criteria with a media type rather than a file type. Also, the registry entry for a DirectShow media type provides the CLSID of a source filter that can be used to read this media type. </P>
+
+<P>For both FileType and MediaType registration, a pattern in the registry contains a series of entries of the form: </P>
+
+<PRE class="code">regdb key = offset, cb, mask, value  </PRE>
+
+<P>The media type is defined as a CLSID pair, {Majortype clsid, Subtype clsid}. If the data in the file at the specified offset or offsets matches a pattern in HKEY_CLASSES_ROOT\Media Type\{&lt;major type&gt;}\{&lt;subtype&gt;}, the media type CLSID pair associated with that pattern is the media type of the file. </P>
+
+<P>The parameters of the registry key are interpreted as follows. The value of the <I>offset</I> item is an offset from the beginning or end of the file, and the <I>cb</I> item is a length in bytes. These two decimal values represent a particular byte range in the file. (A negative value for the offset item is interpreted from the end of the file.) The <I>mask</I> value is a hexadecimal bit mask that is used to perform a logical AND operation, with the byte range specified by <I>offset</I> and <I>cb</I>. The result of the logical AND operation is compared with the <I>value</I> item. If the mask is omitted, it is assumed to be all ones. The number of hexadecimal digits in <I>mask</I> and <I>value</I> must be twice the value of <I>cb</I> (because <I>cb</I> is in bytes). </P>
+
+<P>Each pattern in the registry is compared to the file in the order of the patterns in the database. The first pattern where each of the value items matches the result of the AND operation determines the media type of the file. </P>
+
+<P>Note that each entry can have multiple quadruples, all of which must match the data in the file for the media type to be associated with the file. An example of using multiple quadruples in a single entry might be to match the byte sequence at the beginning and at the end of the file. The following example shows a pattern of AB CD 12 34 as the first 4 bytes in the file and AB AB 00 AB as the last 4 bytes in the file (no masks applied here). All elements must match for the pattern to match a file with a media type. </P>
+
+<PRE class="code">0 = REG_SZ 0, 4, , ABCD1234,  -4, 4, , ABAB00AB </PRE>
+
+<P>Additionally, there can be multiple entries specified under a single media type, a match to any one of which will associate the file with the media type. </P>
+
+<P>For example, the pattern contained in the following entries of the registry requires that the first three bytes be AB CD 12, that the fourth byte be 32, 33, 34, or 35, and that the last 4 bytes be FE FE FE FE: </P>
+
+<PRE class="code">HKEY_CLASSES_ROOT
+    Media Type
+         {12345678-0000-0001-C000-000000000095}
+                {87654321-0000-0001-C000-000000000095}
+                    0 = REG_SZ 0, 4, FFFFFFFE, ABCD1234, -4, 4, , FEFEFEFE
+                    1 = REG_SZ 0, 4, FFFFFFFE, ABCD1232, -4, 4, , FEFEFEFE
+                    Source Filter = {56781234-0000-0001-C000-000000000095}</PRE>
+
+<P>If a file contains such a pattern, the media type {12345678-0000-0001-C000-000000000095}{87654321-0000-0001-C000-000000000095} will be associated with this file. The file source filter for the media type is identified by the CLSID of the Source Filter value under the key for the media type. </P>
+
+<P>The media type can be used to find filter handlers for the file in order to render it. A handler for a type performs a more exact test of the file to be sure of the type before attempting to render the data. </P>
+
+<P>Note that this scheme allows for a set of alternative masks (for instance, .wav files) that might or might not have a RIFF header. </P>
+
+<P class="label"><B>Registering File Extensions Without Byte Extensions</B></P>
+
+<P>As mentioned previously, you can register a particular media type/subtype pair or a source filter CLSID for a given file extension. In this case, only the type and source filter will be used to read the media type. However, if you register your own source filter, there is no requirement for the name to represent a real file because the name gets passed to the source filter for interpretation.</P>
+
+<P>The registry entries are as follows.</P>
+
+<PRE class="code">HKEY_CLASSES_ROOT\Media Type\Extensions</PRE>
+
+<P>If the file extension is .foo, the key has the following structure.</P>
+
+<PRE class="code">.foo
+REG_SZ: Media Type
+REG_SZ: Subtype
+REG_SZ: Source Filter</PRE>
+
+<P>Each value represents a GUID.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

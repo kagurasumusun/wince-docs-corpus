@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>NdisMCancelTimer (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="This function cancels a preceding call to the NdisMSetPeriodicTimer function or cancels the preceding call to the NdisMSetTimer function if the interval specified to NdisMSetTimer has not yet expired."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="NdisMCancelTimer" />
+<MSHelp:RLTitle Title="NdisMCancelTimer (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="NdisMCancelTimer" />
+<MSHelp:Keyword Index="A" Term="wceddkNdisMCancelTimer" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="apiref" />
+<MSHelp:Attr Name="Filename" Value="funct_1.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+<MSHelp:Attr Name="APIName" Value="NdisMCancelTimer" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924895">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkndismcanceltimer"></A>NdisMCancelTimer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This function cancels a preceding call to the <B>NdisMSetPeriodicTimer</B> function or cancels the preceding call to the <B>NdisMSetTimer</B> function if the interval specified to <B>NdisMSetTimer</B> has not yet expired.</P>
+
+<PRE class="syntax"><B>VOID NdisMCancelTimer(</B>
+<B>IN PNDIS_MINIPORT_TIMER </B><I>Timer</I><B>, </B>
+<B>OUT PBOOLEAN </B><I>TimerCanceled</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>Timer</I></DT>
+
+<DD>Pointer to a timer object, already initialized with the <B>NdisMInitializeTimer</B> function and set with the <B>NdisMSetPeriodicTimer</B> or the <B>NdisMSetTimer</B> function.</dd>
+
+<DT><I>TimerCanceled</I></DT>
+
+<DD>Pointer to a caller-supplied variable, which this function sets to TRUE if the timer was queued and then canceled, or to FALSE if the timer either was not set or has already fired.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>All NDIS timer functions operate on an opaque timer object, for which an NIC driver must supply resident storage. The <B>MiniportInitialize</B> function must call <B>NdisMInitializeTimer</B> with a caller-supplied pointer to this storage, thus associating a driver-supplied <B>MiniportTimer</B> function with the timer object. <B>MiniportInitialize</B> must call <B>NdisMInitializeTimer</B> before the driver passes the <I>Timer</I> pointer to any other NDIS timer function.</P>
+
+<P>Drivers of NICs that do not generate interrupts have a polling <B>MiniportTimer</B> function to monitor the NIC state for incoming receives and for send completions.</P>
+
+<P>Calls to the <B>NdisMSet<I>XXX</I>Timer</B> functions insert the timer object in the system timer queue. Calls to this function dequeue the timer object if it is currently queued. Only one instantiation of a particular timer object can be queued at any moment.</P>
+
+<P>A call to this function while the timer object designated by <I>Timer</I> is queued removes the timer object from the queue, thus canceling the execution of the associated <B>MiniportTimer </B>function.</P>
+
+<P>A subsequent call to <B>NdisMSetTimer</B> or <B>NdisMSetPeriodicTimer</B> requeues the timer object so that the <B>MiniportTimer</B> function runs again when the specified interval expires.</P>
+
+<P>A call to this function can occur just after a timer has fired but before the associated <B>MiniportTimer</B> function is run. Usually, <B>MiniportTimer</B> sets a state variable immediately on entry to indicate that it is running. When another miniport function calls this function, it can check such a <I>TimerCancelled</I> variable on return from this call to determine whether its call to this function also canceled execution of <B>MiniportTimer</B>.</P>
+
+<P>A call to this function while <B>MiniportTimer</B> is running has no effect on the execution of <B>MiniportTimer</B>. It continues to run until it returns control.</P>
+
+<P>A driver that calls this function runs at IRQL &lt;= DISPATCH_LEVEL.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>SeeAlso</B></P>
+
+<P><A HREF="wceddkndisminitializetimer.htm">NdisMInitializeTimer</A>, <A HREF="wceddkndismsetperiodictimer.htm">NdisMSetPeriodicTimer</A>, <A HREF="wceddkndismsettimer.htm">NdisMSetTimer</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Searching for a Record</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Searching for a Record" />
+<MSHelp:RLTitle Title="Searching for a Record (Windows CE)" />
+<MSHelp:Keyword Index="K" Term="databases, searching records" />
+<MSHelp:Keyword Index="K" Term="searching, database records" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Searching_for_a_Record" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="Filename" Value="objstore.rtf" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922285">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_searching_for_a_record"></A>Searching for a Record</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Before you can read and write a record in a database, you must find the record. Use <B>CeSeekDatabase</B> to move the database seek pointer to the record that you want to read from or write to. <B>CeSeekDatabase</B> always uses the current sort order as it is specified in the call to <B>CeOpenDatabaseEx</B>. <B>CeSeekDatabase</B> can search through a database for a relative or exact property value, a relative or exact location, or a record object identifier (CEOID). However, Windows CE can perform a seek operation only on a property value for which a sort order exists. When <B>CeSeekDatabase</B> finds a record, Windows CE positions the seek pointer at that record. Any subsequent read operation takes place at the location of the seek pointer. If you set the CEDB_AUTOINCREMENT flag in your call to <B>CeOpenDatabaseEx</B>, each read operation automatically increments the seek pointer from the current record to the next record.</P>
+
+<P>Seek operations are affected by the sort order that is associated with the open database handle. For example, suppose that the Contacts database was opened by using a sort operation on the name property. If you specify the CEDB_SEEK_VALUEFIRSTEQUAL flag and a value of "John Smith," <B>CeSeekDatabase</B> searches from the beginning of the database looking only at the name property of each record. It stops when, and if, it finds a matching property.</P>
+
+<P>The following code example shows how to search for a record by using <B>CeSeekDatabase</B>.</P>
+
+<PRE class="code">void UsingCeSeekDatabase (void)
+{
+  CEOID CeOid;          // Object identifier
+  CEOID CeOidSeek;      // Object identifier
+  DWORD dwIndex;        // Index of record to seek
+  TCHAR szError[100];   // String for displaying error messages
+  HANDLE hDataBase;     // Handle to a user-allocated heap
+
+  // Assign to CeOidSeek the object identifier of the record
+  // being searched for.
+  // ...
+
+  // Call CeOpenDatabaseEx to open the database.
+  // hDataBase = CeOpenDatabaseEx {...}
+
+  // Perform the seek. This type of seek operation is very efficient.
+  if ((CeOid = CeSeekDatabase(
+              hDataBase,        // Handle of the database
+              CEDB_SEEK_CEOID,  // Finding an object with the
+                                // same identifier
+              CeOidSeek,        // Specifies the record to seek
+              &amp;dwIndex          // If successful, moves the database
+                                // pointer to point to the record
+                )) == 0)
+  {
+    wsprintf (szError, TEXT("ERROR: CeSeekDatabase failed (%ld)"),
+                          GetLastError ());
+  }
+
+} // End of UsingCeSeekDatabase example code</PRE>
+<!--Footer-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, February 03, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+</div>
+</BODY>
+</HTML>

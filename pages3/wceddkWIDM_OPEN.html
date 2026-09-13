@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>WIDM_OPEN (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="This message is used in an MMDRV_MESSAGE_PARAMS structure passed to the WAV_IOControl function to request a waveform input driver to open an instance of a specified device."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="WIDM_OPEN" />
+<MSHelp:RLTitle Title="WIDM_OPEN (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="WIDM_OPEN" />
+<MSHelp:Keyword Index="A" Term="wceddkWIDM_OPEN" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="apiref" />
+<MSHelp:Attr Name="Filename" Value="mess_1.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+<MSHelp:Attr Name="APIName" Value="WIDM_OPEN" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924558">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkwidm_open"></A>WIDM_OPEN</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This message is used in an <B>MMDRV_MESSAGE_PARAMS</B> structure passed to the <B>WAV_IOControl</B> function to request a waveform input driver to open an instance of a specified device.</P>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>uDeviceId</I></DT>
+
+<DD>Device identifier &#0151; 0, 1, 2, and so on &#0151; for the target device.</dd>
+
+<DT><I>uMsg</I></DT>
+
+<DD>Specifies this message.</dd>
+
+<DT><I>dwUser</I></DT>
+
+<DD>Specifies a pointer to a location to receive the device instance identifier.</dd>
+
+<DT><I>dwParam1</I></DT>
+
+<DD>Specifies a pointer to a <B>WAVEOPENDESC</B> structure containing the client's device handle, notification target, and instance identifier.</dd>
+
+<DT><I>dwParam2</I></DT>
+
+<DD>Contains one or both of the following flags:
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Value</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>WAVE_FORMAT_DIRECT</TD>
+<TD width=63%>Data compression and decompression should take place in hardware.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>WAVE_FORMAT_QUERY</TD>
+<TD width=63%>The driver indicates whether or not it supports the specified format.</TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>MMSYSERR_NOERROR indicates success. Otherwise, the driver returns one of the error values MMSYSERR or WAVERR declared in the Mmsystem.h header file. </P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The ACM sends this message by calling the audio driver's <B>WAV_IOControl</B> entry point through the <B>DeviceIoControl</B> function.</P>
+
+<P>The driver assigns a device instance identifier and returns it in the location pointed to by the parameter <I>dwUser</I>. The driver receives this value as the input parameter <I>dwUser</I> to all other wave input driver messages. </P>
+
+<P>The driver determines the number of clients that it enables to use a particular device. If a device is opened by the maximum number of clients, it returns MMSYSERR_ALLOCATED for subsequent open requests.</P>
+
+<P>The WAVE_FORMAT_DIRECT flag is meant for use with a wave mapper. If the flag is set in <I>dwParam2</I>, the driver does not call the ACM to handle compression and decompression operations; the caller sets that flag to indicate that the driver uses the hardware to perform these operations directly. If the hardware is not capable of performing the operations, the driver returns MMSYSERR_NOTSUPPORTED when WAVE_FORMAT_DIRECT is set.</P>
+
+<P>If the WAVE_FORMAT_QUERY flag is set in <I>dwParam2</I>, the driver does not open the device. Instead, it determines whether it supports the format specified by the <I>lpFormat</I> member of <B>WAVEOPENDESC</B>. If the driver supports the requested format, it returns MMSYSERR_NOERROR. Otherwise, the driver returns WAVERR_BADFORMAT.</P>
+
+<P>If the open operation succeeds, the Wave API Manager sends the ACM the WIM_OPEN message by calling the <B>PostThreadMessage</B> function on the callback thread handle.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>1.0 and later</TD>
+<TD width=19%>&nbsp;</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

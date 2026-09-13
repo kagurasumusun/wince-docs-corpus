@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Sample Custom Draw Function (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="Upon receiving the CDDS_PREPAINT prepaint message, the function requests item-specific messages by returning the CDRF_NOTIFYITEMDRAW value."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Sample Custom Draw Function" />
+<MSHelp:RLTitle Title="Sample Custom Draw Function (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="code examples, custom draw" />
+<MSHelp:Keyword Index="K" Term="custom draw service, sample" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Sample_Custom_Draw_Function" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ctrls.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923207">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_sample_custom_draw_function"></A>Sample Custom Draw Function</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Upon receiving the CDDS_PREPAINT prepaint message, the function requests item-specific messages by returning the CDRF_NOTIFYITEMDRAW value. When it receives the subsequent item-specific messages, it selects a previously created font into the provided device context and specifies new colors before it returns the CDRF_NEWFONT value. The following code example shows how an application-defined function processes custom draw notification messages that are sent by a child list view control.</P>
+
+<PRE class="code">LRESULT DoNotify (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+  LPNMLISTVIEW pnm = (LPNMLISTVIEW)lParam;
+
+  switch (pnm-&gt;hdr.code)
+  {
+    case NM_CUSTOMDRAW:
+    {
+      LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+
+      if (lplvcd-&gt;nmcd.dwDrawStage == CDDS_PREPAINT)
+        return CDRF_NOTIFYITEMDRAW;
+
+      if (lplvcd-&gt;nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
+      {
+        if (!(lplvcd-&gt;nmcd.dwItemSpec % 3))
+          SelectObject (lplvcd-&gt;nmcd.hdc, g_hNewFont);
+        else
+          return CDRF_DODEFAULT;
+
+        lplvcd-&gt;clrText = RGB(150, 75, 150);
+        lplvcd-&gt;clrTextBk = RGB(255,255,255);
+
+        return CDRF_NEWFONT;
+      }
+    }
+
+    default:
+      break;
+  }
+
+  return 0;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

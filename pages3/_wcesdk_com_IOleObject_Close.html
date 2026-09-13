@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::Close</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IOleObject::Close" />
+<MSHelp:RLTitle Title="IOleObject::Close" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IOleObject_Close" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928917">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_ioleobject_close"></A>IOleObject::Close</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This method changes an embedded object from the running to the loaded state. It also disconnects a linked object from its link source.</P>
+
+<PRE class="syntax"><B>HRESULT Close( </B>
+<B>DWORD </B><I>dwSaveOption</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwSaveOption</I></DT>
+
+<DD>[in] Specifies whether the object is to be saved as part of the transition to the loaded state. Valid values are taken from the enumeration <B>OLECLOSE</B>.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>One of the values described in the following table is returned.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%>Value</TH>
+<TH width=56%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>S_OK</TD>
+<TD width=56%>The object closed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>OLE_E_PROMPTSAVECANCELLED</TD>
+<TD width=56%>The user was prompted to save but chose the <B>Cancel</B> button from the prompt message box.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The OLE 2 user model recommends that object applications do not prompt users before saving linked or embedded objects, including those activated in place. This policy represents a change from the OLE 1 user model, in which object applications always prompt the user to decide whether to save changes.</P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>A container application calls <B>IOleObject::Close</B> when it wants to move the object from a running to a loaded state. Following such a call, the object still appears in its container but is not open for editing. Calling <B>IOleObject::Close</B> on an object that is loaded but not running has no effect. Closing a linked object simply means disconnecting it.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>Upon receiving a call to <B>IOleObject::Close</B>, a running object should do the following:
+
+<UL type="disc">
+	<LI>If the object has been changed since it was last opened for editing, it should request to be saved, or not, according to instructions specified in <I>dwSaveOption</I>. If the option is to save the object, then it should call its container's <A HREF="_wcesdk_com_ioleclientsite_saveobject.htm">IOleClientSite::SaveObject</A> interface.</li>
+
+	<LI>If the object has <B>IDataObject::DAdvise</B> connections with ADVF_DATAONSTOP flags, then it should send an OnDataChange notification.</li>
+
+	<LI>If the object currently owns the Clipboard, it should empty it by calling <B>OleFlushClipboard</B>.</li>
+
+	<LI>If the object is currently visible, notify its container by calling <A HREF="_wcesdk_com_ioleclientsite_onshowwindow.htm">IOleClientSite::OnShowWindow</A> with the <I>fshow</I> parameter set to FALSE.</li>
+
+	<LI>Send <B>IAdvise::OnClose</B> notifications to appropriate advise sinks.</li>
+
+	<LI>Finally, forcibly cut off all remoting clients by calling <B>CoDisconnectObject</B>.</li>
+</UL>
+
+<P>If the object application is a local server (an EXE rather than a DLL), closing the object should also shut down the object application unless the latter is supporting other running objects or has another reason to remain in the running state. Such reasons might include the presence of <A HREF="_wcesdk_com_iclassfactory_lockserver.htm">IClassFactory::LockServer</A> locks, end-user control of the application, or the existence of other open documents requiring access to the application.</P>
+
+<P>Calling <B>IOleObject::Close</B> on a linked object disconnects it from, but does not shut down, its source application. A source application that is visible to the user when the object is closed remains visible and running after the disconnection and does not send an <B>OnClose</B> notification to the link container.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Oleidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

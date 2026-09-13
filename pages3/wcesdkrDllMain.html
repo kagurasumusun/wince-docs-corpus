@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DllMain</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="DllMain" />
+<MSHelp:RLTitle Title="DllMain" />
+<MSHelp:Keyword Index="A" Term="wcesdkrDllMain" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927456">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrdllmain"></A>DllMain</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function is an optional method of entry into a dynamic-link library (DLL). If the function is used, it is called by the system when processes and threads are initialized and terminated, or upon calls to the <A HREF="wcesdkrloadlibrary.htm">LoadLibrary</A> and <A HREF="wcesdkrfreelibrary.htm">FreeLibrary</A> functions. </P>
+
+<P><B>DllMain</B> is a placeholder for the library-defined function name. You must specify the actual name you use when you build your DLL. For more information, see the documentation included with your development tools. </P>
+
+<PRE class="syntax"><B>BOOL WINAPI DllMain(
+HANDLE<I> </I></B><I>hinstDLL</I><B>, 
+DWORD<I> </I></B><I>dwReason</I><B>, 
+LPVOID<I> </I></B><I>lpvReserved</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hinstDLL</I></DT>
+
+<DD>Handle to the DLL. The value is the base address of the DLL. The HINSTANCE of a DLL is the same as the HMODULE of the DLL, so <I>hinstDLL</I> can be used in subsequent calls to the <A HREF="wcesdkrgetmodulefilename.htm">GetModuleFileName</A> function and other functions that require a module handle. </dd>
+
+<DT><I>dwReason</I></DT>
+
+<DD>Specifies a flag indicating why the DLL entry-point function is being called. This parameter can be one of the following values: 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=43%>Value</TH>
+<TH width=57%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_PROCESS_ATTACH</TD>
+<TD width=57%>Indicates that the DLL is being loaded into the virtual address space of the current process as a result of the process starting up or as a result of a call to <B>LoadLibrary</B>. DLLs can use this opportunity to initialize any instance data or to use the <A HREF="wcesdkrtlsalloc.htm">TlsAlloc</A> function to allocate a thread local storage (TLS) index.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_THREAD_ATTACH</TD>
+<TD width=57%>Indicates that the current process is creating a new thread. When this occurs, the system calls the entry-point function of all DLLs currently attached to the process. The call is made in the context of the new thread. DLLs can use this opportunity to initialize a TLS slot for the thread. A thread calling the DLL entry-point function with DLL_PROCESS_ATTACH does not call the DLL entry-point function with DLL_THREAD_ATTACH.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>&nbsp;</TD>
+<TD width=57%>Note that the entry-point of a DLL function is called with this value only by threads created after the DLL is loaded by the process. When a DLL is loaded using <B>LoadLibrary</B>, existing threads do not call the entry-point function of the newly loaded DLL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_THREAD_DETACH</TD>
+<TD width=57%>Indicates that a thread is exiting cleanly. If the DLL has stored a pointer to allocated memory in a TLS slot, it uses this opportunity to free the memory. The system calls the entry-point function of all currently loaded DLLs with this value. The call is made in the context of the exiting thread.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_PROCESS_DETACH</TD>
+<TD width=57%>Indicates that the DLL is being unloaded from the virtual address space of the calling process as a result of either a process exit or a call to <B>FreeLibrary</B>. The DLL can use this opportunity to call the <A HREF="wcesdkrtlsfree.htm">TlsFree</A> function to free any TLS indices allocated by using <B>TlsAlloc</B> and to free any thread local data.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>lpvReserved</I></DT>
+
+<DD>Specifies further aspects of DLL initialization and cleanup. 
+
+<P>If <I>dwReason</I> is DLL_PROCESS_ATTACH, <I>lpvReserved</I> is NULL for dynamic loads and non-NULL for static loads. 
+
+
+<P>If <I>dwReason</I> is DLL_PROCESS_DETACH, <I>lpvReserved</I> is NULL if <B>DllMain</B> has been called by using <B>FreeLibrary</B> and non-NULL if <B>DllMain</B> has been called during process termination. 
+</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>When the system calls the <B>DllMain</B> function with the DLL_PROCESS_ATTACH value, the function returns TRUE if it succeeds or FALSE if initialization fails. If the return value is FALSE when <B>DllMain</B> is called because the process uses the <B>LoadLibrary</B> function, <B>LoadLibrary</B> returns NULL. If the return value is FALSE when <B>DllMain</B> is called during process initialization, the process terminates with an error. To get extended error information, call <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A>. </P>
+
+<P>When the system calls the <B>DllMain</B> function with any value other than DLL_PROCESS_ATTACH, the return value is ignored. </P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>During initial process startup or after a call to <B>LoadLibrary</B>, the system scans the list of loaded DLLs for the process. For each DLL that has not already been called with the DLL_PROCESS_ATTACH value, the system calls the entry-point function of the DLL. This call is made in the context of the thread that caused the process address space to change, such as the primary thread of the process or the thread that called <B>LoadLibrary</B>.</P>
+
+<P>There are cases in which the entry-point function is called for a terminating thread even if the DLL never attached to the thread &#0151; for example, the entry-point function was never called with the DLL_THREAD_ATTACH value in the context of the thread in either of these two situations:
+
+<UL type="disc">
+	<LI>The thread was the initial thread in the process, so the system called the entry-point function with the DLL_PROCESS_ATTACH value. </li>
+
+	<LI>The thread was already running when a call to the <B>LoadLibrary</B> function was made, so the system never called the entry-point function for it. </li>
+</UL>
+
+<P>When a DLL is unloaded from a process as a result of process termination or as a result of a call to <B>FreeLibrary</B>, the system does not call the entry-point function of the DLL with the DLL_THREAD_DETACH value for the individual threads of the process. The DLL is only given DLL_PROCESS_DETACH notification. DLLs can take this opportunity to clean up all resources for all threads known to the DLL.</P>
+
+<P>On attach, the body of your DLL entry-point function should perform only simple initialization tasks, such as setting up thread local storage (TLS), creating synchronization objects, and opening files. You must not call <B>LoadLibrary</B> in the entry-point function, because you may create dependency loops in the DLL load order. This can result in a DLL being used before the system has executed its initialization code. Similarly, you must not call the <B>FreeLibrary</B> function in the entry-point function on detach, because this can result in a DLL being used after the system has executed its termination code. </P>
+
+<P>Calling Win32 functions other than TLS, object-creation, and file functions may result in problems that are difficult to diagnose. For example, calling User, Shell, COM, and Windows Sockets functions (or any functions that call these functions) can cause access violation errors, because their DLLs call <B>LoadLibrary</B> to load other system components. While it is acceptable to create synchronization objects in <B>DllMain</B>, you should not perform synchronization in <B>DllMain</B> (or a function called by <B>DllMain</B>) because all calls to <B>DllMain</B> are serialized. Waiting on synchronization objects in <B>DllMain</B> can cause a deadlock. </P>
+
+<P>To provide more complex initialization, create an initialization routine for the DLL. You can require applications to call the initialization routine before calling any other routines in the DLL. Otherwise, you can have the initialization routine create a named mutex, and have each routine in the DLL call the initialization routine if the mutex does not exist. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>1.0 and later</TD>
+<TD width=18%>Winbase.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Coredll.lib, Nk.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrfreelibrary.htm">FreeLibrary</A>, <A HREF="wcesdkrgetmodulefilename.htm">GetModuleFileName</A>, <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A>, <A HREF="wcesdkrloadlibrary.htm">LoadLibrary</A>, <A HREF="wcesdkrtlsalloc.htm">TlsAlloc</A>, <A HREF="wcesdkrtlsfree.htm">TlsFree</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

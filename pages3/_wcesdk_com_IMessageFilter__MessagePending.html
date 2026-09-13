@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMessageFilter::MessagePending</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IMessageFilter::MessagePending" />
+<MSHelp:RLTitle Title="IMessageFilter::MessagePending" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IMessageFilter__MessagePending" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927042">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_imessagefilter__messagepending"></A>IMessageFilter::MessagePending</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This client-based method is called by COM when a Windows message appears in a COM application's message queue while the application is waiting for a reply to a remote call. Handling input while waiting for an outgoing call to finish can introduce complications. The application should determine whether to process the message without interrupting the call, continue waiting, or cancel the operation. </P>
+
+<PRE class="syntax"><B>DWORD MessagePending(</B>
+<B>HTASK </B><I>threadIDCallee</I><B>,</B>
+<B>DWORD </B><I>dwTickCount</I><B>,</B>
+<B>DWORD </B><I>dwPendingType</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>threadIDCallee</I></DT>
+
+<DD>[in] Task handle of the called application that has not yet responded.</dd>
+
+<DT><I>dwTickCount</I></DT>
+
+<DD>[in] Number of ticks since the call was made. It is calculated from the Windows <A HREF="wcesdkrgettickcount.htm">GetTickCount</A> function.</dd>
+
+<DT><I>dwPendingType</I></DT>
+
+<DD>[in] Type of call made during which a message or event was received. Valid values are from the enumeration <B>PENDINGTYPE</B> (where PENDINGTYPE_TOPLEVEL means the outgoing call was not nested within a call from another application and PENDINTGYPE_NESTED means the outgoing call was nested within a call from another application).</dd>
+</DL>
+
+<P class="label"><B>Return Values</B>
+
+<DL>
+<DT>PENDINGMSG_CANCELCALL</DT>
+
+<DD>Cancel the outgoing call. This should be returned only under extreme conditions. Canceling a call that has not replied or been rejected can create orphan transactions and lose resources. COM fails the original call and returns RPC_E_CALL_CANCELLED.</dd>
+
+<DT>PENDINGMSG_WAITNOPROCESS</DT>
+
+<DD>Continue waiting for the reply and do not dispatch the message unless it is a task-switching or window-activation message. A subsequent message will trigger another call to <B>IMessageFilter::MessagePending</B>. Leaving messages or events in the queue enables them to be processed normally, if the outgoing call is completed. Note that returning PENDINGMSG_WAITNOPROCESS can cause the message queue to fill. </dd>
+
+<DT>PENDINGMSG_WAITDEFPROCESS</DT>
+
+<DD>Because of the increased resources available in 32-bit systems, you are unlikely to get this return value. It now indicates the same state as PENDINGMSG_WAITNOPROCESS. 
+
+<P>Keyboard and mouse messages are no longer dispatched, as was done with PENDINGMSG_WAITDEFPROCESS. However there are some cases where mouse and keyboard messages could cause the system to deadlock, and in these cases, mouse and keyboard messages are discarded. WM_PAINT messages are dispatched. Task-switching and activation messages are handled as before.
+</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>COM calls <B>IMessageFilter::MessagePending</B> after an application has made a COM method call and a Windows message occurs before the call has returned. A Windows message is sent, for example, when the user selects a menu command or double-clicks an object. Before COM makes the <B>IMessageFilter::MessagePending</B> call, it calculates the elapsed time since the original COM method call was made. COM delivers the elapsed time in the <I>dwTickCount</I> parameter. In the meantime, COM does not remove the message from the queue.</P>
+
+<P>Windows messages that appear in the caller's queue should remain in the queue until sufficient time has passed to ensure that the messages are probably not the result of typing ahead, but are, instead, an attempt to get attention. Set the delay with the <I>dwTickCount</I> parameter &#0151; a two- or three-second delay is recommended. If that amount of time passes and the call has not been completed, the caller should flush the messages from the queue, and the OLE UI busy dialog box should be displayed offering the user the choice of retrying the call (continue waiting) or switching to the task identified by the <I>threadIDCallee</I> parameter. This ensures that:
+
+<UL type="disc">
+	<LI>If calls are completed in a reasonable amount of time, type ahead will be treated correctly.</li>
+
+	<LI>If the callee does not respond, type ahead is not misinterpreted and the user is able to act to solve the problem. For example, OLE 1 servers can queue up requests without responding when they are in modal dialog boxes.</li>
+</UL>
+
+<P>Handling input while waiting for an outgoing call to finish can introduce complications. The application should determine whether to process the message without interrupting the call, continue waiting, or cancel the operation. </P>
+
+<P>When there is no response to the original COM call, the application can cancel the call and restore the COM object to a consistent state by calling <A HREF="_wcesdk_com_istorage_revert.htm">IStorage::Revert</A> on its storage. The object can be released when the container can shut down. However, canceling a call can create orphaned operations and resource leaks. Canceling should be used only as a last resort. It is strongly recommended that applications not allow such calls to be canceled.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Objidl.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_istorage_revert.htm">IStorage::Revert</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Finding the Filters (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="The first step in creating a filter graph is to find and create the needed filters."/>
+<xml>
+<MSHelp:TOCTitle Title="Finding the Filters" />
+<MSHelp:RLTitle Title="Finding the Filters (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_Finding_the_Filters" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924070">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_finding_the_filters"></A>Finding the Filters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The first step in creating a filter graph is to find and create the needed filters. All DirectShow filters are registered in the Windows registry with a GUID and other information such as which media types are supported, by category, or the filter's merit.</P>
+
+<P>In addition, a filter can register the media types which it will accept for its input and output pins. This is done by registering a 'majortype' and 'subtype' GUID for each media type the filter will accept. The 'majortype' and 'subtype' correspond to the first two fields of the DirectShow Media Type structure (<a href="wcesdkrstructs__am_media_type.htm">AM_MEDIA_TYPE</a>) and are used in this way to find filters which process particular types.</P>
+
+<P>Given the name of a file to play in the <a href="wcesdkrigraphbuilder__renderfile.htm">RenderFile</a> call, the Filter Graph Manager can rapidly search the registry for filters that will support the kind of file it wants to play. This involves either using the file extension or searching for special 'check bytes' in the file. This generally results in the filter graph finding a source filter that it creates and adds to the filter graph, as well as telling the source filter the name of the file.</P>
+
+<P>The source filter will generally have one or more output pins, although in some cases it can have none. Assuming the source filter has at least one output pin, the Filter Graph Manager code inside <B>RenderFile</B> will ask the source filter's output pins to list the media types of the data they output. The Filter Graph Manager can then search the registry for filters that accept those media types on their input pins (by using the majortype and subtype fields in the media types).</P>
+
+<P>To actually do the search, the Filter Graph Manager creates an instance of the DirectShow Filter Mapper object and calls the <a href="wcesdkrifiltermapper__enummatchingfilters.htm">IFilterMapper::EnumMatchingFilters</a> method to search the registry. This method can enumerate DirectShow filters (as well as hardware devices such as decoders) by category or by media type, and it returns a standard COM <a href="_wcesdk_com_IEnumMoniker.htm">IEnumMoniker</a> object containing monikers to all the filters and/or hardware devices that match the search criteria. (The use of COM monikers allows this method to query objects without actually instantiating them, and also to create paths and enumerate things which are not actually COM objects, such as hardware devices.) </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

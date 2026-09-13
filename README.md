@@ -1,11 +1,11 @@
 # wince-docs-corpus
 
-Preservation repository for the *official* Microsoft Learn / archived
-MSDN **Windows CE (1.0–6.0)** documentation pages that the
-[wince-api](https://github.com/kagurasumusun/wince-api) project
-harvests (Requirement-row-bearing reference pages of the
-`learn.microsoft.com/en-us/previous-versions/windows/embedded/...`
-archive).
+Preservation repository for the *official* Microsoft **Windows CE (1.0–6.0)**
+documentation that the [wince-api](https://github.com/kagurasumusun/wince-api)
+project harvests: the Microsoft Learn / archived-MSND `previous-versions` pages
+(`learn.microsoft.com/en-us/previous-versions/windows/embedded/...`), plus the
+official **Windows CE 3.0 Technical Documentation** CHM archive from the
+Microsoft Download Center (id 41197), which is the complete CE 1/2/3 reference.
 
 ## Purpose
 
@@ -25,9 +25,18 @@ archive).
 ## Content
 
 ```
-pages5/<id>.html    CE 5.0 archive pages        (v=msdn.10)           1175
-pages6/<id>.html    Windows Embedded CE 6.0     (v=winembedded.60)      38
-rows.json           harvested Requirement records (see wince-api)
+pages3/<id>.html    Windows CE 3.0 library      (Download Center CHM) 8962
+pages4/<id>.html    CE 4.x archive pages        (v=msdn.10)
+pages5/<id>.html    CE 5.0 archive pages        (v=msdn.10)
+pages6/<id>.html    Windows Embedded CE 6.0     (v=winembedded.60)
+pagesw/             desktop Win32 reference pages (current Learn naming)
+pageswm/            Windows Mobile 6.5 pages
+pagesmag/           MSDN Magazine articles
+ce30/               official CE 3.0 CHM archive + provenance (see ce30/PROVENANCE.md)
+coredll/            coredll.def export lists
+rows.json           harvested Requirement records (CE 5.0; see wince-api)
+rows3.json          harvested CE 3.0 records (title/sig/os/versions/header/lib)
+rows4.json          harvested Requirement records (CE 4.x)
 catalogs/*.tsv      official TOC snapshots per version tree
 INDEX.txt           id / file / tree index of every preserved page
 ```

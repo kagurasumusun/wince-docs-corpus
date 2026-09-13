@@ -1,0 +1,308 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MQReceiveMessage</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="MQReceiveMessage" />
+<MSHelp:RLTitle Title="MQReceiveMessage" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_mq_MQReceiveMessage" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928330">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_mq_mqreceivemessage"></A>MQReceiveMessage</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function allows you to read messages in the queue. When reading messages, you can either peek at (not removing them) or retrieve the messages (removing them) in the queue.</P>
+
+<P>Messages can be read either synchronously, asynchronously, or through a transaction.</P>
+
+<PRE class="syntax"><B>HRESULT APIENTRY MQReceiveMessage(</B>
+<B>QUEUEHANDLE </B><I>hSource</I><B>,</B>
+<B>DWORD </B><I>dwTimeout</I><B>,</B>
+<B>DWORD </B><I>dwAction</I><B>,</B>
+<B>MQMSGPROPS </B><I>pMessageProps</I><B>,</B>
+<B>LPOVERLAPPED </B><I>lpOverlapped</I><B>,</B>
+<B>PMQRECEIVECALLBACK </B><I>fnReceiveCallback</I><B>,</B>
+<B>HANDLE </B><I>hCursor</I><B>,</B>
+<B>Transaction *</B><I>pTransaction
+</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hSource</I></DT>
+
+<DD>[in] Handle to the queue that contains the message. For transactions, specify a queue on a local computer.</dd>
+
+<DT><I>dwTimeout</I></DT>
+
+<DD>[in] Time, in milliseconds, to wait for the message. Can be set to INFINITE. </dd>
+
+<DT><I>dwAction</I></DT>
+
+<DD>[in] How the message is read in the queue. Specify one of the values listed in the following table.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Value</TH>
+<TH width=60%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>MQ_ACTION_RECEIVE</TD>
+<TD width=60%>Reads the message at the current cursor location and removes it from the queue.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>MQ_ACTION_PEEK_CURRENT</TD>
+<TD width=60%>Reads the message at the current cursor location but does not remove it from the queue. The cursor remains pointing at the current message.
+<P>If a cursor was not created by <A HREF="_wcesdk_mq_mqcreatecursor.htm">MQCreateCursor</A> (<I>hCursor</I> is NULL), the queue's cursor can only point to the first message in the queue.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>MQ_ACTION_PEEK_NEXT</TD>
+<TD width=60%>Reads the next message in the queue, skipping the message at the current cursor location, but does not remove it from the queue.
+<P>You must call <B>MQCreateCursor</B> (<I>hCursor</I> is not NULL) before you can use MQ_ACTION_PEEK_NEXT.</P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pMessageProps</I></DT>
+
+<DD>[in/out] On input, a pointer to an <A HREF="_wcesdk_mq_mqmsgprops.htm">MQMSGPROPS</A> structure that specifies which message properties will be received. Can be set to NULL.
+
+<P>On output, it contains the received message property values.
+</dd>
+
+<DT><I>lpOverlapped</I></DT>
+
+<DD>[in/out] Pointer to an overlapped structure. Set to NULL for synchronous receive and transactions.</dd>
+
+<DT><I>fnReceiveCallback</I></DT>
+
+<DD>[in] Pointer to the callback function. Set to NULL for synchronous receive and transactions.</dd>
+
+<DT><I>hCursor</I></DT>
+
+<DD>[in] Handle to a cursor for looking at messages in the queue. Can be set to NULL. See the following <B>Remarks</B> section.</dd>
+
+<DT><I>pTransaction</I></DT>
+
+<DD>[in] Not supported; set to NULL.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B>
+
+<DL>
+<DT>MQ_OK</DT>
+
+<DD>Indicates success.</dd>
+
+<DT>MQ_ERROR_ACCESS_DENIED</DT>
+
+<DD>The action specified in <I>dwAction</I> does not agree with the access rights the queue was opened with.</dd>
+
+<DT>MQ_ERROR_BUFFER_OVERFLOW</DT>
+
+<DD>The supplied buffer for the message body is too small. The part of the message body that fits into the buffer is copied, but the message is not removed from the queue.</dd>
+
+<DT>MQ_ERROR_COMPUTER_DOES_NOT_SUPPORT_ENCRYPTION</DT>
+
+<DD>Windows CE does not support encryption. If specified, the follow properties return this error: PROPID_M_HASH_ALG, PROPID_M_ENCRYPTION_ALG<B>, </B>PROPID_M_PROV_TYPE<B>, </B>PROPID_M_SECURITY_CONTEXT. Other encryption properties return NULL data.</dd>
+
+<DT>MQ_ERROR_SENDERID_BUFFER_TOO_SMALL</DT>
+
+<DD>The supplied sender identification buffer is too small to hold the sender identification.</dd>
+
+<DT>MQ_ERROR_SYMM_KEY_BUFFER_TOO_SMALL</DT>
+
+<DD>The supplied symmetric key buffer is too small to hold the symmetric key.</dd>
+
+<DT>MQ_ERROR_SENDER_CERT_BUFFER_TOO_SMALL</DT>
+
+<DD>The supplied sender certificate buffer is too small to hold the security certificate.</dd>
+
+<DT>MQ_ERROR_SIGNATURE_BUFFER_TOO_SMALL</DT>
+
+<DD>The supplied signature buffer is too small to hold the message's digital signature.</dd>
+
+<DT>MQ_ERROR_PROV_NAME_BUFFER_TOO_SMALL</DT>
+
+<DD>The supplied provider name buffer is too small to hold the cryptographic service provider's name.</dd>
+
+<DT>MQ_ERROR_LABEL_BUFFER_TOO_SMALL</DT>
+
+<DD>The supplied message label buffer is too small to hold the message's label.</dd>
+
+<DT>MQ_ERROR_FORMATNAME_BUFFER_TOO_SMALL</DT>
+
+<DD>The supplied format name buffer is too small to hold the format name of the queue.</dd>
+
+<DT>MQ_ERROR_DTC_CONNECT</DT>
+
+<DD>MSMQ was unable to connect to the Microsoft Distributed Transaction Coordinator (DTC).</dd>
+
+<DT>MQ_ERROR_INSUFFICIENT_PROPERTIES</DT>
+
+<DD>One of the following message properties was specified (in <I>pMessageProps</I>) without its associated length property: <A HREF="_wcesdk_mq_propid_m_admin_queue.htm">PROPID_M_ADMIN_QUEUE</A>, <A HREF="_wcesdk_mq_propid_m_dest_queue.htm">PROPID_M_DEST_QUEUE</A>, <A HREF="_wcesdk_mq_propid_m_label.htm">PROPID_M_LABEL</A>, <A HREF="_wcesdk_mq_propid_m_resp_queue.htm">PROPID_M_RESP_QUEUE</A>.</dd>
+
+<DT>MQ_ERROR_INVALID_HANDLE</DT>
+
+<DD>The queue handle specified in <I>hSource</I> is not valid.</dd>
+
+<DT>MQ_ERROR_IO_TIMEOUT</DT>
+
+<DD>No message was received within the time-out period specified by <I>dwTimeout</I>.</dd>
+
+<DT>MQ_ERROR_MESSAGE_ALREADY_RECEIVED</DT>
+
+<DD>A message that is currently pointed at by the cursor has been removed from the queue. It can be removed by another process or by another call to <B>MQReceiveMessage</B> using a different cursor, or the message time-to-be-received timer has expired.</dd>
+
+<DT>MQ_ERROR_OPERATION_CANCELLED</DT>
+
+<DD>The operation was canceled before it could be completed. For example, the queue handle was closed by another thread while waiting for a message.</dd>
+
+<DT>MQ_ERROR_PROPERTY</DT>
+
+<DD>One or more message properties specified in <I>pMessageProps</I> resulted in an error.</dd>
+
+<DT>MQ_ERROR_QUEUE_DELETED</DT>
+
+<DD>The queue was deleted before the message could be read. The specified queue handle is no longer valid and the queue handle must be closed.</dd>
+
+<DT>MQ_ERROR_ILLEGAL_CURSOR_ACTION</DT>
+
+<DD>MQ_ACTION_PEEK_NEXT cannot be used with the current cursor position.</dd>
+
+<DT>MQ_ERROR_SERVICE_NOT_AVAILABLE</DT>
+
+<DD>Cannot connect to the Queue Manager.</dd>
+
+<DT>MQ_ERROR_STALE_HANDLE</DT>
+
+<DD>The specified queue handle was obtained in a previous session of the Queue Manager service. Close the queue and open it again to obtain a fresh handle.</dd>
+
+<DT>MQ_ERROR_TRANSACTION_USAGE</DT>
+
+<DD>Transaction error. An attempt was made to open a remote queue for read access from within a transaction, or an attempt was made to read a message from a nontransactional queue from within a transaction.</dd>
+
+<DT>MQ_INFORMATION_PROPERTY</DT>
+
+<DD>One or more of the properties specified in <I>pMessageProps</I> resulted in a warning code even though the function is completed.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>All message properties can be read. However, only those properties specified in the <I>pMessageProps</I> parameter are returned to the calling application; other properties are simply discarded when the message is read. For example, you may choose to retrieve the size of the message without retrieving the message body itself.</P>
+
+<P>The <I>hCursor</I> parameter contains the handle to a cursor created by <A HREF="_wcesdk_mq_mqcreatecursor.htm">MQCreateCursor</A>. Using a cursor is optional and is only necessary when you want to read messages that are not at the front of the queue. When using a cursor, you must peek at the first message in the queue by setting <I>dwAction</I> to MQ_ACTION_PEEK_CURRENT before you make calls with <I>dwAction</I> set to MQ_ACTION_PEEK_NEXT. </P>
+
+<P>To retrieve the message body, you must specify <A HREF="_wcesdk_mq_propid_m_body.htm">PROPID_M_BODY</A> in <I>pMessageProps</I>. The VT field of the corresponding element in the <A HREF="_wcesdk_mq_apropvar.htm">aPropVar</A> array should be set to VT_UI1 | VT_VECTOR, allowing MSMQ to use the buffer specified in the <B>CAUI1</B> structure to store the message. If the supplied buffer is too small to contain the entire message body, <B>MQReceiveMessage</B> fails and MQ_ERROR_BUFFER_OVERFLOW is returned. The buffer is filled to capacity, and the full message remains in the queue. When this happens, the other properties specified by <I>pMessageProps</I> are still read.</P>
+
+<P>To retrieve the size of the message, specify <A HREF="_wcesdk_mq_propid_m_body_size.htm">PROPID_M_BODY_SIZE</A> in <I>pMessageProps</I>. MSMQ sets PROPID_M_BODY_SIZE to the size of the message body, even if <B>MQReceiveMessage </B>fails because the message body exceeded the buffer allocated by PROPID_M_BODY. When retrieving the message body size, the <B>CAUI1</B> structure associated with the PROPID_M_BODY<B> </B>property does not indicate the size. The <I>cElems</I> field of the <B>CAUI1</B> structure merely indicates the maximum message body, which could be copied into the <I>pElems</I> buffer. The <I>cElems</I> field is never modified by MSMQ.</P>
+
+<P>Not all properties require the application to specify the property type in the VT field of the <I>aPropVar</I> array. For these properties, the corresponding VT field in the <I>aPropVar</I> array can be set to VT_NULL.</P>
+
+<P>When reading messages in a queue, the function's time-out timer (<I>dwTimeout</I>) can be set to 0, a specific amount of time, or INFINITE. A message can be retrieved if it is available at that period of time.</P>
+
+<P>Messages cannot be read from a queue that resides on a computer without a direct connection. Opening a queue with receive or peek access requires a direct connection to the computer where the queue resides.</P>
+
+<P class="label"><B>Synchronously Reading Messages</B></P>
+
+<P>To synchronously read messages, set <I>fnReceiveCallback</I> and <I>lpOverlapped</I> to NULL. When this is done, the calling thread is blocked until a suitable message is available or a time-out occurs.</P>
+
+<P class="label"><B>Asynchronously Reading Messages</B></P>
+
+<P>When asynchronously reading messages, <B>MQReceiveMessage</B> returns a SUCCESS value if a suitable message is found. Otherwise, the function returns immediately with the return value MQ_INFORMATION_OPERATION_PENDING. This return value indicates that the operation is pending and will be completed as soon as a suitable message can be found. Asynchronous receive is based on standard Microsoft Win32 mechanisms.</P>
+
+<P>Applications can use a callback function, a Windows Event mechanism, or a completion port to read messages asynchronously. When using a callback function, you can register only 64 callbacks at the same time.</P>
+
+<P>Completion ports cannot be used by dependent client applications. On MSMQ independent clients and servers, queue handles are implemented as file handles and so, can be associated with completion ports. However, on dependent clients, queue handles are not file handles and as a result, cannot be used with completion ports.</P>
+
+<P>The output parameters to an asynchronous call to <B>MQReceiveMessage</B> should be kept intact until the operation is complete (that is, you cannot free them or reuse them). Use automatic variables with caution.</P>
+
+<P class="label"><B>Messages in Administration Queues</B></P>
+
+<P>When reading acknowledgment messages in an administration queue, you can see if the original message failed to reach its destination or was not retrieved from the queue by looking at the class property (<A HREF="_wcesdk_mq_propid_m_class.htm">PROPID_M_CLASS</A>) of the acknowledgment message. The class property will contain a positive or negative acknowledgment, depending on the acknowledgment level specified by the original message.</P>
+
+<P>If the class property is positive, the original message body is not included in the acknowledgment message. If the class property is negative, the message body is included as the message body of the acknowledgment message. </P>
+
+<P class="label"><B>Responding to Messages</B></P>
+
+<P>The receiving application can determine if the sending application expects a response by retrieving the <A HREF="_wcesdk_mq_propid_m_resp_queue.htm">PROPID_M_RESP_QUEUE</A> and <A HREF="_wcesdk_mq_propid_m_resp_queue_len.htm">PROPID_M_RESP_QUEUE_LEN</A> properties when reading a message. PROPID_M_RESP_QUEUE contains the format name of a response queue if a response is requested. </P>
+
+<P>When opening a response queue to send several response messages, the receiving application can cache the queue handle returned by <A HREF="_wcesdk_mq_mqopenqueue.htm">MQOpenQueue</A>, thus eliminating the need to call <B>MQOpenQueue</B> several times for the same response queue.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later. Versions prior to 2.12 require the MSMQ add-on pack.</TD>
+<TD width=18%>Mq.h</TD>
+<TD width=15%>Mq.h</TD>
+<TD width=20%>Msmqrt.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_mq_apropvar.htm">aPropVar</A>, <A HREF="_wcesdk_mq_mqcreatecursor.htm">MQCreateCursor</A>, <A HREF="_wcesdk_mq_mqopenqueue.htm">MQOpenQueue</A>, <A HREF="_wcesdk_mq_propid_m_admin_queue.htm">PROPID_M_ADMIN_QUEUE</A>, <A HREF="_wcesdk_mq_propid_m_body.htm">PROPID_M_BODY</A>, <A HREF="_wcesdk_mq_propid_m_body_size.htm">PROPID_M_BODY_SIZE</A>, <A HREF="_wcesdk_mq_propid_m_class.htm">PROPID_M_CLASS</A>, <A HREF="_wcesdk_mq_propid_m_dest_queue.htm">PROPID_M_DEST_QUEUE</A>, <A HREF="_wcesdk_mq_propid_m_label.htm">PROPID_M_LABEL</A>, <A HREF="_wcesdk_mq_propid_m_resp_queue.htm">PROPID_M_RESP_QUEUE</A>, <A HREF="_wcesdk_mq_propid_m_resp_queue_len.htm">PROPID_M_RESP_QUEUE_LEN</A>, <A HREF="_wcesdk_mq_mqmsgprops.htm">MQMSGPROPS</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

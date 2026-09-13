@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Shutting Down TAPI</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Shutting Down TAPI" />
+<MSHelp:RLTitle Title="Shutting Down TAPI (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="shutting down TAPI" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Shutting_Down_TAPI" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="tapi.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923495">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_shutting_down_tapi"></A>Shutting Down TAPI</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Ending a call works the same for incoming and outgoing calls. When the call ends, the application should disconnect and terminate the call by using the <a href="wcesdkrlineDrop.htm">lineDrop</a> function. If the incoming call hangs up on the other end, TAPI automatically drops the line.</P>
+
+<P class="labelproc"><B>To drop a line</B>
+
+<OL type="1">
+	<LI>Call the <B>lineDrop</B> function.</li>
+
+	<LI>Free memory by using the <B>lineDeallocateCall</B> function.</li>
+</OL>
+
+<P>The following code example shows how to use the <B>lineDrop</B> and <B>lineDeallocateCall</B> functions.</P>
+
+<P>To drop a line, you first must call <B>lineDrop</B>.</P>
+
+<PRE class="code">g_DropCallRequestID = lineDrop (g_hCall, NULL, 0);</PRE>
+
+<P>After receiving a LINECALLSTATE_IDLE message, you must call the <B>lineDeallocateCall</B> function.</P>
+
+<PRE class="code">lineDeallocateCall (g_hCall);</PRE>
+
+<P>Deallocating a call handle means that the system must free system-allocated memory that is related to the call after the call has been dropped. The application must call the <B>lineDeallocatedCall</B> function to free allocated memory.</P>
+
+<P>To close the line, the application should call the <B>lineClose</B> function. After the line has closed successfully, the handle is no longer valid.</P>
+
+<P class="labelproc"><B>To close a line for the incoming call</B>
+
+<OL type="1">
+	<LI>Cancel the call by using <B>lineDrop</B> function.</li>
+
+	<LI>Close the open line by using the <B>lineClose</B> function.</li>
+
+	<LI>Reinitialize the variables.</li>
+</OL>
+
+<P>The following code example shows how to use the <B>lineClose</B> function to close the line.</P>
+
+<PRE class="code">VOID CurrentLineClose ()
+{
+  // Close the current line.
+  if (g_CurrentLineInfo.hLine)
+    lineClose (g_CurrentLineInfo.hLine);
+
+  // Reinitialize the variables.
+  g_CurrentLineInfo.hLine = NULL;
+  g_bCurrentLineAvail = TRUE;
+  g_hCall = NULL;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

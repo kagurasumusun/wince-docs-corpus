@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Virtual Path Settings</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Virtual Path Settings" />
+<MSHelp:RLTitle Title="Virtual Path Settings (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="virtual path" />
+<MSHelp:Keyword Index="K" Term="web server, setting virtual paths" />
+<MSHelp:Keyword Index="A" Term="wceinetVirtualPathSettings" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="webserv.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922808">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceinetvirtualpathsettings"></A>Virtual Path Settings</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Virtual paths specify a mapping between the virtual path in a URL and the physical path on the device. For example, you can allow a client browser to connect to http://www.computername.com/www/sample.htm while retrieving the file that is named Sample.htm from the \Windows\www\data directory. To accomplish this, specify a mapping between the /www virtual path and the \Windows\www\data physical path.</P>
+
+<P>At least one virtual path must be created before the Web server starts. If no valid virtual path mappings have been specified, the Web server cannot perform any mappings, and returns the "404 - Object not found" status code for all requests.</P>
+
+<P>If a Web client browser requests a directory, the Web server searches for default pages in the corresponding physical directory, following the order in which they are listed in the registry. If no pages are found and the <B>DirBrowse</B> registry value is nonzero, the Web server sends a list of links to all of the files and directories in the requested directory. If no default pages are found and the <B>DirBrowse</B> registry value is zero, the Web server sends the "403 - Forbidden" status code.</P>
+
+<P><B>HKEY_LOCAL_MACHINE\Comm\HTTPD\VROOTS</B> is the virtual path protected registry key. This registry key contains one or more subkeys, one for each virtual path. Each subkey is named for the virtual path that it specifies. In the previous example, the registry should contain a registry key that is named <B>HKEY_LOCAL_MACHINE\Comm\HTTPD\VROOTS\www</B>.</P>
+
+<P>Each subkey contains values that specify the physical path, as well as the permission levels, authorization level, and user list that are required for that virtual path. The following table shows the values for each virtual path registry key.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>Value</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>(Default)</TD>
+<TD width=74%>Specifies the physical directory that is mapped to the virtual directory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><B>A</B></TD>
+<TD width=74%>Authentication level that a user must have to access this directory. If no value is set, 0 is used as the default value. For more information, see <A HREF="wceinethttpauthenticationandpermissions.htm">HTTP Authentication and Permissions</A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><B>P</B></TD>
+<TD width=74%>Access permissions that are associated with the directory. If no value is set, the default value that is used is either <B>HSE_FLAGS_URL_READ</B>, <B>HSE_FLAGS_URL_EXECUTE</B>, or <B>HSE_FLAGS_URL_SCRIPT</B>. For more information, see <A HREF="wceinethttpauthenticationandpermissions.htm">HTTP Authentication and Permissions</A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><B>UserList</B></TD>
+<TD width=74%>Allows authenticated users, groups, or both to be set on a per-virtual-root basis.</TD>
+</TR>
+</table></div>
+
+<P>The following example shows a subkey that:
+
+<UL type="disc">
+	<LI>Sets the \windows\www directory as the default directory.</li>
+
+	<LI>Sets the authentication level to 1, which requires a valid user ID and password.</li>
+
+	<LI>Grants read, write, and execute permissions to valid users by default without the <B>P</B> option.</li>
+
+	<LI>Identifies a list of users, groups, or both who are allowed or not allowed to access the virtual directory.
+<PRE class="code">[HKEY_LOCAL_MACHINE\Comm\HTTPD\VROOTS\www]
+    (default)=\windows\www
+    A=1
+    UserList" = "GladysL; -AnnD; @Group1</PRE>
+</li>
+</UL>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

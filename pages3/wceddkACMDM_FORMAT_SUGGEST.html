@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>ACMDM_FORMAT_SUGGEST (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="This message requests an ACM driver to choose a preferred destination format for a conversion with a specified source format.    Parameters      dwDriverID    Specifies a driver instance identifier."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="ACMDM_FORMAT_SUGGEST" />
+<MSHelp:RLTitle Title="ACMDM_FORMAT_SUGGEST (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="ACMDM_FORMAT_SUGGEST" />
+<MSHelp:Keyword Index="A" Term="wceddkACMDM_FORMAT_SUGGEST" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="apiref" />
+<MSHelp:Attr Name="Filename" Value="mess_1.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+<MSHelp:Attr Name="APIName" Value="ACMDM_FORMAT_SUGGEST" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924542">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkacmdm_format_suggest"></A>ACMDM_FORMAT_SUGGEST</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This message requests an ACM driver to choose a preferred destination format for a conversion with a specified source format.</P>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwDriverID</I></DT>
+
+<DD>Specifies a driver instance identifier. The driver returns this value in response to the <B>ACM_Open</B> function.</dd>
+
+<DT><I>hDriver</I></DT>
+
+<DD>Handle to a driver.</dd>
+
+<DT><I>uMsg</I></DT>
+
+<DD>Specifies this message.</dd>
+
+<DT><I>lParam1</I></DT>
+
+<DD>Pointer to an <B>ACMDRVFORMATSUGGEST</B> structure declared in the Msacmdrv.h header file.</dd>
+
+<DT><I>lParam2</I></DT>
+
+<DD>Not used.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>MMSYSERR_NOERROR indicates success. Otherwise, the driver returns one of the MMSYSERR error values declared in the Mmsystem.h header file or one of the ACMERR error values declared in the Msacm.h header file. The following are possible error values:
+
+<DL>
+<DT>MMSYSERR_NOTSUPPORTED</DT>
+
+<DD>The driver does not support format suggestion operations.</dd>
+
+<DT>ACMERR_NOTPOSSIBLE</DT>
+
+<DD>The driver cannot suggest a destination format, based on the specified source format and restriction flags.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The ACM (Waveapi.dll) sends this message by calling the ACM driver's <B>ACM_IOControl</B> entry point through the <B>DeviceIoControl</B> function. The ACM sends this message when an application calls the <B>acmFormatSuggest</B> function.</P>
+
+<P>All ACM drivers that provide stream conversions must support this message.</P>
+
+<P><B>ACMDRVFORMATSUGGEST</B> contains pointers to two <B>WAVEFORMATEX</B> structures. One of these structures describes the client-specified source format. The other structure is used by the driver to return a suggested destination format. The client might specify values for some of the destination structure members in order to restrict the possible suggestions.</P>
+
+<P>Given the specified source format and destination restrictions, if any, the driver determines if it can provide a conversion from the specified source format to a particular destination format. If it can, it returns a description of that format in the destination <B>WAVEFORMATEX</B> structure.</P>
+
+<P>Before calling the driver's <B>ACM_IOControl</B> function, the ACM should verify the following conditions:
+
+<UL type="disc">
+	<LI>The flag values contained in <B>ACMDRVFORMATSUGGEST</B> are valid.</li>
+
+	<LI>The <B>WAVEFORMATEX</B> structure containing the source format description is readable.</li>
+
+	<LI>The <B>WAVEFORMATEX</B> structure specified for receiving the suggested destination format description is writable.</li>
+
+	<LI>The destination <B>WAVEFORMATEX</B> structure's size, contained in the <I>cbwfxDst</I> member<B> </B>of <B>ACMDRVFORMATSUGGEST</B>, is large enough to receive a format structure for an appropriate destination format.</li>
+</UL>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>1.0 and later</TD>
+<TD width=19%>&nbsp;</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wceddkacmdrvformatsuggest.htm">ACMDRVFORMATSUGGEST</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

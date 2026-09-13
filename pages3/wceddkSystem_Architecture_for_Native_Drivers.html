@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>System Architecture for Native Device Drivers (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="The sample device drivers included with the Windows CE Platform Builder come in two forms: monolithic and layered. Source code for a monolithic driver consists of both interrupt service thread code and platform specific code."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="System Architecture for Native Device Drivers" />
+<MSHelp:RLTitle Title="System Architecture for Native Device Drivers (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="architecture, native device drivers" />
+<MSHelp:Keyword Index="K" Term="native device drivers, architecture" />
+<MSHelp:Keyword Index="A" Term="wceddkSystem_Architecture_for_Native_Drivers" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="native.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924515">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddksystem_architecture_for_native_drivers"></A>System Architecture for Native Device Drivers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The sample device drivers included with the Windows CE Platform Builder come in two forms: <I>monolithic</I> and <I>layered</I>. Source code for a monolithic driver consists of both interrupt service thread code and platform specific code. In contrast, layered device drivers split the code into an upper layer called the Model Device Driver (MDD) and a lower layer called the Platform Dependent Driver (PDD). The MDD layer contains code that is common to all drivers of a given type. The PDD layer consists of the code that is specific to a given hardware device or platform. The MDD calls specific PDD routines to access the hardware or hardware specific information. When using a layered driver, the OEM reuses the common MDD code provided by Microsoft in the Windows CE Platform Builder, and only writes new PDD code that is specific to the OEM's hardware. Or, if porting one of Microsoft's sample drivers to new hardware, the OEM only needs to port the PDD layer; the MDD layer can be used as-is.</P>
+
+<P>The layered driver style is not required and may not be appropriate for all drivers. In particular, splitting device driver code into two layers imposes additional function call overhead in the device driver's operation. For performance critical situations, a monolithic driver may be more appropriate.</P>
+
+<P>The following illustration shows the integration of monolithic and layered drivers within the Windows CE operating system.</P>
+
+<P class="fig"><IMG SRC="drvrarch.gif" ALT="" BORDER=0></P>
+
+<P>Microsoft provides the MDD for a layered driver. The MDD is common to all platforms and functions, both as source code and as a library. It performs the following tasks:
+
+<UL type="disc">
+	<LI>Links to the PDD layer and defines the DDSI functions it expects to call in that layer</li>
+
+	<LI>Exposes different sets of functions &#0151; DDI functions &#0151; to the operating system</li>
+
+	<LI>Handles complex tasks, such as interrupt processing</li>
+</UL>
+
+<P>Each MDD handles a specific set of devices, such as audio hardware or touch screens.</P>
+
+<P>As shown in the previous illustration, the device driver interface (DDI) is a set of functions exposed by an MDD layer or monolithic driver and called by other OS modules. The device driver service provider interface (DDSI) is a set of functions exposed by the PDD layer of a layered device driver and called by the MDD. Classes of related device drivers can share the same DDI &#0151; for example, the DDI exposed by stream interface drivers is the set of stream interface functions. All stream interface drivers expose those same functions, although certainly their implementations and behavior can be different from one stream interface driver to the next.</P>
+
+<P>In contrast, DDSI layers are rarely the same from one PDD implementation to another. PDD implementations are designed to work with specific MDD implementations, and as such can vary widely from one layered device driver to the next. An exception is in cases where a single MDD layer is capable of using multiple PDDs, in which case the PDDs could expose the same set of DDSI functions. For example, a serial port MDD layer that supported multiple PDDs for controlling different types of serial port hardware, such as a 16550 UART based serial port and an infrared serial port, might require its PDDs to expose the same set of DDSI functions. In some of the sample device drivers provided with the Windows CE Platform Builder version 3.0, the DDI and DDSI implementations are declared in files called DDI.H and DDSI.H in the drivers' sample code directories.</P>
+
+<P>In general, the MDD requires no changes. If you choose to modify the MDD, be aware that Microsoft does not test, warrant, or support custom MDDs. You are responsible for all further MDD maintenance if Microsoft supplies an updated MDD in order to fix bugs or to support later versions of Windows CE. In addition, if you revise the MDD, you must provide support to any IHVs who use those changes.</P>
+
+<P>Unlike the MDD layer, the PDD layer must be written specifically to your target platform. The PDD generally consists of functions that perform specific discrete tasks. These functions serve to isolate the MDD from the specifics of the hardware. Because the PDD is hardware-dependent, you must create a customized PDD for your platform hardware, or port one of Microsoft's sample PDD layers to your hardware. To assist you, Microsoft provides several sample PDD layers for various built-in devices.</P>
+
+<P>You can forego the MDD and PDD layers by implementing your device driver as a monolithic driver. For example, if performance is a critical factor, a monolithic driver might be a better choice than a layered driver because a monolithic driver avoids the overhead associated with the function calls that take place between the MDD and PDD layers. You might also choose to implement a monolithic driver if the capabilities of the device in question are well matched to the tasks that the functions in the MDD layer perform. In such a case, implementing a monolithic driver might be simpler and more efficient than implementing a layered driver. However, regardless of whether you implement a monolithic driver or a layered driver, you can base your implementation on the source code for any of the sample layered drivers.</P>
+
+<P>Finally, some of the sample device drivers are implemented as stream interface drivers, which just means that they use the stream interface functions as their DDI. They exist as ordinary DLLs and are loaded as needed. The audio driver and serial port driver are good examples of a device driver using the stream interface model. Because these drivers have an MDD and PDD that you can use as a basis for your development efforts, they are included here in the native device driver section, rather than in <A HREF="wceddkdeveloping_stream_interface_device_drivers.htm">Developing Stream Interface Device Drivers</A>.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Real-Time Priority System (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="Windows CE 2.12 and earlier did not have robust support for real-time processing, largely due to the lack of nested interrupts and the small number of available thread priority levels."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Real-Time Priority System" />
+<MSHelp:RLTitle Title="Real-Time Priority System (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Real-Time Priority System" />
+<MSHelp:Keyword Index="A" Term="wceddkReal_Time_Priority_System" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="overview.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924477">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkreal_time_priority_system"></A>Real-Time Priority System</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Windows CE 2.12 and earlier did not have robust support for real-time processing, largely due to the lack of nested interrupts and the small number of available thread priority levels. Hard real-time processing performance of Windows CE versions 2.12 and earlier varied widely according to processor and bus speed. On the Windows CE&#0150;based reference platform, interrupt-driven device drivers are typically started within 90 to 170 microseconds after the interrupt occurs, yielding theoretical sampling rates of about 5.8 to 11 kilohertz (kHz). The variability is due to many unpredictable factors, such as what data is currently in the processor cache and whether the device driver happens to be the currently executing process. On other hardware, factors such as CPU speed, bus speed, and the speed of the manufacturer's interrupt vectoring routines determine the lower limits of interrupt latency.</P>
+
+<P>Because the ISTs of device drivers can be preempted by high-priority threads, there is no absolute upper limit. In general, however, the latency for servicing interrupts in Windows CE is less than the latency for Windows-based desktop platforms; device drivers are unlikely to lose data unless they are starved for processor time by other high-priority threads running on the OS. Device drivers for polled devices may be able to achieve higher sampling rates, because polled devices do not generate interrupts and are therefore not subject to the same latencies.</P>
+
+<P>Windows CE 3.0 and later address some of these concerns by providing support for nested interrupts and by greatly increasing the number of available priority levels. ISRs and ISTs that must run at very high priority can now do so, and can preempt the processing of other, lower level ISRs and ISTs. However, because nested interrupts only occur for interrupts of a higher priority than the currently executing ISR, OEMs must be careful in how they assign the priority levels for their various device drivers.</P>
+
+<P>The priority system, which used to have only 8 priority levels, now has 256 levels numbered 0 through 255. Priority level 0 is the highest priority level. The original 8 priority levels are mapped to levels 248 through 255. Applications and device drivers for Windows CE 3.0 and later should use the <B>CeGetThreadPriority</B> and <B>CeSetThreadPriority</B> APIs, instead of the old APIs <B>GetThreadPriority</B> and <B>SetThreadPriority</B>. The old APIs are still available, with the same interfaces as before, but those APIs have access only to the bottom 8 priority levels.</P>
+
+<P>The new priority level system is broken into four ranges. Levels 0 through 96 are for high priority real-time tasks. Levels 97 through 152 are used by the default Windows CE device drivers. Levels 153 through 247 are for tasks that are higher priority than normal user-level tasks, but which should not interfere with device driver operations. Levels 248 through 255 are for non-real-time tasks such as user applications. The following table lists the default priority levels associated with Windows CE device drivers. OEMs can override these values either by changing the source code for the drivers, or by setting values in the registry.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Device Driver</TH>
+<TH width=12%>Priority</TH>
+<TH width=59%>Registry Key</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>USB Function Controller</TD>
+<TD width=12%>100</TD>
+<TD width=59%>none</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>USB OHC Driver</TD>
+<TD width=12%>101</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\OHCI\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>USB UHC Driver</TD>
+<TD width=12%>101</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\UHCI\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>Serial Port Driver</TD>
+<TD width=12%>103</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\Serial\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>PC Card Socket Driver</TD>
+<TD width=12%>105</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\PCMCIA\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>Touch Screen Driver</TD>
+<TD width=12%>109</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\Touch\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>IRSIR Driver</TD>
+<TD width=12%>110</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Comm\Irsir1\Parms\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>NDIS Driver</TD>
+<TD width=12%>116</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\NDIS\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>EDBG Driver</TD>
+<TD width=12%>130</TD>
+<TD width=59%>none</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>CxPort Driver</TD>
+<TD width=12%>132</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Comm\Cxport\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>Keyboard Driver</TD>
+<TD width=12%>145</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\Keybd\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>IR Comm Driver</TD>
+<TD width=12%>148</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\IrComm\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>TAPI/Unimodem Driver</TD>
+<TD width=12%>150</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\Unimodem\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>WaveDev Driver</TD>
+<TD width=12%>249</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\WaveDev\Priority256</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>WaveAPI Driver</TD>
+<TD width=12%>250</TD>
+<TD width=59%>HKEY_LOCAL_MACHINE\Drivers\BuiltIn\WAPIMAN\Priority256</TD>
+</TR>
+</table></div>
+
+<P>On the Windows CE&#0150;based reference the system can start an ISR in 2 to 5 microseconds. The system can start the corresponding IST in 90 to 170 microseconds. Many actual Windows CE&#0150;based platforms have better response times than these, depending on factors such as CPU type, clock speed, bus speed, and so on. Aside from hardware performance, the IST start times vary from one interrupt event to the next due to unpredictable factors, such as the state of the processor cache and whether the IST happens to be the currently running thread.</P>
+
+<P>If your platform is not meeting your real-time performance requirements, you have the following options:
+
+<UL type="disc">
+	<LI>Adjust the priorities of the system's Interrupt Service Threads. Proper tuning of ISTs can have a large impact on the overall performance of any real time system.</li>
+
+	<LI>You can put more processing into the ISR. This is discouraged because when an ISR is running, no other threads are scheduled, and lower priority interrupts are masked. A user might experience poor device performance or missed input if an ISR takes too long.</li>
+
+	<LI>You can add buffering hardware that can store data relevant to several interrupt events and modify the IST so that it gathers the data generated by multiple interrupt events from the buffering hardware. This enables the IST to process interrupts in batches, resulting in increased real-time performance.</li>
+
+	<LI>You can use a higher clock frequency on the CPU, on the data bus, or on both.</li>
+</UL>
+
+<P>Peripherals that connect to a Windows CE&#0150;based platform through a serial port can do so at the maximum speed of the serial port. Most serial ports are buffered internally by 16550-class universal asynchronous receiver-transmitters (UARTs) capable of relaying 115 kilobits per second; consult the manufacturer for specific information. PC Card socket speeds vary also; again, the authoritative source of information is the manufacturer.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

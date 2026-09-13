@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Processing Embedded Script Commands (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="One compelling feature of Advanced Streaming Format (ASF) streams is that they can deliver script commands to the Microsoft Windows Media Player (WMP) control, along with the audio and video streams."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Processing Embedded Script Commands" />
+<MSHelp:RLTitle Title="Processing Embedded Script Commands (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Advanced Streaming Format (ASF)" />
+<MSHelp:Keyword Index="K" Term="ASF (Advanced Streaming Format)" />
+<MSHelp:Keyword Index="K" Term="script commands" />
+<MSHelp:Keyword Index="K" Term="Windows Media Player, script commands" />
+<MSHelp:Keyword Index="A" Term="wcegmm_asx_processing_embedded_script_commands" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="winmediasdk.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924258">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_asx_processing_embedded_script_commands"></A>Processing Embedded Script Commands</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>One compelling feature of Advanced Streaming Format (ASF) streams is that they can deliver script commands to the Microsoft Windows Media Player (WMP) control, along with the audio and video streams. These script commands are pairs of Unicode strings synchronized with a particular time in the multimedia stream. The first string identifies the type of command being sent, and the second specifies the command to process. When the stream reaches the time associated with a command, the control sends a <a href="wcesdkrevent_scriptcommand.htm">ScriptCommand</a> event to the web page which contains it. An event-handling routine can then respond to this event. The script command strings are passed to the event handler as parameters of the ScriptCommand event.</P>
+
+<P>The WMP control automatically processes the following types of embedded script commands. Event-handling routines are not necessary to process these types of commands. 
+
+<UL type="disc">
+	<LI>URL-type Commands </li>
+
+	<LI>FILENAME-type Commands </li>
+
+	<LI>TEXT-type Commands </li>
+
+	<LI>EVENT-type Commands </li>
+
+	<LI>OPENEVENT-type Commands</li>
+
+	<LI>User defined Commands </li>
+</UL>
+
+<H2 class="dtH2">URL-type Commands</H2>
+
+<P>When the WMP control receives a URL-type command, it has two tasks. The control must first interpret the URL to determine what must be opened, and then it must determine where to display that content.</P>
+
+<P>The URL is interpreted in the following manner. If the URL is an absolute address (i.e. http://server.com/content.html) it is launched unmodified. If it is a relative path, the control determines the base prefix according to the following rules:
+
+<OL type="1">
+	<LI>The <a href="wcesdkrprop_baseurl.htm">BaseURL</a> property of the WMP control if set to a non-empty string.</li>
+
+	<LI><a href="wcesdkrBASE.htm">BASE</a> tag specified for the ASX playlist entry.</li>
+
+	<LI>BASE tag specified for the entire ASX playlist.</li>
+
+	<LI>The location of the ASF file being played minus its filename and extension</li>
+
+	<LI>If the current ASF file doesn't begin with http:// (i.e. mms://) then the ActiveX container of the WMP control is requested to supply a base. If the control is embedded within an HTML page inside Internet Explorer, this base will be the current HTML page location minus its filename and extension.</li>
+</OL>
+
+<P>The resulting URL is passed as the command parameter of the ScriptCommand event.</P>
+
+<P>After the location of the content has been determined, the control must determine where to display the content. If the WMP control is embedded in an HTML file that uses frames, the URL can be launched in a frame specified by the script command. This allows the WMP control to continue rendering the multimedia stream in one frame, while the browser renders images or Web pages in another frame. If the script command does not specify a frame, the <a href="wcesdkrprop_DefaultFrame.htm">DefaultFrame</a> property determines the frame in which the new URL is launched.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;If the HTML file does not use frames, or if the URL-type command is launched in the same frame as the WMP control, the URL-type command will be ignored unless the following registry key is set. This allows the WMP control to open another instance of the browser. This key is off by default.</BLOCKQUOTE>
+
+<PRE class="code">HKLM\Software\Microsoft\MediaPlayer\Control\URLFlipping=dword:1</PRE>
+
+<P>You can enable or disable automatic processing of URL-type script commands by setting the <a href="wcesdkrprop_InvokeURLs.htm">InvokeURLs</a> property. If this property is false, the WMP control ignores URL-type commands. The <a href="wcesdkrevent_ScriptCommand.htm">ScriptCommand</a> event is still sent to the container, however, allowing for conditional processing of URL-type commands. </P>
+
+<H2 class="dtH2">FILENAME-type Commands</H2>
+
+<P>When the WMP control receives a FILENAME-type command, it sets the <a href="wcesdkrprop_FileName.htm">FileName</a> property to the value specified by the command. The WMP control then opens the file and begins rendering the stream from the new location. The WMP control always automatically processes FILENAME-type commands; unlike URL-type commands, they cannot be disabled.</P>
+
+<H2 class="dtH2">TEXT-type Commands</H2>
+
+<P>When the WMP control receives a TEXT-type command, it is ignored because the WMP control does not contain a captioning window to display the content of the command. You can still capture the TEXT-type command using the Event Handler.</P>
+
+<H2 class="dtH2">EVENT-type Commands</H2>
+
+<P>When the WMP control receives an EVENT-type command, it searches for the NAME attribute of <a href="wcesdkrEvent.htm">EVENT</a> elements in the Advanced Stream Redirector (ASX) file. If the NAME attribute matches the second string of the script command, the WMP control executes the entries contained within the EVENT element. An example is to embed a script command for switching streams.</P>
+
+<H2 class="dtH2">OPENEVENT-type Commands</H2>
+
+<P>When the WMP control receives an OPENEVENT-type command, it checks the EVENT element in the ASX file and opens the matching title. It does not play the title until the WMP control receives the actual event of the same name from an <a href="wcesdkrevent.htm">EVENT-type</a> command.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

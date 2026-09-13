@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptEncrypt</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CryptEncrypt" />
+<MSHelp:RLTitle Title="CryptEncrypt" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_crypto2_CryptEncrypt" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926318">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_crypto2_cryptencrypt"></A>CryptEncrypt</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function is used to encrypt data. The algorithm used to encrypt the data is designated by the key held by the cryptographic service provider (CSP) module, which is referenced by the <I>hKey</I> parameter.</P>
+
+<PRE class="syntax"><B>BOOL CRYPTFUNC CryptEncrypt( </B>
+<B>HCRYPTKEY </B><I>hKey</I><B>,</B>
+<B>HCRYPTHASH</B> <I>hHash</I><B>,</B> 
+<B>BOOL</B> <I>Final</I><B>,</B><I> </I>
+<B>DWORD</B> <I>dwFlags</I><B>,</B> 
+<B>BYTE</B> <B>*</B><I>pbData</I><B>,</B>
+<B>DWORD</B> <B>*</B><I>pdwDataLen</I><B>,</B> 
+<B>DWORD</B> <I>dwBufLen</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hKey</I></DT>
+
+<DD>[in] Handle to the key to use for the encryption. An application obtains this handle by using either the <A HREF="_wcesdk_crypto2_cryptgenkey.htm">CryptGenKey</A> or the <A HREF="_wcesdk_crypto2_cryptimportkey.htm">CryptImportKey</A> function.
+
+<P>This key specifies the encryption algorithm that is used.
+</dd>
+
+<DT><I>hHash</I></DT>
+
+<DD>[in] Handle to a hash object. This parameter is used only if a hash of the data is to be computed at the same time the encryption is being performed. For more information, see Remarks.
+
+<P>If no hash is to be done, this parameter must be zero.
+</dd>
+
+<DT><I>Final</I></DT>
+
+<DD>[in] Boolean value that specifies whether this is the last section in a series being encrypted. This should be TRUE if this is the last or only block, and FALSE if it is not. For more information, see Remarks.</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Specifies a bitmask of flags. This parameter is reserved for future use and should always be zero.</dd>
+
+<DT><I>pbData</I></DT>
+
+<DD>[in/out] Pointer to the buffer that holds the data to be encrypted. After the encryption has been performed, the encrypted data is placed back in this same buffer.
+
+<P>The size of this buffer is specified by <I>dwBufLen</I>. The number of bytes of data to be encrypted is specified by <I>pdwDataLen</I>.
+
+
+<P>This parameter can be NULL if all you are doing is determining the number of bytes required for the returned data.
+</dd>
+
+<DT><I>pdwDataLen</I></DT>
+
+<DD>[in/out] Pointer to the data length. Before calling this function, the caller should set this parameter to the number of bytes to be encrypted. Upon return, this address will contain the number of bytes of encrypted data.
+
+<P>If the buffer specified by <I>pbData</I> is not large enough to hold the data, the function returns the ERROR_MORE_DATA error code (through <B>GetLastError</B>) and stores the required buffer size, in bytes, into the variable pointed to by <I>pdwDataLen</I>.
+
+
+<P>If <I>pbData</I> is NULL, then no error is returned, and the function stores the size of the data, in bytes, in the variable pointed to be <I>pdwDataLen</I>. This lets an application determine the correct buffer size unambiguously.
+
+
+<P>When a block cipher is used, this data length must be a multiple of the block size, unless this is the final section of data to be encrypted and the <I>Final</I> flag is TRUE.
+</dd>
+
+<DT><I>dwBufLen</I></DT>
+
+<DD>[in] Specifies the number of bytes in the <I>pbData</I> buffer.
+
+<P>Note that, depending on the algorithm used, the encrypted text can be slightly larger than the original plaintext. In this case, the <I>pbData</I> buffer needs to be sized accordingly.
+
+
+<P>As a rule, if a stream cipher is used the ciphertext will be the same size as the plaintext. If a block cipher is used, the ciphertext will be up to a "block length" larger than the plaintext.
+</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A>. Common values for <B>GetLastError</B> are described in the following table. The error values prefaced by "NTE" are generated by the particular CSP you are using.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=41%>Value</TH>
+<TH width=59%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_INVALID_HANDLE</TD>
+<TD width=59%>One of the parameters specifies an invalid handle. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_INVALID_PARAMETER</TD>
+<TD width=59%>One of the parameters contains an invalid value. This is most often an illegal pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_ALGID</TD>
+<TD width=59%>The <I>hKey</I> session key specifies an algorithm that this CSP does not support.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_DATA</TD>
+<TD width=59%>The data to be encrypted is invalid. For example, when a block cipher is used and the <I>Final</I> flag is FALSE, the value specified by <I>pdwDataLen </I>must be a multiple of the block size.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_FLAGS</TD>
+<TD width=59%>The <I>dwFlags</I> parameter is nonzero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_HASH</TD>
+<TD width=59%>The <I>hHash</I> parameter contains an invalid handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_HASH_STATE</TD>
+<TD width=59%>An attempt was made to add data to a hash object that is already marked "finished."</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_KEY</TD>
+<TD width=59%>The <I>hKey</I> parameter does not contain a valid handle to a key.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_LEN</TD>
+<TD width=59%>The size of the output buffer is too small to hold the generated ciphertext.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_UID</TD>
+<TD width=59%>The CSP context that was specified when the key was created cannot be found.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_DOUBLE_ENCRYPT</TD>
+<TD width=59%>The application attempted to encrypt the same data twice.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_FAIL</TD>
+<TD width=59%>The function failed in some unexpected way.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_NO_MEMORY</TD>
+<TD width=59%>The CSP ran out of memory during the operation.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>If data is to be hashed and encrypted simultaneously, a handle to a hash object can be passed in the <I>hHash</I> parameter. The hash value will be updated with the plaintext passed in. This option is useful when generating signed and encrypted text.</P>
+
+<P>Before calling <B>CryptEncrypt</B>, the application should obtain a handle to the hash object by calling the <A HREF="_wcesdk_crypto2_cryptcreatehash.htm">CryptCreateHash</A> function. After the encryption is complete, the hash value can be obtained through the <A HREF="_wcesdk_crypto2_cryptgethashparam.htm">CryptGetHashParam</A> function or the hash can be signed using the <A HREF="_wcesdk_crypto2_cryptsignhash.htm">CryptSignHash</A> function.</P>
+
+<P>When a large amount of data needs to be encrypted, it can be done in sections. This is done by calling <B>CryptEncrypt</B> repeatedly. The <I>Final</I> parameter should be set to TRUE only on the last invocation of <B>CryptEncrypt</B>, so the encryption engine can properly finish the encryption process. The following extra actions are performed when <I>Final</I> is TRUE:
+
+<UL type="disc">
+	<LI>If the key is a block cipher key, the data will be padded to a multiple of the block size of the cipher. To find the block size of a cipher, use <A HREF="_wcesdk_crypto2_cryptgetkeyparam.htm">CryptGetKeyParam</A> to get the KP_BLOCKLEN parameter of the key.</li>
+
+	<LI>If the cipher is operating in a chaining mode, the next CryptEncrypt operation will reset the cipher's feedback register to the KP_IV value of the key.</li>
+
+	<LI>If the cipher is a stream cipher, the next CryptEncrypt will reset the cipher to its initial state.</li>
+</UL>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.10 and later</TD>
+<TD width=18%>Wincrypt.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Cryptapi.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_crypto2_cryptcreatehash.htm">CryptCreateHash</A>, <A HREF="_wcesdk_crypto2_cryptdecrypt.htm">CryptDecrypt</A>, <A HREF="_wcesdk_crypto2_cryptgenkey.htm">CryptGenKey</A>, <A HREF="_wcesdk_crypto2_cryptgethashparam.htm">CryptGetHashParam</A>, <A HREF="_wcesdk_crypto2_cryptimportkey.htm">CryptImportKey</A>, <A HREF="_wcesdk_crypto2_cryptsignhash.htm">CryptSignHash</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

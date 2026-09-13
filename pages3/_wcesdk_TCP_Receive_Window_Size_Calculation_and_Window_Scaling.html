@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TCP Receive Window Size Calculation and Window Scaling</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="TCP Receive Window Size Calculation and Window Scaling" />
+<MSHelp:RLTitle Title="TCP Receive Window Size Calculation and Window Scaling (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="TCP, window size calculation" />
+<MSHelp:Keyword Index="K" Term="window scaling" />
+<MSHelp:Keyword Index="K" Term="window size" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_TCP_Receive_Window_Size_Calculation_and_Window_Scaling" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="tcpip.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923654">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_tcp_receive_window_size_calculation_and_window_scaling"></A>TCP Receive Window Size Calculation and Window Scaling</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The TCP receive window size is the amount of receive data (in bytes) that can be buffered at one time on a connection. The sending host can send only that amount of data before waiting for an acknowledgment and window update from the receiving host. The Windows CE TCP/IP stack was designed to tune itself in most environments, and uses larger default window sizes than earlier versions. Instead of using a hard-coded default receive window size, TCP adjusts to even increments of the maximum segment size (MSS) negotiated during connection setup. Matching the receive window to even increments of the MSS increases the percentage of full-sized TCP segments used during bulk data transmission. </P>
+
+<P>The receive window size defaults to a value calculated as follows: 
+
+<OL type="1">
+	<LI>The first connection request sent to a remote host advertises a receive window size of 16K (16,384) in Windows CE 3.0. In Window CE 2.12, the advertised receive window size is 8K.</li>
+
+	<LI>Upon establishing the connection, the receive window size is rounded up to an increment of the maximum TCP segment size (MSS) which was negotiated during connection setup.</li>
+
+	<LI>If that isn't at least four times the MSS, then it's adjusted to four times the MSS, with a maximum size of 64K, unless a window scaling option (RFC 1323) is in effect.</li>
+</OL>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;In the Windows CE 3.0 Common.reg file, <B>TCPWindowSize</B> was changed to 32K for the Windows CE OS configurations. Because USB operates at high speeds, a larger windows size, such as 32K, works better. If you do not set <B>TCPWindowSize</B>, the TCP/IP stack is 16K by default.</BLOCKQUOTE>
+
+<P>You can set the receive window size to a specific value by setting the <B>TcpWindowSize</B><I> </I>registry entry described in <A HREF="_wcesdk_tcpip_configuration_parameters.htm">TCP/IP Configuration Parameters</A>.</P>
+
+<P>To improve performance on high-bandwidth, high delay networks, RFC 1323 support has been introduced in Windows CE. This RFC details a method for supporting scalable windows by allowing TCP to negotiate a scaling factor for the window size at connection establishment. This allows for an actual receive window of up to 1 gigabyte (GB). RFC 1323 Section 2.2 provides the following description of window scaling:</P>
+
+<P>2.2 Window Scale Option</P>
+
+<P>The three-byte Window Scale option may be sent in a SYN segment by a TCP. It has two purposes: (1) indicate that the TCP is prepared to do both send and receive window scaling, and (2) communicate a scale factor to be applied to its receive window. Thus, a TCP that is prepared to scale windows should send the option, even if its own scale factor is 1. The scale factor is limited to a power of two and encoded logarithmically, so it may be implemented by binary shift operations.</P>
+
+<P>TCP Window Scale Option (WSopt):</P>
+
+<P>Kind: 3 Length: 3 bytes</P>
+
+<PRE class="code">+---------+---------+---------+
+| Kind=3  |Length=3 |shift.cnt|
++---------+---------+---------+</PRE>
+
+<P>This option is an offer, not a promise; both sides must send Window Scale options in their SYN segments to enable window scaling in either direction. If window scaling is enabled, then the TCP that sent this option will right-shift its true receive-window values by 'shift.cnt' bits for transmission in SEG.WND. The value 'shift.cnt' may be zero (offering to scale, while applying a scale factor of 1 to the receive window).</P>
+
+<P>This option may be sent in an initial &lt;SYN&gt; segment (i.e., a segment with the SYN bit on and the ACK bit off). It may also be sent in a &lt;SYN,ACK&gt; segment, but only if a Window Scale option was received in the initial &lt;SYN&gt; segment. A Window Scale option in a segment without a SYN bit should be ignored.</P>
+
+<P>The Window field in a SYN (i.e., a &lt;SYN&gt; or &lt;SYN,ACK&gt;) segment itself is never scaled.</P>
+
+<P>When you read network traces of a connection that was established by two computers that support scalable windows, keep in mind that the window sizes advertised in the trace must be scaled by the negotiated scale factor. The scale factor can be observed in the connection establishment (3-way handshake) packets, as illustrated in the following Network Monitor capture clip:</P>
+
+<PRE class="code">Src Addr   Dst Addr  Protocol  Description
+THEMACS1   NTBUILDS  TCP       ....S., len:0, seq:725163-725163, ack:0, win:65535, src:1217 dst:139
++ FRAME: Base frame properties
++ ETHERNET: ETYPE = 0x0800 : Protocol = IP:  DOD Internet Protocol
++ IP: ID = 0xB908; Proto = TCP; Len: 64
+  TCP: ....S., len:0, seq:725163-725163, ack:0, win:65535, src:1217  dst:139 (NBT Session)
+      TCP: Source Port = 0x04C1
+      TCP: Destination Port = NETBIOS Session Service
+      TCP: Sequence Number = 725163 (0xB10AB)
+      TCP: Acknowledgement Number = 0 (0x0)
+      TCP: Data Offset = 44 (0x2C)
+      TCP: Reserved = 0 (0x0000)
+    + TCP: Flags = 0x02 : ....S.
+      TCP: Window = 65535 (0xFFFF)
+      TCP: Checksum = 0x8565
+      TCP: Urgent Pointer = 0 (0x0)
+      TCP: Options
+        + TCP: Maximum Segment Size Option
+          TCP: Option Nop = 1 (0x1)
+          TCP: Window Scale Option
+              TCP: Option Type = Window Scale
+              TCP: Option Length = 3 (0x3)
+              TCP: Window Scale = 5 (0x5)
+          TCP: Option Nop = 1 (0x1)
+          TCP: Option Nop = 1 (0x1)
+        + TCP: Timestamps Option
+          TCP: Option Nop = 1 (0x1)
+          TCP: Option Nop = 1 (0x1)
+        + TCP: SACK Permitted Option
+00000:  8C 04 C8 BD A3 82 00 00 50 7D 83 80 08 00 45 00   ........P}....E.
+00010:  00 40 B9 08 40 00 80 06 A7 1A 9D 36 15 FD AC 1F   .@..@......6....
+00020:  3B 42 04 C1 00 8B 00 0B 10 AB 00 00 00 00 B0 02   ;B..............
+00030:  FF FF 85 65 00 00 02 04 05 B4 01 03 03 05 01 01   ...e............
+00040:  08 0A 00 00 00 00 00 00 00 00 01 01 04 02         ..............</PRE>
+
+<P>Windows CE uses window scaling automatically if the <B>TcpWindowSize</B> registry entry is set to a value greater than 64Kbytes. Window scaling can be disabled with the <B>Tcp1323Opts</B> registry entry.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

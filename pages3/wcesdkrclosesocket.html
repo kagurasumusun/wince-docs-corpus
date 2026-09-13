@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>closesocket</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="closesocket" />
+<MSHelp:RLTitle Title="closesocket" />
+<MSHelp:Keyword Index="A" Term="wcesdkrclosesocket" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_930319">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrclosesocket"></A>closesocket</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function closes a socket. </P>
+
+<PRE class="syntax"><B>int</B> <B>closesocket</B> <B>(</B>
+<B>SOCKET</B> <I>s </I><B>);</B> </PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>s</I></DT>
+
+<DD>[in] Descriptor that identifies a socket to close.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Zero indicates that no error occurred. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<P>Windows CE does not support the <B>WSACancelBlockingCall</B> function; however, Windows CE returns the WSAEINTR error value if <B>closesocket</B> is called in the middle of executing a sockets call.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>For Infrared Sockets (IrSock), this function has the following additional requirements and behaviors:
+
+<UL type="disc">
+	<LI>The Af_irda.h file must be explicitly included.</li>
+
+	<LI>The WSAENETDOWN error value is not supported.</li>
+
+	<LI>The standard linger options are supported.
+<P>Although IrDA does not provide a graceful close, IrSock defers closing until the receive queues are purged. Thus, an application can send data and immediately call the <B>closesocket</B> function confident that the receiver will copy the data before receiving an FD_CLOSE message.
+</li>
+</UL>
+
+<P>The <B>closesocket</B> function closes a socket. Use it to release the socket descriptor <I>s</I> so that further references to <I>s</I> will fail with the error WSAENOTSOCK. Any pending blocking or asynchronous calls issued by any thread in this process are canceled without posting any notification messages. </P>
+
+<P>An application should always have a matching call to <B>closesocket</B> for each successful call to <A HREF="wcesdkrsocket.htm">socket</A> to return any socket resources to the system.</P>
+
+<P>The semantics of <B>closesocket</B> are affected by the socket options SO_LINGER and SO_DONTLINGER as follows (SO_DONTLINGER is enabled by default; SO_LINGER is disabled).</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Option</TH>
+<TH width=18%>Interval</TH>
+<TH width=24%>Type of close</TH>
+<TH width=27%>Wait for close?</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_DONTLINGER</TD>
+<TD width=18%>Do not care</TD>
+<TD width=24%>Graceful</TD>
+<TD width=27%>No</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_LINGER</TD>
+<TD width=18%>Zero</TD>
+<TD width=24%>Hard</TD>
+<TD width=27%>No</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_LINGER</TD>
+<TD width=18%>Nonzero</TD>
+<TD width=24%>Graceful</TD>
+<TD width=27%>Yes</TD>
+</TR>
+</table></div>
+
+<P>If SO_LINGER is set with a zero time-out interval (that is, the <A HREF="wcesdkrlinger.htm">LINGER</A> structure members <I>l_onoff</I> is not zero and <I>l_linger</I><B> </B>is zero), <B>closesocket</B> is not blocked even if queued data has not yet been sent or acknowledged. This is called a hard or abortive close, because the socket's virtual circuit is reset immediately, and any unsent data is lost. Any <B>recv</B> call on the remote side of the circuit will fail with WSAECONNRESET.</P>
+
+<P>If SO_LINGER is set with a nonzero time-out interval on a blocking socket, the <B>closesocket</B> call blocks on a blocking socket until the remaining data has been sent or until the time-out expires. This is called a graceful disconnect. If the time-out expires before all data has been sent, the Windows Sockets implementation terminates the connection before <B>closesocket</B> returns.</P>
+
+<P>Enabling SO_LINGER with a nonzero time-out interval on a nonblocking socket is not recommended. In this case, the call to <B>closesocket</B> will fail with an error of WSAEWOULDBLOCK if the close operation cannot be completed immediately. If <B>closesocket</B> fails with WSAEWOULDBLOCK the socket handle is still valid, and a disconnect is not initiated. The application must call <B>closesocket</B> again to close the socket. If SO_DONTLINGER is set on a stream socket by setting the <B>l_onoff </B>member of the <A HREF="wcesdkrlinger.htm">LINGER</A> structure to zero, the <B>closesocket</B> call will return immediately and does not receive WSAWOULDBLOCK whether the socket is blocking or nonblocking. However, any data queued for transmission will be sent, if possible, before the underlying socket is closed. This is also called a graceful disconnect. In this case, the Windows Sockets provider cannot release the socket and other resources for an arbitrary period, thus affecting applications that expect to use all available sockets. This is the default behavior (SO_DONTLINGER is set by default).</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To assure that all data is sent and received on a connection, an application should call <A HREF="wcesdkrshutdown_function.htm">shutdown</A> before calling <B>closesocket</B>. Also note, an FD_CLOSE network event is<I> not</I> posted after <B>closesocket</B> is called.</BLOCKQUOTE>
+
+<P>Here is a summary of <B>closesocket</B> behavior:
+
+<UL type="disc">
+	<LI>If SO_DONTLINGER enabled (the default setting) it always returns immediately &#0150; connection is gracefully closed in the background.</li>
+
+	<LI>If SO_LINGER enabled with a zero time-out: it always returns immediately - connection is reset/terminated.</li>
+
+	<LI>If SO_LINGER enabled with nonzero time-out:
+<UL type="disc">
+	<LI>with blocking socket it blocks until all data sent or time-out expires.</li>
+
+	<LI>with nonblocking socket it returns immediately that indicates failure.</li>
+</UL>
+</li>
+</UL>
+
+<P>For additional information please see Graceful shutdown, linger options, and socket closure for more information.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>1.0 and later</TD>
+<TD width=18%>Winsock.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkraccept_function.htm">accept</A>, <A HREF="wcesdkrsocket.htm">socket</A>,<B> </B><A HREF="wcesdkrioctlsocket.htm">ioctlsocket</A>, <A HREF="wcesdkrsetsockopt.htm">setsockopt</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

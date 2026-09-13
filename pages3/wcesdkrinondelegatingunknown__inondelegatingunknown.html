@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>INonDelegatingUnknown::INonDelegatingUnknown</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="INonDelegatingUnknown::INonDelegatingUnknown" />
+<MSHelp:RLTitle Title="INonDelegatingUnknown::INonDelegatingUnknown" />
+<MSHelp:Keyword Index="A" Term="wcesdkrinondelegatingunknown__inondelegatingunknown" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_932097">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrinondelegatingunknown__inondelegatingunknown"></A>INonDelegatingUnknown::INonDelegatingUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>A version of <A HREF="wcesdkriunknown_interface.htm">IUnknown</A> renamed to enable a class to support both nondelegating and delegating <B>IUnknown</B> interfaces in the same COM object. The interface supports the following three methods, in vtable order. </P>
+
+<PRE class="syntax"><B>HRESULT NonDelegatingQueryInterface(</B>
+<B>REFIID</B> <I>iid</I><B>,</B>
+<B>void**</B> <I>ppvObject</I> <B>);</B>
+<B>ULONG</B> <B>NonDelegatingAddRef(void);</B>
+<B>ULONG NonDelegatingRelease(void);</B></PRE>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>To use <B>INonDelegatingUnknown</B> for multiple inheritance, perform the following steps: </P>
+
+<P>Derive your class from an interface, for example, IMyInterface. </P>
+
+<P>Include <B>DECLARE_IUNKNOWN</B> in your class definition to declare implementations of <B>QueryInterface</B>, <B>AddRef</B>, and <B>Release</B> that call the outer unknown. </P>
+
+<P>Override <B>NonDelegatingQueryInterface</B> to expose IMyInterface with code such as the following: </P>
+
+<PRE class="code">     if (riid == IID_IMyInterface) {
+         return GetInterface((IMyInterface *) this, ppv);
+     } else {
+         return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+     }</PRE>
+
+<P>Declare and implement the member functions of IMyInterface. </P>
+
+<P>To use <B>INonDelegatingUnknown</B> for nested interfaces, perform the following steps: </P>
+
+<P>Declare a class derived from <A HREF="wcesdkrcunknown_class.htm">CUnknown</A>. </P>
+
+<P>Include <B>DECLARE_IUNKNOWN </B>in your class definition. </P>
+
+<P>Override <B>NonDelegatingQueryInterface</B> to expose IMyInterface with the code such as the following: </P>
+
+<PRE class="code">     if (riid == IID_IMyInterface) {
+         return GetInterface((IMyInterface *) this, ppv);
+     } else {
+         return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+     }</PRE>
+
+<P>Implement the member functions of IMyInterface. Use <A HREF="wcesdkrcunknown__getowner.htm">CUnknown::GetOwner</A> to access the COM object class. </P>
+
+<P>In your COM object class, make the nested class a friend of the COM object class, and declare an instance of the nested class as a member of the COM object class. </P>
+
+<P>Because you must always pass the outer unknown and an <B>HRESULT</B> to the <A HREF="wcesdkrcunknown_class.htm">CUnknown</A> constructor, you can't use a default constructor. You have to make the member variable a pointer to the class and make a new call in your constructor to actually create it. </P>
+
+<P>Override the <B>NonDelegatingQueryInterface</B> with code such as the following: </P>
+
+<PRE class="code">     if (riid == IID_IMyInterface) {
+         return m_pImplFilter-&gt;
+            NonDelegatingQueryInterface(IID_IMyInterface, ppv);
+     } else {
+         return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+     }</PRE>
+
+<P>You can have mixed classes that support some interfaces through multiple inheritance and some interfaces through nested classes. </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

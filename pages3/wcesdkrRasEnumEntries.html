@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>RasEnumEntries</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="RasEnumEntries" />
+<MSHelp:RLTitle Title="RasEnumEntries" />
+<MSHelp:Keyword Index="A" Term="wcesdkrRasEnumEntries" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928870">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrrasenumentries"></A>RasEnumEntries</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function lists all entry names in a remote access phone book. </P>
+
+<PRE class="syntax"><B>DWORD</B> <B>RasEnumEntries(</B>
+<B>LPWSTR</B> <I>Reserved</I><B>, </B>
+<B>LPWSTR</B> <I>lpszPhoneBookPath</I><B>, </B>
+<B>LPRASENTRYNAME</B> <I>lprasentryname</I><B>, </B>
+<B>LPDWORD</B> <I>lpcb</I><B>, </B>
+<B>LPDWORD</B> <I>lpcEntries </I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>Reserved</I></DT>
+
+<DD>Reserved; set to NULL. </dd>
+
+<DT><I>lpszPhoneBookPath</I></DT>
+
+<DD><B>Windows CE: </B>This parameter is ignored. Dial-up networking stores phone-book entries in the registry rather than in a phone-book file.</dd>
+
+<DT><I>lprasentryname</I></DT>
+
+<DD>Pointer to a buffer that receives an array of <A HREF="wcesdkrrasentryname_str.htm">RASENTRYNAME</A> structures, one for each phone-book entry. Before calling the function, an application must set the <I>dwSize</I> member of the first <B>RASENTRYNAME</B> structure in the buffer to <B>sizeof(RASENTRYNAME)</B> in order to identify the version of the structure being passed. </dd>
+
+<DT><I>lpcb</I></DT>
+
+<DD>Pointer to a variable that that contains the size, in bytes, of the buffer specified by <I>lprasentryname</I>. On return, the function sets this variable to the number of bytes required to successfully complete the call. </dd>
+
+<DT><I>lpcEntries</I></DT>
+
+<DD>Pointer to a variable that the function, if successful, sets to the number of phone-book entries written to the buffer specified by <I>lprasentryname</I>. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Zero indicates success. A nonzero error value listed in the RAS header file, ERROR_BUFFER_TOO_SMALL, or ERROR_NOT_ENOUGH_MEMORY indicates failure. </P>
+
+<P>Include Raserror.h for definitions of the RAS error codes.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The following sample code enumerates the RAS phonebook entries on the current machine. The code initially calls <B>RasEnumEntries</B> to obtain the size of the buffer to pass in. The code then calls <B>RasEnumEntries</B> again, to enumerate the entries. Note that for both calls, the code sets the <I>dwSize</I> member of the first <B>RASENTRY</B> structure in the buffer to <B>sizeof</B>(<B>RASENTRY</B>) to specify the structure version.</P>
+
+<PRE class="code">lprasentryname = (LPRASENTRYNAME)LocalAlloc(GPTR,, sizeof(RASENTRYNAME));
+cb = lpRasEntryName-&gt;dwSize = sizeof(RASENTRYNAME); 
+if ((nRet = RasEnumEntries(NULL, NULL, lprasentryname, &amp;cb, &amp;cEntries)) 
+    == ERROR_BUFFER_TOO_SMALL)
+{
+    lprasentryname = (LPRASENTRYNAME)GlobalAlloc(GPTR, cb);
+    lprasentryname-&gt;dwSize = sizeof(RASENTRYNAME);
+}
+
+// Calling RasEnumEntries to enumerate the phonebook entries   
+nRet = RasEnumEntries(NULL, NULL, lprasentryname, &amp;cb, &amp;cEntries);
+
+if (nRet != ERROR_SUCCESS)
+{
+    printf("RasEnumEntries failed: Error %d\n", nRet);
+}
+else
+{
+    printf("Phone book entries in the default phonebook:\n\n");
+    for(i=0;i &lt; cEntries;i++)
+    {
+        printf("%s\n",lprasentryname-&gt;szEntryName);
+        lprasentryname++;
+    }
+}</PRE>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>1.0 and later</TD>
+<TD width=18%>Ras.h, Afdfunc.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Ppp.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrrasentryname_str.htm">RASENTRYNAME</A>, <A HREF="wcesdkrrasenumconnections.htm">RasEnumConnections</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

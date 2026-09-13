@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Implementing and Using a File Filter</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Implementing and Using a File Filter" />
+<MSHelp:RLTitle Title="Implementing and Using a File Filter (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="file filters, implementing, using" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Implementing_and_Using_a_File_Filter" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="devdesk.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922199">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_implementing_and_using_a_file_filter"></A>Implementing and Using a File Filter</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The CD-ROM that accompanies this documentation includes a sample file filter named Copyfilt that imports a binary file (.bin) from a desktop computer to a binary file (.pbn) on a Windows CE&#0150;based device. The Copyfilt sample file filter demonstrates basic operations for implementing a file filter, which are described in the following procedure. </P>
+
+<P class="labelproc"><B>To implement a file filter</B>
+
+<OL type="1">
+	<LI>Register the file filter DLL.</li>
+
+	<LI>Implement the <B>ICeFileFilter </B>interface and methods. </li>
+
+	<LI>ActiveSync calls the <B>QueryInterface</B> method for the file filter's <B>ICeFileFilterOptions</B> interface. 
+<UL type="disc">
+	<LI>If this interface is available, Windows CE then calls the <B>ICeFileFilterOptions::SetFilterOptions</B> method with a correctly initialized <B>CFF_CONVERTOPTIONS</B> structure. The <I>bNoModalUI</I> member specifies whether the converter is allowed to bring up modal UI while performing the conversion.
+<P>For a file filter that includes selectable conversion options, implement the <B>ICeFileFilter::FilterOptions</B> method to allow users to select among the conversion options supported by the file filter.
+</li>
+</UL>
+</li>
+</OL>
+
+<P class="labelproc"><B>To use a file filter</B>
+
+<OL type="1">
+	<LI>The user transfers a file by dragging it between Windows Explorer on the desktop computer and Windows CE Explorer on the device.</li>
+
+	<LI>ActiveSync prompts the user for a conversion type, using the <B>File Conversion Properties</B> dialog box.</li>
+
+	<LI>ActiveSync calls the <B>ICeFileFilter::NextConvertFile</B> method for the file filter to perform the custom file conversion. </li>
+
+	<LI>Information about the file conversion and about the source and destination files is passed by pointers to the <B>CFF_CONVERTINFO</B>, <B>CFF_DESTINATIONFILE</B>, and <B>CFF_SOURCEFILE</B> structures. </li>
+</OL>
+
+<P>Within the <B>ICeFileFilter::NextConvertFile</B> method: 
+
+<OL type="1">
+	<LI>Call <B>ICeFileFilterSite::OpenSourceFile</B> to open the source file.</li>
+
+	<LI>Call <B>ICeFileFilterSite::OpenDestinationFile</B> to open the destination file. </li>
+
+	<LI>Use the <B>OpenSourceFile</B> method to read data from the stream file that was opened.</li>
+
+	<LI>Convert the data. 
+<P>This can include independent software vendor (ISV)-developed code and RAPI calls.
+</li>
+
+	<LI>Check the status of the <B>NextConvertFile pbCancel</B> parameter occasionally to ensure that the user has not stopped the conversion process. 
+<P>If the conversion has been stopped, perform all cleanup operations, and then exit.
+</li>
+
+	<LI>Use the <B>OpenDestinationFile</B> method to write the converted data to the stream file that was opened.</li>
+
+	<LI>Call the <B>ICeFileFilterSite::ReportProgress</B> method occasionally to report the progress of the file conversion. 
+<P>ActiveSync uses this information to update a status bar that shows the percentage of the conversion that is complete. You should limit your use of this method because it can add substantially to the conversion time.
+</li>
+
+	<LI>Call the <B>ICeFileFilterSite::ReportLoss</B> method to report data that is intentionally discarded during conversion. 
+<P>ActiveSync displays a message with this information when the file conversion is complete. Depending on the error format passed in the call, ActiveSync may call the <B>ICeFileFilter::FormatMessage</B> method for the file filter, in order to properly format the message.
+</li>
+
+	<LI>Use the <B>ICeFileFilterSite::CloseSourceFile</B> method to close the source file, and then use the <B>ICeFileFilterSite::CloseDestinationFile</B> method to close the destination file.</li>
+</OL>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

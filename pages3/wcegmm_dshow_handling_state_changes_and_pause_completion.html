@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Handling State Changes and Pause Completion (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="A renderer filter behaves the same as any other filter in the filter graph when its state is changed, with the following exception. After being paused, the renderer will have some data queued, ready to be rendered when subsequently run."/>
+<xml>
+<MSHelp:TOCTitle Title="Handling State Changes and Pause Completion" />
+<MSHelp:RLTitle Title="Handling State Changes and Pause Completion (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_handling_state_changes_and_pause_completion" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924135">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_handling_state_changes_and_pause_completion"></A>Handling State Changes and Pause Completion</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>A renderer filter behaves the same as any other filter in the filter graph when its state is changed, with the following exception. After being paused, the renderer will have some data queued, ready to be rendered when subsequently run. When the video renderer is stopped, it holds on to this queued data. This is an exception to the DirectShow rule that no resources should be held by filters while the filter graph is stopped. </P>
+
+<P>The reason for this exception is that by holding resources, the renderer will always have an image with which to repaint the window if it receives a WM_PAINT message. It also has an image to satisfy methods, such as <a href="wcesdkrcbasecontrolvideo__getstaticimage.htm">CBaseControlVideo::GetStaticImage</a>, that request a copy of the current image. Another effect of holding resources is that holding on to the image stops the allocator from being decommitted, which in turn makes the next state change occur much faster because the image buffers are already allocated. </P>
+
+<P>A video renderer should render and release samples only while running. While paused, the filter might render them (for example, when drawing a static poster image in a window), but should not release them. Audio renderers will do no rendering while paused (although they can perform other activities, such as preparing the wave device, for example). The time at which the samples should be rendered is obtained by combining the stream time in the sample with the reference time passed as a parameter to the <a href="wcesdkrimediacontrol__run.htm">IMediaControl::Run</a> method. Renderers should reject samples with start times less than or equal to end times. </P>
+
+<P>When an application pauses a filter graph, the filter graph does not return from its <a href="wcesdkrimediacontrol__pause.htm">IMediaControl::Pause</a> method until there is data queued at the renderers. In order to ensure this, when a renderer is paused, it should return S_FALSE if there is no data waiting to be rendered. If it has data queued, then it can return S_OK. </P>
+
+<P>The filter graph manager checks all return values when pausing a filter graph, to ensure that the renderers have data queued. If one or more filters are not ready, then the filter graph manager polls the filters in the graph by calling <a href="wcesdkrcbasefilter__getstate.htm">GetState</a>. The <B>GetState</B> method takes a time-out parameter. A filter (typically a renderer) that is still waiting for data to arrive before completing the state change returns <a href="wcesdkrerror_and_success_codes.htm">VFW_S_STATE_INTERMEDIATE</a> if the <B>GetState</B> method expires. Once data arrives at the renderer, <B>GetState</B> should be returned immediately with S_OK. </P>
+
+<P>In both the intermediate and completed state, the reported filter state will be <B>State_Paused</B>. Only the return value indicates whether the filter is really ready or not. If, while a renderer is waiting for data to arrive, its source filter sends an end-of-stream notification, then that should also complete the state change. </P>
+
+<P>Once all filters actually have data waiting to be rendered, the filter graph will complete its pause state change. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

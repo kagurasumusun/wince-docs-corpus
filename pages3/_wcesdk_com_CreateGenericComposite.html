@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateGenericComposite</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CreateGenericComposite" />
+<MSHelp:RLTitle Title="CreateGenericComposite" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_CreateGenericComposite" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926984">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_creategenericcomposite"></A>CreateGenericComposite</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function performs a generic composition of two monikers and supplies a pointer to the resulting composite moniker.</P>
+
+<PRE class="syntax"><B>WINOLEAPI CreateGenericComposite(</B>
+<B>LPMONIKER </B><I>pmkFirst</I><B>,</B>
+<B>LPMONIKER </B><I>pmkRest</I><B>,</B>
+<B>LPMONIKER FAR *</B><I>ppmkComposite</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>pmkFirst</I></DT>
+
+<DD>[in] Pointer to the moniker to be composed to the left of the moniker that <I>pmkRest</I> points to. Can point to any kind of moniker, including a generic composite.</dd>
+
+<DT><I>pmkRest</I></DT>
+
+<DD>[in] Pointer to the moniker to be composed to the right of the moniker that <I>pmkFirst</I> points to. Can point to any kind of moniker compatible with the type of the <I>pmkRest</I> moniker, including a generic composite.</dd>
+
+<DT><I>ppmkComposite</I></DT>
+
+<DD>[out] Address of <A HREF="_wcesdk_com_imoniker.htm">IMoniker</A>* pointer variable that receives the interface pointer to the composite moniker object that is the result of composing <I>pmkFirst</I> and <I>pmkRest</I>. This object supports the OLE composite moniker implementation of <B>IMoniker</B>. When successful, the function has called <A HREF="_wcesdk_com_iunknown_addref.htm">IUnknown::AddRef</A> on the moniker and the caller is responsible for calling <A HREF="_wcesdk_com_iunknown_release.htm">IUnknown::Release</A>. If either <I>pmkFirst</I> or <I>pmkRest</I> are NULL, the supplied pointer is the one that is non-NULL. If both <I>pmkFirst</I> and <I>pmkRest</I> are NULL, or if an error occurs, the returned pointer is NULL.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>This function supports the standard return value E_OUTOFMEMORY, as well as the following:
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The two input monikers were successfully composed.</dd>
+
+<DT>MK_E_SYNTAX</DT>
+
+<DD>The two monikers could not be composed due to an error in the syntax of a path (for example, if both <I>pmkFirst</I> and <I>pmkRest</I> are file monikers based on absolute paths).</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P><B>CreateGenericComposite</B> joins two monikers into one. The moniker classes being joined can be different, subject only to the rules of composition. Call this function only if you are writing a new moniker class by implementing the <B>IMoniker</B> interface, within an implementation of <A HREF="_wcesdk_com_imoniker_composewith.htm">IMoniker::ComposeWith</A> that includes generic composition capability.</P>
+
+<P>Moniker providers should call <B>IMoniker::ComposeWith</B> to compose two monikers together. Implementations of <B>ComposeWith</B> should (as do OLE implementations) attempt, when reasonable for the class, to perform non-generic compositions first, in which two monikers of the same class are combined. If this is not possible, the implementation can call <B>CreateGenericComposite</B> to do a generic composition, which combines two monikers of different classes, within the rules of composition. You can define new types of non-generic compositions if you write a new moniker class. </P>
+
+<P>During the process of composing the two monikers, <B>CreateGenericComposite</B> makes all possible simplifications. Consider the example where <I>pmkFirst</I> is the generic composite moniker, A + B + C, and <I>pmkRest</I> is the generic composite moniker, C -1 + B -1 + Z (where C -1 is the inverse of C). The function first composes C to C -1, which composes to nothing. Then it composes B and B -1 to nothing. Finally, it composes A to Z, and supplies a pointer to the generic composite moniker, A + Z.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Objbase.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ole232.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::SetExtent</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IOleObject::SetExtent" />
+<MSHelp:RLTitle Title="IOleObject::SetExtent" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IOleObject_SetExtent" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928932">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_ioleobject_setextent"></A>IOleObject::SetExtent</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This<B> </B>method informs an object of how much display space its container has assigned it.</P>
+
+<PRE class="syntax"><B>HRESULT SetExtent( </B>
+<B>DWORD </B><I>dwDrawAspect</I><B>, </B>
+<B>SIZEL *</B><I>psizel</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwDrawAspect</I></DT>
+
+<DD>[in] Describes which form, or "aspect," of an object is to be displayed. The object's container obtains this value from the enumeration <A HREF="_wcesdk_com_dvaspect.htm">DVASPECT</A> (refer to the <A HREF="_wcesdk_com_formatetc.htm">FORMATETC</A> enumeration). The most common aspect is DVASPECT_CONTENT, which specifies a full rendering of the object within its container. An object can also be rendered as an icon, a thumbnail version for display in a browsing tool, or a print version, which displays the object as it would be rendered using the File Print command.</dd>
+
+<DT><I>psizel</I></DT>
+
+<DD>[in] Pointer to the size limit for the object.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>This method supports the standard return value E_FAIL, as well as the values described in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Value</TH>
+<TH width=69%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>S_OK</TD>
+<TD width=69%>The object has resized successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>OLE_E_NOTRUNNING</TD>
+<TD width=69%>The object is not running.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>A container calls <B>IOleObject::SetExtent</B> when it needs to dictate to an embedded object the size at which it will be displayed. Often, this call occurs in response to an end user resizing the object window. Upon receiving the call, the object, if possible, should recompose itself gracefully to fit the new window.</P>
+
+<P>Whenever possible, a container seeks to display an object at its finest resolution, sometimes called the object's <I>native size</I>. All objects, however, have a default display size specified by their applications, and in the absence of other constraints, this is the size they will use to display themselves. Since an object knows its optimum display size better than does its container, the latter normally requests that size from a running object by calling <A HREF="_wcesdk_com_ioleobject_getextent.htm">IOleObject::GetExtent</A>. Only in cases where the container cannot accommodate the value returned by the object does it override the object's preference by calling <B>IOleObject::SetExtent</B>.</P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>You can call <B>SetExtent</B> on an object only when the object is running. If a container resizes an object while an object is not running, the container should keep track of the object's new size but defer calling <B>IOleObject::SetExtent</B> until a user activates the object. If the OLEMISC_RECOMPOSEONRESIZE bit is set on an object, its container should force the object to run before calling <B>OleObject::SetExtent</B>.</P>
+
+<P>As noted above, a container may want to delegate responsibility for setting the size of an object's display site to the object itself, by calling <B>IOleObject::GetExtent</B>.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>You may want to implement this method so that your object rescales itself to match as closely as possible the maximum space available to it in its container.</P>
+
+<P>If an object's size is fixed, that is, if it cannot be set by its container, <B>OleObject::SetExtent</B> should return E_FAIL. This is always the case with linked objects, whose sizes are set by their link sources, not by their containers.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Oleidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_dvaspect.htm">DVASPECT</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

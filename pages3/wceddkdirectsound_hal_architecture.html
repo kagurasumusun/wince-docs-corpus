@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>DirectSound HAL Architecture (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="The DirectSound subsystem of Windows CE consists of two basic components."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="DirectSound HAL Architecture" />
+<MSHelp:RLTitle Title="DirectSound HAL Architecture (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="DirectSound, HAL architecture" />
+<MSHelp:Keyword Index="A" Term="wceddkdirectsound_hal_architecture" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshal.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925471">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkdirectsound_hal_architecture"></A>DirectSound HAL Architecture</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The DirectSound subsystem of Windows CE consists of two basic components. The client component (DSOUND.DLL) that is loaded into the client application's process space, and the server (DSOUNDS.DLL) component that runs as a filesystem driver in the DEVICE.EXE process.</P>
+
+<P>The client component allows the client application to interact with the DirectSound subsystem using the standard DirectSound interfaces published in the DSOUND.H header file. Since many processes may all want to use DirectSound resources, it is the server component that actually manages hardware and buffers. The client portion simply proxies client application requests to the server component, where buffers are mixed and the primary buffer output is rendered.</P>
+
+<P>The DirectSound HAL drivers are simply DLLs that get loaded into DEVICE.EXE by the DirectSound server (DSOUNDS.DLL).</P>
+
+<P>The following articles detail the structure of the DirectSound HAL driver model:
+
+<UL type="disc">
+	<LI><A HREF="#wceddkdirectsound_hal_driver_structure">DirectSound HAL Driver Structure</A></li>
+
+	<LI><A HREF="#wceddkprimary_and_secondary_buffers">Primary and Secondary Buffers</A></li>
+</UL>
+
+<H2 class="dtH2"><A NAME="wceddkdirectsound_hal_driver_structure"></A>DirectSound HAL Driver Structure</H2>
+
+<P>The Windows CE DirectSound driver model is very similar to the one used in Windows 95/98. This will allow many drivers written for the desktop to be used with minimal changes.</P>
+
+<P>DirectSound drivers support two classes of logical objects within the driver. These are referred to as the DsDriver object and the DsDriverBuffer object. These driver objects support the <A HREF="wceddkidsdriver_interface.htm">IDsDriver</A> and <A HREF="wceddkidsdriverbuffer_interface.htm">IDsDriverBuffer</A> interfaces accessed by DirectSound.</P>
+
+<P>These two interfaces form the basic pattern of the driver. If you compare the definitions of the <B>IDsDriver</B> and <B>IDsDriverBuffer</B> interfaces to the <a href="wcesdkrIDirectSound_dsound.htm">IDirectSound</a> and <a href="wcesdkrIDirectSoundBuffer_dsound.htm">IDirectSoundBuffer</a> interfaces, you can see how they map directly to the DirectSound structure.</P>
+
+<P>The Windows CE DirectSound HAL, unlike its Windows 95/98 counterpart, also supports capture through the <A HREF="wceddkidscapturedriver_interface.htm">IDsCaptureDriver</A> and <A HREF="wceddkidscapturedriverbuffer_interface.htm">IDsCaptureDriverBuffer</A> interfaces.</P>
+
+<H2 class="dtH2"><A NAME="wceddkprimary_and_secondary_buffers"></A>Primary and Secondary Buffers</H2>
+
+<P>In DirectSound, the term <I>primary buffer</I> is used to describe the buffer that receives the output of the software mixer. The term <I>secondary buffer</I> is used to denote all other buffers - whether they be mixed in hardware or provide input to the software mixer. A <I>hardware secondary buffer</I> denotes a buffer that will be written directly to the hardware via the primary buffer without being mixed with any other secondary buffers.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Software mixing is not optimal and is usually not desired, but if the demands of an application exceed the resources of the hardware, it is an attempt to perform in software tasks the hardware cannot do.</BLOCKQUOTE>
+
+<P>When DirectSound is being initialized for a given device, it will first call <A HREF="wceddkidsdriver__createsoundbuffer.htm">IDsDriver::CreateSoundBuffer</A> and request the hardware to create the primary buffer. This means the first <A HREF="wceddkidsdriverbuffer_interface.htm">IDsDriverBuffer</A> object is reserved for the output of the software mixer.</P>
+
+<P>Later, when clients make calls to <a href="wcesdkrIDirectSound_CreateSoundBuffer_dsound.htm">IDirectSound::CreateSoundBuffer</a>, DirectSound will call down to the driver via <A HREF="wceddkidsdriver__createsoundbuffer.htm">IDsDriver::CreateSoundBuffer</A> to request a hardware buffer. This buffer will be a hardware secondary buffer. Once all hardware resources are exhausted, future calls to <B>IDsDriver::CreateSoundBuffer</B> will fail. This will cause DirectSound to create software secondary buffers.</P>
+
+<P>Clients can use the DSBCAPS_LOCHARDWARE and DSBCAPS_LOCSOFTWARE flags in the <B>IDirectSound::CreateSoundBuffer</B> method to optimize their hardware resources. This allows a client application to decide which buffers are in hardware, and which are in software. If the client specifies a buffer be in hardware and the hardware resources are exhausted, the <B>IDirectSound::CreateSoundBuffer</B> method will fail instead of creating a software buffer. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IAdviseSink</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IAdviseSink" />
+<MSHelp:RLTitle Title="IAdviseSink:IUnknown" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IAdviseSink" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926658">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_iadvisesink"></A>IAdviseSink:IUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This interface enables containers and other objects to receive notifications of data, view, and compound-document changes occurring in objects of interest. Container applications, for example, require such notifications to keep cached presentations of their linked and embedded objects up-to-date. Calls to <B>IAdviseSink</B> methods are asynchronous, so the call is sent and then the next instruction is executed without waiting for the call's return.</P>
+
+<P>The <B>IAdviseSink</B> interface enables containers and other objects to receive notifications of data changes, view changes, and compound-document changes occurring in objects of interest. Container applications, for example, require such notifications to keep cached presentations of their linked and embedded objects up-to-date. Calls to <B>IAdviseSink</B> methods are asynchronous, so the call is sent and then the next instruction is executed without waiting for the call's return.</P>
+
+<P>For an advisory connection to exist, the object that is to receive notifications must implement <B>IAdviseSink</B>, and the objects in which it is interested must implement <A HREF="_wcesdk_com_ioleobject_advise.htm">IOleObject::Advise</A> and <B>IDataObject::DAdvise</B>. In-process objects and handlers may also implement <A HREF="_wcesdk_com_iviewobject_setadvise.htm">IViewObject::SetAdvise</A>. Objects implementing <B>IOleObject</B> must support all reasonable advisory methods.  <B>IViewObject</B> (and its advisory methods) is implemented in the default handler.</P>
+
+<P>As shown in the following table, an object that has implemented an advise sink registers its interest in receiving certain types of notifications by calling the appropriate method:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Call This Method</TH>
+<TH width=71%>To Register for These Notifications</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="_wcesdk_com_ioleobject_advise.htm">IOleObject::Advise</A></TD>
+<TD width=71%>When a document is saved, closed, or renamed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>IDataObject::DAdvise</B></TD>
+<TD width=71%>When a document's data changes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="_wcesdk_com_iviewobject_setadvise.htm">IViewObject::SetAdvise</A></TD>
+<TD width=71%>When a document's presentation changes.</TD>
+</TR>
+</table></div>
+
+<P>When an event occurs that applies to a registered notification type, the object application calls the appropriate <B>IAdviseSink</B> method. For example, when an embedded object closes, it calls the <A HREF="_wcesdk_com_iadvisesink_onclose.htm">IAdviseSink::OnClose</A> method to notify its container. These notifications are asynchronous, occurring after the events that trigger them.</P>
+
+<P class="label"><B>When to Implement</B></P>
+
+<P>Objects, such as container applications and compound documents, implement <B>IAdviseSink</B> to receive notification of changes in data, presentation, name, or state of their linked and embedded objects. Implementers register for one or more types of notification, depending on their needs.</P>
+
+<P>Notifications of changes to an embedded object originate in the server and flow to the container by way of the object handler. If the object is a linked object, the OLE link object intercepts the notifications from the object handler and notifies the container directly. All containers, the object handler, and the OLE link object register for OLE notifications. The typical container also registers for view notifications. Data notifications are usually sent to the OLE link object and object handler.</P>
+
+<P class="label"><B>When to Use</B></P>
+
+<P>Servers call the methods of <B>IAdviseSink</B> to notify objects with which they have an advisory connection of changes in an object's data, view, name, or state.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>OLE does not permit synchronous calls in the implementation of asynchronous methods, so you cannot make synchronous calls within any of the the <B>IAdviseSink</B> interface's methods. For example, an implementation of <A HREF="_wcesdk_com_iadvisesink_ondatachange.htm">IAdviseSink::OnDataChange</A> cannot contain a call to <B>IDataObject::GetData</B>.</BLOCKQUOTE>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Method</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><A HREF="_wcesdk_com_iadvisesink_onclose.htm">IAdviseSink::OnClose</A></TD>
+<TD width=63%>Advises the sink that data has changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><A HREF="_wcesdk_com_iadvisesink_ondatachange.htm">IAdviseSink::OnDataChange</A></TD>
+<TD width=63%>Advises the sink that an object view has changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><A HREF="_wcesdk_com_iadvisesink_onrename.htm">IAdviseSink::OnRename</A></TD>
+<TD width=63%>Advises the sink that an object name has changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><A HREF="_wcesdk_com_iadvisesink_onsave.htm">IAdviseSink::OnSave</A></TD>
+<TD width=63%>Advises the sink that an object has been saved to disk.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><A HREF="_wcesdk_com_iadvisesink_onviewchange.htm">IAdviseSink::OnViewChange</A></TD>
+<TD width=63%>Advises the sink that an object has been closed.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Oaidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_iadvisesink_onclose.htm">IAdviseSink::OnClose</A>, <A HREF="_wcesdk_com_iadvisesink_ondatachange.htm">IAdviseSink::OnDataChange</A>, <A HREF="_wcesdk_com_iadvisesink_onrename.htm">IAdviseSink::OnRename</A>, <A HREF="_wcesdk_com_iadvisesink_onsave.htm">IAdviseSink::OnSave</A>, <A HREF="_wcesdk_com_iadvisesink_onviewchange.htm">IAdviseSink::OnViewChange</A>, <A HREF="_wcesdk_com_ioleobject_advise.htm">IOleObject::Advise</A>, <A HREF="_wcesdk_com_iviewobject_setadvise.htm">IViewObject::SetAdvise</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

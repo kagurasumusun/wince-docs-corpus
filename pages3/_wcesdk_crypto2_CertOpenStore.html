@@ -1,0 +1,358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertOpenStore</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CertOpenStore" />
+<MSHelp:RLTitle Title="CertOpenStore" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_crypto2_CertOpenStore" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926346">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_crypto2_certopenstore"></A>CertOpenStore</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function opens a certificate store using a specified store provider type. While this function can open a certificate store for ordinary purposes, the <A HREF="_wcesdk_crypto2_certopensystemstore.htm">CertOpenSystemStore</A> function is recommended to open the most common certificate stores. The <B>CertOpenStore</B> function is required for more complex options and special cases.</P>
+
+<PRE class="syntax"><B>HCERTSTORE WINAPI CertOpenStore(</B>
+<B>LPCSTR </B><I>lpszStoreProvider</I><B>,</B>
+<B>DWORD </B><I>dwMsgAndCertEncodingType</I><B>,</B>
+<B>HCRYPTPROV </B><I>hCryptProv</I><B>, </B>
+<B>DWORD </B><I>dwFlags</I><B>, </B>
+<B>const void *</B><I>pvPara</I>
+<B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>lpszStoreProvider </I></DT>
+
+<DD>[in] Specifies the store provider type. The following predefined store provider types furnish most common application needs: 
+
+<UL type="disc">
+	<LI>CERT_STORE_PROV_MEMORY</li>
+
+	<LI>CERT_STORE_PROV_FILE</li>
+
+	<LI>CERT_STORE_PROV_REG</li>
+
+	<LI>CERT_STORE_PROV_SYSTEM</li>
+
+	<LI>CERT_STORE_PROV_SYSTEM_REGISTRY</li>
+
+	<LI>CERT_STORE_PROV_PHYSICAL</li>
+
+	<LI>CERT_STORE_PROV_SERIALIZED</li>
+</UL>
+
+
+<P>Most of the provider names passed to the <I>lpszStoreProvider</I> parameter can be prefixed with "sz_" as in <I>sz_CERT_STORE_PROV_FILE</I>. Calling a provider with a name prefixed by "sz_" does not change that provider in any way.
+
+
+<P>Provider types that pass a string to the <I>pvPara</I> parameter have alternate forms: one that passes the string as Unicode (an LPCWSTR variable) and another that passes the string as ASCII (an LPCSTR variable). The names of providers that pass ASCII strings must be suffixed with "_A" as in CERT_STORE_PROV_FILENAME_A. The names of providers that pass Unicode strings can be suffixed with "_W" as in <I>sz_CERT_STORE_PROV_REG_W</I>. The names of providers without either the "_A" or "_W" use the default, Unicode form.
+
+
+<P>The store provider type passed in the <I>lpszStoreProvider</I> parameter determines the type of the parameter passed in the <I>pvPara</I> parameter and the use and meaning of the high word of the <I>dwFlags</I> parameter.
+
+
+<P>The predefined store provider types are defined in the following table.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=25%>Store provider</TH>
+<TH width=26%>Description</TH>
+<TH width=22%><I>pvPara</I> use</TH>
+<TH width=27%>Comment</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CERT_STORE_PROV_MEMORY</TD>
+<TD width=26%>Creates a certificate store in cached memory. No certificates are initially loaded into the store. Typically used to create a temporary store.</TD>
+<TD width=22%>Not used.</TD>
+<TD width=27%>Any addition of certificates or changes in properties of certificates in a memory store are not automatically saved. They can be saved to a file or to a memory <A HREF="_wcesdk_crypto2_blob.htm">BLOB</A> using the <A HREF="_wcesdk_crypto2_certsavestore.htm">CertSaveStore</A> function.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CERT_STORE_PROV_FILE</TD>
+<TD width=26%>Initializes the store with certificates read from a specified open file. This provider expects the file to contain only a serialized store and not either PKCS #7 signed messages or a single encoded certificate.</TD>
+<TD width=22%>The handle of a file opened using the <A HREF="_wcesdk_win32_createfile.htm">CreateFile</A> function.</TD>
+<TD width=27%>The file pointer must be positioned at the beginning of the serialized store information. After the data in the serialized store has been loaded into the certificate store, the file pointer is positioned at the beginning of any data that can follow the serialized store data in the file. If CERT_FILE_STORE_COMMIT_ENABLE is set in the <I>dwFlags </I>parameter, the file handle is duplicated and the store is always committed as a serialized store. The file is not closed when the store is closed.
+<P>Note that in Windows CE the file handle is not duplicated, so the caller should not close the file handle until the corresponding the <A HREF="_wcesdk_crypto2_certclosestore.htm">CertCloseStore</A> function has been called.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CERT_STORE_PROV_REG</TD>
+<TD width=26%>Initializes the store with certificates from a registry subkey.</TD>
+<TD width=22%>The handle of an open registry key, named with the prefix <B>HKEY</B>.</TD>
+<TD width=27%>This provider opens or creates the registry subkeys <B>Certificates</B> under the key passed in the <I>pvPara </I>parameter. The input key is not closed by the provider. Before returning, the provider opens its own copy of the key passed in the <I>pvPara</I> parameter. If CERT_STORE_READONLY_FLAG is set in the low word of the <I>dwFlags</I> parameter, registry subkeys are opened using <B>RegOpenKey</B> with KEY_READ_ACCESS. Otherwise, registry subkeys are created using <B>RegCreateKey</B> with KEY_ALL_ACCESS. Any changes to the contents of the opened store are immediately persisted to the registry. However, if CERT_STORE_READONLY_FLAG is set in the low word of the <I>dwFlags</I> parameter, any attempt to add to the contents of the store or to change a context's property results in an error with the <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A> function returning the E_ACCESSDENIED code. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CERT_STORE_PROV_SYSTEM</TD>
+<TD width=26%>Initializes the store with certificates from the specified system store.</TD>
+<TD width=22%>A system store name passed as a Unicode or ASCII string, such as "MY" or "Root".</TD>
+<TD width=27%>The system store is a logical, collection store consisting of one or more physical stores. After the system store is opened, all of the physical stores that are associated with it are also opened by calls to the <B>CertOpenStore</B> function. The high word of the <I>dwFlags</I> parameter indicates the system store location, usually set to CERT_SYSTEM_STORE_CURRENT_USER. For more information on support for logical stores in Windows CE, see System Store Locations.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CERT_STORE_PROV_SYSTEM_REGISTRY</TD>
+<TD width=26%>Initializes the store with certificates from a physical registry store. The physical store is not opened as a collection store. Enumerations and searches go through only the certificates in that one physical store. The implementation of this provider is the same as the CERT_STORE_PROV_SYSTEM provider implemented in Windows NT 4.0.</TD>
+<TD width=22%>A system store name, passed as a Unicode or ASCII string, such as "MY" or "Root".</TD>
+<TD width=27%>The high word of the <I>dwFlags</I> parameter indicates the system store location, usually set to CERT_SYSTEM_STORE_CURRENT_USER. For more information, see the section on the <I>dwFlags</I> parameter later in this topic. Some system store locations can be open remotely. For details, see System Store Locations.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CERT_STORE_PROV_PHYSICAL</TD>
+<TD width=26%>Initializes the store with certificates from a specified physical store that is a member of a logical system store.</TD>
+<TD width=22%>Both the system store name and physical names.</TD>
+<TD width=27%>Two names are separated with an intervening backslash (\): for example "Root\.LocalMachine". Here, Root is the name of the system store and .LocalMachine is the name of the physical store. The system and physical store names are Unicode strings and cannot contain any backslashes. The high word of the <I>dwFlags</I> parameter indicates the system store location, usually CERT_SYSTEM_STORE_CURRENT_USER. For more information, see the section on the <I>dwFlags</I> parameter later in this topic. Some physical store locations can be opened remotely.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CERT_STORE_PROV_SERIALIZED</TD>
+<TD width=26%>Initializes the store with certificates from a memory location containing a serialized store.</TD>
+<TD width=22%>Pointer to a <A HREF="_wcesdk_crypto2_blob.htm">CRYPT_DATA_BLOB</A> serialized memory BLOB.</TD>
+<TD width=27%>&nbsp;</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT>Additional store providers can be installed by using the <A HREF="_wcesdk_crypto2_cryptinstalloidfunctionaddress.htm">CryptInstallOIDFunctionAddress</A> function.</DT>
+
+<DT><I>dwMsgAndCertEncodingType </I></DT>
+
+<DD>[in] This parameter is unused and should be set to zero.</dd>
+
+<DT><I>hCryptProv </I></DT>
+
+<DD>[in] Handle to a cryptographic provider. Passing NULL in this parameter causes an appropriate, default provider to be used. Using the default provider is recommended. The default or specified cryptographic provider is used for all store APIs that verify the signature of a subject certificate.</dd>
+
+<DT><I>dwFlags </I></DT>
+
+<DD>[in] These values consist of high-word and low-word values combined using a bitwise <B>OR</B> operation.
+
+<P>The low-word portion of the <I>dwFlags</I> parameter controls a variety of general characteristics of the certificate store opened. This portion can be used with all store provider types. Currently defined low-word values are listed in the following table.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=45%>Value</TH>
+<TH width=55%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_CREATE_NEW_FLAG</TD>
+<TD width=55%>A new store is created if one did not exist. The function fails if the store already exists.
+<P>If neither CERT_STORE_OPEN_EXISTING_FLAG nor CERT_STORE_CREATE_NEW_FLAG is set, a store is opened if it exists or is created and opened if it did not already exist.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_DEFER_CLOSE_UNTIL_LAST_FREE_FLAG</TD>
+<TD width=55%>The closing of a store's provider cannot be done when the <B>CertCloseStore</B> function is called but will be deferred if certificates obtained from the store are still in use. The store is actually closed when the last certificate obtained from the store is freed. Any changes made to properties of these certificates, even after the call to the <B>CertCloseStore</B> function, are persisted.
+<P>If this flag is not set and certificates obtained from the store are still in use, the properties of those certificates can be changed, but those changes are not persisted. Setting this flag causes those changes to be persisted.</P>
+
+<P>Note that setting this flag causes extra overhead in doing context duplications and free operations.</P>
+
+<P>If the <B>CertCloseStore</B> function is called with CERT_CLOSE_STORE_FORCE_FLAG, CERT_STORE_DEFER_CLOSE_UNTIL_LAST_FREE_FLAG is ignored.</P>
+
+<P>When this flag is set and a non-NULL <B>HCRYPTPROV</B> is passed, that provider will continue to be used even after the call to the <B>CertCloseStore</B> function. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_DELETE_FLAG</TD>
+<TD width=55%>The store is deleted instead of being opened. The <B>CertOpenStore</B> function returns NULL for both success and failure of the deletion. To determine the success of the deletion, call the <B>GetLastError </B>function, which returns zero if the store was deleted and a nonzero value if it was not deleted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_ENUM_ARCHIVED_FLAG</TD>
+<TD width=55%>Overrides the default procedure of skipping in enumerations all certificates with the CERT_ARCHIVED_PROP_ID property set. If this flag is set, an enumeration of the certificates in the store lists all of the certificates in the store, including those that have the CERT_ARCHIVED_PROP_ID property.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_MANIFOLD_FLAG</TD>
+<TD width=55%>Certificates are checked for their manifold extension. When certificates are found with the same manifold extension, the older certificates are archived by setting their CERT_ARCHIVED_PROP_ID properties. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_NO_CRYPT_RELEASE_FLAG</TD>
+<TD width=55%>This flag is not used when the NULL is passed in the <I>hCryptProv</I> parameter and the default CSP is used. The flag is valid when a non-NULL CSP handle is passed as the <I>hCryptProv</I> parameter. Setting the flag prevents the automatic release of a nondefault CSP when the certificate store is closed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_OPEN_EXISTING_FLAG</TD>
+<TD width=55%>Only an existing store can be opened. If the store does not exist, the function fails.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_READONLY_FLAG</TD>
+<TD width=55%>Any attempt to change the contents of the store results in an error. When this flag is set and a registry-based store provider is being used, the registry subkeys are opened by using <B>RegOpenKey</B> with KEY_READ_ACCESS. Otherwise, the registry subkeys are created by using <B>RegCreateKey</B> with KEY_ALL_ACCESS.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_SET_LOCALIZED_NAME_FLAG</TD>
+<TD width=55%>If this flag is supported, the provider sets the store's CERT_STORE_LOCALIZED_NAME_PROP_ID property. The localized name can be retrieved by calling the <A HREF="_wcesdk_crypto2_certgetstoreproperty.htm">CertGetStoreProperty</A> function with the <I>dwPropID</I> parameter set to CERT_STORE_LOCALIZED_NAME_PROP_ID. This flag is supported for providers of types CERT_STORE_PROV_FILENAME, CERT_STORE_PROV_SYSTEM, CERT_STORE_PROV_SYSTEM_REGISTRY, and CERT_STORE_PROV_PHYSICAL_W.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>CERT_STORE_UPDATE_KEYID_FLAG</TD>
+<TD width=55%>Within CurrentUser and LocalMachine, lists of key identifiers exist. These key identifiers have properties much like the properties of certificates. If the CERT_STORE_UPDATE_KEYID_FLAG is set, then for every key identifier in the store's location that has a CERT_KEY_PROV_INFO_PROP_ID property, that property is automatically updated from the key identifier property CERT_KEY_PROV_INFO_PROP_ID or the CERT_KEY_IDENTIFIER_PROP_ID of the certificate related to that key identifier.</TD>
+</TR>
+</table></div>
+
+
+
+<P>The high word of the <I>dwFlags</I> parameter is used to specify system store registry locations for the system store provider types CERT_STORE_PROV_SYSTEM, CERT_STORE_PROV_SYSTEM_REGISTER, and CERT_STORE_PROV_PHYSICAL. The following are defined high-word values associated with system store providers: 
+</dd>
+</DL>
+
+<P>CERT_SYSTEM_STORE_CURRENT_USER</P>
+
+<P>CERT_SYSTEM_STORE_LOCAL_MACHINE</P>
+
+<P>For additional details, see System Store Locations.</P>
+
+<P>Two additional system store flags can be set in the high word of the <I>dwFlags </I>parameter, as listed in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=48%>Value</TH>
+<TH width=52%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CERT_SYSTEM_STORE_RELOCATE_FLAG</TD>
+<TD width=52%>Overrides the default location of a system store. When it is set, the <I>pvPara</I> parameter must pass a pointer to a <A HREF="_wcesdk_crypto2_cert_system_store_relocate_para.htm">CERT_SYSTEM_STORE_RELOCATE_PARA</A> structure rather than a string. The structure indicates both the name of the store and its location in the registry. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CERT_SYSTEM_STORE_UNPROTECTED_FLAG</TD>
+<TD width=52%>By default, when the CurrentUser "Root" store is opened, any SystemRegistry roots not on the protected root list are deleted from the cache before the <B>CertOpenStore</B> function returns. When this flag is set, this default is overridden and all of the roots in the SystemRegistry are returned and no check of the protected root list is made. </TD>
+</TR>
+</table></div>
+
+<P>One high-word flag, CERT_FILE_STORE_COMMIT_ENABLE, has been added for the file provider types CERT_STORE_PROV_FILE and CERT_STORE_PROV_FILENAME.</P>
+
+<P>When this flag is set, any additions to the store or any changes made to properties of contexts in the store are committed to the file store either when the <B>CertCloseStore</B> function is called or when the <A HREF="_wcesdk_crypto2_certcontrolstore.htm">CertControlStore</A> function is called with CERT_STORE_CONTROL_COMMIT.</P>
+
+<P>The<B> CertOpenStore</B> function fails with E_INVALIDARG if both CERT_FILE_STORE_COMMIT_ENABLE and CERT_STORE_READONLY_FLAG are set in the <I>dwFlags </I>parameter.
+
+<DL>
+<DT><I>pvPara </I></DT>
+
+<DD>[in] Pointer to a VOID that can point to data of different data types depending on the provider being used. Detailed information about the type and content to be passed in the <I>pvPara</I> parameter is specified in the descriptions of the available providers.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>If the function succeeds, the return value is a handle to the certificate store.</P>
+
+<P>If the function fails, the return value is NULL.</P>
+
+<P>Note that the <A HREF="_wcesdk_win32_createfile.htm">CreateFile</A> function, the <A HREF="_wcesdk_win32_readfile.htm">ReadFile</A> function, or registry errors might be propagated and their error codes returned. The <B>CertOpenStore</B> function has a single error code of its own, ERROR_FILE_NOT_FOUND, which indicates that the function was unable to find the provider specified by the <I>lpszStoreProvider</I> parameter.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>A system store is a collection consisting of one or more physical sibling stores. For each system store, there are predefined physical sibling stores. After opening a system store such as MY at CERT_SYSTEM_STORE_CURRENT_USER, the <B>CertOpenStore</B> function is called to open of all of the physical stores in the system store collection. All certificates in those physical stores are available through the logical system store collection.</P>
+
+<P>Note that Windows CE does not support remote access to system stores. Also, the desktop platform supports the flag PKCS_7_ASN_ENCODING, but Windows CE does not and ignores the flag when it is specified.</P>
+
+<P>The desktop platform supports following <I>lpzStoreProvider</I> flags, but Windows CE does not:</P>
+
+<P>CERT_STORE_PROV_FILENAME, CERT_STORE_PROV_COLLECTION</P>
+
+<P>CERT_STORE_PROV_MSG</P>
+
+<P>CERT_STORE_PROV_PKCS7</P>
+
+<P>CERT_STORE_PROV_LDAP</P>
+
+<P>The desktop platform supports the following defined high-word values associated with system store providers, but Windows CE does not:</P>
+
+<P>CERT_SYSTEM_STORE_CURRENT_SERVICE</P>
+
+<P>CERT_SYSTEM_STORE_CURREN_USER_GROUP_POLICY</P>
+
+<P>CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE</P>
+
+<P>CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY</P>
+
+<P>CERT_SYSTEM_STORE_SERVICES</P>
+
+<P>CERT_SYSTEM_STORE_USERS</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>3.0 or later</TD>
+<TD width=18%>Wincrypt.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Crypt32.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><a href="_wcesdk_System_Store_Locations.htm">System Store Locations</a>, <A HREF="_wcesdk_crypto2_certclosestore.htm">CertCloseStore</A>, <A HREF="_wcesdk_crypto2_certcontrolstore.htm">CertControlStore</A>, <A HREF="_wcesdk_crypto2_certgetstoreproperty.htm">CertGetStoreProperty</A>, <A HREF="_wcesdk_crypto2_certgetcertificatecontextproperty.htm">CertGetCertificateContexProperty</A>, <A HREF="_wcesdk_crypto2_certgetstoreproperty.htm">CertGetStoreProperty</A>, <A HREF="_wcesdk_crypto2_certopensystemstore.htm">CertOpenSystemStore</A>, <A HREF="_wcesdk_crypto2_certsavestore.htm">CertSaveStore</A>, <A HREF="_wcesdk_win32_createfile.htm">CreateFile</A>, <A HREF="_wcesdk_crypto2_cryptinstalloidfunctionaddress.htm">CryptInstallOIDFunctionAddress</A>, <A HREF="_wcesdk_win32_readfile.htm">ReadFile</A>, <A HREF="_wcesdk_crypto2_blob.htm">BLOB</A>, <A HREF="_wcesdk_crypto2_cert_system_store_relocate_para.htm">CERT_SYSTEM_STORE_RELOCATE_PARA</A>, <A HREF="_wcesdk_crypto2_blob.htm">CRYPT_DATA_BLOB</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

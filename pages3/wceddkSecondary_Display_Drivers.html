@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Secondary Display Drivers (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="In addition to the primary display, Windows CE&#0150;based platforms can support additional display devices. These additional controllers might be used, for example, to support a Video Graphics Adapter (VGA) output to a CRT screen."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Secondary Display Drivers" />
+<MSHelp:RLTitle Title="Secondary Display Drivers (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="display drivers, secondary" />
+<MSHelp:Keyword Index="K" Term="secondary display drivers" />
+<MSHelp:Keyword Index="A" Term="wceddkSecondary_Display_Drivers" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="display.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925436">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddksecondary_display_drivers"></A>Secondary Display Drivers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>In addition to the primary display, Windows CE&#0150;based platforms can support additional display devices. These additional controllers might be used, for example, to support a Video Graphics Adapter (VGA) output to a CRT screen. Display drivers for such additional display devices are called secondary display drivers. Secondary display drivers are loaded only when an application calls the <B>CreateDC</B> function with the name of the secondary display driver's .dll file. <B>CreateDC</B> returns a handle to a device context that is associated with the secondary display driver. An application can use this device context just like a device context associated with the primary display driver; all of the text and graphics application programming interfaces (APIs) work with the device context. However, applications cannot use any Window Manager functions with the device context because the Window Manager was not involved in creating it. Thus, applications are responsible for rendering the entire display on the secondary display device. If you want to create the appearance of windows, menus, dialog boxes, scroll bars, and so on on the secondary display, your application must draw those items itself, using the text and graphics APIs. If you want to show the contents of the primary display on the secondary display, your application can copy the frame buffer for the primary display to the frame buffer for the secondary display. The secondary display driver is unloaded when there are no remaining device contexts associated with it. When multiple display devices are being used, the GDI makes sure that all drawing calls are routed to the appropriate display driver.</P>
+
+<P>Windows CE&#0150;based platforms can provide a built-in secondary display controller. The controller must be managed by a secondary display driver. The secondary display driver must be implemented as an ordinary Windows CE display driver, and expose the same display DDI as other display drivers. The sample ATI display driver is the only CEPC display driver that will work as a secondary display driver, and then only if the primary display driver is not also an ATI display driver.</P>
+
+<P>If the display controller resides on a removable medium, such as a PC Card, the secondary display driver can be implemented as two DLLs or as a single DLL. In practice, most device driver writers choose to implement two separate DLLs: a secondary display driver that exposes the native display DDI and a stream driver that exposes the stream interface functions. The Device Manager loads the stream interface driver when a user connects the display adapter to the system and registers the driver's special device file name; for example, "VGA1:". The secondary display driver is loaded when an application calls <B>CreateDC</B> and passes in the name of the secondary display driver's .dll file. The secondary display driver gets a handle to the stream interface driver by calling the <B>FileOpen</B> function on the "VGA1:" special device file. The secondary display driver handles all of the graphics processing. When it needs to communicate with the display controller, it uses the stream interface driver's <B>IOControl</B> function.</P>
+
+<P>You may choose to create a single DLL that acts as both secondary display driver and stream driver instead. In this case, the Device Manager loads this combined driver in its own process space to serve as an ordinary stream interface driver, whereas GWES would load the same driver in its process space to act as the secondary display driver. If you choose to implement a combined driver, be aware that because the driver DLL is loaded in separate process spaces, it cannot share global data without using shared memory or a memory-mapped file. Furthermore, having the driver loaded twice wastes system resources.</P>
+
+<P>Many of the stream interface functions are not used by display device drivers because display devices are not particularly oriented to working with streams of data. Display drivers need only have stubs for those functions. For these interfaces, the driver should handle the call and return. The driver's <I>XXX</I><B>_Init</B> and <I>XXX</I><B>_Deinit</B> functions are exceptions. The driver should handle calls to these functions correctly, as is described in <A HREF="wceddkdeveloping_stream_interface_device_drivers.htm">Developing Stream Interface Device Drivers</A>. The Device Manager calls <B><I>XXX</I>_Init</B> when the display adapter is connected to the system. When the adapter is disconnected, the Device Manager calls <B><I>XXX</I>_Deinit</B>. <B><I>XXX</I>_Deinit</B> deletes any data structures and registry entries that were created by the driver's <B><I>XXX</I>_Init</B> function.</P>
+
+<P>Like all Personal Computer Memory Cars International Association (PCMCIA)-based drivers, the stream interface driver must create registry entries that enable the device to be detected. For more information, see <A HREF="wceddkregistry_keys_for_display_drivers.htm">Registry Keys for Display Drivers</A>.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

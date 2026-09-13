@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Making a Phone Call</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Making a Phone Call" />
+<MSHelp:RLTitle Title="Making a Phone Call (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="making a phone call" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Making_a_Phone_Call" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="tapi.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923488">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_making_a_phone_call"></A>Making a Phone Call</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>To place a call, the application must call the <a href="wcesdkrlineMakeCall.htm">lineMakeCall</a> function. TAPI sends LINE_CALLSTATE messages to indicate the progress of the call. For example, LINE_CALLSTATE indicates states of connection, dialing, proceeding, and so on. The messages vary depending on the type of call and the service that is provided. The application should not be designed to one type or one special sequence of call states.</P>
+
+<P>The <B>lineMakeCall</B> function has the following parameters.
+
+<UL type="disc">
+	<LI>A handle to the open line device on which a call is originated.</li>
+
+	<LI>A pointer to the handle to the call. Use this call handle to identify the call when you invoke other telephony operations on the call.</li>
+
+	<LI>A pointer to the destination address. The destination address follows the standard area code and telephone number format.</li>
+
+	<LI>The country code of the called party.</li>
+
+	<LI>A pointer to a <B>LINECALLPARAMS</B> structure. This structure enables the application to specify how to set up the call. Also, it enables the application to select elements, such as the call bearer mode, data rate, expected media, and dialing parameters.</li>
+</UL>
+
+<P>After the <B>lineMakeCall</B> function successfully sets up the call, the application receives a LINE_REPLY message. This message also informs the application that the call handle that is returned by <B>lineMakeCall</B> is valid.</P>
+
+<P>The following code example shows how to open a line and make an outbound call.</P>
+
+<PRE class="code">VOID MakePhoneCall (LPCTSTR lpszPhoneNum)
+{
+  DWORD dwReturn,
+        dwSizeOfTransOut = sizeof (LINETRANSLATEOUTPUT),
+        dwSizeOfCallParams = sizeof (LINECALLPARAMS);
+
+  LPLINECALLPARAMS lpCallParams = NULL;
+  LPLINETRANSLATEOUTPUT lpTransOutput = NULL;
+  
+  TCHAR szDialablePhoneNum[TAPIMAXDESTADDRESSSIZE + 1] = {'\0'};
+
+  // Initialize g_MakeCallRequestID.
+  g_MakeCallRequestID = 0;
+  
+  // Open the current line.
+  if (dwReturn = lineOpen (
+          g_hLineApp,                 // Usage handle for TAPI
+          g_dwCurrentLineID,          // Cannot use the LINEMAPPER value
+          &amp;g_CurrentLineInfo.hLine,   // Line handle
+          g_CurrentLineInfo.dwAPIVersion, 
+                                      // API version number
+          0,                          // Must set to zero for Windows CE
+          0,                          // No data passed back 
+          LINECALLPRIVILEGE_NONE,     // Can only make an outgoing call
+          0,                          // Media mode 
+          NULL))                      // Must set to NULL for Windows CE
+  {
+    goto exit;
+  }
+  
+  // Call translate address before dialing.
+  do
+  {
+    // Allocate memory for lpTransOutput.
+    if (!(lpTransOutput = (LPLINETRANSLATEOUTPUT) LocalAlloc (
+                                                    LPTR,  
+                                                    dwSizeOfTransOut)))
+    {
+      goto exit;
+    }
+
+    lpTransOutput-&gt;dwTotalSize = dwSizeOfTransOut;
+
+    if (dwReturn = lineTranslateAddress (
+          g_hLineApp,               // Usage handle for TAPI
+          g_dwCurrentLineID,        // Line device identifier
+          g_CurrentLineInfo.dwAPIVersion, 
+                                    // Highest TAPI version supported
+          lpszPhoneNum,             // Address to be translated
+          0,                        // Must be 0 for Windows CE
+          0,                        // No associated operations
+          lpTransOutput))           // Result of the address translation
+    {
+      goto exit;
+    }
+    
+    if (lpTransOutput-&gt;dwNeededSize &lt;= lpTransOutput-&gt;dwTotalSize)
+      break; 
+    else
+    {
+      dwSizeOfTransOut = lpTransOutput-&gt;dwNeededSize;
+      LocalFree (lpTransOutput);
+      lpTransOutput = NULL;
+    }
+
+  } while (TRUE);
+     
+  dwSizeOfCallParams += lpTransOutput-&gt;dwDisplayableStringSize;
+  
+  if (!(lpCallParams = (LPLINECALLPARAMS) LocalAlloc (
+                                                  LPTR, 
+                                                  dwSizeOfCallParams)))
+  {
+    goto exit;
+  }
+
+  // Set the call parameters.
+  lpCallParams-&gt;dwTotalSize = dwSizeOfCallParams;
+  lpCallParams-&gt;dwBearerMode = LINEBEARERMODE_VOICE;
+  lpCallParams-&gt;dwMediaMode = LINEMEDIAMODE_DATAMODEM; 
+  lpCallParams-&gt;dwCallParamFlags = LINECALLPARAMFLAGS_IDLE;
+  lpCallParams-&gt;dwAddressMode = LINEADDRESSMODE_ADDRESSID;
+  lpCallParams-&gt;dwAddressID = g_dwCurrentLineAddr;
+  lpCallParams-&gt;dwDisplayableAddressSize = 
+                                lpTransOutput-&gt;dwDisplayableStringSize;
+  lpCallParams-&gt;dwDisplayableAddressOffset = sizeof (LINECALLPARAMS);
+
+  // Save the translated telephone number for dialing.
+  lstrcpy (szDialablePhoneNum, 
+    (LPTSTR) ((LPBYTE) lpTransOutput + lpTransOutput-&gt;dwDialableStringOffset));
+  lstrcpy ((LPTSTR) ((LPBYTE) lpCallParams+ lpTransOutput-&gt;dwDisplayableStringOffset), 
+    (LPTSTR) ((LPBYTE) lpTransOutput + lpTransOutput-&gt;dwDisplayableStringOffset));
+
+  // Set the cursor as the wait cursor.
+  SetCursor (LoadCursor (NULL, IDC_WAIT));
+
+  // Make the telephone call. lpCallParams should be NULL if the default 
+  // call setup parameters are requested.
+  g_MakeCallRequestID = lineMakeCall (g_CurrentLineInfo.hLine,            
+                                      &amp;g_hCall,         
+                                      szDialablePhoneNum, 
+                                      0, 
+                                      lpCallParams);    
+
+  // Set the cursor back to an arrow.
+  SetCursor (0);
+
+  if (g_MakeCallRequestID &gt; 0) 
+  {
+    g_bCurrentLineAvail = FALSE;
+
+    DialogBoxParam (g_hInst, 
+                    MAKEINTRESOURCE(IDD_DIALING), 
+
+                    g_hwndMain, 
+                    (DLGPROC) DialingProc, 0);
+  }
+  else 
+  {
+    ErrorBox (TEXT("Failed in making the phone call, function")
+              TEXT("\nlineMakeCall failed."));
+    CurrentLineClose ();
+  }
+
+exit :
+
+  if (lpCallParams)
+    LocalFree (lpCallParams);
+  
+  if (lpTransOutput)
+    LocalFree (lpTransOutput);
+
+  // If the lineMakeCall function call did not succeed, but the line was opened, 
+  // close it.
+  if ((g_MakeCallRequestID &lt;= 0) &amp;&amp; (g_CurrentLineInfo.hLine))
+    CurrentLineClose ();
+
+  return;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

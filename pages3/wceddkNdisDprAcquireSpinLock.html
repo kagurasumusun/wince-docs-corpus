@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>NdisDprAcquireSpinLock (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="This function acquires a spin lock so that the caller can synchronize access to resources shared among driver functions not related to interrupts."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="NdisDprAcquireSpinLock" />
+<MSHelp:RLTitle Title="NdisDprAcquireSpinLock (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="NdisDprAcquireSpinLock" />
+<MSHelp:Keyword Index="A" Term="wceddkNdisDprAcquireSpinLock" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="apiref" />
+<MSHelp:Attr Name="Filename" Value="funct_1.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+<MSHelp:Attr Name="APIName" Value="NdisDprAcquireSpinLock" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924869">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkndisdpracquirespinlock"></A>NdisDprAcquireSpinLock</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This function acquires a spin lock so that the caller can synchronize access to resources shared among driver functions not related to interrupts.</P>
+
+<PRE class="syntax"><B>VOID NdisDprAcquireSpinLock(</B>
+<B>IN PNDIS_SPIN_LOCK</B> <I>SpinLock</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>SpinLock</I></DT>
+
+<DD>Pointer to an opaque spin lock, already initialized by the caller.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>In Windows CE, NDIS spinlocks are implemented using critical sections.</P>
+
+<P>The NIC driver must initialize a variable of type NDIS_SPIN_LOCK with the <B>NdisAllocateSpinLock</B> function before it calls any other <B>Ndis</B><I>XXX</I><B>SpinLock </B>function. The driver must provide resident storage for the spin lock(s) it uses.</P>
+
+<P>This function is an optimized version of <B>NdisAcquireSpinLock</B> that a miniport can call only while running at IRQL DISPATCH_LEVEL.</P>
+
+<P>After acquiring a spin lock with this function, the caller must release that lock with a call to the <B>NdisDprReleaseSpinLock</B> function. An NIC driver must call <B>NdisDprReleaseSpinLock</B> following each call to this function. Otherwise, a deadlock occurs, hanging the driver.</P>
+
+<P>A spin lock acquired with this function must be released with <B>NdisDprReleaseSpinLock</B>. A spin lock acquired with <B>NdisAcquireSpinLock</B> must be released with <B>NdisReleaseSpinLock</B>.</P>
+
+<P>A driver should never hold a spin lock for an extended period &#0151; more than a few instructions. Holding a spin lock for longer than 25 microseconds degrades both system and driver performance.</P>
+
+<P>A miniport driver cannot use a spin lock to protect resources that its other functions share with the <B>MiniportISR</B> and/or <B>MiniportDisableInterrupt</B> functions. Instead, a miniport must call the <B>NdisMSynchronizeWithInterrupt</B> function so that its <B>MiniportSynchronizeISR</B> function accesses such shared resources at the same DIRQL at which its <B>MiniportISR</B> and/or <B>MiniportDisableInterrupt </B>functions do.</P>
+
+<P>A driver that calls this function must be running at IRQL DISPATCH_LEVEL.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wceddkndisacquirespinlock.htm">NdisAcquireSpinLock</A>, <A HREF="wceddkndisdprreleasespinlock.htm">NdisDprReleaseSpinLock</A>, <A HREF="wceddkndismsynchronizewithinterrupt.htm">NdisMSynchronizeWithInterrupt</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

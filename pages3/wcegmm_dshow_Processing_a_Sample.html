@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Processing a Sample (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="When a filter's input pin receives a sample, the filter processes the data in the sample and then delivers the sample to the next downstream filter."/>
+<xml>
+<MSHelp:TOCTitle Title="Processing a Sample" />
+<MSHelp:RLTitle Title="Processing a Sample (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_Processing_a_Sample" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924085">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_processing_a_sample"></A>Processing a Sample</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>When a filter's input pin receives a sample, the filter processes the data in the sample and then delivers the sample to the next downstream filter. As the previous section described, the filter can do all of its processing while inside the <a href="wcesdkrimeminputpin__receive.htm">IMemInputPin::Receive</a> on the downstream input pin, passing it a pointer to the sample's method, or it can hold the sample and process it afterward.</P>
+
+<P>Within the call to <B>Receive</B>, the input pin has the option of blocking the upstream filter's calling thread. You can query the input pin's behavior by calling the <a href="wcesdkrimeminputpin__receivecanblock.htm">IMemInputPin::ReceiveCanBlock</a> method. If the return value is S_OK, the pin might block on a call to <B>Receive</B>. If the return value is S_FALSE, the pin will never block on calls to <B>Receive</B>. Based on the return value, the upstream filter might use a separate worker thread to deliver samples.</P>
+
+<P>Some filters process samples in place, without copying any data. Other filters copy the data before processing it. Obviously, it is better to process samples in place whenever possible, to avoid the overhead of unneeded copy operations.</P>
+
+<P>The input pin can reject samples by returning an error code or S_FALSE in its <B>Receive</B> method. The value S_FALSE indicates that the pin is flushing data (see "Flushing" below). An error code indicates some other problem. For example, if the filter is stopped, the return value is VFW_E_WRONG_STATE. If a pin rejects a sample, the upstream filter calls the <a href="wcesdkripin__endofstream.htm">IPin::EndOfStream</a> method and stops sending data. If the pin returned an error code, the upstream filter also signals EC_ERRORABORT to the filter graph manager.</P>
+
+<P>The upstream filter must serialize all of its <B>Receive</B> calls to a given input pin.</P>
+
+<H2 class="dtH2"><A NAME="wcegmm_dshow_end_of_stream"></A>End of Stream</H2>
+
+<P>When a source filter has no more data to send, it calls the <a href="wcesdkripin__endofstream.htm">IPin::EndOfStream</a> method on the downstream input pin. The downstream filter propagates the call to the next filter. Eventually the <B>EndOfStream</B> call reaches the renderer filter. The renderer filter signals EC_COMPLETE to the filter graph manager.</P>
+
+<P>Before posting an EC_COMPLETE notification to the application, the filter graph manager waits until all the streams signal EC_COMPLETE. The application does not receive an EC_COMPLETE notice until all the streams have completed. To determine the number of streams in the graph, the filter graph manager counts the number of filters that support <a href="wcesdkrimediaseeking_interface.htm">IMediaSeeking</a> or <a href="wcesdkrimediaposition_interface.htm">IMediaPosition</a> and have a <I>rendered input pin</I>. A rendered input pin is an input pin with no corresponding outputs. The <a href="wcesdkripin__queryinternalconnections.htm">IPin::QueryInternalConnections</a> method returns zero for a rendered input pin.</P>
+
+<P>Filters must serialize <B>EndOfStream</B> calls with <a href="wcesdkrimeminputpin__receive.htm">IMemInputPin::Receive</a> calls.</P>
+
+<H2 class="dtH2"><A NAME="wcegmm_dshow_flushing"></A>Flushing</H2>
+
+<P>Flushing is the process of discarding all the pending samples in the graph. Flushing enables the graph to be more responsive when events alter the normal data flow. For example, in a seek operation, pending data is flushed from the graph before new data is introduced. If the graph contains multiple streams, it is possible to flush individual streams separately.</P>
+
+<P>Flushing is a two-stage process:
+
+<OL type="1">
+	<LI>The source filter calls <a href="wcesdkripin__beginflush.htm">IPin::BeginFlush</a> on a downstream input pin. The downstream filter flushes any pending data and calls <B>BeginFlush</B> on the next input pin. The call propagates downstream until it reaches the renderer. </li>
+
+	<LI>The source filter calls <a href="wcesdkripin__endflush.htm">IPin::EndFlush</a> on the downstream input pin. Again, the downstream filter propagates this call. </li>
+</OL>
+
+<P>When the <B>BeginFlush</B> method is called on a filter's input pin, the filter performs the following actions:
+
+<UL type="disc">
+	<LI>Returns from any blocking calls to the input pin's <a href="wcesdkrimeminputpin__receive.htm">IMemInputPin::Receive</a> method. </li>
+
+	<LI>Rejects any further samples in calls to <B>Receive</B>, until the <B>EndFlush</B> method is called. </li>
+
+	<LI>Discards any samples that were queued for delivery to downstream filters. </li>
+
+	<LI>Clears any pending calls to <a href="wcesdkripin__endofstream.htm">IPin::EndOfStream</a>. </li>
+
+	<LI>Clears any pending EC_COMPLETE notifications. </li>
+
+	<LI>Calls <B>BeginFlush</B> on downstream input pins. </li>
+</UL>
+
+<P>When the <B>EndFlush</B> method is called, the filter performs the following actions:
+
+<UL type="disc">
+	<LI>Waits for queued samples to be discarded. </li>
+
+	<LI>Calls <B>EndFlush</B> downstream. </li>
+</UL>
+
+<P>At this point, the filter can accept samples again.</P>
+
+<P>In the pull model, the parser filter initiates flushing rather than the source filter. The sequence of events is the same, except that the parser also calls <B>BeginFlush</B> and <B>EndFlush</B> on the source filter's output pin.</P>
+
+<H2 class="dtH2"><A NAME="wcegmm_ddhal_critical_sections_in_filters"></A>Critical Sections in Filters</H2>
+
+<P>Because filter operations are multithreaded, it is crucial that a filter serialize certain operations. Otherwise, race conditions can result. For example, the filter might try to use an allocator that is already decommitted. Filters use two critical sections, one to hold a streaming lock and the other to hold a filter state lock.</P>
+
+<P>The streaming lock serializes streaming operations. The filter holds this lock when it processes the following method calls:
+
+<UL type="disc">
+	<LI><a href="wcesdkrimeminputpin__receive.htm">IMemInputPin::Receive</a></li>
+
+	<LI><a href="wcesdkrimeminputpin__receivemultiple.htm">IMemInputPin::ReceiveMultiple</a></li>
+
+	<LI><a href="wcesdkripin__endofstream.htm">IPin::EndOfStream</a></li>
+
+	<LI><a href="wcesdkripin__newsegment.htm">IPin::NewSegment</a></li>
+</UL>
+
+<P>The filter state lock serializes state changes. The filter holds this lock when it processes the following method calls:
+
+<UL type="disc">
+	<LI><a href="wcesdkrimediafilter__pause.htm">IMediaFilter::Pause</a></li>
+
+	<LI><a href="wcesdkrimediafilter__run.htm">IMediaFilter::Run</a></li>
+
+	<LI><a href="wcesdkrimediafilter__stop.htm">IMediaFilter::Stop</a></li>
+
+	<LI><a href="wcesdkripin__beginflush.htm">IPin::BeginFlush</a></li>
+
+	<LI><a href="wcesdkripin__endflush.htm">IPin::EndFlush</a></li>
+</UL>
+
+<P>Within the <B>Stop</B> and <B>EndFlush</B> methods, the filter must synchronize its filter state with its streaming state. In the <B>Stop</B> method, the filter holds the filter state lock and decommits the input pin's allocator. Then it holds the streaming lock and decommits the output pin's allocator.</P>
+
+<H2 class="dtH2"><A NAME="wcegmm_ddhal_base_classes_for_data_flow"></A>Base Classes for Data Flow</H2>
+
+<P>The following base classes are useful for implementing data flow in a filter.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Class</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><a href="wcesdkrcoutputqueue_class.htm">COutputQueue</a></TD>
+<TD width=63%>Queues data to be delivered downstream. Uses a worker thread for delivering samples.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><a href="wcesdkrcpullpin_class.htm">CPullPin</a></TD>
+<TD width=63%>Input pin on a parser filter. Uses a worker thread to pull data from a source filter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><a href="wcesdkrcsourcestream_class.htm">CSourceStream</a></TD>
+<TD width=63%>Output pin on a source filter. Uses a worker thread to push data downstream.</TD>
+</TR>
+</table></div>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

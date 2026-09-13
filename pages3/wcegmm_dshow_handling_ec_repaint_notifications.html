@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Handling EC_REPAINT Notifications (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="The EC_REPAINT notification is sent only when the renderer is either paused or stopped. This notification signals to the filter graph manager that the renderer needs data."/>
+<xml>
+<MSHelp:TOCTitle Title="Handling EC_REPAINT Notifications" />
+<MSHelp:RLTitle Title="Handling EC_REPAINT Notifications (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_handling_ec_repaint_notifications" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924139">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_handling_ec_repaint_notifications"></A>Handling EC_REPAINT Notifications</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The <a href="wcesdkrevent_notification_codes__ec_repaint.htm">EC_REPAINT</a> notification is sent only when the renderer is either paused or stopped. This notification signals to the filter graph manager that the renderer needs data. If the filter graph is stopped when it receives one of these notifications, it will pause the filter graph, wait for all filters to receive data (by calling <a href="wcesdkrcbasefilter__getstate.htm">GetState</a>), and then stop it again. When stopped, a video renderer should hold on to the image so that subsequent WM_PAINT messages can be handled. </P>
+
+<P>Therefore, if a video renderer receives a WM_PAINT message when stopped or paused, and it has nothing with which to paint its window, then it should send <B>EC_REPAINT</B> to the filter graph manager. If an <B>EC_REPAINT</B> notification is received while paused, then the filter graph manager calls <a href="wcesdkrimediaposition__put_currentposition.htm">IMediaPosition::put_CurrentPosition</a> with the current position (that is, seeks to the current position). This causes the source filters to flush the filter graph and causes new data to be sent through the filter graph. </P>
+
+<P>A renderer must send only one of these notifications at a time. Therefore, once the renderer sends a notification, it should ensure no more are sent until some samples are delivered. The conventional way to do this is to have a flag to signify that a repaint can be sent, which is turned off after an <B>EC_REPAINT</B> notification is sent. This flag should be reset once data is delivered or when the input pin is flushed, but not if end-of-stream is signaled on the input pin. </P>
+
+<P>If the renderer does not monitor its <B>EC_REPAINT</B> notifications, it will flood the filter graph manager with <B>EC_REPAINT</B> requests (which are relatively expensive to process). For example, if a renderer has no image to draw, and another window is dragged across the window of the renderer in a full-drag operation, the renderer receives multiple WM_PAINT messages. Only the first of these should generate an <B>EC_REPAINT</B> event notification from the renderer to the filter graph manager. </P>
+
+<P>A renderer should send its input pin as the first parameter to the <B>EC_REPAINT</B> notification. By doing this, the attached output pin will be queried for <a href="wcesdkrimediaeventsink_interface.htm">IMediaEventSink</a>, and if supported, the <B>EC_REPAINT</B> notification will be sent there first. This enables output pins to handle repaints before the filter graph must be touched. This will not be done if the filter graph is stopped, because no buffers would be available from the decommitted renderer allocator. </P>
+
+<P>If the output pin cannot handle the request and the filter graph is running, then the <B>EC_REPAINT</B> notification is ignored. An output pin must return NOERROR (S_OK) from <a href="wcesdkrimediaeventsink__notify.htm">IMediaEventSink::Notify</a> to signal that it processed the repaint request successfully. The output pin will be called on the filter graph manager worker thread, which avoids having the renderer call the output pin directly, and so sidesteps any deadlock issues. If the filter graph is stopped or paused and the output doesn't handle the request, then the default processing is done. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

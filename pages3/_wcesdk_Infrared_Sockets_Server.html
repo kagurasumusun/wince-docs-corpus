@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Infrared Sockets Server</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Infrared Sockets Server" />
+<MSHelp:RLTitle Title="Infrared Sockets Server (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Infrared, Sockets server sample" />
+<MSHelp:Keyword Index="K" Term="samples, Infrared Sockets server" />
+<MSHelp:Keyword Index="K" Term="secure sockets, Infrared Sockets server sample" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Infrared_Sockets_Server" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="winsock.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923619">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_infrared_sockets_server"></A>Infrared Sockets Server</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>In this sample an IrSock server allocates a socket and binds it to the IAS name, "ServerOne". It then allocates a single connection object and prepares the server to listen for incoming connections. When the client contacts the server, the server accepts the connection. It then receives a string from the client, passes one back, and closes the connection.</P>
+
+<PRE class="code">#include &lt;windows.h&gt;
+#include &lt;af_irda.h&gt;
+
+int WINAPI WinMain (
+              HINSTANCE hInstance,    // Handle to the current instance
+              HINSTANCE hPrevInstance,// Handle to the previous instance
+              LPTSTR lpCmdLine,       // Pointer to the command line
+              int nCmdShow)           // Show state of the window
+{
+  SOCKET ServerSock,              // IR socket bound to the server 
+         ClientSock;              // IR socket bound to the client 
+
+  SOCKADDR_IRDA address = {AF_IRDA, 0, 0, 0, 0, "IRServer"};
+                                  // Specifies the server socket address
+  int index = 0,                  // Integer index
+      iReturn;                    // Return value of recv function
+  char szServerA[100];            // ASCII string 
+  TCHAR szServerW[100];           // Unicode string
+  TCHAR szError[100];             // Error message string
+  
+
+  // Create a socket bound to the server.
+  if ((ServerSock = socket (AF_IRDA, SOCK_STREAM, 0)) == INVALID_SOCKET) 
+  {
+    wsprintf (szError, TEXT("Allocating socket failed. Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    return FALSE;
+  }
+
+  // Associate the server socket address with the server socket.
+  if (bind (ServerSock, (struct sockaddr *)&amp;address, sizeof (address))
+           == SOCKET_ERROR) 
+  {
+    wsprintf (szError, TEXT("Binding socket failed. Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    closesocket (ServerSock);
+    return FALSE;
+  }
+
+  // Establish a socket to listen for incoming connections.
+  if (listen (ServerSock, 5) == SOCKET_ERROR) 
+  {
+    wsprintf (szError, 
+              TEXT("Listening to the client failed. Error: %d"),
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    closesocket (ServerSock);
+    return FALSE;
+  }
+
+  // Accept a connection on the socket.
+  if ((ClientSock = accept (ServerSock, 0, 0)) == INVALID_SOCKET)
+  {
+    wsprintf (szError, TEXT("Accepting connection with client failed.")
+              TEXT(" Error: %d"), WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    closesocket (ServerSock);
+    return FALSE;
+  }
+
+  // Stop listening for connections from clients.
+  closesocket (ServerSock);
+
+  // Send a string from the server socket to the client socket.
+  if (send (ClientSock, "To Client!", strlen ("To Client!") + 1, 0)
+           == SOCKET_ERROR) 
+  {
+    wsprintf (szError, 
+              TEXT("Sending data to the client failed. Error: %d"),
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+  }
+
+  // Receive data from the client.
+  iReturn = recv (ClientSock, szServerA, sizeof (szServerA), 0);
+
+  // Check if there is any data received. If there is, display it.
+  if (iReturn == SOCKET_ERROR)
+  {
+    wsprintf (szError, TEXT("No data is received, recv failed.")
+              TEXT(" Error: %d"), WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Server"), MB_OK);
+  }
+  else if (iReturn == 0)
+  {
+    MessageBox (NULL, TEXT("Finished receiving data"), TEXT("Server"),
+                MB_OK);
+  }
+  else
+  {
+    // Convert the ASCII string to a Unicode string.
+    MultiByteToWideChar (CP_ACP, 0, szClientA, -1, szClientW, sizeof szClientW/sizeof WCHAR);
+
+    // Display the string received from the client.
+    MessageBox (NULL, szServerW, TEXT("Received From Client"), MB_OK);
+  }
+ 
+  // Close the client and server sockets.
+  closesocket (ClientSock);
+
+  return 0;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

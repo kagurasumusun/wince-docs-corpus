@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Introduction to the Windows CE Driver Development Kit (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="Like other operating systems, Microsoft Windows CE implements software called device drivers, whose purpose is to manage, or drive, hardware devices."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Introduction to the Windows CE Driver Development Kit" />
+<MSHelp:RLTitle Title="Introduction to the Windows CE Driver Development Kit (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Introduction to the Windows CE Driver Development Kit" />
+<MSHelp:Keyword Index="A" Term="wceddkIntroduction_to_the_Windows_CE_Driver_Development_Kit" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="overview.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924472">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkintroduction_to_the_windows_ce_driver_development_kit"></A>Introduction to the Windows CE Driver Development Kit</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Like other operating systems, Microsoft Windows CE implements software called device drivers, whose purpose is to manage, or drive, hardware devices. A device driver links an operating system and a device, making it possible for the operating system to recognize the device and to present the device's services to applications. Windows CE allows original equipment manufacturers (OEMs) and independent hardware vendors (IHVs) to write drivers for devices that are built into a Windows CE-based platform or for installable devices that users connect to Windows CE-based platforms. Built-in devices are integral to a Windows CE-based platform and are installed by the platform manufacturer. Display screens and PC Card or USB controllers are often built-in. Installable devices are third-party peripheral devices that end users can connect to a Windows CE-based platform via appropriate hardware sockets at any time. Printers and PC Card devices are two examples of installable devices.</P>
+
+<P>The <I>Microsoft Windows CE Driver Development Kit </I>supplies documentation enabling you to create device drivers for Windows CE. The Driver Development Kit is packaged with the Microsoft Windows CE Platform Builder, which contains source code and libraries for OEMs who build custom Windows CE&#0150;based platforms, and source code for a number of sample device drivers. OEMs are encouraged to use these sample device drivers as the basis for their own device drivers. This chapter provides an overview of device-driver architecture and discusses the primary Windows CE device driver.</P>
+
+<P>All device drivers in Windows CE are dynamic-link libraries (DLLs) and may use the standard Windows CE APIs (Win32-based) in their implementations. This is in contrast to drivers on Windows 2000 and Windows 98 where drivers use the Windows Driver Model (WDM) interfaces and run either in user-mode or kernel-mode, with special privileges based on what mode they are in. Developing device driver DLLs for Windows CE is typically easier than for Windows 2000 and Windows 98, since the Windows CE driver architecture is significantly less complex than WDM.</P>
+
+<P>Windows CE offers two device driver models that are unique to Windows CE operating system, <I>stream interface drivers</I> and <I>native device drivers</I>. Stream interface drivers all expose the same interface &#0151; the stream interface functions &#0151; to the rest of the system. Native device drivers expose a custom-purpose interface to the rest of the system; no two native device drivers expose the same interface.</P>
+
+<P>There is some overlap between these two categories; while most of the sample drivers included in the Windows CE Platform Builder are clearly either native device drivers or stream interface drivers, some are hybrid in the sense that they expose both a custom-purpose interface and a stream interface to the rest of the system. These hybrid device drivers are ones that primarily need to expose a custom-purpose interface, but also need to interact with specific parts of the operating system in ways that are only allowed for stream interface drivers. For example, Windows CE only sends power-up and power-down notifications &#0151; messages that the system is turning off or has just turned on &#0151; to stream interface drivers. Native device drivers that need to receive these messages can implement a minimal stream interface in addition to their primary custom-purpose interfaces.</P>
+
+<P>The two Windows CE driver models are differentiated by the software interfaces that they expose and not by the devices that they serve. There is no requirement that built-in devices use the native device driver model while installable devices use the stream interface model. In fact, some of Microsoft's sample device drivers for built-in devices expose the stream interface functions. Similarly, there is no reason why an IHV could not write a driver for an installable device which exposes an entirely unique interface to the rest of the system, albeit at the expense of losing access to the robust support infrastructure Windows CE provides for stream interface drivers.</P>
+
+<P>Typically, native device drivers are designed for low-level, built-in hardware, such as keyboards, screens, touch devices, and PC Card or USB controllers. These devices are generally fundamental to a Windows CE&#0150;based platforms and each has a very specialized purpose, making them good candidates for exposing custom-purpose interfaces. OEMs, when they design their Windows CE-based platforms, will have to decide how to implement drivers for all the built-in hardware on their platforms. In most cases, an OEM may choose to port or customize the sample native device drivers provided by Microsoft to their Windows CE&#0150;based platform. But in some cases, an OEM may choose to create their own native device drivers for a specific device.</P>
+
+<P>Stream interface drivers are a generic type of device driver. Stream interface drivers implement a fixed set of functions &#0151; the stream interface functions. The stream interface functions are designed to allow applications to interact with the device driver as through it were a file. And in fact, applications interact with stream interface drivers through special filenames in the file system. Stream interface drivers support almost any kind of peripheral device that can be attached to a Windows CE&#0150;based platform; any device that can be thought of as logically producing or consuming streams of data is a good candidate for a stream interface driver. In most cases, drivers for installable devices, such as PC Card or USB client devices, should expose the stream interface functions, although this is not required. One can also create stream interface drivers to serve devices that are designed as part of a Windows CE&#0150;based platform in the case when Microsoft has not defined a specific interface for a particular type of device. Some common types of built-in devices, such as serial ports, use stream interface drivers because the functionality of the devices is well suited to the structure of a stream interface driver.</P>
+
+<P>The following illustration shows devices for which Microsoft provides sample drivers in the Windows CE Platform Builder, and the driver models used by the corresponding sample drivers.</P>
+
+<P class="fig"><IMG SRC="venn.gif" ALT="" BORDER=0></P>
+
+<P>Device drivers in Windows CE are managed by a variety of different operating system modules. Drivers that are integral to a Windows CE-based platform's user interface &#0151; such as the keyboard and display &#0151; are managed by the Graphics, Windowing, and Event (GWE) module. All of the device drivers managed by GWE are native device drivers. GWE loads its drivers when the system boots. A special process called the Device Manager handles stream interface drivers. Device manager loads some stream interface drivers when the system boots, if those drivers are listed in the registry. Finally, any process has the ability to load a device driver after the system has booted, generally because a user has connected an installable device to the Windows CE-based platform. The Device Manager does this for PC Card client drivers, the USBD module does this for USB client device drivers, etc. The following table classifies the sample device drivers in terms of what interfaces they expose and what Windows CE module is responsible for loading them.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>&nbsp;</TH>
+<TH width=33%>Native Device Driver</TH>
+<TH width=34%>Stream Interface Driver</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Loaded by GWE when Windows CE boots</TD>
+<TD width=33%>Keyboard
+<P>Mouse</P>
+
+<P>Touch Screen</P>
+
+<P>Display</P>
+
+<P>Battery</P>
+
+<P>Notification LED</P>
+</TD>
+<TD width=34%>none</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Loaded by the Device Manager when Windows CE boots</TD>
+<TD width=33%>PCMCIA Host Controller
+<P>USB Host Controller driver</P>
+
+<P>NDIS.DLL</P>
+</TD>
+<TD width=34%>Audio driver
+<P>Serial port driver</P>
+
+<P>Parallel port driver</P>
+
+<P>Port Monitor</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Loaded as needed by the Device Manager, USBD, etc.</TD>
+<TD width=33%>PC Card Client drivers
+<P>USB Client drivers</P>
+
+<P>NDIS Miniport drivers</P>
+</TD>
+<TD width=34%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<P>Independent of the driver model, a device driver can be either <I>monolithic</I> or <I>layered</I>. Monolithic drivers implement their interface directly in terms of actions on the device they control. Layered drivers separate the implementation into two layers &#0151; an upper layer which exposes the driver's native or stream interface, and a lower layer that performs the hardware interactions. Many of the sample drivers included in the Windows CE Platform Builder are layered drivers; this reduces the work that OEMs must do to port a driver to new hardware, since all the hardware specific details are contained in the lower layer.</P>
+
+<P>Device drivers can access their devices directly if the devices are mapped into system memory, or they may need to use the services of lower-level device drivers in order to access their devices. For example, device drivers for PC Card devices need to use the services of the PC Card controller driver to access PC Card devices. Conversely, display device drivers typically access the display hardware directly through a block of memory addresses that are hardwired to the display. Finally, device drivers may interact with their devices by responding to interrupts generated by the devices, by polling the devices as necessary.</P>
+
+<P>The remainder of this documentation<I> </I>explains in detail how to implement the device driver models.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

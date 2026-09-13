@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ProtocolStatus</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="ProtocolStatus" />
+<MSHelp:RLTitle Title="ProtocolStatus" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_ProtocolStatus" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928759">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_protocolstatus"></A>ProtocolStatus</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function is a required driver function that handles status-change notifications raised by an underlying connectionless network adapter driver or by NDIS.</P>
+
+<PRE class="syntax"><B>VOID
+ProtocolStatus(
+IN NDIS_HANDLE</B> <I>ProtocolBindingContext</I>,
+<B>IN NDIS_STATUS</B> <I>GeneralStatus</I>,
+<B>IN PVOID</B> <I>StatusBuffer</I>
+<B>IN UINT</B> <I>StatusBufferSize</I> <B>);</B></PRE>
+
+<P><B>ProtocolStatus</B> is a required driver function that handles status-change notifications raised by an underlying connectionless network adapter driver or by NDIS. </P>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>ProtocolBindingContext </I></DT>
+
+<DD>Specifies the handle to a protocol-allocated context area in which the protocol driver maintains per-binding runtime state. The driver supplied this handle when it called <A HREF="_wcesdk_ndisopenadapter.htm">NdisOpenAdapter</A>. </dd>
+
+<DT><I>GeneralStatus </I></DT>
+
+<DD>Indicates the general status code, either raised by NDIS or propagated from the underlying driver's call to <A HREF="_wcesdk_ndismindicatestatus.htm">NdisMIndicateStatus</A>. </dd>
+
+<DT><I>StatusBuffer </I></DT>
+
+<DD>Points to a buffer containing medium-specific data that depends on the value of <I>GeneralStatus</I>. 
+
+<P>For example, if the <I>GeneralStatus</I> argument is NDIS_STATUS_RING_STATUS, this parameter points to a ULONG-sized bitmask and <I>StatusBufferSize</I> is four. As another example, if <I>GeneralStatus</I> is NDIS_STATUS_WAN_LINE_UP, this parameter points to an <B>NDIS_WAN_LINE_UP</B> structure and <I>StatusBufferSize</I> is <B>sizeof(</B>NDIS_STATUS_WAN_LINE_UP<B>)</B>.
+
+
+<P>For some NDIS_STATUS_<I>XXX</I> values, this pointer is NULL and <I>StatusBufferSize</I> is set to zero. 
+</dd>
+
+<DT><I>StatusBufferSize </I></DT>
+
+<DD>Specifies the number of bytes at <I>StatusBuffer</I>. </dd>
+</DL>
+
+<P class="label"><B>Comments</B></P>
+
+<P>A call to <B>ProtocolStatus</B> notifies the protocol about changes in status of the underlying network adapter or its driver. </P>
+
+<P><B>ProtocolStatus</B> interprets two basic pieces of information: 
+
+<OL type="1">
+	<LI>A general status code, defined by NDIS as an NDIS_STATUS_<I>XXX</I> value, indicating a change on the network adapter or in the underlying driver </li>
+
+	<LI>If NDIS has called the underlying driver's <A HREF="_wcesdk_miniportreset.htm">MiniportReset</A> function in an attempt to restore the network adapter to an operational state, NDIS can substitute NDIS_STATUS_RESET_START for the <I>GeneralStatus</I> indicated in the miniport's call to <B>NdisMIndicateStatus</B>. </li>
+
+	<LI>Depending on the status at <I>GeneralStatus</I>, additional information about the specific reason for the change in status, which can be medium-specific </li>
+
+	<LI>For example, ring-insert failures are specific to Token Ring (802.5) networks and do not apply for Ethernet (802.3) networks. </li>
+</OL>
+
+<P>NDIS notifies all bound protocols when an underlying driver is resetting its network adapter by calling their <B>ProtocolStatus</B> functions, first with NDIS_STATUS_RESET_START and later, when the reset operation is done, with NDIS_STATUS_RESET_END. After each such call to a <B>ProtocolStatus</B> function, NDIS also calls the driver's <A HREF="_wcesdk_protocolstatuscomplete.htm">ProtocolStatusComplete</A> function. </P>
+
+<P>Since NDIS will not accept protocol-initiated sends and requests to a miniport while a reset is in progress, the NDIS_STATUS_RESET_START notification warns bound protocols to hold off on their calls to <B>NdisSendPackets</B>, <A HREF="_wcesdk_ndissend.htm">NdisSend</A>, and <A HREF="_wcesdk_ndisrequest.htm">NdisRequest</A> on the binding designated by the respective <I>ProtocolBindingContext</I> given to their <A HREF="#_wcesdk_protocolstatus">ProtocolStatus</A> functions until they receive the corresponding NDIS_STATUS_RESET_END notification.</P>
+
+<P>If the protocol itself initiated the reset operation with a call to <A HREF="_wcesdk_ndisreset.htm">NdisReset</A>, its <B>ProtocolStatus</B> function receives the NDIS_STATUS_RESET_START and NDIS_STATUS_RESET_END notifications like any other protocol bound to the same underlying driver. However, if <B>NdisReset</B> returns NDIS_STATUS_PENDING, only the <B>ProtocolStatusComplete</B> function of the driver that initiated the reset operation is called. </P>
+
+<P>Consequently, every protocol's <B>ProtocolStatus</B> function should take whatever action is required to prevent that protocol from submitting sends and requests as soon as <B>ProtocolStatus</B> receives the NDIS_STATUS_RESET_START notification and should re-enable subsequent sends and requests when <B>ProtocolStatus</B> receives the NDIS_STATUS_RESET_END notification. Usually, <B>ProtocolStatus</B> simply sets and clears a ResetInProgress flag in the <I>ProtocolBindingContext</I> area that other driver functions check before they initiate sends or requests on the binding. </P>
+
+<P>As another example, the <B>ProtocolStatus</B> function of any protocol bound above NDISWAN receives a line-up notification whenever the underlying WAN network adapter miniport is establishing a new link. After such a protocol has traded link-specific context handles with NDISWAN, its <B>ProtocolStatus</B> function can receive additional link-specific line-up, line-down, and fragment indications, which the protocol can use to optimize throughput and/or performance on the link. </P>
+
+<P>When the underlying network adapter driver signals a status change, it does not change associated event counters and thresholds. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ndislib.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_miniportreset.htm">MiniportReset</A>, <A HREF="_wcesdk_ndismindicatestatus.htm">NdisMIndicateStatus</A>, <A HREF="_wcesdk_ndisopenadapter.htm">NdisOpenAdapter</A>,<B> </B><A HREF="_wcesdk_ndisrequest.htm">NdisRequest</A><B>, </B><A HREF="_wcesdk_ndisreset.htm">NdisReset</A>, <A HREF="_wcesdk_ndissend.htm">NdisSend</A>, <A HREF="#_wcesdk_protocolstatus">ProtocolStatus</A>, <A HREF="_wcesdk_protocolstatuscomplete.htm">ProtocolStatusComplete</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

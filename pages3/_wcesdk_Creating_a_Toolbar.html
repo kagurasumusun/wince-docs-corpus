@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Creating a Toolbar (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="A toolbar is a control that contains buttons. The buttons in a toolbar usually correspond to items on the application menu, and provide a quick way for a user to access these commands."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Creating a Toolbar" />
+<MSHelp:RLTitle Title="Creating a Toolbar (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="creating, toolbars, controls, toolbar" />
+<MSHelp:Keyword Index="K" Term="toolbars, creating" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Creating_a_Toolbar" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ctrls.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923159">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_creating_a_toolbar"></A>Creating a Toolbar</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>A toolbar is a control that contains buttons. The buttons in a toolbar usually correspond to items on the application menu, and provide a quick way for a user to access these commands. Toolbar buttons are bit images, and not child windows, as are other buttons. When a user taps a toolbar button, the toolbar sends its parent window a WM_COMMAND message that contains the command identifier of the button.</P>
+
+<P>Each button in a toolbar can include a bitmap image. A toolbar maintains an internal list that contains all of the bitmaps that are assigned to each of its toolbar buttons. When you call the <B>CreateToolbarEx</B> function, you specify a monochrome or color bitmap that contains the initial images. The toolbar then adds the information to the internal list of images. You can add additional images later by using the TB_ADDBITMAP message.</P>
+
+<P>Each image has a zero-based index. The first image that is added to the internal list has an index of zero, the second image has an index of one, and so on. The TB_ADDBITMAP message adds images to the end of the list and returns the index of the first new image that it has added. You use an image index to associate the image with a button.</P>
+
+<P>Windows CE assumes that all toolbar bitmaps are of the same size. You specify the size when you create the toolbar by calling the <B>CreateToolbarEx</B> function. If you call the <B>CreateWindowEx</B> function to create a toolbar, the size of its bitmaps is set to the default dimensions of 16 x 15 pixels. You can use the TB_SETBITMAPSIZE message to change the dimensions of the bitmaps, but you must do so before you add any images to the internal list of images.</P>
+
+<P>Each button can display a string in addition to, or instead of, an image. A toolbar maintains an internal list that contains all of the strings that are available to toolbar buttons. You add strings to the internal list by using the TB_ADDSTRING message and by specifying the address of the buffer that contains the strings that you want to add. Each string must be null-terminated, and the last string must be terminated with two null characters.</P>
+
+<P>Each string has a zero-based index. The first string that is added to the internal list of strings has an index of zero, the second string has an index of one, and so on. The TB_ADDSTRING message adds strings to the end of the list and returns the index of the first new string. You use the index of a string to associate the string with a button.</P>
+
+<P>Each button in a toolbar has a current state that indicates whether the button is hidden or visible, enabled or disabled, and pressed or not pressed. You set the initial state of a button when you add the button to the toolbar, and the toolbar updates the state of the button in response to the actions of the user; for example, when a user taps it with a stylus. You can use the TB_GETSTATE and TB_SETSTATE messages, respectively, to retrieve and set the state of a button.</P>
+
+<P>The following table shows toolbar button states that Windows CE supports.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>State</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_CHECKED</TD>
+<TD width=63%>The button has the TBSTYLE_CHECKED style and is pressed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_ELLIPSES</TD>
+<TD width=63%>The button displays ellipses (...) if the text does not fit the size of the button. This style is unique to Windows&nbsp;CE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_ENABLED</TD>
+<TD width=63%>The button accepts user input. A button without this state does not accept user input, and is dimmed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_HIDDEN</TD>
+<TD width=63%>The button is not visible and cannot receive user input.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_HIGHLIGHTED</TD>
+<TD width=63%>The button is highlighted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_INDETERMINATE</TD>
+<TD width=63%>The button is dimmed. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_PRESSED</TD>
+<TD width=63%>The button is being pressed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>TBSTATE_WRAP</TD>
+<TD width=63%>The button has a line break that follows it. The button also must have the TBSTATE_ENABLED state.</TD>
+</TR>
+</table></div>
+
+<P class="labelproc"><B>To create a toolbar</B>
+
+<UL type="disc">
+	<LI>Use the <B>CreateToolbarEx</B> function, which uses the following syntax:
+<PRE class="code">HWND CreateToolbarEx(
+    HWND hwnd,   
+    DWORD ws,   
+    UINT wID,    
+    int nBitmaps,    
+    HINSTANCE hBMInst, 
+    UINT wBMID,    
+    LPCTBBUTTON lpButtons, 
+    int iNumButtons,    
+    int dxButton,    
+    int dyButton,    
+    int dxBitmap,    
+    int dyBitmap,    
+    UINT uStructSize   
+);</PRE>
+
+<P>Here<I>, hwnd</I> is the handle to the parent window that owns the toolbar and <I>ws</I> is the style of the toolbar. At a minimum, a toolbar must include the WS_CHILD style. You also can specify other styles. For example, in Windows CE, the TBSTYLE_LIST style creates a toolbar with variable-width buttons. If you want to use the TBSTYLE_LIST style with fixed-width buttons, you can override the default behavior by sending a TB_SETBUTTONSIZE message or a TB_SETBUTTONWIDTH message. To keep a toolbar from automatically aligning to the top or bottom of a parent window, specify the CCS_NOPARENTALIGN style. For a complete listing of supported styles, see <a href="_wcesdk_Window_and_Control_Styles.htm">Window and Control Styles</a>.
+
+<P>The identifier that is associated with the toolbar is specified in <I>wID</I>. The <I>nBitmaps</I> parameter specifies the number of button images that are contained in the bitmap that is specified by <I>hBMInst</I> and <I>wBMID</I>.
+
+<P>Button data is contained in an array of structures that is named <B>TBBUTTON</B>; <I>lpButtons</I> is the address of this array. Specific button data &#0151; such as the number of buttons to add to the toolbar, button width and height, and the width and height of button images &#0151; is specified in <I>iNumButtons</I>, <I>dxButton</I> and <I>dyButton</I>, and <I>dxBitmap</I> and <I>dyBitmap</I>, respectively. The size of the <B>TBBUTTON</B> structure is specified in <I>uStructSize</I>. The following screen shot shows a Windows CE toolbar.
+</li>
+</UL>
+
+<P class="fig"><IMG SRC="toolbar.gif" ALT="" BORDER=0></P>
+
+<P>The following code example shows how to create and register a toolbar.</P>
+
+<PRE class="code">HWND WINAPI CreateToolbar (HWND hwnd)
+{
+  int iCBHeight;              // Height of the command bar 
+  DWORD dwStyle;              // Style of the toolbar
+  HWND hwndTB = NULL;         // Handle to the command bar control 
+  RECT rect,                  // Contains the coordinates of the main 
+                              // window client area         
+       rectTB;                // Contains the dimensions of the bounding
+                              // rectangle of the toolbar control
+  INITCOMMONCONTROLSEX iccex; // The INITCOMMONCONTROLSEX structure
+  
+  iccex.dwSize = sizeof (INITCOMMONCONTROLSEX);
+  iccex.dwICC = ICC_BAR_CLASSES;
+
+  // Register toolbar control classes from the DLL for the common 
+  // control.
+  InitCommonControlsEx (&amp;iccex);
+
+  // Create the toolbar control.
+  dwStyle = WS_VISIBLE | WS_CHILD | TBSTYLE_TOOLTIPS | 
+            CCS_NOPARENTALIGN;
+  
+  if (!(hwndTB = CreateToolbarEx (
+                  hwnd,               // Parent window handle
+                  dwStyle,            // Toolbar window styles
+                  (UINT) ID_TOOLBAR,  // Toolbar control identifier
+                  NUMIMAGES,          // Number of button images
+                  hInst,              // Module instance 
+                  IDB_TOOLBAR,        // Bitmap resource identifier
+                  tbButton,           // Array of TBBUTTON structure 
+                                      // contains button data
+                  sizeof (tbButton) / sizeof (TBBUTTON),
+                                      // Number of buttons in toolbar
+                  BUTTONWIDTH,        // Width of the button in pixels
+                  BUTTONHEIGHT,       // Height of the button in pixels
+                  IMAGEWIDTH,         // Button image width in pixels
+                  IMAGEHEIGHT,        // Button image height in pixels
+                  sizeof (TBBUTTON))))// Size of a TBBUTTON structure
+  {
+    return NULL;
+  }
+  
+  // Add ToolTips to the toolbar.
+  SendMessage (hwndTB, TB_SETTOOLTIPS, (WPARAM) NUMIMAGES, 
+               (LPARAM) szToolTips);
+
+  // Reposition the toolbar.
+  GetClientRect (hwnd, &amp;rect);
+  GetWindowRect (hwndTB, &amp;rectTB);
+  iCBHeight = CommandBar_Height (hwndCB);
+  MoveWindow (hwndTB, 
+              0, 
+              iCBHeight - 2, 
+              rect.right - rect.left, 
+              rectTB.bottom - rectTB.top,
+              TRUE);
+
+  return hwndTB;
+}</PRE>
+
+<P>You also can call the <B>CreateWindowEx</B> function to create a toolbar. By using this method, however, you create a toolbar that initially contains no buttons. You can add buttons to the toolbar by using the TB_ADDBUTTONS message or the TB_INSERTBUTTON message. You register the toolbar class by specifying the <B>TOOLBARCLASSNAME</B> window class. Windows CE registers the <B>TOOLBARCLASSNAME</B> class when it loads the DLL for the common control DLL. You can call the <B>InitCommonControls</B> function to ensure that this DLL is loaded. When you register the toolbar class by calling the <B>InitCommonControlsEx</B> function, specify the ICC_BAR_CLASSES flag as the <I>dwICC</I> member of the <B>INITCOMMONCONTROLSEX</B> structure that you pass in the <I>lpInitCtrls</I> parameter.</P>
+
+<P>If you use <B>CreateWindowEx</B> to create a toolbar, you must specify the WS_CHILD window style. <B>CreateToolbarEx</B> includes the WS_CHILD style by default. You must specify the initial parent window when you create the toolbar, but you can change the parent window after you create the toolbar by using the TB_SETPARENT message.</P>
+
+<P>Windows CE does not support user customization of toolbars, or drag-and-drop operations for toolbars.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

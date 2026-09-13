@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPersistStreamInit::Save</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IPersistStreamInit::Save" />
+<MSHelp:RLTitle Title="IPersistStreamInit::Save" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IPersistStreamInit__Save" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927059">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_ipersiststreaminit__save"></A>IPersistStreamInit::Save</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This method saves an object to the specified stream.</P>
+
+<PRE class="syntax"><B>HRESULT Save(</B>
+<B>LPSTREAM </B><I>pStm</I><B> ,</B>
+<B>BOOL </B><I>fClearDirty</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>pStm </I></DT>
+
+<DD>[in]IStream pointer to the stream into which the object should be saved. </dd>
+
+<DT><I>fClearDirty </I></DT>
+
+<DD>[in]Indicates whether to clear the dirty flag after the save is complete. If TRUE, the flag should be cleared. If FALSE, the flag should be left unchanged. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B>
+
+<DL>
+<DT>S_OK </DT>
+
+<DD>The object was successfully saved to the stream. </dd>
+
+<DT>STG_E_CANTSAVE </DT>
+
+<DD>The object could not save itself to the stream. This error could indicate, for example, that the object contains another object that is not serializable to a stream or that an <A HREF="_wcesdk_com_isequentialstream__write.htm">ISequentialStream::Write</A> call returned STG_E_CANTSAVE. </dd>
+
+<DT>STG_E_MEDIUMFULL </DT>
+
+<DD>The object could not be saved because there is no space left on the storage device. </dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P><B>IPersistStreamInit::Save </B>saves an object into the specified stream and indicates whether the object should reset its dirty flag.</P>
+
+<P>The seek pointer is positioned at the location in the stream at which the object should begin writing its data. The object calls the <B>ISequentialStream::Write</B> method to write its data.</P>
+
+<P>On exit, the seek pointer must be positioned immediately past the object data. The position of the seek pointer is undefined if an error returns.</P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>Rather than calling <B>IPersistStreamInit::Save</B> directly, you typically call the <A HREF="_wcesdk_com_olesavetostream.htm">OleSaveToStream</A><B> </B>helper function which does the following: 
+
+<OL type="1">
+	<LI>Calls <A HREF="_wcesdk_com_ipersist_getclassid.htm">IPersistStreamInit::GetClassID</A><B> </B>to get the object's CLSID. </li>
+
+	<LI>Calls the <A HREF="_wcesdk_com_writeclassstm.htm">WriteClassStm</A><B> </B>function to write the object's CLSID to the stream. </li>
+
+	<LI>Calls <A HREF="#_wcesdk_com_ipersiststreaminit__save">IPersistStreamInit::Save</A>. </li>
+</OL>
+
+<P>If you call these methods directly, you can write other data into the stream after the CLSID before calling <B>IPersistStreamInit::Save</B>.</P>
+
+<P>The OLE-provided implementation of <B>IPersistStreamInit</B> follows this same pattern.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>The <B>IPersistStreamInit::Save</B> method does not write the CLSID to the stream. The caller is responsible for writing the CLSID.</P>
+
+<P>The <B>IPersistStream::Save</B> method can read from, write to, and seek in the stream; but it must not seek to a location in the stream before that of the seek pointer on entry.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Ocidl.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_ipersist_getclassid.htm">IPersist::GetClassID</A>, <A HREF="_wcesdk_com_isequentialstream__write.htm">ISequentialStream::Write</A>, <A HREF="_wcesdk_com_olesavetostream.htm">OleSaveToStream</A><B> </B></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

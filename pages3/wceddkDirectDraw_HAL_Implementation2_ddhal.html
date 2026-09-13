@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>DirectDraw HAL Implementation (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="This section describes the steps required to implement minimal DirectDraw HAL functionality in your display driver without using GPE. This section assumes that you do not wish to move an existing DirectDraw HAL from desktop Windows to Windows CE."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="DirectDraw HAL Implementation" />
+<MSHelp:RLTitle Title="DirectDraw HAL Implementation (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="DirectDraw, implementing HAL" />
+<MSHelp:Keyword Index="A" Term="wceddkDirectDraw_HAL_Implementation2_ddhal" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dddev.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925190">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkdirectdraw_hal_implementation2_ddhal"></A>DirectDraw HAL Implementation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This section describes the steps required to implement minimal DirectDraw HAL functionality in your display driver without using GPE. This section assumes that you do not wish to move an existing DirectDraw HAL from desktop Windows to Windows CE. For information on doing that, please see the chapter, <A HREF="wceddkporting_your_ddhal_from_the_desktop_ddhal.htm">Porting your DDHAL from the Desktop</A>.</P>
+
+<P>Before you continue, you will need the following items to implement a simple DDHAL in your display driver:
+
+<UL type="disc">
+	<LI>The contents of the DDGPE package (the basic HAL source code).</li>
+
+	<LI>The sample display driver package.</li>
+
+	<LI>The build files used to export functions from your compiled code (this usually has the name of your compiled binary, as defined in the <CODE>TARGETNAME=BINARYNAME</CODE> section of your <CODE>sources</CODE> file, and ends with the <CODE>.def</CODE> extension).</li>
+
+	<LI>The build files used to define include paths, and to attach source code and libraries to your project (usually called <CODE>sources</CODE>).</li>
+</UL>
+
+<P>First, copy the following header file from the basic HAL source code into an appropriate location inside your display driver's build directory:
+
+<UL type="disc">
+	<LI>GPEHALUsr.h</li>
+</UL>
+
+<P>This header file is private to your display driver, and can be modified to contain whatever you like. You must customize this file to implement the <CODE>IN_VBLANK</CODE> and <CODE>IN_BUSY </CODE>macros, since they are required by the sample DDHAL implementation.</P>
+
+<P>Next, copy the following source code files from the basic HAL source code into your display driver's build directory, and add them to the appropriate build files:
+
+<UL type="disc">
+	<LI>HalCaps.cpp</li>
+
+	<LI>HalDD.cpp</li>
+
+	<LI>HalSurf.cpp</li>
+
+	<LI>HalPalette.cpp</li>
+</UL>
+
+<P>Then, copy the following header files from the DDGPE package into your display driver's build directory:
+
+<UL type="disc">
+	<LI>DDHFuncs.h</li>
+</UL>
+
+<P>DirectDraw requires that your display driver export the <B>HALInit</B> function. You should modify the HalCaps.cpp file that you just added. It should implement <B>HALInit</B>.</P>
+
+<PRE class="code">EXTERN_C BOOL WINAPI HALInit (
+LPDDHALINFO lpddhi,
+BOOL reset,
+DWORD modeidx
+);</PRE>
+
+<P>The <B>HALInit</B> function is normally responsible for setting up various global variables. It then calls <B>buildDDHALInfo</B> with the appropriate parameters, so it can make DirectDraw aware of the driver's support and capabilities. Since you are responsible for writing <B>HALInit</B>, you can add whatever features you want.</P>
+
+<P>Now you should modify the file used to export functions from your compiled binary to export the <B>HALInit</B> function you have created. You can consult the sample driver source code file DDI.def to see how this is done.</P>
+
+<P>The most difficult part of this process is the actual implementation your DDHAL functions. Consult <A HREF="wceddkexported_ddhal_functions_ddhal.htm">Exported DDHAL Functions</A> for a list of functions that you will need to replace with your own implementation. Fill the appropriate HAL function stubs with your own code, and modify the callback structures where necessary. Consult the DirectDraw Hardware Abstraction Layer specification for more information.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Drivers should NOT expose the <B>DDCAPS_CANCLIP</B> flag, nor should they override the <a href="wcesdkridirectdrawclipper_setcliplist_ddraw.htm">SetClipList</a> function even if the device has hardware clipping. DirectDraw does not take advantage of hardware clipping directly. Instead, it relies on the GDI clipping engine.</BLOCKQUOTE>
+
+<P>You should modify the DDHFuncs.h header file to remove unneeded code that could be confusing in the future. You might also want to rename the header file to HalFuncs.h so it corresponds to the naming conventions of the other DDHAL source code files in your directory, and does not conflict with the standard DDHFuncs.h that is part of DDGPE. Remove all GPE-specific global variables and function prototypes, and add prototypes for any functions and global variables that you have added and wish to access elsewhere in your source code.</P>
+
+<P>Finally, your driver initialization code should start up DirectDraw support by loading the <CODE>ddstub.dll</CODE> library.</P>
+
+<P>Now you are ready to compile and build your display driver to ensure that it continues to work properly. Once you have verified that it is still functional, your driver is ready to be tested with DirectDraw programs. Keep in mind that the code is not in an optimized state, and will require some customization to improve performance. See<I> </I><A HREF="wceddkcustomizing_your_ddhal_ddhal.htm">Customizing Your DDHAL</A> for more information.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

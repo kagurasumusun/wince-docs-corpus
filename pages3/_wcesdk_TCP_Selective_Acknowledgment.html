@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TCP Selective Acknowledgment</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="TCP Selective Acknowledgment" />
+<MSHelp:RLTitle Title="TCP Selective Acknowledgment (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="SACK" />
+<MSHelp:Keyword Index="K" Term="selective acknowledgement" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_TCP_Selective_Acknowledgment" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="tcpip.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923656">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_tcp_selective_acknowledgment"></A>TCP Selective Acknowledgment</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Windows CE introduces support for an important performance feature known as <I>Selective Acknowledgment</I>, or SACK. SACK is especially important for connections using large TCP window sizes. Prior to SACK, a receiver could only acknowledge the latest sequence number of contiguous data that had been received, or the "left edge" of the receive window. With SACK enabled, the receiver continues to use the ACK number to acknowledge the left edge of the receive window, but it can also acknowledge other blocks of received data individually. SACK uses TCP header options, as shown below. This text was taken directly from RFC&nbsp;2018:</P>
+
+<P>2. Sack-Permitted Option</P>
+
+<P>This two-byte option may be sent in a SYN by a TCP that has been extended to receive (and presumably process) the SACK option once the connection has opened. It MUST NOT be sent on non-SYN segments.</P>
+
+<P>TCP Sack-Permitted Option:</P>
+
+<P>Kind: 4</P>
+
+<PRE class="code">+---------+---------+
+| Kind=4  | Length=2|
++---------+---------+</PRE>
+
+<P>3. Sack Option Format</P>
+
+<P>The SACK option is to be used to convey extended acknowledgment information from the receiver to the sender over an established TCP connection.</P>
+
+<P>TCP SACK Option:</P>
+
+<P>Kind: 5</P>
+
+<P>Length: Variable</P>
+
+<PRE class="code">                         +--------+--------+
+                         | Kind=5 | Length |
+       +--------+--------+--------+--------+
+       |      Left Edge of 1st Block       |
+       +--------+--------+--------+--------+
+       |      Right Edge of 1st Block      |
+       +--------+--------+--------+--------+
+       |                                   |
+       /            . . .                  /
+       |                                   |
+       +--------+--------+--------+--------+
+       |      Left Edge of nth Block       |
+       +--------+--------+--------+--------+
+       |      Right Edge of nth Block      |
+       +--------+--------+--------+--------+</PRE>
+
+<P>With SACK enabled (the default) a packet or series of packets can be dropped, and the receiver is able to inform the sender of exactly which data has been received, and where the "holes" in the data are. The sender can then selectively retransmit the missing data without needing to retransmit blocks of data that have already been received successfully. SACK is controlled by the <B>SackOpts</B> registry entry. The trace clip below illustrates a host acknowledging all data up to sequence number 54857341, plus the data from sequence number 54858789 through 54861685.</P>
+
+<PRE class="code">+ FRAME: Base frame properties
++ ETHERNET: ETYPE = 0x0800 : Protocol = IP:  DOD Internet Protocol
++ IP: ID = 0x1A0D; Proto = TCP; Len: 64
+  TCP: .A...., len:0, seq:925104-925104, ack:54857341, win:32722, src:1242  dst:139 
+      TCP: Source Port = 0x04DA
+      TCP: Destination Port = NETBIOS Session Service
+      TCP: Sequence Number = 925104 (0xE1DB0)
+      TCP: Acknowledgement Number = 54857341 (0x3450E7D)
+      TCP: Data Offset = 44 (0x2C)
+      TCP: Reserved = 0 (0x0000)
+    + TCP: Flags = 0x10 : .A....
+      TCP: Window = 32722 (0x7FD2)
+      TCP: Checksum = 0x4A72
+      TCP: Urgent Pointer = 0 (0x0)
+      TCP: Options
+          TCP: Option Nop = 1 (0x1)
+          TCP: Option Nop = 1 (0x1)
+        + TCP: Timestamps Option
+          TCP: Option Nop = 1 (0x1)
+          TCP: Option Nop = 1 (0x1)
+          TCP: SACK Option
+              TCP: Option Type = 0x05
+              TCP: Option Length = 10 (0xA)
+              TCP: Left Edge of Block  = 54858789 (0x3451425)
+   TCP: Right Edge of Block = 54861685 (0x3451F75)</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

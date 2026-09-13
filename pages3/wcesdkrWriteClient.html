@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>WriteClient</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="WriteClient" />
+<MSHelp:RLTitle Title="WriteClient" />
+<MSHelp:Keyword Index="A" Term="wcesdkrWriteClient" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927553">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrwriteclient"></A>WriteClient</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function is a callback function that is supplied in the <A HREF="wcesdkrextension_control_block.htm">EXTENSION_CONTROL_BLOCK</A> for a request sent to the ISAPI extension. It sends the data present in the given buffer to the client that made the request.</P>
+
+<PRE class="syntax"><B>BOOL WriteClient(
+HCONN </B><I>ConnID</I><B>,
+LPVOID </B><I>Buffer</I><B>,
+LPDWORD </B><I>lpdwBytes</I><B>,
+DWORD </B><I>dwSync</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>ConnID </I></DT>
+
+<DD>Specifies the connection identifier of the client to which the response data should be sent.</dd>
+
+<DT><I>Buffer</I> </DT>
+
+<DD>Points to the data to be sent.</dd>
+
+<DT><I>lpdwBytes</I> </DT>
+
+<DD>Points to a DWORD that contains the number of bytes from the buffer that will be written to the client when the call is made. The DWORD also contains the number of bytes successfully sent out for synchronous write operations. For asynchronous write operations the returned value has no meaning.</dd>
+
+<DT><I>dwReserved</I> </DT>
+
+<DD>Reserved for future use.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>If the function succeeds, the return value is TRUE. If an error occurs, the return value is FALSE. The <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A> function can be called to determine the cause of the error.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>This function attempts to write the data in the supplied buffer to the same socket that was used for the client request. For synchronous writes, it attempts to write in the calling thread. The thread may become blocked while trying to send the data to client. On completion, <B>WriteClient</B> returns the number of bytes sent in *<I>lpdwBytes</I>.</P>
+
+<P>If you attempt to send more than 16 KB of data over an SSL connection, IIS will break your outgoing data into multiple chunks of 16 KB or smaller.</P>
+
+<P>For asynchronous writes, <B>WriteClient</B> submits the write operation to the system asynchronously and returns from the call immediately. At this point the ISAPI extension may choose to do more background processing or return from the <A HREF="wcesdkrhttpextensionproc.htm">HttpExtensionProc</A> function with a HSE_STATUS_PENDING. When the I/O operation completes, the server calls the callback function submitted by the ISAPI extension with the EXTENSION_CONTROL_BLOCK, context value, number of bytes sent and error codes, if any. It is the responsibility of the ISAPI extension to do further processing and finally use <A HREF="wcesdkrserversupportfunction.htm">ServerSupportFunction</A> with HSE_DONE_WITH_SESSION set to notify the server when it is finished processing the request.</P>
+
+<P>Only one outstanding asynchronous I/O operation is permitted per request. This limitation applies to calls to asynchronous <B>WriteClient</B>, or to the asynchronous <B>TransmitFile</B> function through the HSE_REQ_TRANSMIT_FILE <B>ServerSupportFunction</B>.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>3.0 and later</TD>
+<TD width=18%>httpext.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Httpextn.lib, Httpfilt.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A>, <A HREF="wcesdkrhttpextensionproc.htm">HttpExtensionProc</A>, <A HREF="wcesdkrserversupportfunction.htm">ServerSupportFunction</A>, <A HREF="wcesdkrextension_control_block.htm">EXTENSION_CONTROL_BLOCK</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMarshal</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IMarshal" />
+<MSHelp:RLTitle Title="IMarshal" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IMarshal" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927032">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_imarshal"></A>IMarshal</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This interface enables a COM object to define and manage the marshaling of its interface pointers. The alternative is to use COM's default implementation, the preferred choice in all but a few special cases (see "When to Implement").</P>
+
+<P>"Marshaling" is the process of packaging data into packets for transmission to a different process or machine. "Unmarshaling" is the process of recovering that data at the receiving end. In any given call, method arguments are marshaled and unmarshaled in one direction, while return values are marshaled and unmarshaled in the other.</P>
+
+<P>Although marshaling applies to all data types, interface pointers require special handling. The fundamental problem is how client code running in one address space can correctly dereference a pointer to an interface on an object residing in a different address space. COM's solution is for a client application to communicate with the original object through a surrogate object, or proxy, which lives in the client's process. The proxy holds a reference to an interface on the original object and hands the client a pointer to an interface on itself. When the client calls an interface method on the original object, its call is actually going to the proxy. Therefore, from the client's point of view, all calls are in-process.</P>
+
+<P>On receiving a call, the proxy marshals the method arguments and, through some means of interprocess communication, such as RPC, passes them along to code in the server process, which unmarshals the arguments and passes them to the original object. This same code marshals return values for transmission back to the proxy, which unmarshals the values and passes them to the client application.</P>
+
+<P><B>IMarshal</B> provides methods for creating, initializing, and managing a proxy in a client process; it does not dictate how the proxy should communicate with the original object. COM's default implementation of <B>IMarshal</B> uses RPC. When you implement this interface yourself, you are free to choose any method of interprocess communication you deem to be appropriate for your application &#0151; shared memory, named pipe, window handle, RPC &#0151; in short, whatever works.</P>
+
+<P class="label"><B>When to Implement </B></P>
+
+<P>Implement <B>IMarshal</B> only when you believe that you can realize significant optimizations to COM's default implementation. In practice, this will rarely be the case. However, there are occasions where implementing <B>IMarshal</B> may be preferred:
+
+<UL type="disc">
+	<LI>The objects you are writing keep their state in shared memory. In this case, both the original process and the client process uses proxies that refer to the shared memory. This type of custom marshaling is possible only if the client process is on the same machine as the original process. COM-provided implementations of <A HREF="_wcesdk_com_istorage.htm">IStorage</A> and <A HREF="_wcesdk_com_istream.htm">IStream</A> are examples of this type of custom marshaling.</li>
+
+	<LI>The objects you are writing are immutable, that is, their state does not change after creation. Instead of forwarding method calls to the original objects, you simply create copies of those objects in the client process. This technique avoids the cost of switching from one process to another. Some monikers are examples of immutable objects; if you are implementing your own moniker class, you should evaluate the costs and benefits of implementing <B>IMarshal</B> on your moniker objects.</li>
+
+	<LI>Objects that themselves are proxy objects can use custom marshaling to avoid creating proxies to proxies. Instead, the existing proxy can refer new proxies back to the original object. This capability is important for the sake of both efficiency and robustness.</li>
+
+	<LI>Your server application wants to manage how calls are made across the network without affecting the interface exposed to clients. For example, if an end user were making changes to a database record, the server might want to cache the changes until the user has committed them all, at which time the entire transaction would be forwarded in a single packet. Using a custom proxy would enable the caching and batching of changes in this way.</li>
+</UL>
+
+<P>When you choose to implement <B>IMarshal</B>, you must do so for both your original object and the proxy you create for it. When implementing the interface on either object or proxy, you simply return E_NOTIMPL for the methods that are not implemented.</P>
+
+<P>COM uses your implementation of <B>IMarshal</B> in the following manner: When it's necessary to create a remote interface pointer to your object (that is, when a pointer to your object is passed as an argument in a remote function call), COM queries your object for the <B>IMarshal</B> interface. If your object implements it, COM uses your <B>IMarshal</B> implementation to create the proxy object. If your object does not implement <B>IMarshal</B>, COM uses its default implementation.</P>
+
+<P>How you choose to structure the proxy is entirely up to you. You can write the proxy to use whatever mechanisms you deem appropriate for communicating with the original object. You can also create the proxy as either a stand-alone object or as part of a larger aggregation such as a handler. However you choose to structure the proxy, it must implement <B>IMarshal</B> to work at all. You must also generate a CLSID for the proxy to be returned by your implementation of <B>IMarshal::GetUnmarshalClass</B> on the original object.</P>
+
+<P class="label"><B>When to Use</B></P>
+
+<P>COM calls this interface as part of system-provided marshaling support. COM's calls are wrapped in calls to <A HREF="_wcesdk_com_comarshalinterface.htm">CoMarshalInterface</A> and <A HREF="_wcesdk_com_counmarshalinterface.htm">CoUnmarshalInterface</A>. Your code typically will not need to call this interface. Special circumstances where you might choose to do so are discussed in the "Notes to Callers" section for each method.</P>
+
+<P class="label"><B>Methods in VTable Order</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%><A HREF="_wcesdk_com_iunknown.htm">IUnknown</A> Methods</TH>
+<TH width=56%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_iunknown_queryinterface.htm">QueryInterface</A></TD>
+<TD width=56%>Returns pointers to supported interfaces.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_iunknown_addref.htm">AddRef</A></TD>
+<TD width=56%>Increments the reference count.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_iunknown_release.htm">Release</A></TD>
+<TD width=56%>Decrements the reference count.</TD>
+</TR>
+</table></div>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%>IMarshal Methods</TH>
+<TH width=56%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_imarshal__getunmarshalclass.htm">GetUnmarshalClass</A></TD>
+<TD width=56%>Returns CLSID of unmarshaling code.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_imarshal__getmarshalsizemax.htm">GetMarshalSizeMax</A></TD>
+<TD width=56%>Returns size of buffer needed during marshaling.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_imarshal__marshalinterface.htm">MarshalInterface</A></TD>
+<TD width=56%>Marshals an interface pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_imarshal__unmarshalinterface.htm">UnmarshalInterface</A></TD>
+<TD width=56%>Unmarshals an interface pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_imarshal__releasemarshaldata.htm">ReleaseMarshalData</A></TD>
+<TD width=56%>Destroys a marshaled data packet.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="_wcesdk_com_imarshal__disconnectobject.htm">DisconnectObject</A></TD>
+<TD width=56%>Severs all connections.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Objidl.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><B>IStdMarshalInfo</B> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

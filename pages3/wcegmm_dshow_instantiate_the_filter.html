@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Instantiate the Filter (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="All filters must add code to let the base classes instantiate the filter."/>
+<xml>
+<MSHelp:TOCTitle Title="Instantiate the Filter" />
+<MSHelp:RLTitle Title="Instantiate the Filter (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_instantiate_the_filter" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924097">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_instantiate_the_filter"></A>Instantiate the Filter</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>All filters must add code to let the base classes instantiate the filter. To instantiate a filter, you must include two pieces of code in your filter: a static <B>CreateInstance</B> member function in the derived filter class, and a means of informing the class factory in the base classes how to access this function. </P>
+
+<P>Typically, the <B>CreateInstance</B> member function calls the constructor for the derived filter class. The following examples show how to implement the <B>CreateInstance</B> member function. </P>
+
+<PRE class="code">CUnknown *CGargle::CreateInstance(LPUNKNOWN punk, HRESULT *phr) {
+
+    CGargle *pNewObject = new CGargle(NAME("Gargle Filter"), punk, phr);
+    if (pNewObject == NULL) {
+        *phr = E_OUTOFMEMORY;
+    }
+
+    return pNewObject;
+} // CreateInstance
+</PRE>
+
+<P>To communicate with the class factory, declare a global array of <a href="wcesdkrcfactorytemplate_class.htm">CFactoryTemplate</a> objects as <I>g_Templates</I> and provide the name of your filter, the class identifier (CLSID) of your filter, and a pointer to the static <B>CreateInstance</B> member function that creates your filter object. </P>
+
+<PRE class="code">// Needed for the CreateInstance mechanism
+CFactoryTemplate g_Templates[2]=
+    { { L"Gargle filter"              , &amp;CLSID_Gargle , 
+Gargle::CreateInstance          }
+    , { L"Gargle filter Property Page", &amp;CLSID_GargProp, 
+GargleProperties::CreateInstance}
+    };
+
+int g_cTemplates = sizeof(g_Templates)/sizeof(g_Templates[0]);
+</PRE>
+
+<P>You can add additional parameters to the <B>CFactoryTemplate</B> templates if you want your filter to be self-registering. For more information on this, see <A HREF="wcegmm_dshow_how_to_register_directshow_filters.htm">How to Register DirectShow Filters</A>. </P>
+
+<P>Finally, link your filter to Strmbase.lib and export <a href="_wcesdk_com_DllGetClassObject.htm">DllGetClassObject</a> and <B>DllCanUnloadNow</B> using a .def file. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

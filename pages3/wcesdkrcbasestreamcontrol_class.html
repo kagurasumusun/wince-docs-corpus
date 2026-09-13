@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CBaseStreamControl Class</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CBaseStreamControl Class" />
+<MSHelp:RLTitle Title="CBaseStreamControl Class" />
+<MSHelp:Keyword Index="A" Term="wcesdkrcbasestreamcontrol_class" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_931754">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrcbasestreamcontrol_class"></A>CBaseStreamControl Class</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P class="fig"><IMG SRC="strmctl1.gif" ALT="" BORDER=0></P>
+
+<P>The <B>CBaseStreamControl</B> class implements the <A HREF="wcesdkriamstreamcontrol_interface.htm">IAMStreamControl</A> interface on input and output pins in a filter graph. This class provides control of the starting and stopping of various components of the stream. Various streams can be turned on or off without affecting the rest of the graph. For example, an audio stream can be turned off while a video stream continues, for muting. Or perhaps a capture stream can be turned off while preview continues to flow. This could be used to assist in frame accuracy when exact capture start or stop times are important. </P>
+
+<P><B>CBaseStreamControl</B> enables you to specify start and stop times in the <A HREF="wcesdkrcbasestreamcontrol__startat.htm">StartAt</A> and <A HREF="wcesdkrcbasestreamcontrol__stopat.htm">StopAt</A> member functions and provides stream information in the <A HREF="wcesdkrcbasestreamcontrol__getinfo.htm">GetInfo</A> member function. <B>CBaseStreamControl</B> uses the <A HREF="wcesdkrdtypes__streamcontrolstate.htm">StreamControlState</A> enumerated data type to describe the various states a stream is in. If a stream is flowing it is indicated by the STREAM_FLOWING setting, otherwise it is in a discarding state indicated by the STREAM_DISCARDING setting. </P>
+
+<P>Filters that need to implement the interface on their own should typically inherit from <B>CBaseStreamControl</B> to obtain an implementation of the <A HREF="wcesdkrcbasestreamcontrol__startat.htm">StartAt</A>, <A HREF="wcesdkrcbasestreamcontrol__stopat.htm">StopAt</A>, and <A HREF="wcesdkrcbasestreamcontrol__getinfo.htm">GetInfo</A> methods. The <B>CBaseStreamControl</B> class also maintains state information and decides what to do with the sample. To implement your own filter with pins that support <B>CBaseStreamControl</B> you must: 
+
+<UL type="disc">
+	<LI>Inform the filter object of all state changes through the <A HREF="wcesdkrcbasestreamcontrol__notifyfilterstate.htm">NotifyFilterState</A> member function. </li>
+
+	<LI>Inform the filter object of all <A HREF="wcesdkrcbasestreamcontrol__setsyncsource.htm">SetSyncSource</A> calls to the filter. </li>
+
+	<LI>Inform the filter object when in a flushing state. and when flushing has completed, in the <A HREF="wcesdkrcbasestreamcontrol__flushing.htm">CBaseStreamControl::Flushing</A> member function. </li>
+
+	<LI>Use the <A HREF="wcesdkrcbasestreamcontrol__checkstreamstate.htm">CheckStreamState</A> function to make decisions about discarding or passing along samples. </li>
+
+	<LI>Make sure output pins set discontinuity flags on the first sample flowed after samples have been discarded. </li>
+
+	<LI>Tell your pin what the sink is when your filter joins a filter graph, as shown in the following example. </li>
+
+	<LI>STDMETHODIMP CMyFilter::JoinFilterGraph(IFilterGraph * pGraph, LPCWSTR pName)</li>
+
+	<LI>{</li>
+
+	<LI>   HRESULT hr = CBaseFilter::JoinFilterGraph(pGraph, pName);</li>
+
+	<LI>   if (hr == S_OK)</li>
+
+	<LI>      m_pMyPin-&gt;SetFilterGraph(m_pSink);</li>
+
+	<LI>   return hr;</li>
+
+	<LI>}</li>
+</UL>
+
+<P>If you are implementing the <A HREF="wcesdkriamstreamcontrol_interface.htm">IAMStreamControl</A> interface without using <B>CBaseStreamControl</B>, the last two preceding points do not apply. </P>
+
+<P>For sample code, see the video capture sample in the Samples\Multimedia\DShow\src\vidcap subdirectory of the DirectX Media SDK. </P>
+
+<P class="label"><B>Member Functions</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__cbasestreamcontrol.htm">CBaseStreamControl</A></TD>
+<TD width=55%>Constructs a <B>CBaseStreamControl</B> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__checkstreamstate.htm">CheckStreamState</A></TD>
+<TD width=55%>Retrieves a stream's current state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__flushing.htm">Flushing</A></TD>
+<TD width=55%>Notifies the pin when the filter is flushing. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__getinfo.htm">GetInfo</A></TD>
+<TD width=55%>Retrieves information about the current streaming settings. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__notifyfilterstate.htm">NotifyFilterState</A></TD>
+<TD width=55%>Notifies the pin of what state your filter is in. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__setfiltergraph.htm">SetFilterGraph</A></TD>
+<TD width=55%>Sets the event sink notification that your filter graph is using. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__setsyncsource.htm">SetSyncSource</A></TD>
+<TD width=55%>Identifies the reference clock being used by the graph your filter is in. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__startat.htm">StartAt</A></TD>
+<TD width=55%>Informs the pin when to start sending streaming data. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%><A HREF="wcesdkrcbasestreamcontrol__stopat.htm">StopAt</A></TD>
+<TD width=55%>Informs the pin when to stop processing data and discard any new samples. </TD>
+</TR>
+</table></div>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

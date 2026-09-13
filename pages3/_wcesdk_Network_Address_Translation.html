@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Network Address Translation</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Network Address Translation" />
+<MSHelp:RLTitle Title="Network Address Translation (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="NAT" />
+<MSHelp:Keyword Index="K" Term="network address translation" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Network_Address_Translation" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="inetcshr.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923272">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_network_address_translation"></A>Network Address Translation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>NAT allows the gateway device to provide devices on the home network with access to a public network or Internet while sharing a single IP address provided by an Internet Service Provider (ISP). Because the public network only sees the gateway, only one IP is known for the gateway device. As a result, in order to provide the internal devices with access to the external network, the gateway must translate the destination of packets as the gateway passes the packets from one network to the other. To accomplish this task, ICS performs a function known as port address translation.</P>
+
+<P>Because the gateway translates from one network to another, you can easily configure the gateway to map a specific port on the public interface to a specific device on the home network. This mapping allows you to configure the home network with servers that appear to be located on the gateway device, from the perspective of the external network.</P>
+
+<P>For each outbound session, ICS allocates a dynamic Transmission Control Protocol (TCP) or User Datagram Protocol (UDP) source port for use during that session. ICS then replaces the source IP address for each packet with the IP address of the external or Internet adapter on the gateway device, and replaces the source TCP or UDP port number of the packet with the dynamic port number. This procedure enables ICS to create a mapping, which correlates the IP address and source port of the originating computer with the dynamic source port number just assigned. As responses return to the gateway device, the gateway device uses this mapping to restore the originating IP address and originating port number. The gateway device then forwards the resulting packets to the home network.</P>
+
+<P>NAT maps private addresses to public addresses. NAT accomplishes this mapping by modifying the source address and source port in packets sent from the home network to the Internet, while also modifying the destination address and destination port in packets sent from the Internet to the home network. By modifying the port information in TCP and UDP packets, NAT can direct traffic for multiple clients over the dial-up connection.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;NAT reads port numbers and converts the port numbers to host byte order, instead of using network byte order. Network byte order means that the bytes are stored in big-endian order. Host byte order means that the bytes are stored with the same byte ordering that the host uses. Windows-CE bases computers are currently all little-endian, so host byte order stores the bytes in reverse order. For example, you would specify the bytes for port 42045 (0xA43D) in the order A4, 3D when using network byte order, and in the order 3D, A4 when using host byte order. You can change a value from network byte order to host byte order by calling the <B>ntohs</B> function, and you can change a value from host byte order to network byte order by calling the <B>htons</B> function.</BLOCKQUOTE>
+
+<P>The following illustration shows an example ICS configuration on which NAT can be used.</P>
+
+<P class="fig"><IMG SRC="ics2.gif" ALT="" BORDER=0></P>
+
+<P>If NAT receives a TCP packet from a source port of 2000 on the client with an IP address of 192.168.0.2 in the illustration, NAT looks for an existing mapping for the [192.168.0.2, 2000] combination of address and port. If NAT does not find a mapping, NAT creates a new mapping; for instance [157.55.0.1, 3373]; NAT replaces the source address in the packet with 157.55.0.1 and the source port with 3373, updates the checksum, and passes the packet on over the dial-up connection. NAT then modifies all subsequent packets from the same client and port by using the established mapping.</P>
+
+<P class="labelproc"><B>To enable NAT</B>
+
+<OL type="1">
+	<LI>Enable IP forwarding by setting the <B>HKEY_LOCAL_MACHINE\Comm\Tcpip\Parms\IpEnableRouter</B> registry key equal to 1. For more information about IP forwarding and the <B>IpEnableRouter</B> registry subkey, see <A HREF="_wcesdk_routing.htm">Routing</A>.</li>
+
+	<LI>Set the <A HREF="_wcesdk_enableaddresstranslation.htm">HKEY_LOCAL_MACHINE\Comm\ConnectionSharing\EnableAddressTranslation</A> registry key equal to a non-zero value.</li>
+
+	<LI>Set the <A HREF="_wcesdk_publicinterface.htm">HKEY_LOCAL_MACHINE\Comm\ConnectionSharing\PublicInterface</A><B> </B>registry key to the public interface that you want to enable NAT on. This value should contain a string that indicates the adapter instance for a network card, or that indicates the RAS connection name for a dial-up connection.</li>
+</OL>
+
+<P>NAT mappings expire after a certain amount of time if the mappings are not used. The default expiration time is 24 hours for TCP connections, and 1 minute for UDP mappings. You can configure these expiration times by setting registry subkeys contained under the <B>HKEY_LOCAL_MACHINE\Comm\IPNat</B> registry key.</P>
+
+<P>The following table shows optional registry subkeys that you can use to configure these expiration times.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Subkey</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="_wcesdk_tcptimeoutseconds.htm">TCPTimeoutSeconds</A></TD>
+<TD width=50%>Specifies the amount of time before TCP mappings expire in the NAT, if the mappings are not used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="_wcesdk_udptimeoutseconds.htm">UDPTimeoutSeconds</A></TD>
+<TD width=50%>Specifies the amount of time before UDP mappings expire in the NAT, if the mappings are not used.</TD>
+</TR>
+</table></div>
+
+<P>For more information about NAT, see Internet Request for Comments (RFC) 1631.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

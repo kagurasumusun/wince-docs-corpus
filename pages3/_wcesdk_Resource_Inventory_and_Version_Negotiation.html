@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Resource Inventory and Version Negotiation</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Resource Inventory and Version Negotiation" />
+<MSHelp:RLTitle Title="Resource Inventory and Version Negotiation (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="resource inventory and version negotiation" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Resource_Inventory_and_Version_Negotiation" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="tapi.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923486">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_resource_inventory_and_version_negotiation"></A>Resource Inventory and Version Negotiation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>A line can have different capabilities. To determine these capabilities, the application should call the <B>lineGetDevCaps</B> function. This function fills in the <B>LINEDEVCAPS</B> structure, which the TSP defines. The size of the structure might be different for different service providers; therefore, the application must check to see if the buffer size is adequate. To check if the amount of space that is supplied for the structure is adequate for the size of the structure of the provider, compare the <I>dwNeededSize</I> and <I>dwTotalSize</I> parameters. If the total size is smaller than the needed size, the application must pass a larger buffer to the function.</P>
+
+<P>The <B>lineNegotiateAPIVersion</B> function indicates the version of TAPI that the application supports, and negotiates the API version number that TAPI should use. The reason for negotiating the TAPI version is to be sure that the correct protocol is used. New versions might define new features, new fields to data structures, and so on. Version numbers, therefore, indicate how to interpret various data, structures, and messages. If version ranges do not match, the application and API or service-provider versions are incompatible, and an error is returned.</P>
+
+<P>When the function succeeds, the line data, such as permanent identifier, number of addresses, and line name, can be obtained from the <B>LINEDEVCAPS</B> structure.</P>
+
+<P>The following code example shows how to determine the capabilities of an open line.</P>
+
+<PRE class="code">DWORD GetLineInfo (DWORD dwLineID, LPLINEINFO lpLineInfo)
+{
+  DWORD dwSize,
+        dwReturn;
+  LPTSTR lpszLineName = NULL; 
+  LPLINEDEVCAPS lpLineDevCaps = NULL;
+  
+  // Negotiate the API version number. If it fails, return to dwReturn.
+  if (dwReturn = lineNegotiateAPIVersion (
+        g_hLineApp,                   // TAPI registration handle
+        dwLineID,                     // Line device to be queried
+        TAPI_VERSION_1_0,             // Least recent API version 
+        TAPI_CURRENT_VERSION,         // Most recent API version 
+        &amp;(lpLineInfo-&gt;dwAPIVersion),  // Negotiated API version 
+        NULL))                        // Must be NULL; the provider-
+                                      // specific extension is not 
+                                      // supported by Windows CE.
+  {
+    goto exit;
+  }
+
+  dwSize = sizeof (LINEDEVCAPS);
+
+  // Allocate enough memory for lpLineDevCaps.
+  do
+  {
+    if (!(lpLineDevCaps = (LPLINEDEVCAPS) LocalAlloc (LPTR, dwSize)))
+    {
+      dwReturn = LINEERR_NOMEM;
+      goto exit;
+    }
+
+    lpLineDevCaps-&gt;dwTotalSize = dwSize;
+
+    if (dwReturn = lineGetDevCaps (g_hLineApp,
+                                   dwLineID,
+                                   lpLineInfo-&gt;dwAPIVersion,
+                                   0,
+                                   lpLineDevCaps))
+    {
+      goto exit;
+    }
+
+    // Stop if the allocated memory is equal to or greater than the 
+    // needed memory.
+    if (lpLineDevCaps-&gt;dwNeededSize &lt;= lpLineDevCaps-&gt;dwTotalSize)
+      break;  
+
+    dwSize = lpLineDevCaps-&gt;dwNeededSize;
+    LocalFree (lpLineDevCaps);
+    lpLineDevCaps = NULL;
+    
+  } while (TRUE);
+
+  // Store the line data in *lpLineInfo.
+  lpLineInfo-&gt;dwPermanentLineID = lpLineDevCaps-&gt;dwPermanentLineID;
+  lpLineInfo-&gt;dwNumOfAddress = lpLineDevCaps-&gt;dwNumAddresses;
+  lpLineInfo-&gt;bVoiceLine = 
+    (lpLineDevCaps-&gt;dwMediaModes &amp; LINEMEDIAMODE_INTERACTIVEVOICE);
+
+  // Allocate memory for lpszLineName.
+  if (!(lpszLineName = (LPTSTR) LocalAlloc (LPTR, 512)))
+  {
+    dwReturn = LINEERR_NOMEM;
+    goto exit;
+  }  
+  
+  // Store the line name in *lpszLineName.
+  if (lpLineDevCaps-&gt;dwLineNameSize &gt;= 512)
+  {
+    wcsncpy (
+      lpszLineName, 
+      (LPTSTR)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwLineNameOffset),
+      512);
+  }
+  else if (lpLineDevCaps-&gt;dwLineNameSize &gt; 0)
+  {
+    wcsncpy (
+      lpszLineName, 
+      (LPTSTR)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwLineNameOffset),
+      lpLineDevCaps-&gt;dwLineNameSize);
+  }
+  else 
+    wsprintf (lpszLineName, TEXT("Line %d"), dwLineID);
+
+  // Copy lpszLineName to lpLineInfo-&gt;lpszLineName.
+  lstrcpy (lpLineInfo-&gt;szLineName, lpszLineName);
+
+  dwReturn = ERR_NONE;
+
+exit:
+    
+  if (lpLineDevCaps)
+    LocalFree (lpLineDevCaps);
+
+  if (lpszLineName)
+    LocalFree (lpszLineName);
+
+  return dwReturn; 
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

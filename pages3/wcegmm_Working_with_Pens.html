@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Working with Pens (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="In Windows CE, a pen is a graphics object for drawing lines. Drawing applications use pens to draw freehand lines and straight lines. Computer-aided design (CAD) applications use pens to draw visible lines, section lines, center lines, and so on."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Working with Pens" />
+<MSHelp:RLTitle Title="Working with Pens (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="pens, working with" />
+<MSHelp:Keyword Index="A" Term="wcegmm_Working_with_Pens" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="gdi.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924225">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_working_with_pens"></A>Working with Pens</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>In Windows CE, a <I>pen</I> is a graphics object for drawing lines. Drawing applications use pens to draw freehand lines and straight lines. Computer-aided design (CAD) applications use pens to draw visible lines, section lines, center lines, and so on. Word processing and desktop publishing applications use pens to draw borders and rules. Spreadsheet applications use pens to designate trends in graphs and to outline bar graphs and pie charts.</P>
+
+<P>Windows CE stock pens include the <B>BLACK_PEN</B> and the <B>WHITE_PEN</B>, which draw a solid, 1-pixel-wide line in their respective color, and the <B>NULL_PEN</B>, which does not draw. You obtain the stock pens with the <B>GetStockObject</B> function.</P>
+
+<P>You call the <B>CreatePen</B> or <B>CreatePenIndirect</B> function to create a custom pen with a unique color, width, or pen style.</P>
+
+<P>The following table shows the pen styles supported by Windows CE.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Pen style </TH>
+<TH width=84%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%><B>PS_SOLID </B></TD>
+<TD width=84%>Draws a solid line</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%><B>PS_DASH </B></TD>
+<TD width=84%>Draws a dashed line</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%><B>PS_NULL </B></TD>
+<TD width=84%>Does not draw a line</TD>
+</TR>
+</table></div>
+
+<P>Windows CE supports wide pens and dashed pens, but does not support dotted pens, inside frame pens, geometric pens, pen endcap styles, or pens that are both wide and dashed.</P>
+
+<P>You can create a pen with a unique color by storing the RGB value that specifies the color that you want in a <B>COLORREF</B> value and passing this value to the <B>CreatePen</B> or <B>CreatePenIndirect</B> function. In the case of <B>CreatePenIndirect</B>, the <B>COLORREF</B> value is incorporated into the <B>LOGPEN</B> structure, which is used by <B>CreatePenIndirect</B>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>The wide pen requires significant GDI computation. To improve the performance of a handwriting application, use a standard size pen.</BLOCKQUOTE>
+
+<P>The following code example shows how to use pen functions.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">#define NUMPT  200
+
+HDC hDC;            // Handle to the display device context 
+HPEN hPen,          // Handle to the new pen object  
+     hOldPen;       // Handle to the old pen object 
+RECT rect;          // A RECT structure that contains the window's 
+                    // client area coordinates
+int index,          
+    iCBHeight;      // Command bar height
+POINT ptAxis[2],    // Two dimensional POINT structure array
+     ptSine[NUMPT]; // 200 dimensional POINT structure array
+static COLORREF g_crColor[] = {
+                        0x000000FF,0x0000FF00,0x00FF0000,0x0000FFFF,
+                        0x00FF00FF,0x00FFFF00,0x00FFFFFF,0x00000080,
+                        0x00008000,0x00800000,0x00008080,0x00800080,
+                        0x00808000,0x00808080,0x000000FF,0x0000FF00,
+                        0x00FF0000,0x0000FFFF,0x00FF00FF,0x00FFFF00};
+
+// Retrieve a handle to a display device context for the client 
+// area of the window (hwnd). 
+if (!(hDC = GetDC (hwnd)))
+  return;
+
+// Retrieve the coordinates of the window's client area. 
+GetClientRect (hwnd, &amp;rect);
+
+// Retrieve the height of the command bar in pixels. 
+iCBHeight = CommandBar_Height (g_hwndCB);
+
+// Assign the axis points coordinates in pixels.
+ptAxis[0].x = 0;
+ptAxis[0].y = iCBHeight + (rect.bottom - iCBHeight) / 2;
+ptAxis[1].x = rect.right - 1;
+ptAxis[1].y = ptAxis[0].y;
+
+// Assign the sine wave points coordinates in pixels.
+for (index = 0; index &lt; NUMPT; ++index)
+{
+  ptSine[index].x = index * rect.right / NUMPT;
+  ptSine[index].y = (long) (iCBHeight + \
+                            (rect.bottom - iCBHeight) / 2 * \
+                            (1 - sin (8 * 3.14159 * index / NUMPT)));
+}
+
+// Create a dash pen object and select it.
+hPen = CreatePen (PS_DASH, 1, g_crColor[5]);
+hOldPen = SelectObject (hDC, hPen);
+
+// Draw a straight line connecting the two points.
+Polyline (hDC, ptAxis, 2);
+
+// Select the old pen back into the device context.
+SelectObject (hDC, hOldPen);
+
+// Delete the pen object and free all resources associated with it. 
+DeleteObject (hPen);
+
+// Create a solid pen object and select it.
+hPen = CreatePen (PS_SOLID, 3, g_crColor[5]);
+hOldPen = SelectObject (hDC, hPen);
+
+// Draw a sine wave shaped polyline.
+Polyline (hDC, ptSine, NUMPT);
+
+// Select the old pen back into the device context.
+SelectObject (hDC, hOldPen);
+
+// Delete the pen object and free all resources associated with it. 
+DeleteObject (hPen);
+
+// Release the device context.
+ReleaseDC (hwnd, hDC);
+
+return;
+</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

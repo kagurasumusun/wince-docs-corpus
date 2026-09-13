@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>ACMDM_STREAM_CONVERT (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="This message requests an ACM driver to perform a conversion operation on a specified conversion stream.    Parameters      dwDriverID    Specifies a driver instance identifier."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="ACMDM_STREAM_CONVERT" />
+<MSHelp:RLTitle Title="ACMDM_STREAM_CONVERT (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="ACMDM_STREAM_CONVERT" />
+<MSHelp:Keyword Index="A" Term="wceddkACMDM_STREAM_CONVERT" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="apiref" />
+<MSHelp:Attr Name="Filename" Value="mess_1.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+<MSHelp:Attr Name="APIName" Value="ACMDM_STREAM_CONVERT" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924547">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkacmdm_stream_convert"></A>ACMDM_STREAM_CONVERT</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This message requests an ACM driver to perform a conversion operation on a specified conversion stream.</P>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwDriverID</I></DT>
+
+<DD>Specifies a driver instance identifier. The driver returns this value in response to the <B>ACM_Open</B> function.</dd>
+
+<DT><I>hDriver</I></DT>
+
+<DD>Handle to a driver.</dd>
+
+<DT><I>uMsg</I></DT>
+
+<DD>Specifies this message.</dd>
+
+<DT><I>lParam1</I></DT>
+
+<DD>Pointer to an <B>ACMDRVSTREAMINSTANCE </B>structure.</dd>
+
+<DT><I>lParam2</I></DT>
+
+<DD>Pointer to an <B>ACMDRVSTREAMHEADER </B>structure.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>MMSYSERR_NOERROR indicates success. Otherwise, the driver returns one of the MMSYSERR error values declared in the Mmsystem.h header file or one of the ACMERR error values declared in the Msacm.h header file.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The ACM (Waveapi.dll) sends this message by calling the ACM driver's <B>ACM_IOControl</B> entry point through the <B>DeviceIoControl</B> function. The ACM sends this message when an application calls the <B>acmStreamConvert</B> function.</P>
+
+<P>All ACM drivers that provide stream conversions must support this message. For more information about stream conversions, see the Windows NT DDK.</P>
+
+<P>The <B>ACMDRVSTREAMINSTANCE</B> structure received with this message is the same structure received with a previous ACMDM_STREAM_OPEN message. The driver does not need to validate the structure's contents again.</P>
+
+<P><B>ACMDRVSTREAMHEADER </B>identifies the source and destination data buffers. The source buffer contains the data to be converted. The driver places converted data into the destination buffer.</P>
+
+<P>The driver must check the flags in the <I>fdwConvert</I> member<B> </B>of <B>ACMDRVSTREAMHEADER</B>. These flags indicate how converted data should be returned.</P>
+
+<P>Because stream conversions are time-critical operations, ACMDM_STREAM_CONVERT messages must be processed efficiently. The driver should perform as much processing as possible in response to the ACMDM_STREAM_OPEN message.</P>
+
+<P>If the driver supports asynchronous operations and the client has specified the ACM_STREAMOPENF_ASYNC flag, which is contained in the <I>fdwOpen</I> member<B> </B>of <B>ACMDRVSTREAMINSTANCE</B>, the driver must take the following actions when it has finished converting the data in the source buffer: 
+
+<UL type="disc">
+	<LI>Set the ACMSTREAMHEADER_STATUSF_DONE flag<B> </B>of <B>ACMDRVSTREAMHEADER</B>.</li>
+
+	<LI>Send the client an MM_ACM_DONE callback message by calling the <B>PostThreadMessage</B> function.</li>
+</UL>
+
+<P>Along with the <I>padshNext</I> member of <B>ACMDRVSTREAMHEADER</B>, asynchronous drivers can use the ACMSTREAMHEADER_STATUSF_INQUEUE flag of the structure to maintain a conversion queue of stream header structures.</P>
+
+<P>Before calling the driver's <B>ACM_IOControl</B> function, the ACM should verify the following conditions:
+
+<UL type="disc">
+	<LI>The structure is readable, writable, and properly sized.</li>
+
+	<LI>The <I>fdwConvert</I> member of the structure contains valid flag values.</li>
+
+	<LI>The structure's buffers have been prepared, and the specified buffer sizes are not larger than their prepared sizes. </li>
+
+	<LI>The structure is not currently in an asynchronous driver's conversion queue; that is, the structure's ACMSTREAMHEADER_STATUSF_INQUEUE flag is not set.</li>
+</UL>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>1.0 and later</TD>
+<TD width=19%>&nbsp;</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wceddkacmdm_stream_prepare.htm">ACMDM_STREAM_PREPARE</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

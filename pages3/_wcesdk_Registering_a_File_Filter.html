@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registering a File Filter</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Registering a File Filter" />
+<MSHelp:RLTitle Title="Registering a File Filter (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="file filters, registering" />
+<MSHelp:Keyword Index="K" Term="registering, file filters" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Registering_a_File_Filter" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="devdesk.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922197">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_registering_a_file_filter"></A>Registering a File Filter</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>An application registers a file filter by placing its CLSID in the following registry key locations: 
+
+<UL type="disc">
+	<LI><B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters\.</B>&lt;<I>file extension</I>&gt;<B>\InstalledFilters</B>. This registration associates the file filter with the file type that it converts. </li>
+
+	<LI><B>HKEY_CLASSES_ROOT\CLSID</B>. This registration provides information on the file filter's capabilities and its DLL. </li>
+</UL>
+
+<P>ActiveSync uses device partnerships to allow multiple Windows CE&#0150;based devices to be connected to the same desktop computer. If device partnerships exist when an application registers a file filter, an application must create a file filter extension key for each existing device partnership. Connecting a device to a desktop computer for the first time establishes a new device partnership with a unique identifier. Devices use the partnership identifier to store unique settings for synchronization, file conversions, and backup-and-restore information. </P>
+
+<P>All filters registered under the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters</B> key are copied to the <B>HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows CE Services\Partners\</B>&lt;<I>partner identifier</I>&gt; key, where &lt;<I>partner identifier</I>&gt; is the identifier of the new device partnership.</P>
+
+<P>A file type can have more than one file filter associated with it. The ActiveSync user interface (UI) lists the registered filters as filter options. A file filter can be registered under the file type's <B>InstalledFilters</B> key in the <B>DefaultImport</B> or <B>DefaultExport</B> subkeys. As their names imply, these subkeys define the default file filters for the file type. The file filter specified under the extension key as the <B>DefaultImport</B> or <B>DefaultExport</B> value will be shown as the default. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Any filter defined as the <B>DefaultImport</B> or <B>DefaultExport</B> value must be an <B>InstalledFilters</B> value, also.</BLOCKQUOTE>
+
+<P>A file filter can also be registered for a particular device. For example, for the Palm-size PC device category, the file filter extension subkey needs to be created under the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Windows CE Services\SpecialDefaults\Palm PC\Filters</B> key.</P>
+
+<P>The following is the structure of the <B>Filters</B> key and the <B>InstalledFilters</B> subkey.</P>
+
+<PRE class="code">HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters
+
+   \.&lt;file extension&gt;
+      [DefaultImport = &lt;default import filter CLSID&gt;]
+      [DefaultExport = &lt;default export filter CLSID&gt;]
+      \InstalledFilters
+         [&lt;clsid1&gt;]
+         . . .
+         [More CLSIDs for this extension.]
+    . . .
+    [More extensions.]</PRE>
+
+<P>The <B>HKEY_CLASSES_ROOT\CLSID</B> key provides basic information about file filters. Each file filter that has been identified in the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters</B> key must be registered in this key. The following is the structure for this key and its subkeys.</P>
+
+<PRE class="code">HKEY_CLASSES_ROOT\CLSID
+
+   \&lt;<I>clsid</I>&gt;
+      \(Default) = &lt;description in "Edit Conversion Settings" list&gt;
+      \DefaultIcon = &lt;file name,index for the icon for this type&gt;
+      \InProcServer32 = &lt;file name of the DLL that handles this type&gt;
+         ThreadingModel = Apartment
+      \PegasusFilter
+         [Import]
+         [HasOptions]
+         Description = &lt;string to display in the conversion dialog box&gt;
+         NewExtension = &lt;extension of the converted file&gt;
+   \. . . [More CLSIDs for filters.]</PRE>
+
+<P>The &lt;<I>clsid</I>&gt; key is a named value that is the CLSID of the registered file filter. This key contains the following subkeys:
+
+<UL type="disc">
+	<LI><B>DefaultIcon</B>, which defines the icon name string or icon resource identifier for the icon associated with the file filter DLL.</li>
+
+	<LI><B>InProcServer32</B>, which identifies the file filter DLL using the default value, and defines the apartment model capabilities of the file filter in the <B>ThreadingModel</B> named value. </li>
+
+	<LI><B>PegasusFilter</B>, which provides information on the specific capabilities of the file filer.
+<P>The following table shows possible named values for the <B>PegasusFilter</B> subkey.
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=20%>Named value </TH>
+<TH width=80%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><B>Import</B></TD>
+<TD width=80%>If this named value exists, the conversion type is for importing files from the desktop computer to the device. Otherwise, the conversion type is for exporting files from the desktop computer to the device. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><B>HasOptions</B></TD>
+<TD width=80%>If this named value exists, the file filter supports the <B>IceFileFilter::FilterOptions</B> method.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><B>Description</B></TD>
+<TD width=80%>The data for this named value is a string that describes the conversion. ActiveSync displays this text on the property sheets that are displayed by selecting the <B>DeviceDesktop</B> or <B>DesktopDevice</B> tab control selections in the <B>File Conversion Properties</B> dialog box, and then choosing <B>Edit</B> to display the <B>Edit Conversion Settings</B> dialog box. 
+<P>For example, if the <B>Import</B> named value exists, then, on the <B>DesktopDevice</B> property sheet, the data value defined by the <B>Description</B> named value is displayed under the file conversions details <B>Convert to HPC files of the type</B>. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><B>NewExtension</B></TD>
+<TD width=80%>Defines the extension of the file that will be created on the destination device. </TD>
+</TR>
+</table></div>
+</li>
+</UL>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

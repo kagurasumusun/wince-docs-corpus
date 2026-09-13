@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Obtaining a Display Device Context (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="To get a handle to a display device context, call the BeginPaint or GetDC function and supply a handle to a window. Windows CE returns a handle to a display device context with default objects, attributes, and graphic modes."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Obtaining a Display Device Context" />
+<MSHelp:RLTitle Title="Obtaining a Display Device Context (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="DCs, display, obtaining" />
+<MSHelp:Keyword Index="K" Term="display DCs, obtaining" />
+<MSHelp:Keyword Index="A" Term="wcegmm_Obtaining_a_Display_Device_Context" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="gdi.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924219">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_obtaining_a_display_device_context"></A>Obtaining a Display Device Context</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>To get a handle to a display device context, call the <B>BeginPaint</B> or <B>GetDC</B> function and supply a handle to a window. Windows CE returns a handle to a display device context with default objects, attributes, and graphic modes. Newly created device contexts start with default brush, palette, font, pen, and region objects. You can begin drawing using these defaults, or you can choose a new object, change the attributes of an existing object, or choose a new mode.</P>
+
+<P>You can examine a default object's attributes by calling the <B>GetCurrentObject</B> and <B>GetObject</B> functions. The <B>GetCurrentObject</B> function returns a handle identifying the current pen, brush, palette, bitmap, or font, and the <B>GetObject</B> function initializes a structure containing the object attributes.</P>
+
+<P>The following table shows the object-specific creation functions you can call to replace a default object.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=22%>Graphics object</TH>
+<TH width=78%>Creation functions</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Bitmap</TD>
+<TD width=78%><B>CreateBitmap</B>, <B>CreateCompatibleBitmap</B>,<B> CreateDIBSection</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Brush</TD>
+<TD width=78%><B>CreateDIBPatternBrushPt</B>, <B>CreatePatternBrush</B>, <B>CreateSolidBrush</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Palette</TD>
+<TD width=78%><B>CreatePalette</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Font</TD>
+<TD width=78%><B>CreateFontIndirect</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Pen</TD>
+<TD width=78%><B>CreatePen</B>, <B>CreatePenIndirect </B></TD>
+</TR>
+</table></div>
+
+<P>Each of these functions returns a handle identifying the new object. After you retrieve a handle, you can call the <B>SelectObject</B> function to select the new object into the device context. However, you should save the <B>SelectObject</B> return value because it is the handle to the default object. When you finish using the new object, use <B>SelectObject</B> to restore the default object, and delete the new object with the <B>DeleteObject</B> function.</P>
+
+<P>When you have finished drawing in the display area, you must release the device context by calling the <B>EndPaint</B> or <B>ReleaseDC</B> function. If you called <B>BeginPaint</B> to create the device context, then call <B>EndPaint</B> to release it. If you called <B>GetDC</B> to create the device context, then call <B>ReleaseDC</B> to release it. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Call<B> BeginPaint </B>and<B> EndPaint</B> while processing WM_PAINT messages in your window procedure. Otherwise, call <B>GetDC</B> and <B>ReleaseDC</B> to obtain and release a device context.</BLOCKQUOTE>
+
+<P>The following code example shows how to call <B>GetDC</B> and <B>ReleaseDC</B> to obtain and release a device context and how to call <B>SelectObject</B> to get a new object.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">HDC hDC;                // Handle to a display device context
+HBRUSH hBrush,          // Handle to the new brush object  
+       hOldBrush;       // Handle to the old brush object 
+
+// Retrieve the handle to the display device context.
+if (!(hDC = GetDC (hwnd)))
+  return;
+
+// Create a solid brush and select it into the device context.
+hBrush = CreateSolidBrush (RGB(0, 255, 255));
+hOldBrush = SelectObject (hDC, hBrush);
+
+// Draw a rectangle.
+Rectangle (hDC, 0, 0, 100, 200);
+
+// Select the old brush back into the device context.
+SelectObject (hDC, hOldBrush);
+
+// Delete the new brush object.
+DeleteObject (hBrush);
+
+// Release the device context.
+ReleaseDC (hwnd, hDC);</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample Extension-Agent Application</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Sample Extension-Agent Application" />
+<MSHelp:RLTitle Title="Sample Extension-Agent Application (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="code sample, extension agent" />
+<MSHelp:Keyword Index="K" Term="extension agent, sample" />
+<MSHelp:Keyword Index="K" Term="Testdll sample" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Sample_Extension_Agent_Application" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="snmp.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923448">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_sample_extension_agent_application"></A>Sample Extension-Agent Application</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The Testdll sample demonstrates how to write an extension-agent DLL. This DLL implements the toaster MIB and shows how new MIBs can be added to the agent through a DLL.</P>
+
+<PRE class="code">/**********************************************************************
+Module Name:
+  testdll.c
+
+Abstract:
+  Microsoft's Extendible Agent is implemented by dynamically linking to
+  the Extension-Agent DLLs that implement portions of the MIB. These 
+  Extension Agents are configured in the Registration Database. When 
+  the Extendible Agent Service is started, it queries the registry to 
+  determine the Extension-Agent DLLs that have been installed and need to 
+  be loaded and initialized. The Extendible Agent invokes various DLL 
+  entry points to request MIB queries and obtain Extension Agent- 
+  generated traps.
+**********************************************************************/
+
+#include &lt;windows.h&gt;
+#include &lt;snmp.h&gt;
+#include "testmib.h"    // Contains the definitions for the table 
+                        // structure describing the MIB. This is used 
+                        // in conjunction with Testmib.c where the MIB
+                        // requests are resolved.
+// Extension-Agent DLLs need access to the time that has elapsed since the agent
+// has been active. This reference is implemented by initializing the Extension 
+// Agent with a time-zero reference, and allowing the agent to compute the 
+// elapsed time by subtracting the time-zero reference from the current
+// system time. This sample Extension Agent implements this reference
+// by using dwTimeZero.
+DWORD dwTimeZero = 0;
+
+// Extension-Agent DLLs that generate traps must create a Win32 Event 
+// object to communicate occurrence of traps to the Extendible Agent.
+// The event handle is given to the Extendible Agent when the Extension
+// Agent is initialized, it should be NULL if traps will not be 
+// generated. This sample Extension Agent simulates the occurrence of 
+// traps by using hSimulateTrap.
+HANDLE hSimulateTrap = NULL;
+
+// This is a standard Win32 DLL entry point. This example DLL does not
+// perform any special actions by using this mechanism.
+BOOL WINAPI DLLEntry (HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
+{
+  switch (dwReason)
+  {
+    case DLL_PROCESS_ATTACH:
+    case DLL_PROCESS_DETACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    default:
+      break;
+  } // end switch ()
+
+  return TRUE;
+} // end DllEntryPoint ()
+
+
+// Extension-Agent DLLs provide the following entry point to coordinate
+// the initializations of the Extension Agent and the Extendible Agent. 
+// The Extendible Agent provides the Extension Agent with a time-zero 
+// reference; The Extension Agent provides the Extendible Agent with an
+// Event handle for communicating occurrence of traps, and an object 
+// identifier representing the root of the MIB subtree that the 
+// Extension Agent supports.
+BOOL WINAPI SnmpExtensionInit (
+    IN  DWORD               dwTimeZeroReference,
+    OUT HANDLE              *hPollForTrapEvent,
+    OUT AsnObjectIdentifier *supportedView)
+{
+  // Record the time-zero reference that is provided by the Extendible Agent.
+  dwTimeZero = dwTimeZeroReference;
+
+  // Create an Event that will be used to communicate the occurrence of
+  // traps to the Extendible Agent. The Extension Agent will assert 
+  // this Event when a trap has occurred. This is explained further, 
+  // later in this file.
+  if ((*hPollForTrapEvent = CreateEvent (NULL, FALSE, FALSE, NULL)) 
+      == NULL)
+  {
+    // Indicate error. Be sure that NULL is returned to the Extendible
+    // Agent.
+  }
+
+  // Indicate the MIB view that is supported by this Extension Agent, an object
+  // identifier that represents the sub root of the MIB that is supported.
+  *supportedView = MIB_OidPrefix;       // Structure copy
+
+  // Record the trap event. This example Extension Agent simulates 
+  // traps by generating a trap after every given number of requests 
+  // that are processed.
+  hSimulateTrap = *hPollForTrapEvent;
+
+  // Indicate that initialization of the Extension Agent was successful.
+  return TRUE;
+} // end SnmpExtensionInit ()
+
+
+// Extension-Agent DLLs provide the following entry point to 
+// communicate traps to the Extendible Agent. The Extendible Agent will
+// query this entry point when the trap event (which is supplied at 
+// initialization time) is asserted, which indicates that zero or more 
+// traps might have occurred. The Extendible Agent will call repeatedly
+// this entry point until FALSE is returned, which indicates that all 
+// outstanding traps have been processed.
+BOOL WINAPI SnmpExtensionTrap (
+    OUT AsnObjectIdentifier *enterprise,
+    OUT AsnInteger          *genericTrap,
+    OUT AsnInteger          *specificTrap,
+    OUT AsnTimeticks        *timeStamp,
+    OUT RFC1157VarBindList  *variableBindings)
+{
+  // The body of this routine is an extremely simple example of the trap
+  // functionality. A real implementation will be more complex.
+
+  // The following variables define data that is inserted into the trap below.
+  static UINT OidList[]  = { 1, 3, 6, 1, 4, 1, 77, 2 };
+  static UINT OidListLen = 8;
+
+  // The following variable is used for the simulation; it allows a 
+  // single trap to be generated and then causes FALSE to be returned, 
+  // which indicates no more traps.
+  static whichTime = 0;
+
+  // The following if/else support the simulation.
+  if (whichTime == 0)
+  {
+    whichTime = 1;                      // Supports the simulation
+
+    // Communicate the trap data to the Extendible Agent.
+    enterprise-&gt;idLength    = OidListLen;
+    enterprise-&gt;ids         = OidList;
+    *genericTrap            = SNMP_GENERICTRAP_ENTERSPECIFIC;
+    *specificTrap           = 1;        // the bytesAvailAlert trap
+    *timeStamp              = GetTickCount () - dwTimeZero;
+    variableBindings-&gt;list  = NULL;
+    variableBindings-&gt;len   = 0;
+
+    // Indicate that valid trap data exists in the parameters.
+    return TRUE;
+  }
+  else
+  {
+    whichTime = 0;                      // Supports the simulation
+
+    // Indicate that no more traps are available and parameters do not
+    // refer to any valid data.
+    return FALSE;
+  }
+} // end SnmpExtensionTrap ()
+
+
+// Extension-Agent DLLs provide the following entry point to resolve 
+// queries for MIB variables in their supported MIB view (which is supplied at 
+// initialization time). The requestType is Get/GetNext/Set.
+BOOL WINAPI SnmpExtensionQuery (
+    IN BYTE                   requestType,
+    IN OUT RFC1157VarBindList *variableBindings,
+    OUT AsnInteger            *errorStatus,
+    OUT AsnInteger            *errorIndex)
+{
+  UINT I;
+  static unsigned long requestCount = 0;// Supports the trap simulation
+  
+  // Iterate through the list of variable bindings to resolve individual
+  // variable bindings.
+  for (I=0; I &lt; variableBindings-&gt;len; I++)
+  {
+    *errorStatus = ResolveVarBind (&amp;variableBindings-&gt;list[I],
+                                   requestType);
+    // Test and handle the case where Get Next past end of the MIB view that 
+    // is supported by this Extension Agent occurs. Special processing is 
+    // required to communicate this situation to the Extendible Agent, 
+    // so that it can take the appropriate action, possibly querying other 
+    // Extension Agents.
+    if (*errorStatus == SNMP_ERRORSTATUS_NOSUCHNAME &amp;&amp;
+        requestType == MIB_ACTION_GETNEXT)
+    {
+      *errorStatus = SNMP_ERRORSTATUS_NOERROR;
+
+      // Modify variable binding of such variables so the OID points
+      // just outside the MIB view that is supported by this Extension Agent.
+      // The Extendible Agent tests for this and takes appropriate
+      // action.
+      SnmpUtilOidFree (&amp;variableBindings-&gt;list[I].name);
+      SnmpUtilOidCpy (&amp;variableBindings-&gt;list[I].name, &amp;MIB_OidPrefix);
+      variableBindings-&gt;list[I].name.ids[MIB_PREFIX_LEN-1] ++;
+    }
+
+    // If an error was indicated, communicate error status and error
+    // index to the Extendible Agent. The Extendible Agent will ensure
+    // that the original variable bindings are returned in the response
+    // packet.
+    if (*errorStatus != SNMP_ERRORSTATUS_NOERROR)
+    {
+      *errorIndex = I + 1;
+      goto Exit;
+    }
+  }
+
+Exit:
+  // Supports the trap simulation.
+  if (++requestCount % 3 == 0 &amp;&amp; hSimulateTrap != NULL)
+    SetEvent (hSimulateTrap);
+
+  // Indicate that Extension-Agent processing was successful.
+  return SNMPAPI_NOERROR;
+} // end SnmpExtensionQuery ()
+
+
+// Extension-Agent DLLs provide the following entry point to be called
+// by the master agent when the subagent is being unloaded.
+VOID SnmpExtensionClose ()
+{
+  // Add code here ...
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

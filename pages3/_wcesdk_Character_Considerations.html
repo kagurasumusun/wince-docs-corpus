@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Character Considerations</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Character Considerations" />
+<MSHelp:RLTitle Title="Character Considerations (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Character Considerations" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Character_Considerations" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="portingapps.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922247">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_character_considerations"></A>Character Considerations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Windows CE is based on Unicode. If you are porting non-Unicode applications to Windows CE you should convert all strings from chars to widechars (for example, the C variable type wchar_t). Almost all the Win32 and run-time library functions supported under Windows CE require widechar arguments. Because Windows 95 does not support Unicode, you must use the TCHAR type defined in tchar.h, instead of directly using wchar_t when porting an application from Windows 95.</P>
+
+<P>To successfully port an application to a Windows CE-based platform, you need to adhere to the following guidelines:
+
+<UL type="disc">
+	<LI>Include Tchar.h in your source code. It contains all the required character conversions.</li>
+
+	<LI>Use Win32 string functions instead of C run-time library functions.</li>
+
+	<LI>Use TCHAR or LPTSTR for declarations. By declaring character variables as TCHAR, you can compile the code as either Unicode or ASCII.</li>
+
+	<LI>Use the <B>TEXT</B> macro for string literals, such as a text string. The <B>TEXT</B> macro identifes a string as Unicode when the UNICODE compile flag is use or as an ANSI string when Unicode is not defined.</li>
+
+	<LI>Don't confuse TCHARs with bytes. The following code sample will cause an access violation, because the argument to the <B>malloc</B> function specifies a size in bytes, whereas the third argument to <B>_tcsncpy</B> specifies a size in TCHARs, not bytes. When UNICODE is defined, a TCHAR will be two bytes.
+<PRE class="code">int myfunc(TCHAR *p)
+{
+TCHAR *pszFileName;
+
+pszFileName = (TCHAR*)malloc(MAXFILELEN);
+if (pszFileName)
+_tcsncpy(szFileName, p, MAXFILELEN);
+/* etc */</PRE>
+
+<P>To prevent an access violation, pass the size of a TCHAR as an argument to the <I>sizeof</I> operator and multiply the result with the <I>size</I> parameter of the <B>malloc </B>function as show in the following code sample:
+
+<PRE class="code">int myfunc(TCHAR *p)
+{
+TCHAR *pszFileName;
+
+pszFileName = (TCHAR*)malloc(MAXFILELEN * sizeof(TCHAR));
+if (pszFileName)
+_tcsncpy(szFileName, p, MAXFILELEN);
+}
+/* etc */</PRE>
+</li>
+</UL>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

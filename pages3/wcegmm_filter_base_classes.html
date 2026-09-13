@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Filter Base Classes (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="The DirectShow stream architecture is based on filters and pins. Filters communicate with the filter graph manager and with the pins on the filter. Pins connect filters and handle transporting the data down the stream."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Filter Base Classes" />
+<MSHelp:RLTitle Title="Filter Base Classes (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="DirectShow, filter base classes" />
+<MSHelp:Keyword Index="K" Term="filter base classes (DirectShow)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_filter_base_classes" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshowclasses.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924159">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_filter_base_classes"></A>Filter Base Classes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The DirectShow stream architecture is based on filters and pins. Filters communicate with the filter graph manager and with the pins on the filter. Pins connect filters and handle transporting the data down the stream. </P>
+
+<P><a href="wcesdkrCBaseFilter_class.htm">CBaseFilter</a> is the base class for all filter classes. It implements the <a href="wcesdkrIBaseFilter_interface.htm">IBaseFilter</a> interface, which specifies methods that allow the filter graph manager to create and enumerate pins, retrieve filter information, and notify the filter that it has been added to a filter graph. <B>CBaseFilter</B> also implements the <a href="wcesdkrIMediaFilter_interface.htm">IMediaFilter</a> interface (from which <B>IBaseFilter</B> derives) to allow the filter to receive run, pause, and stop commands from the filter graph manager. This base class adds member functions to retrieve the pin count, retrieve pointers to individual pins, and retrieve the pin version. </P>
+
+<P>The <a href="wcesdkrCBaseMediaFilter_class.htm">CBaseMediaFilter</a> class also implements the <B>IMediaFilter</B> interface. However, because <B>IMediaFilter</B> is also implemented by <B>CBaseFilter</B>, this class is seldom used except to write a plug-in distributor (PID). </P>
+
+<P>Several classes are derived directly from <B>CBaseFilter</B>. Each of these classes provides a base class for implementing a specific type of filter. These include: 
+
+<UL type="disc">
+	<LI><a href="wcesdkrCSource_class.htm">CSource</a>, a base class for source filters. </li>
+
+	<LI><a href="wcesdkrCTransformFilter_class.htm">CTransformFilter</a>, a base class for transform filters. </li>
+
+	<LI><a href="wcesdkrCBaseRenderer_class.htm">CBaseRenderer</a>, a base class for renderer filters. </li>
+</UL>
+
+<P>The <B>CSource</B> filter class works in conjunction with the <a href="wcesdkrCSourceStream_class.htm">CSourceStream</a> pin class to help create a source filter. Most of the work is done in the pin class, and <B>CSource</B> adds pin creation and deletion member functions. The <a href="wcesdkrCSourcePosition_class.htm">CSourcePosition</a> class implements a source filter. </P>
+
+<P>The <B>CTransformFilter</B> class implements a transform filter. Derive your transform class from <B>CTransformFilter</B> if you want to make a copy of the data. The <a href="wcesdkrCTransInPlaceFilter_class.htm">CTransInPlaceFilter</a> class, derived from <B>CTransformFilter</B>, allows in-place transforms that do not copy the data. These transform filter classes work in conjunction with similarly named pin classes (for example, <a href="wcesdkrCTransformOutputPin_class.htm">CTransformOutputPin</a> and <a href="wcesdkrCTransformInputPin_class.htm">CTransformInputPin</a>). Most member functions in the pin classes are implemented to call member functions in the transform filter class, so typically you need only to derive your filter from the filter class and override a few member functions to implement a transform filter. </P>
+
+<P><B>CTransformFilter</B> adds several member functions to those inherited from <B>CBaseFilter</B>. Some of these are pure virtual member functions that the derived class must override. One example is the <a href="wcesdkrCTransformFilter__Transform.htm">CTransformFilter::Transform</a> member function, which is called when the input pin receives a sample. This member function provides the core of the transform functionality. Other member functions to be overridden also involve implementations that are specific to the derived class, such as verifying media types on pins and allocating the correct amount of memory. Additionally, several <B>CTransformFilter</B> member functions are called at various points in the connection or streaming process; the derived class can override these to handle requirements such as adding or releasing references to interfaces. </P>
+
+<P>The <a href="wcesdkrCVideoTransformFilter_class.htm">CVideoTransformFilter</a> class derives from the <B>CTransformFilter</B> class and is used as a base class for filters that can affect the quality of a rendered video by dropping frames when the video renderer sends quality-control messages. This class is primarily used by video decompressors in the DirectShow run time. </P>
+
+<P>The <B>CBaseRenderer</B> class and its derived class, <a href="wcesdkrCBaseVideoRenderer_class.htm">CBaseVideoRenderer</a>, are the base filter classes that implement a video renderer filter. The video renderer filter used in DirectShow is derived from <B>CBaseVideoRenderer</B>. There are other renderer classes that work in conjunction with these classes but are not derived from <B>CBaseFilter</B>. These classes are: 
+
+<UL type="disc">
+	<LI><a href="wcesdkrCRendererInputPin_class.htm">CRendererInputPin</a></li>
+
+	<LI><a href="wcesdkrCBaseControlVideo_class.htm">CBaseControlVideo</a> and its base class <a href="wcesdkrCBaseBasicVideo_class.htm">CBaseBasicVideo</a></li>
+
+	<LI><a href="wcesdkrCBaseControlWindow_class.htm">CBaseControlWindow</a>, and its base classes <a href="wcesdkrCBaseVideoWindow_class.htm">CBaseVideoWindow</a> and <a href="wcesdkrCBaseWindow_class.htm">CBaseWindow</a></li>
+
+	<LI><a href="wcesdkrcaggdirectdraw_class.htm">CAggDirectDraw</a></li>
+
+	<LI><a href="wcesdkrCAggDrawSurface_class.htm">CAggDrawSurface</a></li>
+</UL>
+
+<P>The following illustration shows all the classes that support renderers that are not derived from either <B>CBaseFilter</B> or <a href="wcesdkrCBasePin_class.htm">CBasePin</a>. </P>
+
+<P class="fig"><IMG SRC="basecl6.gif" ALT="" BORDER=0></P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

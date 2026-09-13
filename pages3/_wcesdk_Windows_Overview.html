@@ -1,0 +1,197 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Windows Overview (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="Windows are always rectangular. They are placed above and below each other along an imaginary line that runs perpendicular to the screen. This stack of windows is called the z-order. Each window has a unique position in the z-order."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Windows Overview" />
+<MSHelp:RLTitle Title="Windows Overview (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Windows Overview" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Windows_Overview" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="window.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923251">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_windows_overview"></A>Windows Overview</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Windows are always rectangular. They are placed above and below each other along an imaginary line that runs perpendicular to the screen. This stack of windows is called the <I>z-order</I>. Each window has a unique position in the z-order. Windows that appear first in the z-order are considered to be in front of, or on top of, windows that appear later in the z-order. A window's position in the z-order affects its appearance; a window might obscure another window partially or totally, depending on its location, size, and position in the z-order. </P>
+
+<P>A window is divided into a <I>nonclient area</I>, which is occupied by borders, scroll bars, and various other controls, and a <I>client area</I>, which is the central space inside the nonclient area. You can draw in the client area, but not in the nonclient area. In the Windows CE operating system (OS), the nonclient area of a window is controlled exclusively by the window manager. Windows CE does not send messages that deal with the nonclient area to applications. The following screen shot shows the nonclient and client areas.</P>
+
+<P class="fig"><IMG SRC="client.gif" ALT="" BORDER=0></P>
+
+<P>A window can be displayed or hidden, depending on whether its WS_VISIBLE style is turned on or off, respectively. A window that has the WS_VISIBLE style turned off will not be displayed on the screen; a window that has the WS_VISIBLE style turned on might or might not be displayed on the screen, depending on whether it is obscured by other windows. Covering or uncovering a window by moving another window does not change the WS_VISIBLE style. However, using the <B>ShowWindow</B> API with the SW_SHOW flag makes the window visible, and using <B>ShowWindow</B> with the SW_HIDE flag hides the window.</P>
+
+<P>Every window has a unique identifier that is known as a <I>window</I> <I>handle</I>. When you create a window, you receive a window handle, which you can use then to call functions that use the window.</P>
+
+<P>The following code example shows how to create a window by using an <I>hwndMain</I> variable contains the window handle for the window.</P>
+
+<PRE class="code">HWND hwndMain = CreateWindow(szWindowClass, szTitle, WS_VISIBLE, 
+CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, 
+NULL, hInstance, NULL);</PRE>
+
+<P>Handles (HWND) are useful in applications that create multiple child windows. You can change attributes about the window handle by calling the <B>SetWindowLong</B> function, and you can retrieve the handle and attributes about the window by calling the <B>GetWindowLong</B> function.</P>
+
+<P>A Windows-based application begins with a <B>WinMain</B> function. Every Windows CE&#0150;based application must have the <B>WinMain</B> function as its entry-point function. <B>WinMain</B> performs a number of tasks, including the following:
+
+<UL type="disc">
+	<LI>Registers a window definition for the main window by calling the <B>RegisterClass</B> function. This action is often referred to as "registering a window class."</li>
+
+	<LI>Creates a main window by calling the <B>CreateWindowEx</B> function.</li>
+
+	<LI>Enters a message loop where it waits for messages that signify events that are important for the main window to respond to.</li>
+</UL>
+
+<P><B>WinMain</B> does not need to register a window class or create a main window itself; <B>WinMain</B> can call other functions to perform these tasks. </P>
+
+<P>One task that <B>WinMain</B> must perform itself is establishing a <I>message loop</I>. The message loop retrieves messages from a thread message queue and dispatches them to the appropriate window procedure. The message queue coordinates the transmission of messages for a specified thread. Each thread can have only one message queue. When a message is passed to a window, the message is placed on the message queue of the window thread. The thread receives and dispatches the message. There are two ways to pass a message to a window: posting a message and sending a message. Basically, the <B>PostMessage</B> function sends the message and returns immediately, while the <B>SendMessage</B> function waits for a response from the window to which the message was sent.</P>
+
+<P>The following code examples show how to call <B>PostMessage</B> and <B>SendMessage</B>.</P>
+
+<PRE class="code">PostMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+RetVal = SendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);</PRE>
+
+<P>The following code example shows how to create a simple <B>WinMain</B> function by registering a window class, creating a main window, and entering a message loop.</P>
+
+<PRE class="code">int WINAPI WinMain(   HINSTANCE hInstance,HINSTANCE hPrevInstance,
+                            LPTSTR lpCmdLine, int nCmdShow)
+{
+   TCHAR   szTitle[] = TEXT("Window Title");      // The title bar text
+   TCHAR   szWindowClass[] = TEXT("Window Class");      // The window class name
+   MSG msg;
+   WNDCLASS   wc; // The window class for this application
+
+// Register the window class:
+   
+   wc.style             = CS_HREDRAW | CS_VREDRAW;
+   wc.lpfnWndProc      = (WNDPROC) WinProc; //The function to handle the window messages
+   wc.cbClsExtra      = 0;
+   wc.cbWndExtra      = 0;
+   wc.hInstance      = hInstance;
+   wc.hIcon           = 0;
+   wc.hCursor         = 0;
+   wc.hbrBackground   = (HBRUSH) GetStockObject(WHITE_BRUSH);
+   wc.lpszMenuName      = 0;
+   wc.lpszClassName   = szWindowClass;
+   
+   if (!RegisterClass(&amp;wc)) return FALSE;//Failed to register the window
+   
+   // Create the main window
+   
+   HWND hwndMain = CreateWindow(szWindowClass, szTitle, WS_VISIBLE,
+      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+   
+   if (!hwndMain) return FALSE; //Failed to create the window
+   
+   ShowWindow(hwndMain, SW_SHOW); //Show the main window
+   UpdateWindow(hwndMain); //Update or Redraw the main window
+   
+   // Loop here waiting for messages about the window 
+   // until it is destroyed
+   while (GetMessage(&amp;msg, NULL, 0, 0)) 
+   {
+      TranslateMessage(&amp;msg);
+//This is the function that calls the main window WinProc with the 
+//window messages
+      DispatchMessage(&amp;msg);
+   }
+   
+   return msg.wParam;
+}</PRE>
+
+<P>All applications have at least one window, regardless of whether or not they have a graphical user interface (GUI). Windows CE requires that applications at have least one window because Windows CE is a message-driven OS and a window is the means by which an application receives messages. Each window must be associated with a special function that is known as a <I>window procedure</I> or <B>WinProc</B>. Windows CE calls this window procedure to pass a message to the application.</P>
+
+<P>The <B>WinProc</B> function is attached to a specific window class when the window class is registered. <B>WinProc</B> handles the messages (events) that are sent to all of the existing windows of that window class. <B>WinProc</B> is called in a loop to handle the events that are generated for that window, such as stylus taps and control actions.</P>
+
+<P>A very basic implementation of <B>WinProc </B>consists of a switch statement that handles window messages or passes them on to the default system <B>WinProc</B> for the main window. So, the <B>WinProc</B> must have at least two elements:
+
+<UL type="disc">
+	<LI>A switch statement to handle the window messages, as required for the application.</li>
+
+	<LI>A statement that sends the messages on to the default window procedure.</li>
+</UL>
+
+<P>The following code example shows a typical implementation of <B>WinProc</B>.</P>
+
+<PRE class="code">LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+   HDC hdc;
+   int wmId, wmEvent;
+
+// The switch statement handles messages.
+   switch (message) 
+   {
+      case WM_CREATE:
+// Handle something before the window is created.
+         break;
+
+// Handle various windows messages.
+
+      case WM_DESTROY:
+         PostQuitMessage(0);
+         break;
+// The default window procedure 
+      default:
+         return DefWindowProc(hWnd, message, wParam, lParam);
+   }
+   return 0;
+}</PRE>
+
+<P>A message consists of a <I>message identifier</I> and optional parameters. A message identifier is a named constant that identifies a message. In Windows CE, message identifiers typically are of the form WM_<I>XXXXXXX</I>, such as WM_COMMAND or WM_CREATE. When a window procedure receives a message, it uses a message identifier to determine how to process the message. For example:
+
+<UL type="disc">
+	<LI>The WM_CREATE message is sent to a window when the window is created.</li>
+
+	<LI>The WM_DESTROY message is sent to a window when the window is destroyed.</li>
+
+	<LI>The WM_PAINT message is sent to a window when the window client area has changed and must be repainted.</li>
+</UL>
+
+<P>Message parameters contain data, or the location of data, that a window procedure uses to process messages. The meaning and value of the message parameters depend on the message identifier. A message parameter can contain an integer, packed bit flags, a pointer to a structure containing additional data, or other information. A window must check the message identifier to determine how to interpret the message parameters. The term "message" is used to mean either the message identifier or the identifier and the parameters together. The specific meaning usually is clear from the context.</P>
+
+<P>The system sends a message to a window procedure by passing the message data as arguments to the procedure. The window procedure then performs an appropriate action for the message: it checks the message identifier and, while processing the message, uses data that is specified by the message parameters.</P>
+
+<P>If a window procedure does not process a message, it should pass the message along for default processing. The window procedure does this by calling the <B>DefWindowProc</B> function, which performs a default action and returns a message result. The window procedure then must return this value as its own message result. Most window procedures process just a few messages and pass the others on to <B>DefWindowProc</B>.</P>
+
+<P>Window procedures can be shared. The handle of the specific window that is receiving the message is available as an argument of the window procedure; it is the first parameter in the <B>WinProc</B> callback.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

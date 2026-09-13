@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IEnumConnections</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IEnumConnections" />
+<MSHelp:RLTitle Title="IEnumConnections" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IEnumConnections" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927021">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_ienumconnections"></A>IEnumConnections</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This interface enumerates the current connections for a connectable object. Connectable objects support the following features:
+
+<UL type="disc">
+	<LI>Outgoing interfaces, such as event sets</li>
+
+	<LI>The ability to enumerate the IIDs of the outgoing interfaces</li>
+
+	<LI>The ability to connect and disconnect sinks to the object for those outgoing IIDs</li>
+
+	<LI>The ability to enumerate the connections that exist to a particular outgoing interface</li>
+</UL>
+
+<P class="label"><B>When to Implement</B></P>
+
+<P>To support connectable objects, you need to provide four related interfaces:
+
+<UL type="disc">
+	<LI><A HREF="_wcesdk_com_iconnectionpointcontainer.htm">IConnectionPointContainer</A> </li>
+
+	<LI><A HREF="_wcesdk_com_ienumconnectionpoints.htm">IEnumConnectionPoints</A> </li>
+
+	<LI><A HREF="_wcesdk_com_iconnectionpoint.htm">IConnectionPoint</A> </li>
+
+	<LI><B>IEnumConnections </B></li>
+</UL>
+
+<P>The <B>IConnectionPointContainer</B> interface indicates the existence of the outgoing interfaces. It provides access to an enumerator sub-object with the <B>IEnumConnectionPoints</B> interface. It also provides a connection point sub-object with the <B>IConnectionPoint</B> interface. The <B>IConnectionPoint</B> interface provides access to an enumerator sub-object with the <B>IEnumConnections</B> interface.</P>
+
+<P>The connection point is a separate sub-object to avoid circular reference counting problems.</P>
+
+<P>Any individual connection point can support enumeration of its currently known connections through <A HREF="_wcesdk_com_iconnectionpoint__enumconnections.htm">IConnectionPoint::EnumConnections</A>. The enumerator created by this method implements the interface <B>IEnumConnections</B> which deals with the type <B>CONNECTDATA</B>. Each <B>CONNECTDATA</B> structure contains the <A HREF="_wcesdk_com_iunknown.htm">IUnknown</A> of a connected sink and the <I>dwConnection</I> that was returned by <A HREF="_wcesdk_com_iconnectionpoint__advise.htm">IConnectionPoint::Advise</A> when that sink was connected. When enumerating connections through <B>IEnumConnections</B>, the enumerator is responsible for calling <A HREF="_wcesdk_com_iunknown_addref.htm">IUnknown::AddRef</A> through the pointer in each enumerated structure, and the caller is responsible to later call <A HREF="_wcesdk_com_iunknown_release.htm">IUnknown::Release</A> when those pointers are no longer needed.</P>
+
+<P class="label"><B>When to Use</B></P>
+
+<P>Use the <B>IEnumConnectionPoints</B> interface to enumerate all the supported connection points for each outgoing IID.</P>
+
+<P>The prototypes of the methods are as follows:</P>
+
+<PRE class="syntax"><B>HRESULT</B> <B>Next(</B>
+  <B>ULONG</B> <I>cConnections</I>,  //[in]Number of CONNECTDATA structures 
+                       // returned in rgpcd
+  <B>CONNECTDATA</B> <B>**</B><I>rgpcd</I>, //[out]Array to receive enumerated 
+                       // CONNECTDATA structures
+  <B>ULONG</B> <B>*</B><I>pcFetched</I>     //[out]Pointer to actual number of 
+                       // CONNECTDATA structures
+<B>);</B>
+ 
+<B>HRESULT</B> <B>Skip(</B>
+  <B>ULONG</B> <I>cConnections</I>  //[in]Number of elements to skip
+<B>);</B>
+ 
+<B>HRESULT</B> <B>Reset(void);</B>
+ 
+<B>HRESULT</B> <B>Clone(</B>
+  <B>IEnumConnections</B> <B>**</B><I>ppEnum</I>  //[out]Address of output variable that 
+                             // receives the IEnumConnections interface 
+                             // pointer
+<B>);</B></PRE>
+
+<P class="label"><B>Remarks</B>
+
+<DL>
+<DT><B>IEnumConnections::Next</B></DT>
+
+<DD>Enumerates the next <I>cConnections</I> elements (i.e., <B>CONNECTDATA</B> structures) in the enumerator's list, returning them in rg<I>p</I>cd along with the actual number of enumerated elements in <I>pcFetched</I>.
+
+<P>The caller is responsible for calling <CODE>CONNECTDATA.pUnk-&gt;Release</CODE> for each element in the array once this method returns successfully. If <I>cConnections</I> is greater than one, the caller must also pass a non-NULL pointer to <I>pcFetched</I> to get the number of pointers it has to release.
+
+
+<P>E_NOTIMPL is not allowed as a return value. If an error value is returned, no entries in the <I>rgpcd</I> array are valid on exit and require no release.
+</dd>
+
+<DT><B>IEnumConnections::Skip</B></DT>
+
+<DD>Instructs the enumerator to skip the next <I>cConnections</I> elements in the enumeration so that the next call to <B>IEnumConnections::Next</B> will not return those elements.</dd>
+
+<DT><B>IEnumConnections::Reset</B></DT>
+
+<DD>Instructs the enumerator to position itself at the beginning of the list of elements.
+
+<P>There is no guarantee that the same set of elements will be enumerated on each pass through the list. It depends on the collection being enumerated. It is too expensive for some collections, such as files in a directory, to maintain a specific state.
+</dd>
+
+<DT><B>IEnumConnections::Clone</B></DT>
+
+<DD>Creates another connection point enumerator with the same state as the current enumerator to iterate over the same list. This method makes it possible to record a point in the enumeration sequence in order to return to that point at a later time.
+
+<P>The caller must release this new enumerator separately from the first enumerator.
+</dd>
+</DL>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Ocidl.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_iconnectionpoint.htm">IConnectionPoint</A>, <A HREF="_wcesdk_com_iconnectionpointcontainer.htm">IConnectionPointContainer</A>, <A HREF="_wcesdk_com_ienumconnectionpoints.htm">IEnumConnectionPoints</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

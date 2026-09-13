@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>USBD Interface Functions (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="USB device drivers interact with the peripherals that they control by using the USBD interface functions. These functions, which are provided by the USBD module, constitute the core of a USB device driver's functionality."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="USBD Interface Functions" />
+<MSHelp:RLTitle Title="USBD Interface Functions (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="USBD Interface Functions" />
+<MSHelp:Keyword Index="A" Term="wceddkUSB_Driver_Interface_Functions" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="usb.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924372">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkusb_driver_interface_functions"></A>USBD Interface Functions</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>USB device drivers interact with the peripherals that they control by using the USBD interface functions. These functions, which are provided by the USBD module, constitute the core of a USB device driver's functionality. There are several categories of USBD interface functions, each related to a different aspect of interacting with a USB device, including transfer, pipe, frame, and configuration functions, as well as functions for performing other miscellaneous tasks.</P>
+
+<P>Transfer functions are the most important category because they handle sending data to and receiving data from a USB device. There are four basic types of transfer: control, bulk, interrupt, and isochronous. For convenience, there are several special transfer functions that provide common types of control transfer, such as device configuration and setup requests. All transfer functions have an optional callback parameter. If a callback function is provided, the transfer functions return immediately, or asynchronously, without waiting for the transfer request to complete. When the transfer request finishes, the USBD module invokes the function pointed to by the callback parameter. Additionally, a USB device driver can use the USB_NO_WAIT flag to cause the transfer functions to return asynchronously, even if no callback is specified. USB device drivers typically do this in situations when they queue several requests to the device and wait for only the last one to finish. In such cases, the device driver is still responsible for closing all transfer handles. If the USB device driver provides no callback function and does not use the USB_NO_WAIT flag, the transfer function blocks until the transfer is complete. Note that if a transfer request fails, possibly even before the transfer is issued, then the transfer function will return FALSE immediately and will not invoke any callback functions.</P>
+
+<P>The USBD module calls the callback function in a context that may block other USB operations. Therefore, these callback functions should perform very minimal processing, preferably just setting some state variables and signaling an event so that any substantial post-processing can be handled by another thread; such callback functions cannot call any USBD interface functions. In particular, callback functions that handle notifications from <B>AbortTransfer</B> must not call the <B>CloseTransfer</B> function. See the HID sample driver for examples of using callback functions.</P>
+
+<P>HCD implementations generally have an internal contiguous buffer of memory which is used as a temporary staging location for data during transfers. However, copying data into and out of this buffer may impose an unacceptable limit on the performance of a USB device driver. In such cases, the driver may pass an optional physical memory address that the USB system uses directly for data transfers. A driver-specific buffer used in this way must be contiguous within 4KB segments and must not be accessed by the USB device driver during transfer operations. The <B>LockPages</B> API can be used to obtain physical address information. </P>
+
+<P>The following list shows the transfer functions:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wceddkaborttransfer.htm">AbortTransfer</A></TD>
+<TD width=62%><A HREF="wceddkissuecontroltransfer.htm">IssueControlTransfer</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wceddkclosetransfer.htm">CloseTransfer</A></TD>
+<TD width=62%><A HREF="wceddkissueinterrupttransfer.htm">IssueInterruptTransfer</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wceddkgetisochresults.htm">GetIsochResults</A></TD>
+<TD width=62%><A HREF="wceddkissueisochtransfer.htm">IssueIsochTransfer</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wceddkgettransferstatus.htm">GetTransferStatus</A></TD>
+<TD width=62%><A HREF="wceddkistransfercomplete.htm">IsTransferComplete</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wceddkissuebulktransfer.htm">IssueBulkTransfer</A></TD>
+<TD width=62%><A HREF="wceddkissuevendortransfer.htm">IssueVendorTransfer</A></TD>
+</TR>
+</table></div>
+
+<P>The following list shows the pipe functions that open and close communication channels between a USB device driver and a USB device: </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkabortpipetransfers.htm">AbortPipeTransfers</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkclosepipe.htm">ClosePipe</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkisdefaultpipehalted.htm">IsDefaultPipeHalted</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkispipehalted.htm">IsPipeHalted</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkopenpipe.htm">OpenPipe</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkresetdefaultpipe.htm">ResetDefaultPipe</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkresetpipe.htm">ResetPipe</A></TD>
+</TR>
+</table></div>
+
+<P>The following list shows the frame functions that control the physical characteristics of frame timing on the bus:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkgetframelength.htm">GetFrameLength</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkgetframenumber.htm">GetFrameNumber</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddkreleaseframelengthcontrol.htm">ReleaseFrameLengthControl</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddksetframelength.htm">SetFrameLength</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="wceddktakeframelengthcontrol.htm">TakeFrameLengthControl</A></TD>
+</TR>
+</table></div>
+
+<P>The following list shows device configuration functions for specific kinds of data transfers defined in the <I>Universal Serial Bus Specification, Revision 1</I>: </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkclearfeature.htm">ClearFeature</A></TD>
+<TD width=60%><A HREF="wceddksetdescriptor.htm">SetDescriptor</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkgetdescriptor.htm">GetDescriptor</A></TD>
+<TD width=60%><A HREF="wceddksetfeature.htm">SetFeature</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkgetinterface.htm">GetInterface</A></TD>
+<TD width=60%><A HREF="wceddksetinterface.htm">SetInterface</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkgetstatus.htm">GetStatus</A></TD>
+<TD width=60%><A HREF="wceddksyncframe.htm">SyncFrame</A></TD>
+</TR>
+</table></div>
+
+<P>The following list shows miscellaneous functions for tasks related to interacting with the USB system software:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkfindinterface.htm">FindInterface</A></TD>
+<TD width=60%><A HREF="wceddkregisterclientdriverid.htm">RegisterClientDriverId</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkgetdeviceinfo.htm">GetDeviceInfo</A></TD>
+<TD width=60%><A HREF="wceddkregisterclientsettings.htm">RegisterClientSettings</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkgetusbdversion.htm">GetUSBDVersion</A></TD>
+<TD width=60%><A HREF="wceddkregisternotificationroutine.htm">RegisterNotificationRoutine</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkloadgenericinterfacedriver.htm">LoadGenericInterfaceDriver</A></TD>
+<TD width=60%><A HREF="wceddktranslatestringdescr.htm">TranslateStringDescr</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wceddkopenclientregistrykey.htm">OpenClientRegistryKey</A></TD>
+<TD width=60%><A HREF="wceddkunregisternotificationroutine.htm">UnRegisterNotificationRoutine</A></TD>
+</TR>
+</table></div>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>
