@@ -1,0 +1,330 @@
+<html>
+<HEAD>
+<TITLE>Windows CE Display Drivers & Hardware</TITLE>
+<META NAME="Windows CE Display Drivers & Hardware" CONTENT="Whitepapers "> 
+<META NAME="MS.LOCALE" CONTENT="EN-US">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso8859-1">
+</HEAD>
+
+<BODY bgcolor="#FFFFFF" text="#000000" link="#CC3300" vlink="#999966" leftmargin=0 topmargin=0>
+<font face="verdana, arial, helvetica" size=2>
+
+<!--TOOLBAR DELETED-->
+
+
+
+<table width="100%" cellspacing=0 cellpadding=0 border=0>
+	<TR>
+		<TD rowspan=3 valign=top width=159 bgcolor=#CCCC99><img src="/windowsce/developer/images/WinCE.gif" width=157 height=75 border=0 alt="Windows CE"><BR>
+
+<!--LEFT_TOC START-->		
+		<a href="/windowsce/developer/default.htm" border=no><img src="/windowsce/developer/images/t_headlines.gif" width=157 height=25 border=0 alt="Headlines"><BR>
+		<a href="/windowsce/developer/prodinfo/default.htm" border=no><img src="/windowsce/developer/images/t_prod.gif" width=157 height=20 border=0 alt="Product Information"><BR>  
+		<a href="/default.htm" border=no><img src="/windowsce/developer/images/t_tech.gif" width=157 height=20 border=0 alt="Technical Materials"><BR>
+		<a href="/windowsce/developer/resources/default.htm" border=no><img src="/windowsce/developer/images/t_resrc.gif" width=157 height=20 border=0 alt="Resources"><BR>
+		<a href="/windowsce/developer/programs/default.htm" border=no><img src="/windowsce/developer/images/t_devprg.gif" width=157 height=20 border=0 alt="Developer Programs"><BR>
+		<a href="/windowsce/developer/feedback/default.htm" border=no><img src="/windowsce/developer/images/t_feedbk.gif" width=157 height=20 border=0 alt="Feedback"><BR>
+		<a href="/windowsce/developer/download/default.htm" border=no><img src="/windowsce/developer/images/t_free.gif" width=157 height=20 border=0 alt="Free Downloads"><BR>
+		<a href="/windowsce/developer/embedded/default.htm" border=no><img src="/windowsce/developer/images/t_embed.gif" width=157 height=20 border=0 alt="Embedded Development"><BR>
+		<a href="/windowsce/developer/purchase/default.htm" border=no><img src="/windowsce/developer/images/t_purchase.gif" width=157 height=20 border=0 alt="Purchase"><BR>
+	<img src="/windowsce/developer/images/t_gradient1.gif" width=157 height=64 border=0><BR><BR>
+		<img src="/windowsce/developer/images/gr_spacer.gif" width=157 height=100% border=0 alt=" ">
+		</TD>
+<!--LEFT_TOC END-->
+		
+		<TD rowspan=3 valign=top width=2 height=100% bgcolor="#000000"><img src="/windowsce/developer/images/spacer.gif" height=1 width=2 border=0></TD> <!--blk vertical ine-->
+
+		<TD colspan=6 valign=top height=49 width=100%>
+			<img src="/windowsce/developer/images/spacer.gif" height=1 width=24 border=0 alt=" ">
+			<img src="/windowsce/developer/images/h_tech.gif" valign=bottom width=301 height=48 border=0 alt="Developer Programs"></TD>
+	</TR>
+
+	<TR><TD colspan=6 bgcolor="#FF3300" height=1><img src="/windowsce/developer/images/whitepix.gif" height=1 width=6 border=0><BR>
+ 
+</TD></TR>
+		
+
+<!--CENTER PANE START-->	
+<tr>
+
+<TD valign=top bgcolor="#FFFFFF" width=24 height=1>	<!--gutter_spacer-->
+<img src="/windowsce/developer/images/spacer.gif" width=24 height=1 border=0 alt="">
+</td>
+
+	<td><img src="/windowsce/developer/images/spacer.gif" width=24 height=24 border=0 alt=""><BR>
+		<font face="verdana, arial, helvetica" size=3 align=left><strong>Microsoft Windows CE Display Drivers & Hardware</strong></font>	
+		<font face="verdana, arial, helvetica" size=2><p>
+</p>
+<font face="verdana, arial, helvetica" size=2 align=left><b>INTRODUCTION</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		 The graphics display architecture in the Microsoft&reg; Windows&reg; CE operating system has been radically transformed in version 2.0. In version 1.0, the Graphics Device Interface (GDI) interfaced directly with the display hardware. In version 2.0, the GDI interfaces with one or more display drivers, which in turn interface with the display hardware. This display architecture gives Windows CE the capability of using a wide variety of display devices without the need to have a hardcoded interface routine for each device. The new Windows CE GDI thus combines versatility with a small footprint. 
+This paper first considers the elements that make a good Windows CE display driver. It discusses the device driver interface functions that display drivers should implement, as well as the graphics primitive engine classes that can be used to simplify the task of writing display drivers. GDI support for device drivers is also discussed.</p>
+<p>The paper then lists detailed display buffer formats for each of the pixel depths supported by Windows CE, and discusses display hardware. Since the display drivers are the conduit between GDI and the display devices, the hardware needed to support the display drivers is, in effect, the hardware needed to support GDI.</p>
+</p>
+</font>
+
+<font face="verdana, arial, helvetica" size=2 align=left><b>WINDOWS CE DISPLAY DRIVERS</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		Like much of Windows CE, the Display Driver Interface (DDI) is a subset of the Microsoft&reg;Windows&reg; NT DDI. If you are not familiar with the Windows NT DDI, you may wish to read the display driver sections of the Windows NT Device Driver Kit before writing your Windows CE display driver.</p>
+<p>Windows CE uses only the basic graphics engine functions and driver functions from the Windows NT DDI. These differences between Windows CE and Windows NT have the following ramifications for Windows CE display drivers:<ul>
+<li>Windows CE display drivers always present the same set of functionality; GDI does not query the driver for information about its capabilities.
+<li>A Windows CE display driver cannot reject an operation as too complex and then call back to GDI to have the operation broken into simpler steps. Because all Windows CE display drivers support the same set of functionality, GDI can break up complex operations before calling the display driver in the first place.
+<li>Windows CE display drivers are compiled as dynamic link libraries (.DLL files) rather than as libraries (.LIB files).</ul><p>
+<p>All Windows CE display drivers must implement a set of DDI functions which will be called by GDI to initialize the display driver and draw to the display. In addition to the DDI functions there is a set of Microsoft&reg; Visual C++&reg; classes called the Graphics Primitive Engine (GPE) classes, which display drivers can use to facilitate hardware acceleration. The sample display driver's implementation of the GPE Classes and their methods perform acceleration for S3Trio64 based display hardware. If your display hardware uses a different video chip set, you can change the implementation of the GPE methods to suit your hardware's capabilities.</p>
+<p>Note that using the GPE classes is optional. You could write your display driver without them, at the expense of making your implementations of the DDI functions more complex. Note that the GPE classes as provided by Microsoft require that your display hardware have a flat frame buffer. If your display hardware does not, for example, if it uses a fixed-size moveable window to access the whole of display memory, it may not be possible to use the GPE classes. For more information, see the <b>Windows CE Display Hardware Recommendations</b> section of this paper, especially the <b>Dirty Rec Drivers</b> subsection.</p>
+<p>Windows CE display drivers differ from normal device drivers in a number of ways. The major difference is that they do not expose the stream I/O interface, therefore, they are not managed by the device manager, so <b>RegisterDevice</b> is never called for them. As a result, there are no special device files or other file system entries that correspond to active display drivers. The mechanism by which display drivers are loaded is that an application that needs to use the display driver calls <b>CreateDC</b> with the name of the display driver's .DLL file. This causes Windows CE to load the display driver, and initialize it so that a device context can be returned to the calling application. The default display driver, of course, is loaded automatically.</p>
+
+</p>
+
+<font face="verdana, arial, helvetica" size=2 align=left><b>DDI FUNCTIONS</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		 The following tables lists the DDI functions for both display and printer drivers. Display drivers should implement all of the display DDI functions listed here; printer drivers should implement all of the listed print DDI functions. However, only DrvEnableDriver must be exported from the display driver DLL. Therefore, only DrvEnableDriver must bear that name; the other functions can be called whatever you want because they are exposed to GDI through function pointers returned by DrvEnableDriver. No matter what they are called, follow the prototypes defined in the WinDDI.H file.</p>
+<table>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>Function</b></td><td><font face="verdana, arial, helvetica" size=2><b>Purpose</b></td></tr>
+
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvAnyBlt</b></td><td><font face="verdana, arial, helvetica" size=2>	Bit block transfer, with stretching or transparency.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvBitBlt</b></td><td><font face="verdana, arial, helvetica" size=2>	General bit block transfer, with clipping and masking.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvContrastControl</b></td><td><font face="verdana, arial, helvetica" size=2>	Allows software adjustment of the display hardware's contrast.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvCopyBits</b></td><td><font face="verdana, arial, helvetica" size=2>	Sends GDI-created print band to printer driver.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvCreateDeviceBitmap</b></td><td><font face="verdana, arial, helvetica" size=2>	Creates and manages bitmaps.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvDeleteDeviceBitmap</b></td><td><font face="verdana, arial, helvetica" size=2>	Deletes a device bitmap.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvDisableDriver</b></td><td><font face="verdana, arial, helvetica" size=2>	Notifies the driver that GDI no longer needs it and is ready to unload it.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvDisablePDEV</b></td><td><font face="verdana, arial, helvetica" size=2>	Notifies the driver that GDI no longer needs a <tr><td><font face="verdana, arial, helvetica" size=2><b>particular print or display device.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvDisableSurface</b></td><td><font face="verdana, arial, helvetica" size=2>	Notifies the driver that GDI no longer needs a particular drawing surface.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvEnableDriver</b></td><td><font face="verdana, arial, helvetica" size=2>	The initial entry point exposed by the driver, which returns pointers to the other DDI functions to GDI.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvEnablePDEV</b></td><td><font face="verdana, arial, helvetica" size=2>	Returns a PDEV, a logical representation of a physical display device, to GDI.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvEnableSurface</b></td><td><font face="verdana, arial, helvetica" size=2>	Creates a drawing surface and associates it with a PDEV.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvEndDoc</b></td><td><font face="verdana, arial, helvetica" size=2>	Sends any control information needed to finish printing a document.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvFillPath</b></td><td><font face="verdana, arial, helvetica" size=2>	Fills a path with a brush.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvGetMasks</b></td><td><font face="verdana, arial, helvetica" size=2>	Gets the color masks for the display device's current mode.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvGetModes</b></td><td><font face="verdana, arial, helvetica" size=2>	Lists the display modes supported by the display device.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvMovePointer</b></td><td><font face="verdana, arial, helvetica" size=2>	Moves the pointer with a guarantee of non-interference by GDI.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvPaint</b></td><td><font face="verdana, arial, helvetica" size=2>	Paints a specified region with a brush.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvPowerHandler</b></td><td><font face="verdana, arial, helvetica" size=2>	Called to handle power-up and power-down notifications.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvQueryFont</b></td><td><font face="verdana, arial, helvetica" size=2>	Gets font metric information.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvRealizeBrush</b></td><td><font face="verdana, arial, helvetica" size=2>	Creates a brush with parameters specified by GDI.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvRealizeColor</b></td><td><font face="verdana, arial, helvetica" size=2>	Maps an RGB color onto the closest available color supported by the device.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvSetPalette</b></td><td><font face="verdana, arial, helvetica" size=2>	Sets the display device's palette.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvSetPointerShape</b></td><td><font face="verdana, arial, helvetica" size=2>	Sets the pointer to a new shape and updates the display.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvStartDoc</b></td><td><font face="verdana, arial, helvetica" size=2>	Sends any control information needed to start printing a document.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvStartPage</b></td><td><font face="verdana, arial, helvetica" size=2>	Sends any control information needed to start printing a new page.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvStrokePath</b></td><td><font face="verdana, arial, helvetica" size=2>	Strokes a path.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvTransparentBlt</b></td><td><font face="verdana, arial, helvetica" size=2>	Bit block transfer, with transparency.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>DrvUnrealizeColor</b></td><td><font face="verdana, arial, helvetica" size=2>	Maps a color in the display device's format onto an RGB value.</td></tr>
+</table>
+
+</p>
+
+<font face="verdana, arial, helvetica" size=2 align=left><b>USING GPE CLASSES</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		 The sample display driver uses the Graphics Primitive Engine (GPE) classes. While the GPE classes are optional, using them greatly facilitates the process of writing display drivers. If you use the GPE classes, you only need to provide new code necessary to make your display hardware function correctly and to perform acceleration.</p>
+<p>The GPE classes require that your display hardware uses a flat frame buffer. That is, the display's memory must lie in a contiguous memory range. Modifying the GPE classes to use a discontinuous frame buffer would require significant effort.</p>
+<p>To create a display driver based on the GPE classes, use the following approach:<ol>
+	<li>	Create a directory for your project.
+	<li>	Copy the files from one of the sample driver directories, for example the S3Trio64 directory, to your project directory.
+	<li>	Globally replace the device-specific name in those files, such as "S3Trio64", with your device's name.
+	<li>	Change Config.CPP so that it puts your display device in a linear frame-buffer mode.
+	<li>	Disable all hardware-specific acceleration.
+	<li>	Build and test this non-accelerated driver. GPE will use software emulation to generate output.
+	<li>	Add your own hardware acceleration code.</ol>
+</p>
+</font>
+
+<font face="verdana, arial, helvetica" size=2 align=left><b>GDI SUPPORT SERVICES FOR DISPLAY DRIVERS</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		 The Windows CE GDI provides some services to support display drivers, in the form of predefined structures with functions that act on them, and a few standalone C functions. Predefined structures provide support for brushes, clipping regions, palettes, stroke and fill paths, and translations. Standalone C functions provide support for device bitmaps and surfaces.
+</p>
+<table>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>Structure or Function	</b></td><td><font face="verdana, arial, helvetica" size=2><b>Purpose</b></td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>BRUSHOBJ		</b></td><td><font face="verdana, arial, helvetica" size=2>Structure that represents a brush used for solid or patterned stroke and fill operations.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>BRUSHOBJ_pvAllocRbrush	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that allocates memory for a brush.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>BRUSHOBJ_pvGetRbrush	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that retrieves a pointer to the specified brush.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>CLIPOBJ		</b></td><td><font face="verdana, arial, helvetica" size=2>Structure that represents a clipping region.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>CLIPOBJ_bEnum		</b></td><td><font face="verdana, arial, helvetica" size=2>Function that enumerates clipping rectangles from a clipping region.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>CLIPOBJ_cEnumStart	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that sets parameters for enumerating the rectangles in a clipping region.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>EngCreateDeviceBitmap	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that causes GDI to create a handle for a device bitmap.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>EngCreateDeviceSurface	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that causes GDI to create a device surface that the display driver will manage.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>EngDeleteSurface	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that informs GDI that a device surface is no longer needed by the display driver.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>PALOBJ_cGetColors	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that copies colors into a palette.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>PATHDATA		</b></td><td><font face="verdana, arial, helvetica" size=2>Structure that stores portions of a drawing path.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>PATHOBJ_bEnum		</b></td><td><font face="verdana, arial, helvetica" size=2>Function that enumerates PATHDATA records from a drawing path.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>PATHOBJ_vEnumStart	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that readies a drawing path to have its component line segments enumerated.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>PATHOBJ_vGetBounds	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that returns the bounding rectangle for a drawing path.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>XLATEOBJ		</b></td><td><font face="verdana, arial, helvetica" size=2>Structure used in translating colors from one palette to another.</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2><b>XLATEOBJ_cGetPalette	</b></td><td><font face="verdana, arial, helvetica" size=2>Function that retrieves colors from an indexed palette.</td></tr>
+</table>
+
+
+<font face="verdana, arial, helvetica" size=2 align=left><b>DISPLAY BUFFER FORMATS</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		 The Windows CE GDI supports displays with a wide variety of color depths and color models, from one-bit color to palletized color to true 32-bit RGB. Each format also supports several pixel-orderings, depending on whether access to the display memory is by bytes, two-byte words, or 4-byte dwords.</p>
+<p>All display buffer formats assume that the order of pixels on the display is from left to right, and top to bottom. That is, pixel (0,0) is at the upper-left corner of the display, and pixel (width -1, height -1) is at the lower-right corner.</p>
+<p><b>One Bit-Per-Pixel Format</b></p>
+<p>One bit-per-pixel format is for simple black-and-white displays. Zero represents black, 1 represents white. Pixels are packed into bytes such that pixel (0,0) is packed into the highest-order bit of the first byte of display memory. Memory for this format can be arranged like this:
+</p>	   
+<p><b>Two Bits-Per-Pixel Format</b></p>
+<p>Two bits-per-pixel format is typically used for four-level grayscale displays, although any 4-entry palette will work. Gray levels are represented according to the following table:
+<table><tr><td><font face="verdana, arial, helvetica" size=2><b>Bit 1</b></td><td><font face="verdana, arial, helvetica" size=2><b>Bit 0</b></td><td><font face="verdana, arial, helvetica" size=2><b>Gray Level</b></td></tr>
+
+<tr><td><font face="verdana, arial, helvetica" size=2>0</td><td><font face="verdana, arial, helvetica" size=2>0<td><font face="verdana, arial, helvetica" size=2>Black</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2>0</td><td><font face="verdana, arial, helvetica" size=2>1</td><td><font face="verdana, arial, helvetica" size=2>Dark Gray</b></td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2>1</td><td><font face="verdana, arial, helvetica" size=2>0</td><td><font face="verdana, arial, helvetica" size=2>Light Gray</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2>1</td><td><font face="verdana, arial, helvetica" size=2>1</td><td><font face="verdana, arial, helvetica" size=2>White</td></tr>
+</table>
+
+<p>Memory for this format can be arranged like this:</p>
+	   
+<p><b>Four Bits-Per-Pixel Format</b></p>
+<p>Four bits-per-pixel format is generally a palletized format. The frame buffer itself can be implemented either as two pixels packed into each byte, or as one pixel-per-byte. Memory for this format can be arranged like this:</p>
+	   
+<p>If you choose to implement just one pixel-per-byte, the driver should represent the display mode as eight bits-per-pixel with a 16-color palette. The relevant bits in each byte should be the low-order nibble, while the high-order nibble should always be zero.</p>
+<p><b>Eight Bits-Per-Pixel Format</b></p>
+<p>Eight bits-per-pixel format should ideally use a software-changeable palette which maps eight-bit values onto 24-bit colors. </p><p>Microsoft recommends using a palette that contains the default Windows CE palette for reasons of performance, compatibility, and image quality. Memory for this format can be arranged like this:</p>
+	   
+<p><b>Fifteen or Sixteen Bits-Per-Pixel Format</b></p>
+<p>Fifteen or sixteen bits-per-pixel format is a masked format, and is not palletized. For either fifteen or sixteen bits-per-pixel, pixels are stored one per two-byte word; fifteen bits-per-pixel format wastes the high-order bit of each word. Microsoft recommends using the following masks to extract red, green, and blue values:</p>
+<table><tr><td><font face="verdana, arial, helvetica" size=2><b>Color</b></td><td><font face="verdana, arial, helvetica" size=2><b>Fifteen-Bit (5-5-5 RGB)</b></td><td><font face="verdana, arial, helvetica" size=2><b>Sixteen-Bit (5-6-5 RGB)</b></td></tr>
+
+<tr><td><font face="verdana, arial, helvetica" size=2>Red</td><td><font face="verdana, arial, helvetica" size=2>0x7C00<td><font face="verdana, arial, helvetica" size=2>0xF800</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2>Green</td><td><font face="verdana, arial, helvetica" size=2>0x3E00</td><td><font face="verdana, arial, helvetica" size=2>0x07E0</b></td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2>Blue</td><td><font face="verdana, arial, helvetica" size=2>0x001F</td><td><font face="verdana, arial, helvetica" size=2>0x001F</td></tr></table>
+
+<p>As those masks show for fifteen bits-per-pixel, the low-order fifteen bits of each word contain the pixel's data. The unused bit should contain zero. Memory for this format can be arranged like this:</p>
+	   
+<p><b>Twenty-Four Bits-Per-Pixel Format</b></p>
+<p>Twenty-four bits-per-pixel format is a true-color format, in which each pixel stores eight bits for red, green, and blue. There are advantages and drawbacks to this format. The advantages are that image quality is very good, and because each pixel occupies exactly 3 bytes, they can be packed together without wasting memory. The drawback is that since half the pixels in this scheme cross dword boundaries, there is a performance penalty in accessing and decoding pixels. Memory for this format can be arranged like this:</p>
+	   
+<p><b>Thirty-Two Bits-Per-Pixel Format</b></p>
+<p>Thirty-two bits-per-pixel format is another true color format. This format does not cause pixels to cross DWORD boundaries, but is less efficient in memory use. There are two ways to arrange the color channels in this format. One puts blue in the least significant byte of each pixel, and the other puts red in the least significant byte. These options correspond to the PAL_BGR and PAL_RGB modes. You can use the following masks to extract red, green, blue, and alpha channels from each pixel:</p>
+<table><tr><td><font face="verdana, arial, helvetica" size=2><b>Color</b></td><td><font face="verdana, arial, helvetica" size=2><b>PAL_RGB Mask</b></td><td><font face="verdana, arial, helvetica" size=2><b>PAL_BGR Mask</b></td></tr>
+
+<tr><td><font face="verdana, arial, helvetica" size=2>Red</td><td><font face="verdana, arial, helvetica" size=2>0x000000FF<td><font face="verdana, arial, helvetica" size=2>0x00FF0000</td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2>Green</td><td><font face="verdana, arial, helvetica" size=2>0x0000FF00</td><td><font face="verdana, arial, helvetica" size=2>0x0000FF00</b></td></tr>
+<tr><td><font face="verdana, arial, helvetica" size=2>Blue</td><td><font face="verdana, arial, helvetica" size=2>0x00FF0000</td><td><font face="verdana, arial, helvetica" size=2>0x000000FF</td></tr></table>
+
+
+<p>Memory for this format can be arranged like this:</p>
+	   
+</p>
+</font>
+
+<font face="verdana, arial, helvetica" size=2 align=left><b>WINDOWS CE DISPLAY HARDWARE RECOMMENDATIONS</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		 Microsoft has several recommendations for display hardware used with the Windows CE operating system. These recommendations are both to improve performance and to facilitate your display driver development effort. You can still write a fully functional display driver even if your hardware does not conform to these recommendations, or if it is too late in the design cycle for your product to alter the hardware design, at the expense of additional effort in implementing the driver and/or decreased performance.</p>
+<p><b>Memory Layout</b></p>
+<p>Microsoft strongly recommends that your display hardware use a linear frame buffer; you should be able to both read and write to the buffer. All of your display's memory should be contiguous, and preferably, there should be one linear access window that covers the entire frame buffer. Hardware that does not meet this recommendation will require that you make substantial modifications to the GPE classes if you choose to use them. See the <b>Using GPE Classes</b> section of this paper for more information.</p>
+<p>Your display hardware should also use a supported combination of pixel format, packing, and pixel ordering. For more information, read the <b>Display Buffer Format</b> section of this paper. The display hardware's frame buffer should have the following properties:<ul>
+<li>Top-down format, with pixel (0,0) at the upper left, and pixel (width -1, height -1) at the lower right.
+<li>The frame buffer's stride, the number of bytes in memory that it takes to represent one scan line on the display, should be a multiple of four bytes, even if that means padding the end of each scan line with unused bytes.
+<li>The entire frame buffer must be accessible by the CPU without the CPU having to perform bank selection.
+<li>Frame buffers should not use bit-planes, in which separate frame buffers are used for each color channel or intensity component.</ul>
+<p><b>Dirty Rect Drivers</b></p>
+<p>If you wish to use the GPE classes to implement a display driver but your display hardware is not designed to support GPE classes (for instance, if the frame buffer is not linear) then you may want to consider writing a "dirty rect driver". </p>
+<p>In this model, the GPE classes maintain an in-memory device-independent bitmap (DIB) that represents the frame buffer. GPE notifies the dirty rect driver whenever the in-memory DIB is modified. The dirty rect driver is responsible for copying the altered or "dirty" portion of the DIB to the display device, performing whatever conversions are necessary.</p>
+<p>Dirty rect drivers come with significant costs in memory usage and execution speed. They should only be used as a last resort to support hardware that absolutely cannot be made compatible with GPE requirements.</p>
+<p><b>Acceleration</b></p>
+<p>Microsoft recommends that you use display hardware which can accelerate the following operations, in order of decreasing importance:<ul>
+<li>Solid color fills. Specifically, Blt operations whose pbo->iSolidColor member is not 0xFFFFFFFF.
+<li>SRCCOPY Blt operations.
+<li>Cursor display, if your platform uses a cursor.
+<li>Solid line drawing with sub-pixel precision.
+<li>Masked SRCCOPY Blt operations.
+<li>Other graphical operations performed frequently by your Windows CE device.</ul></p>
+</p>
+
+
+<font face="verdana, arial, helvetica" size=2 align=left><b>SUMMARY</b></font></p>
+		
+		<font face="verdana, arial, helvetica" size=2><P>
+		 In version 2.0 of Windows CE, the display drivers play a critical role in the visual display architecture. Display drivers and display hardware that are created in accordance with the design strategies outlined in this paper will allow Windows CE-based devices to take full advantage of the enhanced graphical display capabilities of the new GDI. 
+
+
+</p>
+</font>
+
+<font face="verdana, arial, helvetica" size=1><P>
+
+		<!--date removed-->
+		
+</P>
+</font>
+
+<!-- MSFT COPYRIGHT-->
+			
+<font face="verdana, arial, helvetica" size=1><A href="http://www.microsoft.com/misc/cpyright.htm">&copy; 1997 Microsoft Corporation. All rights reserved. Terms of Use.</A></FONT>
+	</td>
+
+<!--MSFT COPYRIGHT-->
+
+<!-- ******************** -->	
+<!--  END CENTER COLUMN   -->
+<!-- ******************** -->
+
+<TD valign=top bgcolor="#FFFFFF" width=10>	<!--gutter_spacer-->
+<img src="/windowsce/developer/images/spacer.gif" width=6 height=1 border=0>
+</td>
+
+<TD valign=top bgcolor="#666600" width=1>	<!--green line-->
+<img src="/windowsce/developer/images/whitepix.gif" width=1 height=6 border=0><BR>
+</td>
+
+<TD valign=top bgcolor="#FFFFFF" width=6>	<!--gutter_spacer-->
+<img src="/windowsce/developer/images/spacer.gif" width=6 height=1 border=0>
+</td>
+
+<!--Right TOC-->
+
+<TD valign=top width=125>
+<font face=verdana size=1>
+
+<BR>&nbsp;
+<p>
+
+</font>
+</td>
+
+<!-- Right TOC end-->
+
+</tr>
+</table>
+</Body>
+</HTML>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
