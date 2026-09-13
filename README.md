@@ -32,6 +32,9 @@ pages6/<id>.html    Windows Embedded CE 6.0     (v=winembedded.60)
 pagesw/             desktop Win32 reference pages (current Learn naming)
 pageswm/            Windows Mobile 6.5 pages
 pagesmag/           MSDN Magazine articles
+pagesnet/           .NET Framework 3.5 (v=vs.90) class-library pages
+                    harvested for the CE .NET (Compact) Framework
+                    surface (M102b; see wince-api tools/cf-harvest.py)
 ce30/               official CE 3.0 CHM archive + provenance (see ce30/PROVENANCE.md)
 coredll/            coredll.def export lists
 rows.json           harvested Requirement records (CE 5.0; see wince-api)
