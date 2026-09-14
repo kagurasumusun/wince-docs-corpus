@@ -40,6 +40,16 @@ coredll/            coredll.def export lists
 rows.json           harvested Requirement records (CE 5.0; see wince-api)
 rows3.json          harvested CE 3.0 records (title/sig/os/versions/header/lib)
 rows4.json          harvested Requirement records (CE 4.x)
+rows-prints.json    the code prints that the Requirement-row harvest
+                    drops: ce-fetch.py records a page's code block only
+                    when it is call-shaped (`NAME(`), so pages whose
+                    print is a plain typedef / tagged definition /
+                    #define reached rows*.json with an empty `sig`.
+                    Regenerated from the preserved pages below by
+                    wince-api tools/ce-prints.py (80 records: 78 tagdef,
+                    2 typedef; 3,394 pages print no declaration of their
+                    own title, which is the measured basis of the hold
+                    policy).
 catalogs/*.tsv      official TOC snapshots per version tree
 INDEX.txt           id / file / tree index of every preserved page
 ```
