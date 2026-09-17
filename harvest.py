@@ -15,6 +15,8 @@ Features:
       - Wayback Machine (Internet Archive): 1.5s delay per request (prevents 429 rate limit triggers).
       - MS Learn & MSDN: 0.3s delay per request.
       - Microsoft main: 0.5s delay per request.
+  - Batch commit & push: Periodically commits and pushes fetched data every N pages (default: 1000 pages)
+    to prevent memory overflow, workflow timeouts, and GitHub payload/push size limit issues.
   - Automatic Exponential Backoff & Retry-After handling on HTTP 429 (Too Many Requests) or HTTP 503 errors.
   - Preserves URL directory structures, raw HTML, and metadata (.meta.json).
 """
@@ -24,7 +26,9 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
@@ -203,7 +207,59 @@ def save_fetched_data(filepath, meta_path, res):
         json.dump(meta, f, indent=2, ensure_ascii=False)
 
 
-def harvest_domain_queue(category, domain_urls, delay, force):
+class BatchCommitManager:
+    """
+    Thread-safe manager that tracks fetched page counts across workers and performs
+    git commit and git push every commit_interval pages to prevent GitHub payload size limits.
+    """
+    def __init__(self, commit_interval=1000, auto_push=False):
+        self.commit_interval = commit_interval
+        self.auto_push = auto_push
+        self.counter = 0
+        self.lock = threading.Lock()
+
+    def record_page_fetched(self):
+        if self.commit_interval <= 0:
+            return
+
+        with self.lock:
+            self.counter += 1
+            if self.counter >= self.commit_interval:
+                self.counter = 0
+                self.do_commit_and_push()
+
+    def do_commit_and_push(self):
+        print(f"\n[BatchCommitManager] Reached {self.commit_interval} pages batch milestone. Committing changes...")
+        try:
+            subprocess.run(["git", "config", "--global", "user.name", "github-actions[bot]"], check=False)
+            subprocess.run(["git", "config", "--global", "user.email", "github-actions[bot]@users.noreply.github.com"], check=False)
+
+            # Add harvested directories
+            subprocess.run(["git", "add", "MSLearn/", "MSDN/", "Microsoft/", "Wayback/", "Other/"], check=False)
+
+            # Check if there are staged changes
+            diff_res = subprocess.run(["git", "diff", "--staged", "--quiet"])
+            if diff_res.returncode != 0:
+                commit_msg = f"chore: batch harvest snapshot ({datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')})"
+                subprocess.run(["git", "commit", "-m", commit_msg], check=True)
+                print(f"[BatchCommitManager] Committed batch successfully.")
+
+                if self.auto_push:
+                    print("[BatchCommitManager] Pushing batch commit to GitHub repository...")
+                    push_res = subprocess.run(["git", "push"])
+                    if push_res.returncode == 0:
+                        print("[BatchCommitManager] Batch push succeeded.")
+                        # Pull with rebase if needed
+                        subprocess.run(["git", "pull", "--rebase"], check=False)
+                    else:
+                        print("[BatchCommitManager] Batch push warning: failed to push batch commit.")
+            else:
+                print("[BatchCommitManager] No staged changes found for batch commit.")
+        except Exception as e:
+            print(f"[BatchCommitManager] Error during batch commit/push: {e}")
+
+
+def harvest_domain_queue(category, domain_urls, delay, force, batch_manager):
     """
     Worker function to harvest URLs for a specific domain category sequentially with rate limiting.
     """
@@ -231,6 +287,9 @@ def harvest_domain_queue(category, domain_urls, delay, force):
         else:
             print(f"[{category}] [{i}/{total}] -> FAILED/HTTP {res['status_code']}: {res['error']}")
             fail_count += 1
+
+        if batch_manager:
+            batch_manager.record_page_fetched()
 
         if i < total and delay > 0:
             time.sleep(delay)
@@ -265,6 +324,8 @@ def main():
     parser.add_argument("--delay", type=float, default=None, help="Override default delay in seconds between requests per domain")
     parser.add_argument("--limit", type=int, default=0, help="Limit maximum number of URLs to process (0 = no limit)")
     parser.add_argument("--force", action="store_true", help="Force re-fetching existing valid files")
+    parser.add_argument("--commit-interval", type=int, default=1000, help="Number of pages per batch git commit & push (default: 1000, 0 = disable)")
+    parser.add_argument("--auto-push", action="store_true", help="Automatically git push after each batch commit")
     args = parser.parse_args()
 
     urls = load_urls(args.urls_file)
@@ -287,16 +348,23 @@ def main():
         delay = args.delay if args.delay is not None else DOMAIN_DELAYS.get(cat, 0.5)
         print(f"  - Category '{cat}': {len(q)} URLs (Delay: {delay}s)")
 
+    batch_manager = BatchCommitManager(commit_interval=args.commit_interval, auto_push=args.auto_push)
+
     # Execute domain workers concurrently
     results = []
     with ThreadPoolExecutor(max_workers=len(domain_queues)) as executor:
         futures = []
         for cat, q in domain_queues.items():
             delay = args.delay if args.delay is not None else DOMAIN_DELAYS.get(cat, 0.5)
-            futures.append(executor.submit(harvest_domain_queue, cat, q, delay, args.force))
+            futures.append(executor.submit(harvest_domain_queue, cat, q, delay, args.force, batch_manager))
 
         for future in futures:
             results.append(future.result())
+
+    # Final commit for remaining items
+    if args.commit_interval > 0:
+        print("\nPerforming final batch commit/push for remaining pages...")
+        batch_manager.do_commit_and_push()
 
     print("\nHarvest Summary Across All Domains:")
     total_processed = sum(r["total"] for r in results)
