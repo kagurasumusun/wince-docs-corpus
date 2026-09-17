@@ -9,8 +9,14 @@ Reads URLs from urls.txt, fetches raw pages, and saves them under top-level dire
   - web.archive.org -> Wayback/
   - Other domains -> Other/
 
-Preserves URL structure for directories and saves raw HTML files alongside JSON metadata (.meta.json).
-Handles skipping existing valid files, re-fetching incomplete files, sequential delay, and error logging.
+Features:
+  - Domain-level concurrency: Independent target site categories (MSLearn, MSDN, Wayback, Microsoft) are processed in parallel threads.
+  - Per-domain strict rate limits:
+      - Wayback Machine (Internet Archive): 1.5s delay per request (prevents 429 rate limit triggers).
+      - MS Learn & MSDN: 0.3s delay per request.
+      - Microsoft main: 0.5s delay per request.
+  - Automatic Exponential Backoff & Retry-After handling on HTTP 429 (Too Many Requests) or HTTP 503 errors.
+  - Preserves URL directory structures, raw HTML, and metadata (.meta.json).
 """
 
 import argparse
@@ -22,7 +28,18 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+
+
+# Investigated & documented domain-specific crawling delays (seconds)
+DOMAIN_DELAYS = {
+    "Wayback": 1.5,     # Internet Archive / Wayback Machine rate limit protection
+    "MSLearn": 0.3,     # Microsoft Learn
+    "MSDN": 0.3,        # MSDN
+    "Microsoft": 0.5,   # Microsoft main site / downloads
+    "Other": 0.5
+}
 
 
 def get_domain_category(url_parts):
@@ -43,9 +60,6 @@ def url_to_filepath(url):
     """
     Map a full URL to a safe relative filepath under top-level directory.
     Includes query parameter hash if present to avoid filename collisions.
-    Example:
-      https://learn.microsoft.com/en-us/previous-versions/windows/embedded/ee498596(v=winembedded.60)
-      -> MSLearn/en-us/previous-versions/windows/embedded/ee498596(v=winembedded.60).html
     """
     parsed = urllib.parse.urlparse(url)
     category = get_domain_category(parsed)
@@ -54,20 +68,17 @@ def url_to_filepath(url):
     if not path or path.endswith("/"):
         path += "index.html"
 
-    # Remove leading slash
     path = path.lstrip("/")
 
     base_dir, filename = os.path.split(path)
     if not os.path.splitext(filename)[1]:
         filename += ".html"
 
-    # If query parameters exist, append a short hash to filename to prevent collision
     if parsed.query:
         query_hash = hashlib.md5(parsed.query.encode("utf-8")).hexdigest()[:8]
         name, ext = os.path.splitext(filename)
         filename = f"{name}_{query_hash}{ext}"
 
-    # Sanitize invalid filename characters while remaining recognizable
     safe_filename = re.sub(r'[\\:*?"<>|]', '_', filename)
     safe_dir = re.sub(r'[\\:*?"<>|]', '_', base_dir)
 
@@ -97,58 +108,80 @@ def is_valid_file(filepath, meta_path):
     return False
 
 
-def fetch_url(url, timeout=15, user_agent=None):
+def fetch_url_with_retry(url, max_retries=3, timeout=15, user_agent=None):
     """
-    Fetches raw content from public target URL.
+    Fetches raw content from public target URL with automatic Retry-After and exponential backoff for HTTP 429/503 errors.
     NOTE: Secret tokens (e.g. GITHUB_PAT) are NOT sent to external servers.
     """
     headers = {
         "User-Agent": user_agent or "Mozilla/5.0 (Windows CE Documentation Harvester)"
     }
 
-    req = urllib.request.Request(url, headers=headers)
     start_time = datetime.now(timezone.utc).isoformat()
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            content = resp.read()
-            status_code = resp.status
-            headers_dict = dict(resp.headers)
+    attempt = 0
+
+    while attempt <= max_retries:
+        attempt += 1
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                content = resp.read()
+                status_code = resp.status
+                headers_dict = dict(resp.headers)
+                end_time = datetime.now(timezone.utc).isoformat()
+                return {
+                    "url": url,
+                    "status_code": status_code,
+                    "headers": headers_dict,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "content": content,
+                    "error": None
+                }
+        except urllib.error.HTTPError as e:
             end_time = datetime.now(timezone.utc).isoformat()
+            headers_dict = dict(e.headers) if e.headers else {}
+
+            # Handle HTTP 429 (Too Many Requests) or HTTP 503 with Retry-After backoff
+            if e.code in (429, 503) and attempt <= max_retries:
+                retry_after = headers_dict.get("Retry-After")
+                if retry_after and retry_after.isdigit():
+                    wait_time = int(retry_after)
+                else:
+                    wait_time = 2 ** attempt * 2  # Exponential backoff: 4s, 8s, 16s...
+
+                print(f"  [HTTP {e.code} Rate Limit] Retrying {url} in {wait_time}s (Attempt {attempt}/{max_retries})...")
+                time.sleep(wait_time)
+                continue
+
+            try:
+                content = e.read()
+            except Exception:
+                content = b""
+
             return {
                 "url": url,
-                "status_code": status_code,
+                "status_code": e.code,
                 "headers": headers_dict,
                 "start_time": start_time,
                 "end_time": end_time,
                 "content": content,
-                "error": None
+                "error": str(e)
             }
-    except urllib.error.HTTPError as e:
-        end_time = datetime.now(timezone.utc).isoformat()
-        try:
-            content = e.read()
-        except Exception:
-            content = b""
-        return {
-            "url": url,
-            "status_code": e.code,
-            "headers": dict(e.headers) if e.headers else {},
-            "start_time": start_time,
-            "end_time": end_time,
-            "content": content,
-            "error": str(e)
-        }
-    except Exception as e:
-        end_time = datetime.now(timezone.utc).isoformat()
-        return {
-            "url": url,
-            "status_code": None,
-            "headers": {},
-            "start_time": start_time,
-            "end_time": end_time,
-            "content": b"",
-            "error": str(e)
-        }
+        except Exception as e:
+            end_time = datetime.now(timezone.utc).isoformat()
+            if attempt <= max_retries:
+                time.sleep(2 * attempt)
+                continue
+            return {
+                "url": url,
+                "status_code": None,
+                "headers": {},
+                "start_time": start_time,
+                "end_time": end_time,
+                "content": b"",
+                "error": str(e)
+            }
 
 
 def save_fetched_data(filepath, meta_path, res):
@@ -170,6 +203,48 @@ def save_fetched_data(filepath, meta_path, res):
         json.dump(meta, f, indent=2, ensure_ascii=False)
 
 
+def harvest_domain_queue(category, domain_urls, delay, force):
+    """
+    Worker function to harvest URLs for a specific domain category sequentially with rate limiting.
+    """
+    print(f"[{category}] Worker started for {len(domain_urls)} URLs (domain rate limit delay={delay}s)...")
+    success_count = 0
+    skip_count = 0
+    fail_count = 0
+
+    total = len(domain_urls)
+    for i, url in enumerate(domain_urls, start=1):
+        filepath, meta_path = url_to_filepath(url)
+
+        if not force and is_valid_file(filepath, meta_path):
+            print(f"[{category}] [{i}/{total}] SKIPPED: {url}")
+            skip_count += 1
+            continue
+
+        print(f"[{category}] [{i}/{total}] Fetching: {url}")
+        res = fetch_url_with_retry(url)
+        save_fetched_data(filepath, meta_path, res)
+
+        if res["status_code"] == 200:
+            print(f"[{category}] [{i}/{total}] -> SUCCESS (200 OK)")
+            success_count += 1
+        else:
+            print(f"[{category}] [{i}/{total}] -> FAILED/HTTP {res['status_code']}: {res['error']}")
+            fail_count += 1
+
+        if i < total and delay > 0:
+            time.sleep(delay)
+
+    print(f"[{category}] Worker completed. (Total: {total}, Skipped: {skip_count}, Success: {success_count}, Failed: {fail_count})")
+    return {
+        "category": category,
+        "total": total,
+        "skipped": skip_count,
+        "success": success_count,
+        "failed": fail_count
+    }
+
+
 def load_urls(urls_file):
     if not os.path.exists(urls_file):
         print(f"Error: {urls_file} does not exist.", file=sys.stderr)
@@ -187,7 +262,7 @@ def load_urls(urls_file):
 def main():
     parser = argparse.ArgumentParser(description="Harvest Windows CE documentation pages.")
     parser.add_argument("--urls-file", default="urls.txt", help="Path to URL list file (default: urls.txt)")
-    parser.add_argument("--delay", type=float, default=0.5, help="Delay in seconds between requests (default: 0.5)")
+    parser.add_argument("--delay", type=float, default=None, help="Override default delay in seconds between requests per domain")
     parser.add_argument("--limit", type=int, default=0, help="Limit maximum number of URLs to process (0 = no limit)")
     parser.add_argument("--force", action="store_true", help="Force re-fetching existing valid files")
     args = parser.parse_args()
@@ -200,39 +275,39 @@ def main():
     if args.limit > 0:
         urls = urls[:args.limit]
 
-    print(f"Starting harvest for {len(urls)} URLs...")
-    success_count = 0
-    skip_count = 0
-    fail_count = 0
+    # Group URLs by domain category
+    domain_queues = {}
+    for url in urls:
+        parsed = urllib.parse.urlparse(url)
+        cat = get_domain_category(parsed)
+        domain_queues.setdefault(cat, []).append(url)
 
-    for i, url in enumerate(urls, start=1):
-        filepath, meta_path = url_to_filepath(url)
+    print(f"Starting domain-parallel harvest for {len(urls)} total URLs across {len(domain_queues)} domain categories...")
+    for cat, q in domain_queues.items():
+        delay = args.delay if args.delay is not None else DOMAIN_DELAYS.get(cat, 0.5)
+        print(f"  - Category '{cat}': {len(q)} URLs (Delay: {delay}s)")
 
-        if not args.force and is_valid_file(filepath, meta_path):
-            print(f"[{i}/{len(urls)}] SKIPPED (already fetched): {url}")
-            skip_count += 1
-            continue
+    # Execute domain workers concurrently
+    results = []
+    with ThreadPoolExecutor(max_workers=len(domain_queues)) as executor:
+        futures = []
+        for cat, q in domain_queues.items():
+            delay = args.delay if args.delay is not None else DOMAIN_DELAYS.get(cat, 0.5)
+            futures.append(executor.submit(harvest_domain_queue, cat, q, delay, args.force))
 
-        print(f"[{i}/{len(urls)}] Fetching: {url}")
-        res = fetch_url(url)
+        for future in futures:
+            results.append(future.result())
 
-        save_fetched_data(filepath, meta_path, res)
+    print("\nHarvest Summary Across All Domains:")
+    total_processed = sum(r["total"] for r in results)
+    total_skipped = sum(r["skipped"] for r in results)
+    total_success = sum(r["success"] for r in results)
+    total_failed = sum(r["failed"] for r in results)
 
-        if res["status_code"] == 200:
-            print(f"  -> SUCCESS (200 OK) -> Saved to {filepath}")
-            success_count += 1
-        else:
-            print(f"  -> FAILED/HTTP {res['status_code']}: {res['error']} -> Saved metadata to {meta_path}")
-            fail_count += 1
-
-        if i < len(urls) and args.delay > 0:
-            time.sleep(args.delay)
-
-    print("\nHarvest Summary:")
-    print(f"  Total processed: {len(urls)}")
-    print(f"  Skipped: {skip_count}")
-    print(f"  Successfully fetched: {success_count}")
-    print(f"  Failed / HTTP Errors: {fail_count}")
+    print(f"  Total processed: {total_processed}")
+    print(f"  Skipped: {total_skipped}")
+    print(f"  Successfully fetched: {total_success}")
+    print(f"  Failed / HTTP Errors: {total_failed}")
 
 
 if __name__ == "__main__":
