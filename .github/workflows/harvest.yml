@@ -1,0 +1,36 @@
+name: Windows CE Documentation Harvester
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Limit number of URLs to fetch (0 for all)'
+        required: false
+        default: '0'
+      delay:
+        description: 'Delay between requests in seconds'
+        required: false
+        default: '0.5'
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run Harvester
+        run: |
+          python harvest.py --limit "${{ github.event.inputs.limit || '0' }}" --delay "${{ github.event.inputs.delay || '0.5' }}"
+
+      - name: Commit and push updated documentation corpus
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add MSLearn/ MSDN/ Microsoft/ Wayback/ Other/ || true
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update harvested Windows CE documentation corpus" && git push)
