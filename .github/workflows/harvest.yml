@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,10 +27,15 @@ jobs:
           python-version: '3.x'
 
       - name: Run Harvester
+        env:
+          GIT_PAT: ${{ secrets.GIT_PAT || secrets.GITHUB_PAT }}
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT || secrets.GIT_PAT }}
         run: |
           python harvest.py --limit "${{ github.event.inputs.limit || '0' }}" --delay "${{ github.event.inputs.delay || '0.5' }}"
 
       - name: Commit and push updated documentation corpus
+        env:
+          PAT_TOKEN: ${{ secrets.GIT_PAT || secrets.GITHUB_PAT || secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
