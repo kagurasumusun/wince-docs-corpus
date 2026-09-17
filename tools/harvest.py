@@ -48,6 +48,10 @@ BOOK_RULES = (
     (r"\(Windows Mobile[^)]*\)", None),   # resolved dynamically below
     (r"\(Handheld PC[^)]*\)", "handheld-pc"),
     (r"\(Palm-size PC[^)]*\)", "palm-size-pc"),
+    (r"\(Microsoft\.RemoteToolSdk[^)]*\)", "windows-embedded-ce-6.0"),
+    (r"\((System|Microsoft)\.[A-Za-z0-9_.]+\)$", "dotnet-compact-framework"),
+    (r"\((?:[A-Za-z0-9_.]+ (?:Method|Property|Constructor|Field|Event|Class|"
+     r"Structure|Interface|Enumeration|Delegate))$", "dotnet-compact-framework"),
 )
 
 
@@ -156,6 +160,21 @@ def main():
     os.makedirs(logdir, exist_ok=True)
     faillog = os.path.join(logdir, f"fail-{qname}.log")
 
+    # resume index: ids already stored anywhere under docs/mslearn
+    ms_root = os.path.join(ROOT, "docs/mslearn")
+    have_ids = set()
+    if os.path.isdir(ms_root):
+        for b in os.listdir(ms_root):
+            bd = os.path.join(ms_root, b)
+            if os.path.isdir(bd):
+                for fn in os.listdir(bd):
+                    if fn.endswith(".html"):
+                        have_ids.add(fn[:-5])
+    wb_dir = os.path.join(ROOT, "docs/wayback-msdn/2010-05")
+    if os.path.isdir(wb_dir):
+        have_ids |= {"wb:" + fn[:-5] for fn in os.listdir(wb_dir)
+                     if fn.endswith(".html")}
+
     have = skip = 0
     since_batch = 0
     t0 = time.time()
@@ -164,15 +183,11 @@ def main():
         if kind is None:
             continue
         if kind == "learn":
-            # resume: skip when any book dir already holds this id
-            if any(os.path.exists(os.path.join(ROOT, "docs/mslearn", b, pid + ".html"))
-                   for b in os.listdir(os.path.join(ROOT, "docs/mslearn"))
-                   if os.path.isdir(os.path.join(ROOT, "docs/mslearn", b))):
+            if pid in have_ids:
                 skip += 1
                 continue
         else:
-            if os.path.exists(os.path.join(ROOT, "docs/wayback-msdn/2010-05",
-                                           pid + ".html")):
+            if "wb:" + pid in have_ids:
                 skip += 1
                 continue
         content, status = fetch(url)
@@ -189,8 +204,12 @@ def main():
             else:
                 d = os.path.join(ROOT, "docs/wayback-msdn/2010-05")
             os.makedirs(d, exist_ok=True)
-            with open(os.path.join(d, pid + ".html"), "wb") as fh:
+            final = os.path.join(d, pid + ".html")
+            tmp = final + ".part"
+            with open(tmp, "wb") as fh:
                 fh.write(content)
+            os.replace(tmp, final)   # atomic: batch commits never see partials
+            have_ids.add(pid if kind == "learn" else "wb:" + pid)
             have += 1
             since_batch += 1
         if have and have % 200 == 0:
