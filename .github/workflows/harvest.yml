@@ -1,0 +1,57 @@
+name: Windows CE Documentation Harvester
+
+on:
+  workflow_dispatch:
+    inputs:
+      queue:
+        description: 'URL queue file under urls/ (e.g. to-fetch-mslearn.txt, wayback-msdn-2010.txt)'
+        required: true
+        default: 'to-fetch-mslearn.txt'
+      limit:
+        description: 'Limit number of URLs to fetch (0 for all)'
+        required: false
+        default: '0'
+      batch:
+        description: 'Pages per batch commit & push'
+        required: false
+        default: '500'
+
+permissions:
+  contents: write
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run harvester (sequential, rate-limited, batch push)
+        run: |
+          LIMIT_ARG=""
+          if [ "${{ github.event.inputs.limit }}" != "0" ]; then
+            LIMIT_ARG="--limit ${{ github.event.inputs.limit }}"
+          fi
+          python3 tools/harvest.py \
+            --queue "urls/${{ github.event.inputs.queue }}" \
+            --batch "${{ github.event.inputs.batch }}" $LIMIT_ARG --push
+
+      - name: Refresh index and final push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          python3 tools/make-index.py
+          git add data/index/ docs/ data/harvest/ || true
+          if ! git diff --quiet || ! git diff --staged --quiet; then
+            git commit -m "corpus: index refresh + final harvest batch"
+            git pull --rebase
+            git push
+          fi
