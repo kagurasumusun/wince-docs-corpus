@@ -123,11 +123,18 @@ def git(*args, check=True):
 
 
 def commit_push(batch, pushed):
+    git("config", "user.name", "wince-docs-corpus harvester", check=False)
+    git("config", "user.email", "wince-corpus-harvester@users.noreply.github.com",
+        check=False)
     git("add", "docs/", "data/index/", check=False)
     if git("diff", "--staged", "--quiet", check=False).returncode == 0:
         return pushed
     ts = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    git("commit", "-m", f"corpus: harvest batch +{batch} pages ({ts})")
+    c = git("commit", "-m", f"corpus: harvest batch +{batch} pages ({ts})",
+            check=False)
+    if c.returncode != 0:
+        print(f"[push] commit failed: {c.stderr.strip()[:200]}", flush=True)
+        return pushed
     git("pull", "--rebase", check=False)
     r = git("push", check=False)
     if r.returncode == 0:
