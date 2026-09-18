@@ -49,7 +49,8 @@ BOOK_RULES = (
     (r"\(Handheld PC[^)]*\)", "handheld-pc"),
     (r"\(Palm-size PC[^)]*\)", "palm-size-pc"),
     (r"\(Microsoft\.RemoteToolSdk[^)]*\)", "windows-embedded-ce-6.0"),
-    (r"\((System|Microsoft)\.[A-Za-z0-9_.]+\)$", "dotnet-compact-framework"),
+    (r"\(Compact 7\)", "windows-embedded-compact-7"),
+    (r"\((System|Microsoft)(\.[A-Za-z0-9_.]+)?\)$", "dotnet-compact-framework"),
     (r"\((?:[A-Za-z0-9_.]+ (?:Method|Property|Constructor|Field|Event|Class|"
      r"Structure|Interface|Enumeration|Delegate))$", "dotnet-compact-framework"),
 )
@@ -57,6 +58,9 @@ BOOK_RULES = (
 
 def classify(title_text, body_head):
     """Map a learn 'previous-versions/windows/embedded' page to a book dir."""
+    # learn.microsoft.com appends a site suffix to <title>; the
+    # $-anchored .NET CF rules must see the bare book marker
+    title_text = re.sub(r"\s*\|\s*Microsoft Learn\s*$", "", title_text)
     for pat, bucket in BOOK_RULES:
         m = re.search(pat, title_text)
         if m:
