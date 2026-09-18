@@ -32,6 +32,7 @@ Usage:
 import argparse
 import datetime as _dt
 import os
+import random
 import re
 import subprocess
 import time
@@ -158,6 +159,38 @@ def dest_for(url):
     return None, None
 
 
+# Adaptive rate-limit state: consecutive 429/503 responses multiply
+# the inter-request delay (never below the configured base delay, so
+# total access volume only ever goes DOWN, never up).
+_THROTTLE = {"consec": 0, "ok": 0, "factor": 1.0}
+
+
+def throttle_sleep_seconds(base_delay):
+    """Delay to sleep after one processed URL."""
+    return base_delay * _THROTTLE["factor"] + random.uniform(0, base_delay / 2.0)
+
+
+def note_throttled():
+    _THROTTLE["consec"] += 1
+    _THROTTLE["ok"] = 0
+    if _THROTTLE["consec"] % 5 == 0:
+        _THROTTLE["factor"] = min(_THROTTLE["factor"] * 2.0, 20.0)
+        print(
+            f"[throttle] consecutive rate-limit hits: "
+            f"{_THROTTLE['consec']} -> delay factor "
+            f"{_THROTTLE['factor']:.1f}x",
+            flush=True,
+        )
+
+
+def note_ok():
+    _THROTTLE["consec"] = 0
+    _THROTTLE["ok"] += 1
+    if _THROTTLE["ok"] >= 20 and _THROTTLE["factor"] > 1.0:
+        _THROTTLE["factor"] = max(1.0, _THROTTLE["factor"] / 2.0)
+        _THROTTLE["ok"] = 0
+
+
 def fetch(url, timeout=60, max_attempts=5):
     """Fetch one URL with retry handling."""
 
@@ -171,21 +204,26 @@ def fetch(url, timeout=60, max_attempts=5):
 
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.read(), resp.status
+                body = resp.read()
+                note_ok()
+                return body, resp.status
 
         except urllib.error.HTTPError as exc:
             if exc.code == 404:
                 return None, 404
 
             if exc.code in (429, 503):
+                note_throttled()
                 retry_after = exc.headers.get("Retry-After")
 
                 if (retry_after or "").isdigit():
                     wait = int(retry_after)
                 else:
-                    wait = 10 * (attempt + 1)
+                    wait = 30 * (attempt + 1)
 
-                time.sleep(min(wait, 120))
+                # Respect the server's backoff request; only cap very
+                # long values so a single URL cannot eat the runner.
+                time.sleep(min(wait, 300))
                 continue
 
             last_err = str(exc)
@@ -230,6 +268,7 @@ def commit_push(batch):
         "add",
         "docs/",
         "data/index/",
+        "data/harvest/",
         check=False,
     )
 
@@ -494,7 +533,7 @@ def process_url(
 
     have_ids.add(stored_id)
 
-    time.sleep(delay)
+    time.sleep(throttle_sleep_seconds(delay))
 
     return "stored"
 
@@ -768,6 +807,47 @@ def main():
                 and lines >= args.limit
             ):
                 break
+
+    # --------------------------------------------------------------
+    # Retry pass: failures that were not hard 404s get one more
+    # attempt at double delay (sequential; no extra concurrency).
+    # --------------------------------------------------------------
+
+    if failed and os.path.exists(faillog):
+        pending = []
+        keep = []
+        with open(faillog, "r", encoding="utf-8") as fh:
+            for ln in fh:
+                parts = ln.rstrip("\n").split("\t", 1)
+                if len(parts) == 2 and parts[0] != "404":
+                    pending.append(parts[1])
+                else:
+                    keep.append(ln)
+        if pending:
+            print(
+                f"[{qname}] retry pass: {len(pending)} URLs "
+                f"at {delay * 2:.1f}s delay",
+                flush=True,
+            )
+            still = []
+            for url in pending:
+                result = process_url(
+                    url,
+                    have_ids,
+                    os.devnull,
+                    delay * 2,
+                )
+                if result == "stored":
+                    stored += 1
+                    since_batch += 1
+                    failed -= 1
+                else:
+                    still.append(url)
+                time.sleep(throttle_sleep_seconds(delay * 2))
+            with open(faillog, "w", encoding="utf-8") as fh:
+                fh.writelines(keep)
+                for url in still:
+                    fh.write(f"retry-failed\t{url}\n")
 
     # --------------------------------------------------------------
     # Final batch.
