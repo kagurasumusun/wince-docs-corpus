@@ -180,7 +180,16 @@ def main():
             if os.path.isdir(bd):
                 for fn in os.listdir(bd):
                     if fn.endswith(".html"):
-                        have_ids.add(fn[:-5])
+                        base = fn[:-5]
+                        have_ids.add(base)
+                        # 2026-09-18: also index the bare id of versioned
+                        # files ("aa450192(v=msdn.10)" -> "aa450192") so
+                        # queue URLs resolve to the same page and skip;
+                        # without this, 30k+ already-harvested pages were
+                        # re-fetched every run.
+                        paren = base.find("(v=")
+                        if paren > 0:
+                            have_ids.add(base[:paren])
     wb_dir = os.path.join(ROOT, "docs/wayback-msdn/2010-05")
     if os.path.isdir(wb_dir):
         have_ids |= {"wb:" + fn[:-5] for fn in os.listdir(wb_dir)
