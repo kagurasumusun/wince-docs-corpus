@@ -2,9 +2,7 @@
 
 このリポジトリは **Windows CE 1.0〜6.0 に関する Microsoft 公式公開ドキュメント**
 を収集・保存するコーパスである。利用先は
-[Akari-dev](https://github.com/kagurasumusun/Akari-dev)
-(Windows CE API サーフェス: headers / .def / import libraries /
-startup・toolchain integration) の資料照合である。
+[Akari-dev](https://github.com/kagurasumusun/Akari-dev)である。
 
 ## 収集対象(完全収集)
 
@@ -40,19 +38,15 @@ WindowsCEは、Win32のapiサブセットであるためWin32の一部に互換�
 
 * サイトへの多並列・大量同時アクセスは行わない。
   収集はサイトごとに逐次(1 リクエストずつ)、固定ディレイ
-  (learn.microsoft.com: 0.4 秒 / web.archive.org: 1.5 秒)、
   HTTP 429/503 では指数バックオフ。
 * 収集は `tools/harvest.py` を使う(再開可能、既存ページはスキップ)。
 * **こまめに push する**(harvester は `--batch` ページごとに
   commit & push)。
 
-## セッション手順
+## 活動時
 
-1. 作業開始時にこのリポジトリを再取得(clone / pull)する。
-2. 収集・整理を行い、こまめに push する。
-3. 作業終了時に INDEX を再生成(`python3 tools/make-index.py`)して push。
-4. 作業環境からは Akari-dev 以外をクリーンアップする
-   (コーパスの正はこの GitHub リポジトリ)。
+1. 収集・整理を行い、こまめに push する。
+2. 作業終了時に INDEX を再生成(`python3 tools/make-index.py`)して push。
 
 ## ライセンス
 
