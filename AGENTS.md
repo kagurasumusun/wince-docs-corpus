@@ -12,27 +12,28 @@ startup・toolchain integration) の資料照合である。
 * Microsoft Learn(`learn.microsoft.com/en-us/previous-versions/windows/embedded`)
 * Wayback Machine(web.archive.org)に保存された MSDN スナップショット
 * Microsoft Download Center の公式ドキュメントアーカイブ(CHM/HLP/ZIP)
+* Microsoft ignite
+* その他大手の信用できる公開情報サイト
+* cegcc/gnuce/pascal/cegcc-w32api/cegcc-mingwrt
 
 収集対象となる情報は**根こそぎすべて収集する**こと。
 収集したデータは上記 README の階層にきれいに整理し、
 `data/index/INDEX.tsv` を最新に保つこと。
+
+
+## 注意
+Win32/Win64/ReactOS/Wine等はWindows CEではなくてWindows NT系であるため構造やapiの書き方の理解として参考にするがWindowsCE自体の情報の根拠としては扱わないこと。
+mingwについてもcegcc版と通常盤との違いに注意すること。
+WindowsCEは、Win32のapiサブセットであるためWin32の一部に互換がある。
+そのため扱う情報の内容に十分注意すること。
 
 ## 収集対象外(絶対に行わない)
 
 * Shared Source、Platform Builder のソース、Visual Studio のソース
   (Microsoft 公式「公開資料」に該当しない)
 * 許可されていない非公開情報、入手経路不明・出所不明の資料、非合法な入手
-* **dump(バイナリ/デバイスダンプ)由来の情報**
-  (旧 `coredll/*.def` はこの理由で 2026-09-18 に削除済み)
-* Wine / ReactOS / MinGW / mingw-w64 / w32api / mingwrt
-  — 収集せず、比較対象・調査対象にもしない。
-  **唯一の例外:** CeGCC 版 w32api および CeGCC 版 mingwrt は
-  「値の確認・参考」程度にのみ参照可(転載・宣言の根拠にはしない)。
-* デスクトップ Win32 / デスクトップ .NET Framework のリファレンスページ
-  (Windows CE の資料ではない。旧 `pagesw/` `pagesnet/` `pagesmag/` は
-  2026-09-18 にこのポリシーにより削除済み)
 
-大手の信頼できる公開情報は**二次的な対象**として扱えるが、上記の
+大手の信頼できる公開情報も**優先的な対象**として扱えるが、上記の
 除外事項に該当する情報を含む場合は収集範囲に含めない。
 
 ## 収集方法の制約
