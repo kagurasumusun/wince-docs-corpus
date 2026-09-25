@@ -50,6 +50,9 @@ def print_records(rows, limit):
             print("  declaration  %s" % row["declaration"].replace("\n", " "))
         elif row["parse_status"] == "no_declaration_documented":
             print("  declaration  (not printed by the topic - recorded as a gap)")
+        if row["documentation_role"] not in ("declaration_section",
+                                             "unlabelled_block_symbol_topic"):
+            print("  role         %s (%s)" % (row["documentation_role"], row["page_class"]))
         print("  header       %s" % (row["header"] or "(not documented)"))
         print("  library      %s" % (row["library"] or "(not documented)"))
         if row["version_raw"]:
@@ -88,10 +91,10 @@ def main():
                         "ORDER BY symbol, source_id", ("%" + arguments.argument + "%",))
         print_records(data, arguments.limit)
     elif arguments.command == "header":
-        data = rows("SELECT * FROM symbols WHERE lower(header)=lower(?) "
+        data = rows("SELECT * FROM symbols WHERE lower(header) LIKE lower(?) "
                     "AND (? IS NULL OR kind=?) AND (? IS NULL OR source_id=?) "
                     "ORDER BY symbol, source_id",
-                    (arguments.argument, arguments.kind, arguments.kind,
+                    ("%" + (arguments.argument or "") + "%", arguments.kind, arguments.kind,
                      arguments.source, arguments.source))
         print_records(data, arguments.limit)
     elif arguments.command == "library":
@@ -162,19 +165,25 @@ def main():
     elif arguments.command == "params":
         if not arguments.argument:
             sys.exit("params needs a symbol name")
-        data = rows("SELECT s.symbol, s.source_id, p.* FROM symbols s JOIN parameters p "
-                    "ON p.symbol_id=s.id WHERE lower(s.symbol)=lower(?) "
-                    "ORDER BY s.source_id, p.position", (arguments.argument,))
+        data = rows("SELECT s.symbol, s.source_id, s.kind, p.* FROM symbols s JOIN parameters p "
+                    "ON p.symbol_id=s.id WHERE lower(s.symbol) LIKE lower(?) "
+                    "ORDER BY s.symbol, s.source_id, p.position",
+                    ("%" + arguments.argument + "%",))
+        current = None
         for row in data:
-            print("%-28s %-24s pos=%-4s %-18s %-8s %s" % (
-                row["symbol"], row["source_id"], row["position"], row["name"] or "-",
-                row["direction"] or "-", (row["description"] or "")[:70]))
+            if (row["symbol"], row["source_id"]) != current:
+                current = (row["symbol"], row["source_id"])
+                print("%s  [%s, %s]" % (current[0], row["kind"], current[1]))
+            print("   pos=%-3s %-20s %-8s %s" % (
+                row["position"], row["name"] or "(unnamed)", row["direction"] or "-",
+                (row["description"] or "")[:76]))
     elif arguments.command == "members":
         if not arguments.argument:
             sys.exit("members needs a struct name")
         data = rows("SELECT s.symbol, s.source_id, m.idx, m.text_raw FROM symbols s "
-                    "JOIN members m ON m.symbol_id=s.id WHERE lower(s.symbol)=lower(?) "
-                    "ORDER BY s.source_id, m.idx", (arguments.argument,))
+                    "JOIN members m ON m.symbol_id=s.id WHERE lower(s.symbol) LIKE lower(?) "
+                    "ORDER BY s.symbol, s.source_id, m.idx",
+                    ("%" + arguments.argument + "%",))
         for row in data:
             print("%-20s %-26s %2d  %s" % (row["symbol"], row["source_id"], row["idx"],
                                            row["text_raw"]))
