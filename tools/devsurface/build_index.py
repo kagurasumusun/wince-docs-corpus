@@ -180,6 +180,16 @@ SHARD_SPLIT_BYTES = 20 * 1024 * 1024
 
 
 def merge_shards(log):
+    found = [path for path in
+             (os.path.join(WORK, pattern % book) for book in vocab.EXTRACT_BOOKS)
+             if os.path.exists(path)]
+    if not found:
+        raise SystemExit(
+            "no extraction input in %s -- run 'python3 tools/devsurface/extract.py --all' first.\n"
+            "devsurface/data/_work/ is a build intermediate (git-ignored) and is deleted after a "
+            "build; data/symbols/*.jsonl are produced from it and are NOT regenerated without it."
+            % os.path.relpath(WORK, ROOT))
+    log("extraction inputs: %d book file(s) in %s" % (len(found), os.path.relpath(WORK, ROOT)))
     os.makedirs(SYMBOLS, exist_ok=True)
     for stale in os.listdir(SYMBOLS):
         if stale.endswith(".jsonl"):
