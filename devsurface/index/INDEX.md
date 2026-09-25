@@ -439,9 +439,10 @@
 | `devsurface/data/symbols/tvout.jsonl` | 1 |
 | `devsurface/data/symbols/uhcdddsi.jsonl` | 1 |
 | `devsurface/data/symbols/unimodem.jsonl` | 6 |
-| `devsurface/data/symbols/unknown-header.part-01.jsonl` | 6677 |
-| `devsurface/data/symbols/unknown-header.part-02.jsonl` | 6696 |
-| `devsurface/data/symbols/unknown-header.part-03.jsonl` | 6365 |
+| `devsurface/data/symbols/unknown-header.part-01.jsonl` | 6546 |
+| `devsurface/data/symbols/unknown-header.part-02.jsonl` | 6563 |
+| `devsurface/data/symbols/unknown-header.part-03.jsonl` | 6532 |
+| `devsurface/data/symbols/unknown-header.part-04.jsonl` | 97 |
 | `devsurface/data/symbols/unknwn.jsonl` | 11 |
 | `devsurface/data/symbols/updownview.jsonl` | 4 |
 | `devsurface/data/symbols/upnp.jsonl` | 109 |

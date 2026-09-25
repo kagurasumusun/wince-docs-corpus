@@ -67,6 +67,20 @@ DOCUMENTATION_ROLES = set(vocab.DOCUMENTATION_ROLES)
 PAGE_CLASS_VALUES = set(vocab.PAGE_CLASSES)
 
 
+def carries_value(record, field):
+    """True when a controlled 'never guess' field actually holds a value."""
+    node = record
+    for part in field.split("."):
+        if not isinstance(node, dict):
+            return False
+        node = node.get(part)
+    if field == "calling_convention":
+        return bool((node or {}).get("value"))
+    if field.startswith("abi."):
+        return bool(node)
+    return node not in (None, "", [], {})
+
+
 def check_record(record, shard_name):
     for field in REQUIRED:
         if field not in record:
@@ -127,6 +141,15 @@ def check_record(record, shard_name):
                                       "library", "module", "namespace", "assembly",
                                       "compatibility"):
             error("%s: statement field %r" % (record["id"], statement["field"]))
+    # The other direction of the uncertainty rule: a field in the controlled
+    # never-guess set (vocab.UNKNOWN_FIELDS) that carries no value must be listed
+    # in uncertainty.unknown_fields, so a consumer can filter on it.
+    listed = set(record["uncertainty"]["unknown_fields"])
+    for field in vocab.UNKNOWN_FIELDS:
+        if not carries_value(record, field) and field not in listed:
+            error("%s: %s has no documented value but is missing from "
+                  "uncertainty.unknown_fields" % (record["id"], field))
+
     # shard placement
     expected_shard = vocab.record_shard(record)
     if expected_shard != shard_name:

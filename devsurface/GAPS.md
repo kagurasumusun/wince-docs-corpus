@@ -7,11 +7,14 @@ value in the corpus; it is recorded as `unknown` rather than filled in.
 |---|---:|
 | `abi.architecture` | 44888 |
 | `abi.data_model` | 44888 |
+| `abi.name_decoration` | 44888 |
+| `abi.packing` | 44888 |
+| `abi.structure_layout` | 44888 |
+| `calling_convention` | 44888 |
 | `export.decorated_name` | 44888 |
 | `export.name` | 44888 |
 | `export.ordinal` | 44888 |
 | `module` | 44888 |
-| `calling_convention` | 42364 |
 | `library` | 23246 |
 | `header` | 19745 |
 | `declaration` | 10779 |

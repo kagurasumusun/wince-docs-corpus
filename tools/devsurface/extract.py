@@ -1114,10 +1114,19 @@ def build_symbol_record(*, source_id, page_id, path, title, source_url, updated,
         unknown_fields.append("library")
     if not modules:
         unknown_fields.append("module")
-    if not parsed["calling_convention_tokens"]:
-        unknown_fields.append("calling_convention")
+    # `calling_convention` has no value unless a page states it, and this
+    # extractor never states it: the macro tokens that appear *inside* a
+    # declaration are recorded as `declaration_calling_convention_tokens`
+    # (a statement about the documented text) and are never promoted to a value.
+    # So the field is always unknown here and is always listed as such, even
+    # when a token such as WINAPI is present in the declaration.
+    unknown_fields.append("calling_convention")
+    # ABI is independent data: every ABI field that no page states is listed as
+    # unknown on the record itself, so "not documented" is visible per symbol and
+    # not only in devsurface/GAPS.md.
     unknown_fields += ["export.name", "export.ordinal", "export.decorated_name",
-                       "abi.architecture", "abi.data_model"]
+                       "abi.architecture", "abi.data_model", "abi.structure_layout",
+                       "abi.packing", "abi.name_decoration"]
 
     statements = []
     for entry in requirements["statements"]:
