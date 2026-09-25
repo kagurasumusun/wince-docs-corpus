@@ -181,7 +181,7 @@ SHARD_SPLIT_BYTES = 20 * 1024 * 1024
 
 def merge_shards(log):
     found = [path for path in
-             (os.path.join(WORK, pattern % book) for book in vocab.EXTRACT_BOOKS)
+             (os.path.join(WORK, "symbols-%s.ndjson" % book) for book in vocab.EXTRACT_BOOKS)
              if os.path.exists(path)]
     if not found:
         raise SystemExit(

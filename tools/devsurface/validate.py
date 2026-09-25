@@ -63,8 +63,8 @@ def warn(message):
     WARNINGS.append(message)
 
 
-DOCUMENTATION_ROLES = {"declaration_section", "unlabelled_block_symbol_topic",
-                       "example_code_fragment", "declaration_not_documented"}
+DOCUMENTATION_ROLES = set(vocab.DOCUMENTATION_ROLES)
+PAGE_CLASS_VALUES = set(vocab.PAGE_CLASSES)
 
 
 def check_record(record, shard_name):
@@ -76,6 +76,8 @@ def check_record(record, shard_name):
         error("%s: schema_version %r" % (record["id"], record["schema_version"]))
     if record["kind"] not in KIND_VALUES:
         error("%s: kind %r not in vocabulary" % (record["id"], record["kind"]))
+    if record.get("page_class") not in PAGE_CLASS_VALUES:
+        error("%s: page_class %r not in vocabulary" % (record["id"], record.get("page_class")))
     if record.get("documentation_role") not in DOCUMENTATION_ROLES:
         error("%s: documentation_role %r not in vocabulary"
               % (record["id"], record.get("documentation_role")))
@@ -141,20 +143,36 @@ def check_record(record, shard_name):
         warn("%s: interface_method without scope" % record["id"])
 
 
+# devsurface/data/pages/<book>.tsv column count (see build_index.PAGE_HEADER and
+# devsurface/METHODOLOGY.md section 6). A short row means the book was extracted
+# with an older tools/devsurface/extract.py; re-run it with --force.
+PAGE_COLUMNS_EXPECTED = 15
+
+
 def check_pages():
-    header = None
+    """Page coverage rows: column count and page_class vocabulary."""
     for name in sorted(os.listdir(PAGES)):
         if not name.endswith(".tsv"):
             continue
+        header = None
         with open(os.path.join(PAGES, name), encoding="utf-8") as handle:
             for number, line in enumerate(handle, start=1):
                 if line.startswith("#"):
                     header = len(line.rstrip("\n").split("\t"))
+                    if header != PAGE_COLUMNS_EXPECTED:
+                        error("%s: header has %d columns, expected %d -- re-run "
+                              "tools/devsurface/extract.py --book %s --force"
+                              % (name, header, PAGE_COLUMNS_EXPECTED, name[:-4]))
                     continue
                 fields = line.rstrip("\n").split("\t")
-                if header and len(fields) != header:
-                    error("%s:%d: %d columns, expected %d"
-                          % (name, number, len(fields), header))
+                if len(fields) != PAGE_COLUMNS_EXPECTED:
+                    error("%s:%d: %d columns, expected %d -- re-run "
+                          "tools/devsurface/extract.py --book %s --force"
+                          % (name, number, len(fields), PAGE_COLUMNS_EXPECTED, name[:-4]))
+                    break
+                if fields[4] not in PAGE_CLASS_VALUES:
+                    error("%s:%d: page_class %r not in vocabulary"
+                          % (name, number, fields[4]))
                     break
 
 

@@ -225,6 +225,33 @@ DERIVED_TAGS = {
 }
 
 # --------------------------------------------------------------------------
+# Page classification vocabulary (devsurface/data/pages/<book>.tsv and each
+# record's `page_class`). Every page of every collection gets exactly one value;
+# the meanings are documented in devsurface/METHODOLOGY.md section 6.
+# --------------------------------------------------------------------------
+
+PAGE_CLASSES = [
+    "symbol_page",
+    "prose_page_code_fragment",
+    "concept_or_overview",
+    "duplicate_page",
+    "identifier_title_no_requirements",
+    "identifier_title_no_declaration",
+    "declaration_candidate_mismatch",
+    "example_code_page",
+    "out_of_scope_managed_surface",
+    "deprecation_notice",
+]
+
+# How the page presents the block the declaration was read from.
+DOCUMENTATION_ROLES = [
+    "declaration_section",
+    "unlabelled_block_symbol_topic",
+    "example_code_fragment",
+    "declaration_not_documented",
+]
+
+# --------------------------------------------------------------------------
 # Evidence status vocabulary (how a field came to exist).
 # --------------------------------------------------------------------------
 
