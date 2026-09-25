@@ -265,6 +265,20 @@ SQLite (`index/devsurface.sqlite3`) の表:
 
 ---
 
+### 検証の実施記録 (2026-09-25, corpus_revision bbe085281)
+
+| 実行 | 結果 |
+|---|---|
+| `validate.py` | 44,888 レコード / 15 収集元 / 25 ABI 引用 — **0 error, 0 warning** |
+| `validate.py --verify-declarations all` | 34,109 件の宣言を元ページと逐語照合 — **不一致 0** |
+| `collect_abi_facts.py --check` | 25 件すべてアンカー一致 |
+| 追加サンプル照合 | `version-differences-normalized.tsv`(1,087 件)から無作為 3 件を抽出し、引用文が各ページに逐語で存在することを確認 |
+
+宣言が無い 10,779 レコードは照合対象外(そもそも宣言が無いことが記録されている)。
+上記は「内部整合と逐語性」の確認であり、**ドキュメントの完全性や API の実在を保証するものではない**。
+
+---
+
 ## 9. 現時点の到達点と未確認領域 (継続管理)
 
 * 抽出済み: `docs/` と `supplementary/` の 8 収集元(下表)。行数は `COVERAGE.md` を参照。
