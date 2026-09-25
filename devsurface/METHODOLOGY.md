@@ -106,8 +106,10 @@ python3 tools/devsurface/query.py summary                 # 検索例
 * 依存: Python 3.11+、`beautifulsoup4`(lxml があれば併用)。
   `query.py` / `build_index.py` / `vocab.py` は標準ライブラリのみ。
 * `--force` は再抽出。抽出元ページを変えたら必ず付け直す。
-* `devsurface/data/_work/` は抽出中間物。`build_index.py` が読み、その後は削除してよい
-  (再生成可能。`.gitignore` 済み)。
+* `devsurface/data/_work/` は抽出中間物(`.gitignore` 済み)。`build_index.py` はこれを入力に
+  `data/symbols/` を作る。**中間物を消した状態で `build_index.py` だけを実行すると失敗する**
+  (誤って `data/symbols/` を作り直さないための安全装置)。その場合は先に
+  `extract.py --all` を実行する。中間物はビルド後に削除してよい。
 * `devsurface/index/devsurface.sqlite3` は生成物なのでコミットしない
   (100 MB を超えるため。`build_index.py` で約 30 秒で再生成できる)。
 
