@@ -167,8 +167,11 @@ class Git:
 
     def commit_push(self, paths, extra_paths, note, push):
         with self.lock:
-            self.run("add", "--pathspec-from-file=-", "--pathspec-file-nul",
-                     inp="\0".join(paths + extra_paths))
+            ad = self.run("add", "--sparse", "--pathspec-from-file=-", "--pathspec-file-nul",
+                          inp="\0".join(paths + extra_paths))
+            if ad.returncode:
+                print("[git] add failed:", ad.stderr.strip()[:300], flush=True)
+                return
             if self.run("diff", "--staged", "--quiet").returncode == 0:
                 return
             ts = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -332,8 +335,6 @@ def main():
             if deadline and time.monotonic() > deadline:
                 done_all = False
                 break
-        else:
-            pass
 
     if new404:
         with open(nf_path, "a", encoding="utf-8") as fh:
@@ -355,7 +356,6 @@ def main():
         [f"{common.HARVEST_META}/notfound-{qname}.txt"] if new404 or os.path.exists(nf_path) else [])
     git.commit_push([], meta_paths, f"({qname} run summary)", a.push)
     print(f"[{qname}] DONE {json.dumps(summary)}", flush=True)
-    more = (not summary["finished"]) or (a.limit and stats["stored"] + stats["notfound"] + stats["failed"] >= a.limit)
     return EXIT_MORE_WORK if (deadline and not summary["finished"]) else 0
 
 
