@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Sample Serial Port Driver (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="The serial port driver handles any I/O devices that behave like serial ports, including those based on 16450 and 16550 universal asynchronous receiver-transmitter (UART) chips and those that use direct memory access (DMA)."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Sample Serial Port Driver" />
+<MSHelp:RLTitle Title="Sample Serial Port Driver (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="ports, driver, sample serial" />
+<MSHelp:Keyword Index="K" Term="samples, serial port driver" />
+<MSHelp:Keyword Index="K" Term="serial port drivers, sample" />
+<MSHelp:Keyword Index="A" Term="wceddkSample_Serial_Port_Driver" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="native.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924523">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddksample_serial_port_driver"></A>Sample Serial Port Driver</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The serial port driver handles any I/O devices that behave like serial ports, including those based on 16450 and 16550 universal asynchronous receiver-transmitter (UART) chips and those that use direct memory access (DMA). Many Windows CE&#0150;based platforms have devices of this type, including ordinary nine-pin serial ports, infrared I/O ports, and PC Card serial devices, such as modems. If multiple types of serial ports exist on a platform, you can either create several different serial drivers, one per serial port type, or create several different PDD layers and link them to a single MDD, thus creating one multipurpose serial driver. Either approach is equally acceptable. Creating separate drivers can simplify debugging and maintenance because each driver supports only one type of port. Creating a multipurpose driver, such as the sample serial port driver for the Windows CE reference platform, is more complex but gives a small memory savings.</P>
+
+<P>The Windows CE Platform Builder 3.0 contains implementations of the serial port MDD. The first implementation was included with Windows CE version 2.12, and is provided for use by legacy PDDs. This legacy MDD code is located in the \Public\Common\Oak\Drivers\Serial directory of your Platform Builder installation. There is also a new serial MDD which addresses some transmission performance issues in the original MDD, but requires some modifications to existing PDDs. This new serial MDD is in the \Public\Common\Oak\Drivers\Com_mdd2 directory. The sample Odo PDD still uses the original MDD, and is located in the Platform\Odo\Drivers\Serial directory. The sample CEPC platform includes PDD implementations for both the original and new MDDs. The legacy CEPC PDD implementation is in the \Platform\CEPC\Drivers\Serial.pdd directory, while the new PDD is located in the \Platform\CEPC\Drivers\Com16550 directory.</P>
+
+<P>In addition to the serial MDDs and PPDs, Microsoft supplies a library for supporting 16550 compatible UARTS. This library is in the \Public\Common\Oak\Drivers\Ser16550, and is used by the CEPC sample PDDs.</P>
+
+<P>The <A HREF="wceddkcom_open.htm">COM_Open</A> function in the serial port MDD does not implement the <I>fErrorChar</I>, <I>fNull</I>, and <I>fAbortOnChar</I> members of the serial device control block (DCB) structure. OEMs must add support for this functionality in your PDD layer, if it is appropriate for their serial port hardware.</P>
+
+<P>Because the functionality of serial ports maps easily to the functionality provided by standard stream interface functions, the serial port driver uses the stream interface functions as its DDI. Like other drivers that expose stream interface functions, the serial driver is loaded by the Device Manager.</P>
+
+<P>Serial port devices make extensive use of I/O control codes to set and query various attributes of a serial port. For example, there are I/O control codes for setting and clearing the Data Terminal Ready (DTR) line, for purging any undelivered data, and for getting the status of a modem device. Therefore, you should support as many <B>IOCTL_SERIAL</B> I/O control codes as possible in your implementation of <B>COM_IOControl</B>.</P>
+
+<P>The following list shows the DDI functions for the serial port driver: </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=49%><A HREF="wceddkcom_close.htm">COM_Close</A></TD>
+<TD width=51%><A HREF="wceddkcom_powerdown.htm">COM_PowerDown</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%><A HREF="wceddkcom_deinit.htm">COM_Deinit</A></TD>
+<TD width=51%><A HREF="wceddkcom_powerup.htm">COM_PowerUp</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%><A HREF="wceddkcom_init.htm">COM_INIT</A></TD>
+<TD width=51%><A HREF="wceddkcom_read.htm">COM_Read</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%><A HREF="wceddkcom_iocontrol.htm">COM_IOControl</A></TD>
+<TD width=51%><A HREF="wceddkcom_write.htm">COM_Write</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%><A HREF="wceddkcom_open.htm">COM_Open</A></TD>
+<TD width=51%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<P>The following list shows the DDSI functions for the sample serial port driver:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkgetserialobject.htm">GetSerialObject</A></TD>
+<TD width=33%><A HREF="wceddkhwgetmodemstatus.htm">HWGetModemStatus</A></TD>
+<TD width=34%><A HREF="wceddkhwputbytes.htm">HWPutBytes</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwclearbreak.htm">HWClearBreak</A></TD>
+<TD width=33%><A HREF="wceddkhwgetrxbuffersize.htm">HWGetRxBufferSize</A></TD>
+<TD width=34%><A HREF="wceddkhwreset.htm">HWReset</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwcleardtr.htm">HWClearDTR</A></TD>
+<TD width=33%><A HREF="wceddkhwgetrxstart.htm">HWGetRxStart</A></TD>
+<TD width=34%><A HREF="wceddkhwsetbreak.htm">HWSetBreak</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwclearrts.htm">HWClearRTS</A></TD>
+<TD width=33%><A HREF="wceddkhwgetstatus.htm">HWGetStatus</A></TD>
+<TD width=34%><A HREF="wceddkhwsetcommtimeouts.htm">HWSetCommTimeouts</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwclose.htm">HWClose</A></TD>
+<TD width=33%><A HREF="wceddkhwinit.htm">HWInit</A></TD>
+<TD width=34%><A HREF="wceddkhwsetdcb.htm">HWSetDCB</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwdeinit.htm">HWDeinit</A></TD>
+<TD width=33%><A HREF="wceddkhwioctl.htm">HWIoctl</A></TD>
+<TD width=34%><A HREF="wceddkhwsetdtr.htm">HWSetDTR</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwdisableir.htm">HWDisableIR</A></TD>
+<TD width=33%><A HREF="wceddkhwlineintrhandler.htm">HWLineIntrHandler</A></TD>
+<TD width=34%><A HREF="wceddkhwsetrts.htm">HWSetRTS</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwenableir.htm">HWEnableIR</A></TD>
+<TD width=33%><A HREF="wceddkhwopen.htm">HWOpen</A></TD>
+<TD width=34%><A HREF="wceddkhwtxintrhandler.htm">HWTxIntrHandler</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwgetbytes.htm">HWGetBytes</A></TD>
+<TD width=33%><A HREF="wceddkhwpoweroff.htm">HWPowerOff</A></TD>
+<TD width=34%><A HREF="wceddkhwxmitcomchar.htm">HWXmitComChar</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwgetcommproperties.htm">HWGetCommProperties</A></TD>
+<TD width=33%><A HREF="wceddkhwpoweron.htm">HWPowerOn</A></TD>
+<TD width=34%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wceddkhwgetintrtype.htm">HWGetIntrType</A></TD>
+<TD width=33%><A HREF="wceddkhwpurgecomm.htm">HWPurgeComm</A></TD>
+<TD width=34%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<P>These function names are listed as they are defined in the sample serial port code. You can change this set of functions or the function names by modifying the serial object table, which is a table of <B>HWOBJ</B> type objects, in the serial port PDD.</P>
+
+<P>Windows CE 3.0 introduces a new serial port MDD implementation, in addition to the original MDD which is still included in Platform Builder to support legacy OEMs. OEMs whose PDDs use the original MDD should make note of the changes in the new MDD, as they significantly improve overall serial port performance. The new design eliminates a large number of thread switches in the data transmit path and thus reduces latency between transmission bursts and improves throughput. The new MDD code is in the Public\Common\Oak\Drivers\Com_mdd directory. New PDD sample code for the CEPC platform, to support the 16550 UART and PC Card-based serial ports, is in Public\Common\Oak\Drivers\Ser_card and Platform\CEPC\Drivers\Com_card.</P>
+
+<P>The new MDD layer makes some changes to the set of serial port DDSI functions. 
+
+<UL type="disc">
+	<LI><A HREF="wceddkhwgetbytes.htm">HWGetBytes</A> has been renamed to <A HREF="wceddkhwrxintrhandler.htm">HWRxIntrHandler</A>.</li>
+
+	<LI><A HREF="wceddkhwputbytes.htm">HWPutBytes</A> has been removed; its functionality is now part of <A HREF="wceddkhwtxintrhandler.htm">HWTxIntrHandler</A>.</li>
+
+	<LI><A HREF="wceddkhwgetrxstart.htm">HWGetRxStart</A> has been removed.</li>
+
+	<LI><B>HWModemIntrHandler</B> replaces an earlier function, <B>HWOtherIntrHandler</B>.</li>
+</UL>
+
+<P>In addition, the behavior of some other DDSI functions is different.
+
+<UL type="disc">
+	<LI><A HREF="wceddkgetserialobject.htm">GetSerialObject</A> now receives the DeviceArrayIndex as a parameter and returns a pointer to the appropriate HWObj, which is useful when one MDD is shared by several PDDs. With this new model, HWObj elements can easily be dynamically allocated. See the CEPC Com16650.c PDD implementation for an example of creating dynamic HWObj structures, allowing a single DLL to support any number of 16650-based serial ports.</li>
+
+	<LI><A HREF="wceddkhwinit.htm">HWInit</A> accepts a new third parameter specifying the <I>HWObject</I> value returned from <B>GetSerialObject</B>. This eliminates the need for the PDD to access this value via the registry.</li>
+</UL>
+
+<P>For more information, see the API Reference documentation for those DDSI functions.</P>
+
+<P>OEMs have the option of staying with the old serial port design, or switching to the new one. To use the new design, OEMs must modify two build variables in their Windows CE Platform Builder environment. The TARGETLIBS variable must list the <B>com_mdd_ex.lib</B> library instead of <B>com_mdd.lib</B>, and the string "-DUSE_NEW_SERIAL_MODEL" must be added to the CDEFINES variable. Finally, in the PDD layer, the <B>HWTxIntrHandler</B> function must map to the SL_TxIntrEx function instead of SL_TxIntr, for backward compatibility. Again, see the CEPC Com16650 sample driver.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Programming Input Methods (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="An IM is an in-process Component Object Model (COM) server that implements the IInputMethod interface. Windows CE provides a default QWERTY keyboard IM to handle alphanumeric input. The IM manages the space inside the input panel window."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Programming Input Methods" />
+<MSHelp:RLTitle Title="Programming Input Methods (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="IMs, programming" />
+<MSHelp:Keyword Index="K" Term="input methods (IMs), programming" />
+<MSHelp:Keyword Index="K" Term="programming, input methods" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Programming_Input_Methods" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="usrinp.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923241">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_programming_input_methods"></A>Programming Input Methods</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>An IM is an in-process Component Object Model (COM) server that implements the <B>IInputMethod</B> interface. Windows CE provides a default QWERTY keyboard IM to handle alphanumeric input. The IM manages the space inside the input panel window. Within this window, the IM is responsible for screen output and for responding to user input. Typically, an IM creates a child window of the input panel window. This actionenables the IM window to respond to user input through the input panel window; the IM does not have access to the <B>WindowProc</B> function of the input panel window unless the IM subclasses that window. The IM usually converts user input into characters and sends those characters to the input panel through the <B>IIMCallback</B> interface.</P>
+
+<P>In order to use an IM, the user first selects the IM from the input panel dialog box or the <B>Input Panel</B> button. The input panel loads the selected IM dynamically by calling the <B>CoCreateInstance</B> function. When the user selects a different IM, the input panel frees the existing IM by calling the <B>Release</B> method on the interface pointer. The input panel then calls <B>IInputMethod</B> methods to notify the IM of events and to request data. The input panel implements and exposes the <B>IIMCallback</B> interface. This interface lets the IM call the input panel to send keystrokes to the application through GWES. The following table shows the methods that are available through the <B>IIMCallback</B> interface.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>IIMCallback method</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>SetImInfo</B></TD>
+<TD width=70%>Lets the IM change the icon of the input panel and the visible state of the input panel.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>SendVirtualKey</B></TD>
+<TD width=70%>Modifies the global key state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>SendCharEvents</B></TD>
+<TD width=70%>Sends Unicode characters to the window that currently has the focus.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>SendString</B></TD>
+<TD width=70%>Sends strings to the window that currently has the focus.</TD>
+</TR>
+</table></div>
+
+<P>In response to the input panel calls to methods of the <B>IInputMethod</B> interface, an IM creates windows in the contexts of the input panel thread. This way, the input panel and the IM belong to the same message loop. For purposes of simplicity, all calls to methods of the <B>IIMCallback</B> interfaceshould be made in the input panel thread. That is, the IM should call <B>IIMCallback</B> methods only in response to a call coming through an <B>IInputMethod</B> method.</P>
+
+<P>Additionally, the IM should not create a separate thread to implement a UI. Only the thread that responds to <B>IInputMethod</B> methods should create and manipulate windows. Instead, the IM can create process threads to implement a UI<I>.</I> However, these process threads must not call <B>IIMCallback</B>, because certain GWES window functions work properly only if they are created from the same thread that created the window.</P>
+
+<P>If you develop your own IM component, you should have your setup application perform self-registration by calling the <B>DllRegisterServer</B> and <B>DllUnregisterServer</B> functions. Implement these functions in the IM server dynamic-link library (DLL). Optionally, you can set the registry values directly. The <B>Input Panel</B> properties dialog box does not provide any UI elements for the self-registration service.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

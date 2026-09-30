@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Driver Registration (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="One aspect where Windows CE drivers differ from Windows 95/98 drivers is in registration. Since Plug-and-Play functionality is not generally an issue on Windows CE devices, drivers are not required to register themselves in such a manner."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Driver Registration" />
+<MSHelp:RLTitle Title="Driver Registration (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="drivers, registration" />
+<MSHelp:Keyword Index="K" Term="registering drivers" />
+<MSHelp:Keyword Index="A" Term="wceddkdriver_registration" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshal.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925473">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkdriver_registration"></A>Driver Registration</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>One aspect where Windows CE drivers differ from Windows 95/98 drivers is in registration. Since Plug-and-Play functionality is not generally an issue on Windows CE devices, drivers are not required to register themselves in such a manner. Instead, DirectSound queries the registry for available DirectSound Drivers.</P>
+
+<H2 class="dtH2">DirectSound Driver Registry Entries</H2>
+
+<P>A Windows CE DirectSound driver should register a GUID, as well as the location of the DLL where the driver code can be found. A typical registry entry might look as follows:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Drivers\DSound\SBAWE64]
+   "CLSID"="{e437ebb6-534f-11ce-9f53-0020af0ba770}"
+   "Dll"="dssbawe64.dll"
+   "Desc"="Sound Blaster AWE 64"</PRE>
+
+<P>or, perhaps if a system has more than one DirectSound compatible device:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Drivers\DSound\SBAWE64]
+   "CLSID"="{e437ebb6-534f-11ce-9f53-0020af0ba770}"
+   "Dll"="dssbawe64.dll"
+   "Desc"="Sound Blaster AWE 64"
+[HKEY_LOCAL_MACHINE\Drivers\DSound\ES1371]
+   "CLSID"="{e437ebb6-537f-115e-9f53-0020af3b1770}"
+   "Dll"="dses1371.dll"
+   "Desc"="Sound Blaster Ensoniq PCI128"</PRE>
+
+<P>When a client of the DirectSound API calls <B>DirectSoundEnumerate</B>, it will look through the <B>HKEY_LOCAL_MACHINE\Drivers\DSound</B> entries and report them back to the client application through the <B>DSEnumCallback</B> the client registered. The CLSID, Desc and DLL entries in the registry will correspond to the first three parameters <B>DSEnumCallback</B> expects. When the client app then selects one of the enumerated devices and calls <B>DirectSoundCreate</B>, the GUID it passes in will be used by DirectSound to select find the correct DLL and create the <B>IDsDriver</B> object.</P>
+
+<P>Registration of capture drivers is basically the same except that it is under <B>HKEY_LOCAL_MACHINE\Drivers\DSoundCapture</B> instead of <B>DSound</B>.</P>
+
+<H2 class="dtH2">Driver Information Stored in Registry</H2>
+
+<P>If the driver requires some parameters, such as an IRQ setting or a DMA address, the registry entry for that driver can contain extra entries that have meaning only for that driver. Since the driver can also access the registry, it can look under <B>HKEY_LOCAL_MACHINE\Drivers\DSound</B> for any extra information it might need. For example:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Drivers\DSound\SBAWE64]
+   "CLSID"="{e437ebb6-534f-11ce-9f53-0020af0ba770}"
+   "Dll"="dssbawe64.dll"
+   "Desc"="Sound Blaster AWE 64"
+   "Irq"=dword:0a
+   "Dma"=dword:5
+   "IoBase"=dword:220</PRE>
+
+<H2 class="dtH2">Multiple Devices Handled by the Same Driver</H2>
+
+<P>It is conceivable that a device might have more than one instance of a given piece of hardware, all being handled by the same driver. Alternatively, as in the case of <B>DirectSoundCapture</B> one driver DLL will be responsible for exporting several different interfaces representing different functionality. In this case, separate GUIDs would represent separate functionality. For example, here's what the registry entries might look like for a fictional device that had two Ensoniq cards, each supporting playback and capture:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Drivers\DSound\ES1371A]
+   "CLSID"="{e437ebb6-537f-115e-9f53-0020af3b1770}"
+   "Dll"="dses1371.dll"
+   "Desc"="Sound Blaster Ensoniq PCI128 A"
+
+[HKEY_LOCAL_MACHINE\Drivers\DSound\ES1371B]
+   "CLSID"="{e437ebb6-537f-115e-9f53-0020af3b1771}"
+   "Dll"="dses1371.dll"
+   "Desc"="Sound Blaster Ensoniq PCI128 B"
+
+[HKEY_LOCAL_MACHINE\Drivers\DSoundCapture\ES1371A]
+   "CLSID"="{e437ebb6-537f-115e-9f53-0020af3b1780}"
+   "Dll"="dses1371.dll"
+   "Desc"="Sound Blaster Ensoniq PCI128 A"
+
+[HKEY_LOCAL_MACHINE\Drivers\DSoundCapture\ES1371B]
+   "CLSID"="{e437ebb6-537f-115e-9f53-0020af3b1781}"
+   "Dll"="dses1371.dll"
+   "Desc"="Sound Blaster Ensoniq PCI128 B"</PRE>
+
+<P>Note that each entry has a distinct GUID, but all the entries point to the same driver. The driver will be able to distinguish which object it is being asked to create based on the GUID. Driver writers should publish GUIDs for the functionality their drivers can manage.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

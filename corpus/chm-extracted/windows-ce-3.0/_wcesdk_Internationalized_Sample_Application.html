@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Internationalized Sample Application</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Internationalized Sample Application" />
+<MSHelp:RLTitle Title="Internationalized Sample Application (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Internationalized Sample Application" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Internationalized_Sample_Application" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="globui.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922234">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_internationalized_sample_application"></A>Internationalized Sample Application</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Imagine that you want to write an application that displays the time and date at which it runs and also displays an amount of currency and a numerical value. You could create a window and use hard-coded strings to display those items. This approach would suffice if you were planning to sell this application in no market other than the United States. It would not work in any other market; even if you could get an English-only application into the Canadian market, your numerical and currency displays would be wrong. This section describes a simple application that uses resources, satellite DLLs, and National Language Services to display these items with a single code base.</P>
+
+<P>This application, called NLSDemo, uses a simple dialog-box-based interface. It displays three items: the current time and date, a negative amount of currency, and a relatively large number. What is significant about this display is that it is sensitive to the language to which the application is localized and to the locale in which a user's system is operating. </P>
+
+<P>NLSDemo consists of two pieces: a main executable (NLSDemo.exe) and a resource-only satellite DLL (NLSRsrc.dll). At startup, NLSDemo.exe calls the <B>LoadLibrary</B> API with a fixed value. That value is stored as a hard-coded string inside the program and does not vary from language to language. The value could bestored as a string resource in NLSDemo.exe, but since the value is a constant, it is left in the code. This case is the only one in which a hard-coded string should ever appear in internationalized codeif the value is used only by the program, is never shown to the user, and does not vary among languages. After <B>LoadLibrary</B> is called, the handle it returns is saved for future reference.</P>
+
+<P>The code for NLSDemo.exe is shown at the end of this section. There are two points of interest in the code. First is the creation of the dialog box itself. The <B>CreateDialog</B> API takes four parameters:
+
+<UL type="disc">
+	<LI>Handle to the module from which a given resource is to be drawn</li>
+
+	<LI>Name of the resource</li>
+
+	<LI>Handle to the item's parent window</li>
+
+	<LI>Pointer to the dialog box window callback process</li>
+</UL>
+
+<P>Usually, the handle to the current module is passed as the first argument to this function, but here the handle to the resource DLL is passed instead, along with a coded form of the dialog box template resource identifier as it appears in the resource DLL. This causes the resource for the dialog box to be drawn from the resource DLL at the specified identifier.</P>
+
+<P>Second, note the process of filling in the header line and the two edit boxes. Generation of the header line is a multistage process. First, the date and time as they would be represented in the current system locale are extracted from the system by calls to <B>GetDateFormat</B> and <B>GetTimeFormat</B>. Then, the template string for incorporating them into the dialog box is extracted from the resources in the satellite DLL. Finally, <B>FormatMessage</B> is called to produce the final displayed string. Similarly, the display of the edit boxes is done indirectly: strings representing the two amounts are kept inside the program. These strings are formatted for output by calls to <B>GetCurrencyFormat</B> and <B>GetNumberFormat</B>, and the resulting strings are then displayed.</P>
+
+<P>There are two options to localize the program. You can create a different .rc (resource) file for each language and compile them into separate language DLLs. This requires a translator to translate the .rc file, and a developer to recompile the DLL.</P>
+
+<P>The second option is to open NLSRsrc.dll directly with the Visual C++ resource editor, and then edit it. When you open the DLL, you must select <B>Resources</B> in the<B> Open As</B> list box that appears at the bottom of the <B>Open</B> dialog box. The resource file can then be edited and translated. If necessary, at the end of the editing and resizing, the file can simply be saved. The advantage of this technique is that it is possible to generate additional localized versions without recompiling, even months after the U.S. product has been shipped. If you are targeting more than one processor type, this operation needs to be repeated once for each target, or it might be more convenient to edit the .rc file directly and recompile. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

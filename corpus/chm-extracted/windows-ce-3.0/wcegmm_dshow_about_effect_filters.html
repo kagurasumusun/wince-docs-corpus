@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>About Effect Filters (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="In Microsoft DirectShow, effect filters are defined as filters that apply an effect to media data, but don't change the media type."/>
+<xml>
+<MSHelp:TOCTitle Title="About Effect Filters" />
+<MSHelp:RLTitle Title="About Effect Filters (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_about_effect_filters" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924123">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_about_effect_filters"></A>About Effect Filters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>In Microsoft DirectShow, <I>effect filters</I> are defined as filters that apply an effect to media data, but don't change the media type. </P>
+
+<P>Because the input and output media formats are the same, and the applied effect can't change the format, effect filters often contain a code that checks the media formatting. If the filter derives from one of the transform filter base classes, <a href="wcesdkrctransformfilter_class.htm">CTransformFilter</a> or <a href="wcesdkrctransinplacefilter_class.htm">CTransInPlaceFilter</a>, the filter typically checks the format with the <a href="wcesdkrcbasepin__checkmediatype.htm">CheckMediaType</a>, <a href="wcesdkrctransformfilter__checkinputtype.htm">CTransformFilter::CheckInputType</a>, and <a href="wcesdkrctransformfilter__checktransform.htm">CheckTransform</a> methods. If the filter doesn't derive from one of the transform filter base classes, its pins typically check the format by calling the <B>CBasePin::CheckMediaType</B> member function. </P>
+
+<P>You should choose a base class for your effect filter class that provides the greatest amount of the functionality you need. Often, the base class will be one of the transform filter base classes. If none of the higher-level base classes support your required functionality, you can choose <a href="wcesdkrcbasefilter_class.htm">CBaseFilter</a> or <a href="wcesdkrcbasepin_class.htm">CBasePin</a> as your base class. </P>
+
+<P>If you want the user to be able to manipulate the effect, you must create and display your effect filter's property page and provide a mechanism for returning the user's input to the filter. To do this, implement a property page class, the <B>ISpecifyPropertyPages </B>interface (which exposes property pages), and a custom interface that changes property page values. Typically, property pages use controls such as a slider, button, or check box to receive user input. You also must provide the resource file that displays the controls on the property page. </P>
+
+<P>To implement the property page class, create a class that derives from <B>CBasePropertyPage</B> and implement the <B>OnReceiveMessage</B> method, the <B>CPersistStream::SetDirty</B> method, and a data member for each effect parameter. To access the two interfaces, derive your effect filter class from <B>ISpecifyPropertyPages</B> and the custom interface, and then query for the interfaces. You can query for all the interfaces you need by overriding the <B>NonDelegatingQueryInterface</B> method as shown in the following code example (IGargle is the custom interface). </P>
+
+<PRE class="code">STDMETHODIMP CGargle::NonDelegatingQueryInterface(REFIID riid, void **ppv)
+{
+    CheckPointer(ppv,E_POINTER);
+    if (riid == IID_IGargle) {
+        return GetInterface((IGargle *) this, ppv);
+    } else if (riid == IID_ISpecifyPropertyPages) {
+        return GetInterface((ISpecifyPropertyPages *) this, ppv);
+    } else if (riid == IID_IPersistStream) {
+        return GetInterface((IPersistStream *) this, ppv);
+    } else {
+        return CTransInPlaceFilter::NonDelegatingQueryInterface(riid, ppv);
+    }
+} </PRE>
+
+<P>The effect filter's custom interface typically supplies a put and a get method for each effect parameter. For example, the IGargle custom interface supplies put_GargleRate and get_GargleRate methods. The IContrast custom interface in the Contrast sample supplies put_ContrastLevel and get_ContrastLevel methods. When the user accesses one of the controls on the property page, the page generates a windows message. The property page class's OnReceiveMessage member function handles this message. The following code fragment from the Contrast sample demonstrates this message generation and handling. IDB_DEFAULT is the resource ID of the Default button. The user clicks this button to set the video contrast to its default state. The CContrastProperties class implements the property page and the IContrast::put_DefaultContrastLevel method sets the contrast level to its default value. </P>
+
+<PRE class="code">BOOL CContrastProperties::OnReceiveMessage(HWND hwnd, UINT uMsg, 
+    WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+       case WM_COMMAND:
+        {
+          if (LOWORD(wParam) == IDB_DEFAULT)
+            {
+            pIContrast()-&gt;put_DefaultContrastLevel();
+            SendMessage(m_hwndSlider, TBM_SETPOS, TRUE, 0L);
+              SetDirty();
+        }
+            return (LRESULT) 1;
+        }
+...</PRE>
+
+<P>Effect filters use critical sections internally to protect the global filter state. Effect filters can lock a critical section to ensure that data flow through the filter graph is serialized and that the global filter state doesn't change while an effect is occurring. DirectShow locks a critical section by declaring a <a href="wcesdkrcautolock_class.htm">CAutoLock</a> class object. Typically, effect filters lock the critical section as soon as they enter the function that applies the effect. For example, in the following code fragment, the function that applies the effect is MessItAbout: </P>
+
+<PRE class="code">// Declare the critical section data member in 
+// the effect filter class definition.
+CCritSec   m_GargleLock; 
+
+void CGargle::MessItAbout(PBYTE pb, int cb)
+{
+    CAutoLock foo(&amp;m_GargleLock);</PRE>
+
+<P>The put and get methods of the effect properties (for example, put_GargleRate) typically lock the critical section so effect values can't change in the middle of an update. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

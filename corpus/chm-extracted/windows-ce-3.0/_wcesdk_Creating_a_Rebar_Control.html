@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Creating a Rebar Control (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="A rebar control, which has one or more bands, is a container for child windows. Each band can contain one child window, which can be a toolbar or any other control."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Creating a Rebar Control" />
+<MSHelp:RLTitle Title="Creating a Rebar Control (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="controls, rebar" />
+<MSHelp:Keyword Index="K" Term="creating, rebar controls" />
+<MSHelp:Keyword Index="K" Term="rebar controls, creating" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Creating_a_Rebar_Control" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ctrls.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923158">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_creating_a_rebar_control"></A>Creating a Rebar Control</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>A rebar control, which has one or more bands, is a container for child windows. Each band can contain one child window, which can be a toolbar or any other control. Each band can have its own bitmap, which is displayed as a background for the toolbar on that band. A user can resize or reposition a band by dragging its <I>gripper bar</I>. A gripper bar appears on a rebar or on a command bands control and is especially useful for bringing off-screen rebar or command bar controls into view. If a band has a text label next to its gripper bar, a user can maximize the band and restore it to its previous size by tapping the label with the stylus. The following screen shot shows a Windows CE rebar.</P>
+
+<P class="fig"><IMG SRC="rebar.gif" ALT="" BORDER=0></P>
+
+<P>Like other common controls, a rebar control sends WM_NOTIFY messages to its parent window. A rebar control also forwards to its parent window all of the messages that the control receives from the child windows that are assigned to its bands.</P>
+
+<P>Rebar controls also support the Windows CE custom draw service, which makes it easy to customize the appearance of a rebar control.</P>
+
+<P class="labelproc"><B>To create a rebar control</B>
+
+<OL type="1">
+	<LI>Specify the REBARCLASSNAME class in the <I>lpClassName</I> parameter of the <B>CreateWindowEx</B> function.
+<P>This class is registered when the DLL for the common control is loaded. You also can use the <B>InitCommonControlsEx</B> function to ensure that this DLL is loaded. To register the control class for the rebar by using the <B>InitCommonControlsEx</B> function, specify the ICC_COOL_CLASSES flag as the <I>dwICC</I> member of the <B>INITCOMMONCONTROLSEX</B> structure that you pass in the <I>lpInitCtrls</I> parameter.
+</li>
+
+	<LI>Specify a rebar style in the <I>dwStyle</I> parameter of the <B>CreateWindowEx</B> function.
+<P>To place a toolbar inside a rebar, you must specify the CCS_NOPARENTALIGN style to ensure proper alignment.
+
+<P>For a complete listing of supported styles, see <a href="_wcesdk_Window_and_Control_Styles.htm">Window and Control Styles</a>.
+</li>
+</OL>
+
+<P>The following code example shows how to create a rebar control.</P>
+
+<PRE class="code">HWND CreateRebar (HWND hwnd)
+{
+  HWND hwndRB = NULL,         // The handle to the rebar control
+  HWND hwndTB = NULL,         // The handle to the toolbar
+  HWND hwndCombo = NULL;      // The handle to the combo box control
+  DWORD dwStyle;              // The window style that is used in 
+                              // CreateWindowEx
+  int index;                  // An integer
+  RECT rect;                  // A RECT structure
+  TCHAR szString[64];         // A temporary string
+  HICON hIcon;                // A handle to an icon
+  REBARINFO rbi;              // Contains data that describes 
+                              // characteristics of the rebar control
+  HIMAGELIST himlRB;          // A handle to an image list
+  REBARBANDINFO rbbi[2];      // Contains data that defines bands
+                              // in the rebar control
+  INITCOMMONCONTROLSEX iccex; // Carries data that is used to load 
+                              // control classes for the rebar
+
+  // Initialize the INITCOMMONCONTROLSEX structure.
+  iccex.dwSize = sizeof (INITCOMMONCONTROLSEX);
+
+  // Load rebar and toolbar control classes.
+  iccex.dwICC = ICC_COOL_CLASSES | ICC_BAR_CLASSES;
+
+  // Register rebar and toolbar control classes from the DLL for the 
+  // common control.
+  InitCommonControlsEx (&amp;iccex);
+
+  // Create rebar control.   
+  dwStyle = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_CLIPCHILDREN | 
+            WS_CLIPSIBLINGS | RBS_VARHEIGHT | RBS_BANDBORDERS | 
+            CCS_NODIVIDER | CCS_NOPARENTALIGN; 
+
+  if (!(hwndRB = CreateWindowEx (0, 
+                                 REBARCLASSNAME, 
+                                 NULL, 
+                                 dwStyle,
+                                 0, 
+                                 0, 
+                                 CW_USEDEFAULT, 
+                                 100, 
+                                 hwnd, 
+                                 (HMENU)ID_REBAR, 
+                                 g_hInst, 
+                                 NULL)))
+  {
+    goto error;
+  }
+    
+  // Set the characteristics of the rebar control.
+  himlRB = ImageList_Create (32, 32, ILC_COLORDDB | ILC_MASK, 1, 0);
+  if (himlRB)
+  {
+    hIcon = LoadIcon (g_hInst, MAKEINTRESOURCE (IDI_REBAR));
+    if (hIcon &amp;&amp; (-1 == ImageList_AddIcon (himlRB, hIcon))
+    {
+      DestroyIcon(hIcon);
+    }
+  }
+
+  rbi.cbSize = sizeof (rbi);
+  rbi.fMask = RBIM_IMAGELIST;
+  rbi.himl = himlRB;
+
+  if (!SendMessage (hwndRB, RB_SETBARINFO, 0, (LPARAM)&amp;rbi))
+  {
+    goto error;
+  }
+
+  // Create a toolbar.
+  dwStyle = WS_VISIBLE | WS_CHILD | TBSTYLE_TOOLTIPS | 
+            CCS_NOPARENTALIGN | CCS_NORESIZE;
+                
+  if (!(hwndTB = CreateToolbarEx (hwnd,
+                                  dwStyle,
+                                  (UINT) ID_TOOLBAR, 
+                                  NUMIMAGES,
+                                  g_hInst,
+                                  IDB_TOOLBAR,
+                                  tbButton,
+                                  sizeof (tbButton) / sizeof (TBBUTTON),
+                                  BUTTONWIDTH,
+                                  BUTTONHEIGHT,
+                                  IMAGEWIDTH,
+                                  IMAGEHEIGHT,
+                                  sizeof (TBBUTTON))))
+  {
+    goto error;
+  }
+
+  // Add ToolTips to the toolbar.
+  SendMessage (hwndTB, TB_SETTOOLTIPS, (WPARAM) NUMIMAGES, 
+               (LPARAM) szToolTips);
+
+  // Retrieve the dimensions of the bounding rectangle of the toolbar. 
+  GetWindowRect (hwndTB, &amp;rect);
+
+  memset (&amp;rbbi[0], 0, sizeof (rbbi[0]));
+  rbbi[0].cbSize = sizeof (REBARBANDINFO);
+  rbbi[0].fMask = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID
+                  | RBBIM_STYLE | RBBIM_TEXT | RBBIM_BACKGROUND | 0;
+
+  rbbi[0].cxMinChild = rect.right - rect.left + 2;
+  rbbi[0].cyMinChild = rect.bottom - rect.top + 2;
+  rbbi[0].cx = 250;
+  rbbi[0].fStyle = RBBS_BREAK | RBBS_GRIPPERALWAYS;
+  rbbi[0].wID = ID_TOOLBAR;
+  rbbi[0].hwndChild = hwndTB;
+  rbbi[0].lpText = TEXT("Toolbar");
+  rbbi[0].hbmBack = LoadBitmap (g_hInst, MAKEINTRESOURCE (IDB_BKGRD));
+
+  // Insert the toolbar band in the rebar control. 
+  SendMessage (hwndRB, RB_INSERTBAND, (WPARAM)-1, 
+               (LPARAM) (LPREBARBANDINFO)&amp;rbbi[0]);
+  
+  // Create a combo box.
+  dwStyle = WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_VSCROLL | 
+            WS_CLIPCHILDREN | WS_CLIPSIBLINGS | 
+            CBS_AUTOHSCROLL | CBS_DROPDOWN;
+
+  if (!(hwndCombo = CreateWindowEx (0, 
+                                    TEXT("combobox"), 
+                                    NULL, 
+                                    dwStyle, 
+                                    0, 0, 100, 200, 
+                                    hwndRB, 
+                                    (HMENU)ID_COMBOBOX, 
+                                    g_hInst, 
+                                    NULL)))
+  {
+    goto error;
+  }
+
+  // Add 10 items to the combo box.
+  for (index = 0; index &lt; 10; index++)
+  {
+    wsprintf (szString, TEXT("Item %d"), index + 1);
+    SendMessage (hwndCombo, CB_ADDSTRING, 0, (LPARAM) szString);
+  }
+
+  // Select the first item as the default.
+  SendMessage (hwndCombo, CB_SETCURSEL, (WPARAM)0, 0);
+
+  // Retrieve the dimensions of the bounding rectangle of the combo box. 
+  GetWindowRect (hwndCombo, &amp;rect);
+
+  memset (&amp;rbbi[1], 0, sizeof (rbbi[1]));
+  rbbi[1].cbSize = sizeof (REBARBANDINFO);
+  rbbi[1].fMask = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID 
+                  | RBBIM_STYLE | RBBIM_TEXT | RBBIM_BACKGROUND 
+                  | RBBIM_IMAGE | 0;
+
+  rbbi[1].cxMinChild = rect.right - rect.left;
+  rbbi[1].cyMinChild = rect.bottom - rect.top;
+  rbbi[1].cx = 100;
+  rbbi[1].fStyle = RBBS_CHILDEDGE | RBBS_FIXEDBMP | 0;
+  rbbi[1].wID = ID_COMBOBOX;
+  rbbi[1].hwndChild = hwndCombo;
+  rbbi[1].lpText = TEXT("ComboBox");
+  rbbi[1].hbmBack = LoadBitmap (g_hInst, MAKEINTRESOURCE (IDB_BKGRD));
+  rbbi[1].iImage = 0;
+
+  // Insert the combo box band in the rebar control. 
+  SendMessage (hwndRB, RB_INSERTBAND, (WPARAM)-1, 
+               (LPARAM) (LPREBARBANDINFO)&amp;rbbi[1]);
+
+  // Reposition the rebar control.
+  MoveRebar (hwnd, hwndRB);
+
+  return hwndRB;
+
+error:
+  if (himlRB)
+  {
+    ImageList_Destroy (himlRB);
+  }
+
+  if (hwndTB)
+  {
+    DestroyWindow (hwndTB);
+  }
+
+  if (hwndRB)
+  {
+    DestroyWindow (hwndRB);
+  }
+
+  return NULL;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

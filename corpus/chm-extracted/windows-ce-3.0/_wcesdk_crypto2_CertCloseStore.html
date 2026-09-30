@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertCloseStore</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CertCloseStore" />
+<MSHelp:RLTitle Title="CertCloseStore" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_crypto2_CertCloseStore" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926362">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_crypto2_certclosestore"></A>CertCloseStore</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function closes a certificate store handle and reduces the reference count on the store. There needs to be a corresponding call to the <B>CertCloseStore</B> function for each successful call to the <A HREF="_wcesdk_crypto2_certopenstore.htm">CertOpenStore</A> or <A HREF="_wcesdk_crypto2_certduplicatestore.htm">CertDuplicateStore</A> function.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CertCloseStore(</B>
+<B>HCERTSTORE</B> <I>hCertStore</I><B>,</B>
+<B>DWORD</B> <I>dwFlags</I>
+<B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hCertStore </I></DT>
+
+<DD>[in] Handle of the certificate store to be closed.</dd>
+
+<DT><I>dwFlags </I></DT>
+
+<DD>[in] Typically, this parameter uses the default value zero. The default is to close the store with memory remaining allocated for contexts that have not been freed. In this case, no check is made to determine whether memory for contexts remains allocated.
+
+<P>Set flags can force the freeing of memory for all of a store's certificate contexts when the store is closed. Flags can also be set that check whether all of the store's certificate contexts have been freed. The following table defines the <I>dwFlags</I>.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_CLOSE_STORE_CHECK_FLAG</TD>
+<TD width=53%>Checks for nonfreed certificate context. A returned error code indicates that one or more store elements is still in use. This flag should only be used as a diagnostic tool in the development of applications.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_CLOSE_STORE_FORCE_FLAG</TD>
+<TD width=53%>Forces the freeing of memory for all contexts associated with the store. This flag can be safely used only when the store is opened in a function and neither the store handle nor any of its contexts are passed to any called functions. For details, see the <B>Remarks</B> section later in this topic.</TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>If the function succeeds, the return value is TRUE.</P>
+
+<P>If the function fails, the return value is FALSE.</P>
+
+<P>For extended error information, call the <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A> function.</P>
+
+<P>If CERT_CLOSE_STORE_CHECK_FLAG is not set or if it is set and all contexts associated with the store have been freed, the return value is TRUE.</P>
+
+<P>If CERT_CLOSE_STORE_CHECK_FLAG is set and memory for one or more contexts associated with the store remains allocated, the return value is FALSE. The store is always closed even when the function returns FALSE. For details, see the <B>Remarks</B> section later in this topic.</P>
+
+<P>The<B> GetLastError</B> function is set to CRYPT_E_PENDING_CLOSE if memory for contexts associated with the store remains allocated. Any existing value returned by the <B>GetLastError</B> function is preserved unless CERT_CLOSE_STORE_CHECK_FLAG is set.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>While a certificate store is open, contexts from that store can be retrieved or duplicated. When a context is retrieved or duplicated, its reference count is incremented. When a context is freed by passing it to a search or enumeration function as a previous context or by using the <A HREF="_wcesdk_crypto2_certfreecertificatecontext.htm">CertFreeCertificateContext</A> function, its reference count is decremented. When a context's reference count reaches zero, memory allocated for that context is automatically freed. When the memory allocated for a context has been freed, any pointers to that context become invalid.</P>
+
+<P>By default, memory used to store contexts with reference counts greater than zero is not freed when a certificate store is closed. References to those contexts remain valid; however, this can cause memory leaks. Also, any changes made to the properties of a context after the store has been closed are not persisted.</P>
+
+<P>To force the freeing of memory for all contexts associated with a store, set CERT_STORE_CLOSE_FORCE_FLAG. With this flag set, memory for all contexts associated with the store is freed and all pointers to certificate contexts associated with the store become invalid. This flag should only be set when the store is opened in a function and neither the store handle nor any of its contexts were ever passed to any called functions.</P>
+
+<P>The status of reference counts on contexts associated with a store can be checked when the store is closed by using CERT_CLOSE_STORE_CHECK_FLAG. When this flag is set, and all certificate contexts have not been released, the function returns FALSE and the <B>GetLastError</B> function returns CRYPT_E_PENDING_CLOSE. Note that the store is still closed when FALSE is returned and the memory for any active contexts is not freed.</P>
+
+<P>If CERT_STORE_NO_CRYPT_RELEASE_FLAG was not set when the store was opened, closing a store releases its CSP handle.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>3.0 or later</TD>
+<TD width=18%>Wincrypt.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Crypt32.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_crypto2_certduplicatestore.htm">CertDuplicateStore</A>, <A HREF="_wcesdk_crypto2_certfreecertificatecontext.htm">CertFreeCertificateContext</A>, <A HREF="_wcesdk_crypto2_certopenstore.htm">CertOpenStore</A>, <A HREF="_wcesdk_crypto2_cryptreleasecontext.htm">CryptReleaseContext</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

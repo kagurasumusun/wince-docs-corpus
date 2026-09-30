@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>recv</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="recv" />
+<MSHelp:RLTitle Title="recv" />
+<MSHelp:Keyword Index="A" Term="wcesdkrrecv" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_930339">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrrecv"></A>recv</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function receives data from a socket. </P>
+
+<PRE class="syntax"><B>int</B> <B>recv</B> <B>(</B>
+<B>SOCKET</B> <I>s</I><B>, </B>
+<B>char</B> <B>*</B><I>buf</I><B>, </B>
+<B>int</B> <I>len</I><B>, </B>
+<B>int</B> <I>flags </I><B>);</B> </PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>s</I></DT>
+
+<DD>[in] Descriptor that identifies a connected socket.</dd>
+
+<DT><I>buf</I></DT>
+
+<DD>[out] Buffer for the incoming data.</dd>
+
+<DT><I>len</I></DT>
+
+<DD>[in] Length of <I>buf</I>.</dd>
+
+<DT><I>flags</I></DT>
+
+<DD>[in] Not supported; set to zero.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Zero indicates that the connection has been gracefully closed. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The <B>recv</B> function is used to read incoming data on connection-oriented sockets, or connectionless sockets. When using a connection-oriented protocol, the sockets must be connected before calling <B>recv</B>. When using a connectionless protocol, the sockets must be bound and <B>connect</B> must be called to associate the remote address before calling <B>recv</B>. </P>
+
+<P>The local address of the socket must be known. For server applications, use an explicit <A HREF="wcesdkrbind.htm">bind</A> function or an implicit <A HREF="wcesdkraccept_function.htm">accept</A> function. Explicit binding is discouraged for client applications. For client applications the socket can become bound implicitly to a local address using <A HREF="wcesdkrconnect_function.htm">connect</A> or <A HREF="wcesdkrsendto.htm">sendto</A>.</P>
+
+<P>For connection-oriented or connectionless sockets, this function restricts the addresses from which received messages are accepted. The function only returns messages from the remote address specified in the connection. Messages from other addresses are (silently) discarded.</P>
+
+<P>For connection-oriented sockets (type SOCK_STREAM for example), calling <B>recv</B> will return as much information as is currently available &#0151; up to the size of the buffer supplied. </P>
+
+<P>For connectionless sockets (type SOCK_DGRAM or other message-oriented sockets), data is extracted from the first enqueued datagram (message) from the destination address specified by the <A HREF="wcesdkrconnect_function.htm">connect</A> function.</P>
+
+<P>If the datagram or message is larger than the buffer supplied, the buffer is filled with the first part of the datagram, and <B>recv </B>generates the error WSAEMSGSIZE. For unreliable protocols (for example, UDP) the excess data is lost; for reliable protocols, the data is retained by the service provider until it is successfully read by calling <B>recv</B> with a large enough buffer. For TCP/IP, an application cannot receive from any multicast address until after becoming a group member.</P>
+
+<P>If no incoming data is available at the socket, the <B>recv</B> call blocks and waits for data to arrive. When the socket is nonblocking, a value of SOCKET_ERROR is returned with the error value set to WSAEWOULDBLOCK. The <A HREF="wcesdkrselect.htm">select</A> function can be used to determine when more data arrives. </P>
+
+<P>Any data that has already been received and buffered by the transport will be copied into the supplied user buffers. In the case of a blocking socket with no data currently having been received and buffered by the transport, the call will block until data is received. For protocols acting as byte-stream protocols, the stack tries to return as much data as possible, subject to the supplied buffer space and amount of received data available. However, receipt of a single byte is sufficient to unblock the caller. There is no guarantee that more than a single byte will be returned. For message-oriented protocols, a full message is required to unblock the caller.</P>
+
+<P>If the socket is connection oriented and the remote side has shut down the connection gracefully, and all data has been received, a <B>recv</B> will complete immediately with zero bytes received. If the connection has been reset, a <B>recv</B> will fail with the error WSAECONNRESET.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>1.0 and later</TD>
+<TD width=18%>Winsock.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkraccept_function.htm">accept</A>, <A HREF="wcesdkrbind.htm">bind</A>, <A HREF="wcesdkrrecvfrom.htm">recvfrom</A>, <A HREF="wcesdkrsend.htm">send</A>, <A HREF="wcesdkrselect.htm">select</A>, <A HREF="wcesdkrshutdown_function.htm">shutdown</A>, <A HREF="wcesdkrsocket.htm">socket</A>, <A HREF="wcesdkrwsastartup.htm">WSAStartup</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

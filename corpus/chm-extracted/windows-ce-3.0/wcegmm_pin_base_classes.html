@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Pin Base Classes (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="Pins have a greater share of the work than filters. A pin must expose methods so that the filter graph manager can connect it with a pin on another filter."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Pin Base Classes" />
+<MSHelp:RLTitle Title="Pin Base Classes (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="DirectShow, pin base classes" />
+<MSHelp:Keyword Index="K" Term="pin base classes (DirectShow)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_pin_base_classes" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshowclasses.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924160">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_pin_base_classes"></A>Pin Base Classes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Pins have a greater share of the work than filters. A pin must expose methods so that the filter graph manager can connect it with a pin on another filter. Pins also expose methods so that connected pins can negotiate what media type they will pass between them, and which pin will provide the shared memory allocator for transporting the media sample. Additionally, the output pin is responsible for passing each media sample to its connected input pin; the input pin is responsible for receiving it. Finally, pins must support interfaces so that quality-control messages and position information can be passed through the stream from pin to pin. </P>
+
+<P>The following illustration shows the pin classes. All pin classes are derived from <a href="wcesdkrCBasePin_class.htm">CBasePin</a>, a base class derived from <a href="wcesdkrCUnknown_class.htm">CUnknown</a>. </P>
+
+<P class="fig"><IMG SRC="basecl2.gif" ALT="" BORDER=0></P>
+
+<P><B>CBasePin</B> implements the <a href="wcesdkrIPin_interface.htm">IPin</a> interface. The <B>IPin</B> interface specifies methods for connecting to other pins, negotiating the media type to be used with the connected pin, querying internal connections on the pin, and informing the pin of stream activity. </P>
+
+<P>Besides implementing the <B>IPin</B> methods, <B>CBasePin</B> also implements <a href="wcesdkrIQualityControl_interface.htm">IQualityControl</a> methods so that quality-control messages can be passed through the filter graph from one pin to the next. Quality-control messages allow a filter, such as a renderer, to request another filter to adjust its sample rate. Typically, quality-control messages travel upstream from renderer to source filter. However, in cases such as a video capture filter, the source filter (for example, a VCR reader) can send quality-control messages downstream to the renderer filter to adjust its rate. </P>
+
+<P>The <B>CBasePin</B> class provides several virtual member functions that can be overridden to provide handling of the connection, media type negotiation, and disconnection processes. Two base classes derive from <B>CBasePin</B> to provide default handling for many of these tasks: 
+
+<UL type="disc">
+	<LI><a href="wcesdkrCBaseOutputPin_class.htm">CBaseOutputPin</a> implements an output pin. </li>
+
+	<LI><a href="wcesdkrCBaseInputPin_class.htm">CBaseInputPin</a> implements an input pin. </li>
+</UL>
+
+<P><B>CBaseOutputPin</B> is the base class for the <a href="wcesdkrCTransformOutputPin_class.htm">CTransformOutputPin</a> and <a href="wcesdkrCSourceStream_class.htm">CSourceStream</a> classes. Likewise, <B>CBaseInputPin</B> is the base class for the <a href="wcesdkrCTransformInputPin_class.htm">CTransformInputPin</a> class. Before looking at these derived base pin classes, it is helpful to understand the basic model the <B>CBaseOutputPin</B> and <B>CBaseInputPin</B> classes use. </P>
+
+<P>In the connection and transport model used by two pins, the input pin supports the <a href="wcesdkrIMemInputPin_interface.htm">IMemInputPin</a> interface so that it can receive a media sample. The <B>CBaseInputPin</B> class implements the <B>IMemInputPin</B> interface. Also, one of the two pins must supply a shared memory allocator object, which is an object that contains the <a href="wcesdkrIMemAllocator_interface.htm">IMemAllocator</a> interface that generates media sample objects passed between pins. An <B>IMemInputPin</B> method, implemented by the <B>CBaseInputPin</B> class, supplies this allocator object, implemented by the <a href="wcesdkrCMemAllocator_class.htm">CMemAllocator</a> class. The connected output pin also has the option of supplying its own allocator; if this is the case, it notifies the input pin (through another <B>IMemInputPin</B> method) of the final decision of which allocator is used. </P>
+
+<P>The <B>CBaseOutputPin</B> class provides extra member functions to set the size and count of samples in the allocator, retrieve a media sample from the allocator, deliver that media sample to the connected input pin, and deliver end-of-stream and end-flush messages downstream. It also implements many of the <B>IPin</B> methods. </P>
+
+<P><a href="wcesdkrCPullPin_class.htm">CPullPin</a> is a class that is used on the input pin of a parser filter. It is derived from the <a href="wcesdkrCAMThread_class.htm">CAMThread</a> class as shown in the following illustration. </P>
+
+<P class="fig"><IMG SRC="pulpin01.gif" ALT="" BORDER=0></P>
+
+<P>A <I>parser filter</I> pulls information from the disk, using the asynchronous file reader filter, or from the Internet, using the URL moniker filter. <B>CPullPin</B> works with the <a href="wcesdkrIAsyncReader_interface.htm">IAsyncReader</a> interface, which is implemented on the source reader filter upstream. <B>CPullPin</B> starts the thread, pulls data from the upstream filter, and then pushes the data downstream. That is, it can simply call its own <a href="wcesdkrIMemInputPin__Receive.htm">IMemInputPin::Receive</a> method after pulling the sample from the source (or perform the equivalent routines elsewhere). </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

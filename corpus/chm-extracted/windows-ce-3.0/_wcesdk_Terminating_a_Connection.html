@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Terminating a Connection</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Terminating a Connection" />
+<MSHelp:RLTitle Title="Terminating a Connection (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Terminating a Connection" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Terminating_a_Connection" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ras.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923403">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_terminating_a_connection"></A>Terminating a Connection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>When a RAS application starts a connection operation, the <a href="wcesdkrrasdial.htm">RasDial</a> function receives a <B>RASCONN</B> connection handle to identify the connection. If the returned handle is not NULL, the client must eventually call the <a href="wcesdkrRasHangup.htm">RasHangUp</a> function to end the connection. If an error occurs during the connection operation, the client must call the <B>RasHangUp</B> function even though the connection was never established.</P>
+
+<P>A client application might require a connection to end even though it does not have the handle returned by <B>RasDial</B>. For example, the application that called <B>RasDial</B> might have exited when the connection was successfully established. In this case, the disconnecting application can use <a href="wcesdkrRasEnumConnections.htm">RasEnumConnections</a> to get all the current connections. For each connection, <B>RasEnumConnections</B> returns a <B>RASCONN</B> structure containing the <B>RASCONN</B> connection handle and the phone-book entry name or phone number specified when the connection operation was started. This data can be used to display a list of connections from which a user can select the connection to end.</P>
+
+<P>If the application exits after calling <B>RasHangUp</B>, there may not be enough time for the modem to reset. To provide the modem time to reset, pause for a few seconds while the application exits.</P>
+
+<P>Before an application terminates one or more connections, it is useful to enumerate the existing connections and hang up. The <B>RasEnumConnections</B> retrieves the current connections. </P>
+
+<P class="labelproc"><B>To terminate a connection</B>
+
+<OL type="1">
+	<LI>Call <B>RasEnumConnections</B> to find all RAS connections.</li>
+
+	<LI>Call <B>RasHangUp</B> to terminate the connection.</li>
+</OL>
+
+<P>The following code example shows how to terminate a connection.</P>
+
+<PRE class="code">DWORD CloseRasConnections ()
+{
+  int index;                 // An integer index
+  TCHAR szError[100];        // Buffer for error codes 
+  DWORD dwError,             // Error code from a function call 
+        dwRasConnSize,       // Size of RasConn in bytes
+        dwNumConnections;    // Number of connections found 
+  RASCONN RasConn[20];       // Buffer for connection state data 
+                             // Assume the maximum number of entries is 
+                             // 20. 
+
+  // Assume no more than 20 connections.
+  RasConn[0].dwSize = sizeof (RASCONN);
+  dwRasConnSize = 20 * sizeof (RASCONN);
+
+  // Find all connections.
+  if (dwError = RasEnumConnections (RasConn, &amp;dwRasConnSize, 
+                                    &amp;dwNumConnections))
+  {
+    wsprintf (szError, TEXT("RasEnumConnections Error: %ld"), dwError);
+    return dwError;
+  }
+
+  // If there are no connections, return zero.
+  if (!dwNumConnections)
+  {
+    wsprintf (szError, TEXT("No open RAS connections"));
+    return 0;
+  }
+
+  // Terminate all of the remote access connections.
+  for (index = 0; index &lt; (int)dwNumConnections; ++index)
+  {
+    if (dwError = RasHangUp (RasConn[index].hrasconn))
+    {
+      wsprintf (szError, TEXT("RasHangUp Error: %ld"), dwError);
+      return dwError;
+    }
+  }
+
+  return 0;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

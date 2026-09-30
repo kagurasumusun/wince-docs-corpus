@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CREATE_PROCESS_DEBUG_INFO</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CREATE_PROCESS_DEBUG_INFO" />
+<MSHelp:RLTitle Title="CREATE_PROCESS_DEBUG_INFO" />
+<MSHelp:Keyword Index="A" Term="wcesdkrCREATE_PROCESS_DEBUG_INFO_str" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927445">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrcreate_process_debug_info_str"></A>CREATE_PROCESS_DEBUG_INFO</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This structure contains process creation information that can be used by a debugger.</P>
+
+<PRE class="syntax"><B>typedef struct _CREATE_PROCESS_DEBUG_INFO { 
+HANDLE </B><I>hFile</I><B>; 
+HANDLE </B><I>hProcess</I><B>; 
+HANDLE </B><I>hThread</I><B>; 
+LPVOID </B><I>lpBaseOfImage</I><B>; 
+DWORD </B><I>dwDebugInfoFileOffset</I><B>; 
+DWORD </B><I>nDebugInfoSize</I><B>; 
+LPVOID </B><I>lpThreadLocalBase</I><B>; 
+LPTHREAD_START_ROUTINE </B><I>lpStartAddress</I><B>;
+LPVOID </B><I>lpImageName</I><B>; 
+WORD </B><I>fUnicode</I><B>; 
+} CREATE_PROCESS_DEBUG_INFO; </B></PRE>
+
+<P class="label"><B>Members</B>
+
+<DL>
+<DT><I>hFile</I></DT>
+
+<DD>Handle to the process's image file. In Windows CE, this member is always NULL. </dd>
+
+<DT><I>hProcess</I></DT>
+
+<DD>Handle to the process. If this member is NULL, the handle is not valid. Otherwise, the debugger can use the member to read from and write to the process's memory. </dd>
+
+<DT><I>hThread</I></DT>
+
+<DD>Handle to the initial thread of the process identified by the <I>hProcess</I> member. If <I>hThread</I> is NULL, the handle is not valid. Otherwise, the debugger has THREAD_GET_CONTEXT, THREAD_SET_CONTEXT, and THREAD_SUSPEND_RESUME access to the thread, allowing the debugger to read from and write to the registers of the thread and to control execution of the thread. </dd>
+
+<DT><I>lpBaseOfImage</I></DT>
+
+<DD>Pointer to the base address of the executable image that the process is running. </dd>
+
+<DT><I>dwDebugInfoFileOffset</I></DT>
+
+<DD>Specifies the offset to the debugging information in the file identified by the <I>hFile</I> member. This member is always set to zero.</dd>
+
+<DT><I>nDebugInfoSize</I></DT>
+
+<DD>Specifies the size, in bytes, of the debugging information in the file. This member is always set to zero. </dd>
+
+<DT><I>lpThreadLocalBase</I></DT>
+
+<DD>Pointer to a block of data. At offset 0x2C into this block is another pointer, called <I>ThreadLocalStoragePointer</I>, that points to an array of per-module thread local storage blocks. This gives a debugger access to per-thread data in the threads of the process being debugged using the same algorithms that a compiler would use. </dd>
+
+<DT><I>lpStartAddress</I></DT>
+
+<DD>Pointer to the starting address of the thread. This value may only be an approximation of the thread's starting address, because any application with appropriate access to the thread can change the thread's context by using the <A HREF="wcesdkrsetthreadcontext.htm">SetThreadContext</A> function. </dd>
+
+<DT><I>lpImageName</I></DT>
+
+<DD>Pointer to the file name associated with the <I>hFile</I> member. This member may be NULL, or it may contain the address of a string pointer in the address space of the process being debugged. That address may, in turn, either be NULL or point to the actual filename. If <I>fUnicode</I> is a nonzero value, the name string is Unicode; otherwise, it is ANSI. 
+
+<P>This member is strictly optional. Debuggers must be prepared to handle the case where <I>lpImageName</I> is NULL or <I>*lpImageName</I> (in the address space of the process being debugged) is NULL. Specifically, the system does not provide an image name for a create process event, and will not likely pass an image name for the first DLL event. The system also does not provide this information in the case of debug events that originate from a call to the <A HREF="wcesdkrdebugactiveprocess.htm">DebugActiveProcess</A> function. 
+</dd>
+
+<DT><I>fUnicode</I></DT>
+
+<DD>Indicates whether a file name specified by the <I>lpImageName</I> member is Unicode or ANSI. A nonzero value indicates Unicode; zero indicates ANSI. </dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The <I>lpImageName</I> member is a pointer into the address space of the process that is being debugged. To retrieve the actual image name, use the <A HREF="wcesdkrreadprocessmemory.htm">ReadProcessMemory</A> function in the following manner.</P>
+
+<PRE class="code">ReadProcessMemory( hProcess, lpImageName, lpBuffer, nSize,
+&amp;NumberOfBytesRead );</PRE>
+
+<P>For the <B>DebugActiveProcess</B> function, if the <I>dwDebugEventCode</I> member of the <A HREF="wcesdkrdebug_event_str.htm">DEBUG_EVENT</A> structure has a value of CREATE_PROCESS_DEBUG_EVENT or CREATE_THREAD_DEBUG_EVENT, the <I>lpStartAddress</I> member is NULL. </P>
+
+<P>The <I>lpThreadLocalBase</I> member points directly to the Thread Local Storage (TLS) data block of the process that is being debugged. To obtain the TLS data for a slot, call the <B>ReadProcessMemory</B> function and pass the following calculated value for the <I>lpBaseAddress</I> parameter: <I>lpThreadLocalBase</I>+4*&lt;slot number&gt;. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Winbase.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrdebugactiveprocess.htm">DebugActiveProcess</A>, <A HREF="wcesdkrreadprocessmemory.htm">ReadProcessMemory</A>, <A HREF="wcesdkrsetthreadcontext.htm">SetThreadContext</A>, <A HREF="wcesdkrdebug_event_str.htm">DEBUG_EVENT</A>, <A HREF="wcesdkrload_dll_debug_info_str.htm">LOAD_DLL_DEBUG_INFO</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

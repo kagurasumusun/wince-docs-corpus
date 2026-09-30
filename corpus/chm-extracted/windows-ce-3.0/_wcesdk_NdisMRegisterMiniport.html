@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisMRegisterMiniport</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="NdisMRegisterMiniport" />
+<MSHelp:RLTitle Title="NdisMRegisterMiniport" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_NdisMRegisterMiniport" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928689">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_ndismregisterminiport"></A>NdisMRegisterMiniport</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function registers a network adapter or intermediate driver's <B>Miniport</B>_* entry points and name with the NDIS library when the driver initializes.</P>
+
+<PRE class="syntax"><B>NDIS_STATUS NdisMRegisterMiniport(</B>
+<B>IN NDIS_HANDLE </B><I>NdisWrapperHandle</I><B>, </B>
+<B>IN PNDIS_MINIPORT_CHARACTERISTICS </B><I>MiniportCharacteristics</I><B>, </B>
+<B>IN UINT </B><I>CharacteristicsLength</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>NdisWrapperHandle</I></DT>
+
+<DD>Handle returned by the <A HREF="_wcesdk_ndisminitializewrapper.htm">NdisMInitializeWrapper</A> function.</dd>
+
+<DT><I>MiniportCharacteristics</I></DT>
+
+<DD>Pointer to an <B>NDIS_MINIPORT_CHARACTERISTICS</B> structure set up by the caller.
+
+<P>The driver should initialize this structure with 0s before setting up any its members.
+</dd>
+
+<DT><I>CharacteristicsLength</I></DT>
+
+<DD>Specifies the length, in bytes, of the caller-supplied characteristics buffer. This parameter must be <B>sizeof(</B>NDIS40_MINIPORT_CHARACTERISTICS<B>)</B>.
+
+<P>The driver includes the build instruction NDIS40_MINIPORT, as appropriate, in its sources; if the driver writer uses the -DNDIS40_MINIPORT compiler switch, this parameter is set when the driver is built.
+</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>NDIS_STATUS_SUCCESS indicates success. One of the following status values indicates failure:
+
+<DL>
+<DT>NDIS_STATUS_BAD_CHARACTERISTICS</DT>
+
+<DD>The <I>CharacteristicsLength</I> is too small for the <I>MajorNdisVersion</I> specified in the buffer at <I>MiniportCharacteristics</I>.</dd>
+
+<DT>NDIS_STATUS_BAD_VERSION</DT>
+
+<DD>The <I>MajorNdisVersion</I> or <I>MinorNdisVersion</I> specified in the characteristics structure is invalid.</dd>
+
+<DT>NDIS_STATUS_RESOURCES</DT>
+
+<DD>A shortage of resources, possibly memory, prevented the NDIS library from registering the caller.</dd>
+
+<DT>NDIS_STATUS_FAILURE</DT>
+
+<DD>This is a default error status, returned when none of the preceding errors caused the registration to fail. For example, if the NDIS library cannot load the driver's image and lock it into system memory, it returns this error.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>An network adapter driver calls this function from its <A HREF="_wcesdk_driverentry.htm">DriverEntry</A> function after <B>DriverEntry</B> calls the <B>NdisMInitializeWrapper</B> function.</P>
+
+<P>Every network adapter driver that exports only <B>Miniport<I>XXX</I> </B>functions must set up a characteristics structure and call this function. This structure is copied in the request to the NDIS library's internal storage. Thus, once it has registered, a miniport driver cannot change its handler functions.</P>
+
+<P>The NDIS library currently does not call <A HREF="_wcesdk_miniportreconfigure.htm">MiniportReconfigure</A> functions, so such a function in an existing miniport driver does nothing unless the miniport makes internal calls to its <B>MiniportReconfigure</B> function from <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>.</P>
+
+<P>After the driver has called this function, it should be prepared to be called back at the <B>MiniportInitialize</B> entry point specified in the characteristics structure.</P>
+
+<P>NDIS intermediate drivers, which export both <B>Miniport<I>XXX</I> </B>and <B>Protocol<I>XXX</I></B> functions, usually call the <A HREF="_wcesdk_ndisimregisterlayeredminiport.htm">NdisIMRegisterLayeredMiniport</A> function, instead of this function. Intermediate drivers that export only a set of <B>Miniport<I>XXX</I> </B>functions usually call this function.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ndislib.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_driverentry.htm">DriverEntry</A>, <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>, <A HREF="_wcesdk_miniportreconfigure.htm">MiniportReconfigure</A>, <A HREF="_wcesdk_ndiszeromemory.htm">NdisZeroMemory</A>, <A HREF="_wcesdk_ndisimregisterlayeredminiport.htm">NdisIMRegisterLayeredMiniport</A>, <A HREF="_wcesdk_ndisminitializewrapper.htm">NdisMInitializeWrapper</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

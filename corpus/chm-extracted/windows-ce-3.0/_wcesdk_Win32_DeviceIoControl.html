@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DeviceIoControl</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="DeviceIoControl" />
+<MSHelp:RLTitle Title="DeviceIoControl" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Win32_DeviceIoControl" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_927095">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_win32_deviceiocontrol"></A>DeviceIoControl</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function sends a control code directly to a specified device driver, causing the corresponding device to perform the specified operation.</P>
+
+<PRE class="syntax"><B>BOOL DeviceIoControl(
+HANDLE</B> <I>hDevice</I>, 
+<B>DWORD</B> <I>dwIoControlCode</I>, 
+<B>LPVOID</B> <I>lpInBuffer</I>, 
+<B>DWORD</B> <I>nInBufferSize</I>, 
+<B>LPVOID </B><I>lpOutBuffer</I>, 
+<B>DWORD</B> <I>nOutBufferSize</I>, 
+<B>LPDWORD</B> <I>lpBytesReturned</I>, 
+<B>LPOVERLAPPED</B> <I>lpOverlapped</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hDevice</I></DT>
+
+<DD>[in] Handle to the device that is to perform the operation. Call the <A HREF="_wcesdk_win32_createfile.htm">CreateFile</A> function to obtain a device handle. </dd>
+
+<DT><I>dwIoControlCode</I></DT>
+
+<DD>[in] Specifies the control code for the operation. This value identifies the specific operation to be performed and the type of device on which the operation is to be performed. No specific values are defined for the <I>dwIoControlCode </I>parameter. However, the writer of a custom device driver can define <I>IOCTL_XXXX</I> control codes, per the <B>CTL_CODE</B> macro. These control codes can then be advertised, and an application can use these control codes with <B>DeviceIoControl</B> to perform the driver-specific functions. </dd>
+
+<DT><I>lpInBuffer</I></DT>
+
+<DD>[in] Long pointer to a buffer that contains the data required to perform the operation. 
+
+<P>This parameter can be NULL if the <I>dwIoControlCode</I> parameter specifies an operation that does not require input data. 
+</dd>
+
+<DT><I>nInBufferSize</I></DT>
+
+<DD>[in] Size, in bytes, of the buffer pointed to by <I>lpInBuffer</I>. </dd>
+
+<DT><I>lpOutBuffer</I></DT>
+
+<DD>[out] Long pointer to a buffer that receives the operation's output data. 
+
+<P>This parameter can be NULL if the <I>dwIoControlCode</I> parameter specifies an operation that does not produce output data. 
+</dd>
+
+<DT><I>nOutBufferSize</I></DT>
+
+<DD>[in] Size, in bytes, of the buffer pointed to by <I>lpOutBuffer</I>. </dd>
+
+<DT><I>lpBytesReturned</I></DT>
+
+<DD>[out] Long pointer to a variable that receives the size, in bytes, of the data stored into the buffer pointed to by <I>lpOutBuffer</I>. 
+
+<P>The <I>lpBytesReturned</I> parameter cannot be NULL. Even when an operation produces no output data, and <I>lpOutBuffer</I> can be NULL, the <B>DeviceIoControl</B> function makes use of the variable pointed to by <I>lpBytesReturned</I>. After such an operation, the value of the variable is without meaning. 
+</dd>
+
+<DT><I>lpOverlapped</I></DT>
+
+<DD>[in] Ignored; set to NULL. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Nonzero indicates success. Zero indicates failure. To get extended error information, call <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A>. </P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>When passed parameters such as DISK_IOCTL_GETINFO, the <B>DeviceIoControl</B> function does not change the <I>dwBytesReturned</I> parameter. This is because the IOCTL_GETINFO command interface returns the information to the input buffer specified with the <I>lpOutBuffer</I> parameter. <B>DeviceIoControl</B> sets <I>dwBytesReturned</I> only when the control code writes into the output buffer. Many other DISK_IOCTL_GET* command codes return this information in the input buffer, as well.</P>
+
+<P>Windows CE will add zeros to a filename that contains less than 4 hex digits. For example, Windows CE would rename the NT file foo34.tmp as foo0034.tmp.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>1.0 and later</TD>
+<TD width=18%>Winbase.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Coredll.lib, Fsmain.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_win32_createevent.htm">CreateEvent</A>, <A HREF="_wcesdk_win32_createfile.htm">CreateFile</A>, <A HREF="_wcesdk_win32_getlasterror.htm">GetLastError</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

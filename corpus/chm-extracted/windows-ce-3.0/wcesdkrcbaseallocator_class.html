@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CBaseAllocator Class</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CBaseAllocator Class" />
+<MSHelp:RLTitle Title="CBaseAllocator Class" />
+<MSHelp:Keyword Index="A" Term="wcesdkrcbaseallocator_class" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_931363">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrcbaseallocator_class"></A>CBaseAllocator Class</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P class="fig"><IMG SRC="filter09.gif" ALT="" BORDER=0></P>
+
+<P><B>CBaseAllocator</B> is an abstract base class that implements the basic mechanisms for an allocator with a fixed number of fixed-size buffers. The number of buffers and their size can be changed using the <A HREF="wcesdkrcbaseallocator__setproperties.htm">CBaseAllocator::SetProperties</A> member function when an input pin and an output pin negotiate the allocator between them. </P>
+
+<P>The class provides the basic functionality for a memory allocator by implementing the <A HREF="wcesdkrimemallocator_interface.htm">IMemAllocator</A> interface. It provides support for managing a list of <A HREF="wcesdkrcmediasample_class.htm">CMediaSample</A> objects (or objects derived from this class), including support for the <A HREF="wcesdkrimemallocator__commit.htm">IMemAllocator::Commit</A> and <A HREF="wcesdkrimemallocator__decommit.htm">IMemAllocator::Decommit</A> methods, and blocking the <A HREF="wcesdkrimemallocator__getbuffer.htm">IMemAllocator::GetBuffer</A> method. </P>
+
+<P>Any class derived from this class (such as <A HREF="wcesdkrcmemallocator_class.htm">CMemAllocator</A>) must create <A HREF="wcesdkrcmediasample_class.htm">CMediaSample</A> objects, which this base class does not. </P>
+
+<P>A signaling mechanism employing a semaphore is used so that if there are no samples, a thread can wait until there are samples or until the allocator is decommitted. The <B>m_lFree</B> and <B>m_hSem</B> member variables are used to implement this simple signaling mechanism as follows. </P>
+
+<P>When a thread calls <A HREF="wcesdkrcbaseallocator__getbuffer.htm">CBaseAllocator::GetBuffer</A>and there are no samples available, <B>m_lWaiting</B> is incremented and the thread calls the Microsoft Win32 <B>WaitForSingleObject</B> function on the semaphore indicated by <B>m_hSem</B>. </P>
+
+<P>When a sample is freed (by the <A HREF="wcesdkriunknown__release.htm">IUnknown::Release</A> method returning the reference count to zero) or <A HREF="wcesdkrcbaseallocator__decommit.htm">CBaseAllocator::Decommit</A> is called and <B>m_lWaiting</B> is nonzero, the Win32 <B>ReleaseSemaphore</B> function is called on <B>m_hSem</B> with a release count of <B>m_lWaiting</B>, and <B>m_lWaiting</B> is reset to zero. </P>
+
+<P>All member functions in this class that return <B>HRESULT</B> and accept a pointer as a parameter return E_POINTER when passed a null pointer. </P>
+
+<P class="label"><B>Protected Data Members</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=50%>m_bChanged </TD>
+<TD width=50%>TRUE if the buffers have changed; otherwise, FALSE. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_bCommitted</TD>
+<TD width=50%>If TRUE, the allocator is in a state in which all <A HREF="wcesdkrimemallocator__getbuffer.htm">IMemAllocator::GetBuffer</A> methods fail. The <A HREF="wcesdkrimemallocator__setproperties.htm">IMemAllocator::SetProperties</A> method is the only member function permitted to operate in this state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_bDecommitInProgress</TD>
+<TD width=50%>If TRUE, the decommit process completes upon the return of all media samples. Until the decommit process has completed, any calls to <A HREF="wcesdkrimemallocator__getbuffer.htm">IMemAllocator::GetBuffer</A> return E_OUTOFMEMORY. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_hSem</TD>
+<TD width=50%>Semaphore for signaling. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_lAlignment</TD>
+<TD width=50%>Agreed alignment of the buffer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_lAllocated </TD>
+<TD width=50%>Number of buffers actually allocated. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_lCount</TD>
+<TD width=50%>Established number of buffers to provide. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_lFree</TD>
+<TD width=50%>List of <A HREF="wcesdkrcmediasample_class.htm">CMediaSample</A> objects that are currently free (free list). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_lPrefix</TD>
+<TD width=50%>Agreed prefix of the buffer (precedes value returned by <A HREF="wcesdkrimediasample__getpointer.htm">IMediaSample::GetPointer</A>). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_lSize </TD>
+<TD width=50%>Size of each buffer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>m_lWaiting</TD>
+<TD width=50%>Count of threads waiting for samples. </TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Member Functions</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__cbaseallocator.htm">CBaseAllocator</A></TD>
+<TD width=50%>Constructs a <B>CBaseAllocator</B> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__notifysample.htm">NotifySample</A></TD>
+<TD width=50%>Notifies a waiting thread that a sample is available on the free list. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__setwaiting.htm">SetWaiting</A></TD>
+<TD width=50%>Increments the <B>m_lWaiting</B> data member to indicate that a thread is waiting for a sample. </TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Overridable Member Functions</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__alloc.htm">Alloc</A></TD>
+<TD width=50%>Allocates memory, instantiates <A HREF="wcesdkrcmediasample_class.htm">CMediaSample</A> objects, and adds them to the <B>m_lAllocated</B> and <B>m_lFree</B> data members. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__free.htm">Free</A></TD>
+<TD width=50%>Decommits memory when the last buffer is freed. </TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Implemented IMemAllocator Methods</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__commit.htm">Commit</A></TD>
+<TD width=50%>Allocates memory by calling the <A HREF="wcesdkrcbaseallocator__alloc.htm">CBaseAllocator::Alloc</A> member function, which you must override. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__decommit.htm">Decommit</A></TD>
+<TD width=50%>Releases any resources and enters the inactive state. Any blocking calls to <A HREF="wcesdkrimemallocator__getbuffer.htm">IMemAllocator::GetBuffer</A> should return with an error value, and all further calls to <A HREF="wcesdkrimemallocator__getbuffer.htm">GetBuffer</A> fail when in the inactive state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__getbuffer.htm">GetBuffer</A></TD>
+<TD width=50%>Retrieves a container for a sample. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__getproperties.htm">GetProperties</A></TD>
+<TD width=50%>Determines the size, number, and alignment of blocks. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__releasebuffer.htm">ReleaseBuffer</A></TD>
+<TD width=50%>Releases the <A HREF="wcesdkrcmediasample_class.htm">CMediaSample</A> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__setproperties.htm">SetProperties</A></TD>
+<TD width=50%>Specifies a desired number of blocks, size of the blocks, and block alignment figure. This method returns the actual values for the same. </TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Implemented INonDelegatingUnknown Methods</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wcesdkrcbaseallocator__nondelegatingqueryinterface.htm">NonDelegatingQueryInterface</A></TD>
+<TD width=50%>Passes out pointers to any interfaces added to the derived filter class. </TD>
+</TR>
+</table></div>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using the Network Registration Utility</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Using the Network Registration Utility" />
+<MSHelp:RLTitle Title="Using the Network Registration Utility (Windows CE)" />
+<MSHelp:Keyword Index="K" Term="Using the Network Registration Utility" />
+<MSHelp:Keyword Index="A" Term="wceipcUsingtheNetworkRegistrationUtility" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="Filename" Value="msmq.rtf" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922501">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceipcusingthenetworkregistrationutility"></A>Using the Network Registration Utility</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The network registration daemon (NETREGD) provides name registration services for Windows CE devices. It ensures that the device name and IP address are registered with WINS when the device goes online. In version 2.12, the NETREG daemon relies solely on the redirector to provide registration services. In version 3.0, NETREG can work with or without the redirector.</P>
+
+<P>Parameters of NETREG daemon are stored in <B>HKEY_LOCAL_MACHINE\Software\Microsoft\netreg</B>. The daemon itself installs as a built-in device driver and starts at the system boot time.</P>
+
+<P>The NETREG daemon can use the network tracking capability of Windows CE 2.12 and later to register the device name when network interface becomes available. To enable this capability, the DWORD value "TrackNetwork" must be set to 1.</P>
+
+<P>It can also reregister a name periodically. To enable this, set the "Cycle" DWORD value to the desired elapsed time, in seconds, between registrations.</P>
+
+<P>NETREG operates in two different (and mutually exclusive) modes. Redirector mode must be used when redirector is present in the system. To use it, registry DWORD value "UseRedirector" must be set to 1. On Windows CE, redirector has a side effect of supporting NetBIOS networking, including name registration and node status query support, required for hosting network servers on Windows CE devices. When working in redirector mode, NETREG simply ensures that redirector is loaded all the time by periodically (every "cycle" seconds and after network interface has come up if TrackNetwork is specified) creating a file on an non-existent network share.</P>
+
+<P>If a redirector is not present in the OS image (such as on pre-2.11 Handheld PCs and all Pocket PCs), NETREG is capable of supplying all necessary NetBIOS services to guarantee that the machine is properly registered on the network. DWORD registry value "EmulateNB" needs to be set to 1 and "UseRedirector" to 0. In this mode, NETREG (with the same periodicity as in redirector mode) scans the registry's <B>HKEY_LOCAL_MACHINE\COMM\*\Params\tcpip</B> key for values "WINS", "DHCPWINS", "IPAddress," and "DHCPIPAddress". It then calls gethostbyname on the local host to get list of active IP addresses and matches these to interfaces discovered in the registry to determine active network interfaces. It then registers itself with the WINS servers discovered in the active interfaces.</P>
+
+<P>The NETREG utility is implemented as a device driver and installs in:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Drivers\BuiltIn\NETREGD]
+    "Dll"="NETREGD.Dll"
+    "Order"=dword:8
+    "Keep"=dword:1
+    "Entry"="NETREGDInitialize"</PRE>
+<!--Footer-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, February 03, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+</div>
+</BODY>
+</HTML>

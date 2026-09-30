@@ -1,0 +1,263 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Configuring a Serial Port</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Configuring a Serial Port" />
+<MSHelp:RLTitle Title="Configuring a Serial Port (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="serial port, configuring" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Configuring_a_Serial_Port" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="serial.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923419">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_configuring_a_serial_port"></A>Configuring a Serial Port</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The most critical phase in serial communications programming is configuring the port settings with the <a href="wcesdkrDCB_str.htm">DCB</a> structure. Erroneously initializing the <B>DCB</B> structure is a common problem. When a serial communications function does not produce the expected results, the <B>DCB</B> structure may be in err.</P>
+
+<P>A call to the <B>CreateFile</B> function opens a serial port with default port settings. Usually, the application needs to change the defaults. Use the <a href="wcesdkrGetCommState.htm">GetCommState</a> function to retrieve the default settings and use the <a href="wcesdkrSetCommState.htm">SetCommState</a> function to set new port settings.</P>
+
+<P>Also, port configuration involves using the <a href="wcesdkrCOMMTIMEOUTS_str.htm">COMMTIMEOUTS</a> structure to set the time-out values for read/write operations. When a time-out occurs, the <B>ReadFile</B> or <B>WriteFile</B> function returns the specific number of characters successfully transferred.</P>
+
+<P class="labelproc"><B>To configure a serial port</B>
+
+<OL type="1">
+	<LI>Initialize the <I>DCBlength</I> member of the <B>DCB</B> structure to the size of the structure. This initialization is required before passing this member as a variable to any function. The DCB structure must be complete, including hardware and software flow control, before continuing.</li>
+
+	<LI>Call the <B>GetCommState</B> function to retrieve the default settings for the port opened with the <B>CreateFile</B> function. To identify the port, specify in the <I>hPort</I> parameter the handle that <B>CreateFile</B> returns.</li>
+
+	<LI>Modify <B>DCB</B> members as required. The following table shows the <B>DCB</B> structure members.<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=20%>Member</TH>
+<TH width=80%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>DCBlength</I></TD>
+<TD width=80%>Before calling the <B>GetCommState</B> function, set this member to the length of the <B>DCB</B> structure. Neglecting to do this can cause a failure or return erroneous data.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>BaudRate</I></TD>
+<TD width=80%>Specifies the device communication rate. Assigns an actual baud rate or an index by specifying a CBR_ constant.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fBinary</I></TD>
+<TD width=80%>Specifies if binary mode is enabled. The Win32 API does not support nonbinary mode transfers, so this member must be TRUE. Using FALSE will not work.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fParity</I></TD>
+<TD width=80%>Specifies if parity checking is enabled. If this member is TRUE, parity checking is performed and errors are reported</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fOutxCtsFlow</I></TD>
+<TD width=80%>Turns the CTS flow control on and off. To use RTS/CTS flow control, specify TRUE for this member and RTS_CONTROL_HANDSHAKE for the <I>fRtsControl</I> member.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fOutxDsrFlow</I></TD>
+<TD width=80%>Turns the DSR flow control on and off. DSR flow control is rarely used. A typical port configuration is to set this member to FALSE, while enabling the DTR line.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fDtrControl</I></TD>
+<TD width=80%>Specifies the DTR flow control. DTR_CONTROL_ENABLE turns on the DTR line during the connection. DTR_CONTROL_HANDSHAKE turns on DTR handshaking. DTR_CONTROL_DISABLE turns off the DTR line.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fDsrSensitivity</I></TD>
+<TD width=80%>Specifies if the communications driver is sensitive to the state of the DSR signal. If this member is TRUE, the driver ignores any bytes received, unless the DSR modem input line is high.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fTXContinueOnXoff</I></TD>
+<TD width=80%>Specifies if transmission stops when the input buffer is full and the driver has transmitted the <I>XoffChar</I> character. If this member is TRUE, transmission continues after the input buffer has come within <I>XoffLim</I> bytes of being full and the driver has transmitted the <I>XoffChar</I> character to stop receiving bytes. If this member is FALSE, transmission does not continue until the input buffer is within <I>XonLim</I> bytes of being empty and the driver has transmitted the <I>XonChar</I> character to resume reception.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fOutX</I></TD>
+<TD width=80%>Specifies if XON/XOFF flow control is used during transmission. If this member is TRUE, transmission stops when the <I>XoffChar</I> character is received and starts again when the <I>XonChar</I> character is received.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fInX</I></TD>
+<TD width=80%>Specifies if XON/XOFF flow control is used during reception. If this member is TRUE, the <I>XoffChar</I> character is sent when the input buffer comes within <I>XoffLim</I> bytes of being full, and the <I>XonChar</I> character is sent when the input buffer comes within <I>XonLim</I> bytes of being empty.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fErrorChar</I></TD>
+<TD width=80%>Specifies if bytes received with parity errors are replaced with the character specified by the <I>ErrorChar</I> member. If this member is TRUE and the <I>fParity</I> member is TRUE, replacement occurs.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fNull</I></TD>
+<TD width=80%>Specifies if null bytes are discarded. If this member is TRUE, null bytes are discarded when received.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fRtsControl</I></TD>
+<TD width=80%>Turns the RTS flow control on and off. RTS_CONTROL_ENABLE turns on the RTS line during the connection. RTS_CONTROL_HANDSHAKE turns on RTS handshaking. RTS_CONTROL_DISABLE turns off the RTS line. RTS_CONTROL_TOGGLE Specifies that the RTS line is high if bytes are available for transmission. After all buffered bytes have been sent, the RTS line will be low.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fAbortOnError</I></TD>
+<TD width=80%>Specifies if read and write operations are terminated if an error occurs. If this member is TRUE, the driver terminates all read and write operations with an error status if an error occurs. The driver will not accept any further communications operations until the application has acknowledged the error by calling the ClearCommError function.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fDummy2</I></TD>
+<TD width=80%>Reserved, do not use.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>wReserved</I></TD>
+<TD width=80%>Not used, set to zero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>XonLim</I></TD>
+<TD width=80%>Specifies the minimum number of bytes accepted in the input buffer before the XON character is sent.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>XoffLim</I></TD>
+<TD width=80%>Specifies the maximum number of bytes accepted in the input buffer before the XOFF character is sent. The maximum number of bytes accepted is calculated by subtracting this value from the size, in bytes, of the input buffer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>ByteSize</I></TD>
+<TD width=80%>Specifies the bits per byte transmitted and received.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>Parity</I></TD>
+<TD width=80%>Specifies the parity scheme. Do not confuse this member with the <I>fParity</I> member, which turns parity on or off. Because parity is rarely used, this member can usually be NOPARITY.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>StopBits</I></TD>
+<TD width=80%>Specifies the number of stop bits. ONESTOPBIT is the most common setting.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>XonChar</I></TD>
+<TD width=80%>Specifies the value of the XON character for both transmission and reception.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>XoffChar</I></TD>
+<TD width=80%>Specifies the value of the XOFF character for both transmission and reception.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>ErrorChar</I></TD>
+<TD width=80%>Specifies the value of the character used to replace bytes received with a parity error.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>EofChar</I></TD>
+<TD width=80%>Specifies the value of the character used to signal the end of data.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>EvtChar</I></TD>
+<TD width=80%>Specifies the value of the character used to signal an event.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>WReserved1</I></TD>
+<TD width=80%>Reserved, do not use.</TD>
+</TR>
+</table></div>
+</li>
+
+	<LI>Call the <B>SetCommState</B> function to set the new port settings.</li>
+</OL>
+
+<P>The following code example shows how to use the <B>GetCommState</B> and <B>SetCommState</B> functions to configure a serial port.</P>
+
+<PRE class="code">DCB PortDCB;
+
+// Initialize the DCBlength member. 
+PortDCB.DCBlength = sizeof (DCB); 
+
+// Get the default port setting information.
+GetCommState (hPort, &amp;PortDCB);
+
+// Change the DCB structure settings.
+PortDCB.BaudRate = 9600;              // Current baud 
+PortDCB.fBinary = TRUE;               // Binary mode; no EOF check 
+PortDCB.fParity = TRUE;               // Enable parity checking 
+PortDCB.fOutxCtsFlow = FALSE;         // No CTS output flow control 
+PortDCB.fOutxDsrFlow = FALSE;         // No DSR output flow control 
+PortDCB.fDtrControl = DTR_CONTROL_ENABLE; 
+                                      // DTR flow control type 
+PortDCB.fDsrSensitivity = FALSE;      // DSR sensitivity 
+PortDCB.fTXContinueOnXoff = TRUE;     // XOFF continues Tx 
+PortDCB.fOutX = FALSE;                // No XON/XOFF out flow control 
+PortDCB.fInX = FALSE;                 // No XON/XOFF in flow control 
+PortDCB.fErrorChar = FALSE;           // Disable error replacement 
+PortDCB.fNull = FALSE;                // Disable null stripping 
+PortDCB.fRtsControl = RTS_CONTROL_ENABLE; 
+                                      // RTS flow control 
+PortDCB.fAbortOnError = FALSE;        // Do not abort reads/writes on 
+                                      // error
+PortDCB.ByteSize = 8;                 // Number of bits/byte, 4-8 
+PortDCB.Parity = NOPARITY;            // 0-4=no,odd,even,mark,space 
+PortDCB.StopBits = ONESTOPBIT;        // 0,1,2 = 1, 1.5, 2 
+
+// Configure the port according to the specifications of the DCB 
+// structure.
+if (!SetCommState (hPort, &amp;PortDCB))
+{
+  // Could not configure the serial port.
+  MessageBox (hMainWnd, TEXT("Unable to configure the serial port"), 
+              TEXT("Error"), MB_OK);
+  dwError = GetLastError ();
+  return FALSE;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

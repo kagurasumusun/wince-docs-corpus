@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>HalGetBusDataByOffset</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="HalGetBusDataByOffset" />
+<MSHelp:RLTitle Title="HalGetBusDataByOffset" />
+<MSHelp:Keyword Index="K" Term="HalGetBusDataByOffset" />
+<MSHelp:Keyword Index="A" Term="_wcepb_HalGetBusDataByOffset" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwce50" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ceddk_f.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925539">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcepb_halgetbusdatabyoffset"></A>HalGetBusDataByOffset</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function retrieves information, starting at the specified offset, about a specified slot or address on a particular I/O bus.</P>
+
+<PRE class="syntax"><B>ULONG HalGetBusDataByOffset</B> <B>(</B> 
+<B>BUS_DATA_TYPE</B> <I>BusDataType,</I> 
+<B>ULONG</B> <I>BusNumber,</I> 
+<B>ULONG</B> <I>SlotNumber</I>, 
+<B>PVOID</B> <I>Buffer</I>, 
+<B>ULONG</B> <I>Offset</I>, 
+<B>ULONG</B> <I>Length</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>BusDataType</I></DT>
+
+<DD>[in] Specifies the type of bus data to be retrieved. The upper bound on the bus types supported is always MaximumBusDataType.</dd>
+
+<DT><I>BusNumber</I></DT>
+
+<DD>[in] Specifies the zero-based and system-assigned number of the bus in systems with several buses of the same <I>BusDataType</I>.</dd>
+
+<DT><I>SlotNumber</I></DT>
+
+<DD>[in] Specifies the logical slot number or location of the device. If PCIConfiguration is specified as the <I>BusDataType</I>, this value is specified as a PCI_SLOT_NUMBER value (slot and function number combined).</dd>
+
+<DT><I>Buffer</I></DT>
+
+<DD>[in] Points to a caller-supplied buffer for configuration information specific to <I>BusDataType</I>.
+
+<P>If PCIConfiguration is specified, the buffer contains the <B>PCI_COMMON_CONFIG</B> information for the given <I>SlotNumber</I> and function number. The specified <I>Offset</I> and <I>Length</I> determine how much information is supplied. Certain members of <B>PCI_COMMON_CONFIG</B> have read-only values, and the caller is responsible for preserving the system-supplied values of read-only members.
+</dd>
+
+<DT><I>Offset</I></DT>
+
+<DD>[in] Specifies the byte offset in the <B>PCI_COMMON_CONFIG</B> structure for which the requested information should be returned. Callers can use the system-defined constant PCI_COMMON_HDR_LENGTH to specify the device-specific area of <B>PCI_COMMON_CONFIG</B>.</dd>
+
+<DT><I>Length</I></DT>
+
+<DD>[in] Specifies the maximum number of bytes in the <I>Buffer</I>.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>This function returns the number of bytes of data it wrote in the specified buffer. If the given <I>BusDataType</I> is not valid for the current platform, this function returns zero.</P>
+
+<P>The following table shows the values that can be returned by<B> HalGetBusDataByOffset</B> to indicate an error when the input <I>BusType</I> is PCIConfiguration.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=13%>Value</TH>
+<TH width=87%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=13%>0 (zero)</TD>
+<TD width=87%>The specified PCI bus does not exist.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=13%>2</TD>
+<TD width=87%>The specified PCI bus exists, but there is no device at the specified PCI <I>SlotNumber</I>. The <I>Buffer</I> also contains the value PCI_INVLAID_VENDOR_ID at the PCI_COMMON_CONFIG <B>VendorId</B> member.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>Device drivers call this function during initialization to locate their devices on a particular I/O bus in the machine. The bus-type-specific configuration data returned is later used in calls to other configuration and initialization functions, such as <B>HalTranslateBusAddress</B>.</P>
+
+<P>When accessing the device-specific area of the PCI configuration space, <B>HalGetBusDataByOffset </B>guarantees the following:
+
+<UL type="disc">
+	<LI>This function never reads or writes data outside the range specified by the input <I>Offset</I> and <I>Length</I>.</li>
+
+	<LI>Even if the input <I>Length</I> is exactly a 1-byte or 2-byte word, this function never accesses any data outside the requested range.</li>
+</UL>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=19%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=19%>2.10 and later</TD>
+<TD width=18%>Ceddk.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcepb_halgetbusdata.htm">HalGetBusData</A>, <A HREF="_wcepb_halsetbusdata.htm">HalSetBusData</A>,<A HREF="_wcepb_halsetbusdatabyoffset.htm"> HalSetBusDataByOffset</A>, <A HREF="_wcepb_haltranslatebusaddress.htm">HalTranslateBusAddress</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

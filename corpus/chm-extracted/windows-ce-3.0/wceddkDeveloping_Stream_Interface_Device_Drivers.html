@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Developing Stream Interface Device Drivers (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="Stream interface drivers all use the same interface and expose a common set of functions &#0151; the stream interface functions."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Developing Stream Interface Device Drivers" />
+<MSHelp:RLTitle Title="Developing Stream Interface Device Drivers (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="developing, stream interface device drivers" />
+<MSHelp:Keyword Index="K" Term="stream interface device drivers, developing" />
+<MSHelp:Keyword Index="A" Term="wceddkDeveloping_Stream_Interface_Device_Drivers" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="stream.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924440">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkdeveloping_stream_interface_device_drivers"></A>Developing Stream Interface Device Drivers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Stream interface drivers all use the same interface and expose a common set of functions &#0151; the stream interface functions. A stream interface driver is any driver that exposes the stream interface functions, regardless of the type of device controlled by the driver. This is in contrast to native device drivers, which each use special, single-purpose interfaces.</P>
+
+<P>Stream interface drivers are appropriate for any I/O device that can be thought of logically as a data source or a data sink. That is, any peripheral that produces or consumes streams of data as its primary function is a good candidate for a stream interface driver. Some examples include block devices, such as disks, serial port devices. An example of a device that does not produce or consume data in the traditional sense would be a display device, and indeed, one does not write stream interface drivers in Windows CE for controlling display hardware.</P>
+
+<P>The stream interface functions themselves are designed to closely match the semantics of the normal file system APIs &#0151; such as ReadFile, IOControl, etc. As a side effect of this design, devices that are managed by stream interface drivers are exposed to applications through the file system; applications interact with the driver by opening special files in the file system. For example, the USB HID class driver provided with Windows CE implements the stream interface functions so that it can expose the services of HID class devices to the Windows CE Direct Input module by means of special files.</P>
+
+<P>This metaphor of treating devices as special files is common to many operating systems, including the desktop versions of Microsoft Windows and most Unix-like operating systems as well. For example, in the desktop versions of Microsoft Windows, printer devices have traditionally been represented by the "LPT<I>x</I>:" special file names, serial ports by the "COM<I>x</I>:" special file names, etc.</P>
+
+<P>Despite the generic characteristics of stream interface drivers, they can be implemented in different ways. For example, even though stream interface drivers typically are designed by independent hardware vendors (IHVs) for peripheral devices, OEMs who customize Windows CE&#0150;based platforms sometimes write-stream interface drivers for certain built-in devices. In addition, although stream interface drivers are usually loaded and unloaded by the Device Manager, sometimes applications or other drivers perform the loading and unloading.</P>
+
+<P>In some cases, a stream interface driver might use the service provided by another driver which could be a native device driver or another stream interface driver. One example is a bus driver such as the PC Card Socket driver (PCMCIA.DLL) that provides PCMCIA Card and Socket Services to PC Card client drivers. In this case, the PCMCIA.DLL driver happens to be a native device driver, but the client driver can provide either a native or stream interface.</P>
+
+<P>In some less common cases, stream interface drivers can re-package existing resources, usually in ways that specific applications can more readily use. For example, a serial global positioning system (GPS) receiver can be controlled by this type of a stream interface driver. In this example, an ISV might choose to write a special stream interface driver to work in conjunction with a GPS mapping application. Many GPS receivers connect to serial ports. A GPS mapping application could, therefore, open the special "COMx:" file corresponding to the serial port and directly interact with the GPS receiver. However, the GPS receiver might provide positioning data in an inconvenient format, or the application writer might want to keep the details of managing specific models of GPS receiver hidden. Therefore, a stream interface driver could be written to mediate between the application and the GPS receiver. The driver would interact with the GPS receiver through a special "COMx:" file as before, but could re-package the positioning data in a more convenient format for the application. The driver could expose its own services as a special "GPSx:" file, which the application would open in order to read positioning data.</P>
+
+<P>The following sections describe how to write stream interface drivers in greater detail. Included are explanations of the system architecture for stream interface drivers, device file names, the Device Manager, entry points, and the relationship of a stream interface driver to a device and to applications.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Encrypting and Decrypting Simultaneously</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Encrypting and Decrypting Simultaneously" />
+<MSHelp:RLTitle Title="Encrypting and Decrypting Simultaneously (Windows CE)" />
+<MSHelp:Keyword Index="K" Term="decrypting, and encrypting simultaneously" />
+<MSHelp:Keyword Index="K" Term="encrypting, and decrypting simultaneously" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Encrypting_and_Decrypting_Simultaneously" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="Filename" Value="crypto.rtf" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923092">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_encrypting_and_decrypting_simultaneously"></A>Encrypting and Decrypting Simultaneously</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>When encrypting or decrypting data simultaneously with the same key, the same physical session key must not be used for both operations. This is because every session key contains internal state data that becomes jumbled if it is used for more than one operation at a time. A simple solution to this problem is to make a copy of the session key so that the original key can be used for one operation and the copy used for the other.</P>
+
+<P>Copying a session key is done by exporting the key with <B>CryptExportKey</B> and then using <B>CryptImportKey</B> to import it back in. When the key is imported, the CSP gives the imported key its own section of internal memory, as if it were not related to the original key.</P>
+
+<P>The following code example shows how a copy of a session key can be obtained.</P>
+
+<PRE class="code">HCRYPTPROV hProv;           // Handle to a CSP
+HCRYPTKEY hKey;             // Handle to a session key
+HCRYPTKEY hCopyKey = 0,
+          hPubKey = 0;
+
+BYTE pbBlob[256];
+DWORD dwBlobLen;
+
+// Get a handle to your own key exchange public key.
+CryptGetUserKey (hProv, AT_KEYEXCHANGE, &amp;hPubKey);
+
+// Export the session key into a key BLOB.
+dwBlobLen = 256;
+CryptExportKey (hKey, hPubKey, SIMPLEBLOB, 0, pbBlob, &amp;dwBlobLen);
+
+// Import the session key back into the CSP. This is stored separately
+// from the original session key.
+CryptImportKey (hProv, pbBlob, dwBlobLen, 0, 0, &amp;hCopyKey);</PRE>
+
+<P>This technique should not be used with stream ciphers because stream cipher keys should never be used more than once. Instead, use separate keys to transmit and receive data.</P>
+<!--Footer-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, February 03, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+</div>
+</BODY>
+</HTML>

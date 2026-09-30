@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TCP Stream Socket Client</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="TCP Stream Socket Client" />
+<MSHelp:RLTitle Title="TCP Stream Socket Client (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="samples, TCP stream socket client" />
+<MSHelp:Keyword Index="K" Term="TCP, stream socket client" />
+<MSHelp:Keyword Index="K" Term="Winsock, implementing client, sample" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_TCP_Stream_Socket_Client" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="winsock.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923618">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_tcp_stream_socket_client"></A>TCP Stream Socket Client</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This sample application shows how to implement a Winsock client. It sends a message to the server and checks the incoming message sent by the server. This sample can be run on the same device with the TCP Stream Socket Server sample application. In this case, define HOSTNAME as "localhost". Otherwise, define HOSTNAME as the full server name.</P>
+
+<PRE class="code">#include &lt;windows.h&gt; 
+#include &lt;winsock.h&gt;
+
+#define PORTNUM         5000          // Port number
+#define HOSTNAME        "localhost"   // Server name string
+                                      // This should be changed
+                                      // according to the server.
+int WINAPI WinMain (
+              HINSTANCE hInstance,    // Handle to the current instance
+              HINSTANCE hPrevInstance,// Handle to the previous instance
+              LPTSTR lpCmdLine,       // Pointer to the command line
+              int nCmdShow)           // Show state of the window
+{
+  int index = 0,                      // Integer index
+      iReturn;                        // Return value of recv function
+  char szClientA[100];                // ASCII string 
+  TCHAR szClientW[100];               // Unicode string
+  TCHAR szError[100];                 // Error message string
+
+  SOCKET ServerSock = INVALID_SOCKET; // Socket bound to the server
+  SOCKADDR_IN destination_sin;        // Server socket address
+  PHOSTENT phostent = NULL;           // Points to the HOSTENT structure
+                                      // of the server
+  WSADATA WSAData;                    // Contains details of the 
+                                      // Winsocket implementation
+  int Status;
+
+  // Initialize Winsocket. 
+  if (WSAStartup (MAKEWORD(1,1), &amp;WSAData) != 0) 
+  {
+    wsprintf (szError, TEXT("WSAStartup failed. Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    return FALSE;
+  }
+
+  // Create a TCP/IP socket that is bound to the server.
+  if ((ServerSock = socket (AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+  {
+    wsprintf (szError, TEXT("Allocating socket failed. Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    WSACleanup ();
+    return FALSE;
+  }
+
+  // Fill out the server socket's address information.
+  destination_sin.sin_family = AF_INET;
+
+  // Retrieve the host information corresponding to the host name.
+  if ((phostent = gethostbyname (HOSTNAME)) == NULL) 
+  {
+    wsprintf (szError, TEXT("Unable to get the host name. Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    Status = FALSE;
+    goto Close;
+  }
+
+  // Assign the socket IP address.
+  memcpy ((char FAR *)&amp;(destination_sin.sin_addr), 
+          phostent-&gt;h_addr, 
+          phostent-&gt;h_length);
+
+  // Convert to network ordering.
+  destination_sin.sin_port = htons (PORTNUM);      
+
+  // Establish a connection to the server socket.
+  if (connect (ServerSock, 
+               (PSOCKADDR) &amp;destination_sin, 
+               sizeof (destination_sin)) == SOCKET_ERROR) 
+  {
+    wsprintf (szError, 
+              TEXT("Connecting to the server failed. Error: %d"),
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    Status = FALSE;
+    goto Close;
+  }
+
+  // Send a string to the server.
+  if (send (ServerSock, "To Server.", strlen ("To Server.") + 1, 0)
+           == SOCKET_ERROR) 
+  {
+    wsprintf (szError, 
+              TEXT("Sending data to the server failed. Error: %d"),
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+  }
+
+  // Disable sending on ServerSock.
+  shutdown (ServerSock, 0x01);
+
+  for (;;)
+  {
+    // Receive data from the server socket.
+    iReturn = recv (ServerSock, szClientA, sizeof (szClientA), 0);
+
+    // Check if there is any data received. If there is, display it.
+    if (iReturn == SOCKET_ERROR)
+    {
+      wsprintf (szError, TEXT("No data is received, recv failed.")
+                TEXT(" Error: %d"), WSAGetLastError ());
+      MessageBox (NULL, szError, TEXT("Client"), MB_OK);
+      break;
+    }
+    else if (iReturn == 0)
+    {
+      MessageBox (NULL, TEXT("Finished receiving data"), TEXT("Client"),
+                  MB_OK);
+      break;
+    }
+    else
+    {
+      // Convert the ASCII string to a Unicode string.
+      for (index = 0; index &lt;= sizeof (szClientA); index++)
+        szClientW[index] = szClientA[index];
+
+      // Display the string received from the server.
+      MessageBox (NULL, szClientW, TEXT("Received From Server"), MB_OK);
+    }
+  }
+
+  // Disable receiving on ServerSock.
+  shutdown (ServerSock, 0x00);
+  Status = TRUE;
+
+Close:
+  // Close the socket.
+  closesocket (ServerSock);
+
+  WSACleanup ();
+
+  return Status;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>
