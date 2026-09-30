@@ -1,0 +1,20 @@
+name: CI
+on:
+  push:
+    paths: ['tools/**', 'sources/**', '.github/**', 'corpus/**', 'meta/**', 'queues/**']
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            /tools
+            /sources
+          sparse-checkout-cone-mode: false
+      - run: python3 -m py_compile tools/*.py
+      - run: python3 -c "import json;json.load(open('sources/sources.json'))"
+      - run: python3 tools/verify_layout.py

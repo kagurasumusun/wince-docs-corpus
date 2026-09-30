@@ -1,0 +1,41 @@
+name: Index
+
+# Rebuilds meta/index/INDEX.tsv (tracked) and the SQLite name index (published as a
+# Release asset, NOT committed -- it used to add 33 MB of git history per refresh).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 0'    # weekly, Sunday 03:17 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      - run: python3 tools/verify_layout.py
+      - run: python3 tools/build_index.py --sqlite "$RUNNER_TEMP/corpus.sqlite3"
+      - name: Commit INDEX.tsv if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add meta/index/INDEX.tsv
+          if ! git diff --staged --quiet; then
+            git commit -q -m "index: refresh INDEX.tsv"
+            git pull -q --rebase && git push -q
+          fi
+      - name: Publish SQLite index as release asset
+        env:
+          GH_TOKEN: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          gzip -9 -c "$RUNNER_TEMP/corpus.sqlite3" > "$RUNNER_TEMP/corpus.sqlite3.gz"
+          gh release view index-latest >/dev/null 2>&1 || \
+            gh release create index-latest --title "Index (latest)" --notes "Auto-generated SQLite name index. See docs/LAYOUT.md."
+          gh release upload index-latest "$RUNNER_TEMP/corpus.sqlite3.gz" --clobber

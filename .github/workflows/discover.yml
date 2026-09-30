@@ -1,0 +1,58 @@
+name: Discover (widen collection scope)
+
+# Builds/refreshes URL queues from sources/sources.json. Downloads NO documents.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to discover'
+        required: true
+        default: 'all'
+        type: choice
+        options: [all, learn-toc, wayback-cdx, archive-org, learn-links, pending]
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ inputs.mode != 'learn-links' }}
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            /tools
+            /queues
+            /sources
+            /meta/catalogs
+            /meta/harvest
+          sparse-checkout-cone-mode: false
+      - uses: actions/checkout@v4     # link crawl reads every harvested page -> full checkout
+        if: ${{ inputs.mode == 'learn-links' }}
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - run: python3 tools/discover.py "${{ inputs.mode }}"
+
+      - name: Commit queues / catalogs / report
+        run: |
+          git config user.name  "wince-corpus-discover"
+          git config user.email "wince-corpus-harvester@users.noreply.github.com"
+          git add --sparse queues/sources meta/catalogs meta/harvest sources
+          if ! git diff --staged --quiet; then
+            git commit -q -m "scope: discovery (${{ inputs.mode }})"
+            for i in 1 2 3 4 5; do
+              git fetch -q origin "${{ github.ref_name }}" && git rebase -q "origin/${{ github.ref_name }}" || git rebase --abort
+              git push -q origin "HEAD:${{ github.ref_name }}" && break
+              sleep $((i*5))
+            done
+          fi
+      - name: Report
+        run: cat meta/harvest/discovery-report.json >> "$GITHUB_STEP_SUMMARY" || true

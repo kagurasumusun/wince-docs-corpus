@@ -114,9 +114,24 @@ def page_id_of(rel):
     return base if i < 0 else base[:i] + "|" + base[i + 3:-1]
 
 
+FAST = False
+
+
+def head_title(path):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            m = TITLE.search(f.read(16000))
+        return m.group(1).strip() if m else ""
+    except OSError:
+        return ""
+
+
 def work(rel):
     path = os.path.join(ROOT, rel)
-    title, rows = extract(path, page_id_of(rel))
+    if FAST:
+        title, rows = head_title(path), []
+    else:
+        title, rows = extract(path, page_id_of(rel))
     try:
         size = os.path.getsize(path)
     except OSError:
@@ -141,6 +156,8 @@ def main():
     ap.add_argument("--sqlite", default="")
     ap.add_argument("--tsv", default=common.abspath("meta/index/INDEX.tsv"))
     a = ap.parse_args()
+    global FAST
+    FAST = not a.sqlite
     files = sorted(p for p in common.list_tracked(common.LEARN_DIR, common.WAYBACK_DIR, common.CHM_DIR)
                    if p.endswith(".html"))
     cats = catalog_titles()

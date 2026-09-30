@@ -1,60 +1,136 @@
-name: Windows CE Documentation Harvester
+name: Harvest
+
+# Fetches pages from queues/pending/<queue>.txt (generated offline from queues/sources/*).
+# Fast because: sparse+blobless checkout (no 3.4 GB working tree), parallel shards,
+# bounded per-host concurrency, remembered 404s, path-limited git add.
+# Long runs stop cleanly at --max-minutes and re-dispatch themselves (chain counter).
 
 on:
   workflow_dispatch:
     inputs:
       queue:
-        description: 'URL queue file under urls/ (e.g. to-fetch-mslearn.txt, wayback-msdn-2010.txt)'
+        description: 'learn | wayback'
         required: true
-        default: 'to-fetch-mslearn.txt'
+        default: 'learn'
+        type: choice
+        options: [learn, wayback]
+      shards:
+        description: 'Parallel jobs (each has its own IP / rate budget). learn: 1-4, wayback: keep 1'
+        required: true
+        default: '2'
       limit:
-        description: 'Limit number of URLs to fetch (0 for all)'
+        description: 'Max URLs per shard per run (0 = all)'
         required: false
         default: '0'
       batch:
-        description: 'Pages per batch commit & push'
+        description: 'Pages per commit+push'
         required: false
-        default: '500'
+        default: '1000'
+      workers:
+        description: 'Workers per host (0 = tool default)'
+        required: false
+        default: '0'
+      rps:
+        description: 'Requests/sec per host per shard (0 = tool default)'
+        required: false
+        default: '0'
+      chain:
+        description: 'Auto-continue: remaining self re-dispatches (0 = stop after this run)'
+        required: false
+        default: '20'
 
 permissions:
   contents: write
+  actions: write
+
+concurrency:
+  group: harvest-${{ inputs.queue }}
+  cancel-in-progress: false
+
+env:
+  GIT_AUTHOR_NAME: wince-corpus-harvester
+  GIT_AUTHOR_EMAIL: wince-corpus-harvester@users.noreply.github.com
+  GIT_COMMITTER_NAME: wince-corpus-harvester
+  GIT_COMMITTER_EMAIL: wince-corpus-harvester@users.noreply.github.com
 
 jobs:
-  harvest:
+  plan:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - id: m
+        run: |
+          n=${{ inputs.shards }}; [ "$n" -ge 1 ] || n=1; [ "$n" -le 8 ] || n=8
+          echo "matrix={\"shard\":[$(seq -s, 0 $((n-1)))]}" >> "$GITHUB_OUTPUT"
+
+  harvest:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            /tools
+            /queues
+            /sources
+            /meta/catalogs
+            /meta/harvest
+          sparse-checkout-cone-mode: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+      - name: Build pending queue (offline)
+        run: python3 tools/discover.py pending
 
-      - name: Run harvester (sequential, rate-limited, batch push)
+      - name: Harvest shard ${{ matrix.shard }}
         run: |
-          git config user.name "wince-docs-corpus harvester"
-          git config user.email "wince-corpus-harvester@users.noreply.github.com"
-          LIMIT_ARG=""
-          if [ "${{ github.event.inputs.limit }}" != "0" ]; then
-            LIMIT_ARG="--limit ${{ github.event.inputs.limit }}"
-          fi
+          set +e
           python3 tools/harvest.py \
-            --queue "urls/${{ github.event.inputs.queue }}" \
-            --batch "${{ github.event.inputs.batch }}" $LIMIT_ARG --push
+            --queue "queues/pending/${{ inputs.queue }}.txt" \
+            --shard "${{ matrix.shard }}/${{ inputs.shards }}" \
+            --batch "${{ inputs.batch }}" \
+            --limit "${{ inputs.limit }}" \
+            --workers "${{ inputs.workers }}" \
+            --rps "${{ inputs.rps }}" \
+            --max-minutes 330 --push
+          rc=$?
+          [ $rc -eq 10 ] && rc=0   # 10 = time budget reached, more work remains
+          exit $rc
 
-      - name: Refresh index and final push
+  continue:
+    needs: harvest
+    if: ${{ always() && needs.harvest.result == 'success' && inputs.chain != '0' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            /tools
+            /queues
+            /sources
+            /meta/catalogs
+            /meta/harvest
+          sparse-checkout-cone-mode: false
+      - name: Re-dispatch if work remains
+        env:
+          GH_TOKEN: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          python3 tools/make-index.py
-          python3 tools/build-index-sql.py
-          git add data/index/ docs/ data/harvest/ || true
-          if ! git diff --quiet || ! git diff --staged --quiet; then
-            git commit -m "corpus: index refresh + final harvest batch"
-            git pull --rebase
-            git push
+          python3 tools/discover.py pending >/dev/null
+          left=$(grep -vc '^#' "queues/pending/${{ inputs.queue }}.txt" || true)
+          echo "remaining: $left"
+          if [ "${left:-0}" -gt 0 ]; then
+            gh workflow run harvest.yml --ref "${{ github.ref_name }}" \
+              -f queue="${{ inputs.queue }}" -f shards="${{ inputs.shards }}" \
+              -f limit="${{ inputs.limit }}" -f batch="${{ inputs.batch }}" \
+              -f workers="${{ inputs.workers }}" -f rps="${{ inputs.rps }}" \
+              -f chain="$(( ${{ inputs.chain }} - 1 ))"
           fi
