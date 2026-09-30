@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Sample HID Class Driver (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="Microsoft provides a sample class driver for Human Interface class devices. This USB device driver supports the following Human Interface class devices: joysticks, gamepads, mice, trackballs, and keyboards."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Sample HID Class Driver" />
+<MSHelp:RLTitle Title="Sample HID Class Driver (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Sample, HID Class, Human Interface Driver" />
+<MSHelp:Keyword Index="A" Term="wceddkSample_HID_Class_Driver" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="usb.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924380">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddksample_hid_class_driver"></A>Sample HID Class Driver</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Microsoft provides a sample class driver for Human Interface class devices. This USB device driver supports the following Human Interface class devices: joysticks, gamepads, mice, trackballs, and keyboards. In order to present applications with a consistent method of accessing those devices, the HID class driver uses the Microsoft DirectInput API. It uses the stream interface functions to interact with the DirectInput (DI) subsystem.</P>
+
+<P>In the sample, the registry keys are configured to load the drivers automatically; plugging in an HID class device such as a mouse or keyboard loads the HID class driver.</P>
+
+<P>The following series of actions takes place when a user connects an HID device such as a mouse or keyboard to a Windows CE-based platform that contains the HID class driver. After the HID class driver is loaded and the USBD module calls the driver's <A HREF="wceddkusbdeviceattach.htm">USBDeviceAttach</A> function, the driver calls an initialize function that opens a pipe to the HID device's interrupt endpoint. It also starts a worker thread to handle interrupts. This thread enters a loop in which it submits interrupt transfers by calling the <A HREF="wceddkissueinterrupttransfer.htm">IssueInterruptTransfer</A> function. After the transfer completes, the driver retrieves the event data from the function's <I>lpvBuffer</I> parameter. It then creates an appropriate mouse or keyboard event to submit to the Windows CE input system and the DI subsystem.</P>
+
+<P>The HID class driver submits input to both DI and the Windows CE input system for two reasons. One is so that DI is not required to be present in a Windows CE-based platform just to use the HID class driver. The other is that if an application that is using DI to access the mouse or keyboard fails or stops responding, the use of those devices is still available to other applications. The sample HID class driver presents itself to the DirectInput subsystem as a stream interface device, with the special device file name "HID1:". The device filename prefix, "HID", is currently mandatory. Future versions of Windows CE may allow OEMs to specify this prefix via a registry key.</P>
+
+<P>The DirectInput subsystem in Windows CE uses I/O control codes to request various actions from the HID class driver. The following table shows the eight I/O control codes that the HID class driver must support in its <B>IOControl</B> function:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=41%>I/O control code</TH>
+<TH width=59%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_ACQUIRE</TD>
+<TD width=59%>Notifies the HID class driver that the DirectInput subsystem no longer wants to receive events connected to a handle that was previously obtained through use of the IOCTL_HID_SET_FORMAT control code.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_ATTACH</TD>
+<TD width=59%>Notifies the HID class driver that an application needs to use a device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_ENUM_DEVICES</TD>
+<TD width=59%>Returns a list of devices that the HID class driver is currently managing.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_ENUM_OBJECTS</TD>
+<TD width=59%>Returns the number of input sources, such as buttons, on the device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_GET_INST_DATA</TD>
+<TD width=59%>Returns data from the device to the DirectInput subsystem.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_POLL</TD>
+<TD width=59%>Requests that the HID class driver poll the device to get the device's status.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_SET_FORMAT</TD>
+<TD width=59%>Sets the format of data that the HID class driver returns for a device to the DirectInput subsystem, and acquires the device for use by an application.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>IOCTL_HID_TRANSFER_EVENT</TD>
+<TD width=59%>Registers an event handle that the HID class driver can use to notify the DirectInput subsystem when the device generates data.</TD>
+</TR>
+</table></div>
+
+<P>The implementation of the DirectInput subsystem for Windows CE is a subset of the full DirectInput API that is defined for desktop versions of Windows. The following differences between these implementations affect the HID class driver:
+
+<UL type="disc">
+	<LI>Windows CE DI supports only foreground-exclusive mode. Therefore, only one thread at a time in the system can use the sample HID class driver.</li>
+
+	<LI>Windows CE DI does not support force feedback mechanisms.</li>
+
+	<LI>Attempting to enumerate the available HID class devices fails if there are no such devices connected to the Windows CE&#0150;based platform because the USB subsystem unloads the HID class driver when there are no HID class devices to control.</li>
+</UL>
+
+<P>The sample HID class driver is available as part of the Microsoft Windows CE Platform Builder 3.0, in the directory \WinCE\public\common\oak\drivers\usb\class\hid.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Exchanging Session Keys</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Exchanging Session Keys" />
+<MSHelp:RLTitle Title="Exchanging Session Keys (Windows CE)" />
+<MSHelp:Keyword Index="K" Term="cryptographic keys, exchanging session keys" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Exchanging_Session_Keys" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="Filename" Value="crypto.rtf" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923086">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_exchanging_session_keys"></A>Exchanging Session Keys</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>To send another user an encrypted message, the sender must send the receiver the session key used to perform the encryption. There are two ways of doing this:
+
+<UL type="disc">
+	<LI>The sender and receiver can mutually agree on a session key by exchanging several messages. The users can then use this session key to exchange encrypted messages. Because successfully designing one of these protocols is difficult, it is recommended only for experienced cryptographers.</li>
+
+	<LI>The sender can send an encrypted session key with the encrypted message. The sender creates a random session key, encrypts it using the receiver's public key, and sends the key BLOB to the receiver with the message. The receiver then decodes the session key with a private key to decode the message.</li>
+</UL>
+
+<P class="labelproc"><B>To send an encrypted session key</B>
+
+<OL type="1">
+	<LI>Create a random session key, using the <a href="_wcesdk_crypto2_CryptGenKey.htm">CryptGenKey</a> function.</li>
+
+	<LI>Encode the message, using the session key.
+<P>For more information on encoding a message using a session key, see 
+
+<P><A HREF="_wcesdk_encrypting_and_decrypting_data.htm">Encrypting and Decrypting Data</A>.
+</li>
+
+	<LI>Export the session key into a key BLOB with the <a href="_wcesdk_crypto2_CryptExportKey.htm">CryptExportKey</a> function.
+<P>Specify that the key be encoded with the destination user's key exchange public key, which is the receiver's public key.
+</li>
+
+	<LI>Send the encoded message and the encoded key BLOB to the destination user.</li>
+
+	<LI>The receiver then imports the key BLOB into the CSP, using the <a href="_wcesdk_crypto2_CryptImportKey.htm">CryptImportKey</a> function.
+<P>This automatically decodes the session key, provided that the destination user's key exchange private key was specified in step three.
+</li>
+
+	<LI>The receiver can then decode the message, using the session key, following the procedure discussed in <A HREF="_wcesdk_encrypting_and_decrypting_data.htm">Encrypting and Decrypting Data</A>.</li>
+</OL>
+
+<P>The following illustration shows how to send an encoded message, using this procedure.</P>
+
+<P class="fig"><IMG SRC="blob.gif" ALT="" BORDER=0></P>
+
+<P>This approach is vulnerable in at least one way. A hacker can acquire copies of one of more encrypted messages and the encoded keys. Then, at some later time, the hacker can send one of these messages to the receiver and the receiver has no way of knowing that the message did not come directly from the original sender. This risk can be reduced by <I>timestamping</I> all messages or by using serial numbers. Timestamping involves attaching the date and time to each message. Using a three-phase key exchange protocol eliminates this problem entirely. For more information on using this protocol, see the Microsoft Platform SDK.</P>
+<!--Footer-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, February 03, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+</div>
+</BODY>
+</HTML>

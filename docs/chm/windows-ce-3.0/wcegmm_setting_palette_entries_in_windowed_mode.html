@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Setting Palette Entries in Windowed Mode (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="The rules that apply to the PALETTEENTRY structure used with the IDirectDraw4::CreatePalette method also apply to the IDirectDrawPalette::SetEntries method."/>
+<xml>
+<MSHelp:TOCTitle Title="Setting Palette Entries in Windowed Mode" />
+<MSHelp:RLTitle Title="Setting Palette Entries in Windowed Mode (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_setting_palette_entries_in_windowed_mode" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ddover.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924025">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_setting_palette_entries_in_windowed_mode"></A>Setting Palette Entries in Windowed Mode</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The rules that apply to the <B>PALETTEENTRY</B> structure used with the <a href="wcesdkrIDirectDraw4_createpalette_ddraw.htm">IDirectDraw4::CreatePalette</a> method also apply to the <a href="wcesdkridirectdrawpalette_setentries_ddraw.htm">IDirectDrawPalette::SetEntries</a> method. Typically, you maintain your own array of <B>PALETTEENTRY</B> structures, so you do not need to rebuild it. When necessary, you can modify the array, and then call <B>IDirectDrawPalette::SetEntries</B> when it is time to update the palette.</P>
+
+<P>In most circumstances, you should not attempt to set any of the Windows static entries when in nonexclusive (windowed) mode or you will get unpredictable results. The only exception is when you reset the 256 entries.</P>
+
+<P>For palette animation, you typically change only a small subset of entries in your <B>PALETTEENTRY</B> array. You submit only those entries to <B>IDirectDrawPalette::SetEntries</B>. If you are resetting such a small subset, you must reset only those entries marked with the PC_NOCOLLAPSE and PC_RESERVED flags. Attempting to animate other entries can have unpredictable results.</P>
+
+<P>The following example illustrates palette animation in nonexclusive mode:</P>
+
+<PRE class="code">LPDIRECTDRAW        lpDD;        // Already initialized 
+PALETTEENTRY pPaletteEntry[256]; // Already initialized 
+LPDIRECTDRAWPALETTE lpDDPal;     // Already initialized 
+int                 index; 
+HRESULT             ddrval; 
+PALETTEENTRY        temp; 
+ 
+// Animate some entries. Cycle the first 16 available entries. 
+// They were already animated. 
+temp = pPaletteEntry[10]; 
+for (index = 10; index &lt; 25; index ++) 
+{ 
+    pPaletteEntry[index] = pPaletteEntry[index+1]; 
+} 
+pPaletteEntry[25] = temp; 
+ 
+// Set the values. Do not pass a pointer to the entire palette entry 
+// structure, but only to the changed entries. 
+ddrval = lpDDPal-&gt;SetEntries( 
+    0,                      // Flags must be zero 
+    10,                     // First entry 
+    16,                     // Number of entries 
+    &amp; (pPaletteEntry[10])); // Where to get the data 
+ </PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

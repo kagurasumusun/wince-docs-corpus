@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MiniportCheckForHang</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="MiniportCheckForHang" />
+<MSHelp:RLTitle Title="MiniportCheckForHang" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_MiniportCheckForHang" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928606">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_miniportcheckforhang"></A>MiniportCheckForHang</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P><B>MiniportCheckForHang</B> is an optional function that reports the state of the network adapter or monitors the responsiveness of an underlying device driver.</P>
+
+<PRE class="syntax"><B>BOOLEAN</B>
+<B>MiniportCheckForHang(</B>
+<B>IN NDIS_HANDLE</B> <I>MiniportAdapterContext</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>MiniportAdapterContext</I> </DT>
+
+<DD>Specifies the handle to a miniport-allocated context area in which the driver maintains per-network adapter state, set up by <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P><B>MiniportCheckForHang</B> returns TRUE if the driver determines that its network adapter is not operating or if an intermediate driver determines that the underlying device driver is unresponsive. </P>
+
+<P class="label"><B>Comments</B></P>
+
+<P>In network adapter drivers, <B>MiniportCheckForHang</B> does nothing more than check the internal state of the network adapter and return TRUE if it detects that the network adapter is not operating correctly. </P>
+
+<P>In intermediate drivers, <B>MiniportCheckForHang </B>can periodically check the state of the driver's virtual network adapter to determine whether the underlying device driver appears to be hung. </P>
+
+<P>By default, the NDIS library calls <B>MiniportCheckForHang</B> approximately every two seconds. </P>
+
+<P>If <B>MiniportCheckForHang</B> returns TRUE, NDIS then calls the driver's <A HREF="_wcesdk_miniportreset.htm">MiniportReset</A> function. </P>
+
+<P>If a network adapter driver has no <B>MiniportCheckForHang</B> function and NDIS judges the driver unresponsive as, for example, when NDIS holds many pending sends and requests queued to the miniport for a time-out interval, NDIS calls the driver's <B>MiniportReset</B> function. The NDIS library's default time-out interval for queued sends and requests is around four seconds. However, a network adapter driver's <B>MiniportInitialize</B> function can extend NDIS's time-out interval by calling <A HREF="_wcesdk_ndismsetattributesex.htm">NdisMSetAttributesEX</A> from <B>MiniportInitialize</B> to avoid unnecessary resets. </P>
+
+<P>The <B>MiniportInitialize</B> function of an intermediate driver should disable NDIS's time-out interval with <B>NdisMSetAttributesEx</B> because such a driver can neither control nor estimate a reasonable completion interval for the underlying device driver. </P>
+
+<P><B>MiniportCheckForHang</B> can be pre-empted by an interrupt. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ndislib.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>, <A HREF="_wcesdk_miniportreset.htm">MiniportReset</A>, <A HREF="_wcesdk_ndismsetattributesex.htm">NdisMSetAttributesEX</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

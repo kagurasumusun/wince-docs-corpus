@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Establishing a Connection</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Establishing a Connection" />
+<MSHelp:RLTitle Title="Establishing a Connection (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Establishing a Connection" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Establishing_a_Connection" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ras.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923398">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_establishing_a_connection"></A>Establishing a Connection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The Windows CE <B>RasDial</B> function indicates a successful connection in two ways. If RasDial make a successful connection:
+
+<UL type="disc">
+	<LI>It returns a zero, a non-zero value indicates failure.</li>
+
+	<LI>In addition, the function stores a handle to the RAS connection into the variable pointed to by the function parameter <I>pRasConn</I>.</li>
+</UL>
+
+<P>The <B>RasDial</B> function must specify data so that RAS can establish the connection from a Windows CE&#0150;based device to a remote access server. The client uses the <B>RasDial</B> function parameters to specify a phone-book entry. The <I>lpszPhonebookPath</I> parameter must be NULL. The <I>lpRasDialParams</I> parameter points to a <a href="wcesdkrRASDIALPARAMS_str.htm">RASDIALPARAMS</a> structure that specifies the phone-book entry to use. To connect, the <B>RasDial</B> function must specify the data necessary to establish a connection. Typically, the <B>RasDial</B> call provides the connection data by specifying a phone-book entry using the <B>RASDIALPARAMS</B> structure to provide data such as phone number, user name, domain, and password.</P>
+
+<P>The connection data includes callback and user authentication data. To make a connection, the <B>RasDial</B> function can specify an empty string for the <I>szEntryName</I> member of the <B>RASDIALPARAMS</B> structure. This will result in the first available modem being used. The <I>szPhoneNumber</I> member must contain the phone number to dial.</P>
+
+<P class="labelproc"><B>To use RasDial to establish a connection</B>
+
+<OL type="1">
+	<LI>Set the <I>dialExtensions</I> parameter to NULL.</li>
+
+	<LI>Set the <I>lpszPhonebook</I> parameter to NULL. Phone-book entries are stored in the registry rather than in a phone-book file.</li>
+
+	<LI>Set the <I>dwNotiferType</I> parameter to 0xFFFFFFFF, specifying the <I>lpvNotifier</I> parameter as a handle to the window receiving progress notification messages. If the application requires messages from RAS, the messages must be sent to a window handle. There is no support for callback functions.</li>
+
+	<LI>Set the <I>szEntryName, szUserName, szPassword, and szDomain</I> members of the <B>RASDIALPARAM</B><I> </I>structure. Pass a pointer to this structure into <I>lpRasDialParam</I>.</li>
+</OL>
+
+<BLOCKQUOTE class="dtBlock">
+<B>Note&nbsp;&nbsp;&nbsp;RasDial</B> does not automatically display the logon dialog box. This is currently done through the Remote Networking application. Your application is responsible for getting the data from a user.</BLOCKQUOTE>
+
+<P>The following code example shows how to establish a RAS connection.</P>
+
+<PRE class="code">BOOL MakeRasDial (HWND hDlgWnd)
+{
+  BOOL bPassword;
+  TCHAR szBuffer[100];
+
+  if (bUseCurrent)
+  {
+    // Get the last configuration parameters used for this connection. 
+    // If the password was saved, then the logon dialog box will not be
+    // displayed.
+    if (RasGetEntryDialParams (NULL, &amp;RasDialParams, &amp;bPassword) != 0)
+    {
+      MessageBox (hDlgWnd, 
+                  TEXT("Could not get parameter details"), 
+                  szTitle, 
+                  MB_OK);
+      return FALSE;
+    }
+  }
+  else
+  {
+    // Display the Authentication dialog box.
+    DialogBox (hInst, MAKEINTRESOURCE(IDD_AUTHDLG), hDlgWnd, 
+               AuthDlgProc);
+
+    // Set hRasConn to NULL before attempting to connect.
+    hRasConn = NULL;
+
+    // Initialize the structure.
+    memset (&amp;RasDialParams, 0, sizeof (RASDIALPARAMS));
+
+    // Configure the RASDIALPARAMS structure. 
+    RasDialParams.dwSize = sizeof (RASDIALPARAMS);
+    RasDialParams.szPhoneNumber[0] = TEXT('\0');
+    RasDialParams.szCallbackNumber[0] = TEXT('\0');
+    wcscpy (RasDialParams.szEntryName, szRasEntryName);
+    wcscpy (RasDialParams.szUserName, szUserName);
+    wcscpy (RasDialParams.szPassword, szPassword);
+    wcscpy (RasDialParams.szDomain, szDomain); 
+  }
+
+  // Try to establish RAS connection.
+  if (RasDial (NULL,            // Extension not supported
+               NULL,            // Phone book is in registry
+               &amp;RasDialParams,  // RAS configuration for connection
+               0xFFFFFFFF,      // Notifier type is a window handle
+               hDlgWnd,         // Window receives notification message
+               &amp;hRasConn) != 0) // Connection handle
+  {
+    MessageBox (hDlgWnd, 
+                TEXT("Could not connect using RAS"), 
+                szTitle, 
+                MB_OK);
+    return FALSE;
+  }
+
+  wsprintf (szBuffer, TEXT("Dialing %s..."), szRasEntryName);
+
+  // Set the Dialing dialog box window name to szBuffer.
+  SetWindowText (hDlgWnd, szBuffer);
+
+  return TRUE;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

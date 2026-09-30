@@ -1,0 +1,415 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Subordinate DMA Network Adapters</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Subordinate DMA Network Adapters" />
+<MSHelp:RLTitle Title="Subordinate DMA Network Adapters (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="DMA, network adapters" />
+<MSHelp:Keyword Index="A" Term="_wincesdk_Subordinate_DMA_Network_Adapters" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ndis.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923349">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wincesdk_subordinate_dma_network_adapters"></A>Subordinate DMA Network Adapters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>For subordinate DMA transfers, a Windows NT miniport calls a set of functions that consist of <B>NdisMRegisterDmaChannel</B>, <B>NdisMDeregisterDmaChannel</B>, <B>NdisMSetupDmaTransfer</B>, <B>NdisMCompleteDmaTransfer</B>, and <B>NdisMReadDmaCounter</B>. The Windows CE implementation of NDIS does not support these functions. Instead, the required functionality can be implemented directly in the miniport driver code.</P>
+
+<P>To implement DMA transfers in a miniport, you must reserve a physical memory block from the memory map of a Windows CE-based device. Then, you must map the device's memory block to virtual address pointers by using the <B>VirtualAlloc</B> and <B>VirtualCopy</B> functions. Mapping the device's memory block to virtual address pointers provides the miniport with a shared memory block to send and receive packet buffers.</P>
+
+<P>To see an example of how to implement DMA operations in a miniport for Windows&nbsp;CE, consult the sample code for the National Semiconductor Fast IR Miniport Driver that is shipped with Windows&nbsp;CE&nbsp;3.0.</P>
+
+<P>The following code samples show how to implement DMA functionality in a miniport in Windows CE:</P>
+
+<PRE class="code">/**********************************************************************
+
+Copyright (c) 1999 Microsoft Corporation
+
+Module Name:    
+  ndisdma.h
+
+Abstract:       
+  This will implement the NDIS-required DMA functions that differ 
+  from the Windows CE and Windows NT implementations.
+
+**********************************************************************/
+
+#ifndef _NDISDMA_H_
+#define _NDISDMA_H_
+
+#ifdef UNDER_CE
+
+typedef struct _NDIS_DMA_DESCRIPTION 
+{
+  BOOLEAN DemandMode;
+  BOOLEAN AutoInitialize;
+  BOOLEAN DmaChannelSpecified;
+  DMA_WIDTH DmaWidth;
+  DMA_SPEED DmaSpeed;
+  ULONG DmaPort;
+  ULONG DmaChannel;
+} NDIS_DMA_DESCRIPTION, *PNDIS_DMA_DESCRIPTION;
+
+// DMA Operations.  
+NDIS_STATUS NdisMRegisterDmaChannel (
+              OUT PNDIS_HANDLE            MiniportDmaHandle,
+              IN  NDIS_HANDLE             MiniportAdapterHandle,
+              IN  UINT                    DmaChannel,
+              IN  BOOLEAN                 Dma32BitAddresses,
+              IN  PNDIS_DMA_DESCRIPTION   DmaDescription,
+              IN  ULONG                   MaximumLength);
+
+VOID NdisMDeregisterDmaChannel (IN NDIS_HANDLE MiniportDmaHandle);
+VOID NdisMSetupDmaTransfer (
+        OUT PNDIS_STATUS            Status,
+        IN  PNDIS_HANDLE            MiniportDmaHandle,
+        IN  PNDIS_BUFFER            Buffer,
+        IN  ULONG                   Offset,
+        IN  ULONG                   Length,
+        IN  BOOLEAN                 WriteToDevice);
+
+VOID NdisMCompleteDmaTransfer (
+        OUT PNDIS_STATUS            Status,
+        IN  PNDIS_HANDLE            MiniportDmaHandle,
+        IN  PNDIS_BUFFER            Buffer,
+        IN  ULONG                   Offset,
+        IN  ULONG                   Length,
+        IN  BOOLEAN                 WriteToDevice);
+
+ULONG NdisMReadDmaCounter (IN NDIS_HANDLE MiniportDmaHandle);
+
+#endif // UNDER_CE
+
+#endif // _NDISDMA_H_
+/**********************************************************************
+
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+Copyright (c) 1999  Microsoft Corporation
+
+**********************************************************************/
+
+#include &lt;windows.h&gt;
+#include &lt;ndis.h&gt;
+#include "nsc.h"
+#include "ndisdma.h"
+
+#define FIR_BUFFER_BASE_PA    0x00001000
+#define MINIPORT_DMA_HANDLE   (NDIS_HANDLE) 0x45454545
+
+// We will map our virtual address to our DMA physical buffer.
+// This is used with any buffer that was mapped into our physical
+// buffer.
+PVOID VirtualToPhysAddress (PVOID pvVirtual)
+{
+  // Make sure that the given virtual address is within the range of 
+  // our buffer.
+  ASSERT (((PUCHAR)pvVirtual &gt;= (PUCHAR)g_pvDmaVirtualBase) &amp;&amp; 
+         ((PUCHAR)pvVirtual &lt; ((PUCHAR)g_pvDmaVirtualBase + 
+                               NSCIRDA_DMA_BUFFER_LEN)));
+  // Physical address is the base physical address plus the offset 
+  // in the virtual address space.
+  return (PVOID) ((DWORD)NSCIRDA_DMA_BUFFER_BASE_PA + 
+         (DWORD)pvVirtual - (DWORD)g_pvDmaVirtualBase);
+}
+
+const int DmaAddrReg[4]  = { 0x00, 0x02, 0x04, 0x06};
+const int DmaCountReg[4] = { 0x01, 0x03, 0x05, 0x07};
+const int DmaPageReg[4]  = { 0x87, 0x83, 0x81, 0x82};
+
+// Define the DMA-mode register structure.
+typedef struct _DMA_MODE
+{
+  UCHAR Channel : 2;
+  UCHAR TransferType : 2;
+  UCHAR AutoInitialize : 1;
+  UCHAR AddressDecrement : 1;
+  UCHAR RequestMode : 2;
+}DMA_MODE, *PDMA_MODE;
+
+
+// Define TransferType values.
+#define VERIFY_TRANSFER         0x00
+#define READ_TRANSFER           0x01    // Read from the device.
+#define WRITE_TRANSFER          0x02    // Write to the device.
+
+// Define RequestMode values.
+#define DEMAND_REQUEST_MODE     0x00
+#define SINGLE_REQUEST_MODE     0x01
+#define BLOCK_REQUEST_MODE      0x02
+#define CASCADE_REQUEST_MODE    0x03
+
+#define DMA_SETMASK             4
+#define DMA_CLEARMASK           0
+#define DMA_READ                4       
+#define DMA_WRITE               8       
+#define DMA_SINGLE_TRANSFER     0x40
+#define DMA_AUTO_INIT           0x10    // Auto initialization mode
+
+// Define DMA 1 address and count structure (for 8237 compatibility)
+typedef struct _DMA1_ADDRESS_COUNT
+{
+    UCHAR DmaBaseAddress;
+    UCHAR DmaBaseCount;
+} DMA1_ADDRESS_COUNT, *PDMA1_ADDRESS_COUNT;
+
+// Define DMA 1 control register structure (for 8237 compatibility)
+typedef struct _DMA1_CONTROL
+{
+  DMA1_ADDRESS_COUNT DmaAddressCount[4];
+  UCHAR DmaStatus;
+  UCHAR DmaRequest;
+  UCHAR SingleMask;
+  UCHAR Mode;
+  UCHAR ClearBytePointer;
+  UCHAR MasterClear;
+  UCHAR ClearMask;
+  UCHAR AllMask;
+} DMA1_CONTROL, *PDMA1_CONTROL;
+
+NDIS_DMA_DESCRIPTION g_DMA_Description;
+BOOL                 g_fRegistered;
+UINT                 g_nDmaChannel;
+
+/*********************************************************************/
+NDIS_STATUS NdisMRegisterDmaChannel (
+    PNDIS_HANDLE            phMiniportDmaHandle,
+    NDIS_HANDLE             hMiniportAdapterHandle,
+    UINT                    nDmaChannel,
+    BOOLEAN                 fDma32BitAddresses,
+    PNDIS_DMA_DESCRIPTION   pDmaDescription,
+    ULONG                   ulMaximumLength)
+{
+  NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
+
+  DEBUGMSG (ZONE_INIT | ZONE_DMA,
+    (TEXT("+NdisMRegisterDmaChannel (%#x, %#x, %d, %d, %#x, %d\r\n"),
+    phMiniportDmaHandle,
+    hMiniportAdapterHandle,
+    nDmaChannel, 
+    fDma32BitAddresses,
+    pDmaDescription,
+    ulMaximumLength));
+    
+  // Check to ensure that we are not registered already. Allow only 
+  // one at a time.
+  if (g_fRegistered)
+  {
+    Status = NDIS_STATUS_RESOURCE_CONFLICT;
+    goto done;
+  }
+
+  // One DMA Channel per driver. Return Constant.
+  *phMiniportDmaHandle = MINIPORT_DMA_HANDLE;
+
+  // Store the description for later use.
+  memcpy (&amp;g_DMA_Description, pDmaDescription, 
+          sizeof (NDIS_DMA_DESCRIPTION));
+  g_nDmaChannel = nDmaChannel;
+
+  if (g_nDmaChannel &gt; 3)
+  {
+    DBGERR ((TEXT("The channel is &gt; 3. Not available in this sample driver!")));
+    Status = NDIS_STATUS_RESOURCES;
+    goto done;
+  }
+
+  // Indicate that we are registered.
+  g_fRegistered = TRUE;
+
+done:
+  DEBUGMSG (ZONE_INIT | ZONE_DMA,
+    (TEXT("-NdisMRegisterDmaChannel [%s, hDma = %#x]\r\n"), 
+    DBG_NDIS_RESULT_STR (Status), *phMiniportDmaHandle));
+
+  return (Status);
+}
+
+/*********************************************************************/
+VOID NdisMDeregisterDmaChannel (PNDIS_HANDLE phMiniportDmaHandle)
+{
+  DEBUGMSG (ZONE_INIT | ZONE_DMA,
+  (TEXT("+NdisMDeregisterDmaChannel (%#x)\r\n"), phMiniportDmaHandle));
+
+  if (*phMiniportDmaHandle == MINIPORT_DMA_HANDLE)
+    g_fRegistered = FALSE;
+
+  DEBUGMSG (ZONE_INIT | ZONE_DMA, 
+    (TEXT("-NdisMDeregisterDmaChannel\r\n")));
+}
+
+/*********************************************************************/
+VOID NdisMSetupDmaTransfer (
+        PNDIS_STATUS  pStatus,
+        PNDIS_HANDLE  phMiniportDmaHandle,
+        PNDIS_BUFFER  pBuffer,
+        ULONG         Offset,
+        ULONG         Length,
+        BOOLEAN       WriteToDevice)
+{
+  int           DMAAddr, DMACount, DMAPage, Offset2, Page;
+  int           DMAChanOffset;
+  UCHAR         bReadWrite;
+  UCHAR         bMode;
+  PDMA1_CONTROL dmaControl = 0;
+  DMA_MODE      dmaMode;
+  DWORD         dwPhysAddress;
+
+  DBGDMA((TEXT("+NdisMSetupDmaTransfer %s: buf = 0x%x, offset = %d, len = %d"),
+         (WriteToDevice == TRUE) ? TEXT("TX") : TEXT("RX"),
+         pBuffer, Offset, Length));
+
+  *pStatus = NDIS_STATUS_SUCCESS;
+
+  if (phMiniportDmaHandle != MINIPORT_DMA_HANDLE)
+  {
+    *pStatus = NDIS_STATUS_RESOURCES;
+    goto done;
+  }
+
+  DMAAddr  = DmaAddrReg[g_nDmaChannel];
+  DMACount = DmaCountReg[g_nDmaChannel];
+  DMAPage  = DmaPageReg[g_nDmaChannel];
+
+  // We're making the assumption of 8-bit.
+  DMAChanOffset = g_nDmaChannel;
+
+  if (Offset + Length &gt; pBuffer-&gt;BufferLength)
+  {
+    DBGERR ((TEXT("The offset + length is greater than the buffer length!")));
+    *pStatus = NDIS_STATUS_RESOURCES;
+    goto done;
+  }
+    
+  // Get the physical address from the virtual address. 
+  dwPhysAddress = 
+    (DWORD)VirtualToPhysAddress (pBuffer-&gt;VirtualAddress) + Offset;
+
+  DBGDMA((TEXT("Address = 0x%X"), 
+    (PBYTE)pBuffer-&gt;VirtualAddress + Offset));
+  DBGDMA((TEXT("Length  = 0x%X"), pBuffer-&gt;BufferLength));
+  DBGDMA((TEXT("Channel = 0x%X"), g_nDmaChannel));
+  DBGDMA((TEXT("DMA Buffer 0x%x, len %d"), 
+    dwPhysAddress + Offset, Length));
+
+  // PROGRAM THE DMA chip
+  Page    = (int) ((dwPhysAddress &gt;&gt; 16) &amp; 0xFF);
+  Offset2 = (int) (dwPhysAddress &amp; 0xFFFF);
+
+  // Disable DMA while programming.
+  WRITE_PORT_UCHAR ((PUCHAR) 0x0A, (UCHAR) (DMAChanOffset | 4));
+
+  // Clear byte pointer.
+  WRITE_PORT_UCHAR ((PUCHAR) 0x0C, (UCHAR) 0);
+
+  dmaMode.Channel          = g_nDmaChannel;
+  dmaMode.TransferType     = 
+    (WriteToDevice ? WRITE_TRANSFER : READ_TRANSFER);
+  dmaMode.RequestMode      = DEMAND_REQUEST_MODE;
+  dmaMode.AutoInitialize   = FALSE;
+  dmaMode.AddressDecrement = FALSE;
+
+  // 8-bit demand mode non-autoinit
+  bReadWrite = (WriteToDevice ? 0x8 : 0x4);
+  bMode = bReadWrite | g_nDmaChannel;
+  WRITE_PORT_UCHAR ((PUCHAR) 0x0B, bMode);
+
+  // LO byte address of buffer.
+  WRITE_PORT_UCHAR ((PUCHAR)DMAAddr, (UCHAR) (Offset2 &amp; 0xFF));
+  // HI byte address of buffer.
+  WRITE_PORT_UCHAR ((PUCHAR)DMAAddr, (UCHAR) (Offset2 &gt;&gt; 8));
+  // Physical page number.
+  WRITE_PORT_UCHAR ((PUCHAR)DMAPage, (UCHAR) Page);
+  // LO byte of count.
+  WRITE_PORT_UCHAR ((PUCHAR)DMACount, (UCHAR) ((Length - 1) &amp; 0xFF));
+  // HI byte of count.
+  WRITE_PORT_UCHAR ((PUCHAR)DMACount, (UCHAR) ((Length - 1) &gt;&gt; 8));
+
+  DBGDMA((TEXT("ReadCount (before) = %d"), 
+         NdisMReadDmaCounter (phMiniportDmaHandle)));
+
+  // Done programming the DMA, enable it.
+  WRITE_PORT_UCHAR ((PUCHAR) 0x0A, (UCHAR) DMAChanOffset);
+
+done:
+  DBGDMA((TEXT("-NdisMSetupDmaTransfer [%s]"), 
+    DBG_NDIS_RESULT_STR (*pStatus)));
+  return;
+}
+
+/*********************************************************************/
+VOID NdisMCompleteDmaTransfer (
+        PNDIS_STATUS Status,
+        PNDIS_HANDLE MiniportDmaHandle,
+        PNDIS_BUFFER Buffer,
+        ULONG Offset,
+        ULONG Length,
+        BOOLEAN WriteToDevice)
+{
+  DBGDMA((TEXT("+NdisMCompleteDmaTransfer %s: buf = 0x%x, offset = %d, len = %d"),
+   (WriteToDevice == TRUE) ? TEXT("TX") : TEXT("RX"),
+    Buffer, Offset, Length));
+
+  // Disable the DMA.
+  WRITE_PORT_UCHAR ((PUCHAR) 0x0A, (UCHAR) (g_nDmaChannel | 4));
+
+  DBGDMA((TEXT("-NdisMCompleteDmaTransfer [NDIS_STATUS_SUCCESS]")));
+    *Status = NDIS_STATUS_SUCCESS;
+}
+
+/*********************************************************************/
+ULONG NdisMReadDmaCounter (NDIS_HANDLE MiniportDmaHandle)
+{
+  UCHAR bLo, bHi;
+
+  bLo = READ_PORT_UCHAR ((PUCHAR) DmaCountReg[g_nDmaChannel]);
+  bHi = READ_PORT_UCHAR ((PUCHAR) DmaCountReg[g_nDmaChannel]);
+
+  DBGDMA((TEXT("NdisMReadDmaCounter [StatusReg = 0x%x, Count = %d]"), 
+         READ_PORT_UCHAR ((PUCHAR) 0x08), bHi &lt;&lt; 8 | bLo));
+
+  return (bHi &lt;&lt; 8 | bLo);
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

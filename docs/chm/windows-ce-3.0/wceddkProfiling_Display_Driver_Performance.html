@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Profiling Display Driver Performance (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="The Platform Builder includes a sample profiling tool, DispPerf, that the display driver writer can use to profile the performance of a display driver."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Profiling Display Driver Performance" />
+<MSHelp:RLTitle Title="Profiling Display Driver Performance (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="display drivers, profiling performance" />
+<MSHelp:Keyword Index="K" Term="performance" />
+<MSHelp:Keyword Index="K" Term="profiling" />
+<MSHelp:Keyword Index="K" Term="profiling display drivers" />
+<MSHelp:Keyword Index="A" Term="wceddkProfiling_Display_Driver_Performance" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="display.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925455">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkprofiling_display_driver_performance"></A>Profiling Display Driver Performance</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The Platform Builder includes a sample profiling tool, DispPerf, that the display driver writer can use to profile the performance of a display driver. DispPerf builds a table that lists, for each ROP code that is profiled, the frequency count, elapsed time in microseconds and average elapsed time in microseconds for ROPs handled by the default GPE emulation, by the software emulation library, and by hardware accelerations. To measure these times accurately, DispPerf can be used only on Windows CE&#0150;based platforms that support the <B>QueryPerformanceCounter</B> and <B>QueryPerformanceFrequency</B> functions with a recommended resolution of 1 microsecond. </P>
+
+<P>The ATI driver demonstrates how to use the profiler for measuring performance of blits and line drawing. The display driver writer may extend the profiler to measure the performance of additional display functions. Source code for DispPerf is in the Platform\Cepc\Drivers\Display\ directory.</P>
+
+<P>The driver starts profiling of blit operations during the call to the <B>BltPrepare</B> function when it calls the <B>DispPerfStart</B> function. The following code example shows how the driver initializes its display function pointer to use the default emulation that is provided by the GPE.</P>
+
+<PRE class="code">SCODE 
+ATI::BltPrepare(GPEBltParms *pBltParms)
+{
+DispPerfStart (pBltParms-&gt;rop4);
+pBltParms-&gt;pBlt = EmulatedBlt; // Catch all</PRE>
+
+<P>When the driver is able to handle the ROP with hardware acceleration or software emulation, it changes its display function pointer appropriately. The driver also calls the <B>DispPerfType</B> function to record which type of acceleration is used to handle the ROP. For example, the following code example demonstrates how the driver calls <B>DispPerfType</B> after the driver successfully sets the display function pointer to a hardware-accelerated function.</P>
+
+<PRE class="code">// Performance Logging Type
+if (pBltParms-&gt;pBlt != EmulatedBlt) {
+DispPerfType(DISPPERF_ACCEL_HARDWARE);
+}</PRE>
+
+<P>When the blit operation completes, the <B>BltComplete</B> function stops profiling with a call to the <B>DispPerfEnd</B> function.</P>
+
+<P>The DO_DISPPERF environment variable controls whether the code to support profiling is compiled into the display driver. Refer to the Sources file for the ATI driver to see how the environment variable causes the correct compiler directives to be set.</P>
+
+<P><B>DispPerf</B> can be invoked from the Command Shell on a Windows CE&#0150;based platform, or it can be launched remotely from the Windows CE Debug Shell. The following example shows the command syntax for <B>DispPerf</B>.</P>
+
+<PRE class="code">dispperf [-c[w*]] [-d [&gt; <I>file</I>]]</PRE>
+
+<P>The <I>-c</I> option clears the profiler buffer. If the letter "w" appears one or more times following the <I>-c</I> option, <B>DispPerf</B> calls the <B>CreateWindow</B> function that number of times and profiles the resulting display driver operations. The <I>-d</I> option dumps the profiler buffer in tabular form. If the <I>-d</I> option is followed by (&gt;) plus a file name, the output is written to the named file. Otherwise, it appears on the console where the command was issued.</P>
+
+<P>The following code example shows how <B>DispPerf</B> clears its buffer of all profiling information.</P>
+
+<PRE class="code">Dispperf &#0150;cwwwwwd</PRE>
+
+<P>It then calls the <B>CreateWindow</B> function five times, profiling the performance of the display functions. The following code example shows how <B>DispPerf</B> displays its table of profiling information to the console.</P>
+
+<PRE class="code">Dispperf &#0150;c
+Pword stat_rpt.pwd
+Dispperf &#0150;d &gt; results.txt</PRE>
+
+<P>In this example, <B>DispPerf</B> clears its buffer of all profiling information. The Microsoft Word application for the Windows CE OS is launched and opens the document Stat_rpt.pwd. <B>DispPerf</B> tracks the profiled display functions that are called by Pocket Word. Finally, <B>DispPerf</B> writes its table of profiling information to the Results.txt file.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

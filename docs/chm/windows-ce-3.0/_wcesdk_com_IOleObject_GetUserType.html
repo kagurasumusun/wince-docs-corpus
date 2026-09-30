@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::GetUserType</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IOleObject::GetUserType" />
+<MSHelp:RLTitle Title="IOleObject::GetUserType" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IOleObject_GetUserType" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928927">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_ioleobject_getusertype"></A>IOleObject::GetUserType</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This<B> </B>method retrieves the user type name of an object for display in user interface elements such as menus, list boxes, and dialog boxes.</P>
+
+<PRE class="syntax"><B>HRESULT GetUserType( </B>
+<B>DWORD </B><I>dwFormOfType</I><B>, </B>
+<B>LPOLESTR *</B><I>pszUserType</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwFormOfType</I></DT>
+
+<DD>[in] Specifies the form of the user-type name to be presented to users. Valid values are obtained from the <B>USERCLASSTYPE</B> enumeration.</dd>
+
+<DT><I>pszUserType</I></DT>
+
+<DD>[out] Address of <B>LPOLESTR</B> pointer variable that receives a pointer to the user type string. The caller must free *<I>pszUserType</I> using the current <B>IMalloc</B> instance. If an error occurs, the implementation must set *<I>pszUserType</I> to NULL.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>One of the values described in the following table is returned.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=21%>Value</TH>
+<TH width=79%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>S_OK</TD>
+<TD width=79%>The object's user-type name is successfully returned.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>OLE_S_USEREG</TD>
+<TD width=79%>Delegate to the default handler's implementation using the registry to provide the requested information. </TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>Containers call <B>IOleObject::GetUserType</B> in order to represent embedded objects in list boxes, menus, and dialog boxes by their normal, user-recognizable names. Examples include "Word Document," "Excel Chart," and "Paintbrush Object." The information returned by <B>IOleObject::GetUserType</B> is the user-readable equivalent of the binary class identifier returned by <A HREF="_wcesdk_com_ioleobject_getuserclassid.htm">IOleObject::GetUserClassID</A>.</P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>The default handler's implementation of <B>IOleObject::GetUserType</B> uses the object's class identifier (the <I>pClsid</I> parameter returned by <B>IOleObject::GetUserClassID</B>) and the <I>dwFormOfType</I> parameter together as a key into the registry. If an entry is found that matches the key exactly, then the user type specified by that entry is returned. If only the CLSID part of the key matches, then the lowest-numbered entry available (usually the full name) is used. If the CLSID is not found, or there are no user types registered for the class, the user type currently found in the object's storage is used.</P>
+
+<P>You should not cache the string returned from <B>GetUserType.</B> Instead, call this method each and every time the string is needed. This guarantees correct results when the embedded object is being converted from one type into another without the caller's knowledge. Calling this method is inexpensive because the default handler implements it using the registry.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>You can use the implementation provided by the default handler by returning OLE_S_USEREG as your application's implementation of this method. If the user type name is an empty string, the message "Unknown Object" is returned.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Oleidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

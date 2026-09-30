@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>NDIS Differences Between Windows CE and Windows NT (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="Although the NDIS implementation on Windows CE and Windows NT is source-code compatible, and although both operating systems, with a few exceptions, support identical APIs, there are some differences in the implementation of NDIS between Windows CE and"/>
+<xml>
+<MSHelp:TOCTitle Title="NDIS Differences Between Windows CE and Windows NT" />
+<MSHelp:RLTitle Title="NDIS Differences Between Windows CE and Windows NT (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wceddkNDIS_Differences_Between_Windows_CE_and_Windows_NT" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ndis.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924483">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkndis_differences_between_windows_ce_and_windows_nt"></A>NDIS Differences Between Windows CE and Windows NT</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Although the NDIS implementation on Windows CE and Windows NT is source-code compatible, and although both operating systems, with a few exceptions, support identical APIs, there are some differences in the implementation of NDIS between Windows CE and Windows NT:
+
+<UL type="disc">
+	<LI>Windows NT and Windows CE share the same source code for miniport drivers, but each uses a different compilation method. In Windows NT, miniport drivers are compiled as system (.sys) files. Because Windows CE does not support system files, you must compile a miniport driver as a dynamic-link library (DLL). To compile a miniport driver as a DLL, the driver must export the <B>DriverEntry</B> function in its .def file. <B>DriverEntry</B> initializes the driver and then calls other functions in the DLL to perform platform-specific initializations.</li>
+
+	<LI>Windows CE does not support .inf files for dynamic installation and configuration of NDIS miniport drivers.</li>
+
+	<LI>Windows CE does not provide a built-in support for Direct Memory Access (DMA) functionality. However, developers can implement DMA code in a miniport driver for a specific combination of a Windows CE-based platform and a network adapter. Windows CE does not support contiguous physical memory allocations. This memory must be allocated in a platform-specific way.</li>
+
+	<LI>The NDIS wrapper interface (Ndis.dll) that is supported in Windows&nbsp;CE does not make any calls to the multipacket <B>send</B> handler in the miniport driver. However, a miniport driver's regular send handler should return RESET_IN_PROGRESS if the send handler is invoked while the adapter is being reset.</li>
+
+	<LI>The I/O port address that is returned from the <B>NdisMRegisterIoPortRange</B> function represents a 32-bit virtual address in Windows CE and should be treated as a 32-bit value. Because Windows CE does not use the lower 64-KB region of the I/O address space, you should not use 16-bit values for I/O port addresses. Many Windows&nbsp;CE devices emulate I/O ports on top of mapped memory.</li>
+
+	<LI>The Windows CE implementation of NDIS does not provide access to the PCMCIA attribute memory. A driver instead must use PC Card Services functions to read the card tuple information.</li>
+
+	<LI>The IrDA protocol driver supports only a single statically bound adapter.</li>
+
+	<LI>The <B>NdisSendPackets</B> function is not supported in Windows CE.</li>
+
+	<LI>Windows CE does not prevent a miniport driver's <B>MiniportHandleInterrupt</B> function from being called before the miniport driver's <B>PacketIndicateHandler</B> function is registered.</li>
+</UL>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

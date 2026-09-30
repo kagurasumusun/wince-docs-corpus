@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MkParseDisplayName</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="MkParseDisplayName" />
+<MSHelp:RLTitle Title="MkParseDisplayName" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_MkParseDisplayName" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926996">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_mkparsedisplayname"></A>MkParseDisplayName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>Converts a string into a moniker that identifies the object named by the string. This is the inverse of the <A HREF="_wcesdk_com_imoniker_getdisplayname.htm">IMoniker::GetDisplayName</A> operation, which retrieves the display name associated with a moniker.</P>
+
+<PRE class="syntax"><B>WINOLEAPI MkParseDisplayName(</B>
+<B>LPBC </B><I>pbc</I><B>,</B>
+<B>LPCOLESTR </B><I>szUserName</I><B>,</B>
+<B>ULONG FAR *</B><I>pchEaten</I><B>,</B>
+<B>LPMONIKER FAR *</B><I>ppmk</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <B>IBindCtx</B> interface on the bind context object to be used in this binding operation.</dd>
+
+<DT><I>szUserName</I></DT>
+
+<DD>[in] Pointer to a zero-terminated wide character string (two bytes per character) containing the display name to be parsed.</dd>
+
+<DT><I>pchEaten</I></DT>
+
+<DD>[out] Pointer to the number of characters of szUserName that were consumed. If the function is successful, *<I>pchEaten</I> is the length of <I>szUserName</I>; otherwise, it is the number of characters successfully parsed. </dd>
+
+<DT><I>ppmk</I></DT>
+
+<DD>[out] Address of <B>IMoniker</B>* pointer variable that receives the interface pointer to the moniker that was built from <I>szUserName</I>. When successful, the function has called <A HREF="_wcesdk_com_iunknown_addref.htm">IUnknown::AddRef</A> on the moniker and the caller is responsible for calling <A HREF="_wcesdk_com_iunknown_release.htm">IUnknown::Release</A>. If an error occurs, the supplied interface pointer value is NULL.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>This function supports the standard return value E_OUTOFMEMORY, as well as the following:
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The parse operation was successful and the moniker was created.</dd>
+
+<DT>MK_E_SYNTAX</DT>
+
+<DD>Error in the syntax of a file name or an error in the syntax of the resulting composite moniker.</dd>
+</DL>
+
+<P>This function can also return any of the error values returned by <A HREF="_wcesdk_com_imoniker_bindtoobject.htm">IMoniker::BindToObject</A> or <A HREF="_wcesdk_com_iparsedisplayname__parsedisplayname.htm">IParseDisplayName::ParseDisplayName</A>.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The <B>MkParseDisplayName</B> function parses a human-readable name into a moniker that can be used to identify a link source. The resulting moniker can be a simple moniker (such as a file moniker), or it can be a generic composite made up of the component moniker pieces. For example, the following display name:</P>
+
+<PRE class="code">"c:\mydir\somefile!item 1" 
+ </PRE>
+
+<P>could be parsed into the following generic composite moniker:</P>
+
+<PRE class="code">(FileMoniker based on "c:\mydir\somefile") + (ItemMoniker based on "item 1") 
+ </PRE>
+
+<P>The most common use of <B>MkParseDisplayName</B> is in the implementation of the standard Links dialog box, which allows an end user to specify the source of a linked object by typing in a string. You may also need to call <B>MkParseDisplayName</B> if your application supports a macro language that permits remote references (reference to elements outside of the document). </P>
+
+<P>Parsing a display name often requires activating the same objects that would be activated during a binding operation, so it can be just as expensive (in terms of performance) as binding. Objects that are bound during the parsing operation are cached in the bind context passed to the function. If you plan to bind the moniker returned by <B>MkParseDisplayName</B>, it is best to do so immediately after the function returns, using the same bind context, which removes the need to activate objects a second time. </P>
+
+<P><B>MkParseDisplayName</B> parses as much of the display name as it understands into a moniker. The function then calls <B>IMoniker::ParseDisplayName</B> on the newly created moniker, passing the remainder of the display name. The moniker returned by <B>IMoniker::ParseDisplayName</B> is composed onto the end of the existing moniker and, if any of the display name remains unparsed, <B>IMoniker::ParseDisplayName</B> is called on the result of the composition. This process is repeated until the entire display name has been parsed. </P>
+
+<P>The <B>MkParseDisplayName</B> function attempts the following strategies to parse the beginning of the display name, using the first one that succeeds: 
+
+<OL type="1">
+	<LI>The function looks in the Running Object Table for file monikers corresponding to all prefixes of <I>szDisplayName</I> that consist solely of valid file name characters. This strategy can identify documents that are as yet unsaved.</li>
+
+	<LI>The function checks the maximal prefix of <I>szDisplayName</I>, which consists solely of valid file name characters, to see if an OLE 1 document is registered by that name (this may require some DDE broadcasts). In this case, the returned moniker is an internal moniker provided by the OLE 1 compatibility layer of OLE 2.</li>
+
+	<LI>The function consults the file system to check whether a prefix of <I>szDisplayName</I> matches an existing file. The file name can be drive-absolute, drive-relative, working-directory relative, or begin with an explicit network share name. This is the common case.</li>
+</OL>
+
+<P>If the initial character of <I>szDisplayName</I> is an '@', the function finds the longest string immediately following it that conforms to the legal ProgID syntax. The function converts this string to a CLSID using the <A HREF="_wcesdk_com_clsidfromprogid.htm">CLSIDFromProgID</A> function. If the CLSID represents an OLE 2 class, the function loads the corresponding class object and asks for an <B>IParseDisplayName</B> interface pointer. The resulting <B>IParseDisplayName</B> interface is then given the whole string to parse, starting with the '@'. If the CLSID represents an OLE 1 class, then the function treats the string following the ProgID as an OLE1/DDE link designator having &lt;filename&gt;!&lt;item&gt; syntax. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Objbase.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ole232.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_imoniker_parsedisplayname.htm">IMoniker::ParseDisplayName</A>, <A HREF="_wcesdk_com_imoniker_getdisplayname.htm">IMoniker::GetDisplayName</A>, <A HREF="_wcesdk_com_iparsedisplayname.htm">IParseDisplayName</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

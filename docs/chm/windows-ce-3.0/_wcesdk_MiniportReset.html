@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MiniportReset</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="MiniportReset" />
+<MSHelp:RLTitle Title="MiniportReset" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_MiniportReset" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928615">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_miniportreset"></A>MiniportReset</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P><B>MiniportReset</B> is a required function that issues a hardware reset to the network adapter and/or resets the driver's software state.</P>
+
+<PRE class="syntax"><B>NDIS_STATUS</B> <B>MiniportReset(</B>
+<B>OUT PBOOLEAN</B> <I>AddressingReset</I><B>,</B>
+<B>IN NDIS_HANDLE</B> <I>MiniportAdapterContext</I><B>);</B> </PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>AddressingReset</I> </DT>
+
+<DD>Points to a variable that <B>MiniportReset</B> sets to TRUE if the NDIS library should call <A HREF="_wcesdk_miniportsetinformation.htm">MiniportSetInformation</A> to restore addressing information to the current values. </dd>
+
+<DT><I>MiniportAdapterContext</I> </DT>
+
+<DD>Specifies the handle to a miniport-allocated context area in which the driver maintains per-network adapter state, set up by <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P><B>MiniportReset</B> can return one of the following: 
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS </DT>
+
+<DD><B>MiniportReset</B> successfully reset the network adapter to an operational state. </dd>
+
+<DT>NDIS_STATUS_PENDING </DT>
+
+<DD>The driver will complete the reset operation asynchronously by calling <A HREF="_wcesdk_ndismresetcomplete.htm">NdisMResetComplete</A> when the operation is done. </dd>
+
+<DT>NDIS_STATUS_NOT_RESETTABLE </DT>
+
+<DD>The network adapter does not provide reset capabilities under software control. </dd>
+
+<DT>NDIS_STATUS_RESET_IN_PROGRESS </DT>
+
+<DD><B>MiniportReset</B> determined that the network adapter was currently being reset, so this call is superfluous. </dd>
+
+<DT>NDIS_STATUS_SOFT_ERRORS </DT>
+
+<DD><B>MiniportReset</B> successfully reset the network adapter but a recoverable error occurred during the operation. <B>MiniportReset</B> has called <A HREF="_wcesdk_ndiswriteerrorlogentry.htm">NdisWriteErrorLogEntry</A> with more information about the error. </dd>
+
+<DT>NDIS_STATUS_HARD_ERRORS </DT>
+
+<DD><B>MiniportReset</B> attempted to reset the network adapter but an unrecoverable error occurred during the operation. <B>MiniportReset</B> has called <B>NdisWriteErrorLogEntry</B> with more information about the error. </dd>
+</DL>
+
+<P class="label"><B>Comments</B></P>
+
+<P><B>MiniportReset</B> can reset the parameters of its network adapter. If a reset causes a change in the network adapter's station address, the miniport automatically restores the station address following the reset to its prior value. Any multicast or functional addressing masks reset by the hardware do not have to be reset in this function. </P>
+
+<P>If other information, such as multicast or functional addressing information or the lookahead size, is changed by a reset, <B>MiniportReset</B> must set the variable at <I>AddressingReset</I> to TRUE before it returns control. This causes NDIS to call the <B>MiniportSetInformation</B> function to restore the information. </P>
+
+<P>As a general rule, the <B>MiniportReset</B> function of an NDIS intermediate driver should always set <I>AddressingReset</I> to TRUE. Until the underlying network adapter driver resets its network adapter, such an intermediate driver cannot determine whether it must restore addressing information for its virtual network adapter. Because an intermediate driver disables the NDIS library's timing out of queued sends and requests to itself with an initialization-time call to <A HREF="_wcesdk_ndismsetattributesex.htm">NdisMSetAttributesEx</A>, such a driver's <B>MiniportReset</B> function is called only when a reset request is directed to the underlying network adapter driver. </P>
+
+<P>Intermediate drivers that layer themselves above other types of device drivers also must have a <B>MiniportReset</B> function. Such a <B>MiniportReset</B> function must handle reset requests initiated by protocol drivers' calls to <A HREF="_wcesdk_ndisreset.htm">NdisReset</A>. If the intermediate driver also has a <A HREF="_wcesdk_miniportcheckforhang.htm">MiniportCheckForHang</A> function, its <B>MiniportReset</B> function will be called whenever <B>MiniportCheckForHang</B> returns TRUE. </P>
+
+<P>It is unnecessary for a driver to complete outstanding requests before <B>MiniportReset</B> begins resetting the network adapter or updating its software state. NDIS submits no further requests to the miniport for the network adapter designated by the <I>MiniportAdapterContext</I> handle when NDIS has called <B>MiniportReset</B> until the reset operation is completed. A miniport need not call <A HREF="_wcesdk_ndismindicatestatus.htm">NdisMIndicateStatus</A> to signal the start and finish of each reset operation because NDIS notifies bound protocols when a reset begins and ends. </P>
+
+<P>If <B>MiniportReset</B> must wait for state changes in the network adapter during reset operations, it can call <A HREF="_wcesdk_ndisstallexecution.htm">NdisStallExecution</A>. However, a <B>MiniportReset</B> function should <I>never</I> call <B>NdisStallExecution</B> with an interval greater than 50 microseconds. </P>
+
+<P>If <B>MiniportReset</B> returns NDIS_STATUS_PENDING, the driver must complete the original request subsequently with a call to <A HREF="_wcesdk_ndismresetcomplete.htm">NdisMResetComplete</A>. </P>
+
+<P><B>MiniportReset</B> can be pre-empted by an interrupt. </P>
+
+<P>If a network adapter driver supplies a <B>MiniportCheckForHang</B> function, the NDIS library calls it periodically to determine whether to call the driver's <B>MiniportReset</B> function. Otherwise, the NDIS library calls a network adapter driver's <B>MiniportReset</B> function whenever requests NDIS submitted to the <A HREF="_wcesdk_miniportqueryinformation.htm">MiniportQueryInformation</A>, <B>MiniportSetInformation</B>, <A HREF="_wcesdk_miniportsend.htm">MiniportSend</A>, or <A HREF="_wcesdk_miniportwansend.htm">MiniportWanSend</A> functions seem to have timed out. By default, the NDIS-determined time-out interval for outstanding sends and requests is around four seconds. If this default is too short, a network adapter driver can make an initialization-time call to <B>NdisMSetAttributesEx</B>, rather than <A HREF="_wcesdk_ndismsetattributes.htm">NdisMSetAttributes</A>, to lengthen the time-out interval to suit its network adapter. </P>
+
+<P>Every NDIS intermediate driver should call <B>NdisMSetAttributesEx</B> from <B>MiniportInitialize</B> and disable NDIS's attempts to time out requests and sends in the intermediate driver. NDIS runs an intermediate driver's <B>MiniportCheckForHang</B> function, if any, approximately every two seconds. </P>
+
+<P>NDIS cannot determine whether a network adapter might be hung on receives, so supplying a <B>MiniportCheckForHang</B> function allows a driver to monitor its network adapter for this condition and to force a reset if it occurs. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ndislib.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_miniportcheckforhang.htm">MiniportCheckForHang</A>, <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>, <A HREF="_wcesdk_miniportqueryinformation.htm">MiniportQueryInformation</A>, <A HREF="_wcesdk_miniportsend.htm">MiniportSend</A>, <A HREF="_wcesdk_miniportsetinformation.htm">MiniportSetInformation</A>, <A HREF="_wcesdk_miniportwansend.htm">MiniportWanSend</A>, <A HREF="_wcesdk_ndismindicatestatus.htm">NdisMIndicateStatus</A>, <A HREF="_wcesdk_ndismresetcomplete.htm">NdisMResetComplete</A>, <A HREF="_wcesdk_ndismsetattributes.htm">NdisMSetAttributes</A>, <A HREF="_wcesdk_ndismsetattributesex.htm">NdisMSetAttributesEx</A>, <A HREF="_wcesdk_ndisstallexecution.htm">NdisStallExecution</A>, <A HREF="_wcesdk_ndiswriteerrorlogentry.htm">NdisWriteErrorLogEntry</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

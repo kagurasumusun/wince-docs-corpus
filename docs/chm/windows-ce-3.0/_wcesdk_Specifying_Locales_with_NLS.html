@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Specifying Locales with NLS (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="The national language support functions enable you to target an application for a specific locale. A locale is a collection of language-related user preference information represented as a list of values."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Specifying Locales with NLS" />
+<MSHelp:RLTitle Title="Specifying Locales with NLS (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="locales, specifying with NLS" />
+<MSHelp:Keyword Index="K" Term="NLS, specifying locales with" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Specifying_Locales_with_NLS" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="unicode.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923227">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_specifying_locales_with_nls"></A>Specifying Locales with NLS</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The national language support functions enable you to target an application for a specific locale. A locale is a collection of language-related user preference information represented as a list of values. Each system has at least one installed locale and often has many locales from which the user can choose. </P>
+
+<P>The system assigns a locale to each thread. Initially, the system assigns the system default locale to the thread. This default locale is set by the user when the system is installed or through the Regional Settings program in Control Panel. If a thread is run in a process belonging to a user, the system assigns the user-default locale to the thread. An application can override either default by using the <B>SetThreadLocale</B> function to explicitly set the locale for a thread.</P>
+
+<P>Each locale has a unique locale identifier (LCID), which is a 32-bit value that consists of a language identifier and a sort identifier. The LCID is constructed using the <B>MAKELCID </B>macro. The following illustration shows the format of the bits in an LCID. </P>
+
+<PRE class="code">+-------------+---------+-------------------------+
+|   Reserved  | Sort ID |      Language ID        |
++-------------+---------+-------------------------+
+31         20 19     16 15                      0   bit</PRE>
+
+<P>The following locale identifiers are predefined:
+
+<UL type="disc">
+	<LI>LOCALE_SYSTEM_DEFAULT, which identifies the system default locale. </li>
+
+	<LI>LOCALE_USER_DEFAULT, which identifies the locale of the current user. </li>
+
+	<LI>LOCALE_NEUTRAL, which identifies the default language-neutral locale. </li>
+</UL>
+
+<P>The LOCALE_NEUTRAL identifier is the same as LOCALE_USER_DEFAULT. An application can retrieve the current locale identifiers by using the <B>GetSystemDefaultLCID</B> and <B>GetUserDefaultLCID</B> functions. </P>
+
+<P>A language identifier is a standard international numeric abbreviation for a country or geographical region. Each language has a unique language identifier (LANGID), which is a 16-bit value that consists of a primary language identifier and a secondary language identifier. The LANGID is constructed using the <B>MAKELANGID </B>macro. The following illustration shows the format of the bits in a LANGID. </P>
+
+<PRE class="code">+-------------------------+-------------------------+
+|  Secondary Language ID  |   Primary Language ID   |
++-------------------------+-------------------------+
+15                    10  9                         0   bit</PRE>
+
+<P>The following language identifiers are predefined: 
+
+<UL type="disc">
+	<LI>LANG_SYSTEM_DEFAULT, which identifies the system default language. </li>
+
+	<LI>LANG_USER_DEFAULT, which identifies the language of the current user. </li>
+</UL>
+
+<P>An application can retrieve the current language identifiers by using the <B>GetSystemDefaultLangID</B> and <B>GetUserDefaultLangID</B> functions. </P>
+
+<P>It is often necessary to get specific information on available languages and locales in order to handle strings appropriately. Each element of locale information has a corresponding LCTYPE constant. To get the locale information, call the <B>GetLocaleInfo</B> function with the constant that corresponds to the information that is needed.</P>
+
+<P>Most LCTYPE constants are mutually exclusive, so usually only one type of information can be retrieved at a time. The exceptions to this are LOCALE_NOUSEROVERRIDE, LOCALE_USE_CP_ACP, and LOCALE_RETURN_NUMBER, which can combined with other LCTYPE constants by using the binary <B>OR</B> operator. </P>
+
+<P>Locale information is always stored and manipulated as a null-terminated string. No binary data is allowed; any numeric values must be specified as text. Each type of information has a particular format. Also, several of the types are linked together, so that changing one changes the value of the other as well. </P>
+
+<P>Although a specified locale identifier may be supported, it is not available for use by an application unless it is also installed.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

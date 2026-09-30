@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Handling End-of-stream and Flushing Notifications (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="An end-of-stream notification begins at an upstream filter (such as the source filter) when that filter detects that it can send no more data."/>
+<xml>
+<MSHelp:TOCTitle Title="Handling End-of-stream and Flushing Notifications" />
+<MSHelp:RLTitle Title="Handling End-of-stream and Flushing Notifications (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_handling_end-of-stream_and_flushing_notifications" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924134">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_handling_end-of-stream_and_flushing_notifications"></A>Handling End-of-stream and Flushing Notifications</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>An end-of-stream notification begins at an upstream filter (such as the source filter) when that filter detects that it can send no more data. It is passed through every filter in the graph and eventually ends at the renderer, which is responsible for subsequently sending an <a href="wcesdkrevent_notification_codes__ec_complete.htm">EC_COMPLETE</a> notification to the filter graph manager. Renderers have special responsibilities when it comes to handling these notifications. </P>
+
+<P>A renderer receives an end-of-stream notification when its input pin's <a href="wcesdkripin__endofstream.htm">IPin::EndOfStream</a> method is called by the upstream filter. A renderer should note this notification and continue to render any data it has already received. Once all remaining data has been received, the renderer should send an <B>EC_COMPLETE</B> notification to the filter graph manager. The <B>EC_COMPLETE</B> notification should be sent only once by a renderer each time it reaches the end of a stream. Furthermore, <B>EC_COMPLETE</B> notifications must never be sent except when the filter graph is running. Therefore, if the filter graph is paused when a source filter sends an end-of-stream notification, then <B>EC_COMPLETE</B> should not be sent until the filter graph is finally run. </P>
+
+<P>Any calls to the <a href="wcesdkrimeminputpin__receive.htm">IMemInputPin::Receive</a> or <a href="wcesdkrimeminputpin__receivemultiple.htm">IMemInputPin::ReceiveMultiple</a> methods after an end-of-stream notification is signaled should be rejected. E_UNEXPECTED is the most appropriate error message to return in this case. </P>
+
+<P>When a filter graph is stopped, any cached end-of-stream notification should be cleared and not resent when next started. This is because the filter graph manager always pauses all filters just before running them so that proper flushing occurs. So, for example, if the filter graph is paused and an end-of-stream notification is received, and then the filter graph is stopped, the renderer should not send an <B>EC_COMPLETE</B> notification when it is subsequently run. If no seeks have occurred, the source filter will automatically send another end-of-stream notification during the pause state that precedes a run state. If, on the other hand, a seek has occurred while the filter graph is stopped, then the source filter might have data to send, so it won't send an end-of-stream notification. </P>
+
+<P>Video renderers often depend on end-of-stream notifications for more than the sending of <B>EC_COMPLETE</B> notifications. For example, if a stream has finished playing (that is, an end-of-stream notification is sent) and another window is dragged over a video renderer window, a number of WM_PAINT window messages will be generated. The typical practice for running video renderers is to refrain from repainting the current frame upon receipt of WM_PAINT messages (based on the assumption that another frame to be drawn will be received). However, when the end-of-stream notification has been sent, the renderer is in a waiting state; it is still running but is aware that it will not receive any additional data. Under these circumstances, the renderer customarily draws the playback area black. </P>
+
+<P>Handling flushing is an additional complication for renderers. Flushing is carried out through a pair of <a href="wcesdkripin_interface.htm">IPin</a> methods called <a href="wcesdkripin__beginflush.htm">BeginFlush</a> and <a href="wcesdkripin__endflush.htm">EndFlush</a>. Flushing is essentially an additional state that the renderer must handle. It is illegal for a source filter to call <B>BeginFlush</B> without calling <B>EndFlush</B>, so hopefully the state is short and discrete; however, the renderer must correctly handle data or notifications it receives during the flush transition. </P>
+
+<P>Any data received after calling <B>BeginFlush</B> should be rejected immediately by returning E_UNEXPECTED. Furthermore, any cached end-of-stream notification should also be cleared when a renderer is flushed. A renderer will typically be flushed in response to a seek. The flush ensures that old data is cleared from the filter graph before fresh samples are sent. (Typically, the playing of two sections of a stream, one after another, is best handled through deferred commands rather than waiting for one section to finish and then issuing a seek command.) </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

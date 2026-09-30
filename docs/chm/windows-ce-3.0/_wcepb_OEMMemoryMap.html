@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>OEMMemoryMap</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="OEMMemoryMap" />
+<MSHelp:RLTitle Title="OEMMemoryMap" />
+<MSHelp:Keyword Index="K" Term="OEMMemoryMap" />
+<MSHelp:Keyword Index="A" Term="_wcepb_OEMMemoryMap" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwce50" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="oal_gv.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925809">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcepb_oemmemorymap"></A>OEMMemoryMap</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This global variable array provides the virtual-to-physical mapping that is required by a PPC kernel. Prior to calling <B>KernelStart</B> from the OAL, OEMMemoryMap must be initialized. After initialization, the physical address of OEMMemoryMap is stored in r3. </P>
+
+<PRE class="syntax"><B>globl</B> OEMMemoryMap</PRE>
+
+<P class="label"><B>Remarks (PPC403 kernel)</B></P>
+
+<P>The OEMMemoryMap array defines the mapping from the 4-GB physical address space to the kernel's 512-MB unmapped space. The kernel creates two ranges of virtual addresses from this array: One range, from 0x80000000 to 0x9FFFFFFF, has caching and buffering enabled. The other range, from 0xA0000000 to 0xBFFFFFFF, has caching and buffering disabled.</P>
+
+<P>Each entry in the table consists of the virtual base address to map to, the physical base address to map from, and the number of megabytes to map. The size must be a multiple of 16 MB. </P>
+
+<P>The following is the virtual memory map for the PPC403 on an ODO:</P>
+
+<PRE class="code">0x80000000 - 0x83FFFFFF: 64MB for RAM (0x00-0x3F)
+0x84000000 - 0x87FFFFFF: 64MB for Housekeeping FPGA (0x40-0x4F)
+0x8C000000 - 0x8FFFFFFF: unused
+0x90000000 - 0x93FFFFFF: 64MB for System ASIC, FPGA, etc. (0x40-0x4F)
+0x94000000 - 0x94FFFFFF: 16MB PCMCIA 16 bit attr memory window
+0x95000000 - 0x95FFFFFF: 16MB PCMCIA 16 bit common memory window
+0x96000000 - 0x96FFFFFF: 16MB PCMCIA 16 bit I/O window
+0x97000000 - 0x97FFFFFF: 16MB PCMCIA UNUSED
+0x98000000 - 0x98FFFFFF: 16MB PCMCIA 8 bit attr memory window
+0x99000000 - 0x99FFFFFF: 16MB PCMCIA 8 bit common memory window
+0x9A000000 - 0x9AFFFFFF: 16MB PCMCIA 8 bit I/O window
+0x9B000000 - 0x9BFFFFFF: 16MB PCMCIA PCMCIA status regs (8 bit)
+0x9C000000 - 0x9DFFFFFF: unused
+0x9E000000 - 0x9FFFFFFF  32MB for flash memory
+OEMMemoryMap:
+// -------------------------------------------------------------
+//    Virtual Addr  Physical Addr   MB
+// -------------------------------------------------------------
+.long 0x80000000,   0x00000000,     64  // RAM
+.long 0x84000000,   0x78000000,     64  // HouseKeeping
+.long 0x90000000,   0x7c000000,     32  // System Asic
+.long 0x94000000,   0x70000000,     16 // PCMCIA 16 bit attr
+.long 0x95000000,   0x71000000,     16 // PCMCIA 16 bit comm
+.long 0x96000000,   0x74000000,     16 // PCMCIA 16 bit IO
+.long 0x98000000,   0x72000000,     16 // PCMCIA 8 bit attr
+.long 0x99000000,   0x73000000,     16 // PCMCIA 8 bit comm
+.long 0x9b000000,   0x77000000,     16 // PCMCIA status
+.long 0x9e000000,   0x7e000000,     32 // FLASH
+.long 0x00000000,   0x00000000,     0  // Must be zero</PRE>
+
+<P>For an example, see Fw403.s in the %_WINCEROOT%\Platform\Odo\Kernel\Hal\Ppc directory.</P>
+
+<P class="label"><B>Remarks (PPC821 kernel)</B></P>
+
+<P>OEMMemoryMap defines the mapping from the 4-GB physical address space to the kernel's 512-MB unmapped spaces The kernel creates two ranges of virtual addresses from this table: One range, from 0x80000000 to 0x9FFFFFFF, has caching and buffering enabled. The other range, from 0xA0000000 to 0xBFFFFFFF, has caching and buffering disabled.</P>
+
+<P>Each entry in the table consists of the virtual base address to map to, the physical base address to map from, and the number of megabytes to map. The size must be a multiple of 16 MB.</P>
+
+<P>The first 16-MB frame (0x00000000&#0150;0x00ffffff) must be mapped to the first kernel virtual frame (0x80000000&#0150;0x80ffffff). For an example, see Fw821.s in the %_WINCEROOT%\Platform\Odo\Kernel\Hal\Ppc directory.</P>
+
+<P>The following is the virtual memory map for the PPC821 on an ODO:</P>
+
+<PRE class="code">OEMMemoryMap:
+// -------------------------------------------------------------
+//    Virtual Addr  Physical Addr   MB
+// -------------------------------------------------------------
+.long 0x80000000,   0x00000000,     256  // PPC 821 ODO maps 80000000h directly to 0 for 512MB.
+.long 0x90000000,   0x10000000,     256
+.long 0         ,   0         ,     0    // Table terminator</PRE>
+
+<P>For an example, see Fw821.s in the %_WINCEROOT%\Platform\Odo\Kernel\Hal\Ppc directory.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>&nbsp;</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

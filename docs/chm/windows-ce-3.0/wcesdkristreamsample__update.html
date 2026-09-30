@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IStreamSample::Update</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IStreamSample::Update" />
+<MSHelp:RLTitle Title="IStreamSample::Update" />
+<MSHelp:Keyword Index="A" Term="wcesdkristreamsample__update" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_932151">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkristreamsample__update"></A>IStreamSample::Update</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>Performs a synchronous or an asynchronous update on the current sample. </P>
+
+<PRE class="syntax"><B>HRESULT</B> <B>Update(</B>
+<B>DWORD</B> <I>dwFlags</I><B>,</B>
+<B>HANDLE</B> <I>hEvent</I><B>,</B>
+<B>PAPCFUNC</B> <I>pfnAPC</I><B>,</B>
+<B>DWORD</B> <I>dwAPCData</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwFlags</I> </DT>
+
+<DD>[in] Flag that specifies whether the update is synchronous or asynchronous. The SSUPDATE_ASYNC flag specifies an asynchronous update, which you can set if both <I>hEvent</I> and <I>pfnAPC</I> are NULL. Use SSUPDATE_CONTINUOUS to continuously update the sample until you call the <A HREF="wcesdkristreamsample__completionstatus.htm">IStreamSample::CompletionStatus</A> method. </dd>
+
+<DT><I>hEvent</I> </DT>
+
+<DD>[in] Handle to an event that this method will trigger when the update is complete. </dd>
+
+<DT><I>pfnAPC</I> </DT>
+
+<DD>[in] Pointer to a Win32 asynchronous procedure call (APC) function that this method will call after it completes the sample update. </dd>
+
+<DT><I>dwAPCData</I> </DT>
+
+<DD>[in] Value that this method passes to the function specified by the <I>pfnAPC</I> parameter. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Returns one of the following values. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=35%>E_ABORT </TD>
+<TD width=65%>The update aborted. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%>One of the parameters is invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_POINTER </TD>
+<TD width=65%>One of the parameters is invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>MS_E_BUSY </TD>
+<TD width=65%>This sample already has a pending update. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>MS_S_ENDOFSTREAM </TD>
+<TD width=65%>Reached the end of the stream; the sample wasn't updated. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>MS_S_PENDING </TD>
+<TD width=65%>The asynchronous update is pending. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Success. </TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>This method can be used to perform a synchronous or asynchronous update of a sample. If both <I>hEvent</I> and <I>pfnAPC</I> are NULL then the update will be synchronous unless either of the SSUPDATE_ASYNC or SSUPDATE_CONTINUOUS flags is specified. When a synchronous update returns, the result of the function contains the I/O completion status. </P>
+
+<P>You can't specify values for both <I>hEvent</I> and <I>pfnAPC</I>; the method will fail. </P>
+
+<P>Asynchronous updates might complete before the update returns; in that case, the return value is S_OK. If you specify an event and the update returns S_OK, this method sets the event on return. If you specify an APC function and the update returns S_OK, the APC will not be queued and the function will not be called. </P>
+
+<P>Asynchronous updates that don't complete prior to returning will return a value of MS_S_PENDING. </P>
+
+<P>Applications that create multiple streams must read from each of them to avoid having their data blocked.</P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

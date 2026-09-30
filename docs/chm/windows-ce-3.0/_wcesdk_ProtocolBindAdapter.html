@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ProtocolBindAdapter</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="ProtocolBindAdapter" />
+<MSHelp:RLTitle Title="ProtocolBindAdapter" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_ProtocolBindAdapter" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_928751">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_protocolbindadapter"></A>ProtocolBindAdapter</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P><B>ProtocolBindAdapter</B> is a required driver function to support Plug and Play.</P>
+
+<PRE class="syntax"><B>VOID 
+ProtocolBindAdapter(</B>
+<B>OUT PNDIS_STATUS</B> <I>Status</I>,
+<B>IN NDIS_HANDLE</B> <I>BindContext</I>,
+<B>IN PNDIS_STRING</B> <I>DeviceName</I>
+<B>IN PVOID</B> <I>SystemSpecific1</I>
+<B>IN PVOID</B> <I>SystemSpecific2 </I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>Status </I></DT>
+
+<DD>Points to a variable in which <B>ProtocolBindAdapter</B> returns the status of its operation(s), as one of the following: </dd>
+
+<DT>NDIS_STATUS_SUCCESS </DT>
+
+<DD>The driver completed initialization successfully and bound itself to the given network adapter driver specified at <I>DeviceName</I>. </dd>
+
+<DT>NDIS_STATUS_PENDING </DT>
+
+<DD>The protocol will complete the bind operation asynchronously with a call to <B>NdisCompleteBindAdapter</B> when it is ready to accept receives from the underlying driver and to send transmit, query, and set requests down to the underlying driver. </dd>
+
+<DT>NDIS_STATUS_<I>XXX</I> or NTSTATUS<I>_XXX</I> </DT>
+
+<DD>The protocol's attempt to set up a binding failed or the protocol could not allocate the resources it needed to carry out network I/O operations. Usually, such an error status is propagated from an <B>Ndis<I>XXX</I></B> function or a kernel-mode support routine. </dd>
+
+<DT><I>BindContext </I></DT>
+
+<DD>Specifies a handle, supplied by NDIS, that the protocol passes subsequently to <B>NdisCompleteBindAdapter</B>. </dd>
+
+<DT><I>DeviceName </I></DT>
+
+<DD>Points to a buffered Unicode string naming an underlying network adapter driver or virtual network adapter driver to which <B>ProtocolBindAdapter</B> should bind. </dd>
+
+<DT><I>SystemSpecific1 </I></DT>
+
+<DD>Specifies a registry path pointer that is a required parameter to <A HREF="_wcesdk_ndisopenprotocolconfiguration.htm">NdisOpenProtocolConfiguration</A>. The caller cannot use this pointer for any other purpose. </dd>
+
+<DT><I>SystemSpecific2 </I></DT>
+
+<DD>Reserved for system use. The caller cannot use this pointer for any purpose. </dd>
+</DL>
+
+<P class="label"><B>Comments</B></P>
+
+<P><B>ProtocolBindAdapter</B> performs dynamic binding operations whenever an underlying network adapter to which the protocol can bind itself becomes available. In addition, <B>ProtocolBindAdapter</B> continues driver initialization operations deferred from the <A HREF="_wcesdk_driverentry.htm">DriverEntry</A> function to support plug and play. <B>ProtocolBindAdapter</B> allocates sufficient memory to maintain per-binding runtime state and calls <A HREF="_wcesdk_ndisopenadapter.htm">NdisOpenAdapter</A> with the given <I>BindContext</I> and <I>DeviceName</I> to bind itself to the underlying driver. </P>
+
+<P>If <B>NdisOpenAdapter</B> returns NDIS_STATUS_PENDING, the driver's ProtocolOpenAdapterComplete function will be called subsequently when the binding operation has completed. <B>ProtocolBindAdapter</B> should store the input <I>BindContext</I> handle in the area it allocated for per-binding state; the <I>ProtocolBindContext</I> handle it supplied to <B>NdisOpenAdapter</B> is an input parameter to the driver's ProtocolOpenAdapterComplete function, which must pass the <I>BindContext</I> handle to <B>NdisCompleteBindAdapter</B> subsequently. The underlying network adapter driver returns NDIS_STATUS_ADAPTER_NOT_READY for any requests it receives while the open operation is pending. Consequently, <B>ProtocolBindAdapter</B> cannot call <B>Ndis(Co)Request</B> to query the underlying driver if <B>NdisOpenAdapter</B> returns NDIS_STATUS_PENDING. </P>
+
+<P>In these circumstances, <B>ProtocolBindAdapter</B> simply sets <I>Status</I> to NDIS_STATUS_PENDING and returns control, thereby deferring whatever actions the protocol takes to set up binding-specific state and to allocate binding-specific resources to <A HREF="_wcesdk_protocolopenadaptercomplete.htm">ProtocolOpenAdapterComplete</A> if this function is called with an input <I>Status</I> of NDIS_STATUS_SUCCESS. </P>
+
+<P>Similarly, if <B>NdisOpenAdapter</B> returns an error status, <B>ProtocolBindAdapter</B> sets <I>Status</I> to the returned value, releases any per-binding resources the driver has allocated, and returns control immediately. Otherwise, a successful binding has been established and the protocol can receive indications from the underlying driver to its <B>Protocol(Co)Status</B>, <B>Protocol(Co)ReceivePacket</B>, and/or <A HREF="_wcesdk_protocolreceive.htm">ProtocolReceive</A> functions. </P>
+
+<P>Consequently, when <B>NdisOpenAdapter</B> returns NDIS_STATUS_SUCCESS, <B>ProtocolBindAdapter</B> allocates the resources the driver needs to carry out network I/O on the binding and sets up whatever binding-specific runtime state the protocol uses to track network I/O operations. If the driver's installation script installed adapter-specific configuration information in the protocol section of the registry, <B>ProtocolBindAdapter</B> calls <B>NdisOpenProtocolConfiguration</B> and <A HREF="_wcesdk_ndisreadconfiguration.htm">NdisReadConfiguration</A> to retrieve this information. For more information about driver installation scripts, see the <I>Setup, Plug &amp; Play, and Power Managment Design Guide</I> and<I> Reference</I>. </P>
+
+<P>Depending on the underlying media, <B>ProtocolBindAdapter</B> also can call <B>NdisCoRequest</B> or <A HREF="_wcesdk_ndisrequest.htm">NdisRequest</A> to query the underlying driver (or NDIS) about the underlying driver's network adapter-specific limits, such as its maximum frame size, transmit/receive buffer space, and so forth, to set up appropriate state for the binding.</P>
+
+<P>Any protocol bound to a connection-oriented network adapter driver can assume that the underlying miniport both supports multipacket sends and indicates full-packet receives. </P>
+
+<P>A driver's <B>Protocol(Co)ReceivePacket</B> or <B>ProtocolReceive</B> function can be called as soon as the protocol sets up a packet filter with OID_GEN_CURRENT_PACKET_FILTER for the binding. For the NULL filter, receive indications are enabled on return from a successful call to <B>NdisOpenAdapter</B>. </P>
+
+<P>Every NDIS protocol driver should allocate sufficient packet pool and buffer pool from which to allocate packet descriptors and buffer descriptors for subsequent network transmits and, possibly, for subsequent transfer-data requests, depending on whether the underlying driver indicates full-packet receives with <A HREF="_wcesdk_ndismindicatereceivepacket.htm">NdisMIndicateReceivePacket</A> or <B>NdisMCoIndicateReceivePacket</B>. </P>
+
+<P>The <B>ProtocolBindAdapter</B> function of a connection-oriented call manager or MCM driver must call <B>NdisCmRegisterAddressFamily</B> or <B>NdisMCmRegisterAddressFamily</B>, respectively, to register its <B>ProtocolCm<I>XXX</I></B> functions and signalling services for this adapter with NDIS. NDIS will advertise the call manager's services to possible client protocols by calling their <B>ProtocolCoAfRegisterNotify</B> functions, which each potential connection-oriented client registered when it called <B>NdisRegisterProtocol</B> from its <B>DriverEntry</B> function. </P>
+
+<P>Note that connection-oriented client protocols cannot call <B>NdisClOpenAddressFamily</B> from their <B>ProtocolBindAdapter</B> functions. Instead, these protocols make this call to register their <B>ProtocolCl<I>XXX</I></B> functions with NDIS from their <B>ProtocolCoAfRegisterNotify </B>functions. </P>
+
+<P>The <B>ProtocolBindAdapter</B> function of an NDIS intermediate driver is responsible for prompting the initialization of the driver's virtual network adapter by calling <A HREF="_wcesdk_ndisiminitializedeviceinstanceex.htm">NdisIMInitializeDeviceInstanceEx</A> or <A HREF="_wcesdk_ndisiminitializedeviceinstance.htm">NdisIMInitializeDeviceInstance</A>, which, in turn, calls the driver's <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A> function. Such a driver must initialize its virtual network adapter after <B>ProtocolBindAdapter</B> (or <B>ProtocolBindAdapterComplete</B>) establishes a binding to the underlying driver specified at <I>DeviceName</I>. Still higher level protocols cannot bind to such an intermediate driver until its virtual network adapter has been initialized. </P>
+
+<P>If <B>ProtocolBindAdapter</B> cannot allocate the resources it needs to carry out subsequent network I/O operations, it should free all resources it has already allocated, set <I>Status</I> to an appropriate error value, and return control. </P>
+
+<P>If the driver is ready to carry out network I/O on the established binding, <B>ProtocolBindAdapter</B> calls <B>NdisCompleteBindAdapter</B> with NDIS_STATUS_SUCCESS for the <I>Status</I> and <I>OpenStatus</I> arguments. </P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=17%>Ndis.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ndislib.lib</TD>
+</TR>
+</table></div>
+
+<P><b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</P>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_driverentry.htm">DriverEntry</A>, <A HREF="_wcesdk_miniportinitialize.htm">MiniportInitialize</A>, <A HREF="_wcesdk_ndiscloseadapter.htm">NdisCloseAdapter</A>, <A HREF="_wcesdk_ndisiminitializedeviceinstance.htm">NdisIMInitializeDeviceInstance</A>, <A HREF="_wcesdk_ndisiminitializedeviceinstanceex.htm">NdisIMInitializeDeviceInstanceEx</A>,<B> </B><A HREF="_wcesdk_ndismindicatereceivepacket.htm">NdisMIndicateReceivePacket</A><B>, </B><A HREF="_wcesdk_ndisopenadapter.htm">NdisOpenAdapter</A>, <A HREF="_wcesdk_ndisopenprotocolconfiguration.htm">NdisOpenProtocolConfiguration</A>, <A HREF="_wcesdk_ndisreadconfiguration.htm">NdisReadConfiguration</A>,<B> </B><A HREF="_wcesdk_ndisregisterprotocol.htm">NdisRegisterProtocol</A>, <A HREF="_wcesdk_ndisrequest.htm">NdisRequest</A>, <A HREF="_wcesdk_protocolopenadaptercomplete.htm">ProtocolOpenAdapterComplete</A>, <A HREF="_wcesdk_protocolreceive.htm">ProtocolReceive</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

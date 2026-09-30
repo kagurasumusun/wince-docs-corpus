@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CBaseReferenceClock::AdvisePeriodic</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CBaseReferenceClock::AdvisePeriodic" />
+<MSHelp:RLTitle Title="CBaseReferenceClock::AdvisePeriodic" />
+<MSHelp:Keyword Index="A" Term="wcesdkrcbasereferenceclock__adviseperiodic" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_931680">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrcbasereferenceclock__adviseperiodic"></A>CBaseReferenceClock::AdvisePeriodic</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>Sets up a recurring advise with the reference clock. </P>
+
+<PRE class="syntax"><B>HRESULT AdvisePeriodic(</B>
+<B>REFERENCE_TIME</B> <I>StartTime</I><B>,</B>
+<B>REFERENCE_TIME</B> <I>PeriodTime</I><B>,</B>
+<B>HSEMAPHORE</B> <I>hSemaphore</I><B>,</B>
+<B>DWORD *</B><I>pdwAdviseToken</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>StartTime </I></DT>
+
+<DD>Start at this time. </dd>
+
+<DT><I>PeriodTime </I></DT>
+
+<DD>Time between notifications. </dd>
+
+<DT><I>hSemaphore </I></DT>
+
+<DD>Advise through a semaphore. </dd>
+
+<DT><I>pdwAdviseToken </I></DT>
+
+<DD>Advise token that identifies the link with the clock. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Returns one of the following <B>HRESULT</B> values: </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=30%>E_OUTOFMEMORY </TD>
+<TD width=70%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>E_INVALIDARG </TD>
+<TD width=70%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>NOERROR </TD>
+<TD width=70%>No error. </TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>A semaphore is used, rather than an event, to ensure that multiple notifications can be seen by the user. Each time an amount of time specified in the <I>PeriodTime</I> parameter elapses, the semaphore will be released. </P>
+
+<P>When no further notifications are required, call <A HREF="wcesdkrcbasereferenceclock__unadvise.htm">CBaseReferenceClock::Unadvise</A> and pass the <I>pdwAdviseToken</I> value returned from this call. </P>
+
+<P>For example, the following code extract sets up an advise link that fires its first advise five seconds from now and then signals every second until <A HREF="wcesdkrcbasereferenceclock__unadvise.htm">Unadvise</A> is called. By using a semaphore with a count of 10, the clock is effectively able to cache 10 events. </P>
+
+<PRE class="code">HANDLE hSemaphore = CreateSemaphore(NULL, 0, 10, NULL);
+    // Assume pRefClock is an IReferenceClock* variable.
+
+    REFERENCE_TIME rtPeriodTime = 1000 * (UNITS / MILLISECONDS);
+        // A one-second interval
+    REFERENCE_TIME rtNow;
+    DWORD    dwAdviseToken;
+    pRefClock-&gt;GetTime(&amp;rtNow);
+
+    pRefClock-&gt;AdvisePeriodic(rtNow+(5*rtPeriodTime),
+        PeriodTime, hSemaphore, &amp;dwAdviseToken);</PRE>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

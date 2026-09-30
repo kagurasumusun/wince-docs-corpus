@@ -1,0 +1,1203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Assessing Microsoft Windows CE 3.0 Real-Time Capabilities</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Assessing Microsoft Windows CE 3.0 Real-Time Capabilities" />
+<MSHelp:RLTitle Title="Assessing Microsoft Windows CE 3.0 Real-Time Capabilities" />
+<MSHelp:Keyword Index="A" Term="realtimecapabilities" />
+<MSHelp:Keyword Index="K" Term="Windows CE 3.0, Real-Time Capabilities" />
+<MSHelp:Keyword Index="A" Term="realtimecapabilities" />
+<MSHelp:Attr Name="DocSet" Value="kbmsdn" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Media" Value="kbText" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbwince" />
+<MSHelp:Attr Name="Source" Value="Column" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+</xml>
+<meta name="description" content="In this document, Siemens Corporation evaluates the Microsoft Windows CE operating system for its real-time capabilities."><meta name="keywords" content="Microsoft Windows CE 3.0, Windows CE 3.0, Real-Time Capabilities, Siemens AG, Kernel Services, Microsoft Windows CE Platform Builder 3.0, Windows CE Platform Builder 3.0, eMbedded Visual Tools 3.0, Latency Measurement, Latency Tools"><META name="rtfFileName" content="realtimecapabilities.rtf">
+<!--CSS_START-->
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT>
+<!--CSS_END--><META NAME="Description" CONTENT="The important properties for real-time systems are the latency times for Interrupt Service Routines (ISR) and Interrupt Service Threads (IST). Additionally, performance of certain kernel calls has been measured and compared.">
+<META NAME="msdnID" CONTENT="_975757">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0&nbsp;Technical&nbsp;Articles</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="realtimecapabilities"></A>Assessing Microsoft Windows CE 3.0 Real-Time Capabilities</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<DIV id="smpMgrCell" style="width:230px;float:right"></DIV>
+<P>Siemens CT SE 2</P>
+
+<P>Copyright &#169; 2001 by Siemens AG. All rights reserved. Terms of use.</P>
+
+<P>Authors</P>
+
+<P>Oliver Gr&#228;bner<BR>
+Dr. Holger K&#252;fner<BR>
+Dr. Odo Stierschneider<BR>
+J&#252;rgen Schmitt</P>
+
+<H4 class="dtH1"><A NAME="_rtc_contents"></A>Contents</H4>
+
+<P><A HREF="#_rtc_preface">Preface</A><BR>
+<A HREF="#_rtc_features_of_windows_ce_30">Features of Windows CE 3.0</A><BR>
+<A HREF="#_rtc_power_management">Power Management</A><BR>
+<A HREF="#_rtc_real_time_support">Real-Time Support</A><BR>
+<A HREF="#_rtc_kernel_services">Kernel Services</A><BR>
+<A HREF="#_rtc_driver_and_hardware_support">Driver and Hardware Support</A><BR>
+<A HREF="#_rtc_object_store">Object Store</A><BR>
+<A HREF="#_rtc_security">Security</A><BR>
+<A HREF="#_rtc_registry">Registry</A><BR>
+<A HREF="#_rtc_communications">Communications</A><BR>
+<A HREF="#_rtc_internet_services">Internet Services</A><BR>
+<A HREF="#_rtc_client_services">Client Services</A><BR>
+<A HREF="#_rtc_remote_connectivity">Remote Connectivity</A><BR>
+<A HREF="#_rtc_application_runtime_services">Application Runtime Services</A><BR>
+<A HREF="#_rtc_gui_and_user">GUI and User</A><BR>
+<A HREF="#_rtc_development_tools">Development Tools</A><BR>
+<A HREF="#_rtc_microsoft_windows_ce_platform_builder_30">Microsoft Windows CE Platform Builder 3.0</A><BR>
+<A HREF="#_rtc_embedded_visual_tools_30">eMbedded Visual Tools 3.0</A><BR>
+<A HREF="#_rtc_real_time_properties_of_windows_ce_30">Real-Time Properties of Windows CE 3.0</A><BR>
+<A HREF="#_rtc_introduction">Introduction</A><BR>
+<A HREF="#_rtc_hardware_configuration_for_performance_and_latency_measurement">Hardware Configuration for Performance and Latency Measurement</A><BR>
+<A HREF="#_rtc_latency_tool_description">Latency Tool Description</A><BR>
+<A HREF="#_rtc_performance_tool_description">Performance Tool Description</A><BR>
+<A HREF="#_rtc_dhrystone">Dhrystone</A><BR>
+<A HREF="#_rtc_ssc_benchmark">SSC-Benchmark</A><BR>
+<A HREF="#_rtc_results_of_latency_measurement">Results of Latency Measurement</A><BR>
+<A HREF="#_rtc_results_for_the_hitachi_sh4_evaluation_board">Results for the Hitachi SH4 Evaluation Board</A><BR>
+<A HREF="#_rtc_results_for_the_intel_pentium_board">Results for the Intel Pentium Board</A><BR>
+<A HREF="#_rtc_results_for_the_pentium_board_with_qfe_for_the_x86_kernel">Results for the Pentium Board with QFE for the x86 Kernel</A><BR>
+<A HREF="#_rtc_results_of_performance_measurement">Results of Performance Measurement</A><BR>
+<A HREF="#_rtc_results_for_the_intel_pentium_board_code">Results for the Intel Pentium Board</A><BR>
+<A HREF="#_rtc_results_for_the_pentium_board_with_qfe_for_the_x86_kernel_code">Results for the Pentium Board with QFE for the x86 Kernel</A><BR>
+<A HREF="#_rtc_summary_of_the_latency_results">Summary of the Latency Results</A><BR>
+<A HREF="#_rtc_summary_of_the_performance_results">Summary of the Performance Results</A><BR>
+<A HREF="#_rtc_real_time_programming_hints">Real-Time programming hints</A><BR>
+<A HREF="#_rtc_bibliography">Bibliography</A></P>
+
+<H2 class="dtH1"><A NAME="_rtc_preface"></A>Preface</H2>
+
+<P>Embedded real-time applications are becoming increasingly important for a number of business segments. Siemens Corporation, a player in e-business and IT technology, evaluated the Microsoft Windows CE operating system for its real-time capabilities. Various properties of this operating system, like its built-in multimedia capabilities, its optional GUI support, and the availability of the Microsoft Win32 application programming interface, make it a natural choice for Siemens in embedded applications. However, its real-time behavior still must be assessed to determine its usability for today's demanding real-time applications. The purpose of this paper is to provide this evaluation.</P>
+
+<P>The important properties for real-time systems are the latency times for Interrupt Service Routines (ISR) and Interrupt Service Threads (IST). Additionally, performance of certain kernel calls has been measured and compared. These requirements are particularly relevant to the industrial automation industry.</P>
+
+<P>This document does not provide a detailed description of all the features of Windows CE 3.0. If you need more information about these features, see the references in the <A HREF="#_rtc_bibliography">Bibliography</A>. </P>
+
+<H2 class="dtH1"><A NAME="_rtc_features_of_windows_ce_30"></A>Features of Windows CE 3.0</H2>
+
+<P>The following sections outline new features and characteristics of Windows CE 3.0. The information in these sections is taken from experiences with beta releases, information from Microsoft project managers, and the white paper "Information to Windows CE 3.0". </P>
+
+<H3 class="dtH1"><A NAME="_rtc_power_management"></A>Power Management</H3>
+
+<P>Power management is essential for mobile computing. Windows CE 3.0 provides a considerably higher tick-rate, which yields higher power consumption, than previous releases. To allow for lower power consumption, the OEMIdle function can now be adapted to place the CPU into standby for arbitrarily long periods that are not bound to the thread quantum anymore.</P>
+
+<P>To achieve this, the kernel now exposes the following variables, which allow for custom CPU standby periods:
+
+<UL type="disc">
+	<LI><I>dwPreempt</I>: Number of milliseconds until the current thread is preempted.</li>
+
+	<LI><I>dwSleepMin</I>: Number of milliseconds until the next scheduler interrupt is necessary; this equals the minimum of the sleeping times of all available threads.</li>
+
+	<LI><I>ticksleft</I>: The number of ticks that have elapsed but have not been processed by the scheduler.</li>
+
+	<LI><I>CurrMSec</I>: The time in milliseconds since the system last booted.</li>
+
+	<LI><I>DiffMSec</I>: The time in milliseconds since the scheduler last ran.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_real_time_support"></A>Real-Time Support</H3>
+
+<UL type="disc">
+	<LI>Nested interrupts are possible, with support from the CPU and/or additional hardware. An interrupt with a higher priority level will be serviced immediately without having to wait for a lower priority ISR to complete. </li>
+
+	<LI>Better thread response. The upper bound of scheduler latencies for high-priority ISTs has been tightened (see "<A HREF="#_rtc_real_time_properties_of_windows_ce_30">Real-Time Properties of Windows CE 3.0</A>"). </li>
+
+	<LI>256 priority levels, which allows better control over the system behavior. The original eight priorities are mapped to the lowest eight of the 256 priority levels. Any priority thread can now be run to completion by setting the thread scheduling quantum to zero (see the next paragraph). This should only be done in critical situations, since in this case the system is less predictable. Normally, only priority level 0 (highest priority level) threads are meant to run to completion. Therefore special driver or hard real-time threads should be the only ones to use this feature. </li>
+
+	<LI>Thread level scheduling quantum control. Any thread can have any scheduling quantum (time slice). This feature enables CPU load balancing among several threads that have the same priority. Using this feature enables threads at any priority level to run to completion as long as no higher priority thread is running. In effect, this decouples the time a thread can run before being preempted from the system tick.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_kernel_services"></A>Kernel Services</H3>
+
+<P>The kernel underwent some major changes in Windows CE 3.0. The dominant reason behind this redesign was to enhance its Real Time Operating System (RTOS) capabilities. The changes include:
+
+<UL type="disc">
+	<LI>Priority inheritance to correct thread priority inversion is only supported for one level (earlier versions of Windows CE were unbounded).</li>
+
+	<LI>Large kernel calls have been segmented into smaller pieces to allow for faster preemption.</li>
+
+	<LI>1 ms system tick. This allows a more timely response to Sleeps and Waits. Sleep(0) forces a reschedule.</li>
+
+	<LI>Process/Thread synchronization objects now also include semaphores. </li>
+
+	<LI>File compression module optional to reduce kernel size.  If not included in a kernel-image, programs in ROM must not be compressed.</li>
+
+	<LI>Multiple Execute In Place (XIP) regions supported. For example, you could install the core operating system components into ROM, and install the other operating system components into flash memory. XIP applications could run in both places. </li>
+
+	<LI>Full kernel mode support, in which all threads run in kernel mode and performance optimizations are enabled.</li>
+
+	<LI>Support for on-chip debugging. Hardware-assisted debugging enables debugging of the OAL before the OS kernel is running, simplifying the OAL debugging process.</li>
+
+	<LI>Event tracking that allows platform developers to track events and improve performance.</li>
+
+	<LI>Replaceable ROM DLLs with implicit links to other modules.</li>
+
+	<LI>Kernel-level security. A new security model prevents unauthorized applications from accessing system APIs that might potentially damage the platform. An OEM can specify whether individual modules and processes will be allowed to run and specify those that are fully trusted on a particular platform. Two new APIs allow software developers to retrieve the assigned trust level of a module or a process.</li>
+
+	<LI>Footprint: Smallest Windows CE version: about 400kB. Networking, but no graphics: about 1200kB. Version with GWES (Window Manager, GDI and Events), shell and networking: about 3-4 MB. Full blown up version with task manager, hand writing recognition, etc.: up to 6 MB. Windows CE shell : about 3 MB.</li>
+
+	<LI>Support has been added for querying VERSIONINFO resources to obtain version and language-support information from files.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_driver_and_hardware_support"></A>Driver and Hardware Support</H3>
+
+<UL type="disc">
+	<LI>Dial-up bootloader. The bootloader enables the platform image to be updated in the field. It supports security and certificate authentication, and connects to standard Web server technologies, such as HTTP, FTP, PPP and SLIP. </li>
+
+	<LI>Enhanced USB support.</li>
+
+	<LI>UHCI (Universal Host Controller Interface) driver.</li>
+
+	<LI>Sample USB Function controller driver, based on the Scanlogic SL11 chipset.</li>
+
+	<LI>USB HID (Human Interface Device) driver with Direct Input Interface.</li>
+
+	<LI>Sample USB, PCMCIA and Serial Smart Card drivers.</li>
+
+	<LI>Enhanced display-driver support.</li>
+
+	<LI>Flat mode driver that works with the most of the PC-based display cards currently available.</li>
+
+	<LI>Accelerated display driver for ATI Rage XL 2D-only.</li>
+
+	<LI>Sample display drivers that illustrate the use of software cursors and anti-aliased text.</li>
+
+	<LI>New Serial MDD driver that improves serial interface performance.</li>
+
+	<LI>Support for DiskOnChip Millennium product from M-Systems (also limited Flash devices).</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_object_store"></A>Object Store</H3>
+
+<P>Windows CE 3.0 supports larger data storage systems and larger files within those systems.
+
+<UL type="disc">
+	<LI>The number of objects that can be kept in the object store has been increased from 65,536 to 4.19 million (object IDs are reused). </li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_security"></A>Security</H3>
+
+<P>Windows CE 3.0 has enhanced capabilities in the area of security. 
+
+<UL type="disc">
+	<LI>Smart card subsystem, including a resource manager API and reader drivers, for developing PS/SC-compliant smart card systems for Windows CE. RSAENH (Microsoft Enhanced Cryptography Service), which includes 128-bit encryption algorithms. </li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_registry"></A>Registry</H3>
+
+<P>The Registry has be enhanced to support the following features:
+
+<UL type="disc">
+	<LI>Write protected sections of the registry.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_communications"></A>Communications</H3>
+
+<P>Communications enhancements to Windows CE include the following:
+
+<UL type="disc">
+	<LI>TAPI 2.1 support. It includes inbound data modem call capability, and support for adding TSPs (telephony service providers). A Unimodem TSP for AT-command-based modems is included.</li>
+
+	<LI>RAS support for multiple sessions.</li>
+
+	<LI>Improved TCP/IP support. Equivalent to the TCP/IP support in Windows 2000, Windows CE now supports dead gateway detection, which enables better fault tolerance across different network segments as well as package forwarding across multiple interfaces.</li>
+
+	<LI>NDIS (network driver interface specification) now supports intermediate drivers, the NDIS WAN (wide area network) media type, and token-ring networks. The Windows CE 3.0 DDK includes a new, improved NDIS Test utility.</li>
+
+	<LI>DHCP (Dynamic Host Configuration Protocol) client support now includes Autonet, which assigns an IP address to a device if a DHCP server is not available. Autonet allows Windows CE-based devices to connect to a network where there is no DHCP server available.</li>
+
+	<LI>IP Helper APIs provide application developers more control over TCP/IP. For example, they provide access to the Route and ARP tables. In addition to the IP helper APIs, Windows CE 3.0 supports the following tools: Route, IPConfig, and Ping.</li>
+
+	<LI>Common Internet File System (CIFS) redirector. Windows CE supports the CIFS redirector for accessing remote file systems and printers. The CIFS protocol is also known as the Server Message Block (SMB) protocol.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_internet_services"></A>Internet Services</H3>
+
+<UL type="disc">
+	<LI>Telnet server sample.</li>
+
+	<LI>Web (HTTP) server support.</li>
+
+	<LI>Support for persistent connections, multiple connections, folder browsing, and multiple virtual paths.</li>
+
+	<LI>ISAPI extensions and filters.</li>
+
+	<LI>Dynamic Web Pages: a subset of standard ASP functionality is supported. As a default, ASP scripting is possible via the Microsoft Visual Basic, Scripting Edition (VBScript) programming language and the Microsoft JScript development software. Custom scripting engines can be added if necessary.</li>
+
+	<LI>Remote server-based management.</li>
+
+	<LI>Support for caching dynamic link libraries (ISAPI extensions and filters) and COM objects.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_client_services"></A>Client Services</H3>
+
+<UL type="disc">
+	<LI>Control Panel (with source code).</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_remote_connectivity"></A>Remote Connectivity</H3>
+
+<UL type="disc">
+	<LI>Telnet server sample enabling a Telnet client to connect to a remote Windows CE-based (version 3.0) device. This feature can be used for a software update via the Internet (used by CT SE 2 for Siemens Medical).</li>
+
+	<LI>Application Manager to add/remove programs on a Windows CE-based device. </li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_application_runtime_services"></A>Application Runtime Services</H3>
+
+<P>Windows CE 3.0 supports two separate COM modules that offer two different levels of COM support.
+
+<UL type="disc">
+	<LI>A limited-feature, small-footprint module that provides interprocess calls and a free-threading model (similar to Windows CE 2.12).</li>
+
+	<LI>A full-featured module that supports out-of-process calls, full-threading model support, and DCOM. The DCOM module, with the exception of the security interfaces, is fully compatible with Microsoft Windows NT 4.0 Service Pack 5 (SP5).</li>
+
+	<LI>Building upon COM, the Microsoft ActiveX standard is supported (with and without ATL).</li>
+
+	<LI>Enhanced MSMQ compatible with the Windows NT, Microsoft Windows 98, and Microsoft Windows 2000 operating systems.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_gui_and_user"></A>GUI and User</H3>
+
+<UL type="disc">
+	<LI>Microsoft Windows Media technologies player with multimedia streaming, ASF/ASX.</li>
+
+	<LI>Windows Media player control with JScript, VCR-like controls, information retrieval, and monitoring.</li>
+
+	<LI>Sound, used to draw user attention to critical events or to play .WAV files.</li>
+
+	<LI>Microsoft DirectX application programming interface support for cutting edge graphics and audio performance.</li>
+
+	<LI>Support for latest a/v codecs like MPEG-4, WMA, and MP3.</li>
+
+	<LI>Resolution-independent controls and dialog boxes.</li>
+</UL>
+
+<H3 class="dtH1"><A NAME="_rtc_development_tools"></A>Development Tools</H3>
+
+<P>Development tools for Windows CE 3.0 include Platform Builder 3.0 for creating and debugging new embedded designs and Microsoft eMbedded Visual Tools 3.0 for creating embedded applications and components that can be used with Platform Builder.</P>
+
+<P>Platform Builder can package the OS configuration of a kernel image that has been built into a software development kit (SDK), and then export the SDK for the use with eMbedded Visual Tools. This SDK contains the tools and information needed to develop applications for platforms based on the Windows CE operating system. </P>
+
+<P>Disadvantage: By creating an application with eMbedded Visual<I> </I>Tools it will become more difficult to develop this application in parallel for Windows NT and Windows CE. Currently the configuration and project files of Microsoft Visual Studio and eMbedded Visual Tools are not compatible and, at the time of this writing, no tools for converting project and configuration files between those development platforms were known to exist.</P>
+
+<H4 class="dtH1"><A NAME="_rtc_microsoft_windows_ce_platform_builder_30"></A>Windows CE Platform Builder 3.0</H4>
+
+<P>The features of Platform Builder 3.0 are:
+
+<UL type="disc">
+	<LI>The Windows CE operating system can be built for 8 predefined configurations ranging from a minimal system with little more than a kernel to a comprehensive system complete with a rich graphical user interface (GUI) and preloaded applications.</li>
+
+	<LI>Offers an integrated, intuitive UI that supports the needs of developers designing platforms and components.</li>
+
+	<LI>A tool for creating and exporting SDKs that can be imported into eMbedded Visual Tools to develop applications.</li>
+
+	<LI>Optional support for Microsoft run-time libraries, including Microsoft Foundation Classes (MFC) for Windows CE, Active Template Library (ATL) for Windows CE, and Visual Basic.</li>
+
+	<LI>Component development tools that enable the developer to build custom components for a platform, including device drivers, applications, dynamic-link libraries (DLLs), and static libraries.</li>
+
+	<LI>Documentation is available for Windows CE 3.0 and Platform Builder 3.0. Also online and context-sensitive help is provided.</li>
+
+	<LI>A Platform Wizard helps to quickly choose individual OS modules as needed.</li>
+
+	<LI>Two board support packages (ODO and CEPC) are included. Microsoft offers additional BSPs on its Web site, The creation of custom BSPs is also possible. The HARP platform for the Infineon TriCore processor will probably not be available for version 3.0 but will be released for the next version.</li>
+
+	<LI>Connectivity and download features are integrated in the IDE.</li>
+
+	<LI>A Status Monitor displays information regarding communication between the developer workstation and target device.</li>
+
+	<LI>The Extended Microprocessor Kit supports Add-in CPUs. Add-in CPU configurations are added by third-party vendors.</li>
+
+	<LI>Hardware debugging support is integrated.</li>
+
+	<LI>Import of Microsoft Visual C++ projects is supported.</li>
+
+	<LI>Data Visualization support for third party visualization tools.</li>
+
+	<LI>Enhanced debugger user interface.</li>
+
+	<LI>New build options.</li>
+
+	<LI>Integrated Target Control that allows viewing process and thread information, start and stop processes, set debug zone information and much more.</li>
+</UL>
+
+<H4 class="dtH1"><A NAME="_rtc_embedded_visual_tools_30"></A>eMbedded Visual Tools 3.0 </H4>
+
+<P>eMbedded Visual Tools comprises Microsoft eMbedded Visual C++ 3.0 and Microsoft eMbedded Visual Basic 3.0. Both tools are integrated development environments (IDE) that can be used by developers to build applications for the next generation of Windows CE-based communication, entertainment, and information-access devices. eMbedded Visual Tools 3.0 provides help to create, debug, and deploy applications for the Windows CE operating system quickly for a wide range of devices using well-known Visual C++ and Visual Basic development systems and techniques (including an adapted version of the Win32 application programming interface).</P>
+
+<P>The features of eMbedded Visual Tools 3.0 are:
+
+<UL type="disc">
+	<LI>Increased Developer Productivity</li>
+
+	<LI>Simplified Development and Integrated Debugging</li>
+
+	<LI>Comprehensive Access to the Windows CE Platform</li>
+
+	<LI>Fast, Flexible Data Access</li>
+</UL>
+
+<P>As mentioned before, by using these tools, application cross development for Windows NT and Windows CE will become more difficult because two tool sets must be supported (Visual Studio and eMbedded Visual Tools) and configuration/project file exchange is currently not supported. Furthermore, code created by the various wizards is not always compatible with the opposite version of the development tools, e.g. an ATL component source-code created with the ATL wizard in the Visual C++ 6.0 development system will not build in eMbedded Visual C++ 3.0 without editing the program code.</P>
+
+<H2 class="dtH1"><A NAME="_rtc_real_time_properties_of_windows_ce_30"></A>Real-Time Properties of Windows CE 3.0</H2>
+
+<P>Real-time capabilities are very important in most embedded systems. Devices like telecommunications switching equipment, medical monitoring equipment, aircraft "fly-by-wire" controls, space navigation and guidance, laboratory experiment control, automobile engine control, and robotics systems must often manage time critical responses.</P>
+
+<H3 class="dtH1"><A NAME="_rtc_introduction"></A>Introduction</H3>
+
+<P>A real-time system is a system in which the correctness of the computations not only depends on the logical correctness of the computation, but also on the time when the result is produced. If timing constraints of the system are not met, system failure is said to have occurred. (Source: newsgroup.comp.realtime, Donald Gilles)</P>
+
+<P>Because an RTOS is part of a real-time system, it must provide the functionality to enable the overall real-time system to meet its requirements.</P>
+
+<P>Requirements of standard real-time operating systems (RTOS) are:
+
+<UL type="disc">
+	<LI>The OS (operating system) must be multithreaded and preemptive.</li>
+
+	<LI>The OS must support thread priority.</li>
+
+	<LI>The OS must support predictable thread synchronization mechanisms.</li>
+</UL>
+
+<P>In addition, the OS behavior must be predictable. This means real-time system developers must have detailed information about the system interrupt levels, system calls, and timing:
+
+<UL type="disc">
+	<LI>The maximum time during which interrupts are masked by the OS and by device drivers must be known.</li>
+
+	<LI>The maximum time that device drivers use to process an interrupt, and specific IRQ information relating to those device drivers, must be known.</li>
+
+	<LI>The interrupt latency (the time from interrupt to task run) must be predictable and compatible with application requirements.</li>
+</UL>
+
+<P>A major requirement for a RTOS is to process interrupts in a given range of time. As in most modern RTOSes, in Windows CE the processing of interrupts is divided in two steps, the Interrupt Service Routine (ISR) and the Interrupt Service Thread (IST).</P>
+
+<P>The ISR performs minimal processing and returns an interrupt ID to the kernel. The kernel examines the returned interrupt ID and sets the associated event. The interrupt service thread is waiting for that event. When the kernel sets the event, the IST stops waiting and starts performing its additional interrupt processing. Most of the interrupt handling actually occurs within the IST.</P>
+
+<P>The quality of the real-time behavior of an operating system is determined by the following factors. Clearly the interrupt latencies of the ISRs and the ISTs under worst case workload are significant. Also, the behavior of the scheduler, and in the case of Windows CE, the implemented reaction quality of the MMU is an important characteristic. However, more important for a complete real-time system is the jitter of ISRs and especially of ISTs running on top of the underlying RTOS. Events with real-time requirements occur asynchronously, but most of the time periodically and predictably. In most real-time designs its possible to derive characteristic system reaction times from these events. This allows for RT designs with latencies, which do not need to be so small. This is possible if the jitter, the variance of the interrupt latencies, is very small. Think of a band pass filter: the smaller the band width, the better the quality of the filter. Similarly, the smaller the jitter, the better the quality of a real-time </P>
+
+<P class="normal"></P>
+
+<P>OS. Figure 1 clarifies this relationship. </P>
+
+<P class="fig"><IMG SRC="realtimecapabilities01.gif" ALT="" BORDER=0></P>
+
+<P>In automation applications, events from an external technical process (e.g. chemistry transformation of material, GSM protocol stack) are usually sent to the controlling system (usually RTOS applications) on a periodic basis. Therefore, the notion of a "working period" is used to denote the time interval between the instant when an external process generates one of these periodic events (in the form of an interrupt) and the moment it expects a response to this event. The duration of one working period is determined by the requirements of the external technical process. It is valid for the processing of a low priority event to take longer than one working period if the processed result is not needed in the same period that the event occurred in. Sporadic events (e.g. alarm events), on the other hand, usually have a high priority and therefore have to be processed at once. Due to this description we can conclude a general rule for priorities: Periodic events determining the "working period" have a lower priority then sporadic events.</P>
+
+<P>To get significant characteristics concerning real-time behavior and performance of Windows CE, we tracked two different views for the measurements: 
+
+<OL type="1">
+	<LI>Latencies: measurement of interrupt latencies and operating system kernel call duration under different workloads to assess real-time and performance capabilities for Windows CE 3.0.</li>
+
+	<LI>Real-time behavior between different processor families: To collect data of RTOS implementation qualities, we verified interrupt latencies for two processor types, the Hitachi SH4 and the Intel Pentium. Comparisons between the SH4 (RISC processor) and the Pentium (more or less CISC) are made.</li>
+</OL>
+
+<P>The results of the measurements will be graphically presented in sections 3.5 and 3.6, and a summary in sections 3.7 and 3.8. The following paragraphs describe the hardware configuration of the SH4 and the Pentium boards in more detail, as well as the tools used for interrupt latency and performance measurements.</P>
+
+<H3 class="dtH1"><A NAME="_rtc_hardware_configuration_for_performance_and_latency_measurement"></A>Hardware Configuration for Performance and Latency Measurement</H3>
+
+<P>The measurements were performed with the evaluation board S1 from Hitachi Europe (PFM-DS6C) for the Hitachi SH4 processor, and with a standard Siemens PC (PCD-5H) for the Intel Pentium processor. The following configurations were used:</P>
+
+<P>Hardware:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=33%>Processor:</TD>
+<TD width=33%>SH4, 198 MHz</TD>
+<TD width=34%>Pentium, 100 MHz</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Instruction Cache:</TD>
+<TD width=33%>8 kB</TD>
+<TD width=34%>L1: 16 kB, L2: 256 kB</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Operand Cache:</TD>
+<TD width=33%>16 kB</TD>
+<TD width=34%>L1: 16 kB,</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Memory:</TD>
+<TD width=33%>64 MB</TD>
+<TD width=34%>32 MB</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Graphic Chip:</TD>
+<TD width=33%>64413 (Q2SD Board)</TD>
+<TD width=34%>Tseng ET 4000</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Graphic Driver:</TD>
+<TD width=33%>ddi_vga8</TD>
+<TD width=34%>ddi_vga8</TD>
+</TR>
+</table></div>
+
+<P>Software:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=100%>Microsoft Windows CE 3.0, Build 126, Maxall.</TD>
+</TR>
+</table></div>
+
+<H3 class="dtH1"><A NAME="_rtc_latency_tool_description"></A>Latency Tool Description</H3>
+
+<P>Microsoft has developed a test tool for latency measurement named "iltiming". This tool was modified by Siemens CT SE 2 to support LAN services, which are used to send the test results to a workstation or PC. In this manner, errors in measurement are minimized. More precise statements can only be made with the help of a logic analyzer.</P>
+
+<P>Iltiming uses the timer interrupt to measure latency times. It measures the time difference between the occurrence of the timer interrupt and the start of the Interrupt Service routine and also the time difference between the time the ISR finished and the time the Interrupt Service Thread started. </P>
+
+<P>To understand the method that is used to get the time difference between the occurrence of the interrupt and the start of the IST, we take a closer look at the timer. During system initialization, the timer is initialized with a start value of the timer counter. The timer counter decrements every clock tick until it becomes zero. If it becomes zero, the timer triggers an interrupt, loads its timer counter register with the start value, and starts to decrement its timer counter again. This means the interrupt occurred when the timer counter register was loaded with its start value.</P>
+
+<P>The ISR reads the timer counter register immediately after invocation. The difference between the start value of the counter and the value that was read from the ISR, together with the frequency of the timer, can be used to calculate the time difference.</P>
+
+<P>The ISR gets a second timestamp (reading of timer counter register) before leaving. A third timestamp is taken from the Interrupt Service Thread (IST) immediately after invocation. The second and the third timestamp are used by "iltiming" to calculate the time difference that was needed to start the Interrupt Service Thread. To get the complete interrupt latency from the occurrence of a hardware interrupt up to activating the IST, both latency numbers and the individual runtime of the ISR have to be added which is done by our graphical front end on the host system.</P>
+
+<P>It should be noted that usually the time needed to process an IST is also included in the latency measurements. This means that the latency denotes the time difference between the occurrence of an event (beginning of the ISR) and the end of its processing (usually the end of the IST). As the latency in this case is application specific and as we tried to present a "normalized", application independent view on latencies in Windows CE, the time spent inside the IST was not included in our latency experiments.</P>
+
+<P>For the latency measurements the iltiming tool was called with the following parameters: </P>
+
+<PRE class="code">Iltiming &#0150;n 1000 &#0150;t 2 &#0150;udp &lt;ip_addr&gt;
+</PRE>
+
+<P>This means:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=31%>-n 1000</TD>
+<TD width=69%>a measurement cycle consists of 1000 measurements</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>-t 2</TD>
+<TD width=69%>every second timer interrupt is used to measure latency times</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>-udp &lt;ip_addr&gt;</TD>
+<TD width=69%>iltiming sends the test result via UDP to the workstation specified by the IP address &lt;ip_addr&gt;</TD>
+</TR>
+</table></div>
+
+<P>To simulate workload, mathematical functions as well as graphics and network operations were used. As graphical workload, we used an application that rotates a rectangle (see figure 2). The network workload is an application that sends 250 UDP packet/second. To simulate computation, we used standard math functions (mathload.exe).</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities02.gif" ALT="" BORDER=0></P>
+
+<H3 class="dtH1"><A NAME="_rtc_performance_tool_description"></A>Performance Tool Description </H3>
+
+<P>The Dhrystone Test was used to measure arithmetic and string manipulations regarding compiler optimizations and OS support while the SSC-Benchmark was used to benchmark operating system related issues.</P>
+
+<H4 class="dtH1"><A NAME="_rtc_dhrystone"></A>Dhrystone</H4>
+
+<P>Dhrystone is a suite of arithmetic and string manipulating programs. Since the whole program is less then 8 kBytes, it fits into the processor cache.  It can be used to measure two aspects both the processor's speed as well as the optimizing capabilities of the compiler. The resulting number is the number of executions of the program suite per second.</P>
+
+<H4 class="dtH1"><A NAME="_rtc_ssc_benchmark"></A>SSC-Benchmark</H4>
+
+<P>SSC-Benchmark tests the following operating system functionality (structure as specified by SSC):
+
+<OL type="1">
+	<LI><I>Create/Delete Task</I>
+<P>We create a task with a higher priority and start it. The task does not do anything and terminates itself. Therefore, the creator task will be executed again.
+
+<P>Windows CE needs four system calls to perform this test: one for the creation of the task (we create the task suspended), one to set the priority, one to get the task running after setting the priority, and the last system call closes the handle to the created task (after the task has finished itself).
+
+<P>The measurement is labeled "Create Task".
+</li>
+
+	<LI><I>Ping Suspend/Resume Task</I>
+<P>A task with a lower priority resumes another suspended task (with a higher priority). The task with the higher priority suspends itself immediately and therefore returns to the task with the lower priority.
+
+<P>The measurement is labeled "Suspend Ping".
+</li>
+
+	<LI><I>Suspend/Resume Task</I>
+<P>A task with a higher priority suspends a task with a lower priority and resumes it afterwards (without a context switch). 
+
+<P>The measurement is labeled "Suspend/Resume".
+</li>
+
+	<LI><I>Ping Mutex</I>
+<P>Two tasks alternately acquire and release a semaphore.
+
+<P>Windows CE 3.0 supports semaphores, but in this case, the testing was performed using mutexes. A mutex object can only be acquired or released. It is not equal to a counting semaphore, but in this measurement its behavior is similar.
+
+<P>The measurement is labeled "Sema/Mutex Ping".
+</li>
+
+	<LI><I>Get/Release Mutex </I>
+<P>One task acquires a mutex and releases it immediately.
+
+<P>The measurement is labeled "Semaphore/Mutex".
+</li>
+
+	<LI><I>Queue Fill</I>
+<P>Filling the message queue without blocking.
+
+<P>Because Windows CE only uses one message queue (the standard queue for receiving Windows Messages), we do not need to create a separate message queue. However, the messages have to be a user created message with an ID higher than or equal to "WM_USER".
+
+<P>The measurement is labeled "Fill Queue".
+</li>
+
+	<LI><I>Queue Drain</I>
+<P>Emptying the message queue after it has been filled by "Queue Fill".
+
+<P>The measurement is labeled "Empty Queue".
+</li>
+
+	<LI><I>Queue Fill/Drain</I>
+<P>One task sends a message to itself and receives it immediately.
+
+<P>The measurements are labeled "Send/Recv" and "Queue Send/Recv". 
+</li>
+
+	<LI><I>Ping Fill/Drain</I>
+<P>There are two tasks connected with each other via two message queues. The second task waits for messages from the first queue and sends them immediately in the second queue. The first task sends a message in the first queue and waits for receiving the message from the second queue. The two tasks have equal priorities.
+
+<P>The measurement is labeled "Ping Queue".
+</li>
+
+	<LI><I>Allocate/Deallocate Memory</I>
+<P>Allocating and freeing memory regions.
+
+<P>Windows CE is able to allocate memory from the local heap and memory from an additional requested heap. Freeing of the allocated memory was also measured.
+
+<P>The measurements are labeled "Heap Alloc", "Heap Free", "Local Alloc 32B", "Local Alloc 128B" and "Local Free".
+</li>
+
+	<LI><I>Time Calls</I>
+<P>Getting the value of a timer.
+
+<P>For Windows CE we measure two different timer calls, one to get the system time and the other to get the ticks from a high performance timer. 
+
+<P>The measurements are labeled "GetTickCount" and "GetSystemTime".
+</li>
+
+	<LI><I>Ping Event</I>
+<P>Two tasks with equal priorities are each waiting for an event generated by the other task.
+
+<P>The measurement was labeled "Ping Event".
+</li>
+
+	<LI><I>Event Pending</I>
+<P>A task with a higher priority is waiting for an event, which is generated from a task with lower priority.
+
+<P>The measurement was labeled "Event Pending".
+</li>
+
+	<LI><I>Set Event</I>
+<P>We measure the time for setting an event. There is no other task waiting for the event.
+
+<P>The measurement was labeled "Set Event".
+</li>
+</OL>
+
+<H3 class="dtH1"><A NAME="_rtc_results_of_latency_measurement"></A>Results of Latency Measurement </H3>
+
+<P>The following figures present the interrupt latency measurement results that Windows CE 3.0 shows under different workloads running on the specified boards.</P>
+
+<H4 class="dtH1"><A NAME="_rtc_results_for_the_hitachi_sh4_evaluation_board"></A>Results for the Hitachi SH4 Evaluation Board</H4>
+
+<P>The following latency times are measured with the "iltiming" tool on a:
+
+<UL type="disc">
+	<LI>SH4 processor 198 MHz (S1 board), </li>
+
+	<LI>MAXALL Platform.</li>
+</UL>
+
+<P class="label">WORKLOAD: Rotate and Mathload</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities03.gif" ALT="" BORDER=0></P>
+
+<P>Figure 3 shows the results for the graphical and mathematical workload. Each multicolored column represents the results from one execution of the "iltiming" tool (as described in section 3.3, each execution of "iltiming" records 1,000 measurements). The top of the black bar represents the minimum latency measured. The top of the green bar represents the average latency. The top of the red bar represents the maximum latency. The jitter is computed as the difference between the worst (maximum) and best (minimum) IST measurements. The IST minimum, average and maximum runtimes are fairly constant, which can be explained by the constant workload that has been applied to the system.</P>
+
+<P>The ISR runtimes also show rather stable values with the exception of occasional peaks, which can be attributed to the occurrence of other interrupts, or sections of code in the kernel where interrupts are disabled. It might be a good guess that calls to the graphical subsystem of Windows CE are responsible for those peaks.</P>
+
+<P class="label">WORKLOAD: UDP messages 250 packets/second</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities04.gif" ALT="" BORDER=0></P>
+
+<P>Figure 4 presents the results when sending UDP packets as a workload. The IST times are again fairly stable due to the constant nature of the system workload.</P>
+
+<P>The ISR runtime is about the same as before but without the occasional peaks found with the graphical and mathematical workload. Looking at this figure, it should be noted that the occurrence of the worst maximum values of the IST does not necessarily coincide with the maximum runtime values of the ISR.</P>
+
+<H4 class="dtH1"><A NAME="_rtc_results_for_the_intel_pentium_board"></A>Results for the Intel Pentium Board</H4>
+
+<P>The following latency times were measured with the "iltiming" tool on a:
+
+<UL type="disc">
+	<LI>Intel Pentium processor 100 MHz (Siemens PCD-5H), </li>
+
+	<LI>MAXALL Platform.</li>
+</UL>
+
+<P class="label">WORKLOAD: Rotate and Mathload</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities05.gif" ALT="" BORDER=0></P>
+
+<P>Figure 5 reveals a considerable performance problem of the standard x86 Windows CE kernel. Although the Pentium is running at just half the clock rate of the SH4, this result (jitter three times as high as on the S1 board) cannot be explained by merely referring to the clock rate. As a result of these measurements, Microsoft produced a QFE that remedies those performance drawbacks under certain circumstances.</P>
+
+<P>Again, the time spent in the ISR is fairly stable and comparable to the times measured on the Hitachi board. It should be noted that the test on the Pentium board does not show the sporadic peaks that the SH4 has.</P>
+
+<P class="label">WORKLOAD: UDP messages 250 packets/s</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities06.gif" ALT="" BORDER=0></P>
+
+<P>Figure 6 presents about the same picture as Figure 5. The jitter is extraordinarily high, showing a rather strong variance concerning its maximum IST runtime values.</P>
+
+<P>The ISR, on the other hand, still shows about the same performance as in the rotate/mathload test above.</P>
+
+<H4 class="dtH1"><A NAME="_rtc_results_for_the_pentium_board_with_qfe_for_the_x86_kernel"></A>Results for the Pentium Board with QFE for the x86 Kernel</H4>
+
+<P>In response to the performance concerns on x86, Microsoft generated a QFE with optimized TLB handling for the Intel processors:
+
+<UL type="disc">
+	<LI>QFE to reduce interrupt latencies for the x86 processor.</li>
+
+	<LI>Currently optimized for up to 8 processes or 8 x 32 MB of virtual memory.</li>
+
+	<LI>Increasing interrupt latency for more than 8 processes up to standard interrupt latency as shown above.</li>
+
+	<LI>Solution mainly based on an enlarged page pool.</li>
+
+	<LI>Needs about 300K more memory space.</li>
+</UL>
+
+<P>The following latency times were measured with the "iltiming" tool on a:
+
+<UL type="disc">
+	<LI>Intel Pentium processor 100 MHz (Siemens PCD-5H), </li>
+
+	<LI>MAXALL Platform.</li>
+
+	<LI>QFE for x86 kernel applied.</li>
+</UL>
+
+<P class="label">WORKLOAD: Rotate and Mathload</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities07.gif" ALT="" BORDER=0></P>
+
+<P>Figure 7 shows that with the QFE installed, the Pentium board yields a considerably improved IST performance, now comparable to the Hitachi evaluation board. Also, the jitter was reduced to about the same value as on the SH4 board.</P>
+
+<P>Again the ISR consumes the same amount of time as it did in the preceding test runs.</P>
+
+<P class="label">WORKLOAD: UDP messages 250 packets/s</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities08.gif" ALT="" BORDER=0></P>
+
+<P>Figure 8 confirms the improved real-time qualities of the x86 kernel through the QFE. The IST runtimes and the jitter are comparable to the respective values measured on the Hitachi board running the same workload.</P>
+
+<P>Although the QFE does improve the real-time capabilities of Windows CE, it should be noted that it does so only for up to eight processes and at the expense of 300K additional memory. As we will see below, the QFE even has some negative effects on other performance measurements, so caution has to be used when thinking about applying this fix.</P>
+
+<P>Finally, we tested Windows CE without any workload to show that it is very important to test the OS with the right workloads for the specified applications. Otherwise, the measurements are absolute worthless.</P>
+
+<P class="label">NO  WORKLOAD</P>
+
+<P class="fig"><IMG SRC="realtimecapabilities09.gif" ALT="" BORDER=0></P>
+
+<P>The last test performed without any workload at all shows how important it is to include the expected workload into one's real-time considerations. Due to some sporadic peaks, the jitter is the same with workload as without, whereas the overall time consumption of the IST is, as expected, very small (these are "marketing" numbers).</P>
+
+<P>The ISR runtime again is stable at around 3 to 4 &#181;s.</P>
+
+<H3 class="dtH1"><A NAME="_rtc_results_of_performance_measurement"></A>Results of Performance Measurement </H3>
+
+<P>This section presents detailed results of the performance testing conducted on the two different computing boards. The tests for the Pentium board were conducted once with and once without the latency QFE applied. Information on how the following results have to be interpreted can be found in chapter 3.8. The measurement results present the minimum, the average, the maximum, and also the last measured value.  Due to the fact that a program does more than one kernel call we compare the average values in chapter 3.8. This is in contrast to the interrupt latency measurements where the worst case values are of interest. Results for the Hitachi SH4 Evaluation Board</P>
+
+<PRE class="code">***                   Dhrystone:                          ***
+   Dhrystone Benchmark, Version 2.1 (Language: C)
+   Program compiled without 'register' attribute
+   Execution starts, 1000000 runs through Dhrystone
+   Execution ends
+   Final values of the variables used in the benchmark:
+
+Microseconds for one run through Dhrystone:    3.3 
+Dhrystones per Second:                    302388.9 
+--==&lt; Start:      20493     Iterations:  10    Current:      48663 &gt;==--
+Used timer runs with 2083333 Hz, 1 tick is 4.800001e-007 s
+Semaphore/Mutex (10000) last/min/avg/max 37/37/<B>38</B>/366 us, t = 380.5 ms
+Sema/Mutex Ping (10000) last/min/avg/max 117/117/<B>120</B>/2135 us, t = 1202.5 ms
+HeapAlloc       (9999) last/min/avg/max 18/16/<B>19</B>/411 us, t = 190.7 ms
+HeapFree        (10000) last/min/avg/max 27/17/<B>18</B>/594 us, t = 178.4 ms
+LocalAlloc 32B  (10000) last/min/avg/max 19/18/<B>22</B>/1134 us, t = 222.8 ms
+LocalAlloc 128B (10000) last/min/avg/max 19/18/<B>22</B>/2357 us, t = 222.5 ms
+LocalFree       (10000) last/min/avg/max 28/20/<B>24</B>/2353 us, t = 235.9 ms
+GetTickCount    (10000) last/min/avg/max 14/14/<B>15</B>/423 us, t = 147.7 ms
+GetSystemTime   (10000) last/min/avg/max 64/62/<B>64</B>/923 us, t = 636.7 ms
+Create Task    (10000) last/min/avg/max 1149/1131/<B>1159</B>/11594 us, t = 11590.9 ms
+Suspend Ping    (9999) last/min/avg/max 68/56/<B>59</B>/2065 us, t = 586.0 ms
+Suspend/Resume  (10000) last/min/avg/max 39/38/<B>40</B>/2048 us, t = 400.6 ms
+Event Pending   (10000) last/min/avg/max 844/64/<B>68</B>/2076 us, t = 682.7 ms
+Set Event       (10000) last/min/avg/max 20/20/<B>21</B>/513 us, t = 206.1 ms
+Ping Event      (10000) last/min/avg/max 100/99/<B>102</B>/2113 us, t = 1019.2 ms
+Ping Queue      (10000) last/min/avg/max 335/329/<B>344</B>/4282 us, t = 3442.1 ms
+Fill Queue      (10000) last/min/avg/max 81/69/<B>80</B>/2110 us, t = 799.1 ms
+Empty Queue     (10000) last/min/avg/max 56/39/<B>45</B>/2989 us, t = 445.8 ms
+Queue Send/Recv (10000) last/min/avg/max 107/106/<B>109</B>/2159 us, t = 1089.0 ms
+
+***               End of Performance Test                 ***
+</PRE>
+
+<H4 class="dtH1"><A NAME="_rtc_results_for_the_intel_pentium_board_code"></A>Results for the Intel Pentium Board</H4>
+
+<PRE class="code">***                   Dhrystone:                          ***
+   Dhrystone Benchmark, Version 2.1 (Language: C)
+   Program compiled without 'register' attribute
+   Execution starts, 1000000 runs through Dhrystone
+   Execution ends
+   Final values of the variables used in the benchmark:
+
+Microseconds for one run through Dhrystone:    6.5 
+Dhrystones per Second:                    153917.2 
+
+
+--==&lt; Start:      51427     Iterations:  10    Current:      74905 &gt;==--
+Used timer runs with 1193180 Hz, 1 tick is 8.380965e-007 s
+Semaphore/Mutex (10000) last/min/avg/max 23/23/<B>24</B>/509 us, t = 239.2 ms
+Sema/Mutex Ping (10000) last/min/avg/max 104/96/<B>106</B>/2912 us, t = 1056.7 ms
+HeapAlloc       (10000) last/min/avg/max 8/8/<B>9</B>/381 us, t = 93.2 ms
+HeapFree        (10000) last/min/avg/max 8/7/<B>9</B>/875 us, t = 86.8 ms
+LocalAlloc 32B  (10000) last/min/avg/max 8/8/<B>11</B>/659 us, t = 105.9 ms
+LocalAlloc 128B (10000) last/min/avg/max 8/8/<B>11</B>/619 us, t = 106.7 ms
+LocalFree       (10000) last/min/avg/max 8/8/<B>10</B>/1132 us, t = 97.4 ms
+GetTickCount    (10000) last/min/avg/max 6/6/<B>7</B>/535 us, t = 71.1 ms
+GetSystemTime   (10000) last/min/avg/max 112/106/<B>115</B>/2948 us, t = 1151.9 ms
+Create Task     (10000) last/min/avg/max 1251/1245/<B>1281</B>/4565 us, t = 12813.7 ms
+Suspend Ping    (10000) last/min/avg/max 34/31/<B>33</B>/2819 us, t = 333.2 ms
+Suspend/Resume  (10000) last/min/avg/max 21/20/<B>22</B>/873 us, t = 220.4 ms
+Event Pending   (10000) last/min/avg/max 870/43/<B>47</B>/908 us, t = 466.5 ms
+Set Event       (10000) last/min/avg/max 10/9/<B>10</B>/859 us, t = 103.7 ms
+Ping Event      (10000) last/min/avg/max 74/71/<B>76</B>/2964 us, t = 756.9 ms
+Ping Queue      (10000) last/min/avg/max 360/342/<B>356</B>/3373 us, t = 3561.8 ms
+Fill Queue      (10000) last/min/avg/max 70/68/<B>80</B>/2984 us, t = 799.8 ms
+Empty Queue     (10000) last/min/avg/max 49/48/<B>52</B>/1436 us, t = 522.4 ms
+Queue Send/Recv (10000) last/min/avg/max 122/122/<B>126</B>/3732 us, t = 1258.4 ms
+
+***               End of Performance Test                 ***
+</PRE>
+
+<H4 class="dtH1"><A NAME="_rtc_results_for_the_pentium_board_with_qfe_for_the_x86_kernel_code"></A>Results for the Pentium Board with QFE for the x86 Kernel</H4>
+
+<PRE class="code">***                   Dhrystone:                          ***
+   Dhrystone Benchmark, Version 2.1 (Language: C)
+   Program compiled without 'register' attribute
+   Execution starts, 1000000 runs through Dhrystone
+   Execution ends
+   Final values of the variables used in the benchmark:
+
+Microseconds for one run through Dhrystone:    6.5 
+Dhrystones per Second:                    152998.8 
+
+
+--==&lt; Start:      31411     Iterations:  10    Current:      57662 &gt;==--
+Used timer runs with 1193180 Hz, 1 tick is 8.380965e-007 s
+Semaphore/Mutex (10000) last/min/avg/max 23/22/<B>24</B>/893 us, t = 236.6 ms
+Sema/Mutex Ping (10000) last/min/avg/max 107/98/<B>105</B>/2849 us, t = 1048.9 ms
+HeapAlloc       (10000) last/min/avg/max 8/8/<B>9</B>/851 us, t = 95.0 ms
+HeapFree        (10000) last/min/avg/max 10/7/<B>9</B>/501 us, t = 86.5 ms
+LocalAlloc 32B  (10000) last/min/avg/max 8/8/<B>11</B>/2751 us, t = 109.2 ms
+LocalAlloc 128B (10000) last/min/avg/max 8/8/<B>11</B>/577 us, t = 108.1 ms
+LocalFree       (10000) last/min/avg/max 8/8/<B>10</B>/1044 us, t = 102.0 ms
+GetTickCount    (10000) last/min/avg/max 7/6/<B>7</B>/247 us, t = 70.1 ms
+GetSystemTime   (10000) last/min/avg/max 113/111/<B>117</B>/19503 us, t = 1170.3 ms
+Create Task    (10000) last/min/avg/max 1457/1432/<B>1482</B>/16431 us, t = 14818.0 ms
+Suspend Ping    (10000) last/min/avg/max 34/31/<B>33</B>/2746 us, t = 333.4 ms
+Suspend/Resume  (10000) last/min/avg/max 23/20/<B>22</B>/305 us, t = 222.6 ms
+Event Pending   (10000) last/min/avg/max 977/42/<B>48</B>/2135 us, t = 481.3 ms
+Set Event       (10000) last/min/avg/max 10/8/<B>10</B>/498 us, t = 103.5 ms
+Ping Event      (10000) last/min/avg/max 80/70/<B>74</B>/2781 us, t = 735.2 ms
+Ping Queue      (10000) last/min/avg/max 413/397/<B>412</B>/3154 us, t = 4116.5 ms
+Fill Queue      (10000) last/min/avg/max 81/80/<B>92</B>/2815 us, t = 916.5 ms
+Empty Queue     (10000) last/min/avg/max 61/59/<B>64</B>/2797 us, t = 637.5 ms
+Queue Send/Recv (10000) last/min/avg/max 145/143/<B>149</B>/2890 us, t = 1485.9 ms
+
+***               End of Performance Test                 ***
+</PRE>
+
+<P>It is important to note that the QFE worsens some of the performance values of the SSC-Benchmark considerably. CreateTask and the queue functions particularly suffer in performance. This indicates that caution has to be used when applying this fix.</P>
+
+<H3 class="dtH1"><A NAME="_rtc_summary_of_the_latency_results"></A>Summary of the Latency Results</H3>
+
+<P>The following table compares the results of the interrupt latency measurements. It presents the best case, average and worst case results of the ISR and IST measurements for the SH4 as well as for the Pentium processor. The jitter is computed as the difference between the worst (maximum) and best (minimum) IST measurements. These numbers are indicative of the behavior of Windows CE 3.0 on both processors concerning interrupt latencies. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=25%>&nbsp;</TD>
+<TD width=25%><B>SH4</B> 198MHz <BR>
+Windows CE 3.0</TD>
+<TD width=25%><B>Pentium</B> 100 MHz<BR>
+Windows CE 3.0<B> </B></TD>
+<TD width=25%><B>Pentium</B> 100 MHz<BR>
+Windows CE 3.0<B>+QFE</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>ISR Min       [&#181;s]</TD>
+<TD width=25%>0.9</TD>
+<TD width=25%>1.9</TD>
+<TD width=25%>1.9</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>ISR Max</TD>
+<TD width=25%>9.1</TD>
+<TD width=25%>5.7</TD>
+<TD width=25%>5.7</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>ISR Average</TD>
+<TD width=25%>2.9</TD>
+<TD width=25%>2.8</TD>
+<TD width=25%>2.8</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>IST Min</TD>
+<TD width=25%>14.8</TD>
+<TD width=25%>12.9</TD>
+<TD width=25%>9.6</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>IST Max</TD>
+<TD width=25%>54.3</TD>
+<TD width=25%>163.3</TD>
+<TD width=25%>55.6</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>IST Average</TD>
+<TD width=25%>38.2</TD>
+<TD width=25%>28.7</TD>
+<TD width=25%>26.4</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Jitter Max</TD>
+<TD width=25%>40</TD>
+<TD width=25%>150</TD>
+<TD width=25%>46</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Table 1: Latency measurement results</B></P>
+
+<P>Again, it should be noted that Windows CE 3.0 supports nested interrupts. This tends to complicate the kernel's internal interrupt management and would be likely to block the processor more than in earlier versions. Microsoft divided the interrupt kernel calls into multiple, shorter parts, which compensates for this situation. </P>
+
+<P>In table 1, the interesting values are the "Max" times of the IST in general and especially for the Pentium processor with and without the QFE. With the QFE, the maximum IST is about three times faster than without. This directly influences the value of jitter. With the interrupt latency characteristics that Windows CE 3.0 shows for the SH4 as well as for the Pentium processor, it can be claimed that it possesses real-time capabilities, which will substantially improve products.</P>
+
+<H3 class="dtH1"><A NAME="_rtc_summary_of_the_performance_results"></A>Summary of the Performance Results </H3>
+
+<P>Table 2 contains the performance results of Windows CE 3.0 on the SH4 platform (Hitachi S1 development board) and the Intel platform (Siemens Pentium board). The results show that the SH4 is about twice as fast in computation (Drystone), but needs more time for kernel calls. The results have to be interpreted with caution. On the one hand, the results depend upon the motherboard, the peripherals, the clock-rate of the processors, and upon the processor type itself (RISC or CISC). On the other hand, the SH-family does not support TLB exception handling by hardware. In standard automation applications, the overall processor time consumption for kernel calls is usually small compared to the processor time consumed by the user application. Therefore, the considerable performance differences concerning the SSC-Benchmark in table 2 are not so important as they might appear.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=30%>&nbsp;</TD>
+<TD width=22%><B>SH4</B> 198MHz <BR>
+Windows CE 3.0</TD>
+<TD width=24%><B>Pentium</B> 100 MHz<BR>
+Windows CE 3.0</TD>
+<TD width=24%><B>Pentium</B> 100 MHz<BR>
+Windows CE 3.0+<B>QFE</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>Drystone</B></TD>
+<TD width=22%>302388</TD>
+<TD width=24%>153917</TD>
+<TD width=24%>152998</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>SSC-Benchmark</B></TD>
+<TD width=22%>&nbsp;</TD>
+<TD width=24%>&nbsp;</TD>
+<TD width=24%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Semaphore/Mutex   [&#181;s]</TD>
+<TD width=22%>38</TD>
+<TD width=24%>24</TD>
+<TD width=24%>24</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Sema/Mutex Ping    [&#181;s]</TD>
+<TD width=22%>120</TD>
+<TD width=24%>106</TD>
+<TD width=24%>105</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>HeapAlloc               [&#181;s]</TD>
+<TD width=22%>19</TD>
+<TD width=24%>9</TD>
+<TD width=24%>9</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>HeapFree               [&#181;s]</TD>
+<TD width=22%>18</TD>
+<TD width=24%>9</TD>
+<TD width=24%>9</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>LocalAlloc 32B        [&#181;s]</TD>
+<TD width=22%>22</TD>
+<TD width=24%>11</TD>
+<TD width=24%>11</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>LocalAlloc 128B      [&#181;s]</TD>
+<TD width=22%>22</TD>
+<TD width=24%>11</TD>
+<TD width=24%>11</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>LocalFree               [&#181;s]</TD>
+<TD width=22%>24</TD>
+<TD width=24%>10</TD>
+<TD width=24%>10</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>GetTickCount         [&#181;s]</TD>
+<TD width=22%>15</TD>
+<TD width=24%>7</TD>
+<TD width=24%>7</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>GetSystemTime      [&#181;s]</TD>
+<TD width=22%>64</TD>
+<TD width=24%>115</TD>
+<TD width=24%>117</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Create Task           [&#181;s]</TD>
+<TD width=22%>1159</TD>
+<TD width=24%>1281</TD>
+<TD width=24%>1482</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Suspend Ping         [&#181;s]</TD>
+<TD width=22%>59</TD>
+<TD width=24%>33</TD>
+<TD width=24%>33</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Suspend/Resume    [&#181;s]</TD>
+<TD width=22%>40</TD>
+<TD width=24%>22</TD>
+<TD width=24%>22</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Event Pending        [&#181;s]</TD>
+<TD width=22%>68</TD>
+<TD width=24%>47</TD>
+<TD width=24%>48</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Set Event               [&#181;s]</TD>
+<TD width=22%>21</TD>
+<TD width=24%>10</TD>
+<TD width=24%>10</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Ping Event              [&#181;s]</TD>
+<TD width=22%>102</TD>
+<TD width=24%>76</TD>
+<TD width=24%>74</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Ping Queue             [&#181;s]</TD>
+<TD width=22%>344</TD>
+<TD width=24%>356</TD>
+<TD width=24%>412</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Fill Queue               [&#181;s]</TD>
+<TD width=22%>80</TD>
+<TD width=24%>80</TD>
+<TD width=24%>92</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Empty Queue          [&#181;s]</TD>
+<TD width=22%>45</TD>
+<TD width=24%>52</TD>
+<TD width=24%>64</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Queue Send/Recv    [&#181;s]</TD>
+<TD width=22%>109</TD>
+<TD width=24%>126</TD>
+<TD width=24%>149</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Table 2: Performance measurement results</B></P>
+
+<P>Table 2 shows that some functions achieve relatively poor results (e.g. Create Task). These are functions which should normally only be called during the boot time of a real-time application. Most functions that are used during runtime achieve good results (e.g. SetEvent, Queue Send/Recv). However, some "runtime functions" have worse numbers (e.g. Semaphore/ Mutex Ping) than other functions that usually get called during runtime. Improvements in these areas are necessary in order to increase the performance of the OS. </P>
+
+<P>It is important for programmers to know &#0150; and always to keep in mind &#0150; that some of the "ease of use" real-time programming functionality introduced in earlier versions of the Windows CE operating system has been removed in order to improve the real-time behavior of Windows CE 3.0. One example is that only one level of priority inversion is supported. It is a dilemma that many Windows CE programmers are not aware of certain real-time related issues and are not careful in regards to real-time programming (see the following paragraph).  We suggest that software architects should check the programming restrictions of Windows CE 3.0 with respect to their real-time requirements. </P>
+
+<H3 class="dtH1"><A NAME="_rtc_real_time_programming_hints"></A>Real-Time Programming Hints </H3>
+
+<P>Following is a summary of real-time programming do's and don'ts to reach real-time performance.</P>
+
+<P>To achieve real-time performance, do not:
+
+<UL type="disc">
+	<LI>spend inordinate amounts of time in ISRs,</li>
+
+	<LI>spin in highest priority thread, this will starve the system,</li>
+
+	<LI>use non-real-time APIs in real-time threads and expect real-time performance (e.g. SetTimer, file system calls, Process/Thread creation),</li>
+
+	<LI>allow priority inversion to occur. Keep in mind: by using a good system and program architecture, priority inversion <B>is </B>avoidable. </li>
+</UL>
+
+<P>To achieve real-time performance, do:
+
+<UL type="disc">
+	<LI>pre-allocate <I>all</I> your resources (e.g. memory, threads, processes, mutexes, semaphores, events, etc.), </li>
+
+	<LI>pre-allocate resources in system/application pools to use these resources during runtime without allocation and releasing,</li>
+
+	<LI>setup embedded program structure correctly, especially process communication, </li>
+
+	<LI>buffer data in ISR if passing it directly to IST isn't fast enough,</li>
+
+	<LI>use ISR for all the work if:
+<P>no system services are required, and
+
+<P>no extensive processing (long ISR time) required,
+</li>
+
+	<LI>set priorities and scheduling quanta correctly,</li>
+
+	<LI>use the function LoadDriver() to avoid page faults or turn off the demand-pager,</li>
+
+	<LI>watch out for slow hardware or hardware that utilizes the bus for extended periods (e.g. a CMOS real-time clock takes 70&#181;s to access; display acceleration hardware steals bus cycles from CPU). These cases block ISR hits and delay ISR calls,</li>
+
+	<LI>watch for exception handling, which is very time consuming.</li>
+</UL>
+
+<P>All programming efforts are worthless, if:
+
+<UL type="disc">
+	<LI>no structured development process is explicitly declared,</li>
+
+	<LI>no test and verification strategy is developed and used during the whole project, </li>
+
+	<LI>no real-time requirements and their verification are considered (logic testing is not enough!).</li>
+</UL>
+
+<H2 class="dtH1"><A NAME="_rtc_bibliography"></A>Bibliography</H2>
+
+<P><I>Real-Time Programming for Embedded Systems</I>, Holger K&#252;fner, course of lectures, 2000</P>
+
+<P><I>Getting Started with CE 2.12</I>, Luis Alonso, Odo Stierschneider, CT/SE2, November 1999</P>
+
+<P><I>Getting Started with CE 2.11</I>, Luis Alonso, CT/SE2, October 1998</P>
+
+<P><I>Designing and Optimizing Microsoft Windows CE 3.0 for Real-Time Performance</I>, Microsoft Embedded web site, Microsoft Corporation, June 1999 </P>
+
+<P><I>Real-Time Systems with Microsoft Windows CE, </I>Microsoft Embedded web site, Microsoft Corporation, April 2000</P>
+
+<P><I>Updated with the New Kernel Features, Windows CE 3.0 Really Packs a Punch</I>, Douglas Boling, Microsoft Systems Journal web site, Microsoft Corporation, July 1999</P>
+
+<P><I>Microsoft Windows CE Platform Builder Release Notes 3.0 beta</I>, Microsoft Corporation, July 1999</P>
+
+<P><I>Microsoft Windows CE Platform Builder Books Online 3.0 beta</I>, Microsoft Corporation, July 1999</P>
+
+<P><I>Programming Windows CE</I>, Douglas Boling, Microsoft Press, 1998</P>
+
+<P><I>The Microsoft Embedded Technology Tour, Collected Slides</I>, Microsoft Corporation, October 1999</P>
+
+<P><I>Microsoft Windows CE Developers Conference, Collected Slides</I>, Microsoft Corporation, June 1999</P>
+
+<P><I>Windows CE 3.0 Product Overview, </I>Microsoft Corporation,<I> </I>June 2000</P>
+
+<P><I>Building Embedded Systems with the Windows CE 3.0 Platform, </I>Microsoft Embedded web site, Microsoft Corporation, June 2000</P>
+
+<P><I>Windows CE Platform Builder 3.0: Getting Started, </I>Microsoft Embedded web site, Microsoft Corporation, May 2000</P>
+
+<P><I>What's New in Platform Builder 3.0, </I>Microsoft Embedded web site, Microsoft CorporationJune 2000, </P>
+
+<P><I>Comparing Windows CE 3.0 with Windows CE 2.12, </I>Microsoft Embedded web site, Microsoft Corporation, June 2000</P>
+
+<P>Microsoft Windows CE 3.0 Data Sheet, Microsoft Embedded web site, Microsoft Corporation, June 2000</P>
+
+<P class="label"><B>Links</B></P>
+
+<P><A HREF="http://www.siemens.com" target="_blank">Siemens web site</A></P>
+
+<P><A HREF="http://www.ct.siemens.com" target="_blank">Siemens Corporate Research web site</A></P>
+
+<P><A HREF="http://go.microsoft.com/fwlink/?LinkId=407" target="_blank">Microsoft Embedded web site</A></P>
+
+<P><A HREF="http://go.microsoft.com/fwlink/?linkid=4818" target="_blank">Microsoft Systems Journal web site</A></P>
+
+<P>TriCore is a registered trademark of Infineon Technologies AG</P>
+<!--Footer Start-->
+<DIV CLASS="footer">
+<br>
+<HR><!--Feedback Link-->
+<!--Copyright-->
+<p><a href="CE30_Copyright.htm">&copy; 2004 Microsoft Corporation. All rights reserved.</a></p></div> <!--Closes the footer div-->
+</div> <!--closes the topic content div-->
+<!--FOOTER_END-->
+</BODY>
+</HTML>

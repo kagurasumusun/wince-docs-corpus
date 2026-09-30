@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Host Name Resolution Using Registry Entries</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Host Name Resolution Using Registry Entries" />
+<MSHelp:RLTitle Title="Host Name Resolution Using Registry Entries (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="host name resolution, registry entries" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Host_Name_Resolution_Using_Registry_Entries" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="tcpip.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923669">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_host_name_resolution_using_registry_entries"></A>Host Name Resolution Using Registry Entries</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>In Windows NT, one common way to resolve a host name to an IP address is to use a locally-stored database file that contains mappings of IP addresses to host names. Windows CE supports host name resolution by using entries in the registry.</P>
+
+<P>You can store the name-to-IP-address mapping for devices that you connect to regularly by loading HOSTS entries into the <B>HKEY_LOCAL_MACHINE\Comm\Tcpip\Hosts\<I>Host Name</I></B> registry subkey. <B><I>Host Name</I></B> stands for the name of the host and is not hard-coded. This subkey contains three entries, <B>ExpireTime</B>, <B>ipaddr</B>, and <B>aliases</B>. The entries are described in <A HREF="_wcesdk_parameters_configurable_using_the_registry_editor.htm">Parameters Configurable Using the Registry Editor</A>. Setting a large expire time guarantees that the entry is not deleted from the registry. You can also set the expire time to a short interval of time, as an offset from the current file time. When an application calls <B>gethostbyname</B>, the registry is queried first, before a DNS or WINS request is sent. If the host name is found in the registry, <B>gethostbyname</B> returns the registry values.</P>
+
+<H3 class="dtH3"><A NAME="_wcesdk_assigning_a_device_name"></A>Assigning a Device Name</H3>
+
+<P>An OEM can configure the name of a particular device more permanently &#0151; instead of entering the name each time that the device cold boots &#0151; by including the following lines in the Platform.reg file:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Ident]
+    "OrigName"="WinCE"
+    "Name"="MyUniqueName"</PRE>
+
+<P>When the device boots, the system copies the original name to the <B>HKEY_LOCAL_MACHINE\Ident\OrigName</B> registry key. If another device wants to connect to your device by using the value of the <I>Name</I>, the other device can do so. If Redir or MSMQ is started, it logs the value of <I>Name</I> with WINS. Even if Redir and MSMQ do not run on your device, your device responds to the IP subnet broadcast from another device on the same subnet. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>If you update <I>Name</I> after Redir or MSMQ has started, you need to reset the interface before the new name is registered with WINS. To reset the interface, either remove a PCMCIA card and then reinsert it, or use the <B>ipconfig /release</B> command followed by the <B>ipconfig /renew</B> command.</BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+The names of the registry entries for configuring the name of a device may change in future releases.</BLOCKQUOTE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

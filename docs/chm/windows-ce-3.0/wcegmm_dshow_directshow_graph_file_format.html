@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>DirectShow Graph File Format (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="This article describes the format of a saved Microsoft DirectShow graph file (.grf) created by GraphEdit.     The docfile (storage file) contains a stream called ActiveMovieGraph."/>
+<xml>
+<MSHelp:TOCTitle Title="DirectShow Graph File Format" />
+<MSHelp:RLTitle Title="DirectShow Graph File Format (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_directshow_graph_file_format" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924146">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_directshow_graph_file_format"></A>DirectShow Graph File Format</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This article describes the format of a saved Microsoft DirectShow graph file (.grf) created by GraphEdit. </P>
+
+<P>The docfile (storage file) contains a stream called ActiveMovieGraph. This single stream contains within it all the filters, filter names, file names, connections, and so on. </P>
+
+<P>To load such a graph, either: 
+
+<UL type="disc">
+	<LI>Pass the storage file name to <a href="wcesdkrigraphbuilder__renderfile.htm">RenderFile</a>. It will recognize that this is not a media file but a saved graph, and will restore the graph. </li>
+</UL>
+
+<P>- or -
+
+<OL type="1">
+	<LI>Open the storage file (by using <B>StgOpenStorage</B>). </li>
+
+	<LI>Query the filter graph manager for <B>IPersistStream</B>. </li>
+
+	<LI>Open the L"ActiveMovieGraph" stream (by using <B>IStorage::OpenStream</B>). </li>
+
+	<LI>Pass the stream to the filter graph (by using <B>IPersistStream::Load</B>). </li>
+</OL>
+
+<P>The syntax of the graph within the stream follows: </P>
+
+<PRE class="code">&lt;graph&gt; ::= &lt;version3&gt;&lt;filters&gt;&lt;connections&gt;&lt;clock&gt;END | &lt;version2&gt;&lt;filters&gt;&lt;connections&gt;END
+&lt;version3&gt; ::= 0003\r\n
+&lt;version2&gt; ::= 0002\r\n
+&lt;clock&gt; ::= CLOCK &lt;b&gt; &lt;required&gt;&lt;b&gt;&lt;clockid&gt;\r\n
+&lt;required&gt; ::= 1|0
+&lt;clockid&gt; ::= &lt;n&gt;|&lt;class id&gt;
+&lt;filters ::= FILTERS &lt;b&gt;[&lt;filter list&gt;&lt;b&gt;]
+&lt;connections&gt; ::= CONNECTIONS [&lt;b&gt; &lt;connection list&gt;]
+&lt;filter list&gt; ::= [&lt;filter&gt; &lt;b&gt;] &lt;filter list&gt;
+&lt;connection list&gt; ::= [&lt;connection&gt;&lt;b&gt;]&lt;connection list&gt;
+&lt;filter&gt; ::= &lt;n&gt;&lt;b&gt;"&lt;name&gt;"&lt;b&gt;&lt;class id&gt;&lt;b&gt;[&lt;file&gt;]&lt;length&gt;&lt;b1&gt;&lt;filter data&gt;
+&lt;file&gt; ::= SOURCE "&lt;name&gt;"&lt;b&gt; | SINK "&lt;name&gt;"&lt;b&gt;
+&lt;class id&gt; ::= class id of the filter in standard string form
+&lt;name&gt; ::= any sequence of characters NOT including "
+&lt;length&gt; ::= character string representing unsigned decimal number, for example, 23
+             this is the number of bytes of data that follow the following space.
+&lt;b&gt; ::= any combination of space, \t, \r, or \n
+&lt;b1&gt; ::= exactly one space character
+&lt;n&gt; ::= an identifier that will in fact be an integer, 0001, 0002, 0003, etc.
+&lt;connection&gt; ::= &lt;n1&gt;&lt;b&gt;"&lt;pin1 id&gt;"&lt;b&gt;&lt;n2&gt;&lt;b&gt;"&lt;pin2 id&gt;" &lt;media type&gt;
+&lt;n1&gt; ::= identifier of first filter
+&lt;n2&gt; ::= identifier of second filter
+&lt;pin1 id&gt; ::= &lt;name&gt;
+&lt;pin2 id&gt; ::= &lt;name&gt;
+&lt;media type&gt; ::= &lt;major type&gt;&lt;b&gt;&lt;sub type&gt;&lt;b&gt;&lt;flags&gt;&lt;length&gt;&lt;b1&gt;&lt;format&gt;
+&lt;major type&gt; ::= &lt;class id&gt;
+&lt;sub type&gt; ::= &lt;class id&gt;
+&lt;flags&gt; ::= &lt;FixedSizeSamples&gt;&lt;b&gt;&lt;TemporalCompression&gt;&lt;b&gt;
+&lt;FixedSizeSamples&gt; ::= 1|0
+&lt;TemporalCompression&gt; ::= 1|0
+&lt;Format&gt; ::= &lt;SampleSize&gt;&lt;b&gt;&lt;FormatType&gt;&lt;b&gt;&lt;FormatLength&gt;&lt;b1&gt;&lt;FormatData&gt;
+&lt;FormatType&gt; ::= class id of the format in standard string form
+&lt;FormatLength&gt; ::= character string representing unsigned decimal number
+             this is the number of bytes of data that follow the following space.
+&lt;FormatData&gt; ::= binary data</PRE>
+
+<P>On output there will be a new line (\r\n) per filter, one per connection, and one for each of the keywords FILTERS and CONNECTIONS. Each other case of &lt;B&gt; will be a single space. The keywords FILTERS, CONNECTIONS, and END are not localizable. Note also that the filter data and the format data are binary, so they might contain incorrect line breaks, null values, and so on. </P>
+
+<P>The following approximates what the output looks like (a connection line is long and so has been split for presentation here, &lt;with comments enclosed like this&gt;). </P>
+
+<PRE class="code">0002
+&lt;version 2 of the syntax&gt;
+FILTERS
+0001 "Source" {00000000-0000-0000-0000-000000000001} SOURCE "MyFile.mpg" 0000000000
+&lt;id   name   guid of the filter (need this to load it)   
+         source file name   no private data&gt;
+0002 "another filter" {00000000-0000-0000-0000-000000000002} 0000000008 XXXXXXXX
+&lt;id   name   guid   (this one is not a file source or sink)   8 bytes private data&gt;
+CONNECTIONS
+0001 "Output pin" 0002 "In"   &lt;no line break here&gt;
+&lt;filter id pin id   filter id pin id  (output pin is first, then input pin)&gt;
+    0000000172 {00000000-0000-0000-0000-000000000003}   &lt;no line break here&gt;
+&lt;sample size,   media type major-type&gt;
+    {00000000-0000-0000-0000-000000000004} 1 0   &lt;no line break here&gt;
+&lt;media type sub-type, fixed size samples, no temporal compression&gt;
+    0000000093 {00000000-0000-0000-0000-000000000005} 18 YYYYYYYYYYYYYYYYYY
+&lt;length of format   format type   18 bytes of binary format data&gt;
+END
+where: </PRE>
+
+<UL type="disc">
+	<LI>XXX... represents filter data </li>
+
+	<LI>YYY... represents format data </li>
+</UL>
+
+<P>The strings and characters in the file are always in Unicode. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

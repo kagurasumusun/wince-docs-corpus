@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>How to Create a DLL (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="This article describes how to implement a component as a dynamic-link library (DLL) in Microsoft DirectShow."/>
+<xml>
+<MSHelp:TOCTitle Title="How to Create a DLL" />
+<MSHelp:RLTitle Title="How to Create a DLL (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_how_to_create_a_dll" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924090">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_how_to_create_a_dll"></A>How to Create a DLL</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This article describes how to implement a component as a dynamic-link library (DLL) in Microsoft DirectShow. This article is a continuation from <A HREF="wcegmm_dshow_how_to_implement_iunknown.htm">How to Implement IUnknown</A>, which describes how to implement the <a href="_wcesdk_com_IUnknown.htm">IUnknown</a> interface by deriving your component from the <a href="wcesdkrCunknown_class.htm">CUnknown</a> base class.</P>
+
+<P>This article contains the following sections.
+
+<UL type="disc">
+	<LI>Class Factories and Factory Templates</li>
+
+	<LI>Factory Template Array</li>
+
+	<LI>DLL Functions</li>
+</UL>
+
+<P>Registering a DirectShow filter (as opposed to a generic COM object) requires some additional steps that are not covered in this article. For information on registering filters, see <A HREF="wcegmm_dshow_how_to_register_directshow_filters.htm">How to Register DirectShow Filters</A>.</P>
+
+<H2 class="dtH2">Class Factories and Factory Templates</H2>
+
+<P>Before a client creates an instance of a COM object, it creates an instance of the object's class factory, using a call to the <a href="_wcesdk_COM_CoGetClassObject.htm">CoGetClassObject</a> function. The client then calls the class factory's <a href="_wcesdk_com_IClassFactory_CreateInstance.htm">IClassFactory::CreateInstance</a> method. It is the class factory that actually creates the component and returns a pointer to the requested interface. (The <a href="_wcesdk_COM_CoCreateInstance.htm">CoCreateInstance</a> function combines these steps, inside the function call.)</P>
+
+<P><B>CoGetClassObject</B> calls the <a href="_wcesdk_com_DllGetClassObject.htm">DllGetClassObject</a> function, which is defined in the DLL. This function creates the class factory and returns a pointer to an interface on the class factory. DirectShow implements <B>DllGetClassObject</B> for you, but the function relies on your code in a specific way. To understand how it works, you must understand how DirectShow implements class factories.</P>
+
+<P>A class factory is a COM object dedicated to creating another COM object. Each class factory has one type of object that it creates. In DirectShow, every class factory is an instance of the same C++ class, CClassFactory. Class factories are specialized by means of another class, <a href="wcesdkrcfactorytemplate_class.htm">CFactoryTemplate</a>, also called the <I>factory template</I>. Each class factory holds a pointer to a factory template. The factory template contains information about a specific component, such as the component's class identifier (CLSID), and a pointer to a function that creates the component.</P>
+
+<P>In your DLL, declare a global array of factory templates, one for each component in the DLL. When <B>DllGetClassObject</B> makes a new class factory, it searches the array for a template with a matching CLSID. Assuming it finds one, it creates a class factory that holds a pointer to the matching template. When the client calls <B>IClassFactory::CreateInstance</B>, the class factory calls the instantiation function defined in the template.</P>
+
+<P>The benefit of this architecture is that you can define just a few things that are specific to your component, such as the instantiation function, without implementing the entire class factory. </P>
+
+<H2 class="dtH2">Factory Template Array</H2>
+
+<P>The factory template contains the following public member variables.</P>
+
+<PRE class="code">const WCHAR *              m_Name;                // Name
+const CLSID *              m_ClsID;               // CLSID
+LPFNNewCOMObject           m_lpfnNew;             // Function to create an instance
+                                                  //   of the component
+LPFNInitRoutine            m_lpfnInit;            // Initialization function (optional)
+const AMOVIESETUP_FILTER * m_pAMovieSetup_Filter; // Set-up information (for filters)</PRE>
+
+<P>The two function pointers, <I>m_lpfnNew</I> and <I>m_lpfnInit</I>, use the following type definitions.</P>
+
+<PRE class="code">typedef CUnknown *(CALLBACK *LPFNNewCOMObject)(LPUNKNOWN pUnkOuter, HRESULT *phr);
+typedef void (CALLBACK *LPFNInitRoutine)(BOOL bLoading, const CLSID *rclsid);</PRE>
+
+<P>The first is the instantiation function for the component. The second is an optional initialization function. If you provide an initialization function, it is called from inside the DLL entry-point function. (The DLL entry-point function is discussed later in this article.)</P>
+
+<P>Suppose you are creating a DLL that contains a component named CMyComponent, which inherits from <a href="wcesdkrCunknown_class.htm">CUnknown</a>. You must provide the following items in your DLL.
+
+<UL type="disc">
+	<LI>The initialization function, a private method that returns a new instance of CMyComponent. </li>
+
+	<LI>A global array of factory templates, named <I>g_Templates</I><B>.</B> This array contains the factory template for CMyComponent. </li>
+
+	<LI>A global variable named <I>g_cTemplates </I>that specifies the size of the array. </li>
+</UL>
+
+<P>The following example shows how to declare these items.</P>
+
+<PRE class="code">// Private method that returns a new instance. 
+CUnknown * WINAPI CMyComponent::CreateInstance(LPUNKNOWN pUnk, HRESULT *pHr) {
+    CMyComponent *pNewObject = new CMyComponent(NAME("My Component"), pUnk, pHr );
+    if (pNewObject == NULL) {
+        *phr = E_OUTOFMEMORY;
+    }
+    return pNewObject;
+} 
+
+CFactoryTemplate g_Templates[1] = {
+    { L"My Component",                // Name
+      &amp;CLSID_MyComponent,             // CLSID
+      CMyComponent::CreateInstance,   // Method to create an instance of MyComponent
+      NULL,                           // Initialization function
+      NULL                            // Set-up information (for filters)
+    }
+};
+int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);</PRE>
+
+<P>The <B>CreateInstance</B> method calls the class constructor and returns a pointer to the new class instance. The parameter <I>pUnk</I> is a pointer to the aggregating <a href="_wcesdk_com_IUnknown.htm">IUnknown</a>. You can simply pass this parameter to the class constructor. The parameter <I>pHr</I> is a pointer to an <B>HRESULT</B> value. The class constructor sets this to an appropriate value, but if the constructor fails, set the value to E_OUTOFMEMORY. </P>
+
+<P>The <a href="wcesdkrmisc_macros__name.htm">NAME</a> macro generates a string in debug builds but resolves to NULL in retail builds. It is used used in this example to give the component a name that appears in debug logs but does not occupy memory in the final version.</P>
+
+<P>CreateInstance is a private method, so it can have any name. The class factory receives a pointer to it in the factory template. However, <I>g_Templates</I> and <I>g_cTemplates</I> are global variables that the class factory expects to find, so they must have exactly those names. </P>
+
+<H2 class="dtH2">DLL Functions</H2>
+
+<P>A DLL must implement the following functions so that it can be registered, unregistered, and loaded into memory.
+
+<UL type="disc">
+	<LI><a href="wcesdkrDllMain.htm">DllMain</a><B>:</B> The DLL entry point. The name <B>DllMain</B> is a placeholder for the library-defined function name. The DirectShow implementation uses the name <B>DllEntryPoint</B>. For more information, see the Platform SDK. </li>
+
+	<LI><a href="_wcesdk_com_DllGetClassObject.htm">DllGetClassObject</a><B>:</B> Creates a class factory instance. Described in the previous sections. </li>
+
+	<LI><B>DllCanUnloadNow:</B> Queries whether the DLL can safely be unloaded. </li>
+
+	<LI><B>DllRegisterServer:</B> Creates registry entries for the DLL. </li>
+
+	<LI><B>DllUnregisterServer:</B> Removes registry entries for the DLL. </li>
+</UL>
+
+<P>Of these, the first three are implemented by DirectShow. If your factory template provides an initialization function in the <I>m_lpfnInit</I> member variable, that function is called from inside the DLL entry-point function. For more information on when the system calls the DLL entry-point function, see <B>DllMain</B> in the Platform SDK.</P>
+
+<P>You must implement <B>DllRegisterServer</B> and <B>DllUnregisterServer</B>, but DirectShow provides a function named <a href="wcesdkrdll_setup_functs__amoviedllregisterserver.htm">AMovieDLLRegisterServer</a> that does the necessary work. Your component can simply wrap this function, as shown in the following example.</P>
+
+<PRE class="code">STDAPI DllRegisterServer()
+{
+    return AMovieDLLRegisterServer( TRUE );
+}
+
+STDAPI DllUnregisterServer()
+{
+    return AMovieDLLRegisterServer( FALSE );
+}</PRE>
+
+<P>However, within <B>DllRegisterServer</B> and <B>DllUnregisterServer</B> you can customize the registration process as needed.</P>
+
+<P>In your module-definition (.def) file, export all the DLL functions except for the entry-point function. The following is an example .def file.</P>
+
+<PRE class="code">EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE
+    DllRegisterServer PRIVATE
+    DllUnregisterServer PRIVATE</PRE>
+
+<P>You can register the DLL using the Regsvr32.exe utility.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>
