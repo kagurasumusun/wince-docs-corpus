@@ -1035,6 +1035,8 @@ def main():
                         rows[parts[0]] = parts
         now = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
         for pid, status, snapshot in status_log:
+            if status == "covered":
+                continue          # derivable from the corpus; keep the file small
             rows[pid] = [pid, status, now, snapshot]
         with open(path, "w", encoding="utf-8") as fh:
             fh.write("page_id\tstatus\tchecked\tsnapshot\n")
