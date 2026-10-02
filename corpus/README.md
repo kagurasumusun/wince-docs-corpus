@@ -9,13 +9,13 @@ that way:
 corpus/
 ├── learn/<set>/              pages harvested from learn.microsoft.com
 ├── chm/windows-ce-3.0/       pages extracted from the official CE 3.0 CHM
-├── win32/api/, win32/guide/  Win32-shared reference + guides (MicrosoftDocs)
+├── win32/api/, win32/guide/  Win32 reference + guides (MicrosoftDocs)
 └── msdn-library/
     ├── 2010-05/<set>/        Internet Archive copies of MSDN topics
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 85,242 pages (77,953 in the CE trees + 7,289 Win32-shared pages).
+Total: 97,118 pages (77,953 in the CE trees + 19,165 Win32 pages).
 
 ## Sets under `corpus/learn/` (68,704 pages)
 
@@ -30,9 +30,9 @@ Total: 85,242 pages (77,953 in the CE trees + 7,289 Win32-shared pages).
 | `windows-embedded-compact-7` | 256 | Windows Embedded Compact 7 remote-tools reference (`(Compact 7)`). |
 | `unclassified` | 414 | Set could not be determined from page metadata. |
 
-(IDs 84,538 vs 85,242 pages: `corpus/win32/api/` contains both `CreateFileA`
-and `CreateFileW` style variants, so a few hundred page ids repeat across
-modules; the index keys pages by path.)
+(IDs 96,414 vs 97,118 pages: sdk-api contains the same page id in several
+modules — `winsock`/`winsock2` and the `A`/`W` variants of a name — so a few
+hundred page ids repeat; the SQL index keys pages by path.)
 
 `unclassified/` is a deliberate holding area, not a junk drawer: 313 of the
 414 pages are Windows CE 2.12/3.0-era native API topics (e.g. `dprintf`,
@@ -96,12 +96,14 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 * `msdn-library/windows-mobile-6.5/` — 34 Windows Mobile 6.5 topics in MSDN
   Library (MSHelp XML) format; see
   `msdn-library/windows-mobile-6.5/PROVENANCE.md`.
-* `win32/` — 7,289 pages from Microsoft's public Win32 documentation
-  repositories (`MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`), limited to
-  the API names and subsystems Windows CE shares. Markdown, not HTML; see
-  `win32/README.md`. This is the "w32共通部分" of the corpus: the same API is
-  documented on the CE side in `learn/` and `chm/`, so a question about e.g.
-  `CreateFile` can be answered from both angles.
+* `win32/` — 19,165 pages from Microsoft's public Win32 documentation
+  repositories (`MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`): the 183
+  sdk-api modules that contain a CE-shared API name (5,219 shared pages +
+  11,876 context pages) and the programming guides for the subsystems CE
+  implements. Markdown, not HTML; see `win32/README.md`. This is the
+  "w32共通部分" of the corpus: the same API is documented on the CE side in
+  `learn/` and `chm/`, and `data/reports/win32-shared.tsv` maps one to the
+  other, so e.g. `CreateFile` can be read from both angles.
 
 ## Regenerating the index
 

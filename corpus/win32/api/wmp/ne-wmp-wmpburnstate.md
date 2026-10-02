@@ -1,0 +1,107 @@
+---
+UID: NE:wmp.WMPBurnState
+title: WMPBurnState (wmp.h)
+description: The WMPBurnState enumeration type defines the possible operational states of Windows Media Player as it burns a CD.
+helpviewer_keywords: ["WMPBurnState","WMPBurnState enumeration [Windows Media Player]","wmp.wmpburnstate","wmp/WMPBurnState","wmp/wmpbsBurning","wmp/wmpbsBusy","wmp/wmpbsErasing","wmp/wmpbsPreparingToBurn","wmp/wmpbsReady","wmp/wmpbsRefreshStatusPending","wmp/wmpbsStopped","wmp/wmpbsUnknown","wmp/wmpbsWaitingForDisc","wmpbsBurning","wmpbsBusy","wmpbsErasing","wmpbsPreparingToBurn","wmpbsReady","wmpbsRefreshStatusPending","wmpbsStopped","wmpbsUnknown","wmpbsWaitingForDisc"]
+old-location: wmp\wmpburnstate.htm
+tech.root: WMP
+ms.assetid: fd286f68-4d36-48ae-800e-ad2be4c613c1
+ms.date: 4/26/2023
+ms.keywords: WMPBurnState, WMPBurnState enumeration [Windows Media Player], wmp.wmpburnstate, wmp/WMPBurnState, wmp/wmpbsBurning, wmp/wmpbsBusy, wmp/wmpbsErasing, wmp/wmpbsPreparingToBurn, wmp/wmpbsReady, wmp/wmpbsRefreshStatusPending, wmp/wmpbsStopped, wmp/wmpbsUnknown, wmp/wmpbsWaitingForDisc, wmpbsBurning, wmpbsBusy, wmpbsErasing, wmpbsPreparingToBurn, wmpbsReady, wmpbsRefreshStatusPending, wmpbsStopped, wmpbsUnknown, wmpbsWaitingForDisc
+req.header: wmp.h
+req.include-header: 
+req.target-type: Windows
+req.target-min-winverclnt: Windows Media Player 11.
+req.target-min-winversvr: 
+req.kmdf-ver: 
+req.umdf-ver: 
+req.ddi-compliance: 
+req.unicode-ansi: 
+req.idl: 
+req.max-support: 
+req.namespace: 
+req.assembly: 
+req.type-library: 
+req.lib: 
+req.dll: 
+req.irql: 
+targetos: Windows
+req.typenames: WMPBurnState
+req.redist: 
+ms.custom: 19H1
+f1_keywords:
+ - WMPBurnState
+ - wmp/WMPBurnState
+dev_langs:
+ - c++
+topic_type:
+ - APIRef
+ - kbSyntax
+api_type:
+ - HeaderDef
+api_location:
+ - wmp.h
+api_name:
+ - WMPBurnState
+---
+
+# WMPBurnState enumeration
+
+
+## -description
+
+\[The feature associated with this page, [Windows Media Player SDK](/windows/win32/wmp/windows-media-player-sdk), is a legacy feature. It has been superseded by [MediaPlayer](/uwp/api/Windows.Media.Playback.MediaPlayer). **MediaPlayer** has been optimized for Windows 10 and Windows 11. Microsoft strongly recommends that new code use **MediaPlayer** instead of **Windows Media Player SDK**, when possible. Microsoft suggests that existing code that uses the legacy APIs be rewritten to use the new APIs if possible.\]
+
+The <b>WMPBurnState</b> enumeration type defines the possible operational states of Windows Media Player as it burns a CD.
+
+## -enum-fields
+
+### -field wmpbsUnknown:0
+
+Not a valid state.
+
+### -field wmpbsBusy
+
+Windows Media Player is busy. Try again in a moment.
+
+### -field wmpbsReady
+
+Ready to begin burning a CD.
+
+### -field wmpbsWaitingForDisc
+
+Waiting for the disc to become available.
+
+### -field wmpbsRefreshStatusPending
+
+The burn playlist has changed. Call <a href="/windows/desktop/api/wmp/nf-wmp-iwmpcdromburn-refreshstatus">IWMPCdromBurn::refreshStatus</a>.
+
+### -field wmpbsPreparingToBurn
+
+Windows Media Player is preparing to burn the CD.
+
+### -field wmpbsBurning
+
+The CD is being burned.
+
+### -field wmpbsStopped
+
+The burning operation is stopped.
+
+### -field wmpbsErasing
+
+Windows Media Player is erasing the CD.
+
+### -field wmpbsDownloading
+
+## -remarks
+
+Windows Media Player 10 Mobile: This enumeration is not supported.
+
+## -see-also
+
+<a href="/windows/desktop/WMP/enumeration-types">Enumeration Types</a>
+
+
+
+<a href="/windows/desktop/api/wmp/nn-wmp-iwmpcdromburn">IWMPCdromBurn Interface</a>

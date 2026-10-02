@@ -59,6 +59,7 @@ Usage:
 
 import argparse
 import collections
+import contextlib
 import datetime as _dt
 import gzip
 import http.client
@@ -207,22 +208,43 @@ def dest_for(url):
 # politeness: per-host pacing + robots.txt
 # ---------------------------------------------------------------------------
 class HostPacer:
-    """One in-flight request per host, `delay` seconds apart."""
+    """One in-flight request per host, `delay` seconds apart.
+
+    `slot()` is held for the whole request (not just the delay), which is
+    what guarantees that a host never sees two concurrent requests even
+    when `--workers` runs several hosts at once.  The delay is measured
+    from the *start* of the previous request to this host, so the pace is
+    `1/delay` requests per second per host regardless of how long the
+    responses take.
+    """
 
     def __init__(self):
         self._lock = threading.Lock()
         self._last = {}
+        self._locks = collections.defaultdict(threading.Lock)
 
-    def wait(self, host, delay):
-        while True:
-            with self._lock:
-                now = time.monotonic()
-                last = self._last.get(host, 0.0)
-                wait = delay + random.uniform(0, delay / 2.0) - (now - last)
-                if wait <= 0:
-                    self._last[host] = now
-                    return
-            time.sleep(min(wait, 1.0))
+    def _host_lock(self, host):
+        with self._lock:
+            return self._locks[host]
+
+    @contextlib.contextmanager
+    def slot(self, host, delay):
+        lock = self._host_lock(host)
+        lock.acquire()
+        try:
+            while True:
+                with self._lock:
+                    now = time.monotonic()
+                    last = self._last.get(host, 0.0)
+                    wait = (delay + random.uniform(0, delay / 2.0)
+                            - (now - last))
+                    if wait <= 0:
+                        self._last[host] = now
+                        break
+                time.sleep(min(wait, 1.0))
+            yield
+        finally:
+            lock.release()
 
 
 class Response:
@@ -324,7 +346,8 @@ class Fetcher:
         parser = urllib.robotparser.RobotFileParser()
         url = f"{scheme}://{host}/robots.txt"
         try:
-            resp = self._request(scheme, host, url, extra_headers=None)
+            with self.pacer.slot(host, 0.0):
+                resp = self._request(scheme, host, url, extra_headers=None)
             text = resp.body.decode("utf-8", "replace")
             parser.parse(text.splitlines())
         except Exception:  # noqa: BLE001
@@ -386,17 +409,17 @@ class Fetcher:
             return None, "robots-disallow"
 
         for attempt in range(self.max_attempts):
-            self.pacer.wait(host, delay * self.delay_factor())
-            try:
-                resp = self._request(p.scheme, host, url)
-            except urllib.error.HTTPError as exc:            # pragma: no cover
-                if exc.code == 404:
-                    return None, 404
-                last_err = str(exc)
-                resp = None
-            except Exception as exc:  # noqa: BLE001
-                last_err = str(exc)
-                resp = None
+            with self.pacer.slot(host, delay * self.delay_factor()):
+                try:
+                    resp = self._request(p.scheme, host, url)
+                except urllib.error.HTTPError as exc:  # pragma: no cover
+                    if exc.code == 404:
+                        return None, 404
+                    last_err = str(exc)
+                    resp = None
+                except Exception as exc:  # noqa: BLE001
+                    last_err = str(exc)
+                    resp = None
 
             if resp is None:
                 self._drop(p.scheme, host)
@@ -511,17 +534,20 @@ class GitBatcher:
         self.enabled = enabled
         self.batch_size = batch_size
         self.pending = []
+        self._lock = threading.Lock()
 
     def add(self, paths):
         if not self.enabled or not paths:
             return
-        self.pending.extend(paths)
+        with self._lock:
+            self.pending.extend(paths)
 
     def maybe_flush(self, force=False):
         if not self.enabled:
             return
-        if not force and len(self.pending) < self.batch_size:
-            return
+        with self._lock:
+            if not force and len(self.pending) < self.batch_size:
+                return
         self.flush()
 
     def flush(self):
@@ -693,6 +719,7 @@ def main():
                             batch_size=args.batch)
 
     counters = collections.Counter()
+    counters_lock = threading.Lock()
     lines = 0
     t0 = time.time()
 
@@ -703,34 +730,51 @@ def main():
         print(f"[{qname}] queue open failed: {exc}", flush=True)
         return 1
 
-    with queue_file as fh:
-        for chunk in iter_chunks(fh, CHUNK_SIZE):
-            for url in chunk:
-                if args.limit and lines >= args.limit:
-                    break
-                lines += 1
-                result, written = process_url(
-                    url, have_ids, faillog, fetcher, index_by_id,
-                    dry_run=args.dry_run)
-                counters[result] += 1
-                if written:
-                    gitbatcher.add([written])
-                    gitbatcher.maybe_flush()
+    def work(url):
+        nonlocal lines
+        result, written = process_url(
+            url, have_ids, faillog, fetcher, index_by_id,
+            dry_run=args.dry_run)
+        with counters_lock:
+            counters[result] += 1
+            lines += 1
+            if written:
+                gitbatcher.add([written])
+                gitbatcher.maybe_flush()
+            if lines % 200 == 0 or result in ("stored", "would-fetch"):
+                elapsed = max(time.time() - t0, 1)
+                rate = (counters["stored"] or counters["would-fetch"]) \
+                    / elapsed
+                print(
+                    f"[{qname}] lines={lines:,} "
+                    f"stored={counters['stored']:,} "
+                    f"would-fetch={counters['would-fetch']:,} "
+                    f"skipped={counters['skipped']:,} "
+                    f"failed={counters['failed']:,} "
+                    f"rate={rate:.2f} pages/s", flush=True)
 
-                if lines % 200 == 0 or result in ("stored", "would-fetch"):
-                    elapsed = max(time.time() - t0, 1)
-                    rate = (counters["stored"] or counters["would-fetch"]) \
-                        / elapsed
-                    print(
-                        f"[{qname}] lines={lines:,} "
-                        f"stored={counters['stored']:,} "
-                        f"would-fetch={counters['would-fetch']:,} "
-                        f"skipped={counters['skipped']:,} "
-                        f"failed={counters['failed']:,} "
-                        f"rate={rate:.2f} pages/s", flush=True)
+    def urls():
+        sent = 0
+        with queue_file as fh:
+            for chunk in iter_chunks(fh, CHUNK_SIZE):
+                for url in chunk:
+                    if args.limit and sent >= args.limit:
+                        return
+                    sent += 1
+                    yield url
+                chunk.clear()
 
-            if args.limit and lines >= args.limit:
-                break
+    if args.workers > 1:
+        import concurrent.futures as cf
+
+        print(f"[{qname}] {args.workers} workers "
+              f"(one in-flight request per host, always)", flush=True)
+        with cf.ThreadPoolExecutor(max_workers=args.workers) as pool:
+            for _ in pool.map(work, urls(), chunksize=8):
+                pass
+    else:
+        for url in urls():
+            work(url)
 
     if args.dry_run:
         print(f"[{qname}] DRY RUN lines={lines:,} "

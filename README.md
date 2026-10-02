@@ -7,7 +7,7 @@ Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
 documentation Windows CE shares**, so that an API question can be answered
 without breaking the offline copy.
 
-**85,242 pages**: 77,953 harvested/extracted CE pages (HTML) and 7,289 Win32
+**97,118 pages**: 77,953 harvested/extracted CE pages (HTML) and 19,165 Win32
 pages (markdown, from Microsoft's public `MicrosoftDocs` repositories). The
 repository also carries the original media the pages were extracted from, the
 URL queues used to harvest them, the complete upstream snapshots, and the
@@ -20,7 +20,7 @@ derived catalogs, manifests and indexes.
 | `corpus/` | The documentation itself, one page per file (HTML, plus markdown for the Win32 trees). See `corpus/README.md`. |
 | `corpus/learn/<set>/` | 68,704 pages harvested from `learn.microsoft.com/…/previous-versions/windows/embedded`. |
 | `corpus/chm/windows-ce-3.0/` | 8,962 pages extracted from the official Windows CE 3.0 documentation CHM. |
-| `corpus/win32/api/`, `corpus/win32/guide/` | 7,289 Win32-shared pages (API reference + subsystem guides) from `MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`, pinned by commit. |
+| `corpus/win32/api/`, `corpus/win32/guide/` | 19,165 Win32 pages: 5,219 CE-shared API pages, 11,876 module-context pages, 2,068 subsystem guides (from `MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`, pinned by commit). `data/reports/win32-shared.tsv` maps the shared surface. |
 | `corpus/msdn-library/2010-05/<set>/` | 253 Internet Archive copies of MSDN topics (May 2010), filed under the set they duplicate. |
 | `corpus/msdn-library/windows-mobile-6.5/` | 34 Windows Mobile 6.5 topics in MSDN Library (MSHelp) format. |
 | `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror) and the complete MicrosoftDocs snapshots (`sources/microsoftdocs/`), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
@@ -28,7 +28,7 @@ derived catalogs, manifests and indexes.
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
 | `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32-shared pages), the two index builders and the gap-report generator. |
 | `.github/workflows/harvest.yml` | Manual harvest workflow. Left untouched by the reorganization — it still refers to the pre-reorganization paths. |
-| `.actions/harvest.yml` | Updated copy of that workflow for this tree, staged outside `.github/` because installing it needs the GitHub `workflows` permission. See `.actions/README.md`. |
+| `.actions/` | Staged GitHub Actions workflows (harvest, Win32 refresh) that could not be installed under `.github/` because that needs the GitHub `workflows` permission. See `.actions/README.md`. |
 
 ## Corpus conventions
 
@@ -63,6 +63,7 @@ python3 tools/build-index-sql.py      # data/index/corpus.sqlite3 (incremental; 
 python3 tools/build-gap-report.py     # data/reports/missing-pages.tsv (catalog vs corpus)
 python3 tools/fetch-upstream.py list                    # what the Win32 import would take
 python3 tools/fetch-upstream.py subset --source sdk-api # corpus/win32/api (pinned commit)
+python3 tools/build-win32-map.py      # data/reports/win32-{shared,imported}.tsv
 
 # Harvest more pages (see .actions/harvest.yml for the CI variant)
 python3 tools/harvest.py --queue queues/to-fetch-mslearn.txt --limit 1000
@@ -109,7 +110,7 @@ harvester's resume check) don't have to rescan ~78k files.
   `tools/make-index.py` → `tools/build-index.py`.
   Pages were deduplicated and renamed to their canonical page ids at the
   same time.
-* 2026-10 additions: `corpus/win32/` (7,289 Win32-shared pages from
+* 2026-10 additions: `corpus/win32/` (19,165 Win32 pages from
   `MicrosoftDocs/sdk-api` + `MicrosoftDocs/win32`), `sources/microsoftdocs/`
   (full snapshots + provenance), `tools/fetch-upstream.py`,
   `corpus/msdn-library/2010-05/` (the wayback capture, filed by set instead of

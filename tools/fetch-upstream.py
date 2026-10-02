@@ -21,6 +21,10 @@ What this script can do
      every sdk-api page whose API name also appears in one of the CE catalogs
      (``data/catalogs/*.tsv``), including the ANSI/Unicode ``A``/``W``
      variants of a shared base name (``CreateFileW`` -> ``CreateFile``).
+     ``--scope modules`` additionally takes *every* page of the modules that
+     contain at least one shared API name, so that the interfaces, enums and
+     structs used together with a shared function are present too
+     (183 modules, ~17k pages).
    * ``corpus/win32/guide/<folder>/<page>.md``
      the programming guides for CE-relevant subsystems (see ``GUIDE_FOLDERS``).
 
@@ -199,15 +203,27 @@ def shared_api_names(tar, root, subdir, catalogs):
     return pages, names, shared
 
 
-def extract_subset(source, tar_path, apply, pack=False):
+def extract_subset(source, tar_path, apply, pack=False, scope="shared"):
     meta = UPSTREAM[source]
     catalogs = load_catalogs() if source == "sdk-api" else {}
     written = []
     with open_tarball(tar_path) as tar:
         root = tarball_root(tar)
         if source == "sdk-api":
-            pages, _names, shared = shared_api_names(
+            pages, names, shared = shared_api_names(
                 tar, root, meta["subdir"], catalogs)
+            if scope == "modules":
+                modules = {module for kind, module, _n in pages.values()}
+                extra = 0
+                for name, entries in names.items():
+                    for kind, module, member_name in entries:
+                        if module in modules and member_name not in pages:
+                            pages[member_name] = (kind, module,
+                                                  os.path.basename(
+                                                      member_name))
+                            extra += 1
+                print(f"[subset] sdk-api scope=modules: +{extra:,} pages from "
+                      f"{len(modules)} modules")
             print(f"[subset] sdk-api pages: {len(pages):,} "
                   f"(shared API names: {len(shared):,})")
             for member_name, (kind, module, fn) in sorted(pages.items()):
@@ -290,6 +306,10 @@ def main():
                                       "downloading (per --source)")
     ap.add_argument("--cache-dir", default=os.path.join(ROOT, ".cache",
                                                         "upstream"))
+    ap.add_argument("--scope", default="modules",
+                    choices=["shared", "modules"],
+                    help="sdk-api: shared API names only, or whole modules "
+                         "that contain them (default: modules)")
     args = ap.parse_args()
 
     sources = list(UPSTREAM) if args.source == "all" else [args.source]
@@ -302,10 +322,17 @@ def main():
             with open_tarball(tar_path) as tar:
                 root = tarball_root(tar)
                 if source == "sdk-api":
-                    pages, _n, shared = shared_api_names(
+                    pages, names, shared = shared_api_names(
                         tar, root, UPSTREAM[source]["subdir"], load_catalogs())
+                    if args.scope == "modules":
+                        modules = {mod for _k, mod, _n in pages.values()}
+                        for entries in names.values():
+                            for _k, mod, member in entries:
+                                if mod in modules:
+                                    pages.setdefault(member, None)
                     print(f"{source}: would extract {len(pages):,} pages "
-                          f"({len(shared):,} shared API names)")
+                          f"({len(shared):,} shared API names, "
+                          f"scope={args.scope})")
                 else:
                     n = 0
                     for member in iter_blobs(tar, root,
@@ -321,7 +348,7 @@ def main():
         if args.mode == "pack":
             build_pack(source, tar_path)
         else:
-            extract_subset(source, tar_path, apply=True)
+            extract_subset(source, tar_path, apply=True, scope=args.scope)
     return 0
 
 

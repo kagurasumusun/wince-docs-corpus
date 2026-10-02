@@ -19,16 +19,21 @@ with `nf` = function, `ns` = structure, `ne` = enumeration, `nc` = callback,
 
 ### What was extracted into the corpus
 
-`corpus/win32/api/<module>/<page>.md` — **5,219 pages** for the **5,009 API
-names** that also appear in the Windows CE catalogs
-(`data/catalogs/windows-ce-*.tsv`), including the `A`/`W` variants of a shared
-base name (`CreateFileW` is included because Windows CE documents
-`CreateFile`). This is the "Win32-common" API surface of Windows CE.
+`corpus/win32/api/<module>/<page>.md` — **17,095 pages** in two rings:
 
-Page-by-page extraction is limited to that shared surface on purpose: the
-complete snapshot would add 65,911 files, which a git corpus of this size
-cannot carry page-by-page. The snapshot tarball next to this file *is*
-complete — unpack it with:
+* **5,219 pages** for the **5,009 API names** that also appear in the Windows
+  CE catalogs (`data/catalogs/windows-ce-*.tsv`), including the `A`/`W`
+  variants of a shared base name (`CreateFileW` is included because Windows CE
+  documents `CreateFile`). This is the "Win32-common" API surface of CE.
+* **11,876 pages** that are the remaining content of the 183 modules those
+  shared names live in (`--scope modules`, the default), so the enums,
+  structs, callbacks and interfaces that accompany a shared function are
+  present. `data/reports/win32-imported.tsv` marks each page `ce_shared`.
+
+Page-by-page extraction stops at those 183 modules on purpose: importing all
+65,911 sdk-api pages would more than double this repository with desktop-only
+material (DirectX, WMI, AD schema, …). The snapshot tarball next to this file
+*is* complete — unpack it with:
 
 ```bash
 python3 tools/fetch-upstream.py pack --source sdk-api   # rebuild the snapshot

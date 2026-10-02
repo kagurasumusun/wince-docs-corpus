@@ -7,9 +7,15 @@ one place.
 
 ```
 corpus/win32/
-├── api/<module>/<page>.md     Win32 API reference (5,219 pages)
-└── guide/<folder>/<page>.md   Win32 programming guides (2,070 pages)
+├── api/<module>/<page>.md     Win32 API reference (17,095 pages)
+└── guide/<folder>/<page>.md   Win32 programming guides (2,068 pages)
 ```
+
+19,166 pages in total — `api/` covers **every page of the 183 sdk-api modules
+that document at least one CE-shared API**, so the structs, enums, callbacks
+and interfaces used together with a shared function are present as well.
+`data/reports/win32-imported.tsv` marks each page `ce_shared = yes/no`
+(5,219 pages are CE-shared, 11,876 are module context).
 
 Format is the upstream markdown (YAML front matter with `title`, `description`,
 `helpviewer_keywords`, `ms.assetid`, …) — not HTML like the rest of the corpus.
@@ -17,12 +23,21 @@ The upstream commit, licenses and the complete snapshots are documented in
 `sources/microsoftdocs/PROVENANCE.md`; extraction is reproducible with
 `python3 tools/fetch-upstream.py subset --source sdk-api|win32`.
 
-## api/ — 5,219 pages, 183 modules
+## api/ — 17,095 pages, 183 modules
 
-Every `MicrosoftDocs/sdk-api` page whose **API name also occurs in a Windows CE
-catalog** (`data/catalogs/*.tsv`), including `A`/`W` variants of a shared base
-name (Windows CE documents `CreateFile`, so `CreateFileA` and `CreateFileW`
-are both included):
+Two rings of pages, both from `MicrosoftDocs/sdk-api`:
+
+* **CE-shared (5,219 pages, 5,009 API names).** Every page whose name also
+  occurs in a Windows CE catalog (`data/catalogs/*.tsv`), including `A`/`W`
+  variants of a shared base name — Windows CE documents `CreateFile`, so
+  `CreateFileA` and `CreateFileW` are both included. These are the APIs the
+  two platforms have in common; `data/reports/win32-shared.tsv` maps each name
+  to its CE page ids and its Win32 page.
+* **Module context (11,876 pages).** Every remaining page of the modules those
+  shared APIs live in (`winbase`, `wingdi`, `winuser`, `winsock2`, `wincrypt`,
+  `strmif`, `commctrl`, `shobjidl_core`, …). They provide the surrounding API
+  surface — e.g. `CRYPT_*` alongside the shared `CryptAcquireContext`, the
+  DirectShow interfaces alongside the CE DirectShow pages.
 
 | kind | pages | example |
 |------|------:|---------|
@@ -87,3 +102,6 @@ by adding them to `GUIDE_FOLDERS` in `tools/fetch-upstream.py`.
   `old-location`) — useful for matching a topic to old MSDN/CHM ids.
   `data/index/INDEX.tsv` and the SQL index include these pages with ids such as
   `nf-fileapi-createfilew` and book `win32/api/fileapi`.
+* Not everything here is on CE: `--scope modules` brings in desktop-only pages
+  of a shared module (transactional NTFS, `SERVICE_*`, DirectShow filters that
+  CE never had). `data/reports/win32-imported.tsv` says which is which.

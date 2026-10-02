@@ -1,0 +1,94 @@
+---
+UID: NF:wmsdkidl.IWMDRMWriter.GenerateSigningKeyPair
+title: IWMDRMWriter::GenerateSigningKeyPair (wmsdkidl.h)
+description: The GenerateSigningKeyPair method generates a public and private key pair that are used to sign the DRM header object.
+helpviewer_keywords: ["GenerateSigningKeyPair","GenerateSigningKeyPair method [windows Media Format]","GenerateSigningKeyPair method [windows Media Format]","IWMDRMWriter interface","IWMDRMWriter interface [windows Media Format]","GenerateSigningKeyPair method","IWMDRMWriter.GenerateSigningKeyPair","IWMDRMWriter::GenerateSigningKeyPair","IWMDRMWriterGenerateSigningKeyPair","wmformat.iwmdrmwriter_generatesigningkeypair","wmsdkidl/IWMDRMWriter::GenerateSigningKeyPair"]
+old-location: wmformat\iwmdrmwriter_generatesigningkeypair.htm
+tech.root: wmformat
+ms.assetid: 2ad66a22-b088-423c-b726-63bc6372f3c2
+ms.date: 4/26/2023
+ms.keywords: GenerateSigningKeyPair, GenerateSigningKeyPair method [windows Media Format], GenerateSigningKeyPair method [windows Media Format],IWMDRMWriter interface, IWMDRMWriter interface [windows Media Format],GenerateSigningKeyPair method, IWMDRMWriter.GenerateSigningKeyPair, IWMDRMWriter::GenerateSigningKeyPair, IWMDRMWriterGenerateSigningKeyPair, wmformat.iwmdrmwriter_generatesigningkeypair, wmsdkidl/IWMDRMWriter::GenerateSigningKeyPair
+req.header: wmsdkidl.h
+req.include-header: Wmsdk.h
+req.target-type: Windows
+req.target-min-winverclnt: Windows 2000 Professional [desktop apps only],Windows Media Format 9 Series SDK, or later versions of the SDK
+req.target-min-winversvr: Windows 2000 Server [desktop apps only]
+req.kmdf-ver: 
+req.umdf-ver: 
+req.ddi-compliance: 
+req.unicode-ansi: 
+req.idl: 
+req.max-support: 
+req.namespace: 
+req.assembly: 
+req.type-library: 
+req.lib: Wmvcore.lib; WMStubDRM.lib (if you use DRM)
+req.dll: 
+req.irql: 
+targetos: Windows
+req.typenames: 
+req.redist: 
+ms.custom: 19H1
+f1_keywords:
+ - IWMDRMWriter::GenerateSigningKeyPair
+ - wmsdkidl/IWMDRMWriter::GenerateSigningKeyPair
+dev_langs:
+ - c++
+topic_type:
+ - APIRef
+ - kbSyntax
+api_type:
+ - COM
+api_location:
+ - Wmvcore.lib
+ - Wmvcore.dll
+ - WMStubDRM.lib
+ - WMStubDRM.dll
+api_name:
+ - IWMDRMWriter.GenerateSigningKeyPair
+---
+
+# IWMDRMWriter::GenerateSigningKeyPair
+
+
+## -description
+
+\[The feature associated with this page, [Windows Media Format 11 SDK](/windows/win32/wmformat/windows-media-format-11-sdk), is a legacy feature. It has been superseded by [Source Reader](/windows/win32/medfound/source-reader) and [Sink Writer](/windows/win32/medfound/sink-writer). **Source Reader** and **Sink Writer** have been optimized for Windows 10 and Windows 11. Microsoft strongly recommends that new code use **Source Reader** and **Sink Writer** instead of **Windows Media Format 11 SDK**, when possible. Microsoft suggests that existing code that uses the legacy APIs be rewritten to use the new APIs if possible.\]
+
+<p class="CCE_Message">[<b>GenerateSigningKeyPair</b> is available for use in the operating systems specified in the Requirements section. It may be altered or unavailable in subsequent versions. Instead, use <a href="https://www.microsoft.com/PlayReady/">Microsoft PlayReady</a>.
+]
+
+
+The <b>GenerateSigningKeyPair</b> method generates a public and private <a href="/windows/desktop/wmformat/wmformat-glossary">key</a> pair that are used to sign the DRM header object.
+
+## -parameters
+
+### -param pwszPrivKey [out]
+
+Pointer to a wide-character <b>null</b>-terminated string containing the private key. Set to <b>NULL</b> to retrieve the size of the string, which is returned in <i>pcwchPrivKeyLength</i>. Use this key to set the <a href="/windows/desktop/wmformat/drm-headersignprivkey">DRM_HeaderSignPrivKey</a> property.
+
+### -param pcwchPrivKeyLength [in, out]
+
+Pointer to a <b>DWORD</b> containing the size, in wide characters, of <i>pwszPrivKey</i>. This size includes the terminating <b>null</b> character.
+
+### -param pwszPubKey [out]
+
+Pointer to a wide-character <b>null</b>-terminated string containing the public key. Set to <b>NULL</b> to retrieve the size of the string, which is returned in <i>pcwchPubKeyLength</i>. This key is shared only with the license server; it enables the license server to verify the signature of the DRM header object when users attempt to obtain a content license for a file.
+
+### -param pcwchPubKeyLength [in, out]
+
+Pointer to a <b>DWORD</b> containing the size, in wide characters, of <i>pwsPubKey</i>. This size includes the terminating <b>null</b> character.
+
+## -returns
+
+If the method succeeds, it returns S_OK. If it fails, it returns an <b>HRESULT</b> error code.
+
+## -remarks
+
+Do not confuse the signature that is applied to the ASF header object, using these keys, with the signature that is applied to the DRM header object by using the <a href="/windows/desktop/wmformat/drm-lasignatureprivkey">DRM_LASignaturePrivKey</a> and other properties that make up the digital signature object in the file.
+
+The keys generated by this method are the basis for revocation lists, so the number of different key pairs you use will be based on your particular business needs. In general, the same key pair should be used for some set of content that forms a logical group and that shares the same revocation list.
+
+## -see-also
+
+<a href="/windows/desktop/api/wmsdkidl/nn-wmsdkidl-iwmdrmwriter">IWMDRMWriter Interface</a>
