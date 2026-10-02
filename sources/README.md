@@ -48,9 +48,14 @@ can collect them):
 | CE 5.0 Standard SDK | Microsoft Download Center id 17310 (still live) | the CE 5.0 Standard SDK API surface |
 | MSDN Library discs (2001–2010) | Internet Archive / WinWorld | the MSDN-era captures of CE 3.0–5.0 reference, including custom-hardware docs |
 
-For page-level material the *queues* are the actionable list: the
-`queues/wayback-msdn-2010.txt` capture still has 31,135 topics that were never
-stored (the 161 stored ones were the topics duplicated by Learn), and
-`queues/mslearn-embedded.txt` is exhausted (`--dry-run` reports 0 to fetch).
-Run those from a network with access to `web.archive.org`/`learn.microsoft.com`
-(`.github/workflows/harvest.yml` does exactly that).
+For page-level material the *queues* are the actionable list, and as of
+2026-10 both of them are done: `queues/mslearn-embedded.txt` is exhausted
+(`--dry-run` reports 0 to fetch), and `queues/wayback-msdn-2010.txt` — 31,388
+captures of the May 2010 MSDN Library — holds the *same topics, id for id*,
+as the pages already harvested from learn.microsoft.com, so a dry run now
+reports 31,226 covered (already in the corpus), 161 stored and exactly one
+topic left to fetch. The next page-level material has to come from sources
+that predate or bypass that topic space: the mirror imports
+(`corpus/msdn-library/techshelps/`, `corpus/kb/`) and the mirror crawls of the
+older MSDN Library editions (`queues/mirrors.tsv`,
+`.github/workflows/crawl-mirror.yml`).

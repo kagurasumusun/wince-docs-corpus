@@ -737,7 +737,7 @@ def store_page(content, path, page_id):
 
 def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
                 wayback_retries=2, snapshot_cache=None, status_log=None,
-                known_dead=None, known_snapshots=None):
+                known_dead=None, known_snapshots=None, wayback_all=False):
     """Fetch and store one URL. Returns (result, written_path, detail)."""
 
     kind, pid = dest_for(url)
@@ -751,6 +751,16 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
     else:
         if "wb:" + pid in have_ids:
             return "skipped", None, ""
+
+    if kind == "wayback" and not wayback_all and pid in have_ids:
+        # The topic is already in the corpus.  The 2010 MSDN Library topics
+        # and the learn.microsoft.com "previous versions" pages are the same
+        # documents id for id, so fetching the archive.org rendering would
+        # store a duplicate (with the Wayback banner around it).  Skipping
+        # here costs one set lookup instead of two requests.
+        if status_log is not None:
+            status_log.append((pid, "covered", ""))
+        return "covered", None, "already-in-corpus"
 
     if dry_run:
         # No network access at all: report what would be fetched.
@@ -880,6 +890,9 @@ def main():
                     help="write a JSON run summary (counters, rate, delay) "
                          "here; used by the Actions workflow to report what "
                          "a run actually did")
+    ap.add_argument("--wayback-all", action="store_true",
+                    help="fetch every wayback topic, even ones the corpus "
+                         "already covers")
     ap.add_argument("--wayback-retries", type=int, default=3,
                     help="other capture dates to try when archive.org "
                          "answers with an interstitial (default 3)")
@@ -943,7 +956,8 @@ def main():
             url, have_ids, faillog, fetcher, index_by_id,
             dry_run=args.dry_run, wayback_retries=args.wayback_retries,
             snapshot_cache=snapshot_cache, status_log=status_log,
-            known_dead=known_dead, known_snapshots=known_snapshots)
+            known_dead=known_dead, known_snapshots=known_snapshots,
+            wayback_all=args.wayback_all)
         with counters_lock:
             counters[result] += 1
             lines += 1
@@ -1080,6 +1094,7 @@ def main():
         print(f"[{qname}] DRY RUN lines={lines:,} "
               f"would-fetch={counters['would-fetch']:,} "
               f"already-have={counters['skipped']:,} "
+              f"covered={counters['covered']:,} "
               f"invalid={counters['invalid']:,}", flush=True)
         write_summary()
         return 0
@@ -1108,7 +1123,8 @@ def main():
                     url, have_ids, None, fetcher, index_by_id,
                     wayback_retries=args.wayback_retries,
                     snapshot_cache=snapshot_cache, status_log=status_log,
-                    known_dead=known_dead, known_snapshots=known_snapshots)
+                    known_dead=known_dead, known_snapshots=known_snapshots,
+                    wayback_all=args.wayback_all)
                 if result == "stored":
                     counters["stored"] += 1
                     counters["failed"] -= 1
@@ -1129,6 +1145,7 @@ def main():
     print(
         f"[{qname}] DONE lines={lines:,} stored={counters['stored']:,} "
         f"not-archived={counters['not-archived']:,} "
+        f"covered={counters['covered']:,} "
         f"skipped={counters['skipped']:,} fails={counters['failed']:,} "
         f"invalid={counters['invalid']:,} robots={counters['robots']:,} "
         f"rate={counters['stored'] / elapsed:.2f} pages/s "

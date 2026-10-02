@@ -94,10 +94,16 @@ The checker also reports how many pages belong to each index (`INDEX.tsv`,
 harvest or import.
 
 `wayback-status.tsv` — what the harvester learned about the Wayback queue:
-one row per topic (`page_id`, `status` = `stored` / `resolved` /
-`not-archived`, `checked`, `snapshot`). `not-archived` means the Internet
-Archive has no capture of that topic at all, so the topic cannot come from
-the 2010 MSDN snapshot and has to come from another source.
+one row per topic (`page_id`, `status`, `checked`, `snapshot`).
+
+* `stored` — the page is in the corpus.
+* `resolved` — the pinned capture date did not work, but the availability API
+  named a capture that did; the URL it returned is in the last column.
+* `not-archived` — the Internet Archive has no capture of that topic at all;
+  it is skipped without further requests (the queue stays as a record).
+* `covered` — the topic is already in the corpus from another tree (in
+  practice the learn.microsoft.com harvest), so the MSDN rendering would be a
+  duplicate; skipped without a request.
 
 `harvest-last.json` / `harvest-history.tsv` — what the last harvester run did
 (counters plus a `fail_log.statuses` breakdown from `tools/harvest.py

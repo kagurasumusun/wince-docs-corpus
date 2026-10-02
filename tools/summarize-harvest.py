@@ -17,8 +17,33 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SUMMARY = "data/reports/harvest-last.json"
 HISTORY = "data/reports/harvest-history.tsv"
 
-COLUMNS = ("finished", "queue", "lines", "stored", "skipped", "failed",
-           "invalid", "robots", "interstitial", "requests", "elapsed_seconds")
+COLUMNS = ("finished", "queue", "lines", "stored", "skipped", "covered",
+           "not_archived", "failed", "invalid", "robots", "interstitial",
+           "requests", "elapsed_seconds")
+# counters in data/reports/harvest-last.json are hyphenated
+COUNTER_KEY = {"covered": "covered", "not_archived": "not-archived"}
+
+
+def migrate_header(path):
+    """Rewrite an older history file so every row has today's columns."""
+    with open(path, encoding="utf-8") as fh:
+        lines = fh.read().splitlines()
+    if not lines:
+        return
+    header = lines[0].split("\t")
+    if header == list(COLUMNS):
+        return
+    rows = []
+    for line in lines[1:]:
+        record = dict(zip(header, line.split("\t")))
+        rows.append("\t".join(record.get(col, "0" if col in COLUMNS
+                                          and col not in ("finished", "queue")
+                                          else "")
+                              for col in COLUMNS))
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\t".join(COLUMNS) + "\n")
+        for row in rows:
+            fh.write(row + "\n")
 
 
 def main():
@@ -38,7 +63,7 @@ def main():
     with open(summary_path, encoding="utf-8") as fh:
         data = json.load(fh)
     counters = data.get("counters", {})
-    row = {key: counters.get(key, 0) for key in COLUMNS}
+    row = {key: counters.get(COUNTER_KEY.get(key, key), 0) for key in COLUMNS}
     for key in COLUMNS:
         if key in data:                  # queue, lines, requests, elapsed, ...
             row[key] = data[key]
@@ -49,6 +74,8 @@ def main():
         else os.path.join(ROOT, args.history)
     os.makedirs(os.path.dirname(history_path), exist_ok=True)
     new = not os.path.exists(history_path)
+    if not new:
+        migrate_header(history_path)
     with open(history_path, "a", encoding="utf-8") as fh:
         if new:
             fh.write("\t".join(COLUMNS) + "\n")
@@ -57,7 +84,8 @@ def main():
     if not args.quiet:
         fails = data.get("fail_log", {}).get("statuses") or {}
         print(f"{data.get('queue')}: stored={row['stored']} "
-              f"skipped={row['skipped']} failed={row['failed']} "
+              f"skipped={row['skipped']} covered={row['covered']} "
+              f"not-archived={row['not_archived']} failed={row['failed']} "
               f"interstitial={row['interstitial']} "
               f"requests={row['requests']} "
               f"elapsed={row['elapsed_seconds']}s")

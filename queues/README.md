@@ -55,9 +55,14 @@ Start with `dry_run: true` to see what a queue would still fetch — it makes no
 requests at all. (For the automatic run, the equivalent is a comment-only
 `queues/auto-harvest.txt`: it does nothing at all.) The harvester resumes from `data/index/corpus.sqlite3`, so a
 queue can be re-run safely and a job that hits the 6-hour runner limit simply
-continues on the next run. `wayback-msdn-2010` is the big one: 31,135 topics
-left at ~1.5 s each, i.e. ~13 h and roughly 0.8 GB of HTML, so cap each run
-(`limit: 8000`) instead of trying to do it in one go.
+continues on the next run. `wayback-msdn-2010` turned out to be a no-op: its
+31,388 topics are the same documents, id for id, as the pages already in
+`corpus/learn/` (the 2010 MSDN Library and learn.microsoft.com "previous
+versions" are one and the same topic space). A `--dry-run` of the queue now
+reports 31,226 `covered`, 161 `skipped`, one topic to fetch, and that one is
+the only CE topic of the 2010 snapshot the corpus is missing. The harvester
+skips covered topics before it touches the network, so the queue can be left
+in place as a record without spending requests.
 
 Notes:
 
@@ -76,8 +81,10 @@ Notes:
   `404`, `empty-response`, `wayback-interstitial`, …).
 * Wayback topics that the Internet Archive never captured are detected: the
   harvester asks the availability API for a real snapshot when the pinned
-  capture date fails, records `stored` / `resolved` / `not-archived` in
-  `data/reports/wayback-status.tsv` and does not retry them.
+  capture date fails, records `stored` / `resolved` / `not-archived` /
+  `covered` in `data/reports/wayback-status.tsv`, does not retry the dead
+  ones, and skips (without any request) the ones the corpus already covers.
+  `--wayback-all` fetches the MSDN rendering of a covered topic anyway.
 * Failures are logged to `data/logs/fail-<queue>.log`. Entries with status
   `wayback-interstitial` are URLs the Internet Archive can only replay as its
   "JavaScript required" notice; the harvester tries other capture dates and
