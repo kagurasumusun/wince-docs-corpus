@@ -34,7 +34,7 @@ DUPLICATES = os.path.join(ROOT, "data", "reports", "duplicates.tsv")
 PROBLEMS = os.path.join(ROOT, "data", "reports", "corpus-problems.tsv")
 
 # Same page selection as tools/build-index.py.
-PAGE_EXT = (".html", ".md")
+PAGE_EXT = (".html", ".htm", ".md")
 NOT_PAGES = {"README.md", "PROVENANCE.md"}
 
 # web.archive.org answers with this interstitial when the replay needs
@@ -146,7 +146,7 @@ def main():
             bad_utf8.append(rel(path))
         if info["interstitial"]:
             interstitial.append(rel(path))
-        if path.lower().endswith(".html"):
+        if path.lower().endswith((".html", ".htm")):
             if "</html>" not in info["tail"].decode("utf-8", "replace").lower():
                 no_endtag.append(rel(path))
 

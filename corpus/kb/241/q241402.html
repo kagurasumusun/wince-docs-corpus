@@ -1,0 +1,195 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>HOWTO: Run ADOCE on a Palm-Size PC Device from VBCE6</title>
+</head>
+<body>
+<!-- Q241402.TXT — Microsoft KnowledgeBase article, from the KB archive at
+     github.com/jeffpar/kbarchive (original text). Product line: Windows CE. -->
+<h1>HOWTO: Run ADOCE on a Palm-Size PC Device from VBCE6</h1>
+<pre class="kb">
+DOCUMENT:Q241402  05-APR-2002  [vbwin]
+TITLE   :HOWTO: Run ADOCE on a Palm-Size PC Device from VBCE6
+PRODUCT :Microsoft Visual Basic for Windows
+PROD/VER::1.0
+OPER/SYS:
+KEYWORDS:kbToolkit kbVBp600 kbGrpDSVB kbOSWinCE211 kbDSupport
+
+======================================================================
+-------------------------------------------------------------------------------
+The information in this article applies to:
+
+ - Microsoft Windows CE Toolkit for Visual Basic 6.0, version 1.0 
+-------------------------------------------------------------------------------
+
+SUMMARY
+=======
+
+This article describes the steps that are required to target Palm-size PC
+devices with a project built with the Windows CE Toolkit for Visual Basic 6.0
+(VBCE) that uses the Microsoft ADO for Windows CE SDK (ADOCE). A code sample is
+included to illustrate this functionality.
+
+MORE INFORMATION
+================
+
+In order to target a Palm-size PC device with a VBCE application that uses
+ADOCE, the following are required:
+
+ - Microsoft Visual Basic 6.0.
+
+ - The Windows CE Toolkit for Visual Basic 6.0.
+
+ - A Palm-size PC device that runs Windows CE 2.11.
+
+ - The Palm-size PC 1.2 Platform SDK that can be downloaded from the following
+   Microsoft Web site:
+
+   http://www.microsoft.com/msdownload/cetools/ppcsdk_color.asp
+
+Recommended: Now available for download is the Microsoft ActiveX Data Objects for
+Windows CE, version 3.1:
+
+   http://msdn.microsoft.com/downloads/sample.asp?url=/msdn-files/027/001/491/msdncompositedoc.xml
+
+
+Following is a sample that illustrates how to create a table and how to query
+mSysTables and mSysFields to verify the existence of the table. The database
+table is created in the \databases folder.
+
+NOTE: If you&#x27;re using ADOCE 3.1 with your project, the syntax for the
+CreateObject call in the code below will be:
+
+   CreateObject(&quot;ADOCE.Recordset.3.1&quot;)
+
+Step-by-Step Example
+--------------------
+
+1. Create a new PsPC Project in Visual Basic. Form1 is created by default.
+
+2. Add a CommandButton, two Label and two ListBox controls to the form. Do not
+   be concerned with placement of the controls.
+
+3. On the Project menu, select References, and then add a reference to Microsoft
+   CE ADO Control.
+
+4. Paste the following code into Form1:
+
+   Option Explicit
+   Dim MyRecordSet
+   Dim lMyRecordCount As Long
+   Dim lRecordIndex As Long
+   Dim sMyTable As String
+
+   Private Sub Form_Load()
+       &#x27;initialize controls
+       Form1.Caption = &quot;CE Database View&quot;
+       Command1.Caption = &quot;Create a Table&quot;
+       Label1.Caption = &quot;Tables:&quot;
+       Label2.Caption = &quot;Fields:&quot;
+       Form1.Move 0, 0, 3705, 4275
+       Command1.Move 120, 120, 2175, 375
+       Label1.Move 120, 720, 2000, 255
+       Label2.Move 120, 2280, 2000, 255
+       List1.Move 120, 960, 3375, 1230
+       List2.Move 120, 2520, 3375, 1230
+   End Sub
+
+   Private Sub Command1_Click()
+       Dim sSQL
+       Set MyRecordSet = CreateObject(&quot;ADOCE.Recordset&quot;)
+       
+       On Error Resume Next
+       sSQL = &quot;DROP TABLE TestTable&quot;
+       MyRecordSet.Open sSQL, , 2, 3
+       MyRecordSet.Close
+       On Error GoTo 0
+       
+       sSQL = &quot;CREATE TABLE TestTable (Id INT, Title TEXT)&quot;
+       MyRecordSet.Open sSQL, , 2, 3
+       Set MyRecordSet = Nothing
+       PopulateTableList
+   End Sub
+
+   Private Sub PopulateTableList()
+       
+       &#x27; Load the ListBox with the Names of Non-System Tables.
+       List1.Clear
+       
+       Set MyRecordSet = CreateObject(&quot;ADOCE.Recordset&quot;)
+       
+       MyRecordSet.Open &quot;MSysTables&quot;, &quot;&quot;, 1, 3
+       lMyRecordCount = MyRecordSet.RecordCount
+       
+       For lRecordIndex = 0 To lMyRecordCount - 1
+           sMyTable = MyRecordSet.Fields(&quot;TableName&quot;).Value
+           If Mid(sMyTable, 1, 4) &lt;&gt; &quot;MSys&quot; Then
+               List1.AddItem sMyTable
+           End If
+           MyRecordSet.MoveNext
+       Next
+       
+       MyRecordSet.Close
+   End Sub
+
+   Private Sub List1_Click()
+       Dim sSQL
+       Dim iTableID
+       
+       &#x27;clear the list of fields
+       List2.Clear
+       
+       &#x27;get selected table
+       sMyTable = List1.List(List1.ListIndex)
+       
+       &#x27;obtain the TableID for use in pulling the fields
+       Set MyRecordSet = CreateObject(&quot;ADOCE.Recordset&quot;)
+       sSQL = &quot;SELECT TableID FROM MSysTables &quot; &amp; _
+           &quot;WHERE [TableName] = &quot;&quot;&quot; &amp; sMyTable &amp; &quot;&quot;&quot;&quot;
+           
+       MyRecordSet.Open sSQL, , 1, 3
+       iTableID = MyRecordSet.Fields(&quot;TableID&quot;).Value
+       MyRecordSet.Close
+       
+       &#x27;query mSysFields for the selected table&#x27;s fields
+       sSQL = &quot;SELECT FieldName FROM MSysFields &quot; &amp; _
+           &quot;WHERE [TableID] = &quot;&quot;&quot; &amp; iTableID &amp; &quot;&quot;&quot;&quot;
+           
+       MyRecordSet.Open sSQL, , 1, 3
+       lMyRecordCount = MyRecordSet.RecordCount
+       For lRecordIndex = 0 To lMyRecordCount - 1
+           List2.AddItem MyRecordSet.Fields(&quot;FieldName&quot;).Value
+           MyRecordSet.MoveNext
+       Next
+       MyRecordSet.Close
+   End Sub
+
+5. Run the project. Click the CommandButton to create the table, then click the
+   table name in the table list to view the fields that you created.
+
+Additional query words: vbce vbce6 adoce
+
+======================================================================
+Keywords          : kbToolkit kbVBp600 kbGrpDSVB kbOSWinCE211 kbDSupport 
+Technology        : kbVBSearch kbAudDeveloper kbWinCETKVBSearch kbWinCESearch kbWinCETK100VB600
+Version           : :1.0
+Issue type        : kbhowto
+
+=============================================================================
+
+THE INFORMATION PROVIDED IN THE MICROSOFT KNOWLEDGE BASE IS
+PROVIDED &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND.  MICROSOFT DISCLAIMS
+ALL WARRANTIES, EITHER EXPRESS OR IMPLIED, INCLUDING THE WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  IN NO
+EVENT SHALL MICROSOFT CORPORATION OR ITS SUPPLIERS BE LIABLE FOR
+ANY DAMAGES WHATSOEVER INCLUDING DIRECT, INDIRECT, INCIDENTAL,
+CONSEQUENTIAL, LOSS OF BUSINESS PROFITS OR SPECIAL DAMAGES, EVEN IF
+MICROSOFT CORPORATION OR ITS SUPPLIERS HAVE BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.  SOME STATES DO NOT ALLOW THE EXCLUSION
+OR LIMITATION OF LIABILITY FOR CONSEQUENTIAL OR INCIDENTAL DAMAGES
+SO THE FOREGOING LIMITATION MAY NOT APPLY.
+
+Copyright Microsoft Corporation 2002.</pre>
+</body>
+</html>

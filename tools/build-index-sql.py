@@ -23,7 +23,8 @@ Incremental: unchanged files (mtime+size) are skipped; changed/new
 files are re-extracted; files removed from disk drop their rows.
 --full rebuilds from scratch.
 
-Handles both page formats in corpus/: ``.html`` (harvested Learn pages, CHM
+Handles the page formats in corpus/: ``.html``/``.htm`` (harvested Learn
+pages, CHM
 extractions, MSDN Library captures) and ``.md`` (the Win32 pages imported from
 MicrosoftDocs, see corpus/win32/README.md).  Markdown pages get their title
 from the ``title:`` front-matter field and their API name from the ``nf-`` /
@@ -213,10 +214,13 @@ def main():
         if row:
             state = json.loads(row[0])
             state_json = row[0]
-    files = sorted(
-        f for pat in ("*.html", "*.md")
-        for f in glob.glob(os.path.join(CORPUS, "**", pat), recursive=True)
-        if os.path.basename(f) not in ("README.md", "PROVENANCE.md"))
+    files = []
+    for dirpath, _dirnames, filenames in os.walk(CORPUS):
+        for fn in filenames:
+            if fn.lower().endswith((".html", ".htm", ".md")) \
+                    and fn not in ("README.md", "PROVENANCE.md"):
+                files.append(os.path.join(dirpath, fn))
+    files.sort()
     changed = removed = 0
     live = set()
     tx = con
@@ -228,7 +232,7 @@ def main():
             continue
         rel = os.path.relpath(f, ROOT)
         live.add(rel)
-        base = os.path.basename(f)[:-5]
+        base = os.path.splitext(os.path.basename(f))[0]
         ver = base.find("(v=")
         page_id = base if ver < 0 else base[:ver] + "|" + base[ver + 3:-1]
         prev = state.get(rel)

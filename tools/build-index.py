@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """tools/build-index.py -- regenerate data/index/INDEX.tsv from the corpus tree.
 
-Walks every page under ``corpus/`` -- ``.html`` (harvested/extracted pages) and
+Walks every page under ``corpus/`` -- ``.html`` (harvested/extracted pages),
+``.htm`` (documentation mirrors keep their original ``.htm`` names) and
 ``.md`` (the Win32 material imported from MicrosoftDocs, see
 ``corpus/win32/README.md``) -- and writes:
 
@@ -30,7 +31,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORPUS = os.path.join(ROOT, "corpus")
 TITLE = re.compile(r"<title>(.*?)</title>", re.S)
 MD_TITLE = re.compile(r"^title:\s*(.+?)\s*$", re.M)
-PAGE_SUFFIXES = (".html", ".md")
+PAGE_SUFFIXES = (".html", ".htm", ".md")   # matched case-insensitively
 # Repository paperwork, not documentation pages.
 NOT_PAGES = {"README.md", "PROVENANCE.md"}
 
@@ -86,7 +87,7 @@ def main():
         dirnames.sort()
         book = os.path.relpath(dirpath, CORPUS).replace(os.sep, "/")
         for fn in sorted(filenames):
-            if not fn.endswith(PAGE_SUFFIXES) or fn in NOT_PAGES:
+            if not fn.lower().endswith(PAGE_SUFFIXES) or fn in NOT_PAGES:
                 continue
             full = os.path.join(dirpath, fn)
             page_id = os.path.splitext(fn)[0]

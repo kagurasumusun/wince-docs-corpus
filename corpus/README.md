@@ -10,13 +10,18 @@ corpus/
 ├── learn/<set>/              pages harvested from learn.microsoft.com
 ├── chm/windows-ce-3.0/       pages extracted from the official CE 3.0 CHM
 ├── mvb/windows-ce-1.0/       CE 1.0 books (Multimedia Viewer/WinHelp era)
+├── kb/                       Windows CE KnowledgeBase articles (CE 1.0/2.0 era)
 ├── win32/api/, win32/guide/  Win32 reference + guides (MicrosoftDocs)
 └── msdn-library/
     ├── 2010-05/<set>/        Internet Archive copies of MSDN topics
+    ├── techshelps/<set>/     MSDN Library CE 1.0/2.0 sets (techshelps mirror)
+    ├── datadungeon-2000-04/  MSDN Library April 2000 CE documentation (crawled)
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 100,417 pages (79,965 in the CE trees + 20,452 Win32 pages).
+Total: 105,839 pages (85,387 in the CE trees + 20,452 Win32 pages) — see
+the per-tree READMEs for the provenance of each, and `../queues/
+third-party-sources.md` for the mirror policy.
 
 ## Sets under `corpus/learn/` (68,704 pages)
 
@@ -87,6 +92,16 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 * `chm/windows-ce-3.0/` — extracted from
   `sources/windows-ce-3.0/WindowsCE3.0_DocumentationArchive.zip`
   (see `sources/windows-ce-3.0/PROVENANCE.md`).
+* `msdn-library/techshelps/` — 5,165 pages: the MSDN Library sets for
+  Windows CE 1.0/2.0 (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED)
+  as mirrored by <https://techshelps.github.io/>; see
+  `msdn-library/techshelps/README.md` and `../queues/third-party-sources.md`.
+* `msdn-library/datadungeon-2000-04/` — the Windows CE documentation of the
+  MSDN Library April 2000, crawled from
+  <https://library.thedatadungeon.com/> (`queues/mirrors.tsv`,
+  `tools/crawl-mirror.py`).
+* `kb/` — 257 Windows CE KnowledgeBase articles from
+  <https://github.com/jeffpar/kbarchive>; see `kb/README.md`.
 * `mvb/windows-ce-1.0/` — the CE 1.0 Books Online (`PEGSDK.MVB` 1,919 pages,
   `PEGDDK.MVB` 181, `RELNOTES.HLP` 4) decoded from the Multimedia Viewer
   format with helpdeco and converted by `tools/extract-mvb.py`; see

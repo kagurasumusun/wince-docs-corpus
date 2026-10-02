@@ -7,8 +7,9 @@ Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
 documentation Windows CE shares**, so that an API question can be answered
 without breaking the offline copy.
 
-**100,417 pages**: 79,965 harvested/extracted CE pages (HTML) and 20,452 Win32
-pages (markdown, from Microsoft's public `MicrosoftDocs` repositories). The
+**105,839 pages**: 85,387 harvested/extracted/mirrored CE pages (HTML) and
+20,452 Win32 pages (markdown, from Microsoft's public `MicrosoftDocs`
+repositories). The
 repository also carries the original media the pages were extracted from, the
 URL queues used to harvest them, the complete upstream snapshots, and the
 derived catalogs, manifests and indexes.
@@ -21,14 +22,16 @@ derived catalogs, manifests and indexes.
 | `corpus/learn/<set>/` | 68,704 pages harvested from `learn.microsoft.com/…/previous-versions/windows/embedded`. |
 | `corpus/chm/windows-ce-3.0/` | 8,962 pages extracted from the official Windows CE 3.0 documentation CHM. |
 | `corpus/mvb/windows-ce-1.0/` | 2,104 pages decoded from the CE 1.0 Books Online (Multimedia Viewer books + WinHelp release notes). |
+| `corpus/msdn-library/techshelps/` | 5,165 pages of the MSDN Library's Windows CE 1.0/2.0 sets, from the techshelps mirror (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED). |
+| `corpus/kb/` | 257 Windows CE KnowledgeBase articles (CE 1.0/2.0/2.1x era, the CE toolkits, H/PC, Palm-size PC, Pocket PC). |
 | `corpus/win32/api/`, `corpus/win32/guide/` | 20,452 Win32 pages: 5,219 CE-shared API pages, 11,876 module-context pages, 3,357 subsystem guides (from `MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`, pinned by commit). `data/reports/win32-shared.tsv` maps the shared surface, `tools/find-api.py` looks a name up on both sides. |
 | `corpus/msdn-library/2010-05/<set>/` | 161 Internet Archive copies of MSDN topics (May 2010), filed under the set they duplicate. |
 | `corpus/msdn-library/windows-mobile-6.5/` | 34 Windows Mobile 6.5 topics in MSDN Library (MSHelp) format. |
 | `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror) and the complete MicrosoftDocs snapshots (`sources/microsoftdocs/`), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
-| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32 pages), `extract-mvb.py` (decode Books Online into pages), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report and Win32-map generators. |
-| `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`, refresh indexes/reports; runs on demand, daily from `queues/auto-harvest.txt`, or whenever that file changes) and `import-win32.yml` (re-import `corpus/win32/` from the pinned MicrosoftDocs commits). Both are `workflow_dispatch` — run them from the Actions tab. |
+| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32 pages), `extract-mvb.py` (decode Books Online into pages), `crawl-mirror.py` (crawl a documentation mirror), `import-techshelps.py` / `import-kbarchive.py` (third-party sources), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report and Win32-map generators. |
+| `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`, refresh indexes/reports; runs on demand, daily from `queues/auto-harvest.txt`, or whenever that file changes), `crawl-mirror.yml` (crawl the mirror sites in `queues/mirrors.tsv`, e.g. the MSDN Library April 2000 CE documentation) and `import-win32.yml` (re-import `corpus/win32/` from the pinned MicrosoftDocs commits). All are `workflow_dispatch` — run them from the Actions tab. |
 
 ## Corpus conventions
 
