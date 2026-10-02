@@ -133,6 +133,7 @@ def main():
     CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
     """)
     state = {}
+    state_json = None
     if args.full:
         # --full rebuilds from scratch: drop any rows left over from a
         # previous layout of the corpus (paths and sections change when
@@ -144,6 +145,7 @@ def main():
             "SELECT value FROM meta WHERE key='state'").fetchone()
         if row:
             state = json.loads(row[0])
+            state_json = row[0]
     files = sorted(glob.glob(os.path.join(CORPUS, "**", "*.html"),
                              recursive=True))
     changed = removed = 0
@@ -188,8 +190,12 @@ def main():
             tx.execute("DELETE FROM pages WHERE page_id=?", (page_id,))
             del state[rel]
             removed += 1
-    tx.execute("INSERT OR REPLACE INTO meta VALUES('state',?)",
-               (json.dumps(state),))
+    new_state_json = json.dumps(state)
+    # Only touch the DB when something actually changed, so that a no-op
+    # incremental run leaves the committed file byte-identical.
+    if new_state_json != state_json:
+        tx.execute("INSERT OR REPLACE INTO meta VALUES('state',?)",
+                   (new_state_json,))
     con.commit()
     npages = con.execute("SELECT COUNT(*) FROM pages").fetchone()[0]
     nnames = con.execute("SELECT COUNT(*) FROM names").fetchone()[0]
