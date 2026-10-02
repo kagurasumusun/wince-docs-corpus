@@ -78,6 +78,7 @@ class Crawl:
         self.base = self._common_base(spec["seeds"])
         self.dirs = set()          # book directories learned from TOC pages
         self.done = set()          # URLs already fetched
+        self.pending = set()       # frontier: links found but not fetched yet
         self.seen = set()
         self.stored = 0
         self.errors = collections.Counter()
@@ -97,6 +98,30 @@ class Crawl:
                 data = json.load(fh)
             self.done = set(data.get("done", []))
             self.dirs = set(data.get("dirs", []))
+            if "pending" in data:
+                self.pending = set(data["pending"])
+            else:
+                # A state file from before the frontier was recorded: the
+                # links of the stored pages are still on disk, so the queue
+                # can be rebuilt instead of stopping early.
+                self.pending = self.rebuild_frontier()
+
+    def rebuild_frontier(self):
+        """Links of the pages already stored that have not been fetched yet."""
+        pending = set()
+        for url in sorted(self.done):
+            dest = self.dest_for(url)
+            if not os.path.exists(dest):
+                continue
+            try:
+                with open(dest, "rb") as fh:
+                    body = fh.read()
+            except OSError:
+                continue
+            for link in self.links(url, body):     # also learns book folders
+                if link not in self.done:
+                    pending.add(link)
+        return pending
 
     def save(self):
         if self.dry_run:
@@ -104,6 +129,7 @@ class Crawl:
         os.makedirs(os.path.dirname(self.state_path), exist_ok=True)
         with open(self.state_path, "w", encoding="utf-8") as fh:
             json.dump({"done": sorted(self.done), "dirs": sorted(self.dirs),
+                       "pending": sorted(self.pending),
                        "updated": _dt.datetime.now(
                            _dt.timezone.utc).isoformat(timespec="seconds")},
                       fh, indent=1)
@@ -162,7 +188,9 @@ class Crawl:
 
     # -- main loop -----------------------------------------------------------
     def run(self, max_pages, max_seconds):
-        queue = collections.deque(self.spec["seeds"])
+        queue = collections.deque(sorted(self.pending) or self.spec["seeds"])
+        if self.pending:
+            print(f"[crawl] resuming with {len(self.pending):,} queued URLs")
         started = time.time()
         while queue:
             if max_pages and self.stored >= max_pages:
@@ -195,10 +223,12 @@ class Crawl:
                 if link not in self.done and link not in self.seen:
                     queue.append(link)
             if self.stored % 25 == 0:
+                self.pending = set(queue)
                 self.save()
                 print(f"[crawl] stored={self.stored:,} queued={len(queue):,} "
                       f"dirs={len(self.dirs)} errors={dict(self.errors)}",
                       flush=True)
+        self.pending = set(queue)
         self.save()
         return self.stored
 
