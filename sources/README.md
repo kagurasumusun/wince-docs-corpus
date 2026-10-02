@@ -52,9 +52,9 @@ For page-level material the *queues* are the actionable list, and as of
 2026-10 both of them are done: `queues/mslearn-embedded.txt` is exhausted
 (`--dry-run` reports 0 to fetch), and `queues/wayback-msdn-2010.txt` — 31,388
 captures of the May 2010 MSDN Library — holds the *same topics, id for id*,
-as the pages already harvested from learn.microsoft.com, so a dry run now
-reports 31,226 covered (already in the corpus), 161 stored and exactly one
-topic left to fetch. The next page-level material has to come from sources
+as the pages already harvested from learn.microsoft.com: a full pass on
+2026-10-02 found 31,226 already in the corpus, 161 stored and one topic
+(`ms838324`) the Internet Archive never captured — two requests in total. The next page-level material has to come from sources
 that predate or bypass that topic space: the mirror imports
 (`corpus/msdn-library/techshelps/`, `corpus/kb/`) and the mirror crawls of the
 older MSDN Library editions (`queues/mirrors.tsv`,
