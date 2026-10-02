@@ -350,12 +350,49 @@ class Crawl:
         return self.stored
 
 
+def show_status():
+    """One line per entry in queues/mirrors.tsv, from its saved state."""
+    state_dir = os.path.join(ROOT, "data", "crawl")
+    specs = load_config(os.path.join(ROOT, "queues", "mirrors.tsv"))
+    if not os.path.isdir(state_dir):
+        print("no crawl state yet (data/crawl/)")
+        return 0
+    for spec in specs:
+        path = os.path.join(state_dir, f"{spec['name']}.json")
+        if not os.path.exists(path):
+            print(f"{spec['name']}: not started")
+            continue
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        done, pending = len(data.get("done", [])), len(data.get("pending", []))
+        on_disk = 0
+        out = spec["out"] if os.path.isabs(spec["out"]) \
+            else os.path.join(ROOT, spec["out"])
+        for _dirpath, _dirnames, filenames in os.walk(out):
+            on_disk += sum(1 for f in filenames if f != "README.md")
+        page_budget = spec["max_pages"] or 0
+        runs = "-"
+        if page_budget:
+            runs = f"~{max(1, -(-pending // page_budget))} more run(s)"
+        print(f"{spec['name']}: {on_disk:,} pages on disk | queued {pending:,} | "
+              f"fetched {done:,} | books {len(data.get('dirs', []))} | "
+              f"errors {data.get('errors') or '{}'} | "
+              f"skipped {data.get('skipped') or '{}'} | {runs}")
+        print(f"    updated {data.get('updated', '?')} | "
+              f"out {spec['out']}")
+        for failure in data.get("failures", [])[-3:]:
+            print(f"    failure: {failure[:120]}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", help="mirrors.tsv to take the crawl from")
     ap.add_argument("--only", help="name of the config entry to run")
     ap.add_argument("--list", action="store_true", help="list config entries")
+    ap.add_argument("--status", action="store_true",
+                    help="print what each saved crawl has collected")
     ap.add_argument("--seed", action="append", default=[], help="seed URL")
     ap.add_argument("--out", default="corpus/mirrors/site")
     ap.add_argument("--toc-regex", default="-",
@@ -367,6 +404,9 @@ def main():
     ap.add_argument("--no-robots", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    if args.status:
+        return show_status()
 
     specs = []
     if args.config:

@@ -9,7 +9,7 @@ as `invalid` and skipped.
 | `to-fetch-mslearn.txt` | 31,635 | `learn.microsoft.com/en-us/previous-versions/windows/embedded/<id>(v=…)` — the current harvest queue. |
 | `mslearn-embedded.txt` | 38,726 | The original full enumeration of the same namespace (superset; first line is the namespace root). |
 | `wayback-msdn-2010.txt` | 31,388 | `web.archive.org/web/20100501000000/https://msdn.microsoft.com/en-us/library/<id>.aspx` — the May 2010 MSDN Library snapshot. **Done**: 161 stored, 31,226 already covered by the Learn harvest, 1 never captured (see below). |
-| `mirrors.tsv` | 1 | Not a URL queue: the mirror crawls (`tools/crawl-mirror.py`) with their seeds, output directory, per-run page budget and delay. |
+| `mirrors.tsv` | 1 | Not a URL queue: the mirror crawls (`tools/crawl-mirror.py`) with their seeds, output directory, per-run page budget and delay. `python3 tools/crawl-mirror.py --status` prints what each crawl has collected so far (stored, queued, errors, how many runs are left). |
 | `third-party-sources.md` | — | Which mirrors are accepted as sources (and which are not), with the robots/usage notes. |
 | `auto-harvest.txt` | 1 | Not a URL queue: the budget the daily automatic run reads (`<queue> <pages per run> [batch]`, or `off`). See below. |
 | `rejected-third-party-sources.txt` | 4 | Candidate sources that are **not** harvested: the collection policy is official Microsoft documentation only. Kept as a record of what was deliberately left out (a GitHub mirror, two vendor/community sites and one blog post). |
