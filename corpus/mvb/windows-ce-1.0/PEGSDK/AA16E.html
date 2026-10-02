@@ -1,0 +1,99 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Seeking and Reading a Database Record</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Seeking and Reading a Database Record</h1>
+<p>The following example shows how to find a record in a database and read its properties into a buffer. The example consists of a function, GetAddressData, that takes two parameters: the object identifier of a record, and a pointer to an application-defined ADDRESSDATA structure that receives the record's property data. First, the GetAddressData function allocates a temporary buffer for the property data, and then it calls the PegSeekDatabase function to find the record that has the given object identifier. If the record is found, the PegReadRecordProps function reads the property data into the temporary buffer. Finally, the property data is copied from the temporary buffer into the application-defined ADDRESSDATA structure:</p>
+<pre class="code">// GetAddressData - retrieves the contents of an address record</pre>
+<p>// Returns a code that indicates the success or failure of the function</p>
+<p>// oidSeek - object identifier of the record to seek</p>
+<p>// pAddressData - pointer to an application-defined ADDRESSDATA</p>
+<p>//   structure that receives the data from the address record</p>
+<p>//</p>
+<p>// Global variable:</p>
+<p>//     g_hAddressDatabase - open handle to the address database</p>
+<p>ECODE GetAddressData(PEGOID oidSeek, PADDRESSDATA pAddressData)</p>
+<p>{-</p>
+<p>LPBYTE lpBuffer;       // Buffer for address record</p>
+<p>WORD wSize = 1024;     // Size of buffer</p>
+<p>PEGOID oid;            // Object identifier of record found or read</p>
+<p>DWORD dwIndex;         // Index of record seeked to</p>
+<p>WORD wCount;           // Number of properties in record</p>
+<p>int i;                 // Loop counter</p>
+<p>PEGPROPID propid;      // Property identifier</p>
+<p>WORD wLength;          // String length</p>
+<p>ECODE ec = EC_SUCCESS; // Error/success code</p>
+<p>// Allocate buffer for record data.</p>
+<pre class="code">lpBuffer = (LPBYTE) LocalAlloc(LMEM_FIXED, wSize);</pre>
+<p>if (!lpBuffer)</p>
+<p>return EC_OUTOFMEMORY;</p>
+<p>// Seek to the record.</p>
+<pre class="code">oid = PegSeekDatabase(g_hAddressDatabase, PEGDB_SEEK_PEGOID,</pre>
+<p>oidSeek, &amp;dwIndex);</p>
+<p>if (!oid)</p>
+<p>return EC_SEEK_FAILURE;</p>
+<p>// Read the record.</p>
+<pre class="code">oid = PegReadRecordProps(g_hAddressDatabase, PEGDB_ALLOWREALLOC,</pre>
+<p>&amp;wCount, NULL, &amp;lpBuffer, &amp;wSize);</p>
+<p>if (!oid)</p>
+<p>return EC_READ_FAILURE;</p>
+<p>// Fill  ADDRESSDATA structure with the data from the address</p>
+<p>// record.</p>
+<p>for (i = 0; i &lt; wCount; i++ ) {-</p>
+<p>propid = ((PEGPROPVAL*) lpBuffer)[i].propid;</p>
+<p>// Switch only on the upper word.</p>
+<p>switch (propid) {-</p>
+<p>case HHPR_NAME:</p>
+<p>{-</p>
+<p>// Copy the addressee's name.</p>
+<p>TCHAR* pData;</p>
+<p>wLength =</p>
+<p>lstrlen(((PEGPROPVAL*) lpBuffer)[i].val.lpwstr);</p>
+<pre class="code">pData = (TCHAR*) LocalAlloc(LMEM_FIXED,</pre>
+<p>wLength * sizeof(TCHAR) + 1);</p>
+<p>if (pData) {-</p>
+<p>lstrcpy(pData,</p>
+<p>((PEGPROPVAL*) lpBuffer)[i].val.lpwstr);</p>
+<p>pAddressData-&gt;pwszName = pData;</p>
+<p>} else {-</p>
+<p>ec = EC_OUTOFMEMORY;</p>
+<p>}</p>
+<p>}</p>
+<p>break;</p>
+<p>case HHPR_STREET:</p>
+<p>{-</p>
+<p>// Copy the addressee's street address.</p>
+<p>TCHAR* pData;</p>
+<p>wLength =</p>
+<p>lstrlen(((PEGPROPVAL*)lpBuffer)[i].val.lpwstr);</p>
+<pre class="code">pData = (TCHAR*) LocalAlloc(LMEM_FIXED,</pre>
+<p>wLength * sizeof(TCHAR) + 1, FALSE);</p>
+<p>if (pData) {-</p>
+<p>lstrcpy(pData,</p>
+<p>((PEGPROPVAL*) lpBuffer)[i].val.lpwstr);</p>
+<p>pTaskData-&gt;pwszDescription = pData;</p>
+<p>} else {-</p>
+<p>ec = EC_OUTOFMEMORY;</p>
+<p>}</p>
+<p>}</p>
+<p>break;</p>
+<p>.</p>
+<p>.  // Copy the remaining record properties to the</p>
+<p>.  // ADDRESSDATA structure.</p>
+<p>default:</p>
+<p>break;</p>
+<p>}</p>
+<p>if (ec != EC_SUCCESS)</p>
+<p>break;</p>
+<p>}</p>
+<p>// Free the record buffer.</p>
+<p>if (lpBuffer)</p>
+<pre class="code">LocalFree(lpBuffer);</pre>
+<p>return ec;</p>
+<p>}</p>
+</body>
+</html>

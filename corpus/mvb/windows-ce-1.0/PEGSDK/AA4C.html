@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Types of Memory</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Types of Memory</h1>
+<p>This section lists all the independent memory pools from which an application can allocate memory. Each of these consists of an integral number of pages. Some can easily be grown and shrunk, others cannot. You should use them in a manner that minimizes the amount of wasted RAM.</p>
+<p>Stack</p>
+<p>Declaring data on the stack is the most commonly used data storage mechanism. The system grows application stacks as the need arises one page at a time. The system can shrink a stack, although it does so lazily and only if all other sources of pages have been exhausted. For short lived data, the stack is a good place from which to allocate memory. However, you should avoid allocating large amounts of memory from the stack.</p>
+<p>Note   The stack frame for a single function should not be allowed to to grow to a size greater than about 58K bytes.  Exceeding this threshhold will result in a system access violation.</p>
+<p>Static Data</p>
+<p>Declaring static or global data causes the system to put the data in the read/write (R/W) data section for the module. This section does not grow or shrink. You can determine the size of your application's data section by looking at the output using the DumpBin utility (Dumpbin.exe) on the executable. If you use the C run-time library, keep in mind that it automatically declares data in the R/W section, making it difficult to completely eliminate it.</p>
+<p>Look carefully at everything in the R/W section, making sure that any constant data item is declared as such so that the compiler moves it into the read-only data section. After moving constant data out of R/W, it may be advantageous to move other types of data in. This may allow you to better utilize space that would otherwise be wasted because of the page granularity.</p>
+<p>For example, if the R/W section contains only 100 bytes, at least 900 bytes will be wasted (assuming a 1K page size). In such a situation it might be worthwhile to move some other data into this section to bring the utilization up and possibly use less heap space. If you do move other data into the R/W section, be sure to make a very visible note in your code to look at your map file each time you add any additional data. You don't want to fill the section up and then have it grow by an entire page just to accomodate one additional double word. Also note that the loader needs 50 to 75 bytes free in the R/W section, so try to leave that much space for it.</p>
+<p>Virtual Memory</p>
+<p>The VirtualAlloc function is the basic function for allocating virtual memory in the Windows CE operating system. You can use VirtualAlloc to directly allocate an integral number of memory pages. When you free memory by using the VirtualFree function, it is immediately returned to the global virtual memory pool.</p>
+<p>All other memory pools (such as stacks and heaps) are based on the VirtualAlloc function. Because VirtualAlloc can allocate only pages, it is not intended for allocating small memory objects. However, if you are allocating a large memory object (ideally, a multiple of the page size), using VirtualAlloc directly is the most efficient method because you can easily return the memory when a low-memory condition occurs.</p>
+<p>Default Heap</p>
+<p>Each process has a default heap upon which the LocalAlloc and LocalFree functions operate. Under Windows CE a heap supports only fixed memory; the system cannot compact a heap. The heap grows whenever a call to LocalAlloc cannot be satisfied from the available space. Because of fragmentation, the available space does not necessarily correspond to the total amount of free space in the heap.</p>
+<p>The operating system will automatically shrink your heap if it has completely free memory pages. Keep in mind however that, due to fragmentation, it is quite likely that the system will not be able to shrink the heap as much as you might expect.</p>
+<p>Separate Heaps</p>
+<p>The HeapAlloc function lets you create a new heap that is separate from your default heap. You can then allocate and free memory using functions similar to LocalAlloc and LocalFree. The difference is that when you are finished, you can free this heap by using the HeapFree function, putting the memory back into the global virtual memory pool.</p>
+<p>Using HeapAlloc and HeapFree is a good allocation strategy for when you temporarily need to do a lot of of small allocations. For example, if your application works with documents, you could create a new heap from which all allocations pertaining to a document are performed. When the document is closed, the application can free the heap, and return the memory to the global virtual memory pool. This strategy lets you keep the size of the default heap small, without the numerous nearly empty pages that would be generated by using VirtualAlloc.</p>
+<p>Keep in mind that each heap requires approximately 500 bytes of overhead. Creating separate heaps is a good strategy only if you expect to allocate at least 5K or so.</p>
+<p>Selecting an Allocation Method</p>
+<p>The following are some criteria to help you decide which memory allocation method is best in a given situation:</p>
+<p>·	For a single big allocation (multiple pages), use VirtualAlloc.</p>
+<p>·	For a set of small data items that have the same lifetime, use a separate heap created by HeapAlloc.</p>
+<p>·	For data items which last the lifetime of the application, consider putting them in the R/W static data section if there is sufficient space.</p>
+<p>·	For small items that exist for the scope of a function, use the stack.</p>
+<p>·	For small items with random overlapping lifetimes, use the default heap. Try to keep the total size of the heap consistent and predictable.</p>
+</body>
+</html>

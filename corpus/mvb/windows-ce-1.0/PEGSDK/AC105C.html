@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>STARTUPINFO</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>STARTUPINFO</h1>
+<p>The STARTUPINFO structure is used with the CreateProcess function to specify main window properties if a new window is created for the new process. For graphical user interface (GUI) processes, this information affects the first window created by the CreateWindow function and shown by the ShowWindow function. For console processes, this information affects the console window if a new console is created for the process.</p>
+<pre class="code">typedef struct _STARTUPINFO {- // si</pre>
+<p>DWORD   cb;</p>
+<p>LPTSTR  lpReserved;</p>
+<p>LPTSTR  lpDesktop;</p>
+<p>LPTSTR  lpTitle;</p>
+<p>DWORD   dwX;</p>
+<p>DWORD   dwY;</p>
+<p>DWORD   dwXSize;</p>
+<p>DWORD   dwYSize;</p>
+<p>DWORD   dwXCountChars;</p>
+<p>DWORD   dwYCountChars;</p>
+<p>DWORD   dwFillAttribute;</p>
+<p>DWORD   dwFlags;</p>
+<p>WORD    wShowWindow;</p>
+<p>WORD    cbReserved2;</p>
+<p>LPBYTE  lpReserved2;</p>
+<p>HANDLE  hStdInput;</p>
+<p>HANDLE  hStdOutput;</p>
+<p>HANDLE  hStdError;</p>
+<p>} STARTUPINFO, *LPSTARTUPINFO;</p>
+<p>Members</p>
+<p>cb</p>
+<p>Specifies the size, in bytes, of the structure.</p>
+<p>lpReserved</p>
+<p>Reserved. Set this member to NULL before passing the structure to CreateProcess.</p>
+<p>lpDesktop</p>
+<p>Windows NT only: Points to a zero-terminated string that specifies either the name of the desktop only or the name of both the window station and desktop for this process. A backslash in the string pointed to by lpDesktop indicates that the string includes both desktop and window station names. Otherwise, the lpDesktop string is interpreted as a desktop name. If lpDesktop is NULL, the new process inherits the window station and desktop of its parent process.</p>
+<p>lpTitle</p>
+<p>For console processes, this is the title displayed in the title bar if a new console window is created. If NULL, the name of the executable file is used as the window title instead. This parameter must be NULL for GUI or console processes that do not create a new console window.</p>
+<p>dwX, dwY</p>
+<p>Ignored unless dwFlags specifies STARTF_USEPOSITION. Specifies the x and y offsets, in pixels, of the upper left corner of a window if a new window is created. The offsets are from the upper left corner of the screen. For GUI processes, the specified position is used the first time the new process calls CreateWindow to create an overlapped window if the x parameter of CreateWindow is CW_USEDEFAULT.</p>
+<p>dwXSize, dwYSize</p>
+<p>Ignored unless dwFlags specifies STARTF_USESIZE. Specifies the width (dwXSize) and height (dwYSize), in pixels, of the window if a new window is created. For GUI processes, this is used only the first time the new process calls CreateWindow to create an overlapped window if the nWidth parameter of CreateWindow is CW_USEDEFAULT.</p>
+<p>dwXCountChars, dwYCountChars</p>
+<p>Ignored unless dwFlags specifies STARTF_USECOUNTCHARS. For console processes, if a new console window is created, dwXCountChars specifies the screen buffer width in character columns, and dwYCountChars specifies the screen buffer height in character rows. These values are ignored in GUI processes.</p>
+<p>dwFillAttribute</p>
+<p>Ignored unless dwFlags specifies STARTF_USEFILLATTRIBUTE. Specifies the initial text and background colors if a new console window is created in a console application. These values are ignored in GUI applications. This value can be any combination of the following values: FOREGROUND_BLUE, FOREGROUND_GREEN, FOREGROUND_RED, FOREGROUND_INTENSITY, BACKGROUND_BLUE, BACKGROUND_GREEN, BACKGROUND_RED, and BACKGROUND_INTENSITY. For example, the following combination of values produces red text on a whilte background:</p>
+<pre class="code">FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE</pre>
+<p>dwFlags</p>
+<p>This is a bit field that determines whether certain STARTUPINFO members are used when the process creates a window. Any combination of the following values can be specified:</p>
+<table class="dtTABLE">
+<tr><td>Value</td><td>Meaning</td></tr>
+<tr><td>STARTF_USESHOWWINDOW</td><td>If this value is not specified, the wShowWindow member is ignored.</td></tr>
+<tr><td>STARTF_USEPOSITION</td><td>If this value is not specified, the dwX and dwY members are ignored.</td></tr>
+<tr><td>STARTF_USESIZE</td><td>If this value is not specified, the dwXSize and dwYSize members are ignored.</td></tr>
+<tr><td>STARTF_USECOUNTCHARS</td><td>If this value is not specified, the dwXCountChars and dwYCountChars members are ignored.</td></tr>
+<tr><td>STARTF_USEFILLATTRIBUTE</td><td>If this value is not specified, the dwFillAttribute member is ignored.</td></tr>
+<tr><td>STARTF_FORCEONFEEDBACK</td><td>If this value is specified, the cursor is in feedback mode for two seconds after CreateProcess is called. If during those two seconds the process makes the first GUI call, the system gives five more seconds to the process. If during those five seconds the process shows a window, the system gives five more seconds to the process to finish drawing the window.</td></tr>
+<tr><td></td><td>The system turns the feedback cursor off after the first call to GetMessage, regardless of whether the process is drawing.</td></tr>
+<tr><td></td><td>For more information on feedback, see the following Remarks section.</td></tr>
+<tr><td>STARTF_FORCEOFFFEEDBACK</td><td>If specified, the feedback cursor is forced off while the process is starting. The normal cursor is displayed. For more information on feedback, see the following Remarks section.</td></tr>
+<tr><td>STARTF_USESTDHANDLES</td><td>If this value is specified, sets the standard input of the process, standard output, and standard error handles to the handles specified in the hStdInput, hStdOutput, and hStdError members of the STARTUPINFO structure. The CreateProcess function's fInheritHandles parameter must be set to TRUE for this to work properly.</td></tr>
+<tr><td></td><td>If this value is not specified, the hStdInput, hStdOutput, and hStdError members of the STARTUPINFO structure are ignored.</td></tr>
+<tr><td>wShowWindow<br>Ignored unless dwFlags specifies STARTF_USESHOWWINDOW. The wshowWindow member can be any of the SW_ constants defined in WINUSER.H. For GUI processes, wShowWindow specifies the default value the first time ShowWindow is called. The nCmdShow parameter of ShowWindow is ignored. In subsequent calls to ShowWindow, the wShowWindow member is used if the nCmdShow parameter of ShowWindow is set to SW_SHOWDEFAULT.<br>cbReserved2<br>Reserved; must be zero.<br>lpReserved2<br>Reserved; must be NULL.<br>hStdInput<br>Ignored unless dwFlags specifies STARTF_USESTDHANDLES. Specifies a handle that will be used as the standard input handle of the process if STARTF_USESTDHANDLES is specified.<br>hStdOutput<br>Ignored unless dwFlags specifies STARTF_USESTDHANDLES. Specifies a handle that will be used as the standard output handle of the process if STARTF_USESTDHANDLES is specified.<br>hStdError<br>Ignored unless dwFlags specifies STARTF_USESTDHANDLES. Specifies a handle that will be used as the standard error handle of the process if STARTF_USESTDHANDLES is specified.<br>Remarks<br>If a GUI process is being started and neither STARTF_FORCEONFEEDBACK or STARTF_FORCEOFFFEEDBACK is specified, the process feedback cursor is used. A GUI process is one whose subsystem is specified as "windows."<br>See Also<br>CreateProcess, CreateWindow, GetMessage, PeekMessage, ShowWindow, WinMain</td></tr>
+</table>
+</body>
+</html>

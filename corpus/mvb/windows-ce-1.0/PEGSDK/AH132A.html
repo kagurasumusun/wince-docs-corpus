@@ -1,0 +1,41 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>PDATA Format</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>PDATA Format</h1>
+<p>The Microsoft object module format for SH-3 specifies a data structure to aid in stack walking at run-time.  It is used mainly in debugging and exception processing.</p>
+<p>In most cases this data structure occupies only eight bytes per function. For functions which have an exception handler an additional eight bytes are needed. Another eight bytes are needed in the rare cases where the prolog extends more than 255 instructions (510 bytes)  beyond the beginning of a function, or the total function length is greater than 8,388,607 instructions (just under 16 Megabytes).</p>
+<p>The PDATA record contains the following information:</p>
+<pre class="code">struct PDATA {-</pre>
+<p>unsigned int FuncStart : 32;</p>
+<p>unsigned int PrologLen : 8;</p>
+<p>unsigned int FuncLen : 23;</p>
+<p>unsigned int ExceptionFlag : 1;</p>
+<p>};</p>
+<p>FuncStart indicates the address of the first instruction in the function.  It is the function’s entry address.</p>
+<p>PrologLen indicates the length of the prolog in instructions.  A prolog with ten instructions would have a PrologLen of 10.</p>
+<p>FuncLen indicates the total function length in instructions.  A function with two hundred instructions would have a FuncLen of 200.</p>
+<p>ExceptionFlag indicates that the function has an associated exception handler or handler data. When its value is one then the PDATA_EH is present in the .text section (as described below).  When the ExceptionFlag is zero then no PDATA_EH is present.</p>
+<p>In the event that the ExceptionFlag is set, or the FuncLen is set to zero, then there is additional PDATA information that precedes the function in the .text section.  The data record containing this information appears in the .text section, immediately preceding the function, if and only if the ExceptionFlag bit is set. This record is used whenever the function has an associated exception handler or handler data. The structure of this record is as follows:</p>
+<pre class="code">struct PDATA_EH {-</pre>
+<p>unsigned int * pHandler;</p>
+<p>unsigned int * pHandlerData;</p>
+<p>};</p>
+<p>pHandler contains the address of the exception handler for the function.</p>
+<p>pHandlerData contains the address of the exception handler data record for the function.</p>
+<p>The prolog and function length record appears in the .text section, immediately preceding the exception handling data record if it exists (otherwise immediately preceding the function itself), if and only if the FuncLen field is zero. (Note that if the FuncLen field is zero, the PrologLen field should also be zero.) This record is generated when the prolog extends more than 255 instructions (510 bytes)  beyond the beginning of a function, or the total function length is greater than 8,388,607 instructions (just under 16 Megabytes).</p>
+<p>The structure of this record is as follows:</p>
+<pre class="code">struct PDATA_PNFLEN</pre>
+<p>{-</p>
+<p>unsigned int PrologLen;</p>
+<p>unsigned int FuncLen;</p>
+<p>};</p>
+<p>PrologLen: as in the PDATA structure, this field indicates the total prolog length in instructions.</p>
+<p>FuncLen: as in the PDATA structure, this field indicates the total function length in instructions.</p>
+<p>Note that the exception handling data record and the prolog and function length record are both guaranteed to be 4-byte aligned. This implies that any function that has either or both of these records associated with it will be 4-byte aligned.</p>
+</body>
+</html>

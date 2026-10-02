@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>About the Pager Source Files</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>About the Pager Source Files</h1>
+<p>The Pager.c source file contains the following important functions for interacting with the operating system:</p>
+<p>·	DllMain—an entry-point function for the DLL</p>
+<p>·	PGR_*—the stream interface entry-point functions (PGR is used as the prefix for the stream interface functions)</p>
+<p>·	StatusCallback—status callback function</p>
+<p>Pager.c declares handles for the pager driver, PC Card pager socket, command buffer memory space, and message buffer memory, and defines unique 32-bit numbers for the pager driver handle and the pager device handle.</p>
+<p>Note   A driver typically uses pointers to internal structures as handle values.</p>
+<p>Pager.c declares the pointers to mapped pager card memory regions with the volatile type qualifier. The volatile type qualifier declares that these mapped memory regions can legitimately be changed by something beyond the control of the pager client driver, such as the pager device storing a new message. Regardless of specified compiler optimizations, the compiler assumes that, at any point in the client driver, a volatile variable can be accessed by an unknown process that uses or modifies its value.</p>
+<p>The Pager DllMain DLL Entry Function</p>
+<p>The device manager uses the DllMain entry function to load and unload the driver DLL. When the driver is loaded, this function can initialize global variables. When the driver is unloaded, this function can call functions that enable a clean separation from the Device Manager process.</p>
+<p>The Pager StatusCallback Callback Function</p>
+<p>The pager StatusCallback status callback function processes PC Card status callback events. These status callback events notify the pager driver of changes in the status of the PC Card that PC Card Services detects. The PGR_Init function uses CardRegisterClient to register StatusCallBack.</p>
+<p>The pager status callback function uses a switch statement in PcmciaCallBack  to decode and process the status callback event codes. Each case of the switch statement represents a callback event code that is of interest to the pager device.</p>
+<p>The Pager PGR_Init Function</p>
+<p>When you install a NewsCard PC Card, the Device Manager loads the Newscard.dll file, and calls the PGR_Init function. The argument to PGR_Init contains the address to a string buffer. This buffer contains the registry path of the active key associated with the driver. The registry stores the slot number of the pager device under this key. PGR_Init uses InitPCMCIA to do most of the work. InitPCMCIA performs the following tasks:</p>
+<p>·	Finds the socket in which the pager card is inserted.</p>
+<p>·	Registers the pager’s status callback function with PC Card Services.</p>
+<p>·	Gets two PCMCIA memory window handles: one for the pager command buffer and one for the pager message area.</p>
+<p>·	Maps system memory to the command buffer memory on the pager card. The driver then has access to the pager command buffer through system memory.</p>
+<p>·	Returns a handle for the pager driver to the Device Manager.</p>
+<p>The Pager PGR_Deinit Function</p>
+<p>The Device Manager calls the PGR_Deinit function when you remove the Motorola NewsCard device. The argument passed in the PGR_Deinit function is a handle for the pager client driver. If the pager is open, PGR_Deinit closes it, and frees all the resources obtained from PC Card Services.</p>
+<p>The PGR_Deinit function always returns a TRUE value. Since the Device Manager expects devices to close successfully, it does not check the return code.</p>
+<p>The Pager PGR_Open Function</p>
+<p>The PGR_Open function returns a handle for the NewsCard pager device. The arguments passed in the PGR_Open function are the handle for the pager driver, the read/write access attribute, and the file share attribute. An application calls CreateFile to open the pager device. The operating system, in turn, calls the PGR_Open function.</p>
+<p>The Pager PGR_Close Function</p>
+<p>The PGR_Close function returns TRUE if it successfully closed the pager device. The argument passed in the PGR_Close function is a handle for the pager client device. An application calls CloseHandle on the pager device. The operating system, in turn, calls the PGR_Close function.</p>
+<p>The Pager PGR_Read Function</p>
+<p>The PGR_Read function receives the message sent by the pager device. It returns 0 for the end of file, –1 for an error, or the number of bytes read for success. The arguments passed in the PGR_Read function are a handle for the NewsCard pager device, a buffer that holds the pager message, and a number that indicates the number of bytes to read. An application calls ReadFile to get a message from the pager device. The operating system, in turn, calls the PGR_Read function. When the operating system calls PGR_Read, it stores the message from the pager device in the buffer passed in the application’s call to ReadFile. The PGR_Read function calls the ReadOneMessage function which is in the Newscard.c source file.</p>
+<p>Unused Stream Interface Functions</p>
+<p>The following functions are not used by the pager driver:</p>
+<p>·	PGR_Write (Applications do not write to the pager device.)</p>
+<p>·	PGR_Seek</p>
+<p>·	PGR_IOControl</p>
+<p>·	PGR_PowerUp (The device supplies its own battery power.)</p>
+<p>·	PGR_PowerDown</p>
+</body>
+</html>

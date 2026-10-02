@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>setsockopt</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>setsockopt</h1>
+<p>The Windows Sockets setsockopt function sets a socket option.</p>
+<table class="dtTABLE">
+<tr><td>int setsockopt (</td><td>// winsock.h</td></tr>
+<tr><td>SOCKET s,</td><td>// descriptor identifying a socket</td></tr>
+<tr><td>int level,</td><td>// level at which the object is defined</td></tr>
+<tr><td>int optname,</td><td>// socket option for which the value is to be set</td></tr>
+<tr><td>const char FAR *optval,</td><td>// pointer to the buffer where value for the option is supplied</td></tr>
+<tr><td>int optlen</td><td>// size of the optval buffer</td></tr>
+<tr><td>);</td><td></td></tr>
+<tr><td>Parameters<br>s<br>A descriptor identifying a socket.<br>level<br>The level at which the option is defined; the only supported levels are SOL_SOCKET and IPPROTO_TCP.<br>optname<br>The socket option for which the value is to be set.<br>optval<br>A pointer to the buffer in which the value for the requested option is supplied.<br>optlen<br>The size of the optval buffer.<br>Return Values<br>If the function succeeds, setsockopt returns zero. If the function fails, a value of SOCKET_ERROR is returned. To get extended error information, call GetLastError.<br>Error code</td><td>Description</td></tr>
+<tr><td>WSANOTINITIALISED</td><td>A successful WSAStartup must occur before using this function.</td></tr>
+<tr><td>WSAENETDOWN</td><td>The Windows Sockets implementation has detected that the network subsystem has failed.</td></tr>
+<tr><td>WSAEFAULT</td><td>The optval parameter is not in a valid part of the process address space.</td></tr>
+<tr><td>WSAEINPROGRESS</td><td>A blocking Windows Sockets operation is in progress.</td></tr>
+<tr><td>WSAEINVAL</td><td>The level parameter is not valid, or the information in optval is not valid.</td></tr>
+<tr><td>WSAENETRESET</td><td>Connection has timed out when SO_KEEPALIVE is set.</td></tr>
+<tr><td>WSAENOPROTOOPT</td><td>The option is unknown or unsupported. In particular, SO_BROADCAST is not supported on sockets of type SOCK_STREAM, while SO_DONTLINGER, SO_KEEPALIVE, SO_LINGER and SO_OOBINLINE are not supported on sockets of type SOCK_DGRAM.</td></tr>
+<tr><td>WSAENOTCONN</td><td>Connection has been reset when SO_KEEPALIVE is set.</td></tr>
+<tr><td>WSAENOTSOCK</td><td>The descriptor is not a socket.</td></tr>
+<tr><td>Remarks<br>The setsockopt function sets the current value for a socket option associated with a socket of any type, in any state. Although options may exist at multiple protocol levels, this specification only defines options that exist at the uppermost "socket" level. Options affect socket operations, such as whether expedited data is received in the normal data stream, whether broadcast messages can be sent on the socket, and so on.<br>There are two types of socket options: Boolean options that enable or disable a feature or behavior, and options that require an integer value or structure. To enable a Boolean option, optval points to a nonzero integer. To disable the option, optval points to an integer equal to zero. The optlen parameter should be equal to sizeof(int) for Boolean options. For other options, optval points to an integer or structure that contains the desired value for the option, and optlen is the length of the integer or structure.<br>The SO_LINGER option controls the action taken when unsent data is queued on a socket and a closesocket is performed. See closesocket for a description of the way the SO_LINGER settings affect the semantics of closesocket. The application sets the desired behavior by creating a linger structure (pointed to by the optval argument) with the following elements:<br>struct linger {-<br>int    l_onoff;<br>int    l_linger;<br>}<br>To enable SO_LINGER, the application should set l_onoff to a nonzero value, set l_linger to zero or the desired timeout (in seconds), and call setsockopt. To enable SO_DONTLINGER (that is, to disable SO_LINGER) l_onoff should be set to zero and setsockopt should be called.<br>By default, a socket cannot be bound (see bind) to a local address that is already in use. On occasions, however, it may be desirable to "re-use" an address in this way. Since every connection is uniquely identified by the combination of local and remote addresses, there is no problem with having two sockets bound to the same local address as long as the remote addresses are different. To inform the Windows Sockets implementation that a bind on a socket should not be disallowed because the desired address is already in use by another socket, the application should set the SO_REUSEADDR socket option for the socket before issuing the bind. Note that the option is interpreted only at the time of the bind. It is therefore unnecessary (but harmless) to set the option on a socket that is not to be bound to an existing address, and setting or resetting the option after the bind has no effect on this or any other socket.<br>An application can request that the Windows Sockets implementation enable the use of "keep-alive" packets on TCP connections by turning on the SO_KEEPALIVE socket option. A Windows Sockets implementation need not support the use of keepalives; if it does, the precise semantics are implementation-specific but should conform to section 4.2.3.6 of RFC 1122: Requirements for Internet Hosts - Communication Layers. If a connection is dropped as the result of keepalives, the error code WSAENETRESET is returned to any calls in progress on the socket, and any subsequent calls will fail with WSAENOTCONN.<br>The TCP_NODELAY option disables the Nagle algorithm. The Nagle algorithm is used to reduce the number of small packets sent by a host by buffering unacknowledged send data until a full-size packet can be sent. However, for some applications this algorithm can impede performance, and TCP_NODELAY can be used to turn it off. You should not set TCP_NODELAY unless the impact of doing so is well understood and desired, since setting TCP_NODELAY can have a significant negative impact on network performance. TCP_NODELAY is the only supported socket option that uses level IPPROTO_TCP; all other options use level SOL_SOCKET.<br>Windows Sockets suppliers are encouraged (but not required) to supply output debug information if the SO_DEBUG option is set by an application. The mechanism for generating the debug information and the form it takes are beyond the scope of this documentation.<br>The following options are supported for setsockopt. The “Type” column identifies the type of data addressed by optval.<br>Value</td><td>Type</td><td>Meaning</td></tr>
+<tr><td>SO_BROADCAST</td><td>BOOL</td><td>Allow transmission of broadcast messages on the socket.</td></tr>
+<tr><td>SO_DEBUG</td><td>BOOL</td><td>Record debugging information.</td></tr>
+<tr><td>SO_DONTLINGER</td><td>BOOL</td><td>Don't block close waiting for unsent data to be sent. Setting this option is equivalent to setting SO_LINGER with l_onoff set to zero.</td></tr>
+<tr><td>SO_DONTROUTE</td><td>BOOL</td><td>Don't route: send directly to interface.</td></tr>
+<tr><td>SO_KEEPALIVE</td><td>BOOL</td><td>Send keepalive messages.</td></tr>
+<tr><td>SO_LINGER</td><td>struct linger FAR *</td><td>Linger on close if unsent data is present.</td></tr>
+<tr><td>SO_OOBINLINE</td><td>BOOL</td><td>Receive out-of-band data in the normal data stream.</td></tr>
+<tr><td>SO_RCVBUF</td><td>int</td><td>Specify buffer size for receives.</td></tr>
+<tr><td>SO_REUSEADDR</td><td>BOOL</td><td>Allow the socket to be bound to an address that is already in use. (See bind.)</td></tr>
+<tr><td>SO_SNDBUF</td><td>int</td><td>Specify buffer size for sends.</td></tr>
+<tr><td>TCP_NODELAY</td><td>BOOL</td><td>Disable the Nagle algorithm for send coalescing.</td></tr>
+<tr><td>The following BSD options are not supported for setsockopt.<br>Value</td><td>Type</td><td>Meaning</td></tr>
+<tr><td>SO_ACCEPTCONN</td><td>BOOL</td><td>Socket is listening.</td></tr>
+<tr><td>SO_ERROR</td><td>int</td><td>Get error status and clear.</td></tr>
+<tr><td>SO_RCVLOWAT</td><td>int</td><td>Receive low-water mark.</td></tr>
+<tr><td>SO_RCVTIMEO</td><td>int</td><td>Receive timeout.</td></tr>
+<tr><td>SO_SNDLOWAT</td><td>int</td><td>Send low-water mark.</td></tr>
+<tr><td>SO_SNDTIMEO</td><td>int</td><td>Send timeout.</td></tr>
+<tr><td>SO_TYPE</td><td>int</td><td>Type of the socket.</td></tr>
+<tr><td>IP_OPTIONS</td><td></td><td>Set options field in IP header.</td></tr>
+<tr><td>See Also<br>bind, getsockopt, ioctlsocket, socket, WSAStartup</td></tr>
+</table>
+</body>
+</html>

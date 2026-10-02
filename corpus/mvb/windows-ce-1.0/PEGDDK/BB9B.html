@@ -1,0 +1,41 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>The PCMCIA Key</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>The PCMCIA Key</h1>
+<p>The HKEY_LOCAL_MACHINE\Drivers\PCMCIA key contains subkeys and entries to identify the drivers for devices that might be inserted into the PC Card socket.</p>
+<p>The Device Manager uses the HKEY_LOCAL_MACHINE\Drivers\PCMCIA\PnpID subkeys for loading drivers when a Plug and Play ID for a device is available. For an actual registry entry, the dummy variable PnpID is replaced with the Plug and Play ID of the device. The following example shows the registry entry for a device with a Plug and Play ID (the Motorola Newscard pager):</p>
+<pre class="code">HKEY_LOCAL_MACHINE</pre>
+<p>[Drivers]</p>
+<p>[PCMCIA]</p>
+<p>[Motorola,_Inc.-NewsCard_Data_Receiver-E6DD]</p>
+<p>DWORD: Index = 0x1</p>
+<p>SZ: Prefix = PGR</p>
+<p>SZ: Dll = NEWSCARD.DLL</p>
+<p>The Device Manager uses the HKEY_LOCAL_MACHINE\Drivers\PCMCIA\Detect\nn subkey for automatic detection of a device when a device Plug and Play ID is not available. For an actual registry entry, the dummy variable nn is replaced with an integer indicating the order in which the detection routines will be used. The following example shows the registry entry for a device without a Plug and Play ID:</p>
+<pre class="code">HKEY_LOCAL_MACHINE</pre>
+<p>[Drivers]</p>
+<p>[PCMCIA]</p>
+<p>[Detect]</p>
+<p>[01]</p>
+<p>SZ: Entry = DetectIHVdevice</p>
+<p>SZ: Dll = IHVdevice.dll</p>
+<p>The installation and setup application for an driver should initialize the registry keys required to identify and load the driver.</p>
+<p>PCMCIA Key Registry Entries</p>
+<p>The registry values used by the Device Manager are defined in the following table:</p>
+<table class="dtTABLE">
+<tr><td>Value Name</td><td>Value Type</td><td>Description</td></tr>
+<tr><td>Dll</td><td>REG_SZ</td><td>This required entry specifies the filename for an driver DLL.</td></tr>
+<tr><td>Entry</td><td>REG_SZ</td><td>Specifies the name of the entry point used by the detection routine if a Plug and Play ID does not exist.</td></tr>
+<tr><td>Prefix</td><td>REG_SZ</td><td>Specifies the device prefix. Required if Entry does not exist</td></tr>
+<tr><td>Index</td><td>REG_DWORD</td><td>Specifies the device index (0 through 9). Let the Device Manager assign this value.</td></tr>
+<tr><td>Context</td><td>REG_DWORD</td><td>Specifies the device context. Let the Device Manager assign this value.</td></tr>
+<tr><td>Ioctl</td><td>REG_DWORD</td><td>Specifies an optional I/O control code the Device Manager sends to an installable driver.</td></tr>
+<tr><td>Note   For Plug and Play drivers, the following registry entries should be added under the HKEY_LOCAL_MACHINE\Drivers\PCMCIA\PnpID key as part of the installable driver’s installation and setup:<br>·    Dll<br>·    Prefix<br>The Dll entry value is always required. This value specifies the filename of the installable driver the Device Manager is to load.<br>For an installable device without a Plug and Play ID, the Entry value specifies the installable driver's detection function to be called by the Device Manager's detection routine. For these devices, driver information is stored under the Detect key (that is, under the key HKEY_LOCAL_MACHINE\Drivers\PCMCIA\Detect\nn). For more information on the detection routines and the registry entries for them, see PC Card Identification Process in this chapter.<br>An installable device with a Plug and Play ID uses the Prefix value to specify a three character identifier (for example, PGR or COM) used as a prefix for their stream interface function names. For these devices, the Device Manager calls RegisterDevice on behalf of the device and increments the device index appropriately. For more information on the stream interface functions and prefixes used by drivers, see Chapter 3, “Stream Interface Reference.”<br>The Index value specifies the index assigned to the driver. If the Index value is not present, the Device Manager assigns the lowest index value available. This index will be associated with the device (for example, PGR1). Only index values 0 through 9 are allowed. Let the Device Manager determine the index value.<br>If the Context value is present (that is, if it was initialized by the device’s setup application), the Device Manager passes it as the dwInfo parameter to RegisterDevice. If it is not present, a pointer to a string containing the registry path to the device's Active key is passed as the parameter. The driver's initialization function can then open this key to read its information To let the driver read the Active key data, you should not initialize the Context value.<br>The Sckt value can be read from the Active key to obtain the socket handle. For example, this is the hSocket parameter passed to the CardRequestIRQ Card Services function.<br>If the Ioctl value is present, the Device Manager opens the loaded driver and calls its stream interface I/O control function. The Device Manager passes the I/O control code specified by the Iocl registry. The driver can do any necessary post-initialization in this context. For example, the driver could load modules that will use the device.<br>The following example, for the Motorola NewsCard pager sample driver, shows the registry entries initialized in the PCMCIA registry key. When the Device Manager matches the pager's Plug and Play ID with the registry key, it loads the Newscard.dll and registers a PGR device for the NewsCard driver. Because the Index value is specified, the Device Manager registers the pager device as a PGR1 device. If the Index value were not present, the Device Manager would select an appropriate device index. So, for a specified index, only one client context (that is, one card) can be supported by a specific driver.<br>HKEY_LOCAL_MACHINE<br>[Drivers]<br>[PCMCIA]<br>[Motorola,_Inc.-NewsCard_Data_Receiver-E6DD]<br>DWORD: Index = 0x1<br>SZ: Prefix = PGR<br>SZ: Dll = NEWSCARD.DLL</td></tr>
+</table>
+</body>
+</html>

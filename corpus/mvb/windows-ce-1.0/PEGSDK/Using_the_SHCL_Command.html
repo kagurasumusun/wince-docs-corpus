@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Using the SHCL Command</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Using the SHCL Command</h1>
+<p>Compiling</p>
+<p>Linking</p>
+<p>Response Files</p>
+<p>CL environment variable</p>
+<p>You can use SHCL to compile specified source files into an object file, or to compile and link specified source files, object files, and libraries into an executable file or a dynamic-link library (DLL).</p>
+<p>Fast compile by default.</p>
+<p>If you do not specify any optimization options, SHCL uses the disable optimization option (/Od). This feature allows you to quickly compile code that is under development and to reserve use of the optimizing compiler until it is needed.</p>
+<p>Use precompiled headers to speed compilation.</p>
+<p>You can also use the precompiled header options (/YX, /Yc, /Yd, /Yu, /Fp, and the hdrstop pragma) to speed compilation.</p>
+<p>Compiling</p>
+<p>SHCL compiles each source file, creating an object file for each. It automatically includes the options listed in the CL environment variable and any specified response files.</p>
+<p>You can use the Compile Without Linking option (/c) to create only an object file. The option /c stops SHCL before it invokes LINK.</p>
+<p>Linking</p>
+<p>SHCL automatically invokes the linker after compiling unless the /c option (Compile Without Linking) is used. It gives the names of the object files created during compiling, and the names of any object files or libraries given on the command line to the linker. The linker uses the options listed in the LINK environment variable. If you use /link to specify linker options on the SHCL command line, these options apply as well. If conflicts occur, options that follow /link override those in the LINK environment variable.</p>
+<p>Before it creates the executable file or DLL, the linker resolves external references in the object files. An external reference is a function call in one object file that refers to a function defined in another object file or in a library. To resolve an external reference, the linker searches for the called function in the following order:</p>
+<p>·	The object files passed by SHCL</p>
+<p>·	The libraries given on the SHCL command line, if any</p>
+<p>·	The libraries named in the object files</p>
+<p>After all external references are resolved, the linker links the object files and libraries named by SHCL to create a single executable file or DLL.</p>
+<p>Example</p>
+<p>Assume that you are compiling three C source files: MAIN.C, MOD1.C, and MOD2.C. Each file includes a call to a function defined in a different file:</p>
+<p>·	MAIN.C calls the function named func1 in MOD1.C and the function named func2 in MOD2.C.</p>
+<p>·	MOD1.C calls the standard library functions printf and scanf.</p>
+<p>·	MOD2.C calls graphics functions named myline and mycircle, which are defined in a library named MYGRAPH.LIB.</p>
+<p>Compile with the following command line:</p>
+<p>SHCL MAIN.C MOD1.C MOD2.C MYGRAPH.LIB</p>
+<p>SHCL first compiles the C source files and creates the object files MAIN.OBJ, MOD1.OBJ, and MOD2.OBJ. The compiler places the name of the standard library (libc.lib or coredll.lib) in each object file. (Use the -Zl flag to override the placement of the name.)</p>
+<p>Next, SHCL passes the names of the generated object files to the linker. Finally, the linker resolves the external references as follows:</p>
+<p>In MAIN.OBJ, the reference to the function func1 is resolved using the definition in MOD1.OBJ; the reference to the function func2 is resolved using the definition in MOD2.OBJ.</p>
+<p>In MOD1.OBJ, the references to printf and scanf are resolved using the definitions in the library that the linker finds named within MOD1.OBJ.</p>
+<p>In MOD2.OBJ, the references to myline and mycircle are resolved using the definitions in MYGRAPH.LIB.</p>
+<p>Response Files</p>
+<p>A response file is an ASCII file containing options and filenames you would otherwise type on the command line or specify by using the CL environment variable. SHCL accepts a compiler response file as an argument on the command line. Unlike either the command line or the CL environment variable, a response file allows you to use multiple lines of options and filenames.</p>
+<p>The options in the response file are interpreted as if they were present on the command line at the position of the response file invocation. An exception to this rule is the /link command. If /link appears in the response file, all options on the rest of the line are passed to the linker. Options in subsequent lines in the response file and options on the command line after the response file invocation are still accepted as compiler options.</p>
+<p>Note: A response file should not contain the SHCL command. Also, each option must begin and end on the same line; you cannot use the backslash (\) to concatenate an option across two lines.</p>
+<p>To invoke a response file, type the “at” sign (@) followed immediately by a filename; you can also specify a drive and path. A response file invocation is not allowed in the SHCL environment-variable string or in another response file.</p>
+<p>Examples</p>
+<p>You could put the following into a file named RESP:</p>
+<p>/Og /link LIBC.LIB</p>
+<p>SHCL uses these options in addition to any options you specify on the SHCL command line. If you specify the following SHCL command:</p>
+<p>SHCL /Ob2 @RESP MYAPP.C</p>
+<p>the following command to SHCL is the result:</p>
+<p>SHCL /Ob2 /Og MYAPP.C /link LIBC.LIB</p>
+<p>Note that the command-line and the response-file commands are effectively combined.</p>
+<p>You can use NMAKE to create a temporary response file for a single compilation step as shown in the following response file:</p>
+<p>MYAPP.OBJ : MYAPP.C</p>
+<pre class="code">SHCL @&lt;&lt; MYAPP.C</pre>
+<p>/DV100 /Og</p>
+<p>&lt;&lt;</p>
+<p>CL Environment Variable</p>
+<p>Note: Do not confuse the CL Environment Variable used by the SHCL cross compiler with CL.EXE, a separate compiler program.</p>
+<p>Use the CL environment variable to specify files and options without giving them on the command line. The environment variable has the following syntax:</p>
+<p>SET SHCL=[[ [[option]] ... [[file]] ...]] [[/link [[ link-libinfo]] ]]</p>
+<p>The CL environment variable is useful if you often specify a large number of files and options when you compile. Ordinarily, MS-DOS limits the command line to 128 characters. The files and options that you define with the CL environment variable, however, do not count toward this limit. Therefore, you can define the files and options you use most often with the SHCL variable and then give only the files and options you need for specific purposes on the command line.</p>
+<p>Note that if you have given an option in the CL environment variable, you cannot turn off or change the option from the command line. You must reset the CL environment variable and omit the file or option that you do not want to use. The information defined in the SHCL variable is treated as though it appeared before the information given on the SHCL command line.</p>
+<p>With MS-DOS, you cannot use SHCL to set options that use an equal sign (for example, the /Didentifier= string option). With Microsoft C and C++, the define constants and macros option (/D) accepts the number sign (#) as an equal sign (=). You can now use the CL environment variable to define preprocessor constants and macros (for example, /D identifier #string).</p>
+<p>You can use wildcards in filenames to specify multiple files with SHCL.</p>
+<p>Examples</p>
+<pre class="code">In the following example, the CL environment variable tells the SHCL command to use the /Zp, /Ox, and /I options during compilation and then to link with the object file \LIB\BINMODE.OBJ.</pre>
+<p>SET SHCL=/Zp2 /Ox /I\INCLUDE\MYINCLS \LIB\BINMODE.OBJ INPUT.C</p>
+<p>Both the CL environment variable above and the SHCL command below specify structure packing on 2-byte boundaries, perform maximum optimizations, and search for include files in the \INCLUDE\MYINCLS directory for the source file INPUT.C.</p>
+<p>SHCL /Zp2 /Ox /I\INCLUDE\MYINCLS \LIB\BINMODE.OBJ INPUT.C</p>
+<p>In the following example, the CL environment variable instructs the SHCL command to compile and link the source files FILE1.C and FILE2.C:</p>
+<pre class="code">SET SHCL=FILE1.C FILE2.C</pre>
+<p>&gt;SHCL FILE3.OBJ</p>
+<p>The preceding SHCL command line has the same effect as the command line:</p>
+<pre class="code">SHCL FILE1.C FILE2.C FILE3.OBJ</pre>
+</body>
+</html>

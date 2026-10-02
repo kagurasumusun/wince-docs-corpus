@@ -1,0 +1,385 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>SH-3 COFF Assembler Manual</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>SH-3 COFF Assembler Manual</h1>
+<h2>Shasm Release Notes</h2>
+<p>Differences from the Standard Hitachi Assembler</p>
+<p>Shasm generates output in MS-COFF (the Microsoft variant of COFF), as compared to the Hitachi assembler, which generates output in SYSROF.  Limitations of the MS-COFF format result in certain features of the Hitachi assembler being restricted or unavailable in Shasm.  These restrictions are detailed in the following sections; here is a summary:</p>
+<p>·	Cannot currently import and export constant symbols defined with .EQU.  Only label symbols and relative .EQU symbols can be imported and exported.  This restriction may be lifted in the future.</p>
+<p>·	Symbols from a DUMMY section cannot be exported.  This restriction may be lifted in the future.</p>
+<p>·	Alignments greater than 64 are not supported.</p>
+<p>·	The COMMON section type is not supported.</p>
+<p>·	The STACK section type is supported as if it were a regular DATA section.</p>
+<p>·	Absolute sections are not supported.</p>
+<p>·	Cannot specify an entry point using the .END directive.</p>
+<p>·	Any expressions (arithmetic) involving relative symbols must be reducible (by computing subparts of the expression whose operands are known at assembly time) to one of the following forms:</p>
+<pre class="code">expr:	   constant</pre>
+<p>|  symbol</p>
+<p>|  expr + expr</p>
+<p>|  expr - constant</p>
+<p>Shasm generates error and warning messages that contain not only an error number (which in some cases is similar to the error or warning number used by the Hitachi assembler in the same situation), but also a descriptive message, which may include specifics relating to the particular instance of the error or warning.  For example, the error message issued when a number is outside of the permitted range will tell you the illegal number (in both decimal and hexadecimal), along with the legal range.</p>
+<p>There are several differences relating to assemble listings:</p>
+<p>·	Shasm does not show accumulated line numbers in the listing; it only shows the source line numbers.  (If the lack of this “feature” is an issue, it could be implemented.  However, the assemble listing seems much more readable without these extra numbers.)</p>
+<p>·	The default number of columns for the Hitachi assembler listing is 132; the default for Shasm’s listing is 80.  However, Shasm does not truncate the source lines in the assemble listing, regardless of the number of columns.</p>
+<p>·	The Hitachi assembler shows machine code and data up to 8 bytes to a line.  By default, Shasm displays the data 4 bytes to a line; you can use the -wide command line option to select the alternate behavior (up to 8 bytes per line).</p>
+<p>·	The Hitachi assembler is able to include a cross-reference list and section list in the listing file, and does so by default.  Shasm does not currently support either the cross-reference list or the section list.  (If the lack of this feature is an issue, it could be implemented.)</p>
+<p>See also:</p>
+<p>Assembler Directives New in Shasm</p>
+<p>Function-Definition Assembler Directives</p>
+<p>Calling Convention Macros</p>
+<p>Assembler Directives New in Shasm</p>
+<p>The following directives exist only in Shasm; they are not supported by the Hitachi assembler, except as noted.</p>
+<p>.ERROR (and .AERROR)</p>
+<p>.COMMON</p>
+<p>.WEAK</p>
+<p>.ERROR (and .AERROR)</p>
+<p>Shasm introduces the .ERROR directive, which may be used to report errors detected at assembly time by user code.  If a .ERROR directive is assembled, its operands (if any) are evaluated, the results concatenated, and the result of the concatenation is used as the error message.  The operands may have either string or numeric values.  Note that Version 2.0 of the Hitachi assembler introduces a .AERROR directive, which has a similar function (although it may not have operands).  Shasm supports .AERROR identically to .ERROR.  Example:</p>
+<pre class="code">.section .text</pre>
+<p>.org 0x202      ; force the .error to be assembled</p>
+<p>.aif $ - .text &gt; 0x200</p>
+<p>.error “PC overflow: is ”, $, “, expecting &lt; ”, 0x200</p>
+<p>.aendi</p>
+<p>.COMMON</p>
+<p>Shasm introduces the .COMMON directive, which may be used to define a symbol that should be initialized to zero unless some other object file calls for it to be initialized to a specific value.  This extension is necessary to support the equivalent of (and assemblable listing for) C code such as:</p>
+<pre class="code">int a;</pre>
+<p>which in external (file) scope means that if no other file defines and initializes variable a, then a should be placed in the .bss section, which causes it to be initialized to 0.  If another file defines a, such as:</p>
+<pre class="code">int a = 5;</pre>
+<p>then both files will refer to the same variable a, which will be initialized to 5, and no link error will result.  Note that this works differently in C++; in C++, the above example would require a link error.</p>
+<p>Shasm provides the .COMMON directive to implement this concept.  The syntax of the .COMMON directive is as follows:</p>
+<pre class="code">.common	&lt;symbol_name&gt; [, &lt;size&gt;]</pre>
+<p>where symbol_name is the name of the symbol to define, and size is the number of bytes that the data occupies.  The size is optional; if omitted, it defaults to 0.  Examples:</p>
+<pre class="code">.common	_foo,4</pre>
+<p>.common	_bar,2</p>
+<p>.common	__fltused</p>
+<p>is equivalent to this C code:</p>
+<pre class="code">int foo;</pre>
+<p>short bar;</p>
+<p>void f (void)</p>
+<p>{-</p>
+<p>float a = 4.5;   // force __fltused symbol</p>
+<p>}</p>
+<p>.WEAK</p>
+<p>Shasm introduces the .WEAK directive, which may be used to define a “weak external” symbol.  Weak externals are a mechanism for programs allowing flexibility at link time.  A .WEAK directive such as:</p>
+<pre class="code">.weak		unlink,__unlink</pre>
+<p>indicates that when the program is linked, if the symbol “unlink” is defined by any object file, then references to “unlink” are resolved to its definition as usual.  However, if the symbol “unlink” is not defined by any object file, then references to “unlink” are resolved to “__unlink” instead.  (The symbol “__unlink” must be defined in exactly one of the object files, or an error will result.)  The syntax of the .WEAK directive is as follows:</p>
+<pre class="code">.weak		&lt;weak_name&gt;, &lt;default_name&gt; [, &lt;type_expr&gt;]</pre>
+<p>The optional type_expr argument is an expression (whose value must be absolute), giving the type of weak external.  If the value is zero or the third argument is omitted, the “alias” type of weak external is generated.  This is almost certainly what you want; therefore, you would not ordinarily want to use the optional third argument.  Examples:</p>
+<pre class="code">.weak		foo,bar,1</pre>
+<p>NO_SEARCH	.equ	1</p>
+<p>SEARCH_LIB	.equ	2</p>
+<p>.weak		ick,yuk,NO_SEARCH</p>
+<p>.weak		snap,crackle,SEARCH_LIB</p>
+<p>Note that if you inadvertantly place a symbol in the third argument position, and the symbol happens to be relative, you’ll get error 404; this does not mean that you can’t use relative symbols or expressions in a .WEAK directive, just that the third argument has to have an absolute value.</p>
+<p>Note that the C and C++ compilers prepend a _ (an underscore) to each symbol name; consequently, if unlink and __unlink were defined and referenced in assembly language, you would code the .WEAK directive as shown in the first example, above, but if unlink and __unlink were defined and referenced in C code, you would code the .WEAK directive as follows:</p>
+<pre class="code">.weak		_unlink,___unlink</pre>
+<p>Function-Definition Assembler Directives</p>
+<p>To support the requirements of structured exception handling and providing stack traces in the debugger, object files must contain information regarding where functions begin and end, and what part of each function is devoted to setting up the function’s stack frame.  For functions written in C and C++, this is handled by the compiler, and need not be a concern of programmer.  However, when coding in assembly language, the programmer is responsible for providing this information.  You provide this information using the following directives:</p>
+<p>.PDATA: defines the language specific exception handler, and optionally data for that handler, for the following or current function.</p>
+<p>.ENTRY: defines a function and marks its beginning.</p>
+<p>.BIGENTRY: same as ENTRY but only used for exceptional situations.</p>
+<p>.PROLOG: marks the end of the function prolog.  The function prolog is the code at the beginning of the function that sets up the function’s stack frame, in accordance with the Calling Standard Specification.</p>
+<p>.ENDF: marks the end of the function.</p>
+<p>For more detailed information on prolog code and related topics, refer to the Calling Standard Specification document; here, we are primarily concerned with the syntax and semantics of the relevant assembler directives.  Note that it is recommended that you use the calling convention macros described in the Calling Standard Specification, rather than using these directives yourself; these macros are summarized following the description of the directives.</p>
+<p>.PDATA</p>
+<p>The .PDATA directive specifies a language specific exception handler for the following or current function.  Beginning with Shasm version 3.00.6070, the .PDATA directive must appear before the .ENTRY or .BIGENTRY section to which it applies.  (Previously, the .PDATA directive could appear before or after the .ENTRY directive, as long as it appeared before the .ENDF directive.  This is no longer the case; it must now precede the .ENTRY or .BIGENTRY directive.)  The exception handler should be the address of a function, although no warning or error will be issued for a non-relative operand.  You may optionally also provide one longword (4 bytes) of data for use by the exception handler; depending on the handler, that data may also be a pointer (an address).  The syntax of the .PDATA directive is as follows:</p>
+<pre class="code">.pdata	&lt;handler_address&gt; [, &lt;handler_data&gt;]</pre>
+<p>where handler_address and handler_data may be expressions of any sort.  Forward references and relative values are permitted.  Note that the .PDATA directive is not persistent; it applies to no more than one function.  To specify an except handler (and optionally handler data) for more than one function, you must provide a .PDATA directive for each such function.  Also, function information (including information supplied by .PDATA directives) is maintained separately for each section.  The .PDATA directive is optional; Shasm issues no error or warning messages if it is not supplied.  Examples:</p>
+<pre class="code">.section	.text</pre>
+<p>.import	ex_handler</p>
+<p>.import	handler_data</p>
+<p>; set up exception handler for following function (fun1 in</p>
+<p>; this case).</p>
+<p>.pdata	ex_handler,handler_data</p>
+<p>fun1:	.entry</p>
+<p>.prolog</p>
+<p>rts</p>
+<p>nop</p>
+<p>.endf</p>
+<p>; fun1 uses ex_handler &amp; handler_data.</p>
+<p>fun2:	.entry</p>
+<p>.prolog</p>
+<p>rts</p>
+<p>nop</p>
+<p>.endf</p>
+<p>; fun2 has no exception handler or handler data (both 0).</p>
+<p>.pdata	ex_handler</p>
+<p>fun3:	.entry</p>
+<p>.prolog</p>
+<p>rts</p>
+<p>nop</p>
+<p>.endf</p>
+<p>; fun3 uses ex_handler; handler data is 0 (the default).</p>
+<p>.pdata	fun4,5</p>
+<p>fun4:	.entry</p>
+<p>.prolog</p>
+<p>rts</p>
+<p>nop</p>
+<p>.endf</p>
+<p>; fun4 is its own exception handler (probably a bad idea);</p>
+<p>; handler data is a constant 5.</p>
+<p>fun5:	.entry</p>
+<p>.prolog</p>
+<p>rts</p>
+<p>nop</p>
+<p>.endf</p>
+<p>.pdata	ex_handler</p>
+<p>; fun5 has no exception handler or handler data; the .pdata</p>
+<p>; directive above applies to the next function.  (The assembler</p>
+<p>; issues a warning if no function follows in the same section,</p>
+<p>; since in that case the .pdata directive would have no effect.)</p>
+<p>.ENTRY</p>
+<p>The .ENTRY directive marks the beginning of a function, and associates a name with that function.  You should insert an .ENTRY directive before the first line of code (.DATA and related directives are fine).  If Shasm encounters code before any .ENTRY (or after a .ENDF, with no intervening .ENTRY), it will issue a warning, and act as though a .ENTRY directive had been found immediately before the line of code.  The syntax of the .ENTRY directive is as follows:</p>
+<pre class="code">&lt;label&gt;	.entry</pre>
+<p>The label operates as a normal label (it causes the symbol to be defined with the current value of the location counter as the value of the symbol); it also associates the symbol with the function.  See the examples for the .PDATA directive, above.</p>
+<p>.BIGENTRY</p>
+<p>The .BIGENTRY directive has the same purpose and syntax as the .ENTRY directive.  Ordinarily, you should use the .ENTRY directive.  For functions that are more than 16,777,214 bytes long, or whose prolog is more than 510 bytes long, you should use the .BIGENTRY directive.  If you try to use .ENTRY for a function that needs .BIGENTRY, Shasm will issue error 554 or 555.  If you use .BIGENTRY for a function that could use .ENTRY, no warning or error will result, and the output will be correct; however, this wastes 8 bytes in the code section in which the .BIGENTRY directive appears.  Note that a function that required the use of .BIGENTRY would be very unusual.</p>
+<p>.PROLOG</p>
+<p>The .PROLOG directive marks the end of the prolog code of a function.  The prolog code is the code at the beginning of a function that sets up the stack frame for the function, in accordance with the Calling Standard Specification.  This would include saving the PR register, pushing other registers onto the stack, setting up the frame pointer, etc.  See the Calling Standard Specification for more information.  The .PROLOG directive should appear between the last line of prolog code and the first line of non-prolog code for the function.  If the function has no prolog code, then the .PROLOG directive should appear between the .ENTRY directive for the function and the first line of code in the function.  The syntax of the .PROLOG directive is as follows:</p>
+<pre class="code">.prolog</pre>
+<p>Example (see also examples for the .PDATA directive, above):</p>
+<pre class="code">fun6:	.entry</pre>
+<p>; this is the prolog code:</p>
+<p>mov.l		r14,@-sp</p>
+<p>mov.l		r8,@-sp</p>
+<p>sts.l		pr,@-sp</p>
+<p>mov		sp,fp</p>
+<p>add		#12,fp</p>
+<p>; end of prolog code.</p>
+<p>.prolog				; mark end of prolog code</p>
+<p>add		#-16,sp</p>
+<p>; function code goes here</p>
+<p>mov		fp,r2</p>
+<p>add		#-12,r2</p>
+<p>lds.l		@r2+,pr</p>
+<p>mov.l		@r2+,r8</p>
+<p>mov		r2,sp</p>
+<p>rts</p>
+<p>mov.l	@sp+,fp</p>
+<p>.endf</p>
+<p>Notes: it is important that the .PROLOG directive be used appropriately, and that the prolog code (and the epilog code) of each function conform to the Calling Standard Specification.  Otherwise, structured exception handling may not work correctly, and the debugger may be unable to provide stack traces.  If the .PROLOG directive is not specified for a function (ie, an .ENDF directive is encountered without a .PROLOG directive having been encountered since the most recent .ENTRY directive), Shasm will issue a warning, and act as though the .PROLOG directive had been specified immediately following the .ENTRY directive.  This effectively indicates that the function has no prolog code; if the function does in fact have prolog code, then structured exception handling and stack tracing may not operate properly, as noted.  It is recommended that you always use a .PROLOG directive, even if the function has no prolog code.</p>
+<p>.ENDF</p>
+<p>The .ENDF directive marks the end of a function; it should appear after the last line of code for each function.  If a .ENDF directive is encountered when there is no matching .ENTRY directive (ie, if no .ENTRY directive has been encountered, or no .ENTRY directive has been encountered since the most recent .ENDF directive), Shasm issues an error message.  If the end of the program (or section) is reached, and a function is still pending (either because there is a .ENTRY directive with no matching .ENDF directive, or because code was encountered without a .ENTRY directive, and so Shasm implicitly opened a function), Shasm issues a warning message and acts as though there were a .ENDF directive at the end of each section that has a pending function.  The syntax of the .ENDF directive is as follows:</p>
+<pre class="code">.endf</pre>
+<p>See the examples for the .PDATA directive.</p>
+<p>When Shasm encounters an .ENDF directive, it writes out any pending literal pool for the current section (as if a .pool directive had been encountered).  It also takes any pending .PDATA directive information, applies it to the current function (the one being terminated by the .ENDF directive), and resets the .PDATA directive information.</p>
+<p>Calling Convention Macros</p>
+<p>It is strongly recommended that you use the calling convention macros, rather than directly using the relevant assembler directives.  These macros are documented in detail in Appendices A and D of the Calling Standard Specification, and their definitions are provided in the header file kxsh3.h, which may be used via the .INCLUDE directive.  The following is a brief overview of the macros.  See also the examples that follow.</p>
+<p>START_REGION  NameBegin</p>
+<p>END_REGION  NameEnd</p>
+<p>These two macros are used to mark the beginning and end of a contiguous range of text or data. NameBegin labels the beginning of the range and NameEnd labels the end.  Both of these names are in the global name space.</p>
+<p>NESTED_ENTRY  Name[,[Section=]SectionName]</p>
+<p>Declares the beginning of a routine that either has an existing frame or creates a stack frame.  Name is the routine name and is in the global name space.  SectionName is the name of the section in which the entry will appear; it is optional and defaults to .text. A NESTED_ENTRY must have an associated PROLOG_END and ENTRY_END.</p>
+<p>LEAF_ENTRY  Name[,[Section=]SectionName]</p>
+<p>Declares the beginning of a routine that does not require any prolog code.  Name is the routine name and is in the global name space.  SectionName is the name of the section in which the entry will appear; it is optional and defaults to .text.  A LEAF_ENTRY must have an associated ENTRY_END.  An explicit PROLOG_END is not needed in this case because LEAF_ENTRY includes PROLOG_END.  Not all leaf routines can use LEAF_ENTRY.</p>
+<p>ALTERNATE_ENTRY  Name[,[Section=]SectionName]</p>
+<p>Declares an alternate entry to a routine of either NESTED_ENTRY or LEAF_ENTRY type.  Name is the entry point and is in the global name space.  SectionName is the name of the section in which the entry will appear; this parameter is not used by the ALTERNATE_ENTRY macro, but is accepted and ignored for consistency with NESTED_ENTRY and LEAF_ENTRY.  If used, an ALTERNATE_ENTRY call must appear in a routine's body.</p>
+<p>ENTRY_END  [Name]</p>
+<p>Ends the current routine that was specified by a prior NESTED_ENTRY or LEAF_ENTRY. Name should be the same name used in the NESTED_ENTRY or LEAF_ENTRY macros; it is currently ignored by the ENTRY_END macro.</p>
+<p>EXCEPTION_HANDLER  Handler</p>
+<p>Associates the exception handler Handler with the subsequent NESTED_ENTRY or LEAF_ENTRY routine.  This association is in effect until the matching ENTRY_END macro is encountered.</p>
+<p>EXCEPTION_HANDLER_DATA  Handler,HandlerData</p>
+<p>Associates the exception handler Handler and the HandlerData with the subsequent NESTED_ENTRY or LEAF_ENTRY routine.  This association is in effect until the matching ENTRY_END macro is encountered.</p>
+<p>PROLOG_END</p>
+<p>Marks the end of the prolog area.  This must appear following a NESTED_ENTRY or LEAF_ENTRY macro, following the prolog area and prior to the matching ENTRY_END macro.</p>
+<p>NESTED_BIGENTRY  Name[,[Section=]SectionName]</p>
+<p>The same as NESTED_ENTRY, except uses the .bigentry assembler directive instead of the .entry assembler directive.  Use this for functions that are more than 16,777,214 bytes long, or whose prolog is more than 510 bytes long.  (Such a function would be very unusual.)</p>
+<p>LEAF_BIGENTRY  Name[,[Section=]SectionName]</p>
+<p>The same as LEAF_ENTRY, except uses the .bigentry assembler directive instead of the .entry assembler directive.  Use this for functions that are more than 16,777,214 bytes long.  (Such a function would be very unusual.)</p>
+<p>Calling Convention Macro Examples</p>
+<p>For example, instead of writing:</p>
+<pre class="code">.section	.text,code</pre>
+<p>.align	4</p>
+<p>.global	fun7</p>
+<p>fun7:	.entry</p>
+<p>.prolog</p>
+<p>rts</p>
+<p>nop</p>
+<p>.endf</p>
+<p>.section	special,code</p>
+<p>.align	4</p>
+<p>.global	fun8</p>
+<p>.pdata	ex_handler</p>
+<p>fun8:	.entry</p>
+<p>sts.l		pr,@-sp</p>
+<p>.prolog</p>
+<p>bsr		fun7</p>
+<p>nop</p>
+<p>lds.l		@sp+,pr</p>
+<p>rts</p>
+<p>nop</p>
+<p>.endf</p>
+<p>You could simply write:</p>
+<p>LEAF_ENTRY	fun7</p>
+<p>rts</p>
+<p>nop</p>
+<p>ENTRY_END</p>
+<p>EXCEPTION_HANDLER	ex_handler</p>
+<p>NESTED_ENTRY	fun8,Section=special</p>
+<p>sts.l		pr,@-sp</p>
+<p>PROLOG_END</p>
+<p>bsr		fun7</p>
+<p>nop</p>
+<p>lds.l		@sp+,pr</p>
+<p>rts</p>
+<p>nop</p>
+<p>ENTRY_END</p>
+<p>Shasm Warnings &amp; Errors</p>
+<p>Shortcuts: 1 40 101 301 400 500 540 611 801 851</p>
+<table class="dtTABLE">
+<tr><td>1 (FATAL)</td><td>Internal error: %s<br>You should never see this message.  If you do, there is a bug in Shasm.  It is most helpful if you can report the exact message, and supply a sample program that causes Shasm to issue the message; however, just a report of the precise message is better than not reporting the error at all.</td></tr>
+<tr><td>2 (FATAL)</td><td>Too many errors (%d) -- stopping assembly<br>The maximum number of errors was exceeded.  You can control the maximum number of errors using the -maxerrors command line option.</td></tr>
+<tr><td>3 (FATAL)</td><td>%s not yet implemented<br>You generally should not see this message.  If you do, you have attempted to use a feature that is not yet implemented in Shasm, which may (or may not) be a bug; please report the exact message.</td></tr>
+<tr><td>10 (ERROR)</td><td>No input files were specified -- nothing to do<br>After parsing all of the command line options, Shasm has no input files that it was able to find and open.</td></tr>
+<tr><td>20 (ERROR)</td><td>Cannot open file %s: %s<br>Shasm failed to find or open an input file that you have specified.</td></tr>
+<tr><td>21 (ERROR)</td><td>Error reading file: %s<br>You generally should not see this message; it indicates that Shasm was suddenly unable to continue reading input from a file that it successfully opened.</td></tr>
+<tr><td>30 (ERROR)</td><td>Unknown command line switch "%s"<br>You specified a command line option that Shasm does not recognize or support.</td></tr>
+<tr><td>31 (ERROR)</td><td>Syntax error in command line switch "%s": %s<br>Shasm thinks it knows which command line option you were trying to use, but it doesn’t understand what you meant.</td></tr>
+<tr><td>32 (ERROR)</td><td>An argument is required for %s<br>You did not supply an argument for a command line option that requires one.</td></tr>
+<tr><td>33 (ERROR)</td><td>A numeric argument is required for %s<br>You did not supply an argument, or you supplied a non-numeric argument, for a command line option that requires a numeric argument.</td></tr>
+<tr><td>34 (ERROR)</td><td>%s is out of range; must be &gt;= %d and &lt;= %d<br>You specified a numeric argument that is not within the valid range.  The error message will show the valid range for the argument.</td></tr>
+<tr><td>35 (ERROR)</td><td>Invalid -show/-noshow option list: "%s"<br>Shasm could not parse some part of a -show or -noshow command line option.</td></tr>
+<tr><td>36 (WARNING)</td><td>Ignoring unimplemented option "%s"<br>You used a command line option or assembler directive that specifies a feature that is not currently implemented by Shasm.</td></tr>
+<tr><td>37 (WARNING)</td><td>Interpreting option "%s" as "%s"<br>You specified a command line option in a way that could be interpreted in more than one way by Shasm; this message tells you which way Shasm chose to interpret the option.  For instance, “-DEBUG” could mean the -D option with the argument EBUG (meaning to define EBUG as 1) or it could mean the switch -debug (enabling output of debugging information).  You can avoid this particular case by using -debug (or -DEBUG=1 if you really wanted an EBUG equate).</td></tr>
+<tr><td>40 (FATAL)</td><td>Insufficient memory%s<br>Shasm was unable to allocate memory for some purpose.  You generally should not see this message.</td></tr>
+<tr><td>41 (FATAL)</td><td>Insufficient memory; can't allocate %u more%s<br>Shasm was unable to allocate memory for some purpose.  You generally should not see this message.</td></tr>
+<tr><td>70 (ERROR)</td><td>Character %c was not expected<br>Shasm encountered a character that it never expected to see in a source file.</td></tr>
+<tr><td>71 (ERROR)</td><td>Nonascii character (^%c) in source<br>Shasm encountered a character that it never expected to see in a source file.</td></tr>
+<tr><td>72 (ERROR)</td><td>Nonascii character (0x%02d) in source<br>Shasm encountered a character that it never expected to see in a source file.</td></tr>
+<tr><td>73 (ERROR)</td><td>What do you mean by "%s"?<br>Shasm encountered a combination of characters that it doesn’t understand.</td></tr>
+<tr><td>74 (ERROR)</td><td>"%c" is not a valid radix specifier (use HDQBXO)<br>You attempted to use a radix specifier that Shasm doesn’t recognize.  Use one of H, D, Q, B, X, O, h, d,q, b, x, or o.</td></tr>
+<tr><td>75 (ERROR)</td><td>"%s" is not a valid radix specifier (use HDQBXO)<br>You attempted to use a radix specifier that Shasm doesn’t recognize.  Use one of H, D, Q, B, X, O, h, d,q, b, x, or o.</td></tr>
+<tr><td>76 (ERROR)</td><td>Overflow in numeric constant<br>You attempted to write a numeric constant that cannot be represented in 32 bits.  The valid range is -2,147,483,648 to 4,294,967,295 or H’00000000 to H’FFFFFFFF.</td></tr>
+<tr><td>77 (ERROR)</td><td>A backquoted symbol name cannot span multiple lines<br>You wrote a backquote character (`) which may be used to enclose a symbol whose name contains characters that are not ordinarily allowed, but no matching backquote character was found on the same line.  These characters must travel in pairs (with a symbol name between them).</td></tr>
+<tr><td>78 (ERROR)</td><td>A backquoted symbol name cannot be null (``)<br>You wrote two adjacent backquote characters (``) which would represent a symbol whose name is null (zero-length), but such a symbol name is illegal.  Shasm will also issue this error message if you write a backquote (`) as the last character on a line.</td></tr>
+<tr><td>80 (ERROR)</td><td>Parser error: %s<br>You should not see this message; if you do, there is a bug in Shasm (because it should recover from the error and give you a more helpful error message).  Please report the exact message, and if possible, provide a source file that causes Shasm to issue the message.</td></tr>
+<tr><td>81 (ERROR)</td><td>Failed to parse input<br>You should not see this message; if you do, there is a bug in Shasm (because it should recover from the error and give you a more helpful error message).  Please report the exact message, and if possible, provide a source file that causes Shasm to issue the message.</td></tr>
+<tr><td>101 (ERROR)</td><td>Syntax error<br>Something is syntactically invalid on the line for which this error is reported.</td></tr>
+<tr><td>150 (ERROR)</td><td>Cannot put a %s instruction in a delay slot<br>You have attempted to place an instruction in a delay slot that is not allowed in a delay slot.</td></tr>
+<tr><td>151 (ERROR)</td><td>Can't compute PC displacement in a delay slot<br>Shasm is not able to compute the PC displacement for a PC-relative addressing mode in a delay slot, because such a displacement must be relative to the PC of the branch target, and that’s hard.  Maybe someday, especially since version 2.0 of the Hitachi assembler can do it, and you have to keep up with the Joneses, after all.</td></tr>
+<tr><td>152 (ERROR)</td><td>Cannot use "%s #x" in section (%s) with align &lt; %d<br>You cannot use a MOV.L #imm,Rn in a section whose alignment is less than 4, or a MOV.W #imm,Rn in a section whose alignment is less than 2.</td></tr>
+<tr><td>153 (ERROR)</td><td>Instruction at odd address<br>An instruction at an odd address is not usually a good idea.  Attempting to execute it will cause a processor exception at run time.</td></tr>
+<tr><td>200 (ERROR)</td><td>Symbol "%s", first used at %s, is never defined<br>You referenced a symbol without ever providing a definition for it.  Either define it (using .EQU, a label, etc.), or import it (using .IMPORT or .GLOBAL).</td></tr>
+<tr><td>202 (ERROR)</td><td>Illegal symbol "%s"<br>User defined symbols are not permitted to begin with \&amp; or . (a period).</td></tr>
+<tr><td>203 (ERROR)</td><td>Illegal label symbol "%s"<br>User defined symbols are not permitted to begin with \&amp; or . (a period).</td></tr>
+<tr><td>205 (WARNING)</td><td>%s has already been declared %s<br>You have attempted to redeclare or redefine a symbol that has already been declared or defined.</td></tr>
+<tr><td>206 (ERROR)</td><td>%s has already been declared %s<br>You have attempted to redeclare or redefine a symbol that has already been declared or defined.</td></tr>
+<tr><td>207 (ERROR)</td><td>Preprocessor symbol "%s" has not been defined yet<br>You have attempted to use a preprocessor symbol before defining it.</td></tr>
+<tr><td>210 (ERROR)</td><td>A string ("%s") is not valid here<br>You have attempted to use a string constant or a string-valued symbol or expression in a context in which strings (including character constants) are not supported.</td></tr>
+<tr><td>211 (ERROR)</td><td>Can't %s a %s symbol (%s)<br>You have attempted to use a .ASSIGN, .ASSIGNA, .ASSIGNC, .REG, .SECTION, or internal register symbol with .EXPORT or .GLOBAL.  Such symbols cannot be imported or exported.</td></tr>
+<tr><td>212 (ERROR)</td><td>Symbol "%s" has not been defined yet<br>You have attempted to reference a symbol in a context where forward references are not permitted, but the symbol has not yet been defined or its value is not yet known.</td></tr>
+<tr><td>213 (ERROR)</td><td>The value of symbol "%s" is not known yet<br>You have attempted to reference a symbol in a context where forward references are not permitted, but the symbol has not yet been defined or its value is not yet known.</td></tr>
+<tr><td>214 (ERROR)</td><td>"%s" is an .IMPORT symbol; its value is unknown<br>You have attempted to reference a .IMPORT symbol in a context where external references are not permitted.</td></tr>
+<tr><td>301 (ERROR)</td><td>Too many operands; expecting %s<br>You have supplied too many operands for an instruction or an assembler directive.</td></tr>
+<tr><td>302 (ERROR)</td><td>"%s" is not an opcode, directive, or macro<br>You have specified an operation name that is not an opcode or directive, nor a defined macro.  Perhaps you have misspelled it, or it is a macro that has not yet been defined.</td></tr>
+<tr><td>304 (ERROR)</td><td>Not enough operands; expecting %s<br>You have supplied fewer operands than are required for an instruction or an assembler directive.</td></tr>
+<tr><td>307 (ERROR)</td><td>This addressing mode is not legal here<br>You have specified an addressing mode that is not legal for the instruction or the instruction/modifier combination, or you have specified a modifier that is not legal for the instruction.</td></tr>
+<tr><td>308 (ERROR)</td><td>Invalid addressing mode (incompatible operands)<br>You have specified a combination of addressing modes that are not legal for the instruction or the instruction/modifier combination, or you have specified a modifier that is not legal for the combination of addressing modes and the instruction.</td></tr>
+<tr><td>309 (ERROR)</td><td>Invalid addressing mode (illegal register %s): "%s"<br>You have specified a register name in a place where that register (or register type) is not legal.</td></tr>
+<tr><td>310 (ERROR)</td><td>Cannot use %s here; only r0 is valid<br>You have specified a register other than r0 in a context where only r0 is legal.</td></tr>
+<tr><td>311 (ERROR)</td><td>"%s" (%s) is not a register<br>The symbol you specified as the operand of a .REG directive is not a valid register name.</td></tr>
+<tr><td>312 (ERROR)</td><td>This would require %s relocation<br>You have attempted to perform an operation that cannot be represented in the MS-COFF object format as currently defined.  You should not generally see this message.</td></tr>
+<tr><td>400 (ERROR)</td><td>Character constant longer than 4 characters: "%s"<br>A character constant may be no longer than four characters.  You may also see this message if you supply a string (or a string-valued symbol or expression) in a context where a number is expected.</td></tr>
+<tr><td>402 (ERROR)</td><td>%d (0x%x) is out of range; must be &gt;= %d and &lt;= %u<br>An operand value is outside of the legal range.  The message will tell you what the valid range is.  You may also see this message when attempting a PC-relative operation (such as a branch, or a MOV @(disp, PC),Rn) to a location that is too far away, or is a backward reference for an instruction that can only support forward references.</td></tr>
+<tr><td>403 (ERROR)</td><td>Can't %s when one or more operands are relocated<br>Only certain arithmetic operations are supported on relative values; refer to section 1.6 (Expressions, above) for more information.</td></tr>
+<tr><td>404 (ERROR)</td><td>Relocated value not valid here; must be absolute<br>You have attempted to use a relative value or relative-valued symbol or expression in a context where only absolute values are allowed.</td></tr>
+<tr><td>405 (ERROR)</td><td>Can't %s import symbols or between sections<br>Only certain arithmetic operations are supported on relative values and external symbols; refer to section 1.6 (Expressions, above) for more information.</td></tr>
+<tr><td>406 (ERROR)</td><td>Can't %s expr w/%d reloc%s and expr w/%d reloc%s<br>Only certain arithmetic operations are supported on relative values and external symbols; refer to section 1.6 (Expressions, above) for more information.</td></tr>
+<tr><td>408 (ERROR)</td><td>Cannot divide by zero<br>Really, you can’t.</td></tr>
+<tr><td>413 (ERROR)</td><td>Unknown relational operator: "%s"<br>The only supported relational operators (besides the regular C operators) are EQ, NE, GT, LT, GE, and LE (regardless of upper or lower case).</td></tr>
+<tr><td>420 (ERROR)</td><td>Syntax error in operand<br>Shasm is unable to recognize an operand of an instruction.</td></tr>
+<tr><td>421 (ERROR)</td><td>Syntax error in expression<br>Shasm is unable to recognize an expression or a component thereof.</td></tr>
+<tr><td>422 (ERROR)</td><td>Can't use a %s symbol here<br>You cannot use a register in an expression (at least, not the way you’re trying to).</td></tr>
+<tr><td>423 (ERROR)</td><td>Expression must be relative (or use #immediate)<br>You wrote an instruction like MOV symbol,Rn or MOVA symbol,Rn where symbol is an absolute symbol (such as a .EQU symbol might be).  If you want to move the value of the symbol into the register, use MOV #symbol,Rn.</td></tr>
+<tr><td>424 (ERROR)</td><td>The "%s" operator (%s) is not supported<br>You attempted to use an operator that is recognized but not supported, such as ++ or --.</td></tr>
+<tr><td>425 (ERROR)</td><td>Expression result overflow: %s %d (0x%x)<br>An arithmetic operation resulted in overflow (loss of important bits that you probably wanted).</td></tr>
+<tr><td>426 (ERROR)</td><td>Expression result overflow: %d (0x%x) %s %d (0x%x)<br>An arithmetic operation resulted in overflow (loss of important bits that you probably wanted).</td></tr>
+<tr><td>427 (ERROR)</td><td>Expression result overflow: %s %u (0x%x)<br>An arithmetic operation resulted in overflow (loss of important bits that you probably wanted).</td></tr>
+<tr><td>453 (ERROR)</td><td>%s needs a literal pool before here<br>The source line noted in the text of the message (where the %s is above) contains a literal pool reference which cannot reach as far as the address of the source line noted at the beginning of the error message line.  You should insert a .POOL directive (or an unconditional branch) somewhere between the two source lines.</td></tr>
+<tr><td>500 (ERROR)</td><td>Label required here<br>You did not supply a label for a directive that requires one.  The directive may be ignored.</td></tr>
+<tr><td>501 (ERROR)</td><td>Illegal value for .ORG%s<br>You attempted to use a .ORG directive to move the location counter backward (to a lower address than its current value) or more than 1 megabyte forward.  If the latter is the case, consider that this would occupy that amount of space in the object file, due to the MS-COFF object file format.  There may be a better way to accomplish what you desire.</td></tr>
+<tr><td>503 (ERROR)</td><td>Exported symbol "%s" not defined<br>The symbol named in the message was declared in a .EXPORT directive, but was never defined anywhere in the source file.</td></tr>
+<tr><td>516 (ERROR)</td><td>This %s directive conflicts with a previous %s<br>An operand of a .PRINT directive conflicts with an operand of a previous .PRINT directive, or an operand of a .OUTPUT directive conflicts with an operand of a previous .OUTPUT directive.</td></tr>
+<tr><td>517 (ERROR)</td><td>The result of this expression is not known yet<br>You supplied an expression whose value is not yet defined in a context where the value must be known on the first pass through the file.</td></tr>
+<tr><td>519 (ERROR)</td><td>String is %u characters long; maximum is 255<br>The string supplied for a .SDATAC directive must be no more than 255 characters long, because the length is represented in a single byte.</td></tr>
+<tr><td>520 (ERROR)</td><td>A string or string expression is required %s<br>You supplied a numeric constant or a numeric-valued symbol or expression in a context where a string is required.</td></tr>
+<tr><td>521 (WARNING)</td><td>A literal pool would never be put here anyway<br>You put a .NOPOOL directive in a place where Shasm would never have generated a literal pool anyway.</td></tr>
+<tr><td>522 (WARNING)</td><td>.POOL illegal in delay slot of %s<br>A literal pool wound up after a delayed branch instruction; Shasm automatically supplies a NOP instruction to fill the delay slot.</td></tr>
+<tr><td>531 (ERROR)</td><td>Invalid section type "%s"<br>You specified an invalid section type.  The valid section types are CODE, DATA, STACK, DUMMY, COMMON, BSS, USERC, and USERD, without regard to upper or lower case.</td></tr>
+<tr><td>532 (ERROR)</td><td>Section type (%s) must follow section name (%s)<br>You cannot specify the section type before the section name.</td></tr>
+<tr><td>533 (ERROR)</td><td>Section type (%s) cannot have a value<br>You cannot specify a value for the section type.</td></tr>
+<tr><td>534 (ERROR)</td><td>Invalid option "%s"<br>You supplied a keyword option for a directive for which it is not valid.</td></tr>
+<tr><td>535 (ERROR)</td><td>Option "%s" cannot have a value<br>You supplied a value for an option that cannot have a value.</td></tr>
+<tr><td>536 (ERROR)</td><td>Option "%s" must have a numeric value<br>You did not supply a value, or you supplied a non-numeric value, for an option that requires a numeric value.</td></tr>
+<tr><td>537 (ERROR)</td><td>MS-COFF supports alignments 1, 2, 4, 8, 16, 32, 64<br>See the note on the .ALIGN directive, in section 4.2.1, above.</td></tr>
+<tr><td>538 (ERROR)</td><td>"%s": MS-COFF doesn't support absolute sections<br>See the note on the .SECTION directive, in section 4.2.1, above.</td></tr>
+<tr><td>539 (ERROR)</td><td>"%s": MS-COFF can't export non-relocatable .EQU's<br>See section 4.2.4, above.</td></tr>
+<tr><td>540 (ERROR)</td><td>"%s": MS-COFF can't export syms from DUMMY section<br>See section 4.2.4, above.</td></tr>
+<tr><td>541 (ERROR)</td><td>Illegal alignment %u; must be a power of two<br>An alignment value must be a power of two (currently 2</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>611 (ERROR)</td><td>A macro name is required for .MACRO<br>You must specify a macro name with the .MACRO directive.  In particular, the macro name goes on the right hand side of the .MACRO directive (in the first operand position, not in the label position).</td></tr>
+<tr><td>612 (ERROR)</td><td>Syntax error in macro name for .MACRO<br>Shasm encountered something that doesn’t look like a symbol name immediately following a .MACRO directive.</td></tr>
+<tr><td>619 (ERROR)</td><td>Invalid macro parameter name "%s"<br>You specified a macro parameter name that begins with a number; this is not legal.</td></tr>
+<tr><td>622 (ERROR)</td><td>No matching paren for macro expansion exclusion<br>Shasm was not able to find a ) to match a \( which it encountered in a macro expansion.  Note that the macro expansion exclusion syntax \( ... ) is not allowed to start on one line and end on another line; it must all occur on a single line of the macro.</td></tr>
+<tr><td>624 (ERROR)</td><td>Too many macro parameters (max %d)<br>You’ve given the poor macro more parameters (operands) than it knows what to do with.</td></tr>
+<tr><td>631 (ERROR)</td><td>%s without matching %s<br>You wrote a .AENDI or .AENDR or .AENDW that doesn’t seem to have a matching .AIF or .AREPEAT or .AWHILE.  You will also see this error if you have one of these constructs nested inside another, and you forget the end directive for the inner one.</td></tr>
+<tr><td>632 (ERROR)</td><td>Can't have %s after .AELSE<br>You can’t put a .AELSIF or a .AELSE after a .AELSE in the same .AIF block.</td></tr>
+<tr><td>633 (ERROR)</td><td>%s still active at end of "%s" macro expansion<br>A .AIF, .AREPEAT, .AWHILE, or .MACRO (macro definition) was still in progress when the end of a macro was reached.  These constructs cannot span macro boundaries.</td></tr>
+<tr><td>634 (ERROR)</td><td>%s from line %d still active at end of file %s<br>A .AIF, .AREPEAT, .AWHILE, or .MACRO (macro definition) was still in progress when the end of a file was reached.  These constructs cannot span file boundaries.</td></tr>
+<tr><td>635 (ERROR)</td><td>.EXITM outside of any .AREPEAT, .AWHILE, or macro<br>Shasm encountered a .EXITM directive that seems to be stranded without any loop or macro to exit from.  You might also see this message if a previous error caused Shasm to ignore the beginning of such a construct.</td></tr>
+<tr><td>636 (ERROR)</td><td>.END with %s still active<br>Shasm encountered a .END directive while a .AIF, .AREPEAT, .AWHILE, or macro expansion was still in progress.  Shasm ignores the .END directive in this case.</td></tr>
+<tr><td>670 (ERROR)</td><td>This syntax is only legal in a macro: "%s"<br>You attempted to use a special facility that is only available when a macro is being expanded (ie, in a macro body).</td></tr>
+<tr><td>671 (ERROR)</td><td>Syntax error in macro arguments<br>Shasm was unable to parse one or more of the arguments to a macro.  It tries to continue as best it can.</td></tr>
+<tr><td>672 (ERROR)</td><td>End of file reached while processing %s<br>A .AIF, .AREPEAT, .AWHILE, or .MACRO (macro definition) was still in progress when the end of a file was reached.  These constructs cannot span file boundaries.  I would expect you to get error 634 rather than this one.</td></tr>
+<tr><td>673 (ERROR)</td><td>Unknown macro parameter name "%s"<br>You attempted to refer to a macro parameter name that is not defined for the macro currently being expanded.  Note that in the case of nested macro expansion, you can only refer to the arguments of the innermost macro.</td></tr>
+<tr><td>801 (WARNING)</td><td>Symbol %s already defined as a %s<br>You have attempted to redeclare or redefine a symbol that has already been declared or defined.</td></tr>
+<tr><td>802 (ERROR)</td><td>Symbol %s already defined as a %s<br>You have attempted to redeclare or redefine a symbol that has already been declared or defined.</td></tr>
+<tr><td>807 (WARNING)</td><td>Invalid size specification "%c"<br>You have supplied an illegal size specification (modifier).  The only legal modifiers are B, W, L, b, w, and l (lowercase L).</td></tr>
+<tr><td>808 (WARNING)</td><td>A size specification ("%c") is not allowed here<br>You have supplied a size specification (modifier) on an instruction or directive that cannot have one.</td></tr>
+<tr><td>810 (WARNING)</td><td>Too many operands; expecting %s<br>You have supplied more operands than can be used by the instruction or directive.</td></tr>
+<tr><td>811 (WARNING)</td><td>Label not allowed here; ignoring "%s"<br>You have supplied a label on a directive that cannot have one; the label is ignored, and will not be defined.  This may lead to further error messages.</td></tr>
+<tr><td>813 (WARNING)</td><td>Section "%s" has already been declared %s<br>You cannot change the type or attributes of a section after the first time it is declared (via the .SECTION directive).</td></tr>
+<tr><td>816 (WARNING)</td><td>Unaligned %s size data at 0x%x<br>You have written a .DATA or .RES or related directive that is attempting to place a word at an odd address or a longword at an address that is not a multiple of 4.  Be careful; attempting to access such data in a single instruction will lead to a processor exception.</td></tr>
+<tr><td>817 (WARNING)</td><td>Beware of possibly unaligned code<br>You have specified an alignment of less than 2 in a code section; this may result in your code being placed at an odd address, which would almost certainly cause more processor exceptions than you want.</td></tr>
+<tr><td>818 (WARNING)</td><td>Can't guarantee align &gt; section "%s"'s align (%d)<br>You have specified a value for a .ALIGN directive that is greater than the alignment of the current section; such an alignment cannot be guaranteed.</td></tr>
+<tr><td>826 (WARNING)</td><td>Instructions valid only in Code section; "%s" is %s<br>You have written an executable or extended instruction in a section that is not a code section; this is not permitted.</td></tr>
+<tr><td>827 (WARNING)</td><td>%s invalid in a %s section (%s) -- ignored<br>You have attempted to reserve uninitialized data in a code section, or initialized data in a stack, dummy, or bss section; this is not permitted.</td></tr>
+<tr><td>838 (ERROR)</td><td>A character string may not span multiple lines<br>This usually means you forgot a closing quote or you have an embedded quote in the string and you forgot to double it.</td></tr>
+<tr><td>839 (WARNING)</td><td>You may not specify a value for %s; it is ignored<br>You have specified a value for a keyword option that cannot have a value.</td></tr>
+<tr><td>840 (WARNING)</td><td>Block count is zero -- directive ignored<br>You have written a .RESB or .DATAB or .SDATAB directive with a zero block count; this effectively nullifies the directive.</td></tr>
+<tr><td>841 (WARNING)</td><td>%u is too large to fit in a character; using %u<br>A control character expression resulted in a value greater than 255.</td></tr>
+<tr><td>842 (WARNING)</td><td>"%s" is abs; expr is location, not displacement<br>When you write a branch to a symbol in an absolute section, the symbol is assumed to represent a location, not a displacement.  Since absolute sections aren’t currentlly supported anyway, this is probably not your biggest problem.</td></tr>
+<tr><td>851 (WARNING)</td><td>Overriding %s from .PDATA %s<br>A .PDATA directive has overridden a previous .PDATA directive.  This can only happen if you write two .PDATA directives in the same section without a valid .ENDF between them.</td></tr>
+<tr><td>852 (WARNING)</td><td>%s from .PDATA at %s(%d) was never used<br>You wrote a .PDATA directive that didn’t have a valid .ENDF following it in the same section.</td></tr>
+<tr><td>870 (WARNING)</td><td>Unaligned displacement value %d; truncating to %d<br>A displacement value that refers to a word was an odd number, or a displacement value that refers to a longword was not a multiple of four.  The stray least significant bits are dropped on the floor.</td></tr>
+<tr><td>871 (WARNING)</td><td>PC-relative in delay slot is branch-dest relative!<br>Beware!  When you write a PC-relative instruction in a delay slot, the PC that it is relative to is the PC of the branch destination!</td></tr>
+<tr><td>876 (WARNING)</td><td>Inserted BRA and NOP before literal pool<br>Shasm automatically inserted a BRA to skip over a literal pool (and a NOP to fill the BRA’s delay slot), because it observed that the literal pool did not follow the delay slot instruction of an unconditional branch.</td></tr>
+<tr><td>880 (WARNING)</td><td>Function end after delayed branch<br>Shasm encountered a .ENDF directive (or the end of the input file or section) with a branch’s delay slot still unfilled.  Shasm supplies a NOP to fill the delay slot, since executing garbage is no fun.</td></tr>
+<tr><td>882 (WARNING)</td><td>Can't align delay slot instruction for SH3 rev 3<br>You’ll only see this message if you use the -Qsh3r3 command line option; it means that Shasm wanted to align an instruction, but it couldn’t because the instruction in question was in a delay slot.  You’re on your own for that one.  Consider using .AIF to conditionalize any change you make on the value of _M_SH_REV, so that you won’t affect your code except when assembling for the SH3 revision 3.</td></tr>
+<tr><td>886 (WARNING)</td><td>.END missing -- pretending there was one<br>Shasm reached the end of the input without ever seeing a .END directive.  Strictly speaking, there ought to be one in there somewhere.</td></tr>
+<tr><td>887 (WARNING)</td><td>.END reached -- ignoring to EOF<br>Shasm encountered a .END directive, but noticed that there was something more than blank lines after it.  Whatever it was, Shasm ignored it.</td></tr>
+<tr><td>888 (WARNING)</td><td>Entry point not supported<br>Refer to the note regarding the .END directive in section 4.2.7, above.</td></tr>
+<tr><td>903 (ERROR)</td><td>%s: %s<br>It’s hard to tell by looking at it here, but this error indicates that there was some problem opening or writing to the assemble listing file.  If you ever see this message for real, it will be much clearer than it looks here.</td></tr>
+<tr><td>904 (ERROR)</td><td>%s: %s<br>It’s hard to tell by looking at it here, but this error indicates that there was some problem opening or writing to the object file.  If you ever see this message for real, it will be much clearer than it looks here.</td></tr>
+<tr><td>907 (ERROR)</td><td>Can't allocate %u bytes of memory for section "%s"<br>Probably as a result of a .ORG directive, Shasm is unable to allocate enough memory to store the data for the section named.  It will try to continue as best it can.</td></tr>
+<tr><td>998 (ERROR)</td><td>%s<br>This is the message you get if a .AERROR or .ERROR directive is assembled; in other words, you asked for it (literally).</td></tr>
+</table>
+</body>
+</html>

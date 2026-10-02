@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>About the 16550mod Source Files</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>About the 16550mod Source Files</h1>
+<p>The 16550mod.c source file contains the following important functions for interacting with the operating system:</p>
+<p>·	DllEntry—an entry-point function for the DLL</p>
+<p>·	PDM_*—the stream interface entry-point functions (PDM is used as the prefix for the stream interface functions)</p>
+<p>·	StatusCallback—status callback function</p>
+<p>·	InterruptCallback—interrupt callback function</p>
+<p>The 16550.h header file defines constant values related to the 16550 universal asynchronous receiver-transmitter (UART) hardware. Since specific code for the 16550-style PC Card modem was minimized, only a few values from this header file are used in the 16550mod.c source file.</p>
+<p>This driver can simultaneously support multiple instances of a 16550-style PC Card modem device. All data members needed for each instance of the device are contained in the client context structure CLIENT_CONTEXT. PDM_Init allocates memory for this client context structure and initializes it. The device instances are then available to applications.</p>
+<p>A convenience macro, IO, accesses 16550 UART registers. This macro multiplies 16550 register offset by memory granularity.</p>
+<p>An event-name structure associates status callback event codes with printable names. This structure is for debugging purposes only.</p>
+<p>The 16550mod DllEntry DLL Entry Function</p>
+<p>The device manager uses the DllEntry entry function to load and unload the installable driver DLL. When the driver is loaded, this function can initialize global variables. When the driver is unloaded, this function can call functions that enable a clean separation from the system.</p>
+<p>The 16550mod StatusCallBack Status Callback Function</p>
+<p>The 16550 modem StatusCallBack status callback function processes PC Card status callback events. These status callback events notify the pager driver of changes in the status of the PC Card that Card Services detects. The PDM_Init function uses CardRegisterClient to register StatusCallBack.</p>
+<p>The 16550mod InterruptCallback Interrupt Callback Function</p>
+<p>Card services creates a thread of execution for interrupt processing. When the I/O card device generates an interrupt, Card Services invokes the InterruptCallback interrupt callback function passing it the address of the client context in which the interrupt occurred. The interrupt callback function then reads the 16550 interrupt identification register to determine the cause of interrupt. A switch statement processes the cause of the interrupt.</p>
+<p>Note   Current computers do not lock an inserted PC card or have a software-controlled mechanism that ejects the PC card, that is you can remove an inserted PC card at any time.</p>
+<p>You should use exception handling in your client driver to handle possible bus error exceptions if the PC card is removed unexpectedly.</p>
+<p>The interrupt callback function uses a try-except statement that enables the I/O card client to gain control if the card is removed while generating an interrupt. In general, you must wrap all PC card access code in a try-except statement.</p>
+<p>The PDM_Init function uses CardRequestIRQ to register InterruptCallback.</p>
+<p>The 16550mod PDM_Init Function</p>
+<p>When you install a 16550 modem PC Card, the Device Manager loads the Ramcard.dll file, and calls the PDM_Init function. The argument to PDM_Init contains the address to a string buffer containing the registry path of the active key associated with the driver. PDM_Init performs the following tasks:</p>
+<p>·	Opens the passed key and gets the socket handle for the card. The socket handle is used when calling Card Services functions.</p>
+<p>·	Allocates memory for a client context structure containing data members related to an instance of the inserted card. The data members of this client context structure, such as events and critical sections, are then initialized.</p>
+<p>·	Registers the status callback.</p>
+<p>·	Configures the card’s I/O memory and interrupts in the following manner:</p>
+<p>·	An I/O configuration is selected and requested.</p>
+<p>·	A memory window is requested and mapped.</p>
+<p>·	The interrupt callback function is registered with Card Services.</p>
+<p>·	Configures the 16550 UART registers.</p>
+<p>·	Returns the client context handle which is the address of the client context structure.</p>
+<p>The 16550mod PDM_Deinit Function</p>
+<p>When you remove the modem card, the operating system Device Manager calls the PDM_Deinit function. The argument passed in the PDM_Deinit function is the client context handle. This function de-registers with Card Services and frees the client context structure.</p>
+<p>The 16550mod.c PDM_Open Function</p>
+<p>In general, a driver might support multiple open contexts. For each open context, the PDM_Open function allocates and initializes an open context structure. The PDM_Open function then returns the address of the open context structure.</p>
+<p>To keep this 16550 modem client driver simple, it supports only one open context per client context. To test for only one open context, the client context structure use the data member named openCount. If openCount is nonzero, the PDM_Open function fails.</p>
+<p>Since the PDM_Open function only supports one open context, it is convenient to place open context data members into the client context structure, that is, the structure of the open context is merged into the client context structure.</p>
+<p>The PDM_Open function initializes open context data related to the read/write buffers and returns the address of the client context structure which plays the role of the open context structure in this sample driver.</p>
+<p>The 16550mod PDM_Close Function</p>
+<p>The PDM_Close function decrements the openCount data member of the client context structure.</p>
+<p>The 16550mod PDM_Read Function</p>
+<p>The client context structure contains as data members a circular read buffer and index values named intIndex and readIndex. With each byte received by the 16550 chip in the card device, the interrupt callback function deposits that byte in the circular read buffer at a location specified by intIndex and then increments intIndex. The PDM_Read function takes bytes from the circular read buffer at a location specified by readIndex. If the circular read buffer is empty, these indices are equal. If the circular read buffer is full, the value of intIndex is just behind the value of readIndex. When the card device receives a new byte and the circular read buffer is full, the value of intIndex is not incremented, that is, the byte is dropped.</p>
+<p>The PDM_Read function takes bytes already waiting in the circular read buffer, up to the requested number, and returns. There is no waiting for additional bytes to arrive, that is, every read is nonblocking.</p>
+<p>The 16550mod PDM_Write Function</p>
+<p>The client context structure contains as a data member a write buffer. The PDM_Write function copies all bytes passed by an application into this write buffer. The PDM_Write function then enables the transmit hold empty 16550 interrupt. The interrupt callback function is then repeatedly invoked, each time placing one byte into the 16550 transmit hold register. After all bytes are transmitted, the interrupt callback function disables the transmit hold empty interrupt and sends a signal indicating done to the waiting PDM_Write function. The PDM_Write function returns the number of bytes written.</p>
+<p>Note   This 16550 modem client driver assumes its write buffer is big enough to hold all bytes passed by an application’s call to WriteFile. If the write buffer is not big enough, the excess bytes from the application are truncated.</p>
+<p>Unused Stream Interface Functions</p>
+<p>The following stream interface functions are not used for the sample modem driver:</p>
+<p>·	PDM_Seek</p>
+<p>·	PDM_IOControl</p>
+<p>·	PDM_PowerUp</p>
+<p>·	PDM_PowerDown</p>
+</body>
+</html>

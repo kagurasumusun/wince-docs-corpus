@@ -28,7 +28,27 @@ This directory (`ce10/` in the wince-api tree) holds the Windows CE 1.0
 
 `.MVB` is the Microsoft Multimedia Viewer book format (the WinHelp-era
 reader for Books Online).  The files are preserved verbatim as the
-official CE 1.0 documentation; topic-text extraction is a separate step.
-No source code, sample code, compiler binaries or OS images are included
-(documents only, per the collection policy in wince-api
-`docs/iso-collection.md`).
+official CE 1.0 documentation.  No source code, sample code, compiler
+binaries or OS images are included (documents only, per the collection
+policy in wince-api `docs/iso-collection.md`).
+
+## Extraction (2026-10)
+
+The books were decoded and filed into the corpus:
+
+* `PEGSDK.MVB` → `corpus/mvb/windows-ce-1.0/PEGSDK/` — **1,919 pages**
+  (SDK / Win32 API reference).
+* `PEGDDK.MVB` → `corpus/mvb/windows-ce-1.0/PEGDDK/` — **181 pages**
+  (driver and kernel reference).
+* `RELNOTES.HLP` → `corpus/mvb/windows-ce-1.0/RELNOTES/` — **4 pages**
+  (release notes).
+* `MSDNLIB.HLP` — deliberately not extracted: it is the Development Library
+  viewer help (how to search the library), not CE documentation.
+
+Method: [helpdeco](https://github.com/pmachapman/helpdeco) 2.1.4, commit
+`7852737` (GPL), built from source with one local fix (its `my_malloc`
+aborts on a zero-byte allocation) and run with `-y`; the RTF it writes is
+converted to one HTML page per topic by `tools/extract-mvb.py`.  Images
+(BMP/WMF written next to the RTF) are not part of the corpus.  See
+`corpus/mvb/windows-ce-1.0/README.md` for the exact commands and the page
+naming convention.

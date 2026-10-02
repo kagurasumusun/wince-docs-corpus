@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>LIB Reference</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>LIB Reference</h1>
+<p>The Microsoft® 32-Bit Library Manager (LIB.EXE) creates and manages a library of Common Object File Format (COFF) object files. LIB can also be used to create export files and import libraries to reference exported definitions.</p>
+<p>Note   LIB has been enhanced to target HPC devices using new /MACHINE options. The rest of this reference is standard and is provided here only for your convenience.</p>
+<p>Overview of LIB</p>
+<p>Running LIB</p>
+<p>Managing a Library</p>
+<p>Extracting a Library Member</p>
+<p>Working with Import Libraries and Export Files</p>
+<p>Overview of LIB</p>
+<p>LIB creates standard libraries, import libraries, and export files that you can use with LINK when building a 32-bit program.</p>
+<p>You can use LIB in the following modes:</p>
+<p>·	Building or modifying a COFF library</p>
+<p>·	Extracting a member object to a file</p>
+<p>·	Creating an export file and an import library</p>
+<p>These modes are mutually exclusive; you can use LIB in only one mode at a time.</p>
+<p>Running LIB</p>
+<p>Various command-line options can be used to control LIB.</p>
+<p>LIB Command Line</p>
+<p>To run LIB, type the command lib followed by the options and filenames for the task you are using LIB to perform. LIB also accepts command-line input in command files, which are described in the following section. LIB does not use an environment variable.</p>
+<p>Note   If you are accustomed to the LINK32.EXE and LIB32.EXE tools provided with the Microsoft Win32 Software Development Kit for Windows NT, you may have been using either the command link32 -lib or the command lib32 for managing libraries and creating import libraries. Be sure to change your makefiles and batch files to use the lib command instead.</p>
+<p>LIB Command Files</p>
+<p>You can pass command-line arguments to LIB in a command file by using the following syntax:</p>
+<p>LIB @commandfile</p>
+<p>The file commandfile is a text file. No space or tab is allowed between the at sign (@) and the filename. There is no default extension; you must specify the full filename, including any extension. Wildcards cannot be used. You can specify an absolute or relative path with the filename.</p>
+<p>In the command file, arguments can be separated by spaces or tabs, as they can on the command line; they can also be separated by newline characters. Use a semicolon (;) to mark a comment. LIB ignores all text from the semicolon to the end of the line.</p>
+<p>You can specify either all or part of the command line in a command file, and you can use more than one command file in a LIB command. LIB accepts the command-file input as if it were specified in that location on the command line. Command files cannot be nested. LIB echoes the contents of command files unless the /NOLOGO option is used.</p>
+<p>Using LIB Options</p>
+<p>An option consists of an option specifier, which is either a dash ( – ) or a forward slash ( / ), followed by the name of the option. Option names cannot be abbreviated. Some options take an argument, specified after a colon (:). No spaces or tabs are allowed within an option specification. Use one or more spaces or tabs to separate option specifications on the command line. Option names and their keyword or filename arguments are not case sensitive, but identifiers used as arguments are case sensitive. LIB processes options in the order specified on the command line and in command files. If an option is repeated with different arguments, the last one to be processed takes precedence.</p>
+<p>The following options apply to LIB for Windows CE (new /MACHINE options were added):</p>
+<p>·	/MACHINE:{-IX86|MIPS||ALPHA|PPC|M68K|MPPC|SH3}    Specifies the target platform for the program. Usually, you do not need to specify /MACHINE. LIB infers the machine type from the .OBJ files. However, in some circumstances, LIB cannot determine the machine type and issues an error message. If such an error occurs, specify /MACHINE. In /EXTRACT mode, this option is for verification only.</p>
+<p>·	/NOLOGO    Suppresses display of the LIB copyright message and version number and prevents echoing of command files.</p>
+<p>·	/VERBOSE    Displays details about the progress of the session. The information is sent to standard output and can be redirected to a file.</p>
+<p>Other options apply only to specific modes of LIB. These options are discussed in the sections describing each mode.</p>
+<p>Managing a Library</p>
+<p>The default mode for LIB is to build or modify a library of COFF objects. LIB runs in this mode when you do not specify /EXTRACT (to copy an object to a file) or /DEF (to build an import library).</p>
+<p>To build a library from objects and/or libraries, use the following syntax:</p>
+<p>LIB [options...] files...</p>
+<p>This command creates a library from one or more input files. The files can be COFF object files, 32-bit OMF object files, or existing COFF libraries. LIB creates one library that contains all objects in the specified files. If an input file is a 32-bit OMF object file, LIB converts it to COFF before building the library. LIB cannot accept a 32-bit OMF object that is in a library created by the 16-bit version of LIB. You must first use the 16-bit LIB to extract the object; then you can use the extracted object file as input to the 32-bit LIB.</p>
+<p>By default, LIB names the output file using the base name of the first object or library file and the extension .LIB. If a file already exists with the same name, the output file replaces the existing file. To preserve an existing library, use the /OUT option to specify a name for the output file.</p>
+<p>The following options apply to building and modifying a library:</p>
+<p>·	/LIST</p>
+<p>Displays information about the output library to standard output. The output can be redirected to a file. You can use /LIST to determine the contents of an existing library without modifying it.</p>
+<p>·	/OUT:filename    Overrides the default output filename. By default, the output library has the base name of the first library or object file on the command line and the extension .LIB.</p>
+<p>·	/REMOVE:object    Omits the specified object from the output library. LIB creates an output library by first combining all objects (whether in object files or libraries), and then deleting any objects specified with /REMOVE.</p>
+<p>·	/SUBSYSTEM    Tells the operating system how to run a program created by linking to the output library. For more information, see the description of the LINK /SUBSYSTEM option in Chapter 26 on page ???.</p>
+<p>You can use LIB to perform the following library-management tasks:</p>
+<p>·	To add objects to a library, specify the filename for the existing library and the filenames for the new objects.</p>
+<p>·	To combine libraries, specify the library filenames. You can add objects and combine libraries with a single LIB command.</p>
+<p>·	To replace a library member with a new object, specify the library containing the member object to be replaced and the filename for the new object (or the library that contains it). When an object that has the same name exists in more than one input file, LIB puts the last object specified in the LIB command into the output library. When you replace a library member, be sure to specify the new object or library after the library that contains the old object.</p>
+<p>·	To delete a member from a library, use the /REMOVE option. LIB processes any specifications of /REMOVE after combining all input objects, regardless of command-line order.</p>
+<p>Note   You cannot both delete a member and extract it to a file in the same step. You must first extract the member object using /EXTRACT, and then run LIB again using /REMOVE. This behavior differs from that of the 16-bit LIB (for OMF libraries) provided in other Microsoft products.</p>
+<p>Extracting a Library Member</p>
+<p>You can use LIB to create an object (.OBJ) file that contains a copy of a member of an existing library. To extract a copy of a member, use the following syntax:</p>
+<p>LIB library /EXTRACT:member /OUT:objectfile</p>
+<p>This command creates an .OBJ file called objectfile that contains a copy of a member of a library. The member name is case sensitive. You can extract only one member in a single command. The /OUT option is required; there is no default output name. If a file called objectfile already exists in the specified directory (or the current directory, if no directory is specified with objectfile), the extracted objectfile replaces the existing file.</p>
+<p>Working with Import Libraries and Export Files</p>
+<p>You can use LIB with the /DEF option to create an import library and an export file. LINK uses the export file to build a program that contains exports (usually a dynamic-link library (DLL)), and it uses the import library to resolve references to those exports in other programs.</p>
+<p>In most situations, you do not need to use LIB to create your import library. When you link a program (either an executable file or a DLL) that contains exports, LINK automatically creates an import library that describes the exports. Later, when you link a program that references those exports, you specify the import library.</p>
+<p>However, when a DLL exports to a program that it also imports from, whether directly or indirectly, you must use LIB to create one of the import libraries. When LIB creates an import library, it also creates an export file. You must use the export file when linking one of the DLLs.</p>
+<p>Building an Import Library and Export File</p>
+<p>To build an import library and export file, use the following syntax:</p>
+<p>LIB /DEF[:deffile] [options] [objfiles] [libraries]</p>
+<p>When /DEF is specified, LIB creates the output files from export specifications that are passed in the LIB command. There are three methods for specifying exports, listed in recommended order of use:</p>
+<p>·	A __declspec(dllexport) definition in one of the objfiles or libraries</p>
+<p>·	A specification of /EXPORT:name on the LIB command line</p>
+<p>·	A definition in an EXPORTS statement in a deffile</p>
+<p>These are the same methods you use to specify exports when linking an exporting program. A program can use more than one method. You can specify parts of the LIB command (such as multiple objfiles or /EXPORT specifications) in a command file in the LIB command, just as you can in a LINK command.</p>
+<p>The following options apply to building an import library and export file:</p>
+<p>·	/DEBUGTYPE:{-CV|COFF|BOTH}    Sets the format of debugging information. Specify CV for Microsoft Symbolic Debugging Information, required by Microsoft Developer Studio. Specify COFF for Common Object File Format debugging information. Specify BOTH for both COFF debugging information and Microsoft format debugging information.</p>
+<p>·	/OUT:import    Overrides the default output filename for the import library being created. When /OUT is not specified, the default name is the base name of the first object file or library in the LIB command and the extension .LIB. The export file is given the same base name as the import library and the extension .EXP.</p>
+<p>·	/EXPORT:entryname[=internalname][,@ordinal[,NONAME]][,DATA]    Exports a function from your program to allow other programs to call the function. You can also export data (using the DATA keyword). Exports are usually defined in a DLL.</p>
+<p>The entryname is the name of the function or data item as it is to be used by the calling program. Optionally, you can specify the internalname as the function known in the defining program; by default, internalname is the same as entryname. The ordinal specifies an index into the export table in the range 1 through 65,535; if you do not specify ordinal, LIB assigns one. The NONAME keyword exports the function only as an ordinal, without an entryname. The DATA keyword is used to export data-only objects.</p>
+<p>/INCLUDE:symbol    Adds the specified symbol to the symbol table. This option is useful for forcing the use of a library object that otherwise would not be included.</p>
+<p>Using an Import Library and Export File</p>
+<p>When a program (either an executable file or a DLL) exports to another program that it also imports from, or if more than two programs both export to and import from each other, the commands to link these programs must accommodate circular exports.</p>
+<p>In a situation without circular exports, when you link a program that uses exports from another program, you must specify the import library for the exporting program. The import library for the exporting program is created when you link that exporting program. Therefore, you must link the exporting program before the importing program. For example, if TWO.DLL imports from ONE.DLL, you must first link ONE.DLL and get the import library ONE.LIB. You then specify ONE.LIB when you link TWO.DLL. When the linker creates TWO.DLL, it also creates its import library, TWO.LIB. You use TWO.LIB when linking programs that import from TWO.DLL.</p>
+<p>However, in a circular export situation, it is not possible to link all of the interdependent programs using import libraries from the other programs. In the example discussed earlier, if TWO.DLL also exports to ONE.DLL, the import library for TWO.DLL won’t exist yet when ONE.DLL is linked. When circular exports exist, you must use LIB to create an import library and export file for one of the programs.</p>
+<p>To begin, choose one of the programs on which to run LIB. In the LIB command, list all objects and libraries for the program and specify /DEF. If the program uses a .DEF file or /EXPORT specifications, specify these as well.</p>
+<p>After you create the import library (.LIB) and the export file (.EXP) for the program, you use the import library when linking the other program or programs. LINK creates an import library for each exporting program it builds. For example, if you run LIB on the objects and exports for ONE.DLL, you create ONE.LIB and ONE.EXP. You can now use ONE.LIB when linking TWO.DLL; this step also creates the import library TWO.LIB.</p>
+<p>Finally, link the program you began with. In the LINK command, specify the objects and libraries for the program, the .EXP file that LIB created for the program, and the import library or libraries for the exports used by the program. To continue the example, the LINK command for ONE.DLL contains ONE.EXP and TWO.LIB, as well as the objects and libraries that go into ONE.DLL. Do not specify the .DEF file or /EXPORT specifications in the LINK command; these are not needed, because the export definitions are contained in the .EXP file. When you link using an .EXP file, LINK does not create an import library, because it assumes that one was created when the .EXP file was created.</p>
+</body>
+</html>

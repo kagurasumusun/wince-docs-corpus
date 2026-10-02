@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>LINE_LINEDEVSTATE</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>LINE_LINEDEVSTATE</h1>
+<p>Sent when the state of a line device has changed. The application can invoke lineGetLineDevStatus to determine the new status of the line.</p>
+<p>Windows CE Notes   dwParam1 does not supprto the following constants:</p>
+<p>·	LINEDEVSTATE_MESAGEWAITON</p>
+<p>·	LINEDEVSTATE_MESSAGEWAITOFF</p>
+<p>·	LINEDEVSTATE_INSERVICE</p>
+<p>·	LINEDEVSTATE_OUTOFSERVICE</p>
+<p>·	LINEDEVSTATE_MAINTENANCE</p>
+<p>·	LINEDEVSTATE_TERMINALS</p>
+<p>·	LINEDEVSTATE_ROAMMODE</p>
+<p>·	LINEDEVSTATE_BATTERY</p>
+<p>·	LINEDEVSTATE_SIGNAL</p>
+<p>·	LINEDEVSTATE_LOCK</p>
+<p>·	LINEDEVSTATE_COMPLCANCEL</p>
+<p>·</p>
+<p>dwDevice = (DWORD) hLine;</p>
+<p>dwCallbackInstance = (DWORD) hCallback;</p>
+<p>dwParam1 = (DWORD) DeviceState;</p>
+<p>dwParam2 = (DWORD) DeviceStateDetail1;</p>
+<p>dwParam3 = (DWORD) DeviceStateDetail2;</p>
+<p>Parameters</p>
+<p>dwDevice</p>
+<p>Specifies a handle to the line device. This parameter is NULL when dwParam1 is LINEDEVSTATE_REINIT.</p>
+<p>dwCallbackInstance</p>
+<p>Specifies the callback instance supplied when opening the line. If the dwParam1 parameter is LINEDEVSTATE_REINIT, the dwCallbackInstance parameter is not valid and is set to zero.</p>
+<p>dwParam1</p>
+<p>Specifies the line device status item that has changed. The parameter can be a combination of the following LINEDEVSTATE_ constants:</p>
+<table class="dtTABLE">
+<tr><td>LINEDEVSTATE_OTHER</td><td>Device-status items other than those listed below have changed. The application should check the current device status to determine which items have changed.</td></tr>
+<tr><td>LINEDEVSTATE_RINGING</td><td>The switch tells the line to alert the user. Service providers notify applications on each ring cycle by sending messages containing this constant. For example, in the United States, service providers send a message with this constant every six seconds.</td></tr>
+<tr><td>LINEDEVSTATE_CONNECTED</td><td>The line was previously disconnected and is now connected to TAPI.</td></tr>
+<tr><td>LINEDEVSTATE_DISCONNECTED</td><td>This line was previously connected and is now disconnected from TAPI.</td></tr>
+<tr><td>LINEDEVSTATE_NUMCOMPLETIONS</td><td>The number of outstanding call completions on the line device has changed.</td></tr>
+<tr><td>LINEDEVSTATE_OPEN</td><td>The line has been opened by another application.</td></tr>
+<tr><td>LINEDEVSTATE_CLOSE</td><td>The line has been closed by another application.</td></tr>
+<tr><td>LINEDEVSTATE_NUMCALLS</td><td>The number of calls on the line device has changed.</td></tr>
+<tr><td>LINEDEVSTATE_DEVSPECIFIC</td><td>The line's device-specific information has changed.</td></tr>
+<tr><td>LINEDEVSTATE_REINIT</td><td>Items have changed in the configuration of line devices. To become aware of these changes (as with the appearance of new line devices), the application should reinitialize its use of TAPI. The dwDevice parameter is left NULL for this state change as it applies to any of the lines in the system. This message with the LINEDEVSTATE_REINIT bit set is only sent to applications that have opened a line. That is, if an application has only called lineInitialize but has not yet opened any device, and a LINEDEVSTATE_REINIT message is sent, this message is not sent to that application.</td></tr>
+<tr><td>LINEDEVSTATE_CAPSCHANGE</td><td>Indicates that, due to configuration changes made by the user or other circumstances, one or more of the fields in the LINEDEVCAPS structure for the address have changed. The application should use lineGetDevCaps to read the updated structure.</td></tr>
+<tr><td>LINEDEVSTATE_CONFIGCHANGE</td><td>Indicates that configuration changes have been made to one or more of the media devices associated with the line device. The application, if it desires, may use lineGetDevConfig to read the updated information.</td></tr>
+<tr><td>LINEDEVSTATE_TRANSLATECHANGE</td><td>Indicates that, due to configuration changes made by the user or other circumstances, one or more of the fields in the LINETRANSLATECAPS structure have changed. The application should use lineGetTranslateCaps to read the updated structure.</td></tr>
+<tr><td>LINEDEVSTATE_REMOVED</td><td>Indicates that the device is being removed from the system by the service provider (most likely through user action, via a control panel or similar utility). A LINE_LINEDEVSTATE message with this value will normally be immediately followed by a LINE_CLOSE message on the device. Subsequent attempts to access the device prior to TAPI being reinitialized will result in LINEERR_NODEVICE being returned to the application. If a service provider sends a LINE_LINEDEVSTATE message containing this value to TAPI, TAPI will pass it along to applications which have negotiated this or a subsequent API version; applications negotiating a previous API version will not receive any notification.</td></tr>
+<tr><td>dwParam2<br>The interpretation of this parameter depends on the value of dwParam1. If dwParam1 is LINEDEVSTATE_RINGING, dwParam2 contains the ring mode with which the switch instructs the line to ring. Valid ring modes are numbers in the range one to dwNumRingModes, where dwNumRingModes is a line device capability.<br>If dwParam1 is LINEDEVSTATE_REINIT, and the message was issued by TAPI as a result of translation of a new API message into a REINIT message, then dwParam2 contains the dwMsg parameter of the original message (e.g., LINE_CREATE or LINE_LINEDEVSTATE). If dwParam2 is zero, this indicates that the REINIT message is a "real" REINIT message that requires the application to call lineShutdown at its earliest convenience.<br>dwParam3<br>The interpretation of this parameter depends on the value of dwParam1. If dwParam1 is LINEDEVSTATE_RINGING, dwParam3 contains the ring count for this ring event. The ring count starts at zero.<br>If dwParam1 is LINEDEVSTATE_REINIT, and the message was issued by TAPI as a result of translation of a new API message into a REINIT message, then dwParam3 contains the dwParam1 parameter of the original message (e.g., LINEDEVSTATE_TRANSLATECHANGE or some other LINEDEVSTATE_ value, if dwParam2 isLINE_LINEDEVSTATE, or the new device ID, if dwParam2 is LINE_CREATE).<br>Return Values<br>No return value.<br>Remarks<br>The sending of this message can be controlled with lineSetStatusMessages. An application can indicate status item changes about which it wants to be notified. By default, all status reporting will be disabled except for LINEDEVSTATE_REINIT, which cannot be disabled. This message is sent to all applications that have a handle to the line, including those that called lineOpen with the dwPrivilegesparameter set to LINECALLPRIVILEGE_NONE, LINECALLPRIVILEGE_OWNER, LINECALLPRIVILEGE_MONITOR, or permitted combinations of these.<br>See Also<br>TAPI</td></tr>
+</table>
+</body>
+</html>

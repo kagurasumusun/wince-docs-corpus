@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Calling the Stream Interface</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Calling the Stream Interface</h1>
+<p>The xxx_Init, xxx_Deinit, xxx_PowerDown, and xxx_PowerUp functions are called directly by the Device Manager—these functions are not normally called by the application requesting driver services. When the Device Manager loads a driver, it calls the xxx_Init function and when it unloads a driver, it calls the xxx_Deinit function. When the system powers down, the Device Manager calls the xxx_PowerDown function; and when the system powers up, the Device Manager calls the xxx_PowerUp function.</p>
+<p>The xxx_Open, xxx_Close, xxx_Read, xxx_Write, xxx_Seek, and xxx_IOControl functions are indirectly called by an application. The application uses Win32 functions to make the indirect call to the driver. Directly calling these functions is not recommended—the design of the system is such that making direct calls to the driver does not improve application performance. The following table lists the stream interface functions indirectly called by an application and the Win32 function used by an application to make the call:</p>
+<table class="dtTABLE">
+<tr><td>Device Driver Stream Function</td><td>Associated Win32 Function</td></tr>
+<tr><td>xxx_Open</td><td>CreateFile</td></tr>
+<tr><td>xxx_Close</td><td>CloseHandle</td></tr>
+<tr><td>xxx_Read</td><td>ReadFile</td></tr>
+<tr><td>xxx_Write</td><td>WriteFile</td></tr>
+<tr><td>xxx_Seek</td><td>SetFilePointer</td></tr>
+<tr><td>xxx_IOControl</td><td>DeviceIoControl</td></tr>
+<tr><td>The following example lists a short program that exercises all of the functions in the previous table  with the exception of WriteFile. For information on the Win32 functions, see the Pegasus SDK and Win32 SDK.<br>#include &lt;windows.h&gt;<br>typedef wchar_t WTCHAR;<br>INT<br>WINAPI<br>WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, INT nCmdShow) {-<br>HANDLE  hDevice;<br>WTCHAR  wchByte[20];<br>DWORD   dwBytesRead;<br>// Indirectly invokes RAM_Open<br>hDevice = CreateFile(TEXT("RAM1:"), GENERIC_READ, 0, NULL,                                      OPEN_EXISTING, 0, NULL);<br>if (hDevice == INVALID_HANDLE_VALUE) {-<br>MessageBox(0,(TEXT("Error opening SRAM device.")),<br>(TEXT("Read Error")), MB_ICONERROR);<br>return 0;<br>}<br>DEBUGMSG(1, (TEXT("RAM device opened.")));<br>//DeviceIoControl and SetFilePointer used for demonstation only.<br>//The example code only prints debug messages for RAM_IOControl and<br>//RAM_Seek.<br>//Indirectly invokes RAM_IOControl<br>DeviceIoControl(hDevice, 0, NULL, 0, NULL, 0, &amp;dwBytesRead, NULL);<br>//Indirectly invokes RAM_Seek<br>SetFilePointer(hDevice, 1, NULL, FILE_BEGIN);<br>// Indirectly invokes RAM_Read<br>ReadFile(hDevice,(PBYTE)wchByte,20*sizeof(wchar_t),&amp;dwBytesRead,NULL);<br>MessageBox(0,wchByte, TEXT("SRAM Card Message"), MB_OK);<br>DEBUGMSG(1,(TEXT("Read Test: String returned = %s\r\n"),wchByte));<br>DEBUGMSG(1,(TEXT("Read Test: %d bytes read.\r\n"),dwBytesRead));<br>// Indirectly invokes RAM_Close<br>CloseHandle(hDevice);<br>return 1;<br>}<br>Note   When calling CreateFile to open a physical device (as opposed to an actual file), the syntax for the device to open is xxx#:, where xxx is the prefix of the driver (as required by the stream type driver interface), and # is the index. Index values must be a single digit (that is, 0 through 9, inclusive). Finally, the device prefix and index must be followed by a colon.</td></tr>
+</table>
+</body>
+</html>

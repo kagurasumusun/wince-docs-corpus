@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Using the Contacts Database</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Using the Contacts Database</h1>
+<p>The following example attempts to open the Contacts database by calling the OpenAddressBook function. If the function fails because the database does not exist, the example creates the database by calling the CreateAddressBook function. If the creation is successful, the example tries to open the database again. The example uses the GetPropertyDataStruct function to examine address card properties to ensure that the database has not been corrupted. The example returns TRUE if the database was successfully opened, or FALSE otherwise:</p>
+<pre class="code">// OpenUpTheAddressBook - Opens the Contacts database, creating it</pre>
+<p>// if it doesn't exist. Returns TRUE if successful or FALSE otherwise.</p>
+<p>// hwndParent - handle of the parent window that is to receive database</p>
+<p>// notifications (DB_PEGOID_*).</p>
+<p>// hhSortProp - property tag for setting the sort order.</p>
+<p>BOOL OpenUpTheAddressBook(HWND hwndParent, HHPRTAG hhSortProp)</p>
+<p>{-</p>
+<p>DWORD dwError;                   // Error code</p>
+<p>HHPRTAG propList[MAX_COLUMNS];   // Sort-order property tags</p>
+<p>int nColumns;                    // Number of sortable columns</p>
+<p>int index;                       // Loop index</p>
+<p>// Attempt to open the Contacts database.</p>
+<p>if (!OpenAddressBook(hwndParent, hhSortProp)) {-</p>
+<pre class="code">dwError = GetLastError();</pre>
+<p>if (dwError == ERROR_FILE_NOT_FOUND) {-</p>
+<p>// The Contacts database doesn't exist, so try to create</p>
+<p>// it.  Use the default sort order properties.</p>
+<p>if (!CreateAddressBook(NULL, 0)) {-</p>
+<p>goto InitError;</p>
+<p>}</p>
+<p>// The Contacts database was created, now try</p>
+<p>// again to open it.</p>
+<p>if (!OpenAddressBook(hwndParent, hhSortProp)) {-</p>
+<p>goto InitError;</p>
+<p>}</p>
+<p>// Check for an invalid parameter error.</p>
+<p>} else if (dwError == ERROR_INVALID_PARAMETER) {-</p>
+<p>// Another application may have changed the sort orders.</p>
+<p>// Try opening the database without specifying a</p>
+<p>// sort order.</p>
+<p>if (!OpenAddressBook(hwndParent, 0)) {-</p>
+<p>goto InitError;</p>
+<p>}</p>
+<p>// Retrieve the column properties.</p>
+<p>nColumns = MAX_COLUMNS;</p>
+<p>if (!GetColumnProperties(&amp;propList, &amp;nColumns)) {-</p>
+<p>goto InitError;</p>
+<p>}</p>
+<p>// Make sure the properties are valid.</p>
+<p>for (index = 0; index &lt; nColumns; index++) {-</p>
+<pre class="code">if (GetPropertyDataStruct(GPDS_PROPERTY,</pre>
+<p>propList[index], NULL) == GPDS_ERR) {-</p>
+<p>// The database is corrupt.</p>
+<pre class="code">MessageBox(hwndParent, IDS_CORRUPT_DATABASE,</pre>
+<p>MB_ICONEXCLAMATION | MB_OK);</p>
+<p>goto InitError;</p>
+<p>}</p>
+<p>}</p>
+<p>// Try opening the database one last time.</p>
+<p>hhSortProp = propList[0];</p>
+<p>if (!OpenAddressBook(hwndParent, hhSortProp)) {-</p>
+<p>goto InitError;</p>
+<p>}</p>
+<p>} else {-</p>
+<p>goto InitError;</p>
+<p>}</p>
+<p>}</p>
+<p>return TRUE;</p>
+<p>InitError:</p>
+<p>return FALSE;</p>
+<p>}</p>
+</body>
+</html>

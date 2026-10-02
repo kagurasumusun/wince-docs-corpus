@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>The Active Key</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>The Active Key</h1>
+<p>Active devices are those loaded and tracked by the Device Manager. Just prior to loading the driver, the Device Manager qualifies the driver as being an Active device and it writes information to the registry to keep track of the active driver. The Device Manager uses the HKEY_LOCAL_MACHINE\Drivers\Active key in the registry to track these devices. Each time a device is added to the system, an Active subkey is created for the corresponding driver. Each time a device is unloaded, its Active subkey is deleted. The Device Manager  maintains the information contained the Active subkeys and you should not change the entries for this key.</p>
+<p>Note   After inserting a card into the PC Card socket, you can use Pregedit  as described in the SDK to view this key and verify that your driver was loaded.</p>
+<p>The following example shows the contents of the HKEY_LOCAL_MACHINE\Drivers\Active\00 key after  rebooting a test system:</p>
+<pre class="code">HKEY_LOCAL_MACHINE</pre>
+<p>[Drivers]</p>
+<p>[Active]</p>
+<p>[00]</p>
+<p>DWORD: Hnd = 0x0003053c (197948)</p>
+<p>SZ: Key = Drivers\Builtin\Serial</p>
+<p>SZ: Name = COM1:</p>
+<p>DWORD: THnd = 0x00000001 (1)</p>
+<p>The number of Active subkey entries depends on the system and whether or not a PC Card inserted. The  HKEY_LOCAL_MACHINE\Drivers\Active\00 key in the previous example shows that the serial driver is a built-in driver and that it was the first driver to be loaded by the Device Manager.</p>
+<p>Active Key Numeric Subkeys</p>
+<p>Active keys are created by the Device Manager during the process of loading a driver. The Device Manager maintains a counter that starts at zero and is incremented by one after an Active subkey is created. (When the system is rebooted, the counter resets to zero and all of the Active subkeys are deleted.) When a subkey is created, the current value of the counter is converted to a string used to name the subkey.</p>
+<p>When the device manage unloads a driver, the corresponding subkey is deleted but the counter is not decremented. It is not possible for drivers loaded after the deletion of an Active subkey entry to have the same name as a deleted key. Thus it is entirely possible to have the following subkey names under HKEY_LOCAL_MACHINE\Drivers\Active: 00, 01, 02, 15, 19. This implies the Device Manager has loaded 20 drivers since the system booted, and 15 of these drivers have been unloaded.</p>
+<p>You will not see an Active key entry for many of the drivers that are loaded and running in your system. These drivers are not loaded by the Device Manager and are not tracked. Examples of such drivers include the display driver, touch screen driver, keyboard driver, and audio driver.</p>
+<p>Active Key Registry Entries</p>
+<p>The following table defines the Active key registry values maintained by Device Manager. The Device Manager will create and maintain these entries only if it has registered an installable device with RegisterDevice.</p>
+<table class="dtTABLE">
+<tr><td>Value Name</td><td>Value Type</td><td>Description</td></tr>
+<tr><td>Hnd</td><td>REG_DWORD</td><td>Specifies the device handle created for RegisterDevice.</td></tr>
+<tr><td>Name</td><td>REG_SZ</td><td>Specifies the device name (for example, PGR1:).</td></tr>
+<tr><td>Key</td><td>REG_SZ</td><td>Specifies the device key in \Drivers\PCMCIA.</td></tr>
+<tr><td>PnpId</td><td>REG_SZ</td><td>Specifies a Plug and Play ID for PC Cards.</td></tr>
+<tr><td>Sckt</td><td>REG_DWORD</td><td>Specifies a PC Card socket CARD_SOCKET_HANDLE.</td></tr>
+<tr><td>When the Device Manager is about to register a driver, it creates an active device key for the new device. When the Device Manager registers the driver with RegisterDevice, it passes a pointer to a string buffer containing the registry path in the dwInfo parameter of RegisterDevice. The string has the form of “\Drivers\Active\nn” where nn is an active device number. This key is located under HKEY_LOCAL_MACHINE.<br>Active keys for both built-in and PC Card devices have the string values named Key and Name. Key is the registry path to the driver key (for example, Drivers\PCMCIA\PnpID). Name is the actual device name (for example, PGR1:).<br>Active device keys for PC Card devices have an additional string value PnpId and a binary value Sckt. PnpId is the PC Card's Plug and Play identifier consisting of the manufacturer's name, the product name, and a cyclical redundancy check (CRC) generated from the card's card information structure (CIS). Sckt is a binary value in the form of a CARD_SOCKET_HANDLE that identifies the socket and function number.<br>For example, the NewsCard pager had the following entries under the Active key:<br>HKEY_LOCAL_MACHINE<br>[Drivers]<br>[Active]<br>[02]<br>SZ: Name = PGR1:<br>DWORD: Hnd = 0x32798<br>DWORD: Sckt = 0x30000<br>SZ: PnpId = Motorola,_Inc.-NewsCard_Data_Receiver-E6DD<br>SZ: Key = Drivers\PCMCIA\Motorola,_Inc.-NewsCard_Data_Receiver-E6DD</td></tr>
+</table>
+</body>
+</html>

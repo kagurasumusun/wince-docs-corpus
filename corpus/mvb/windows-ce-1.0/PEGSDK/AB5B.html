@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>bind</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>bind</h1>
+<p>The Windows Sockets bind function associates a local address with a socket.</p>
+<table class="dtTABLE">
+<tr><td>int bind(</td><td>// winsock.h</td></tr>
+<tr><td>SOCKET s,</td><td>// descriptor identifying an unbound socket</td></tr>
+<tr><td>const struct sockaddr FAR *addr,</td><td>// address to assign to the socket</td></tr>
+<tr><td>int namelen</td><td>// length of the addr</td></tr>
+<tr><td>);</td><td></td></tr>
+<tr><td>Parameters<br>s<br>A descriptor identifying an unbound socket.<br>addr<br>The address to assign to the socket. The SOCKADDR structure is used by the kernel to store socket addresses and is defined as follows:<br>struct sockaddr {-<br>u_short    sa_family;<br>char       sa_data[14];<br>};<br>namelen<br>The length of the addr.<br>Return Values<br>If no error occurs, bind returns zero. Otherwise, it returns SOCKET_ERROR, and one  of the following specific error codes that may be retrieved by calling GetLastError.<br>Error code</td><td>Description</td></tr>
+<tr><td>WSANOTINITIALISED</td><td>A successful WSAStartup must occur before using this function.</td></tr>
+<tr><td>WSAENETDOWN</td><td>The Windows Sockets implementation has detected that the network subsystem has failed.</td></tr>
+<tr><td>WSAEADDRINUSE</td><td>The specified address is already in use. (See the SO_REUSEADDR socket option under setsockopt.)</td></tr>
+<tr><td>WSAEFAULT</td><td>The namelen argument is too small (less than the size of a struct sockaddr).</td></tr>
+<tr><td>WSAEINPROGRESS</td><td>A blocking Windows Sockets call is in progress.</td></tr>
+<tr><td>WSAEAFNOSUPPORT</td><td>The specified address family is not supported by this protocol.</td></tr>
+<tr><td>WSAEINVAL</td><td>The socket is already bound to an address.</td></tr>
+<tr><td>WSAENOBUFS</td><td>Not enough buffers available, too many connections.</td></tr>
+<tr><td>WSAENOTSOCK</td><td>The descriptor is not a socket.</td></tr>
+<tr><td>Remarks<br>The bind function is used on an unconnected datagram (that is, a socket of type SOCK_DGRAM) or stream socket (that is, a socket of type SOCK_STREAM), before subsequent calls to the connect or listen functions. When a socket is created with socket, it exists in a name space (address family), but it has no name assigned. The bind function establishes the local association (host address/port number) of the socket by assigning a local name to an unnamed socket.<br>In the Internet address family, a local socket name consists of several components. For sockets of type SOCK_DGRAM and SOCK_STREAM, the name consists of three parts: a host address, the protocol number (set implicitly to UDP or TCP, respectively), and a port number that identifies the application. If an application does not care what address is assigned to it, it may specify an Internet address equal to INADDR_ANY (for the  sin_addr.s_addr field of     SOCKADDR_IN), a port equal to zero, or both. If the Internet address is equal to INADDR_ANY, any appropriate network interface will be used; this simplifies application programming in the presence of multi-homed hosts. If the port is specified as zero, the Windows Sockets implementation will assign a unique port to the application with a value between 1024 and 5000. The application may use getsockname after bind to learn the address that has been assigned to it, but note that getsockname will not necessarily fill in the Internet address until the socket is connected, since several Internet addresses may be valid if the host is multi-homed.<br>If an application needs to bind to an arbitrary port outside of the range 1024 to 5000, code similar to the following can be used:<br>SOCKADDR_IN sin;<br>SOCKET s;<br>u_short alport = IPPORT_RESERVED;<br>sin.sin_family = AF_INET;<br>sin.sin_addr.s_addr = 0;<br>for (;;) {-<br>sin.sin_port = htons(alport);<br>if (bind(s, (LPSOCKADDR)&amp;sin, sizeof (sin)) == 0) {-<br>/* it worked */<br>}<br>if ( GetLastError != WSAEADDRINUSE) {-<br>/* fail */<br>}<br>alport--;<br>if (alport == IPPORT_RESERVED/2 ) {-<br>/* fail--all unassigned reserved ports are */<br>/* in use. */<br>}<br>}<br>See Also<br>connect, listen, getsockname, setsockopt, socket, SOCKADDR, SOCKADDR_IN, IN_ADDR</td></tr>
+</table>
+</body>
+</html>

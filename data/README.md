@@ -119,8 +119,9 @@ Generated, committed so tools and the harvester's resume check do not have to
 rescan ~78k HTML files.
 
 * `INDEX.tsv` — `# id <TAB> book <TAB> path <TAB> title`, one row per page
-  (98,313 as of 2026-10). `book` is the corpus-relative directory
-  (`learn/windows-ce-5.0`, `win32/api/fileapi`, `chm/windows-ce-3.0`).
+  (100,417 as of 2026-10). `book` is the corpus-relative directory
+  (`learn/windows-ce-5.0`, `win32/api/fileapi`, `chm/windows-ce-3.0`,
+  `mvb/windows-ce-1.0/PEGSDK`).
   Titles come from `<title>` (HTML) or the `title:` front matter (markdown),
   falling back to the catalogs. Regenerate with
   `python3 tools/build-index.py`.

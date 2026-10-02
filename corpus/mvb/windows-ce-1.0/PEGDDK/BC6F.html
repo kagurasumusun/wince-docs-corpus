@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>About the Ramcard Source Files</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>About the Ramcard Source Files</h1>
+<p>The Ramcard.c source file contains the following important functions for interacting with the operating system:</p>
+<p>·	DllMain—an entry-point function for the DLL</p>
+<p>·	DetectRAMCard—a card detection function</p>
+<p>·	RAM_*—the stream interface entry-point functions (RAM is used as the prefix for the stream interface functions)</p>
+<p>·	StatusCallback—status callback function</p>
+<p>The Ramcard.h header file contains a definition for the memory test I/O control code that define the type of memory test to perform on the SRAM card. This header file includes the Windows I/O control codes header file, Winioctl.h. The I/O control code in this header file is defined using the system-supplied CTL_CODE macro.</p>
+<p>The Ramcard driver supports multiple instances of an SRAM PC Card memory device, and multiple open contexts for each instance of the device. The data members needed for each instance of the device are contained in one client context structure CLIENT_CONTEXT. The data members needed for each open context of a device instance are contained in one open context structure OPEN_CONTEXT.</p>
+<p>A read/write macro, MEM, gets a pointer to an open context structure and the index of a byte to write to or read from memory. The index is relative to the current offset.</p>
+<p>This driver defines the memory window size of the memory device as 16K.</p>
+<p>An event-name structure associates status callback event codes with printable names. This structure is for debugging purposes only.</p>
+<p>The DllMain DLL Entry Function</p>
+<p>The Device Manager uses the DllMain function to load and unload the driver DLL. When the driver is loaded, this function can initialize global variables. When the driver is unloaded, this function can call functions that enable a clean separation from the system.</p>
+<p>The Ramcard StatusCallback Function</p>
+<p>The memory StatusCallback status callback function processes PC Card status callback events. These status callback events notify the memory driver of changes in the status of the PC Card that Card Services detects. The RAM_Init function uses CardRegisterClient to register StatusCallback.</p>
+<p>The RAM_Init Function</p>
+<p>RAM_Init allocates memory for each driver device context structure and initializes it. The device instances are then available to applications. For example, applications can open a “RAM1:” memory device and a “RAM2:” memory device. RAM_Open allocates memory for each open context structure and initializes it.</p>
+<p>When you install a memory card, the Device Manager loads the Ramcard.dll file, and calls the RAM_Init function. The argument to RAM_Init contains the address to a string buffer containing the registry path of the active key associated with the driver. RAM_Init performs the following tasks:</p>
+<p>·	Allocates memory for a client context structure containing data members related to an instance of the card.</p>
+<p>·	Uses the registry key to gets the socket handle for the card. The socket handle is used when calling Card Services.</p>
+<p>·	Initializes the critical section data member of the client context structure.</p>
+<p>·	Registers the status callback function by calling CardRegisterClient.</p>
+<p>·	Gets a PC Card memory window handle.</p>
+<p>·	Maps system address space to the memory card. The driver then has access to the memory card through system address.</p>
+<p>·	Returns the client context handle that is the address of the client context structure.</p>
+<p>The RAM_Deinit Function</p>
+<p>When you remove the memory card, the Device Manager calls the RAM_Deinit function. The argument for RAM_Deinit specifies the client context handle. This function de-registers with Card Services, frees any open contexts of the client context structure, and frees the client context structure.</p>
+<p>The RAM_Open Function</p>
+<p>This driver supports multiple open contexts. For each open context, RAM_Open allocates and initializes an open context structure. It then returns the address of the open context structure as a handle. Applications and the operating system use this handle when calling RAM_Close, RAM_Read, RAM_Seek, and RAM_IOControl.</p>
+<p>The RAM_Close Function</p>
+<p>The RAM_Close function the open context passed to it, and then frees the open context.</p>
+<p>The RAM_Read Function</p>
+<p>The arguments in RAM_Read include a handle for the open context of the memory card instance, a buffer to hold the memory card data, and an integer indicating the number of bytes to read. An application calls ReadFile to get data from the memory card; the operating system, in turn, calls RAM_Read. When the operating system calls RAM_Read, it stores the memory card data in the buffer passed in the application’s call to ReadFile. The RAM_Read function reads bytes from the memory card starting at the current offset until the number of bytes specified in the call are read.</p>
+<p>This function returns the number of bytes read.</p>
+<p>The RAM_Write Function</p>
+<p>The arguments passed to RAM_Write include a handle for the open context of the memory card instance, a pointer to the buffer containing the data to be written to the memory card, and an integer indicating the number of bytes to write. An application calls WriteFile to send data to the memory card; the operating system, in turn, calls RAM_Write. This RAM_Write writes bytes to the memory card starting at the current offset until the number of bytes specified in the call are written.</p>
+<p>The RAM_Seek Function</p>
+<p>The arguments passed to RAM_Seek include a handle for the open context of the memory card instance, a new offset value for this open context, and a value that references the offset from the beginning of the card memory window. An application calls SetFilePointer to move the data pointer in the memory card; the operating system, in turn, calls RAM_Seek. This function assigns the passed offset value to the offset data member of the open context.</p>
+<p>The RAM_IOControl Function</p>
+<p>The RAM_IOControl function processes the I/O control code sent by the test application. A switch statement in RAM_IOControl decodes the I/O control code and selects the type of operation to perform on the inserted memory card.</p>
+<p>The Ramcard Detection Function</p>
+<p>Because an SRAM memory PC Card does not have a card information structure (CIS), the Device Manager cannot identify it from a Plug and Play ID. It attempts to detect the memory card’s type by running the detection functions specified under the Drivers\PCMCIA\Detect key in the registry.</p>
+<p>When the Device Manager calls this detection function, it returns a pointer to a buffer containing the string “RAMCard”.</p>
+<p>The RAM_PowerUp and RAM_PowerDown Functions</p>
+<p>The RAM_PowerUp and RAM_PowerDown functions are not used in this driver.</p>
+</body>
+</html>

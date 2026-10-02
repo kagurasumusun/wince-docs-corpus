@@ -9,13 +9,14 @@ that way:
 corpus/
 ├── learn/<set>/              pages harvested from learn.microsoft.com
 ├── chm/windows-ce-3.0/       pages extracted from the official CE 3.0 CHM
+├── mvb/windows-ce-1.0/       CE 1.0 books (Multimedia Viewer/WinHelp era)
 ├── win32/api/, win32/guide/  Win32 reference + guides (MicrosoftDocs)
 └── msdn-library/
     ├── 2010-05/<set>/        Internet Archive copies of MSDN topics
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 98,313 pages (77,861 in the CE trees + 20,452 Win32 pages).
+Total: 100,417 pages (79,965 in the CE trees + 20,452 Win32 pages).
 
 ## Sets under `corpus/learn/` (68,704 pages)
 
@@ -72,7 +73,8 @@ if you change `BOOK_RULES` in `tools/harvest.py`, update this table.
 
 The file name is the page id — the last segment of the page's canonical URL
 for Learn pages (version tag included: `aa450192(v=msdn.10).html`), the CHM
-topic name for CE 3.0, and the MSDN topic id for the Wayback snapshot. This
+topic name for CE 3.0, the topic's context id (`AB5A.html`) for the CE 1.0
+Books Online, and the MSDN topic id for the Wayback snapshot. This
 keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 `data/reports/missing-pages.tsv` without any mapping file.
 
@@ -85,6 +87,11 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 * `chm/windows-ce-3.0/` — extracted from
   `sources/windows-ce-3.0/WindowsCE3.0_DocumentationArchive.zip`
   (see `sources/windows-ce-3.0/PROVENANCE.md`).
+* `mvb/windows-ce-1.0/` — the CE 1.0 Books Online (`PEGSDK.MVB` 1,919 pages,
+  `PEGDDK.MVB` 181, `RELNOTES.HLP` 4) decoded from the Multimedia Viewer
+  format with helpdeco and converted by `tools/extract-mvb.py`; see
+  `mvb/windows-ce-1.0/README.md` and
+  `sources/windows-ce-1.0/PROVENANCE.md`.
 * `msdn-library/2010-05/` — `web.archive.org` snapshot of
   `msdn.microsoft.com/en-us/library/<id>.aspx` taken 2010-05-01
   (queue: `queues/wayback-msdn-2010.txt`). 161 topics (60 .NET Compact

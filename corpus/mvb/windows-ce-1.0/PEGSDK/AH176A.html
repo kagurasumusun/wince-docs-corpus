@@ -1,0 +1,166 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Section 3 Basic Programming Knowledge</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Section 3 Basic Programming Knowledge</h1>
+<p>3.1  Sections</p>
+<p>3.2  Absolute and Relative Values</p>
+<p>3.3  Symbol Definition and Reference</p>
+<p>3.4  Separate Assembly</p>
+<p>This section presents the basic knowledge required for programming in assembly language.</p>
+<p>3.1 Sections</p>
+<p>3.1.1 Section Types by Usage</p>
+<p>If source programs are compared to natural language writing, a section will correspond to a chapter. The section is the processing unit used when the linkage editor links object modules.</p>
+<p>3.1.1 Section Types by Usage</p>
+<p>Sections are classified by usage into the following types:</p>
+<p>·	Code section</p>
+<p>·	Data section</p>
+<p>·	BSS section</p>
+<p>·	Dummy section</p>
+<p>Code Section: Executable instructions, extended instructions, and assembler directives that reserve initialized data can be written in a code section.</p>
+<p>Example:</p>
+<pre class="code">.SECTION	CD,CODE,ALIGN=4	; This assembler directive declares a</pre>
+<p>; code section with the name CD.</p>
+<p>MOV.L	X,R1					; This is an executable instruction.</p>
+<p>MOV		R1,R2</p>
+<p>.ALIGN	4</p>
+<p>X:	.DATA.L	H'FFFFFFFF		; This assembler directive reserves</p>
+<p>; initialized data.</p>
+<p>Data Section: Assembler directives that reserve initialized data, and assembler directives that reserve uninitialized data can be written in a data section.</p>
+<p>Example:</p>
+<pre class="code">.SECTION	DT1,DATA,ALIGN=4	; This assembler directive declares a</pre>
+<p>; data section with the name DT1.</p>
+<p>.DATA.W	H'FF00				; These assembler directives reserve</p>
+<p>.DATA.B	H'FF				; initialized data.</p>
+<p>.SECTION	DT2,DATA,ALIGN=4	; This assembler directive declares a</p>
+<p>; data section with the name DT2.</p>
+<p>.RES.W	10						; These assembler directives reserve</p>
+<p>; data areas that do not have initial</p>
+<p>.RES.B	10						; values.</p>
+<p>BSS section: The bss section type can be used for a section of any name. By convention, the .bss section is used for data that should be automatically initialized to zeroes when the program is loaded. The program does not need to initialize the data, and no space is wasted on zeroes in the object and executable files. In a bss type section, you may only use assembler directives that reserve uninitialized data (such as .RES, .SRES, .ALIGN, and .ORG). The data will be initialized to zero before the program begins execution.</p>
+<p>Dummy Section: A dummy section is a hypothetical section for representing data structures. The assembler does not output dummy sections to the object module, and labels in a dummy section cannot be exported. Assembler directives that reserve uninitialized data can be written in a dummy section.</p>
+<p>Example:</p>
+<pre class="code">.SECTION DM,DUMMY	; This assembler directive declares a dummy</pre>
+<p>; section with the name DM.</p>
+<p>.RES.B	1				; This assembler does not output the section DM</p>
+<p>A:	.RES.B	1				; to the object module.</p>
+<p>B:	.RES.B	2</p>
+<p>It is possible to access areas in memory by using address symbols from a dummy section. Specific methods for specifying data structures are shown in figure 3.2.</p>
+<p>Figure 3.2   Data Structure Example Using Dummy Section</p>
+<p>Coding Example:</p>
+<pre class="code">; in the example above,</pre>
+<p>; assume that R1 holds the starting address of area 1 and R2 holds the</p>
+<p>; starting address of area 2.</p>
+<p>MOV.L	@(B,R1),R0	; Moves the contents of item B in area 1 to R0.</p>
+<p>MOV.L	R0,@(B,R2)	; Moves the contents of R0 to item B in area 2.</p>
+<p>Note:	The following cannot be used in dummy sections:</p>
+<p>·	·	Executable instructions</p>
+<p>·	Extended instructions</p>
+<p>·	Assembler directives that reserve initialized data (.DATA, .DATAB, .SDATA, .SDATAB, .SDATAC, .SDATACB .SDATAZ and .SDATAZB.)</p>
+<p>When using a data section, be sure to keep in mind whether that section is reserved to ROM or RAM.</p>
+<p>3.2 Absolute and Relative Values</p>
+<p>3.2.1 Absolute Values</p>
+<p>3.2.2 Relative Values</p>
+<p>Absolute values are determined at assembly time. Relative values are determined by the linkage editor.</p>
+<p>3.2.1 Absolute Values</p>
+<p>The absolute values handled by the assembler include constants, absolute address values, and other absolute values.</p>
+<p>Constants:</p>
+<p>·	Integer constants</p>
+<p>·	Character constants</p>
+<p>·	Symbols that have a value that is one of the above (referred to as constant symbols)</p>
+<p>Absolute Address Values:</p>
+<p>·	The location counter referenced in a dummy section</p>
+<p>·	Symbols that have the above as a value (referred to below as absolute address symbols)</p>
+<p>Other Absolute Values:</p>
+<p>·	Expressions whose value is determined at assembly time</p>
+<p>3.2.2 Relative Values</p>
+<p>The relative values handled by the assembler include relative address values, external reference values, and other relative values.</p>
+<p>Relative Address Values:</p>
+<p>·	The location counter referenced in a relative address segment</p>
+<p>·	Symbols that have the above as a value are referred to as relative address symbols</p>
+<p>External Reference Values: Symbols that reference another file are referred to as import symbols.</p>
+<p>Other Relative Values: Expressions whose value is determined by the linkage editor.</p>
+<p>3.3 Symbol Definition and Reference</p>
+<p>3.3.1 Symbol Definition</p>
+<p>3.3.2 Symbol Reference</p>
+<p>3.3.1 Symbol Definition</p>
+<p>Normal Definition: The normal method for defining a symbol consists of writing that symbol in the label field of a source statement. The value of that symbol will then be the value of the location counter at that point in the program.</p>
+<p>Example:</p>
+<pre class="code">.SECTION	DT,DATA	; This statement declares a section</pre>
+<p>X:	.DATA.W	0x1111		; The value of X is determined by</p>
+<p>; the linker, and its value is the</p>
+<p>; start address of section DT.</p>
+<p>Y:	.DATA.W	0x2222		; The value of Y is determined by</p>
+<p>; the linker, and its value is the</p>
+<p>; start address of section DT, plus 2.</p>
+<p>Definition by Assembler Directive: Symbols can be defined by using assembler directives to set an arbitrary value or a special meaning.</p>
+<p>Example:</p>
+<pre class="code">.SECTION	DT1,DATA,ALIGN=4		; DT1 is the section name.</pre>
+<p>; A section name is also a type of</p>
+<p>; symbol, a symbol that expresses</p>
+<p>; the start address of a section.</p>
+<p>; However, the syntactic handling of</p>
+<p>; address symbols and section names is</p>
+<p>; different.</p>
+<p>X:	.EQU	100							; The value of X is 100.</p>
+<p>; X cannot be redefined.</p>
+<p>Y:	.ASSIGN	10						; The value of Y is 10.</p>
+<p>; Y can be redefined.</p>
+<p>Z:	.REG	R1							; Z becomes an alias of the general</p>
+<p>; register R1.</p>
+<p>; Z cannot be redefined.</p>
+<p>3.3.2 Symbol Reference</p>
+<p>There are three types of symbol references :</p>
+<p>·	Forward reference</p>
+<p>·	Backward reference</p>
+<p>·	External reference</p>
+<p>Figure 3.3 shows the meaning of the terms forward and backward as used in this manual.</p>
+<p>Figure 3.3   Meaning of the Terms Forward and Backward</p>
+<p>Figure 3.4 shows the meaning of the term external as used in this manual.</p>
+<p>Figure 3.4   Meaning of the Term External</p>
+<p>Forward Reference: Forward reference means referencing a symbol that is defined forward from the point of reference, i.e., is defined later in the program.</p>
+<p>Example:</p>
+<pre class="code">BRA	FORWARD		; BRA is a branch instruction.</pre>
+<p>; This is a forward reference to the symbol</p>
+<p>; FORWARD.</p>
+<p>FORWARD:</p>
+<p>Backward Reference: Backward reference means referring to a symbol that is defined backward from the point of reference, i.e., is defined earlier in the program.</p>
+<p>Example:</p>
+<pre class="code">BACK:</pre>
+<p>BRA	BACK			; BRA is a branch instruction.</p>
+<p>; This is a backward reference to the symbol BACK.</p>
+<p>External Reference: When a source program consists of multiple source files, a reference to a symbol defined in another file is called an external reference. External reference is described in section 3.4, Separate Assembly.</p>
+<p>3.4 Separate Assembly</p>
+<p>3.4.1 Separate Assembly</p>
+<p>3.4.2 Declaration of Export Symbols and Import Symbols</p>
+<p>3.4.1 Separate Assembly</p>
+<p>Separate assembly refers to the technique of creating a source program in multiple separate source files, and finally creating a single load module by linking together those source files’ object modules (using the linkage editor).</p>
+<p>The process of developing software often consists of repeatedly correcting and reassembling the program. In such cases, if the source program is partitioned, it will be only necessary to reassemble the source file that was changed. As a result, the time required to construct the complete program will be significantly reduced. Figure 3.5 demonstrates the potential reduction in time.</p>
+<p>Figure 3.5   Source Program in a Single File Versus Partitioned into Several Files</p>
+<p>The procedure involved in separate assembly consists of four steps:</p>
+<p>Investigate methods for partitioning the program. Normally, programs are partitioned by function. Note that the memory reservation of the section must also be considered at this point.</p>
+<p>Divide the source program into separate files and edit those files accordingly.</p>
+<p>Assemble the individual files.</p>
+<p>Link the individual object modules into a single load module.</p>
+<p>3.4.2 Declaration of Export Symbols and Import Symbols</p>
+<p>When a source program consists of multiple files, referencing a symbol defined in one file from another file is called external reference or import. When referencing a symbol externally (this declaration is called external definition or export), it is necessary to declare to the assembler that this symbol is shared between multiple files.</p>
+<p>Export Symbol Declaration: This declaration is used to declare that the definition of the symbol is valid in other files. The .EXPORT or the .GLOBAL assembler directive is used to make this declaration.</p>
+<p>Import Symbol Declaration: This declaration is used to declare that a symbol is defined in another file. The or the .GLOBAL assembler directive is used to make this declaration.</p>
+<p>Declaration of Export Symbols and Import Symbols: The assembler does not support the use of .IMPORT, .EXPORT, or .GLOBAL for absolute symbols. Only relative symbols can be imported and exported. This restriction is due to limitations of the MS-COFF object format.</p>
+<p>Example:</p>
+<p>In this example, the symbol TABLE is defined in file A and referenced in file B.</p>
+<p>File A:</p>
+<pre class="code">.EXPORT  TABLE    	; Declares TABLE to be an export symbol</pre>
+<p>TABLE:  	.DATA.L  11,9,68    ; Defines TABLE</p>
+<p>.DATA.L  3,17,72</p>
+<p>File B:</p>
+<pre class="code">.IMPORT  TABLE     	; Declares TABLE to be an import symbol</pre>
+<p>MOV      #TABLE,R1  ; References TABLE (R1 = address of TABLE)</p>
+<p>MOV.L    @(8,R1),R2 ; Loads 3rd item from table (R2 = 68)</p>
+<p>See section 5.5, Export and Import Assembler Directives.</p>
+</body>
+</html>

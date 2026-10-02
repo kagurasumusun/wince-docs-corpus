@@ -1,0 +1,161 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Section 7 Conditional Assembly Function</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Section 7 Conditional Assembly Function</h1>
+<p>7.1  Overview of the Conditional Assembly Function</p>
+<p>7.2  Conditional Assembly Directives</p>
+<p>7.1 Overview of the Conditional Assembly Function</p>
+<p>7.1.1 Preprocessor Variables</p>
+<p>7.1.2 Conditional Assembly</p>
+<p>7.1.3 Iterated Expansion</p>
+<p>7.1.4 Conditional Iterated Expansion</p>
+<p>The conditional assembly function provides the following assembly operations:</p>
+<p>·	Selects whether or not to assemble a specified part of a source program according to the specified condition</p>
+<p>·	Iteratively assembles a specified part of a source program</p>
+<p>7.1.1 Preprocessor variables</p>
+<p>Preprocessor variables are used to write assembly conditions. Preprocessor variables are of either integer or character type.</p>
+<p>Integer preprocessor variables: Integer preprocessor variables are defined by the .ASSIGNA directive and can be redefined. When referencing integer preprocessor variables, insert a backslash (\) and an ampersand (&amp;) in front of them.</p>
+<p>Example:</p>
+<pre class="code">FLAG:	.ASSIGNA 1</pre>
+<p>.AIF	\&amp;FLAG == 1	; MOV R0,R1 is assembled</p>
+<p>MOV		R0,R1			; when FLAG is 1.</p>
+<p>.AENDI</p>
+<p>Character preprocessor variables: Character preprocessor variables are defined by the .ASSIGNC directive and can be redefined. When referencing character preprocessor variables, insert a backslash (\) and an ampersand (&amp;) in front of them.</p>
+<p>Example:</p>
+<pre class="code">FLAG:	.ASSIGNC "ON"</pre>
+<p>.AIF	\&amp;FLAG == "ON"	; MOV R0,R1 is assembled</p>
+<p>MOV		R0,R1				; when FLAG is "ON".</p>
+<p>.AENDI</p>
+<p>7.1.2 Conditional Assembly</p>
+<p>The conditional assembly function determines whether or not to assemble a specified part of a source program according to the specified condition.</p>
+<p>Example:</p>
+<pre class="code">.AIF	&lt;condition1&gt;</pre>
+<p>&lt;Statements to be assembled when condition1 is satisfied&gt;</p>
+<p>.AELSIF &lt;condition2&gt;</p>
+<p>&lt;Statements to be assembled when condition1 is not satisfied, but condition2 is satisfied&gt;*</p>
+<p>.AELSE</p>
+<p>&lt;Statements to be assembled when neither condition1 nor condition2 is satisfied&gt;*</p>
+<p>.AENDI</p>
+<p>Note:	These parts can be omitted from the coding.</p>
+<p>Example:</p>
+<pre class="code">.AIF	\&amp;FLAG == "ON"</pre>
+<p>MOV		R0,R10				; These statements</p>
+<p>MOV		R1,R11				; will be assembled</p>
+<p>MOV		R2,R12				; when FLAG is "ON".</p>
+<p>.AELSIF	\&amp;FLAG == "OFF"</p>
+<p>MOV		R10,R0				; These statements</p>
+<p>MOV		R11,R1				; will be assembled</p>
+<p>MOV		R12,R2				; when FLAG is "OFF".</p>
+<p>.AELSE</p>
+<p>; issue error if FLAG has unexpected value</p>
+<p>.ERROR	"FLAG is ""\&amp;FLAG""; expecting ""ON"" or ""OFF""."</p>
+<p>.AENDI</p>
+<p>7.1.3 Iterated Expansion</p>
+<p>A part of a source program can be iteratively assembled the specified number of times.</p>
+<p>Example:</p>
+<pre class="code">.AREPEAT &lt;count&gt;</pre>
+<p>&lt;Statement to be iterated&gt;</p>
+<p>.AENDR</p>
+<p>Example:</p>
+<pre class="code">; This example is a division of 64-bit data by</pre>
+<pre class="code">; 32-bit data. R1:R2 (64 bits) _ R0 (32 bits)= R2</pre>
+<p>TST			R0,R0			; (32 bits): Unsigned Zero divisor check</p>
+<p>BT			zero_div</p>
+<p>CMP/HS		R0,R1			; Overflow check</p>
+<p>BT			over_div</p>
+<p>DIV0U						; Flag initialization</p>
+<p>.AREPEAT	32</p>
+<p>ROTCL		R2				; These statements are</p>
+<p>DIV1		R0,R1			; iterated 32 times.</p>
+<p>.AENDR</p>
+<p>ROTCL		R2				; R2= quotient</p>
+<p>7.1.4 Conditional Iterated Expansion</p>
+<p>A part of a source program can be iteratively assembled while the specified condition is satisfied.</p>
+<p>A coding example is shown below.</p>
+<pre class="code">.AWHILE &lt;condition&gt;</pre>
+<p>&lt;Statements to be iterated&gt;</p>
+<p>.AENDW</p>
+<p>Example:</p>
+<pre class="code">; This example is a multiply and</pre>
+<p>; accumulate operation.</p>
+<p>TblSiz:	.ASSIGNA	50				; TblSiz: Data Table size</p>
+<p>MOV		A_Tb11,R1			; R1: Start address of data Table 1</p>
+<p>MOV		A_Tb12,R2			; R2: Start address of data Table 2</p>
+<p>CLRMAC						; Mac register initialization</p>
+<p>.AWHILE \&amp;TblSize &gt; 0	; While TblSiz is larger than 0,</p>
+<p>MAC.W	@R0+,@R1+			; this statement is iteratively												   ; assembled</p>
+<p>TblSiz:	.ASSIGNA	\&amp;TblSiz-1	; 1 is subtracted from TblSiz.</p>
+<p>.AENDW</p>
+<p>STS		MACL,R0			; The result is obtained in R0.</p>
+<p>Example:</p>
+<pre class="code">two:		.assigna	2</pre>
+<p>label1:	.data.l	1</p>
+<p>label2:	.data.l	\&amp;two					; same as .data.l 2</p>
+<p>mult:		.equ		5</p>
+<p>str:		.assignc	“mumble”</p>
+<p>num:		.assigna	38 + (label2 - label1)	; num = 42</p>
+<p>.sdata		\&amp;str					; same as “mumble”</p>
+<p>.sdata		“\&amp;str = \&amp;num”		; same as “mumble = 42”</p>
+<p>.arepeat	(mult &lt; \&amp;two) ? (\&amp;num * mult) : \&amp;num</p>
+<p>nop</p>
+<p>.aendr</p>
+<p>permnum:	.equ		\&amp;num</p>
+<p>.awhile	\&amp;num &gt; mult ne 0  	; same as \&amp;num &gt; mult</p>
+<p>.data.l	\&amp;num</p>
+<p>num:		.assigna	\&amp;num - 1</p>
+<p>.aendw</p>
+<p>.aif		“fumble” &lt; \&amp;str</p>
+<p>.sdata		“fumble &lt; \&amp;str”</p>
+<p>.aelif		mult * \&amp;num eq 42</p>
+<p>.sdata		“5 * \&amp;num == 42”</p>
+<p>.aelsif	label1 &gt; label2</p>
+<p>.sdata		“label1 &gt; label2”</p>
+<p>.aelseif	\&amp;num == permnum || \&amp;num == 0</p>
+<p>.sdata		“last chance”</p>
+<p>.aelse</p>
+<p>.sdata		“giving up”</p>
+<p>.aendi</p>
+<p>7.2 Conditional Assembly Directives</p>
+<p>7.2.1 .ASSIGNA: Integer Preprocessor Variable Definition</p>
+<p>7.2.2 .ASSIGNC: Character Preprocessor Variable Definition</p>
+<p>7.2.3 .AIF, .AELSIF, .AELSE, and .AENDI: Conditional Assembly</p>
+<p>7.2.4 .ERROR and .AERROR</p>
+<p>7.2.5 .AREPEAT and .AENDR: Iterated Expansion</p>
+<p>7.2.6 .AWHILE and .AENDW: Conditional Iterated Expansion</p>
+<p>7.2.7 .EXITM: Expansion Termination</p>
+<p>7.2.8 .ALIMIT: Limit .AWHILE Expansion</p>
+<p>The assembler provides the conditional assembly directives listed in Table 7.1.</p>
+<p>Table 7.1   Conditional Assembly Directives</p>
+<table class="dtTABLE">
+<tr><td>Directive</td><td>Purpose</td></tr>
+<tr><td>.ASSIGNA</td><td>Defines an integer preprocessor variable; the defined variable can be redefined</td></tr>
+<tr><td>.ASSIGNC</td><td>Defines a character preprocessor variable; the defined variable can be redefined</td></tr>
+<tr><td>.AIF<br>.AELSIF<br>.AELSE<br>.AENDI</td><td>Determines whether or not to assemble a part of a source program according to the specified condition: When the condition is satisfied, the statements after the .AIF are assembled; When not satisfied, the statements after the .AELSE are assembled</td></tr>
+<tr><td>.ERROR or .AERROR</td><td>Reports error detected at assembly time by user code</td></tr>
+<tr><td>.AREPEAT<br>.AENDR</td><td>Repeats assembly of a part of a source program (between .AREPEAT and .AENDR) the specified number of times</td></tr>
+<tr><td>.AWHILE<br>.AENDW</td><td>Assembles a part of a source program (between .AWHILE and .AENDW) iteratively while the specified condition is satisfied</td></tr>
+<tr><td>.EXITM</td><td>Terminates .AREPEAT or .AWHILE iterated expansion</td></tr>
+<tr><td>.ALIMIT</td><td>Specifies the upper limit value for expansion of the AWHILE directive in the preprocessor.*</td></tr>
+<tr><td>7.2.1 .ASSIGNA: Integer Preprocessor Variable Definition<br>Syntax:<br>&lt;preprocessor variable&gt;[:].ASSIGNAD&lt;value&gt;<br>Statement Elements:<br>·    Label: Enter the name of the preprocessor variable<br>·    Operation: Enter the .ASSIGNA mnemonic in the operation field<br>·    Operands: enter the value to be assigned to the preprocessor variable<br>Description: .ASSIGNA is the assembler directive that defines a value for an integer preprocessor variable. The syntax of integer preprocessor variables is the same as that for symbols. The assembler distinguishes uppercase and lowercase letters. The preprocessor variables defined with the .ASSIGNA directive can be redefined with the .ASSIGNA or .ASSIGNC directive. The values for the preprocessor variables must be absolute values. Relative values, forward references, and external references are not permitted. Arithmetic involving relative values is permitted, subject to the usual restrictions as long as the result is absolute. Defined preprocessor variables are valid from the point of specification forward in the source program.<br>When referencing integer preprocessor variables, insert a backslash (\) and an ampersand (&amp;) in front of them.<br>\&amp;&lt;preprocessor variable&gt;[']<br>To clearly distinguish the preprocessor variable name from the rest of the source statement, an apostrophe (') can be added. This is only necessary in certain cases when preprocessor variables are embedded in strings or macro bodies.<br>Coding Example:<br>; This example generates a general-<br>; purpose multiple-bit shift instruction<br>; which shifts bits to the right by the<br>; number of SHIFT.<br>RN:        .REG    R0                ; Rn is set to R0<br>SHIFT: .ASSIGNA    27            ; SHIFT is set to 27<br>.AIF \&amp;SHIFT &gt;= 16    ; Condition: SHIFT &gt;= 16<br>SHLR16    Rn                ; When the condition is satisfied, Rn is<br>; shifted to the right by 16 bits.<br>SHIFT: .ASSIGNA \&amp;SHIFT-16 ; 16 is subtracted from SHIFT.<br>.AENDI<br>.AIF \&amp;SHIFT &gt;= 8    ; Condition: SHIFT &gt;= 8<br>SHLR8        Rn            ; When the condition is satisfied, Rn is<br>; shifted to the right by 8 bits.<br>SHIFT: .ASSIGNA \&amp;SHIFT-8    ; 8 is subtracted from SHIFT.<br>.AENDI<br>.AIF \&amp;SHIFT &gt;= 4    ; Condition: SHIFT &gt;= 4<br>SHLR2        Rn            ; When the condition is satisfied, Rn is<br>SHLR2        Rn            ; shifted to the right by 4 bits.<br>SHIFT: .ASSIGNA \&amp;SHIFT-4    ; 4 is subtracted from SHIFT.<br>.AENDI<br>.AIF \&amp;SHIFT &gt;= 2    ; Condition: SHIFT &gt;= 2<br>SHLR2        Rn            ; When the condition is satisfied, Rn is<br>; shifted to the right by 2 bits.<br>SHIFT: .ASSIGNA \&amp;SHIFT-2    ; 2 is subtracted from SHIFT.<br>.AENDI<br>.AIF \&amp;SHIFT == 1    ; Condition: SHIFT = 1<br>SHLR        Rn            ; When the condition is satisfied, Rn is<br>; shifted to the right by 1 bit.<br>.AENDI<br>The expanded results are as follows:<br>SHLR16    R1            ; When the condition is satisfied, Rn is shifted to the<br>; right by 16 bits.<br>SHLR8    R1            ; When the condition is satisfied, Rn is shifted to the<br>; right by 8 bits.<br>SHLR2    R1            ; When the condition is satisfied, Rn is shifted to the<br>; right by 2 bits.<br>SHLR    R1            ; When the condition is satisfied, Rn is shifted to the<br>; right by 1 bit.<br>7.2.2 .ASSIGNC: Character Preprocessor Variable Definition<br>Syntax:<br>&lt;preprocessor variable&gt;[:].ASSIGNCD&lt;character string&gt;<br>Statement Elements:<br>·    Label: Enter the name of the preprocessor variable<br>·    Operation: Enter the .ASSIGNC mnemonic in the operation field<br>·    Operands: Enter the character string enclosed with double quotation marks (")<br>Description: .ASSIGNC is the assembler directive that defines a character string for an character preprocessor variable. The syntax of character preprocessor variables is the same as that for symbols. The assembler distinguishes uppercase and lowercase letters. The preprocessor variables defined with the .ASSIGNC directive can be redefined with the .ASSIGNC or .ASSIGNA directive. Character strings are specified by constant strings enclosed in double quotation marks ("), preprocessor variables, or values computed from them (using +, .SUBSTR, or other operators). Defined preprocessor variables are valid from the point of specification forward in the source program.<br>When referencing character preprocessor variables, insert a backslash (\) and an ampersand (&amp;) in front of them.<br>\&amp;&lt;preprocessor variable&gt;[']<br>To clearly distinguish the preprocessor variable name from the rest of the source statement, an apostrophe (') can be added. This is only necessary in certain cases when preprocessor variables are embedded in strings or macro bodies.<br>Coding Example:<br>FLAG:    .ASSIGNC    "ON"            ; "ON" is set to FLAG.<br>.AIF \&amp;FLAG == "ON"        ; MOV R0,R1 is assembled<br>MOV R0,R1                    ; when FLAG is "ON".<br>.AENDI<br>FLAG:    .ASSIGNC \&amp;FLAG            ; A space (") is added to FLAG.<br>FLAGA: .ASSIGNC "OFF"            ; "OFF" is added to FLAGA.<br>FLAG:    .ASSIGNC "\&amp;FLAG AND \&amp;FLAGA"<br>; FLAG becomes "ON AND OFF".<br>7.2.3 .AIF, .AELSIF, .AELSE, and .AENDI: Conditional Assembly<br>Syntax:<br>.AIFD&lt;condition1&gt;<br>&lt;Source statements assembled if condition1 is satisfied&gt;<br>.AELSIFD&lt;condition2&gt;<br>&lt;Source statements assembled if condition1 is not satisfied, but condition2 is satisfied&gt;<br>.AELSE<br>&lt;Source statements assembled if neither condition1 nor condition2 is satisfied&gt;<br>.AENDI<br>Statement Elements:<br>·    Label: The label field is not used<br>·    Operation: Enter the .AIF, .AELSIF (can be omitted), .AELSE (can be omitted), or .AENDI mnemonic in the operation field<br>·    Operands: .AIF or .AELSIF: Enter the condition. For .AELSE and .AENDI the operand field is not used<br>Description: .AIF, .AELSIF, .AELSE, and .AENDI are the assembler directives that select whether or not to assemble source statements according to the condition specified. The .AELSIF and/or .AELSE directives can be omitted. Multiple .AELSIF directives are permitted with a single .AIF, to test a list of conditions in sequence. There may be at most one .AELSE per .AIF. The alternate spellings .AELIF or .AELSEIF may be used in place of .AELSIF. The condition may be any expression with an absolute numeric result value. Expressions whose result is a relative value, or which involve forward references or external references, are not permitted. If the value is non-zero, the source statements up to the following .AELSIF, .AELSE, or .AENDI are assembled, and then any remaining statements up to the .AENDI are skippd. If the value is zero, the next .AELSIF (if any) is considered. If no .AELSIF's remain, and if all of the conditions have been zero, the source statements following the .AELSE are assembled.<br>For compatibility with other Hitachi assemblers, the following syntax is also supported. Term 1 and term 2 may be any expression (including constants).<br>The condition may be specified as follows:<br>.AIFD&lt;term1&gt;D&lt;relational operator&gt;D&lt;term2&gt;<br>Terms are specified with numeric values or character values. Table 7.2 lists the relational operators that can be used.<br>Table 7.2   Relational Operators<br>Operator</td><td>Explanation</td></tr>
+<tr><td>EQ</td><td>term1 = term2</td></tr>
+<tr><td>NE</td><td>term1 != term2</td></tr>
+<tr><td>GT</td><td>term1 &gt; term2</td></tr>
+<tr><td>LT</td><td>term1 &lt; term2</td></tr>
+<tr><td>GE</td><td>term1 &gt;= term2</td></tr>
+<tr><td>LE</td><td>term1 &lt;= term2</td></tr>
+<tr><td>Note:    Numeric values are handled as 32-bit signed integers.<br>Coding Example:<br>.AIF "\&amp;FLAG" EQ "ON"<br>MOV R0,R10                    ; These statements<br>MOV R1,R11                    ; are assembled<br>MOV R2,R12                    ; when FLAG is "ON".<br>.AELSE<br>MOV R10,R0                    ; These statements<br>MOV R11,R1                    ; are assembled<br>MOV R12,R2                    ; when FLAG is not "ON".<br>.AENDI<br>7.2.4 .ERROR and .AERROR<br>Syntax:<br>.ERRORD[&lt;expression&gt;[,&lt;expression&gt;...]]<br>Statement Elements:<br>·    Label: The label field is not used<br>·    Operation: Enter the .ERROR (or .AERROR) mnemonic in the operation field<br>·    Operands: Enter zero or more expressions with string or absolute numeric result values<br>Description: The .ERROR directive may be used to report errors detected at assembly time by user code. If a .ERROR directive is assembled, its operands (if any) are evaluated, the results concatenated, and the result of the concatenation is used as the error message.  The operands may have either string or numeric values. The alternate spelling .AERROR is also supported, for compatibility with other Hitachi assemblers.<br>Coding Example:<br>.section .text<br>.org 0x202      ; force the .error to be assembled<br>.aif $ - .text &gt; 0x200<br>.error “PC overflow: is ”, $, “, expecting &lt; ”, 0x200<br>.aendi<br>7.2.5 .AREPEAT and .AENDR: Iterated Expansion<br>Syntax:<br>.AREPEATD&lt;count&gt;<br>&lt;Source statements iteratively assembled&gt;<br>.AENDR<br>Statement Elements:<br>·    Label: The label field is not used<br>·    Operation: Enter the .AREPEAT or .AENDR mnemonic in the operation field<br>·    Operands:<br>—    .AREPEAT: Enter the number of iterations<br>—    .AENDR: The operand field is not used<br>Description: .AREPEAT and .AENDR are the assembler directives that assemble source statements by iteratively expanding them the specified number of times. The source statements between the .AREPEAT and .AENDR directives are iterated the number of times specified with the .AREPEAT directive. Note that the source statements are simply copied the specified number of times, and therefore, the operation does not loop at program execution. Count must be an abolute value, and cannot be a relative value, forward reference, or external reference. Nothing is expanded if a value of 0 or smaller is specified.<br>Coding Example:<br>; This example is a division of 64-bit data by<br>; 32-bit data. R1:R2 (64 bits) _ R0 (32 bits):<br>; Unsigned<br>TST    R0,R0                ; Zero divisor check<br>BT        zero_div<br>CMP/HS R0,R1            ; Overflow check<br>BT        over_div<br>DIV0U                    ; Flag initialization<br>.AREPEAT 32<br>ROTCL    R2                ; These statements are<br>DIV1    R0,R1            ; iterated 32 times.<br>.AENDR<br>ROTCL    R2                ; R2 = quotient<br>7.2.6 .AWHILE and .AENDW: Conditional Iterated Expansion<br>Syntax:<br>.AWHILED&lt;condition&gt;<br>&lt;Source statements iteratively assembled&gt;<br>.AENDW<br>Statement Elements:<br>·    Label: The label field is not used<br>·    Operation: Enter the .AWHILE or .AENDW mnemonic in the operation field<br>·    Operands:<br>—    .AWHILE: Enter the condition to iteratively expand source statements<br>—    .AENDW: The operand field is not used<br>Description: .AWHILE, .AELSIF, and .AENDW are the assembler directives that assemble source statements by iteratively expanding them while the specified condition is satisfied.<br>The source statements between the .AWHILE and .AENDW directives are iterated while the condition specified with the .AWHILE directive is satisfied. Note that the source statements are simply copied iteratively, and therefore, the operation does not loop at program execution.<br>The condition may be any expression with an absolute numeric value. Expressions whose result is a relative value, or which involve forward references, are not permitted. If the value is non-zero, the condition is considered to be satisfied.<br>For compatibility with other Hitachi assemblers, the following syntax is also supported. Term 1 and term 2 may be any expression (including constants).<br>The condition may be specified as follows:<br>.AWHILED&lt;term1&gt;D&lt;relational operator&gt;D&lt;term2&gt;<br>Terms are specified with numeric values or character values. Table 7.3 lists the relational operators that can be used.<br>Table 7.3   Relational Operators<br>Operator</td><td>Explanation</td></tr>
+<tr><td>EQ</td><td>term1 = term2</td></tr>
+<tr><td>NE</td><td>term1 != term2</td></tr>
+<tr><td>GT</td><td>term1 &gt; term2</td></tr>
+<tr><td>LT</td><td>term1 &lt; term2</td></tr>
+<tr><td>GE</td><td>term1 &gt;= term2</td></tr>
+<tr><td>LE</td><td>term1 &lt;= term2</td></tr>
+<tr><td>Note:    Numeric values are handled as 32-bit signed integers.<br>Coding Example:<br>; This example is a multiply and<br>; accumulate operation.<br>TblSiz:    .ASSIGNA 50                ; TblSiz: Data Table size<br>MOV  A_Tbl1,R1            ; R1: Start address of data Table 1<br>MOV  A_Tbl2,R2            ; R2: Start address of data Table 2<br>CLRMAC                        ; Mac register initialization<br>.AWHILE \&amp;TblSize GT 0    ; While TblSiz is larger than 0,<br>MAC.W  @R0+,@R1+            ; this statement is iteratively<br>; assembled.<br>TblSiz:    .ASSIGNA \&amp;TblSiz-1        ; 1 is subtracted from TblSiz.<br>.AENDW<br>STS        MAC,R0                ; The result is obtained in R0.<br>7.2.7 .EXITM: Expansion Termination<br>Syntax:<br>.EXITM<br>Statement Elements:<br>·    Label: The label field is not used<br>·    Operation: Enter the .EXITM mnemonic in the operation field<br>·    Operands: The operand field is not used<br>Description: .EXITM is the assembler directive that terminates an iterated expansion (.AREPEAT to .AENDR) or a conditional iterated expansion (.AWHILE to .AENDW). Either expansion is terminated when this directive appears. This directive is also used to exit from macro expansions. The location of this directive must be specified carefully when macro instructions and iterated expansion are combined. See also section 8.2, Macro Function Directives.<br>Coding Example:<br>COUNT    .ASSIGNA 0                ; 0 is set to COUNT.<br>.AWHILE 1                    ; An infinite loop (condition is always<br>; satisfied) is specified.<br>ADD    R0,R1<br>ADD    R2,R3<br>COUNT    .ASSIGNA \&amp;COUNT+1    ; 1 is added to COUNT.<br>.AIF    \&amp;COUNT EQ 2    ; Condition: COUNT = 2<br>.EXITM<br>.AENDI<br>.AENDW<br>When COUNT is updated and satisfies the condition specified with the .AIF directive, .EXITM is assembled, and .AWHILE expansion is terminated. The expansion results are as follows:<br>ADD    R0,R1            ; When COUNT is 0<br>ADD    R2,R3<br>ADD    R0,R1            ; When COUNT is 1<br>ADD    R2,R3<br>After this, COUNT becomes 2 and expansion is terminated.<br>7.2.8 .ALIMIT: Limit .AWHILE Expansion<br>Syntax:<br>.ALIMITD&lt;maximum count&gt;<br>Statement Elements:<br>·    Label: The label field is not used<br>·    Operation: Enter the .EXITM mnemonic in the operation field<br>·    Operands: Enter the maximum number of times to expand .AWHILE statements<br>Description: The .ALIMIT directive specifies the upper limit value for expansion of the .AWHILE directive in the preprocessor. During expansion of the .AWHILE directive, if the statement expansion count exceeds the upper limit value specified by this directive, a warning message is output and the expansion is terminated. If this directive is not specified, the upper limit value is 65535.<br>Coding Example:<br>FLG        .ASSIGNA        0<br>.ALIMIT        20<br>.AWHILE        \&amp;FLG eq 0<br>NOP<br>.AENDW</td></tr>
+</table>
+</body>
+</html>

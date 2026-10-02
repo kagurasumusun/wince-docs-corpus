@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>PegReadRecordProps</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>PegReadRecordProps</h1>
+<p>The PegReadRecordProps function reads properties from the current record.  A RAPI version of this function exists and is also called PegFindNextDatabase.  For more information about using RAPI functions, please see the Remote API Functions overview.</p>
+<table class="dtTABLE">
+<tr><td>PEGOID PegReadRecordProps(</td><td>// rapi.h and windbase.h</td></tr>
+<tr><td>HANDLE hDbase,</td><td>// handle to open database</td></tr>
+<tr><td>DWORD dwFlags,</td><td>// read flags</td></tr>
+<tr><td>LPWORD lpcPropID,</td><td>// number of property identifiers in array</td></tr>
+<tr><td>PEGPROPID * rgPropID,</td><td>// pointer to array of property identifiers</td></tr>
+<tr><td>LPBYTE * lplpBuffer,</td><td>// address of pointer to buffer for property information</td></tr>
+<tr><td>LPDWORD lpcbBuffer</td><td>// pointer to size, in bytes, of buffer</td></tr>
+<tr><td>);</td><td></td></tr>
+<tr><td>Parameters<br>hDbase<br>Identifies an open database. The database must have been opened by a previous call to the PegOpenDatabase function.<br>dwFlags<br>Specifies the read flags. Currently, only the following value is supported.<br>Value</td><td>Meaning</td></tr>
+<tr><td>PEGDB_ALLOWREALLOC</td><td>Indicates that the LocalAlloc function was used to allocate the buffer specified by the lplpBuffer parameter, and that the server can reallocate the buffer if it is not large enough to hold the requested properties.</td></tr>
+<tr><td>lpcPropID<br>Indicates the number of property identifiers in the array specified by the rgPropID parameter. If rgPropID is NULL, this parameter receives the number of properties retrieved.<br>rgPropID<br>Points to an array of property identifiers for the properties to be retrieved. If this parameter is NULL, the function retrieves all properties in the record.<br>lplpBuffer<br>Address of a pointer to a buffer that receives the requested properties. If the dwFlags parameter includes the PEGDB_ALLOWREALLOC flag, the buffer may be reallocated if necessary. If the PEGDB_ALLOWREALLOC flag is specified and this parameter is NULL, the server uses the LocalAlloc function to allocate a buffer of the appropriate size in the caller's address space and returns a pointer to the buffer. Note that if the PEGDB_ALLOWREALLOC flag is specified it is possible for the value of this pointer to change even on failure. For example, the old memory might be freed and the allocation might then fail, leaving the pointer set to NULL. Memory allocated by the RAPI version of the API must be released by calling RapiFreeBuffer.<br>lpcbBuffer<br>Points to a variable that cointains the size, in bytes, of the buffer specified by the lplpBuffer parameter. When the function returns, lpcbBuffer receives a value that indicates the actual size of the data copied to the buffer. If the buffer was too small to contain the data, this parameter can be used to calculate the amount of memory to allocate for the buffer if PEGDB_ALLOWREALLOC was not specified.<br>Return Values<br>If the function succeeds, the return value is the object identifier of the record from which the function read. If the function fails, the return value is zero. To get extended error information, call PegGetLastError. PegGetLastError may return one of the following error codes.<br>Value</td><td>Meaning</td></tr>
+<tr><td>ERROR_INVALID_PARAMETER</td><td>A parameter was invalid.</td></tr>
+<tr><td>ERROR_NO_DATA</td><td>None of the requested properties was found. The output buffer and the size are valid.</td></tr>
+<tr><td>ERROR_INSUFFICIENT_BUFFER</td><td>The given buffer was not large enough, and the reallocation failed (if the PEGDB_ALLOWREALLOC flag was specified). The lpcbBuffer parameter contains the required buffer size.</td></tr>
+<tr><td>ERROR_KEY_DELETED</td><td>The record that was about to be read was deleted by another thread. If the current record was reached as a result of an autoseek, this error is not returned, and the next record is returned.</td></tr>
+<tr><td>ERROR_NO_MORE_ITEMS</td><td>The current seek pointer is at the end of the database.</td></tr>
+<tr><td>To get extended error information for the RAPI version of the API,  call PegGetLastError.<br>Remarks<br>The PegReadRecordProps function reads the specified set of properties from the current record. If the database was opened with the autoseek flag, the function increments the seek pointer by one so that the next call reads the next record in the current sort order.<br>An application should read all needed properties from the record in a single call. This is because the entire record is stored in a compressed format, and each time a property is read is must be decompressed. All the properties are returned in a single marshalled structure, which consists of an array of PEGPROPVAL structures, one for each property requested (or one for each property found if the application set the rgPropID parameter to NULL when calling the function).<br>If a property was requested, like strings or blobs are packed in at the end of the array, and the pointers in the PEGPROPVAL structures point into this marshalled structure. This means that the only memory that must be freed is the original pointer to the buffer passed in to the call. Even if the function fails, it may have allocated memory on the caller’s behalf. An application must free the pointer returned by this function if the pointer is not NULL.<br>See Also<br>Object Store, LocalAlloc, LocalFree, PegSeekDatabase, PEGPROPVAL</td></tr>
+</table>
+</body>
+</html>

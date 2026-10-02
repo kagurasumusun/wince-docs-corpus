@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Loading PC Card Drivers Without a Plug and Play ID</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Loading PC Card Drivers Without a Plug and Play ID</h1>
+<p>When the Device Manager receives notification of a newly inserted card, it tries to open the registry key corresponding to the card's Plug and Play identifier, (that is, HKEY_LOCAL_MACHINE\Drivers\PCMCIA\PnpID) and loads the driver for that key.</p>
+<p>Note   You can determine a PC Card’s Plug and Play ID by plugging it into a computer running Windows 95 and examining the  HKEY_LOCAL_MACHINE\Enum\PCMCIA key in the registry.</p>
+<p>If the Device Manager does not find a matching entry in the registry, (memory cards, for example, generally do not have a Card Information Structure (CIS)), it runs the detection routines to determine the name of suitable generic driver for card's type (for example, modem, pager, or memory). The detection routines are listed under the registry HKEY_LOCAL_MACHINE \Drivers\PCMCIA\Detect key. The subkeys under this key are integers. The Device Manager invokes the listed detection functions in numerical order.</p>
+<p>The Device Manager uses the file name specified for the Dll entry to load the DLL containing the detection routine. The Dll entry is a required entry.</p>
+<p>In addition to the Dll entry, the Device Manager needs the Entry value to locate the detection function. The registry key may contain other values used for device initialization and they are not use by the Device Manager.</p>
+<p>If the detection function does not recognize the PC Card, it returns NULL to indicate failure. If the function recognizes the PC Card, it returns a LPTSTR to a string buffer containing a registry entry key that can handle the device. (The key specified is a subkey of the HKEY_LOCAL_MACINE\Drivers\PCMCIA key so this information is not included in the string buffer. For example, the modem detection function copies "Modem" to the string buffer and returns a pointer to it. The Device Manager then loads the driver indicated by the values under HKEY_LOCAL_MACINE\Drivers\PCMCIA\Modem.</p>
+<p>For example, if you added the following detection subkey to the registry, the DetectIHVdevice entry point function in your detection driver IHVdevice.dll could return a pointer to the string "IHVdevice" defined in the dntry function:</p>
+<pre class="code">HKEY_LOCAL_MACHINE</pre>
+<p>[Drivers]</p>
+<p>[PCMCIA]</p>
+<p>[Detect]</p>
+<p>[01]</p>
+<p>SZ: Entry = DetectIHVdevice</p>
+<p>SZ: Dll = IHVdevice.dll</p>
+<p>The Device Manager then loads the driver IHVdeviceA.dll listed under the IHVdevice key:</p>
+<pre class="code">HKEY_LOCAL_MACHINE</pre>
+<p>[Drivers]</p>
+<p>[PCMCIA]</p>
+<p>[IHVdevice]</p>
+<p>SZ: Prefix = DEV</p>
+<p>SZ: Dll = IHVdeviceA.DLL</p>
+<p>If the Prefix value is defined for a device, the Device Manager uses RegisterDevice to load the driver. If the Entry value is defined for a device, the Device Manager calls an entry point in the driver's DLL. These two methods are described in the following sections.</p>
+<p>Loading a Driver With a Prefix Registry Value</p>
+<p>When loading a driver with the Prefix value, the Device Manager calls RegisterDevice on behalf of the driver. Prefix specifies the device's three-character prefix which is one of the arguments to RegisterDevice. For example, PGR is the device reference for the sample NewsCard pager card. Therefore, opening the PGR device is associated with the pager driver.</p>
+<p>There are three optional numeric values in the registry used in the loading process: Index, Context, and Ioctl.</p>
+<p>If the Index value is present, the Device Manager uses it as the index parameter for RegisterDevice. If the Index value does not exist (this is recommended), the Device Manager assigns an appropriate index.</p>
+<p>If the Context value exists, the Device Manager uses it as the context parameter (dwInfo) for RegisterDevice. If Context does not exist (this is recommended), the Device Manager passes the registry path of the device’s active key as the context in RegisterDevice.</p>
+<p>If the Ioctl value is present, the Device Manager calls the I/O control function for the driver and passes the value specified by the Ioctl.</p>
+<p>Just prior to the Device Manager calling RegisterDevice to load a driver, it adds a value to the device's Active registry key that specifies the socket and function number of the new device (actually, a CARD_SOCKET_HANDLE structure).</p>
+<p>Loading a Driver With an Entry Registry Value</p>
+<p>If the Entry string value exists, it specifies the entry-point name of the driver. When a driver is invoked through its entry point, the driver is responsible for calling RegisterDevice on its own. In this case, the driver will not be tracked under the Active key. The name of the Entry function is defined by the driver but it must follow the prototype specified for PFN_DEV_ENTRY:</p>
+<pre class="code">DWORD (*PFN_DEV_ENTRY)(LPTSTR);</pre>
+<p>where the LPSTR parameter is the registry path of the device's key.</p>
+<p>For these drivers, the Device Manager loads the device's DLL and calls the specified entry point. The Device manager passes device's registry path to the entry-point as a parameter.</p>
+</body>
+</html>

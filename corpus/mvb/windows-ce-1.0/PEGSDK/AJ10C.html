@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>How to Set Up for Remote Debugging</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>How to Set Up for Remote Debugging</h1>
+<p>IDE remote debugging model depends on two serial connections between the device and the host machine. One is the PC-link,the other is the debug port. The PC-link uses Remote Access Service (RAS) on NT. This must be configured through the NT Control Panel/Network dialog, accessible by choosing Settings from the Start menu. The debug port is configured from within the IDE using the Remote Connection dialog from the Tools menu.</p>
+<p>The PC-link connection is kept alive during the debug session using the Remote Connection Server. All binaries are built on the host side and are downloaded to the device through the PC-link. The IDE debugger uses the debug port to control the debug session. The IDE project makefiles are configured to work with this model.</p>
+<p>Steps to remote debugging:</p>
+<p>1.	Configure RAS manually. Both the IDE and Minerva require this step, which setup can not do. For more detailed instructions on how to install and configure RAS on NT, see the next topic. Briefly, to set up RAS:</p>
+<p>·	Go to Control Panel\Network\Services and choose Add</p>
+<p>·	Select "Remote Access Service" and add "Dial-up Network Serial Cable between 2 PC's"</p>
+<p>·	Select the com port you want to use, and configure it to Receive Calls</p>
+<p>·	Select Remote Access Setup\Network and set the following:</p>
+<p>- "This Computer Only"</p>
+<p>- "Use Static Address Pool"</p>
+<p>- 192.100.1.99 to 192.100.1.205</p>
+<p>- Set Encryption Settings to "Allow any authentication” including clear text"</p>
+<p>·	Then under the User Manager</p>
+<p>- Enable the Guest account</p>
+<p>- Grant it Dialin permission</p>
+<p>2.	Start Developer Studio from the "Msdev for Windows CE" icon (command line equivalent msdev.exe -pegasus).</p>
+<p>3.	From the Tools menu select Remote Connection Server, and login as Guest on the HPC.</p>
+<p>4.	Configure the debug port for the current platform using  Tools/Remote Connection dialog. Make sure that the  com port you select is not being used by RAS.</p>
+<p>5.	Make sure your binaries have been downloaded to the Windows CE target device. The IDE will download automatically after a build if the Always Download option is checked on the Build menu. Otherwise, or to download without building first, choose Update Remote Output File from the Build menu.</p>
+<p>6.	To debug, use either the hardcoded breakpoint, DebugBreak(); set a soft breakpoint in your code before launching the debugger.</p>
+<p>7.	Choose Debug from the Build menu and select either  Go or Step Into.</p>
+<p>·	The IDE will download and initialize the debug subsystem (dbg.dll and  loaddbg.exe) onto the HPC.</p>
+<p>·	Once debugging is initialized on the device, the IDE will run through a series of loads until it hits the breakpoint.</p>
+<p>·	The IDE debugger is then connected to the device and can control the debug session.</p>
+<p>8.	Debug normally.</p>
+<p>9.	To exit safely, use Debug Stop when the debugger is actually stopped on a breakpoint.</p>
+<p>Note   Stopping the debugger when not at a breakpoint may leave the HPC in an undetermined state. The debugger can only unload the debug subsystem when it the device is at a breakpoint. With a clean exit, however, the debug cycle (building, downloading, debugging, exiting) can go on indefinitely.</p>
+<p>Must make sure that you HPC has the correct build of the OS. If not, you will get erratic behavior such as  not starting up or exceptions when debugging or executing on your device.</p>
+</body>
+</html>

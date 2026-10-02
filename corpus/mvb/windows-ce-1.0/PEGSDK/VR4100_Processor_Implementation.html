@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>VR4100 Processor Implementation</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>VR4100 Processor Implementation</h1>
+<p>This section describes the following:</p>
+<p>·	the 64-bit architecture of the VR4100 processor</p>
+<p>·	the CPU instruction pipeline (described in detail in Chapter 3)</p>
+<p>·	an overview of the System interface (described in detail in Chapter 12)</p>
+<p>·	an overview of the CPU registers (detailed in Chapters 4 and 5) and CPU instruction set (detailed in Chapter 2 and Appendix A)</p>
+<p>·	data formats and byte ordering</p>
+<p>·	the System Control Coprocessor, CP0</p>
+<p>·	caches and memory, including a description of instruction and data caches, the memory management unit (MMU), and the translation lookaside buffer (TLB).</p>
+<p>64-bit Architecture</p>
+<p>The natural mode of operation for the VR4100 processor is as a 64-bit microprocessor; however, 32-bit applications may be run when the processor operates as a 64-bit processor.</p>
+<p>Figure 1.1 is an internal block diagram of the VR4100 processor.</p>
+<p>Figure 1.1    VR4100 Processor Internal Block Diagram</p>
+<p>CPU has the hardware resources to execute integer and  instructions.  It has a 64- bit register file, 64-bit integer datapath, and Multiply-and-Accumulator.</p>
+<p>Coprocessor 0 (CP0) has the memory management unit (MMU) and handles exception processing.  The MMU handles address translation and checks memory accesses that occur between different memory segments (user, supervisor, or kernel).  The translation lookaside buffer (TLB) is used to translate virtual to physical addresses.</p>
+<p>Instruction Cache is direct-mapped, virtually-indexed, and physically-tagged.</p>
+<p>Data Cache is a direct-mapped, virtually-indexed and physically-tagged write- back cache.</p>
+<p>Bus Interface allows the processor to access external resources.  It contains a 32- bit multiplexed address/data bus, with per-byte parity, clock signals, interrupts, and various control signals.</p>
+<p>Clock Generator quadruples  the input clock (labeled MasterClock) frequency to produce the pipeline clock.  This clock is then divided by 2 to produce the System interface clock.  The processor uses a phase-locked loop (PLL) to generate the pipeline clock, that operates at quadruple the frequency of the MasterClock.</p>
+<p>VR4100 Instruction Pipeline</p>
+<p>The VR4100 processor has a 5-stage instruction pipeline. Under normal circumstances,  one instruction is issued each cycle.</p>
+<p>The instruction pipeline of the VR4100 processor operates at quadruple the frequency of the MasterClock.  The processor achieves high throughput by shortening register access times and implementing virtually-indexed caches.</p>
+<p>Processor Register Overview</p>
+<p>The processor provides the following registers:</p>
+<pre class="code">32 64-bit general purpose registers, GPRs</pre>
+<p>In addition, the processor provides the following special registers:</p>
+<pre class="code">64-bit Program Counter, the PC register</pre>
+<pre class="code">64-bit HI register, containing the integer multiply, divide and multiply- and-add upper doubleword result</pre>
+<pre class="code">64-bit LO register, containing the integer multiply, divide and multiply- and-add lower doubleword result</pre>
+<p>Two of the CPU general purpose registers have assigned functions:</p>
+<pre class="code">r0 is hardwired to a value of zero, and can be used as the target register for any instruction whose result is to be discarded. r0 can also be used as a source when a zero value is needed.</pre>
+<pre class="code">r31 is the link register used by Jump and Link instructions.  It can be used by other instructions, with caution.</pre>
+<p>CPU registers can operate as either 32-bit or 64-bit registers, depending on the VR4100 processor mode of operation.</p>
+<p>Figure 1.2 shows the VR4100 processor registers.</p>
+<p>Figure 1.2    VR4100 Processor Registers</p>
+<p>The VR4100 processor has no Program Status Word (PSW) register as such; this is covered by the Status and Cause registers incorporated within the System Control Coprocessor (CP0).  CP0 registers are described later in this chapter.</p>
+<p>CPU Instruction Set Overview</p>
+<p>Each CPU instruction is 32 bits long.  As shown in 17, there are three  instruction formats:</p>
+<p>·	immediate (I-type)</p>
+<p>·	jump (J-type)</p>
+<p>·	register (R-type)</p>
+<p>·</p>
+<p>Figure 1.3    CPU Instruction Formats</p>
+<p>·	Each format contains a number of different instructions, which are described further in this chapter.  Fields of the instruction formats are described in Chapter 2.</p>
+<p>·	Instruction decoding is greatly simplified by limiting the number of formats to these three. This limitation means that the more complicated (and less frequently used) operations and addressing modes can be synthesized by the compiler, using sequences of these same simple instructions.</p>
+<p>The instruction set can be further divided into the following groupings:</p>
+<p>·	Load and Store instructions move data between memory and general registers.  They are all immediate (I-type) instructions, since the only addressing mode supported is base register plus 16-bit, signed immediate offset.</p>
+<p>·	Computational instructions perform arithmetic, logical, shift, multiply, and divide operations on values in registers.  They include register (R- type, in which both the operands and the result are stored in registers) and immediate (I-type, in which one operand is a 16-bit immediate value) formats.</p>
+<p>·	Jump and Branch instructions change the control flow of a program. Jumps are always made to a paged, absolute address formed by combining a 26-bit target address with the high-order bits of the Program Counter (J-type format) or register address (R-type format).  Branches have 16-bit offsets relative to the program counter (I-type).  Jump And Link instructions save their return address in register 31.</p>
+<p>·	Coprocessor 0 (system coprocessor, CP0) instructions perform operations on CP0 registers to control the memory- management and exception-handling facilities of the processor.</p>
+<p>·	Special instructions perform system calls and breakpoint operations, or cause a branch to the general exception-handling vector based upon the result of a comparison.  These instructions occur in both R-type (both the operands and the result are registers) and I-type (one operand is a 16-bit immediate value) formats.</p>
+<p>Chapter 2 provides a more detailed summary and Appendix A [not included in this online version] gives a complete description of each instruction.</p>
+<p>Data Formats and Addressing</p>
+<p>The VR4100 processor uses four data formats: a 64-bit doubleword, a 32-bit word, a 16-bit halfword, and an 8-bit byte.  Byte ordering within all of the larger data formats—halfword, word, doubleword—can be configured in either big-endian or little-endian order through a dedicated pin, BigEndian.  Endianness refers to the location of byte 0 within the multi-byte data structure.  Figures 1.4 and 1.5 show the ordering of bytes within words and the ordering of words within multiple-word structures for the big-endian and little-endian conventions.</p>
+<p>When the VR4100 processor is configured as a big-endian system, byte 0 is the most-significant (leftmost) byte, thereby providing compatibility with MC68000 and IBM 370 conventions.  Figure 1.4 shows this configuration.</p>
+<p>Figure 1.4    Big-Endian Byte Ordering</p>
+<p>When configured as a little-endian system, byte 0 is always the least-significant (rightmost) byte, which is compatible with iAPX x86 and DEC VAX conventions. Figure 1.5 shows this configuration.</p>
+<p>Figure 1.5    Little-Endian Byte Ordering</p>
+<p>MC68000, IBM370, iAPXx86 and VAX are registerd trade mards corresponding with Motorola, IBM, intel and DEC’s.</p>
+<p>In this text, bit 0 is always the least-significant (rightmost) bit; thus, bit designations are always little-endian (although no instructions explicitly designate bit positions within words).</p>
+<p>Figures 1.6 and 1.7 show little-endian and big-endian byte ordering in doublewords.</p>
+<p>Figure 1.6    Little-Endian Data in a Doubleword</p>
+<p>Figure 1.7    Big-Endian Data in a Doubleword</p>
+<p>The CPU uses byte addressing for halfword, word, and doubleword accesses with the following alignment constraints:</p>
+<p>Halfword accesses must be aligned on an even byte boundary (0, 2, 4...).</p>
+<p>Word accesses must be aligned on a byte boundary divisible by four (0, 4, 8...).</p>
+<p>Doubleword accesses must be aligned on a byte boundary divisible by eight (0, 8, 16...).</p>
+<p>The following special instructions load and store words that are not aligned on 4- byte (word) or 8-word (doubleword) boundaries:</p>
+<pre class="code">LWL, LWR</pre>
+<p>SWL, SWR</p>
+<p>LDL, LDR</p>
+<p>SDL, SDR</p>
+<p>These instructions are used in pairs to provide addressing of misaligned words.   Addressing misaligned data incurs one additional instruction cycle over that required for addressing aligned data.</p>
+<p>Figures 1.8 and 1.9 show the access of a misaligned word that has byte address 3</p>
+<p>Figure 1.8    Big-Endian Misaligned Word Addressing</p>
+<p>Figure 1.9    Little-Endian Misaligned Word Addressing</p>
+<p>Coprocessors (CP0-CP3)</p>
+<p>The MIPS ISA defines four coprocessors (designated CP0 through CP3):</p>
+<p>Coprocessor 0 (CP0) is incorporated on the CPU chip and supports the 21 virtual memory system and exception handling.  CP0 is also referred to as the System Control Coprocessor.</p>
+<p>Coprocessor 1 (CP1) is reserved for  floating-point coprocessor operations.</p>
+<p>Coprocessor 2 (CP2) is reserved for future definition by MIPS.</p>
+<p>Coprocessor 3 (CP3) is no longer defined.  CP3 opcodes are reserved for future extensions.</p>
+<p>CP0  is described in the sections that follow.</p>
+<p>System Control Coprocessor, CP0</p>
+<p>CP0 translates virtual addresses into physical addresses and manages exceptions and transitions between kernel, supervisor, and user states. CP0 also controls the cache subsystem, as well as providing diagnostic control and error recovery facilities.</p>
+<p>The CP0 registers shown in Figure 1.10 and described in Table 1.1 manipulate the memory-management and exception-handling capabilities of the CPU.</p>
+<p>Figure 1.10    CP0 Registers</p>
+<p>Table 1.1 System Control Coprocessor (CP0) Register Definitions</p>
+<p>Floating-Point Operation</p>
+<p>The VR4100 inimplementes the Floating-point Unit (FPU)  instruction set. Reserved instruction exception will occur whenever any FPU instructions are excecuted. If needs,  Floating-point instructions should be emulated by software in exception handler.</p>
+<p>Memory Management System (MMU)</p>
+<p>The VR4100 processor has a 32-bit physical addressing range of 4 Gbytes. However, since it is rare for systems to implement a physical memory space this large, the CPU provides a logical expansion of memory space by translating addresses composed in the large virtual address space into available physical memory addresses. The VR4100 processor supports the following two addressing modes:</p>
+<p>32-bit mode, in which the virtual address space is divided into 2 Gbytes per user process and 2 Gbytes for the kernel.</p>
+<p>64-bit mode, in which the virtual address is expanded to 1 Tbyte (2</p>
+<p>Joint TLB</p>
+<p>For fast virtual-to-physical address decoding, the VR4100 uses a large, fully associative TLB which 64 Virtual pages to their corresponding physical addresses. The TLB is organized as 32 pairs of even-odd entries, and maps a virtual address and address space identifier into the 4GB physical address space.</p>
+<p>The page size can be configured, on a per-entry basis, to map a page size of 1KB to 256KB (in multiples of 4). A CP0 register is loaded with the page size of a mapping, and that size is entered into the TLB when a new entry is written. Thus, operating systems can provide special purpose maps; for example, a typical frame buffer can be memory mapped using only one TLB entry.</p>
+<p>Converting a virtual address to a physical address begins by comparing the virtual address from the processor with the virtual addresses in the TLB; there is a match when the virtual page number (VPN) of the address is the same as the VPN field of the entry, and either the Global (G) bit of the TLB entry is set, or  the ASID field of the virtual address is the same as the ASID field of the TLB entry.</p>
+<p>This match is referred to as a TLB hit.   If there is no match, a TLB Miss exception is taken by the processor and software is allowed to refill the TLB from a page table of virtual/physical addresses in memory.</p>
+<p>Operating Modes</p>
+<p>The VR4100 processor has three operating modes:</p>
+<p>User mode</p>
+<p>Supervisor mode</p>
+<p>Kernel mode</p>
+<p>The manner in which memory addresses are translated or mapped depends on the operating mode of the CPU; this is described in Chapter 4.</p>
+<p>Instruction Cache</p>
+<p>The VR4100 incorporates a direct-mapped on-chip instruction cache. This virtually indexed, physically tagged cache is 2KB in size and is protected with word parity.</p>
+<p>Because the cache is virtually indexed, the virtual-to-physical address translation occurs in parallel with the cache access, thus further simultaneously. The tag holds a 22-bit physical address and valid bit, and is parity protected.</p>
+<p>The instruction cache is 64-bits wide, and can be refilled or accessed in a single processor cycle. Instruction fetches require only 32 bits per cycle, for a peak instruction bandwidth of 132MB/sec. The line size is four  instructions (16 bytes) .</p>
+<p>Data Cache</p>
+<p>For fast, single cycle data access, the VR4100 includes a 1KB on-chip data cache that is direct-mapped with a fixed 16-byte (four words) line size.</p>
+<p>The data cache is protected with byte parity and its tag is protected with a single parity bit. It is virtually indexed and physically tagged to allow simultaneous address translation and data cache access.</p>
+<p>The write policy is writeback, which means that a store to a cache line does not immediately cause memory to be updated. This increases system performance by reducing bus traffic and eliminating the bottleneck of waiting for each store operation to finish before issuing a subsequent memory operation.</p>
+<p>Associated with the Data Cache is the store buffer. When the VR4100 executes a Store instruction, this single-entry buffer gets written with the store data while the tag comparison is performed. If the tag matches, then the data is written into the Data Cache in the next cycle that the Data Caches not accessed (the next non-load cycle). The store buffer allows the VR4100 to execute a store ever processor cycle and to perform back-to-back stores without penalty.</p>
+<p>Bus Interface</p>
+<p>Bus Interface allows the processor access to external resources required to satisfy internal requirements. It contains a 32-bit wide, multiplexed address and data bus, clock signals, interrupts, and a number of control signals.</p>
+<p>Clock Generator</p>
+<p>The VR4100 has 5clocks that the user must be aware of. First, there is the pipeline clock, PClock. This clock is used for the pipeline and pipeline related functions internal to the VR4100. It is four times the MasterClock frequency. The next clock is MasterOut. This clock output is aligned with MasterClock. And the next clock is the system interface clock, SClock. This is also an internal clock and is used to sample data at the system interface and to clock data into the processor system interface output registers. The SClock is a divided version of the PClock. The divisor is selected at boot time.</p>
+<p>There is  the TClock, Transmit clock. The TClock is used to clock the output registers (signals transmitted to the VR4100) of the external agent and is at the same frequency as SClock.</p>
+</body>
+</html>

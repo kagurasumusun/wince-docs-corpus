@@ -1,0 +1,100 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Prolog and Epilog</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Prolog and Epilog</h1>
+<p>Prolog</p>
+<p>Epilog</p>
+<p>Coding Examples</p>
+<p>Special Prologs</p>
+<p>The prolog contains the code that sets up the stack frame for a routine. The epilog contains the code that removes the routine's frame and then returns from the routine.</p>
+<p>The Virtual Unwinder emulates a subset of the instructions in prolog and epilog code to reconstruct the context which existed upon entry to a routine. This subset includes adding or subtracting a value from a register, loading or storing a register on the stack frame, loading integer constants into registers, moves between integer registers, and copying the PR register to an integer register. Other instructions found in the prolog or epilog sequences will be ignored.</p>
+<p>To make the unwinding process as efficient as possible, only a small subset of the SH3 instruction set is emulated. This section lists the instruction forms that are emulated in prolog and epilog code.</p>
+<p>Prolog</p>
+<p>The prolog is defined to have the following four parts (listed in order of execution).  All parts are immediately contiguous with no intervening instructions.</p>
+<p>1. A sequence of zero or more instructions which push all permanent registers to be saved, and the PR if it is to be saved, onto the stack using the pre-decrement indirect register addressing mode with R15 as the address register.  If a permanent register (such as R14) is to be used as the frame pointer, it is pushed first.  If the PR (return address) is to be saved, it is pushed last.  The mov.l instruction is used to save registers other than the return address, and the sts.l instruction is used to save the return address.</p>
+<p>2. A sequence of zero or more instructions to save the incoming argument values in R4, R5, R6, and R7 to the argument home locations or to allocated permanent registers.  The mov to-register-displacement instruction using R15 as the base address register, or the mov register-to-register instruction may be used in this sequence.  Note, this sequence will not change the stack pointer, R15.</p>
+<p>3. A sequence of one or more instructions to set up the frame pointer, if one is to be established.  The frame pointer may be established in one of two ways:</p>
+<p>·	R15 is copied to the frame pointer register and the offset to the frame pointer address is added to or subtracted from the frame pointer register.</p>
+<p>·	If the frame pointer address is less than the current value in R15, then the offset to the frame pointer address is subtracted from R15 and R15 is copied to the frame pointer register.  If this method is used, the size of the decrement to R15 must be taken into account in sequence 4.</p>
+<p>If the routine is not a leaf routine, a permanent register (typically R14) must be used as the frame pointer.  Otherwise, a temporary register may be used.</p>
+<p>4. A sequence of zero or more instructions to allocate the remaining stack frame space for local variables, compiler-generated temporaries, and the argument build area by subtracting a 4-byte aligned offset from R15.</p>
+<p>The last instruction in this sequence is considered to be the last instruction of the prolog for the purpose of Virtual Unwinding.</p>
+<p>The mov immediate-to-register, mov register-to-register, add immediate-to-register, add register-to-register, and sub register-to-register instructions may be used in sequences 3 and 4.  The temporary register R1 is typically used to hold an offset too large to be represented in the immediate field of an add instruction.</p>
+<p>Epilog</p>
+<p>Traditionally, an epilog is considered to be a contiguous sequence of instructions which restores the saved permanent registers, resets the stack pointer to its value upon function entry, and returns to the function’s caller.  But, the Virtual Unwinder requires a more formal definition.  The epilog is defined to have the following three parts (listed in reverse execution order).  All parts are immediately contiguous with no intervening instructions.</p>
+<p>1. The rts instruction and its delay slot instruction.</p>
+<p>2. A sequence of instructions immediately preceding the rts instruction of part 1, all of which:</p>
+<p>·	are lds, mov, or add instructions, and</p>
+<p>·	modify R15 by referencing it in the destination operand of the instruction or in a post-increment memory address operand of the instruction.</p>
+<p>3. A single add instruction immediately preceding the sequence of instructions defined in part 2, which adds a value to the frame pointer (usually R14 but may be another register).</p>
+<p>The instruction in the delay slot of the rts (part 1) is considered part of the epilog but is not required to conform to the rules listed for part 2.  For example, it is acceptable for the delay slot to hold a nop instruction.</p>
+<p>Part 2 is optional.  It will not appear in functions (such as simple leaf functions) which have no RSA area to restore.</p>
+<p>Part 3 is also optional.  It is only needed to provide for an efficient epilog in functions which establish a frame pointer.  This add is used to reorient the frame pointer so that it points to the base of the RSA before being copied to the stack pointer in the first instruction of part 2.</p>
+<p>When unwinding out of a function, the Virtual Unwinder must determine if the current point of control (instruction being executed) in a function is in the function’s prolog or epilog.  If the current point of control lies in either of these areas then special measures must be taken to unwind out of the function.</p>
+<p>To make this definition of epilog meaningful the following three invariants must be maintained.</p>
+<p>·	If the function establishes a frame pointer, which is usually R14 but may be some other register, then its value must not be modified by the function during the interval between the completion of the prolog’s last instruction until the beginning of the execution of the first instruction of the epilog.</p>
+<p>·	If the function does NOT establish a frame pointer then the value of R15, the stack pointer, must not be modified by the function during the interval between the completion of the prolog’s last instruction until the beginning of the execution of the first instruction of the epilog.</p>
+<p>·	The address contained in the stack pointer, which is always R15, must never be greater than the lowest address of any unrestored register value in the Register Save Area.</p>
+<p>The first two invariants enable the Virtual Unwinder to determine the value of either the stack pointer or frame pointer as of the end of the prolog so that the execution of the prolog may be emulated in reverse.  The third invariant prevents the preserved values of the permanent registers from being corrupted by a context switch or any other asynchronous event that might occur during the execution of a prolog or epilog.</p>
+<p>Prolog and Epilog Coding Examples</p>
+<p>This appendix presents examples of prolog and epilog code.</p>
+<p>·	Allocate a stack frame to save R14, R8 and PR and to allow alloca() calls.  Also, allocate a 4-word argument build area.  No stack space is needed for local variables or temporaries.</p>
+<pre class="code">NESTED_ENTRY Function</pre>
+<p>mov.l R14, @-R15  // Save old frame pointer</p>
+<p>mov.l R8,  @-R15  // Save a permanent register</p>
+<p>sts.l PR,  @-R15  // Save return address</p>
+<p>mov   R15, R14    // Set up new frame pointer</p>
+<p>add   #12, R14</p>
+<p>add   #-16, R15   // Allocate argument save area</p>
+<p>PROLOG_END</p>
+<p>// Routine body</p>
+<p>add   #-12, R14   // Find base of RSA</p>
+<p>mov   R14, R15</p>
+<p>lds.l @R15+, PR   // Restore return address</p>
+<p>mov.l @R15+, R8   // Restore R8</p>
+<p>rts               // Return</p>
+<p>mov.l @R15+, R14 // Restore R14</p>
+<pre class="code">ENTRY_END Function</pre>
+<p>·	Allocate a stack frame for a leaf routine which requires 40 bytes for local variables and temporaries.  It uses permanent registers R8, R9, and R10.  This routine has no alloca() locals so no Frame Pointer is required.</p>
+<pre class="code">NESTED_ENTRY Function</pre>
+<p>mov.l R8, @-R15</p>
+<p>mov.l R9, @-R15</p>
+<p>mov.l R10, @-R15</p>
+<p>add   #-40, R15</p>
+<p>PROLOG_END</p>
+<p>// Routine body</p>
+<p>add   #40, R15</p>
+<p>mov.l @R15+, R10</p>
+<p>mov.l @R15+, R9</p>
+<p>rts</p>
+<p>mov.l @R15+, R8</p>
+<pre class="code">ENTRY_END Function</pre>
+<p>·	Allocate a stack frame which requires 64K bytes.  Save argument register R4 to the incoming argument save area.  Save argument register R5 to allocated register R8.  No separate frame pointer is required.  The return address and permanent register R8 are saved .  Note that an exception handler is declared in this example.</p>
+<pre class="code">EXCEPTION_HANDLER RoutineHandler</pre>
+<pre class="code">NESTED_ENTRY Function</pre>
+<p>mov.l R8, @-R15</p>
+<p>sts.l PR, @-R15</p>
+<p>mov.l R4, @(R15, 8)</p>
+<p>mov.l R5, R8</p>
+<p>mov   #65528, R1     // Frame size</p>
+<p>sub   R1, R15        // Allocate stack frame</p>
+<p>PROLOG_END</p>
+<p>// Routine body</p>
+<p>mov   #65528, R2     // Get size of frame size</p>
+<p>add   R2, R15        // Use temp to restore regs</p>
+<p>lds.l @R15+, PR      // Recover return address</p>
+<p>rts</p>
+<p>mov.l @R15+, R8     // Restore R8</p>
+<pre class="code">ENTRY_END Function</pre>
+<p>Special Prologs</p>
+<p>In addition to the standard prologs which have been previously detailed, there are several varieties of special prologs used within system code. Crafting these prologs involves detailed knowledge of the SEH mechanism that is beyond the scope of this document</p>
+<p>Most special prologs are never actually executed and are preceded by a comment indicating this. They exist only to be decoded and interpreted by the Virtual Unwinder. These prologs are created for such special cases as trap vector entry points and implementing the GetContextThread and SetContextThread system services.</p>
+<p>Typically, prologs only save permanent registers to the stack when they need to be used by the callee. There are special cases however where the prolog saves all permanent registers to the stack. Examples are the exception dispatch function, which needs the values of all registers so it can build a ContextRecord, and the context swapper, where the values of all registers need to be saved before swapping to a new thread.</p>
+<p>Prologs such as these often contain special instruction sequences which are recognized and treated specially by the unwinder.</p>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Section 8 Macro Function</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Section 8 Macro Function</h1>
+<p>8.1  Overview of the Macro Function</p>
+<p>8.2  Macro Function Directives</p>
+<p>8.3  Macro Body</p>
+<p>8.4  Macro Call</p>
+<p>8.5  Character String Manipulation Functions</p>
+<p>8.1 Overview of the Macro Function</p>
+<p>The macro function allows commonly used sequences of instructions to be named and defined as one macro instruction. This is called a macro definition. Macro instructions are defined as follows:</p>
+<pre class="code">.MACRO &lt;macro name&gt;</pre>
+<p>&lt;macro body&gt;</p>
+<p>.ENDM</p>
+<p>A macro name is the name assigned to a macro instruction, and a macro body is the statements to be executed as the macro instruction. Using a defined macro instruction by specifying the name is called a macro call. Macro instructions are called as follows:</p>
+<pre class="code">&lt;defined macro name&gt;</pre>
+<p>An example of macro definition and macro call is shown below.</p>
+<p>Example:</p>
+<pre class="code">.MACRO	SUM			; Processing to obtain the sum of R0,R1,R2</pre>
+<p>MOV	R0,R10			; and R3 is defined as macro instruction SUM.</p>
+<p>ADD	R1,R10</p>
+<p>ADD	R2,R10</p>
+<p>ADD	R3,R10</p>
+<p>.ENDM</p>
+<p>SUM					; This statement calls macro instruction SUM.</p>
+<p>; Macro body MOV R0,R10</p>
+<p>;	ADD R1,R10</p>
+<p>;	ADD R2,R10</p>
+<p>;	ADD R3,R10</p>
+<p>; is expanded from the macro instruction.</p>
+<p>Parts of the macro body can be replaced when expanded by the following procedure:</p>
+<p>·	Macro definition: Declare formal parameters in the .MACRO directive. Use the formal parameters in the macro body. Formal parameters must be identified in the macro body by placing a backslash (\) in front of them.</p>
+<p>·	Macro call: Specify macro parameters in the macro call. When the macro instruction is expanded, the formal parameters are replaced with their corresponding macro parameters.</p>
+<p>Example:</p>
+<pre class="code">.MACRO	SUM ARG1		; Formal parameter ARG1 is defined.</pre>
+<p>MOV		R0,\ARG1		; ARG1 is referenced in the macro body.</p>
+<p>ADD		R1,\ARG1</p>
+<p>ADD		R2,\ARG1</p>
+<p>ADD		R3,\ARG1</p>
+<p>.ENDM</p>
+<p>SUM		R10				; This statement calls macro instruction SUM</p>
+<p>; specifying macro parameter R10.</p>
+<p>; The formal parameter in the macro body is</p>
+<p>; replaced with the macro parameter, and</p>
+<p>;	MOV R0,R10</p>
+<p>;	MOV R1,R10</p>
+<p>;	MOV R2,R10</p>
+<p>;	ADD R3,R10 is expanded.</p>
+<p>8.2 Macro Function Directives</p>
+<p>8.2.1 .MACRO and .ENDM: Macro Definition</p>
+<p>8.2.2 .EXITM: Expansion Termination</p>
+<p>The assembler provides the following macro function directives</p>
+<p>.MACRO: Defines a macro instruction</p>
+<p>.ENDM: Defines a macro instruction</p>
+<p>.EXITM: Terminates macro instruction expansion</p>
+<p>8.2.1 .MACRO and .ENDM: Macro Definition</p>
+<p>Syntax:</p>
+<pre class="code">.MACROD&lt;macro name&gt;[D&lt;formal parameter&gt;[=&lt;default&gt;]</pre>
+<p>[,&lt;formal parameter&gt;...]]</p>
+<p>Statement Elements:</p>
+<p>·	Label: The label field is not used</p>
+<p>·	Operation: Enter the .MACRO or .ENDM mnemonic in the operation field</p>
+<p>·	Operands:</p>
+<p>—	.MACRO: Enter the name and formal parameters for the macro instruction to be defined; when formal parameters are defined, their defaults can be defined (defaults can be omitted)</p>
+<p>—	.ENDM: The operand field is not used</p>
+<p>Description: .MACRO and .ENDM are the assembler directives that define a macro instruction (a sequence of source statements that are collectively named and handled together). Naming as a macro instruction the source statements (macro body) between the .MACRO and .ENDM directives is called a macro definition. Macro names are the names assigned to macro instructions.</p>
+<p>Formal parameters are specified so that parts of the macro body can be replaced by specific parameters at expansion time. Formal parameters are replaced with the character strings (macro parameters) specified at macro expansion (macro call). The syntax for formal parameters is the same as that for symbols. The assembler distinguishes uppercase and lowercase letters. Formal parameters are used (referenced) at the part to be replaced in the macro body. The syntax of formal parameter reference in macro bodies is as follows:</p>
+<pre class="code">\&lt;formal parameter name&gt;[']</pre>
+<p>To clearly distinguish the formal parameter name from the rest of the source statement, an apostrophe (') can be added. Defaults for formal parameters can be specified in macro definitions. The default specifies the character string to replace the formal parameter when the corresponding macro parameter is omitted in a macro call. The default must be enclosed by double quotation marks ("") or angle brackets (&lt; &gt;) if any of the following characters are included in the default:</p>
+<p>·	Space</p>
+<p>·	Tab</p>
+<p>·	Comma (,)</p>
+<p>·	Semicolon (;)</p>
+<p>·	Double quotation marks ("")</p>
+<p>·	Angle brackets (&lt; &gt;)</p>
+<p>The assembler inserts defaults at macro expansion by removing the double quotation marks or angle brackets that enclose the character strings. Macros cannot be defined in the following locations:</p>
+<p>·	Between .AREPEAT and .AENDR directives</p>
+<p>·	Between .AWHILE and .AENDW directives</p>
+<p>No symbol can be inserted in the label field of the .ENDM directive. The .ENDM directive is ignored if its label field is not blank, but no error is generated in this case.</p>
+<p>Coding Example:</p>
+<pre class="code">.MACRO	SUM			; Processing to obtain the sum of R0,R1,R2,</pre>
+<p>MOV	R0,R10			; and R3 is defined as macro instruction SUM.</p>
+<p>ADD	R1,R10</p>
+<p>ADD	R2,R10</p>
+<p>ADD	R3,R10</p>
+<p>.ENDM</p>
+<p>SUM						; This statement calls macro instruction SUM</p>
+<p>; Macro body MOV R0,R10</p>
+<p>;	ADD R1,R10</p>
+<p>;	ADD R2,R10</p>
+<p>;	ADD R3,R10 is expanded.</p>
+<p>8.2.2 .EXITM: Expansion Termination</p>
+<p>Syntax:</p>
+<pre class="code">.EXITM</pre>
+<p>Statement Elements:</p>
+<p>·	Label: The label field is not used</p>
+<p>·	Operation: Enter the .EXITM mnemonic in the operation field</p>
+<p>·	Operands: The operand field is not used</p>
+<p>Description: .EXITM is the assembler directive that terminates a macro expansion. This directive can be specified within the macro body (between the .MACRO and .ENDM directives). Expansion is terminated when this directive appears. This directive is also used to exit from iterated expansions specified with the .AREPEAT or .AWHILE directive. The location of this directive must be specified carefully when macro instructions and iterated expansion are combined.</p>
+<p>Coding Example:</p>
+<pre class="code">.MACRO SUM P1</pre>
+<pre class="code">MOV	R0,R10</pre>
+<p>8.3 Macro Body</p>
+<p>8.3.1 Formal Parameters</p>
+<p>8.3.2 Preprocessor Variable Reference</p>
+<p>8.3.3 Macro Generation Number</p>
+<p>8.3.4 Macro Replacement Processing Exclusion</p>
+<p>8.3.5 Comments in Macros</p>
+<p>8.3.6 Character String Manipulation Functions</p>
+<p>8.3.7 Macros Defined By (Within) Other Macros</p>
+<p>The source statements between the .MACRO and .ENDM directives are called a macro body. The macro body is expanded and assembled by a macro call.</p>
+<p>8.3.1 Formal Parameters</p>
+<p>Formal parameters are used to specify the parts to be replaced with macro parameters at macro expansion. The syntax of formal parameter reference in macro bodies is as follows:</p>
+<pre class="code">\&lt;formal parameter name&gt;[']</pre>
+<p>To clearly distinguish the formal parameter name from the rest of the source statement, add an apostrophe (').</p>
+<p>Coding Example:</p>
+<pre class="code">.MACRO	PLUS1 P,P1		; P and P1 are formal parameters.</pre>
+<p>ADD		#1,\P1			; Formal parameter P1 is referenced.</p>
+<p>.SDATA	"\P'1"			; Formal parameter P is referenced.</p>
+<p>.ENDM</p>
+<p>PLUS1		R,R1		; PLUS1 is expanded.</p>
+<p>Expanded results are as follows:</p>
+<pre class="code">ADD		#1,R1			; Formal parameter P1 is referenced.</pre>
+<p>.SDATA	"R1"			; Formal parameter P is referenced.</p>
+<p>8.3.2 Preprocessor Variable Reference</p>
+<p>Preprocessor variables can be referenced in macro bodies. The syntax for preprocessor variable reference is as follows:</p>
+<pre class="code">\&amp;&lt;preprocessor variable name&gt;[']</pre>
+<p>To clearly distinguish the formal parameter name from the rest of the source statement, add an apostrophe (').</p>
+<p>It is important to note that preprocessor variable references are handled differently in macro bodies. Outside of macro bodies, these symbols always consistute a token of their own (either a numeric constant or a string constant); you may not include them as part of another token. Inside a macro body, you may insert a preprocessor variable reference anywhere, and it will be substituted before token boundaries are determined.</p>
+<p>Coding Example:</p>
+<pre class="code">.MACRO	PLUS1</pre>
+<p>ADD		#1,R\&amp;V1			; Preprocessor variable V1 is referenced.</p>
+<p>.SDATA	"\&amp;V'1"			; Preprocessor variable V is referenced.</p>
+<p>.ENDM</p>
+<p>V	.ASSIGNC "R"				; Preprocessor variable V is defined.</p>
+<p>V1	.ASSIGNC 1					; Preprocessor variable V1 is defined.</p>
+<p>PLUS1						; PLUS1 is expanded.</p>
+<p>Expanded results are as follows:</p>
+<pre class="code">ADD		#1,R1				; Preprocessor variable V1 is referenced.</pre>
+<p>.SDATA	"R1"				; Preprocessor variable V is referenced.</p>
+<p>8.3.3 Macro Generation Number</p>
+<p>The macro generation number facility is used to avoid the problem that symbols used within a macro body will be multiply defined if the macro is expanded multiple times. To avoid this problem, specify the macro generation number marker as part of any symbol used in a macro. This will result in symbols that are unique to each macro call.</p>
+<p>The macro generation number marker is expanded as a 5-digit decimal number (between 00000 and 99999) unique to the macro expansion. The syntax for specifying the macro generation number marker is as follows:</p>
+<pre class="code">\@</pre>
+<p>Two or more macro generation number markers can be written in a macro body, and they will be expanded to the same number in one macro call.</p>
+<p>Note:	Because macro generation number markers are expanded to numbers, they must not be written at the beginning of symbol names. See section 2.5.2, Symbol Coding.</p>
+<p>Coding Example:</p>
+<pre class="code">.MACRO	RES_STR, Rn</pre>
+<p>MOV.L		#str\@,\Rn</p>
+<p>BRA		end_str\@</p>
+<p>NOP</p>
+<p>str\@	.SDATA	"\STR"</p>
+<p>.ALIGN 2</p>
+<p>end_str\@</p>
+<p>.ENDM</p>
+<p>RES_STR "ONE",R0	; Different symbols are generated each time</p>
+<p>RES_STR "TWO",R1	; RES_STR is expanded.</p>
+<p>Expanded results are as follows:</p>
+<pre class="code">MOV.L		#str00000,R0</pre>
+<p>BRA		end_str00000</p>
+<p>NOP</p>
+<p>str00000			.SDATA "ONE"</p>
+<p>.ALIGN 2</p>
+<p>end_str00000</p>
+<p>MOV.L		#str00001,R1</p>
+<p>BRA		end_str00001</p>
+<p>NOP</p>
+<p>str00001			.SDATA "TWO"</p>
+<p>.ALIGN 2</p>
+<p>end_str00001</p>
+<p>8.3.4 Macro Replacement Processing Exclusion</p>
+<p>When a backslash (\) appears in a macro body, it specifies macro replacement processing. Therefore a means for excluding this macro processing is required when it is necessary to use the backslash as an ASCII character. The syntax for macro replacement processing exclusion is as follows:</p>
+<pre class="code">\(&lt;macro replacement processing excluded character string&gt;)</pre>
+<p>The backslash and the parentheses will be removed in macro processing.</p>
+<p>Coding Example:</p>
+<pre class="code">.MACRO Back_SLASH_SET</pre>
+<p>\(MOV		#"\",R0)		; \ is expanded as an ASCII character.</p>
+<p>.ENDM</p>
+<p>Expanded results are as follows:</p>
+<pre class="code">MOV		#"\",R0		; \ is expanded as an ASCII character.</pre>
+<p>8.3.5 Comments in Macros</p>
+<p>Comments in macro bodies can be coded as normal comments or as macro internal comments. When comments in the macro body are not required in the macro expansion code (to avoid repeating the same comment in the listing file), those comments can be coded as macro internal comments to suppress their expansion.</p>
+<p>The syntax for macro internal comments is as follows:</p>
+<pre class="code">\;&lt;comment&gt;</pre>
+<p>Coding Example:</p>
+<p>.MACRO PUSH Rn</p>
+<pre class="code">MOV.L		\Rn,@-R15		\; \Rn is a register.</pre>
+<p>.ENDM</p>
+<p>PUSH		R0</p>
+<p>Expanded results are as follows (the comment is not expanded):</p>
+<pre class="code">MOV.L		\Rn,@-R15</pre>
+<p>8.3.6 Character String Manipulation Functions</p>
+<p>Character string manipulation functions can be used in the body of a macro as well as anywhere else an expression is valid. Table 8.1 lists the character string manipulation functions. For more information, see section 8.5, Character String Manipulation Functions.</p>
+<p>Table 8.1   Character String Manipulation Functions</p>
+<table class="dtTABLE">
+<tr><td>Function</td><td>Purpose</td></tr>
+<tr><td>.LEN</td><td>Character string length</td></tr>
+<tr><td>.INSTR</td><td>Character string search</td></tr>
+<tr><td>.SUBSTR</td><td>Character string substring</td></tr>
+<tr><td>8.3.7 Macros Defined By (Within) Other Macros<br>Macros can be defined by (in) another macro, although it is not possible to define a macro inside an .AWHILE or .AREPEAT loop. This works much as might be expected; the only non-obvious part is ensuring that the .ENDM for the nested macro isn't interpreted as the end of the outer macro. The following examples show two methods of accomplishing this.<br>Example:<br>.macro        defit        name,code,dummyarg<br>.macro        \name<br>\code<br>\dummyarg        .endm<br>.endm<br>.macro        defit2        name,code,endmarg=“.endm”<br>.macro        \name<br>\code<br>\endmarg<br>.endm<br>.macro        defit3        name,code,argpref,endmarg=“.endm”<br>.macro        \name        arg<br>\code        \argpref\(\arg)<br>\endmarg<br>.endm<br>defit        narp,nop<br>defit2        slurp,sleep<br>defit3        trabbit,trapa,”#”<br>narp        ; same as nop<br>slurp        ; same as sleep<br>trabbit 4    ; same as trapa #4<br>8.4 Macro Call<br>Expanding a defined macro instruction is called a macro call. The syntax for macro calls is as follows:<br>[&lt;symbol&gt;] &lt;macro name&gt;[&lt;macro parameter&gt;<br>[,&lt;macro parameter&gt; ...]]<br>Statement Elements:<br>·    Label: Enter a reference symbol in the label field if required<br>·    Operation: Enter the macro name to be expanded in the operation field; the macro name must have been already defined before a macro call<br>·    Operands: Enter character strings as macro parameters to replace formal parameters at macro expansion; the formal parameters must have been declared in the macro definition with .MACRO<br>Description: Macro parameters can be specified by either positional specification or keyword specification.<br>·    Positional specification: The macro parameters are specified in the same order as that of the formal parameters declared in the macro definition.<br>·    Keyword specification: Each macro parameter is specified following its corresponding formal parameter, separated by an equal sign (=).<br>Macro parameter syntax: Macro parameters must be enclosed by double quotation marks ("") or angle brackets (&lt; &gt;) if any of the following characters are included in the macro parameters:<br>·    Space<br>·    Tab<br>·    Comma (,)<br>·    Semicolon (;)<br>·    Double quotation marks ("")<br>·    Angle brackets (&lt; &gt;)<br>Macro parameters are inserted by removing the double quotation marks or angle brackets that enclose character strings at macro expansion.<br>Coding Example:<br>.MACRO SUM FROM=0,TO=9        ; Macro instruction SUM and formal<br>; parameters FROM and TO are defined.<br>MOV        R\FROM,R10            ; Macro body<br>COUNT    .ASSIGNA    \FROM+1            ; is coded<br>.AWHILE    \&amp;COUNT &lt;= \TO    ; using formal<br>MOV        R\&amp;COUNT,R10            ; parameters.<br>COUNT    .ASSIGNA    \&amp;COUNT+1<br>.AENDW<br>.ENDM<br>SUM        0,5                        ; Both will be expanded<br>SUM        TO=5                    ; into the same statements.<br>Expanded results are as follows (the formal parameters in the macro body are replaced with macro parameters):<br>MOV    R0,R10<br>MOV    R1,R10<br>MOV    R2,R10<br>MOV    R3,R10<br>MOV    R4,R10<br>MOV    R5,R10<br>8.5 Character String Manipulation Functions<br>8.5.1 .LEN: Character String Length Count<br>8.5.2 .INSTR: Character String Search<br>8.5.3 .SUBSTR: Character Substring Extraction<br>The assembler provides the following character string manipulation functions:<br>·    .LEN: Counts the length of a character string<br>·    .INSTR: Searches for a character string<br>·    .SUBSTR: Extracts a character string<br>8.5.1 .LEN: Character String Length Count<br>Syntax:<br>.LEN[D](&lt;character string&gt;)<br>Description: .LEN counts the number of characters in a character string and evaluates to the number of characters in the string. The argument to .LEN may be any expression whose value is a character string, including a preprocessor variable defined with .ASSIGNC, a constant string enclosed in double quotation marks (" "), and the .SUBSTR function and/or + operator.<br>Coding Example:<br>.MACRO RESERVE_LENGTH P1<br>.ALIGN 4<br>.SRES    .LEN("\P1")<br>.ENDM<br>RESERVE_LENGTH ABCDEF<br>RESERVE_LENGTH ABC<br>Expanded results are as follows:<br>.ALIGN 4<br>.SRES    6            ; "ABCDEF" has six characters.<br>.ALIGN 4<br>.SRES    3            ; "ABC" has three characters.<br>8.5.2. INSTR: Character String Search<br>Syntax:<br>.INSTR[D](&lt;character string 1&gt;,&lt;character string 2&gt;<br>[,&lt;start position&gt;])<br>Description: .INSTR searches character string 1 for character string 2, and evaluates to the numerical value of the position of the found string (with 0 indicating the start of the string). .INSTR evaluates to -1 if character string 2 does not appear in character string 1.  The character string arguments may be any expression whose value is a character string, including a preprocessor variable defined with .ASSIGNC, a constant string enclosed in double quotation marks (" "), and the .SUBSTR function and/or + operation.<br>The &lt;start position&gt; parameter specifies the search start position as a numerical value, with 0 indicating the start of the string. Zero is used as default when this parameter is omitted.<br>Coding Example:<br>.MACRO FIND_STR \P1<br>.DATA.W .INSTR("ABCDEFG","\P1",0).<br>.ENDM<br>FIND_STR CDE<br>FIND_STR H<br>Expanded results are as follows:<br>.DATA.W 2            ; The start position of "CDE" is 2 (0 indicating the<br>; beginning of the string) in "ABCDEFG"<br>.DATA.W -1        ; "ABCDEFG" includes no "H".<br>8.5.3 .SUBSTR: Character Substring Extraction<br>Syntax:<br>.SUBSTR[D](&lt;character string&gt;,&lt;start position&gt;<br>,&lt;extraction length&gt;)<br>Description: .SUBSTR extracts from the specified character string a substring starting at the specified start position of the specified length. .SUBSTR evaluates to the extracted character. The character string argument may be any expression whose value is a character string, including a preprocessor variable defined with .ASSIGNC, a constant string enclosed in double quotation marks (" "), and the .SUBSTR function and/or + operation.  (Nested .SUBSTR uses are permitted.)<br>The value of the extraction start position must be 0 or greater. The value of the extraction length must be 1 or greater. If illegal or inappropriate values are specified for the &lt;start position&gt; or &lt;extraction length&gt; parameters, this function evaluates to a blank space ( ).<br>Coding Example:<br>.MACRO RESERVE_STR P1=0,P2<br>.SDATA .SUBSTR("ABCDEFG",\P1,\P2)<br>.ENDM<br>RESERVE_STR 2,2<br>RESERVE_STR ,3        ; Macro parameter P1 is omitted.<br>Expanded results are as follows:<br>.SDATA "CD"<br>.SDATA "ABC"</td></tr>
+</table>
+</body>
+</html>

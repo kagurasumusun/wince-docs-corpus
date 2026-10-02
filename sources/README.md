@@ -20,7 +20,7 @@ collection policy in the top-level `README.md`).
 
 | Directory | Medium | Corpus output |
 |-----------|--------|---------------|
-| `windows-ce-1.0/` | CE 1.0 Desktop Emulation SDK CD: `PEGSDK.MVB`, `PEGDDK.MVB`, `RELNOTES.HLP`, `MSDNLIB.HLP`. | Not extracted yet (Multimedia Viewer books). |
+| `windows-ce-1.0/` | CE 1.0 Desktop Emulation SDK CD: `PEGSDK.MVB`, `PEGDDK.MVB`, `RELNOTES.HLP`, `MSDNLIB.HLP`. | `corpus/mvb/windows-ce-1.0/` (2,104 pages, decoded with helpdeco + `tools/extract-mvb.py`). |
 | `windows-ce-2.0/` | CE 2.0 Technical Information CD (Windows CE Developer site mirror, 41 HTML pages). | Pages preserved as-is in `sources/`; no pending extraction. |
 | `windows-ce-3.0/` | `WindowsCE3.0_DocumentationArchive.zip` + `Important_ReadMe.txt` (Microsoft Download Center, id 41197). | `corpus/chm/windows-ce-3.0/` (8,962 pages). |
 | `windows-ce-4.2/` | CE .NET 4.2 Platform Builder Emulation Edition: `EMULATOR.CHM`, `REMTOOLS.CHM`, release notes. | Reference only — the 4.x API reference comes from Learn (`corpus/learn/windows-ce-net-4x/`). |

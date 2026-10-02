@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>About the Cardtest Source Files</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>About the Cardtest Source Files</h1>
+<p>The Cardtest.c source file contains the following important functions for working with the operating system:</p>
+<p>·	DllEntry—an entry-point function for the DLL</p>
+<p>·	DetectionFunction—a card detection function</p>
+<p>·	PTD_*—the stream interface entry-point functions (PTD is used as the prefix for the stream interface functions)</p>
+<p>·	StatusCallback—status callback function</p>
+<p>The Cardtest.h header file contains definitions for three I/O control codes—memory, attribute, and tuple—that define the type of operation to perform on the inserted PC Card. This header file includes the Windows I/O control codes header file, Winioctl.h. The three I/O control codes in this header file are defined using the system-supplied CTL_CODE macro.</p>
+<p>The Cardtest DllEntry DLL Entry Function</p>
+<p>The Device Manager uses the DllEntry entry function to load and unload the driver DLL. When the driver is loaded, this function can initialize global variables. When the driver is unloaded, this function can call functions that enable a clean separation from the system.</p>
+<p>The Cardtest StatusCallback Status Callback Function</p>
+<p>The Cardtest StatusCallback test status callback function processes PC Card callback status events. These status callback events notify the Cardtest driver of changes in the status of the PC Card that Card Services detects. The PTD_Init function uses CardRegisterClient to register StatusCallBack.</p>
+<p>The Cardtest PTD_Init Function</p>
+<p>When you insert a PC Card, the Device Manager retrieves the Plug and Play ID of the card device and searches the registry. If the Device Manager does not find a match for the card’s Plug and Play ID in the registry, it next looks under the Drivers\PCMCIA\Detect key for a detection function. From information in the detection function, the Device Manager obtains the test device key, adds a new key for the test card under the Drivers\Active key, loads Cardtest.dll, and calls the PTD_Init function, passing it the address of a string containing the registry path of the added key. The PTD_Init function performs the following operations:</p>
+<p>·	Opens the passed key and gets the socket handle for the card. The socket handle is used when calling PC CARD card services functions.</p>
+<p>·	Allocates memory for a client context structure containing data members related to an instance of the inserted card. The critical section data member of this client context structure is initialized.</p>
+<p>·	Proceeds to register the status callback function by calling CardRegisterClient.</p>
+<p>·	Returns the client context handle which is the address of the client context structure.</p>
+<p>The Cardtest PTD_Deinit Function</p>
+<p>When you remove the test card, the operating system Device Manager calls the PTD_Deinit function. The argument passed in the PTD_Deinit function is the client context handle. This function de-registers with Card Services and frees the client context structure.</p>
+<p>The Cardtest PTD_Open and PTD_Close Functions</p>
+<p>The PTD_Open function uses the client context structure as the open context of the test card. Since the PTD_Close function does nothing, it always succeeds and returns a TRUE value.</p>
+<p>The Cardtest PTD_IOControl Function</p>
+<p>The PTD_IOControl function processes the I/O control code that a test application passes. The PTD_IOControl function processes the I/O control code by coding a switch statement. The switch statement test expression is the I/O control code type passed in the PTD_IOControl function. The label for each case of the switch statement is a constant I/O control code that defines the type of operation to perform on the inserted PC Card.</p>
+<p>The Cardtest Detection Function</p>
+<p>The detection function provides the Device Manager with the test card device key. This function detects any card inserted in the PC Card slot and returns the registry key under Drivers\PCMCIA holding the test client driver.</p>
+<p>Unused Stream Interface Functions</p>
+<p>The following functions are not used by the test installable driver:</p>
+<p>·	PDM_Read</p>
+<p>·		PDM_Write</p>
+<p>·	PDM_Seek</p>
+<p>·	PDM_PowerUp</p>
+<p>·	PDM_PowerDown</p>
+</body>
+</html>

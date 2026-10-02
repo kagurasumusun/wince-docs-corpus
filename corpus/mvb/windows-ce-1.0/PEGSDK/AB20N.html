@@ -1,0 +1,34 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>select</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>select</h1>
+<p>The Windows Sockets select function determines the status of one or more sockets, waiting if necessary.</p>
+<table class="dtTABLE">
+<tr><td>int select (</td><td>// winsock.h</td></tr>
+<tr><td>int nfds,</td><td>// ignored</td></tr>
+<tr><td>fd_set FAR *readfds,</td><td>// pointer to a set of sockets to be checked for readability</td></tr>
+<tr><td>fd_set FAR *writefds,</td><td>// optional pointer to sockets to be checked for writability</td></tr>
+<tr><td>fd_set FAR *exceptfds,</td><td>// optional pointer to a set of sockets to be checked for errors</td></tr>
+<tr><td>const struct timeval FAR *timeout</td><td>// max for select to wait, or NULL for blocking operation</td></tr>
+<tr><td>);</td><td></td></tr>
+<tr><td>Parameters<br>nfds<br>This argument is ignored and included only for the sake of compatibility.<br>readfds<br>An optional pointer to a set of sockets to be checked for readability.<br>writefds<br>An optional pointer to a set of sockets to be checked for writability<br>exceptfds<br>An optional pointer to a set of sockets to be checked for errors.<br>timeout<br>The maximum time for select to wait, or NULL for blocking operation.<br>Return Values<br>If the function succeeds, select returns the total number of descriptors that are ready and contained in the fd_set structures, or zero if the time limit expired.<br>If the function fails, a value of SOCKET_ERROR is returned. To get extended error information, call GetLastError.<br>Error code</td><td>Description</td></tr>
+<tr><td>WSANOTINITIALISED</td><td>A successful WSAStartup must occur before using this function.</td></tr>
+<tr><td>WSAENETDOWN</td><td>The Windows Sockets implementation has detected that the network subsystem has failed.</td></tr>
+<tr><td>WSAEINVAL</td><td>The timeout value is not valid.</td></tr>
+<tr><td>WSAEINTR</td><td>The (blocking) call was canceled using WSACancelBlockingCall.</td></tr>
+<tr><td>WSAEINPROGRESS</td><td>A blocking Windows Sockets operation is in progress.</td></tr>
+<tr><td>WSAENOTSOCK</td><td>One of the descriptor sets contains an entry that is not a socket.</td></tr>
+<tr><td>Remarks<br>This function is used to determine the status of one or more sockets. For each socket, the caller may request information on read, write, or error status. The set of sockets for which a given status is requested is indicated by an fd_set structure. Upon return, the structure is updated to reflect the subset of these sockets that meets the specified condition, and select returns the number of sockets meeting the conditions. A set of macros is provided for manipulating an fd_set. These macros are compatible with those used in the Berkeley software, but the underlying representation is completely different.<br>The parameter readfds identifies those sockets that are to be checked for readability. If the socket is currently listening, it will be marked as readable if an incoming connection request has been received, so that an accept is guaranteed to complete without blocking. For other sockets, readability means that queued data is available for reading or, for sockets of type SOCK_STREAM, that the virtual socket corresponding to the socket has been closed, so that a recv or recvfrom is guaranteed to complete without blocking. If the virtual circuit was closed gracefully, then a recv will return immediately with zero bytes read; if the virtual circuit was reset, then a recv will complete immediately with the error code WSAECONNRESET. The presence of out-of-band data will be checked if the socket option SO_OOBINLINE has been enabled (see setsockopt).<br>The parameter writefds identifies those sockets that are to be checked for writeability. If a socket is connecting (nonblocking), writability means that the connection establishment successfully completed. If the socket is not in the process of connecting, writability means that a send or sendto will complete without blocking. (It is not specified how long this guarantee can be assumed to be valid, particularly in a multithreaded environment.)<br>The parameter exceptfds identifies those sockets that are to be checked for the presence of out-of-band data or any exceptional error conditions. Note that out-of-band data will only be reported in this way if the option SO_OOBINLINE is FALSE. For a SOCK_STREAM, the breaking of the connection by the peer or due to KEEPALIVE failure will be indicated as an exception. This specification does not define which other errors will be included. If a socket is connecting (nonblocking), failure of the connect attempt is indicated in exceptfds.<br>Any of readfds, writefds, or exceptfds may be given as NULL if no descriptors are of interest.<br>Four macros are defined in the header file Winsock.h for manipulating the descriptor sets. The variable FD_SETSIZE determines the maximum number of descriptors in a set. (The default value of FD_SETSIZE is 64, which may be modified by #defining FD_SETSIZE to another value before #including Winsock.h.) Internally, an fd_set is represented as an array of SOCKETs; the last valid entry is followed by an element set to INVALID_SOCKET. The macros are listed in the following table.<br>Macro</td><td>Description</td></tr>
+<tr><td>FD_CLR(s, *set)</td><td>Removes the descriptor s from set.</td></tr>
+<tr><td>FD_ISSET(s, *set)</td><td>Nonzero if s is a member of the set, zero otherwise.</td></tr>
+<tr><td>FD_SET(s, *set)</td><td>Adds descriptor s to set.</td></tr>
+<tr><td>FD_ZERO(*set)</td><td>Initializes the set to the NULL set.</td></tr>
+<tr><td>The parameter timeout controls how long the select may take to complete. If timeout is a null pointer, select will block indefinitely until at least one descriptor meets the specified criteria. Otherwise, timeout points to a timeval structure that specifies the maximum time that select should wait before returning. If the timeval is initialized to {-0, 0}, select will return immediately; this is used to "poll" the state of the selected sockets. If this is the case, then the select call is considered nonblocking and the standard assumptions for nonblocking calls apply. For example, the blocking hook must not be called, and the Windows Sockets implementation must not yield.<br>See Also<br>accept, connect, recv, recvfrom, send, sendto, setsockopt, WSAStartup</td></tr>
+</table>
+</body>
+</html>

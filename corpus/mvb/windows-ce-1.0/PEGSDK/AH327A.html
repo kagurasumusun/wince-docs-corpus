@@ -1,0 +1,98 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Section 4 Instruction Features</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Section 4 Instruction Features</h1>
+<p>4.1   RISC-Type Instruction Set</p>
+<p>4.2   Addressing Modes</p>
+<p>4.3   Instruction Format</p>
+<p>4.1 RISC-Type Instruction Set</p>
+<p>4.1.1   16-Bit Fixed Length</p>
+<p>4.1.2   One Instruction/Cycle</p>
+<p>4.1.3   Data Length</p>
+<p>4.1.4   Load-Store Architecture</p>
+<p>4.1.5   Delayed Branch Instructions</p>
+<p>4.1.6   Multiplication/Accumulation Operation</p>
+<p>4.1.7   T Bit</p>
+<p>4.1.8   Immediate Data</p>
+<p>4.1.9   Absolute Address</p>
+<p>4.1.10   16-Bit/32-Bit Displacement</p>
+<p>4.1.11   Privileged Instructions</p>
+<p>All instructions are RISC type. Their features are detailed in this section.</p>
+<p>4.1.1 16-Bit Fixed Length</p>
+<p>All instructions are 16 bits long, increasing program coding efficiency.</p>
+<p>4.1.2 One Instruction/Cycle</p>
+<p>Basic instructions can be executed in one cycle using the pipeline system. Instructions are executed in 16.7 ns at 60 MHz.</p>
+<p>4.1.3 Data Length</p>
+<p>Longword is the standard data length for all operations. Memory can be accessed in bytes, words, or longwords. Byte or word data accessed from memory is sign-extended and handled as longword data (table 4.1). Immediate data is sign-extended for arithmetic operations or zero-extended for logic operations. It also is handled as longword data.</p>
+<p>Table 4.1   Sign Extension of Word Data</p>
+<table class="dtTABLE">
+<tr><td>SH7000 Series CPU</td><td>Description</td><td>Example for Conventional CPU</td></tr>
+<tr><td>MOV.W<br>@(disp,PC),R1<br>ADD    R1,R0<br>.........<br>.DATA.W    H'1234</td><td>Data is sign-extended to 32 bits, and R1<br>becomes H'00001234. It is next operated upon by an ADD instruction.</td><td>ADD.W     #H'1234,R0</td></tr>
+<tr><td>Note:    The address of the immediate data is accessed by @(disp, PC).<br>4.1.4 Load-Store Architecture<br>Basic operations are executed between registers. For operations that involve memory access, data is loaded to the registers and executed (load-store architecture). Instructions such as AND that manipulate bits, however, are executed directly in memory.<br>4.1.5 Delayed Branch Instructions<br>Unconditional branch instructions are delayed. Pipeline disruption during branching is reduced by first executing the instruction that follows the branch instruction, and then branching (table 4.2).<br>Table 4.2   Delayed Branch Instructions<br>SH7000 Series  CPU</td><td>Description</td><td>Example for Conventional CPU</td></tr>
+<tr><td>BRA    TRGET<br>ADD    R1,R0</td><td>Executes an ADD before branching to<br>TRGET.</td><td>ADD.W    R1,R0<br>BRA      TRGET</td></tr>
+<tr><td>4.1.6 Multiplication/Accumulation Operation<br>The five-stage pipeline system and on-chip multiplier enable 32-bit ´ 32-bit ® 64-bit multiplication operations to be executed in two to five cycles. 32-bit ´ 32-bit + 64-bit ® 64 bit multiplication/accumulation operations are executed in two to five cycles.<br>4.1.7 T Bit<br>The T bit in the status register changes according to the result of the comparison, and in turn is the condition (true/false) that determines if the program will branch (table 4.3). The number of instructions after T bit in the status register is kept to a minimum to improve the processing speed.<br>Table 4.3   T Bit<br>SH7000 Series  CPU</td><td>Description</td><td>Example for Conventional CPU</td></tr>
+<tr><td>CMP/GE   R1,R0<br>BT       TRGET0<br>BF       TRGET1</td><td>T bit is set when R0 ³ R1. The program branches to TRGET0 when R0 ³ R1 and to TRGET1 when R0 &lt; R1.</td><td>CMP.W    R1,R0<br>BGE      TRGET0<br>BLT      TRGET1</td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>ADD      #-1,R0<br>CMP/EQ   #0,R0<br>BT       TRGET</td><td>T bit is not changed by ADD. T bit is set when R0 = 0. The program branches if R0 = 0.</td><td>SUB.W    #1,R0<br>BEQ      TRGET</td></tr>
+<tr><td>4.1.8 Immediate Data<br>Byte immediate data is located in instruction code. Word or longword immediate data is not input via instruction codes but is stored in a memory table. The memory table is accessed by an immediate data transfer instruction (MOV) using the PC relative addressing mode with displacement (table 4.4).<br>Table 4.4   Immediate Data Accessing<br>Classification</td><td>SH7000 Series  CPU</td><td>Example for Conventional CPU</td></tr>
+<tr><td>8-bit immediate</td><td>MOV      #H'12,R0</td><td>MOV.B  #H'12,R0</td></tr>
+<tr><td>16-bit immediate</td><td>MOV.W    @(disp,PC),R0<br>.................<br>.DATA.W  H'1234</td><td>MOV.W  #H'1234,R0</td></tr>
+<tr><td>32-bit immediate</td><td>MOV.L    @(disp,PC),R0<br>.................<br>.DATA.L  H'12345678</td><td>MOV.L  #H'12345678,R0</td></tr>
+<tr><td>Note: The address of the immediate data is accessed by @(disp, PC).<br>4.1.9 Absolute Address<br>When data is accessed by absolute address, the value already in the absolute address is placed in the memory table. Loading the immediate data when the instruction is executed transfers that value to the register and the data is accessed in the indirect register addressing mode.<br>Table 4.5   Absolute Address<br>Classification</td><td>SH7000 Series  CPU</td><td>Example for Conventional CPU</td></tr>
+<tr><td>Absolute address</td><td>MOV.L     @(disp,PC),R1<br>MOV. B    @R1,R0<br>..................<br>.DATA.L   H'12345678</td><td>MOV.B   @H'12345678,R0</td></tr>
+<tr><td>4.1.10 16-Bit/32-Bit Displacement<br>When data is accessed by 16-bit or 32-bit displacement, the pre-existing displacement value is placed in the memory table. Loading the immediate data when the instruction is executed transfers that value to the register and the data is accessed in the indirect indexed register addressing mode.<br>Table 4.6   16-Bit/32-Bit Displacement<br>Classification</td><td>SH7000 Series  CPU</td><td>Example for Conventional CPU</td></tr>
+<tr><td>16-bit displacement</td><td>MOV.W     @(disp,PC),R0<br>MOV.W     @(R0,R1),R2<br>..................<br>.DATA.W   H'1234</td><td>MOV.W   @(H'1234,R1),R2</td></tr>
+<tr><td>4.1.11 Privileged Instructions<br>The processor has two operation modes (user/privileged). If these instructions are used in user mode, an illegal instruction exception is detected. Privileged instructions are:<br>LDC<br>STC<br>RTE<br>LDTLB<br>SLEEP<br>4.2 Addressing Modes<br>Addressing modes and effective address calculation are described in table 4.7.<br>Table 4.7   Addressing Modes and Effective Addresses<br>Addressing<br>Mode</td><td>Instruction<br>Format</td><td>Effective Addresses Calculation</td><td>Equation</td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>Direct register addressing</td><td>Rn</td><td>The effective address is register Rn. (The operand is the contents of register Rn.)</td><td>-</td></tr>
+<tr><td>Indirect register addressing</td><td>@Rn</td><td>The effective address is the content of register Rn.</td><td>Rn</td></tr>
+<tr><td>Post-increment indirect register addressing</td><td>@Rn +</td><td>The effective address is the content of register Rn. A constant is added to the content of Rn after the instruction is executed. 1 is added for a byte operation, 2 for a word operation, and 4 for a longword operation.</td><td>Rn<br>(After the instruction is executed)<br>Byte: Rn + 1 ® Rn<br>Word: Rn + 2 ® Rn<br>Longword: Rn + 4 ® Rn</td></tr>
+<tr><td>Pre-decrement indirect register addressing</td><td>@-Rn</td><td>The effective address is the value obtained by subtracting a constant from Rn. 1 is subtracted for a byte operation, 2 for a  word operation, and 4 for a longword operation.</td><td>Byte: Rn - 1 ® Rn<br>Word: Rn - 2 ® Rn<br>Longword: Rn - 4 ® Rn  (Instruction executed with Rn after calculation)</td></tr>
+<tr><td>Indirect register addressing with displace-ment</td><td>@(disp:4, Rn)</td><td>The effective address is Rn plus a 4-bit displacement (disp). The value of disp is zero-extended, and remains the same for a byte operation, is doubled for a word operation, and is quadrupled for a longword operation.</td><td>Byte: Rn + disp<br>Word: Rn + disp ´ 2<br>Longword: Rn + disp ´ 4</td></tr>
+<tr><td>Indirect indexed register addressing</td><td>@(R0, Rn)</td><td>The effective address is the Rn value plus R0.</td><td>Rn + R0</td></tr>
+<tr><td>Indirect GBR addressing with displace-ment</td><td>@(disp:8, GBR)</td><td>The effective address is the GBR value plus an 8-bit displacement (disp). The value of disp is zero-extended, and remains the same for a byte operation, is doubled for a word operation, and is quadrupled for a longword operation.</td><td>Byte: GBR + disp<br>Word: GBR + disp ´ 2<br>Longword: GBR + disp ´ 4</td></tr>
+<tr><td>Indirect indexed GBR addressing</td><td>@(R0, GBR)</td><td>The effective address is the GBR value plus the R0.</td><td>GBR + R0</td></tr>
+<tr><td>Indirect PC addressing with displace-ment</td><td>@(disp:8, PC)</td><td>The effective address is the PC value plus an 8-bit displacement (disp). The value of disp is zero-extended, and remains the same for a byte operation, is doubled for a word operation, and is quadrupled for a longword operation. For a longword operation, the lowest two bits of the PC are masked.</td><td>Word: PC + disp ´ 2<br>Longword: PC &amp; H'FFFFFFFC + disp ´ 4</td></tr>
+<tr><td>PC relative addressing</td><td>disp:8</td><td>The effective address is the PC value sign-extended with an 8-bit displacement (disp), doubled, and added to the PC.</td><td>PC + disp ´ 2</td></tr>
+<tr><td></td><td>disp:12</td><td>The effective address is the PC value sign-extended with a 12-bit displacement (disp), doubled, and added to the PC.</td><td>PC + disp ´ 2</td></tr>
+<tr><td></td><td>Rn</td><td>The effective address is the register PC plus R0.</td><td>PC + R0</td></tr>
+<tr><td>Immediate addressing</td><td>#imm:8</td><td>The 8-bit immediate data (imm) for the TST, AND, OR, and XOR instructions are zero-extended.</td><td>-</td></tr>
+<tr><td></td><td>#imm:8</td><td>The 8-bit immediate data (imm) for the MOV, ADD, and CMP/EQ instructions are sign-extended.</td><td>-</td></tr>
+<tr><td></td><td>#imm:8</td><td>Immediate data (imm) for the TRAPA  instruction is zero-extended and is quadrupled.</td><td>-</td></tr>
+<tr><td>4.3 Instruction Format<br>The instruction format table, table 4.8, refers to the source operand and the destination operand. The meaning of the operand depends on the instruction code. The symbols are used as follows:<br>·    xxxx: Instruction code<br>·    mmmm: Source register<br>·    nnnn: Destination register<br>·    iiii: Immediate data<br>·    dddd: Displacement<br>Table 4.8   Instruction Formats<br>Instruction Formats</td><td>Source Operand</td><td>Destination Operand</td><td>Example</td></tr>
+<tr><td>0 format</td><td>-</td><td>-</td><td>NOP</td></tr>
+<tr><td>n format</td><td>-</td><td>nnnn: Direct register</td><td>MOVT  Rn</td></tr>
+<tr><td></td><td>Control register or system register</td><td>nnnn: Direct register</td><td>STS   MACH,Rn</td></tr>
+<tr><td></td><td>-</td><td>nnnn: Direct register</td><td>JMP   @Rn</td></tr>
+<tr><td></td><td>Control register or system register</td><td>nnnn: Indirect pre-decrement register</td><td>STC.L  SR,@-Rn</td></tr>
+<tr><td></td><td>-</td><td>nnnn: PC relative using Rn</td><td>BRAF   Rn</td></tr>
+<tr><td>m format</td><td>mmmm: Direct register</td><td>Control register or system register</td><td>LDC    Rm,SR</td></tr>
+<tr><td></td><td>mmmm: Indirect post-increment register</td><td>Control register or system register</td><td>LDC.L  @Rm+,SR</td></tr>
+<tr><td>nm format</td><td>mmmm: Direct register</td><td>nnnn: Direct register</td><td>ADD    Rm,Rn</td></tr>
+<tr><td></td><td>mmmm: Direct register</td><td>nnnn: Direct register</td><td>MOV.L  Rm,@Rn</td></tr>
+<tr><td></td><td>mmmm: Indirect post-increment register (multiply/ accumulate)<br>nnnn: Indirect post-increment register (multiply/ accumulate)*</td><td>MACH, MACL</td><td>MAC.W  @Rm+,@Rn+</td></tr>
+<tr><td></td><td>mmmm: Indirect post-increment register</td><td>nnnn: Direct register</td><td>MOV.L  @Rm+,Rn</td></tr>
+<tr><td></td><td>mmmm: Direct register</td><td>nnnn: Indirect pre-decrement register</td><td>MOV.L  Rm,@-Rn</td></tr>
+<tr><td></td><td>mmmm: Direct register</td><td>nnnn: Indirect indexed register</td><td>MOV.L  Rm,@(R0,Rn)</td></tr>
+<tr><td>md format</td><td>mmmmdddd: indirect register with displacement</td><td>R0 (Direct register)</td><td>MOV.B  @(disp,Rm),R0</td></tr>
+<tr><td></td><td>R0 (Direct register)</td><td>nnnndddd: Indirect register with displacement</td><td>MOV.B  R0,@(disp,Rn)</td></tr>
+<tr><td>nmd format</td><td>mmmm: Direct register</td><td>nnnndddd: Indirect register with displacement</td><td>MOV.L  Rm,@(disp,Rn)</td></tr>
+<tr><td></td><td>mmmmdddd: Indirect register with displacement</td><td>nnnn: Direct register</td><td>MOV.L  @(disp,Rm),Rn</td></tr>
+<tr><td>d format</td><td>dddddddd: Indirect GBR with displacement</td><td>R0 (Direct register)</td><td>MOV.L  @(disp,GBR),R0</td></tr>
+<tr><td></td><td>R0(Direct register)</td><td>dddddddd: Indirect GBR with displacement</td><td>MOV.L  R0,@(disp,GBR)</td></tr>
+<tr><td></td><td>dddddddd: PC relative with displacement</td><td>R0 (Direct register)</td><td>MOVA   @(disp,PC),R0</td></tr>
+<tr><td></td><td>-</td><td>dddddddd: PC relative</td><td>BF     label</td></tr>
+<tr><td>d12 format</td><td>-</td><td>dddddddddddd: PC relative</td><td>BRA    label<br>(label = disp + PC)</td></tr>
+<tr><td>nd8 format</td><td>dddddddd: PC relative with displacement</td><td>nnnn: Direct register</td><td>MOV.L  @(disp,PC),Rn</td></tr>
+<tr><td>i format</td><td>iiiiiiii: Immediate</td><td>Indirect indexed GBR</td><td>AND.B  #imm,@(R0,GBR)</td></tr>
+<tr><td></td><td>iiiiiiii: Immediate</td><td>R0 (Direct register)</td><td>AND    #imm,R0</td></tr>
+<tr><td></td><td>iiiiiiii: Immediate</td><td>-</td><td>TRAPA  #imm</td></tr>
+<tr><td>ni format</td><td>iiiiiiii: Immediate</td><td>nnnn: Direct register</td><td>ADD    #imm,Rn</td></tr>
+</table>
+</body>
+</html>

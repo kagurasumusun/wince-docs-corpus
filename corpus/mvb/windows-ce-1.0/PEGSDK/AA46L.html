@@ -1,0 +1,43 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>IPegasusFileFilter::NextConvertFile</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>IPegasusFileFilter::NextConvertFile</h1>
+<p>When the user selects a conversion type from HPC Explorer's conversion selection dialog box, HPC Explorer calls the IPegasusFileFilter::NextConvertFile function of the file filter that supports the selected conversion.</p>
+<pre class="code">STDMETHODIMP IPegasusFileFilter::NextConvertFile(</pre>
+<p>int nConversion,</p>
+<p>PFF_CONVERTINFO* pci,</p>
+<p>PFF_SOURCEFILE* psf,</p>
+<p>PFF_DESTINATIONFILE* pdf,</p>
+<p>volatile BOOL *pbCancel</p>
+<p>PR_ERROR *perr</p>
+<p>);</p>
+<p>Parameters</p>
+<p>nConversion</p>
+<p>A counter for converting a single source file into multiple destination files. This parameter will be zero the first time this function is called and will be incremented for each successive call. A simple filter should return HRESULT_FROM_WIN32(ERROR_NO_MORE_ITEMS) if this parameter is not zero.</p>
+<p>pci</p>
+<p>Points to a PFF_CONVERTINFO structure that contains a pointer to an IPegasusFileFilterSite object. A file filter uses this interface to create an IStream or IStorage object to read the contents of the source file or to write to the destination file. Any files opened in this way should be closed using the corresponding CloseSourceFile or CloseDestinationFile methods.</p>
+<p>psf</p>
+<p>Points to a PFF_SOURCEFILE structure that contains information about the source file.</p>
+<p>pdf</p>
+<p>Points to a PFF_DESTINATIONFILE structure that contains information about the destination file.</p>
+<p>pbCancel</p>
+<p>Points to a variable that receives TRUE if the user cancels the file conversion before it is completed. Otherwise, the variable is set to FALSE. Because this variable is updated asynchronously by another thread, its contents can change at any time. A file filter must check this variable regularly during the conversion process, and return ERROR_CANCELLED (after cleaning up) if it is ever set to TRUE.</p>
+<p>perr</p>
+<p>Address of a filter-defined error code that may be passed to the IPegasusFileFilter::FormatMessage member function.  This error code will be ignored unless the return value from this function is E_FAIL.</p>
+<p>Return Value</p>
+<p>The return value can be one of the following values.</p>
+<table class="dtTABLE">
+<tr><td>Value</td><td>Meaning</td></tr>
+<tr><td>NOERROR</td><td>The subconversion was successful; proceed to the next subconversion.</td></tr>
+<tr><td>HRESULT_FROM_WIN32 (ERROR_CANCELLED)</td><td>The user canceled the conversion.</td></tr>
+<tr><td>HRESULT_FROM_WIN32 (ERROR_NO_MORE_ITEMS)</td><td>The conversion (or last subconversion) was successful. End calls to IPegasusFileFilter::NextConvertFile.</td></tr>
+<tr><td>E_FAIL</td><td>perr was filled with an error code that should be passed to IpegasusFileFilter::FormatMessage</td></tr>
+<tr><td>Remarks<br>HPC Explorer calls this function repeatedly, incrementing the nConversion parameter, until the return value is ERROR_NO_MORE_ITEMS. A simple filter should return NOERROR the first time this method is called, and return HRESULT_FROM_WIN32(ERROR_NO_MORE_ITEMS) thereafter. Alternatively, a file filter can return E_FAIL and specify a filter-defined error code in the variable pointed to by perr. For more information about filter-defined error codes, see "Filter Defined Error Values" in this chapter.<br>As a file conversion progresses, a file filter should periodically call IPegasusFileFilterSite::ReportProgress to report its progress. HPC Explorer uses the progress information to update a progress bar that shows the user how the much of the conversion has been completed.<br>If any important data is intentionally discarded by a file filter during the conversion process, the filter should call IPegasusFileFilterSite::ReportLoss to report the loss. When calling this function, the filter specifies a message that explains the data loss, and HPC Explorer formats and displays the message in a message box when the file conversion has completed.</td></tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Arguments to the MIPS _ _asm Statement</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Arguments to the MIPS _ _asm Statement</h1>
+<p>Inline assembly statements refer to C/C++ expressions and objects in one of two ways:</p>
+<p>If an object, variable or code target is an external global, you can refer to it directly in the statement string. For example, if Errno is an external variable, and Myfunc is an external function, the following are both valid:</p>
+<pre class="code">__asm("lw %t0, Errno");</pre>
+<p>__asm("jal Myfunc");</p>
+<p>Any code label or object (except for static labels) can be passed as an argument to an _ _asm string, in which the arguments are represented by the placeholders %0, %1, %2, and so on. For example:</p>
+<pre class="code">__asm("add %0, %1", sum, val * base);</pre>
+<p>__asm("swl %t0, (%0)", &amp;buffer [3]);</p>
+<p>An _ _asm string taking arguments (%0, %1, and so on) is evaluated similarly to a function call. The compiler handles such an _ _asm statement by first generating instructions that load the indicated expressions as arguments (sum, val * base and buffer [3] in the preceding examples). Arguments in an _ _asm statement are handled in the same manner as function arguments, which are defined by a platform’s calling standard.</p>
+<p>After the compiler generates instructions to load the arguments, if any, it assembles the actual instruction itself. A single instruction in an _ _asm statement may therefore cause multiple instructions to be generated. Judicious use of the argument placeholders enables you to control the order of evaluation. Expressions are always evaluated in the order in which they are passed to the _ _asm statement. For example, consider the following _ _asm statement:</p>
+<pre class="code">__asm("add %1, %0", height * get_coord (&amp;i), arr[i]);</pre>
+<p>In this statement, the expression height * get_coord (&amp;i) is evaluated first, potentially causing side effects in evaluation that could affect the value of arr[i]. To reverse the order of evaluation but specify the same instruction and operands, you could write the following _ _asm statement:</p>
+<pre class="code">__asm("add %0, %1", arr [I], height * get_coord (&amp;i));</pre>
+<p>The placeholders %0 and %1 can appear in any order in the instruction string.</p>
+<p>Because the _ _asm statement follows the standard MIPS calling conventions, and because each individual _ _asm statement is treated as a function call, you do not need to worry about preserving arguments in the current function. The _ _asm statements do not corrupt the arguments in the surrounding function.</p>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Section 7 Processing States</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Section 7 Processing States</h1>
+<p>7.1   State Transitions</p>
+<p>7.2   Power-Down State</p>
+<p>7.1   State Transitions</p>
+<p>7.1.1   Reset State</p>
+<p>7.1.2   Exception Processing State</p>
+<p>7.1.3   Program Execution State</p>
+<p>7.1.4   Power-Down State</p>
+<p>7.1.5   Bus Release State</p>
+<p>The CPU has five processing states: reset, exception processing, bus release, program execution and power-down.</p>
+<p>The transitions between the states are shown in figure 7.1. For more information, see the SH-3 Hardware Manual.</p>
+<p>Figure 7.1   Transitions between Processing States</p>
+<p>7.1.1 Reset State</p>
+<p>In the reset state, the CPU is reset. This occurs when the RESET pin level goes low. When the BREQ pin is high, the result is a power-on reset; when it is low, a manual reset will occur.</p>
+<p>7.1.2 Exception Processing State</p>
+<p>The exception processing state is a transient state that occurs when the CPU's processing state flow is altered by exception processing sources such as resets, general exceptions, or interrupts.</p>
+<p>For a reset, the CPU branches to H'A0000000 and starts executing the user-created exception process program.</p>
+<p>For a general exception or interrupt, the program counter (PC) is saved in the save program counter (SPC), and the status register (SR) is saved in the save status register (SSR). The CPU then branches to the starting address of the user-created exception service routine by adding the content of the vector base address and the vector offset, thereby starting program execution state.</p>
+<p>7.1.3 Program Execution State</p>
+<p>In the program execution state, the CPU sequentially executes the program.</p>
+<p>7.1.4 Power-Down State</p>
+<p>In the power-down state, the CPU operation halts and power consumption declines. The SLEEP instruction places the CPU in the power-down state. This state has two modes: sleep mode and standby mode. See section 7.2  for more details.</p>
+<p>7.1.5 Bus Release State</p>
+<p>In the bus release state, the CPU releases access rights to the bus to the device that has requested them.</p>
+<p>7.2 Power-Down State</p>
+<p>7.2.1   Sleep Mode</p>
+<p>7.2.2   Standby Mode</p>
+<p>7.2.3  Module Stop Mode</p>
+<p>In addition to the ordinary program execution states, the CPU also has a power-down state in which CPU operation halts and power consumption is lowered.</p>
+<p>There are three power-down state modes: sleep mode, standby mode, and module stop mode.</p>
+<p>Table 7.1 Power-Down Modes</p>
+<table class="dtTABLE">
+<tr><td>Mode</td><td>Entering Procedure</td><td>CPG</td><td>CPU</td><td>CPU<br>Register</td><td>On-Chip Memory</td><td>On-Chip<br>Peripheral Modules</td><td>Pins</td><td>External Memory</td><td>Canceling Procedure</td></tr>
+<tr><td>Sleep Mode%_2_1_Sleep_Mode</td><td>Execute SLEEP instruction with STBY bit set to 0 in STBCR</td><td>Run</td><td>Halt</td><td>Held</td><td>Held</td><td>Run</td><td>Held</td><td>Refresh</td><td>1.    Interrupt<br>2.    Reset</td></tr>
+<tr><td>Standby Mode%_2_2_Standby_Mode</td><td>Execute SLEEP instruction with STBY bit set to 1 in STBCR</td><td>Halt</td><td>Halt</td><td>Held</td><td>Held</td><td>Halt*</td><td>Held</td><td>Self-refresh</td><td>1.    Interrupt<br>2.    Reset</td></tr>
+<tr><td>Module Stop Mode%_2_3_Module_Stop_Mode</td><td>Set MSTP bit of STBCR to 1</td><td>Run</td><td>Run`</td><td>Held</td><td>Held</td><td>Specified module halts</td><td>Held</td><td>Refresh</td><td>1.    Set MSTP bit to 0<br>2.    Reset</td></tr>
+<tr><td>Note:    The RTC still runs if the START bit of RCR2 is set to a logic one (see section 12 of the SH-3 Hardware Manual, Realtime Clock (RTC)). TMU still runs when output of the RTC is used as input to its counter (see section 11 of the SH-3 Hardware Manual, Timer (TMU)).<br>7.2.1 Sleep Mode<br>When standby bit STBY (in the standby control register STBCR) is cleared to 0 and a SLEEP instruction executed, the CPU moves from program execution state to sleep mode. In sleep mode, the CPU halts, and the contents of its internal registers and the data in on-chip cache and TLB data are maintained. The on-chip peripheral modules other than the CPU do not halt in the sleep mode.<br>To return from sleep mode, use a reset or any interrupt; the CPU returns to ordinary program execution state through the exception processing state.<br>7.2.2 Standby Mode<br>To enter the standby mode, set the standby bit STBY (in the standby control register STBCR) to 1 and execute a SLEEP instruction. In standby mode, all CPU, on-chip peripheral module and oscillator functions are halted. CPU internal register contents and on-chip cache and TLB data are held.<br>To return from standby mode, use a reset or an interrupt (NMI, IRQ, on-chip peripheral). For resets, the CPU returns to ordinary program execution state through the exception processing state when placed in a reset state after the oscillator stabilization time has elapsed. For interrupts, the CPU returns to ordinary program execution state through the exception processing state after the oscillator stabilization time has elapsed. In this mode, power consumption drops markedly, since the oscillator stops.<br>7.2.3 Module Stop Mode<br>The supply of the clock to on-chip peripheral modules can be halted by setting the corresponding module stop bits (MSTP) in the standby control register (STBCR) to 1. Using this function can reduce the power consumption in sleep mode.<br>The external pins of the on-chip peripheral modules in module standby are reset by the module stop mode. Module stop mode can be cleared by clearing the MSTP bits to 0.</td></tr>
+</table>
+</body>
+</html>

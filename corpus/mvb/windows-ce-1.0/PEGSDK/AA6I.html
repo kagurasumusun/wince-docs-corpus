@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Using a PC Card Serial Device</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Using a PC Card Serial Device</h1>
+<p>Using a PC Card serial device is also similar to the steps for using the built-in serial device. Note that for the PC Card device, EscapeCommFunction is not called to redirect communication. Rather, if the PC Card is a standard serial device, you must call CreateFile using “COM2:” as the lpFileName parameter.</p>
+<p>The following sample code fragment demonstrates an example of how a PC Card serial device can be opened and setup.</p>
+<p>//-------------------------------------------------------------------</p>
+<pre class="code">int WINAPI  WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, LPWSTR</pre>
+<p>pszCmdLine, int nCmdShow)</p>
+<p>{-</p>
+<p>HANDLE  hPort;</p>
+<pre class="code">DCB  PortDCB;</pre>
+<p>// Open COM2.</p>
+<pre class="code">hPort = CreateFile(TEXT("COM2:"), GENERIC_READ | GENERIC_WRITE,</pre>
+<p>0, NULL, OPEN_EXISTING, 0, NULL);</p>
+<p>if (hPort == INVALID_HANDLE_VALUE) {-</p>
+<p>DbgPrintfW(TEXT("Unable to open COM2 port.\r\n"));</p>
+<p>return FALSE;</p>
+<p>}</p>
+<p>// Set state of COM2 port.</p>
+<p>if (!GetCommState(hPort, &amp;PortDCB)) {-</p>
+<pre class="code">DbgPrintfW((TEXT("GetCommState() error=%d.\r\n")), GetLastError());</pre>
+<p>return FALSE;</p>
+<p>}</p>
+<p>PortDCB.BaudRate          = 9600;</p>
+<p>PortDCB.fBinary           = TRUE;</p>
+<p>PortDCB.fParity           = TRUE;</p>
+<p>PortDCB.fOutxCtsFlow      = FALSE;    // ignore possible hangups</p>
+<p>PortDCB.fOutxDsrFlow      = FALSE;    // don't wait on the DSR line</p>
+<p>PortDCB.fDtrControl       = DTR_CONTROL_ENABLE;</p>
+<p>PortDCB.fDsrSensitivity   = FALSE;</p>
+<p>PortDCB.fTXContinueOnXoff = TRUE;</p>
+<p>PortDCB.fOutX             = FALSE;    // no XON/XOFF control</p>
+<p>PortDCB.fInX              = FALSE;</p>
+<p>PortDCB.fErrorChar        = FALSE;</p>
+<p>PortDCB.fNull             = FALSE;</p>
+<p>PortDCB.fRtsControl       = RTS_CONTROL_ENABLE;</p>
+<p>PortDCB.fAbortOnError     = FALSE;</p>
+<p>PortDCB.ByteSize          = 8;</p>
+<p>PortDCB.Parity            = ODDPARITY;</p>
+<p>PortDCB.StopBits          = ONESTOPBIT;</p>
+<p>if (!SetCommState(hPort, &amp;PortDCB)) {-</p>
+<pre class="code">DbgPrintfW((TEXT("SetCommState() error=%d.\r\n")),</pre>
+<pre class="code">GetLastError());</pre>
+<p>return FALSE;</p>
+<p>}</p>
+<pre class="code">SetCommMask(hPort, EV_RXCHAR);</pre>
+<p>// Read data from the PC card</p>
+<p>getDataPackets(hPort);</p>
+<p>// Write data to the PC card</p>
+<p>putDataPackets(hPort);</p>
+<p>// Close the port and exit.</p>
+<pre class="code">SetCommMask(hPort, 0);</pre>
+<pre class="code">CloseHandle(hPort);</pre>
+<p>return TRUE;</p>
+<p>}</p>
+<p>//------------------------------------------------------------------</p>
+</body>
+</html>

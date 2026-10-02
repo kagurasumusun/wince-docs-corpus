@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>How to Display an HTML Document</title>
+</head>
+<body>
+<!-- PEGSDK Books Online (PEGSDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>How to Display an HTML Document</h1>
+<p>Once the first three items listed above have been completed, an application can use the HTML Control interface to display an HTML document.  To display an HTML document, an application performs the following steps.</p>
+<p>Application sends a WM_SETTEXT message to clear the current contents of the HTML Control.</p>
+<p>Application sends a sequence of either DTM_ADDTEXT (ANSI version) or DTM_ADDTEXTW (Unicode version) messages, in order to populate the control.</p>
+<p>For each NM_INLINE_IMAGE callback, the application loads the image and sends one of the following messages.</p>
+<table class="dtTABLE">
+<tr><td>Message</td><td>Usage</td></tr>
+<tr><td>DTM_SETIMAGE</td><td>Contains the HBITMAP of the image to be displayed.</td></tr>
+<tr><td>DTM_IMAGEFAIL</td><td>Indicates that the message could not be loaded and the broken image icon should be displayed.</td></tr>
+<tr><td>(No message sent)</td><td>Image loading icon will be displayed.</td></tr>
+<tr><td>For each NM_INLINE_SOUND callback, the application loads and plays the sound the indicated number of times (if desired).<br>Application sends a DTM_ENDOFSOURCE message indicating that the processing of the document is complete.<br>Application receives an NM_HOTSPOT callback message if the user taps on a link or submits a form.<br>The following code fragment shows the creation of an HTML Control window and demonstrates some of the HTML Control functionality.<br>#define DISPLAYCLASS    TEXT("DISPLAYCLASS")<br>BOOL  g_bMakeFit = TRUE;            // DTM_ENABLESHRINK Shrink-enable flag<br>TCHAR const c_szHTMLControlLibrary[] = TEXT("htmlview.dll");<br>// HTML Control DLL<br>HINSTANCE    g_hInstHTMLCtrl;        // Instance of HTML Control Viewer<br>HINSTANCE    hInstance;            // Instance of application<br>HWND            m_hwndHtml;            // Handle to HTML “DISPLAYCLASS” window<br>. . .   . . .   . . .<br>// Load HTML Viewer Control (Htmlview.dll)<br>g_hInstHTMLCtrl = LoadLibrary(c_szHTMLControlLibrary);<br>. . .   . . .   . . .<br>// Initialize the HTML Viewer Control, passing the instance<br>//  of the calling application.<br>InitHTMLControl(hInstance);<br>. . .  . . .  . . .  . . .<br>switch (message)<br>{-<br>case WM_CREATE:<br>{-<br>RECT            rc;<br>if(!(pWebView = new CWebViewer(hWnd))) {-<br>return -1;<br>}<br>SetWindowLong(hWnd, 0, (LONG)pWebView);<br>SendMessage(hWnd, WM_SETICON, FALSE, (LPARAM)g_hiconViewing);<br>GetClientRect(hWnd, &amp;rc);<br>pWebView-&gt;m_hwndCmdBar = CreateCommandBar(hWnd);<br>rc.top += CommandBar_Height(pWebView-&gt;m_hwndCmdBar);<br>m_hwndHtml = CreateWindow(<br>DISPLAYCLASS,<br>NULL,<br>WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_CLIPSIBLINGS,<br>rc.left,<br>rc.top,<br>rc.right - rc.left,<br>rc.bottom - rc.top,<br>hWnd,<br>(HMENU) IDC_HTMLVIEW,<br>g_hInst,<br>NULL);<br>SetFocus(m_hwndHtml);<br>. . .   . . .   . . .<br>PostMessage(m_hwndHtml, DTM_ENABLESHRINK,<br>0, g_bMakeFit);<br>}<br>break;   /* WM_CREATE */</td></tr>
+</table>
+</body>
+</html>

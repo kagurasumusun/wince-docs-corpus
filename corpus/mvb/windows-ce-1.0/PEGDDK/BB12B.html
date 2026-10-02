@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Loading Built-in Devices</title>
+</head>
+<body>
+<!-- PEGDDK Books Online (PEGDDK.MVB); text extracted with helpdeco, images dropped. -->
+<h1>Loading Built-in Devices</h1>
+<p>Drivers for the built-in devices are loaded by the Device Manager as part of the system initialization process following power-on or reset. The Device Manager loads built-in devices such as the serial driver and the infrared driver. If your driver must be loaded during system initialization, it can load with the built-in driver sequence.</p>
+<p>When the Device Manager loads drivers for the built-in devices, it searches the registry for the keys in HKEY_LOCAL_MACHINE\Drivers\BuiltIn. For example, the Serial and IrCOMM subkeys contain the information necessary for the Device Manager to load the serial and infrared drivers. The following example shows the contents of the HKEY_LOCAL_MACHINE\Driver\BuiltIn\Serial key:</p>
+<pre class="code">HKEY_LOCAL_MACHINE</pre>
+<p>[Drivers]</p>
+<p>[BuiltIn]</p>
+<p>[Serial]</p>
+<p>hex: DevConfig = 10 00 00 00 02 00 00 00 10 01 00 00 00 4b 00</p>
+<p>DWORD: DeviceArrayIndex = 0x00000000 (0)</p>
+<p>DWORD: DeviceType = 0x00000000 (0)</p>
+<p>SZ: Dll = Serial.DLL</p>
+<p>SZ: FriendlyName = Serial Cable on COM1:</p>
+<p>DWORD: Order = 0x00000000 (0)</p>
+<p>SZ: Prefix = COM</p>
+<p>SZ: Tsp = Unimodem.dll</p>
+<p>The descriptions of the PCMCIA Dll, Entry, Prefix, Index, Context, and Ioctl registry entries also apply to the built-in devices. In addition to the PCMCIA entries, built-in devices have an order key. The order key is a REG_DWORD data type and it specifies the load order for the built-in driver. If two drivers have the same load order value, they load in the order they occur in the registry. This entry is useful when one driver must load subsequent to another. The order key is required for non-PC Card devices. (The Device Manager ignores the order key when loading installable PC Card drivers).</p>
+<p>The registry key for device might also contain device-specific entries. For example, the registry key for the serial driver might specify additional keys that are used exclusively by the serial driver during initialization.</p>
+<p>After obtaining the registry data, the Device Manager then performs the following tasks to load the built-in device (see Figure 3):</p>
+<p>·	Just prior to loading the driver specified by the Dll entry, the Device Manager creates a subkey in HKEY_LOCAL_MACHINE \Drivers\Active that includes the name of the BuiltIn subkey. Entries for this subkey include the handle to the device and its name.</p>
+<p>·	The Device Manager loads the driver with LoadLibrary.</p>
+<p>·	The Device Manager then calls the stream interface initialization function defined by the driver. The Device Manager passes the initialization function a pointer to the Active key for the device. The driver can use this information to obtain the name of the driver’s HKEY_LOCAL_MACHINE \Drivers\BuiltIn subkey. The driver can then use this subkey to obtain other keys (including device-specific keys) from the registry.</p>
+<p>·	Finally, the Device Manager performs any post-initalization that is required. If a value is defined for Ioctl, the Device Manager calls the I/O control stream interface function for the device and passes it the value of Ioctl as the control code.</p>
+<p>Figure 3. Block Diagram for Loading Built-in Devices</p>
+</body>
+</html>
