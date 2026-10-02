@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Mounting and Unmounting a Database Volume</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_mounting_and_unmounting_a_database_volume"></A>Mounting and Unmounting a Database Volume</H2>
+
+<P>In order to create and use a database volume with Windows CE 2.10 and later, you must first mount, or open, the volume. This does not include the object store, which is always mounted and identified by a system globally unique identifier (GUID). Once all operations are complete, you must unmount, or close, the volume. Mounting and unmounting adds a level of complexity to your database programming but allows you to store a database elsewhere on a device besides the object store. Note that you can still use the original database API in Windows CE 2.10 and later to gain access to a database in the object store. However, the earlier API exists for backward compatibility only; all new applications should use the new API. </P>
+
+<P>Call the <B>CeMountDBVol</B> function to mount a volume that can store Windows CE databases on any file system. This file system can include the object store or an installed file system, such as the FAT file system on a PC Card. <B>CEMountDBVol</B> acts as a specialized version of <B>CreateFile</B>; instead of opening or creating a generic file, <B>CEMountDBVol</B> opens or creates a database volume. <B>CEMountDBVol</B> accepts the location of the file that is the database volume and returns a <B>PCEGUID</B>. Functions designed to manipulate mounted database volumes use the <B>PCEDUID</B> as a handle to identify a given volume.</P>
+
+<P>Call the <B>CEUnmountDBVol</B> function to unmount a database volume. Like <B>CloseHandle</B>, <B>CeUnmountDBVol</B> returns resources that the database volume was using back to the system. To be sure that Windows CE writes any cached data to permanent storage, call the <B>CeFlushDBVol</B> function prior to unmounting the volume. The database can also be closed by user reset or a power failure. Because Windows CE automatically flushes the cache on a periodic basis, you will lose only data altered since the last cache flush. Also, the volume itself is not altered by a power failure or reset.</P>
+
+<P>Note that more than one process can mount the same database volume. Windows CE keeps track of how many processes have access to a given database volume. When the last process unmounts the database, Windows CE closes the file.</P>
+
+<P>The following code example shows how to unmount a database volume. For an example showing how to mount a database volume, see "<A HREF="objstore_28.htm" TARGET="_top">Mounted Database Example</A>."</P>
+
+<PRE><CODE>void UnmountingDBs (PCEGUID pceguid)
+{
+  TCHAR szMsg[100];
+
+  if (!CeUnmountDBVol (pceguid))
+  {
+    wsprintf (szMsg, TEXT("Failed unmounting the database."));
+
+    // Your error-handling code goes here.
+  }
+} // End of UnmountingDBs example code
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

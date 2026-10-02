@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Administration Differences</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_administration_differences"></A>Administration Differences</H2>
+
+<P>Windows CE implements an independent client that is not part of any domain. It therefore cannot be configured or accessed using standard desktop tools such as MSMQ Explorer. All relevant administration information is stored on the device itself and administration functions are carried out locally using the MSMQAdm utility. MSMQAdm is a utility that configures MSMQ. It supports scripting, enabling you to automate routine tasks.</P>
+
+<P>The entire persistent state of MSMQ is a combination of information in the MSMQ registry key and MSMQ base directory.</P>
+
+<P>The base registry key is <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSMQ\SimpleClient</B>. The following table shows the named values for the base registry MSMQ configuration parameters.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%>
+<H5>Value</H5>
+</TD>
+<TD width=72%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>Port </TD>
+<TD width=72%>The machine port. This port is always set to 1,801 by the registration utility. Do not change the port setting. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>PingPort </TD>
+<TD width=72%>The machine ping port. This ping port is always set to 3,527 by the registration utility. Do not change the ping port setting. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>DefaultQuota</TD>
+<TD width=72%>The queue quota for message storage by a remote queue. If this value does not exist, outgoing queues are unrestricted. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>QueueManagerGUID</TD>
+<TD width=72%>The globally unique identifier (GUID) of the Windows CE queue manager, used for session protocols between Windows CE and Windows NT implementations. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>OutFRSQueue </TD>
+<TD width=72%>The outgoing FRS queue format name. This name must be DIRECT. If it is not, the outgoing FRS queue will not configure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>DebugQueue</TD>
+<TD width=72%>The queue used for routing debugging.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>BaseDir </TD>
+<TD width=72%>The directory used for queue information and message storage.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>HostName </TD>
+<TD width=72%>The machine host name. If this is not set, information is queried dynamically from the network.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>MessageID</TD>
+<TD width=72%>The current message identifier, accurate within 1,000 messages. This identifier is set and used by the MSMQ client. This identifier should not be changed by a user.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>CEStartAtBoot</TD>
+<TD width=72%>Windows CE-specific entry. If this value is a 0 DWORDentry, MSMQ will not start at boot time, but instead can be started using the MSMQ administration utility.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The base directory contains both local and outgoing queue and message data as well as MSMQ internal queues. There is one file contained in each queue. At startup, MSMQ creates a machine journal queue and a dead letter queue, if they are not already present. These queues have a local queue manager GUID as part of their names. Files with extensions "oq" contain ougoing messages, ones that were sent to queues on different machines. Files with extensions "iq" contain local queues and messages residing in these queues. Files with extensions "jq" contain journal counterparts to local queues. File names are prefixed with the machine name and "public" token for public queues. The exception is local queues, which are prefixed with the "$localhost$" token and cannot be public.</P>
+
+<P>Configuration information should be present for MSMQ to start at boot time. If the registry key is not configured, MSMQ starts in a suspended state. After configuration has completed, you can start MSMQ using the MSMQAdm utility. </P>
+
+<P><B>Note</B>  You must configure MSMQ after you set the computer name and current time. Current time is used for the generation of the GUID. If not set properly, more than one machine can end up with the same GUID, which may lead to unpredictable results. This is why configuration is not automatically done during the first cold boot; instead, it is left to the user to accomplish.</P>
+
+<P>To use MSMQAdm, run it with its command as an argument. The following example shows how to run MSMQAdm in both automatic and manual modes.</P>
+
+<PRE><CODE>Msmqadm &lt;command&gt;
+Msmqadm man
+</CODE></PRE>
+
+<P>MSMQAdm displays a prompt so that you can type commands interactively. To get list of commands, type the following command. </P>
+
+<PRE><CODE>Msmqadm help
+</CODE></PRE>
+
+<P>The following table describes some additional commands you can use.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Command</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Man &lt;filename&gt;</TD>
+<TD width=52%>Executes a script from a file</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Exit</TD>
+<TD width=52%>Exits manual mode</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Enum queues</TD>
+<TD width=52%>Displays a list of queues present on a device</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Enum messages &lt;queue number&gt;</TD>
+<TD width=52%>Enumerates messages in a specified queue</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Delete queue &lt;queue number&gt;</TD>
+<TD width=52%>Deletes a queue</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Delete message &lt;message number&gt;</TD>
+<TD width=52%>Deletes a message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Purge queue &lt;queue number&gt;</TD>
+<TD width=52%>Purges a queue and deletes all messages</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Start</TD>
+<TD width=52%>Starts the MSMQ service</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Stop</TD>
+<TD width=52%>Stops the MSMQ service</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Register {GUID}</TD>
+<TD width=52%>Creates the MSMQ configuration in the registry. The optional GUID specifies the GUID of the queue manager</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Status</TD>
+<TD width=52%>Provides the status of the queue manager</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Net connect</TD>
+<TD width=52%>Forces all queues to connect to the network</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Net disconnect</TD>
+<TD width=52%>Abandons all network connections</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Tidy</TD>
+<TD width=52%>Forces the system to perform an internal data compaction </TD>
+</TR>
+</TABLE><BR>
+
+<P>The following three examples show how to set up and start MSMQ on the new device. Enter the commands from the command prompt.</P>
+
+<PRE><CODE>\&gt; msmqadm register
+\&gt; msmqadm start
+</CODE></PRE>
+
+<P>or</P>
+
+<PRE><CODE>\&gt; msmqadm man
+&gt;register
+&gt;start
+&gt;exit
+\&gt;
+</CODE></PRE>
+
+<P>or</P>
+
+<PRE><CODE>\&gt; echo register &gt; start.txt
+\&gt; echo start &gt;&gt; start.txt
+\&gt; echo exit &gt;&gt; start.txt
+\&gt; msmqadm man start.txt
+\&gt;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

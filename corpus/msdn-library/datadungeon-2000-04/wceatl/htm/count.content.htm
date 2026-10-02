@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>COUNT/COUNTCTN</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<DIV STYLE="display:none;">
+
+
+
+
+
+
+
+
+</DIV>
+
+
+
+<H1><A NAME="_vcce_count_countctn"></A>COUNT/COUNTCTN</H1>
+
+<P>The COUNT sample demonstrates how to create a full control and a simple object, within the same DLL, that communicate with each other. The COUNTCTN sample is a simple dialog box application that provides a container for the CCount control.</P>
+
+<P>The CCountCtnDlg dialog box class has two public variables, m_Counter, which is a CCounter object, and m_nMaxCounter which is an integer that’s initialized to 10 in CCountCtnDlg’s constructor.</P>
+
+<P>CCounter is a full control. In addition to <B>IUnknown</B> and <B>IDispatch,</B> it implements the ICounter interface, which exposes three methods. It supports a dual interface, so you can either access the ICounter methods through <B>IDispatch::Invoke</B> or call them directly by way of the vtable. These methods are SetMaxCounter, StartCounting, and GetInfoFromCounter. CCounter also has one protected data member, called m_pIObject, which is a pointer to the IObject1 interface on a CObject1 object. </P>
+
+<P>CObject1 is a simple object. It also supports a dual interface. In addition to <B>IUnknown</B> and <B>IDispatch,</B> it implements the IObject1 interface<B>,</B> which exposes three methods. These methods are Initialize, SetMax, and Start. CObject1 has two protected data members. The m_pICounter data member contains a back-pointer to the ICounter interface on the CCounter control that instantiates it. The m_nMax data member is an integer.</P>
+
+<P>The CCounter constructor instantiates a CObject1 object and queries for a pointer to its IObject1 interface, which the CCounter control assigns to its m_pIObject data member. It then calls IObject1::Initialize, passing a back-pointer to itself, which the IObject1 object assigns to its m_pICounter data member.</P>
+
+<P>When a user enters a number between 1 and 15 in the dialog box’s edit control, the number is assigned to CCountCtnDlg::m_nMaxCounter. When the user taps the <B>Apply</B> button, CCountCtnDlg::OnSetMaxCounter invokes ICounter::SetMaxCounter on the CCounter control, passing the value of m_nMaxCounter as the argument. The ICounter::SetMaxCounter method invokes IObject1::SetMax on its m_pIObject member, passing along the value it was passed. IObject1::SetMax assigns this value to its m_nMax data member.</P>
+
+<P>When a user taps the <B>Start</B> button, CCountCtnDlg::OnStart invokes ICounter::StartCounting on the CCounter control. ICounter::StartCounting invokes IObject::Start on its m_pIObject member, which loops m_nMax times. Each time through the loop, it calls ICounter::GetInfoFromCounter, using the back-pointer stored in its m_pICounter member, passing in a text string that states the number of times it’s been through the loop. ICounter::GetInfoFromCounter displays the text string in its window on the dialog box.</P>
+
+<P>This sample demonstrates the following keywords:
+
+<UL type=disc>
+	<LI><A HREF="../../wcesdkr/htm/ki_uw_2.htm" TARGET="_top">IUnknown::QueryInterface</A><BR><BR></LI>
+
+	<LI><A HREF="../../wcesdkr/htm/uif_d_25.htm" TARGET="_top">DrawText</A><BR><BR></LI>
+
+	<LI><A HREF="../../wcesdkr/htm/uif_fg_13.htm" TARGET="_top">GetClientRect</A><BR><BR></LI>
+
+	<LI><A HREF="../../wcesdkr/htm/uif_pr_3.htm" TARGET="_top">PatBlt</A><BR><BR></LI>
+
+	<LI><A HREF="../../wcesdkr/htm/uif_pr_19.htm" TARGET="_top">Rectangle</A><BR><BR></LI>
+
+	<LI><A HREF="../../wcesdkr/htm/kf_s_49.htm" TARGET="_top">Sleep</A><BR><BR></LI>
+
+	<LI><A HREF="../../vcmfc/HTML/_atl_cwindow.3a3a.releasedc.htm" TARGET="_top">ReleaseDC</A><BR><BR></LI>
+
+	<LI><A HREF="../../wcesdkr/htm/kf_w_10.htm" TARGET="_top">wsprintf</A></LI>
+</UL>
+
+<P>You can find the COUNT project files in the Wce\Samples\Atl\COUNT directory.</P>
+
+<P>You can find the COUNTCTN project files in the Wce\Samples\Atl\COUNTCTN directory.</P>
+
+</BODY>
+</HTML>

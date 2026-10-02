@@ -1,0 +1,402 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Distributing an ADOCE Application</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+
+
+<H1><A NAME="_wceadoce_distributing_an_adoce_application"></A>Distributing an ADOCE Application</H1>
+
+<P>Distributing an ADOCE application can be complex because several components must be installed on the desktop computer as well as on the device. One way to distribute an ADOCE application is to make modifications to the sample setup application included with the Microsoft® Windows® CE Toolkit for Visual Basic® 6.0. The sample below describes how to do this. All ADOCE setup applications need to do the following:
+
+<UL type=disc>
+	<LI>Verify that Windows&nbsp;CE Services 2.1 or ActiveSync 3.0 is installed.<BR><BR></LI>
+
+	<LI>Add references to the ADOCE .cab files to the AppMgr .ini files for your application.<BR><BR></LI>
+
+	<LI>Copy Adofiltr.dll and Adofiltr.hlp to the Windows&nbsp;CE Services directory.<BR><BR></LI>
+
+	<LI>Copy Dbexport.exe to the Windows&nbsp;CE Services directory.<BR><BR></LI>
+
+	<LI>Modify the registry to add the <B>Import Database Tables</B> and <B>Export Database Tables </B>commands to the Windows&nbsp;CE Services <B>Tools </B>menu.<BR><BR></LI>
+
+	<LI>Register Adofiltr.dll on the desktop computer.</LI>
+</UL>
+
+<H1>Sample Distribution Application</H1>
+
+<P>The following procedure shows how to create a desktop computer application that installs an ADOCE application.
+
+<OL>
+	<LI>Create a new standard .exe project and place the code in <B>Code Listing 1</B> (following) in a new BAS module.<BR><BR></LI>
+
+	<LI>On the form, add two buttons named <B>cmdFinish</B> and <B>cmdExitSetup</B>. Add the code in <B>Code Listing 2</B> (following) to the form.<BR><BR></LI>
+
+	<LI>Place the following files in the same directory as the setup application for your executable file. The ADOCE setup application installs these files on your system. They must be copied into the directory where you run your executable file. To run the application from the integrated development environment (IDE), copy these files to the directory where you saved your project files.
+<UL type=disc>
+	<LI>Adoapmgr.ini<BR><BR></LI>
+
+	<LI>Adofiltr.dll<BR><BR></LI>
+
+	<LI>Adofiltr.hlp<BR><BR></LI>
+
+	<LI>Adomips.cab<BR><BR></LI>
+
+	<LI>Adosh3.cab<BR><BR></LI>
+
+	<LI>Dbexport.exe</LI>
+</UL>
+</LI>
+
+	<LI>Compile and run the installation application.</LI>
+</OL>
+
+<P><B>Code Listing 1 </B></P>
+
+<PRE><CODE>Option Explicit
+
+'*************************************************
+' Global variables
+'*************************************************
+
+Public gCEAppMgrPath As String
+Public gCEServicesPath As String
+Public gCEServicesMajorVersion As Integer
+Public gCEServicesMinorVersion As Integer
+
+
+'*************************************************
+' Win32 API Constants
+'*************************************************
+
+Public Const HKEY_LOCAL_MACHINE = &amp;H80000002
+Public Const HKEY_CLASSES_ROOT = &amp;H80000000
+Public Const HKEY_CURRENT_USER = &amp;H80000001
+Public Const KEY_QUERY_VALUE = &amp;H1
+Public Const REG_DWORD = 4                      ' 32-bit number
+Public Const READ_CONTROL = &amp;H20000
+Public Const STANDARD_RIGHTS_READ = (READ_CONTROL)
+Public Const STANDARD_RIGHTS_ALL = &amp;H1F0000
+Public Const KEY_CREATE_LINK = &amp;H20
+Public Const KEY_SET_VALUE = &amp;H2
+Public Const KEY_CREATE_SUB_KEY = &amp;H4
+Public Const KEY_ENUMERATE_SUB_KEYS = &amp;H8
+Public Const KEY_NOTIFY = &amp;H10
+Public Const SYNCHRONIZE = &amp;H100000
+Public Const KEY_READ = ((STANDARD_RIGHTS_READ Or KEY_QUERY_VALUE Or KEY_ENUMERATE_SUB_KEYS Or KEY_NOTIFY) And (Not SYNCHRONIZE))
+Public Const REG_SZ = 1                         ' Unicode null terminated string
+Public Const KEY_ALL_ACCESS = ((STANDARD_RIGHTS_ALL Or KEY_QUERY_VALUE Or KEY_SET_VALUE Or KEY_CREATE_SUB_KEY Or KEY_ENUMERATE_SUB_KEYS Or KEY_NOTIFY Or KEY_CREATE_LINK) And (Not SYNCHRONIZE))
+Public Const ERROR_SUCCESS = 0&amp;
+Public Const REG_OPTION_NON_VOLATILE = 0&amp;
+
+
+'*************************************************
+' Arrays to store list of cabfiles
+' necessary to pass on to ceappmgr.exe
+'*************************************************
+
+Public CabList(10) As String
+
+'*************************************************
+'  Win32 API declarations
+'*************************************************
+
+Declare Function RegQueryValueEx Lib "advapi32.dll" _
+Alias "RegQueryValueExA" (ByVal hKey As Long, ByVal szValueName _
+As String, ByVal lpReserved As Long, ByRef lpType As Long, ByVal _
+lpData As String, ByRef lpcbData As Long) As Long
+' If you declare the lpData parameter as String,
+' you must pass it By Value.
+
+Declare Function RegOpenKeyEx Lib "advapi32.dll" Alias _
+"RegOpenKeyExA" (ByVal hKey As Long, ByVal lpSubKey As String, _
+ByVal ulOptions As Long, ByVal samDesired As Long, phkResult _
+As Long) As Long
+
+Declare Function RegCloseKey Lib "advapi32.dll" (ByVal hKey As Long) _
+As Long
+
+' Function to create a registry key
+Declare Function RegCreateKeyEx Lib "advapi32.dll" Alias _
+"RegCreateKeyExA" (ByVal hKey As Long, ByVal lpSubKey As String, _
+ByVal Reserved As Long, ByVal lpClass As String, ByVal dwOptions _
+As Long, ByVal samDesired As Long, ByVal lpSecurityAttributes _
+As Long, phkResult As Long, lpdwDisposition As Long) As Long
+
+' Function to set REG_SZ values
+Declare Function RegSetValueExString Lib "advapi32.dll" Alias _
+"RegSetValueExA" (ByVal hKey As Long, ByVal lpValueName As String, _
+ByVal Reserved As Long, ByVal dwType As Long, ByVal lpValue As _
+String, ByVal cbData As Long) As Long
+
+' Function to set REG_DWORD values
+Declare Function RegSetValueExLong Lib "advapi32.dll" Alias _
+"RegSetValueExA" (ByVal hKey As Long, ByVal lpValueName As String, _
+ByVal Reserved As Long, ByVal dwType As Long, lpValue As Long, _
+ByVal cbData As Long) As Long
+
+'*************************************************
+' Global Functions
+'*************************************************
+   
+'*************************************************
+' Function Name: SetValueEx
+' Purpose:  Sets a Key Value from the system
+'           registry
+' Inputs:   hkey: a key returned by RegCreateKeyEx
+'           sValueName: A Value for the registry key
+'           lType: REG_SZ or REG_DWORD
+'           vValue: the data for the value in sValueName
+' Returns:  Boolean
+'
+'*************************************************
+
+Public Function SetValueEx(ByVal hKey As Long, sValueName As String, _
+   lType As Long, vValue As Variant) As Long
+       Dim lValue As Long
+       Dim sValue As String
+       Select Case lType
+           Case REG_SZ
+               sValue = vValue &amp; Chr$(0)
+               SetValueEx = RegSetValueExString(hKey, sValueName, 0&amp;, _
+                                              lType, sValue, Len(sValue))
+           Case REG_DWORD
+               lValue = vValue
+               SetValueEx = RegSetValueExLong(hKey, sValueName, 0&amp;, _
+   lType, lValue, 4)
+           End Select
+   End Function
+
+'*************************************************
+' Function Name: GetKeyValue
+' Purpose:  Get a Key Value from the system
+'           registry
+' Inputs:   lngKeyRoot:
+'           strKeyName: Key Name in the system registry
+'           strSubKeyRef:
+'           strKEYVAL
+' Returns:  Boolean
+'
+'*************************************************
+
+Public Function GetKeyValue(lngKeyRoot As Long, strKeyName As String, _
+strSubKeyRef As String, ByRef strKeyVal As String) As Boolean
+    Dim i As Long             ' Loop Counter
+    Dim lngRetCode As Long    ' Return Code
+    Dim lngHKey As Long       ' Handle To An Open Registry Key
+    Dim lngKeyValType As Long ' Data Type Of A Registry Key
+    Dim strTmpVal As String   ' Tempory Storage For A Registry Key Value
+    Dim lngKeyValSize As Long ' Size Of Registry Key
+
+    ' Open RegKey Under KeyRoot {HKEY_LOCAL_MACHINE...}
+    '------------------------------------------------------------
+    ' Open Registry Key
+    lngRetCode = RegOpenKeyEx(lngKeyRoot, strKeyName, 0, KEY_ALL_ACCESS, lngHKey)
+    ' Handle Error...
+    If (lngRetCode &lt;&gt; ERROR_SUCCESS) Then GoTo GetKeyError
+
+    strTmpVal = String$(1024, 0)        ' Allocate Variable Space
+    lngKeyValSize = 1024                ' Mark Variable Size
+
+    '------------------------------------------------------------
+    ' Retrieve Registry Key Value...
+    '------------------------------------------------------------
+    lngRetCode = RegQueryValueEx(lngHKey, strSubKeyRef, 0, _
+                         lngKeyValType, strTmpVal, lngKeyValSize)
+                         ' Get/Create Key Value
+
+    If (lngRetCode &lt;&gt; ERROR_SUCCESS) Then GoTo GetKeyError
+    ' Handle Errors
+
+    If (Asc(Mid(strTmpVal, lngKeyValSize, 1)) = 0) Then
+    ' Win95 Adds Null Terminated String...
+        strTmpVal = VBA.Left(strTmpVal, lngKeyValSize - 1)
+        ' Null Found, Extract From String
+    Else
+    ' WinNT Does NOT Null Terminate String...
+        strTmpVal = VBA.Left(strTmpVal, lngKeyValSize)
+        ' Null Not Found, Extract String Only
+    End If
+    '------------------------------------------------------------
+    ' Determine Key Value Type For Conversion...
+    '------------------------------------------------------------
+    Select Case lngKeyValType
+    ' Search Data Types...
+    Case REG_SZ
+        ' String Registry Key Data Type
+        strKeyVal = strTmpVal
+        ' Copy String Value
+    Case REG_DWORD
+        ' Double Word Registry Key Data Type
+        strKeyVal = ""
+        For i = Len(strTmpVal) To 1 Step -1
+        ' Convert Each Bit
+            strKeyVal = strKeyVal + Hex(Asc(Mid(strTmpVal, i, 1)))
+            ' Build Value Char. By Char.
+        Next
+        strKeyVal = Format$("&amp;h" + strKeyVal)
+        ' Convert Double Word To String
+    End Select
+
+    GetKeyValue = True
+    ' Return Success
+    lngRetCode = RegCloseKey(lngHKey)
+    ' Close Registry Key
+    Exit Function               ' Exit
+
+GetKeyError:    ' Cleanup After An Error Has Occurred...
+    strKeyVal = ""          ' Set Return Val To Empty String
+    GetKeyValue = False  ' Return Failure
+    lngRetCode = RegCloseKey(lngHKey)
+    ' Close Registry Key
+    
+End Function
+</CODE></PRE>
+
+<P><B>Code Listing 2</B></P>
+
+<PRE><CODE>Option Explicit
+
+Private Sub cmdExitSetup_Click()
+    Dim strMsg As String
+    Dim Style As Integer
+    Dim strTitle As String
+    Dim Response As Integer
+  
+    ' Ask if the user really wants to exit
+    strMsg = "Are you sure you want to exit?  " _
+    &amp; "Setup has not yet modified any files." ' Define message.
+    Style = vbYesNo + vbInformation ' Define buttons.
+    strTitle = "Setup"  ' Define title.
+    
+    ' Display message.
+    Response = MsgBox(strMsg, Style, strTitle)
+    If Response = vbYes Then    ' User chose Yes.
+        Unload Me
+    Else    ' User chose No.
+        ' Return to frmSelectC.
+    End If
+End Sub
+
+Private Sub cmdFinish_Click()
+    Dim ShellPath
+
+On Error GoTo Bail
+       
+    ' Copy all the files to the CE Services directory
+    ' The cab files are not copied at all
+            FileCopy App.Path &amp; "\adofiltr.dll", gCEServicesPath &amp; "\adofiltr.dll"
+            FileCopy App.Path &amp; "\adofiltr.hlp", gCEServicesPath &amp; "\adofiltr.hlp"
+            FileCopy App.Path &amp; "\dbexport.exe", gCEServicesPath &amp; "\dbexport.exe"
+
+    ' Call regsvr32 on the adofiltr.dll
+        Shell "regsvr32 /s " &amp; Chr(34) &amp; gCEServicesPath &amp; "\adofiltr.dll" &amp; Chr(34)
+        
+   
+    ' Add the registry keys for dbexport.exe
+   Dim sKeyName As String
+   Dim sValueName As String
+   Dim vValueSetting As Variant
+   Dim lValueType As Long
+   Dim lRetVal As Long      'result of the SetValueEx function
+   Dim hKey As Long         'handle of open key
+
+'Open the Windows CE Services key to add Export to the Windows CE Services Tools menu
+lRetVal = RegCreateKeyEx(HKEY_LOCAL_MACHINE, _
+                "SOFTWARE\Microsoft\Windows CE Services\CustomMenus\DBExport", _
+                0&amp;, _
+                vbNullString, _
+                REG_OPTION_NON_VOLATILE, _
+                KEY_ALL_ACCESS, _
+                0&amp;, hKey, lRetVal)
+
+lRetVal = SetValueEx(hKey, "Command", REG_SZ, gCEServicesPath &amp; "\dbexport.exe")
+lRetVal = SetValueEx(hKey, "DisplayName", REG_SZ, "&amp;Export Database Tables...")
+lRetVal = SetValueEx(hKey, "StatusHelp", REG_SZ, "This tool exports data from tables on the device to the host PC")
+lRetVal = SetValueEx(hKey, "Version", REG_DWORD, "&amp;H20000")
+RegCloseKey (hKey)
+
+'Open the Windows CE Services key to add Import to the Windows CE Services Tools menu
+lRetVal = RegCreateKeyEx(HKEY_LOCAL_MACHINE, _
+                "SOFTWARE\Microsoft\Windows CE Services\CustomMenus\DBImport", _
+                0&amp;, _
+                vbNullString, _
+                REG_OPTION_NON_VOLATILE, _
+                KEY_ALL_ACCESS, _
+                0&amp;, hKey, lRetVal)
+
+lRetVal = SetValueEx(hKey, "Command", REG_SZ, gCEServicesPath &amp; "\dbexport.exe /import")
+lRetVal = SetValueEx(hKey, "DisplayName", REG_SZ, "&amp;Import Database Tables...")
+lRetVal = SetValueEx(hKey, "StatusHelp", REG_SZ, "This tool imports data from the host PC to the device")
+lRetVal = SetValueEx(hKey, "Version", REG_DWORD, "&amp;H20000")
+RegCloseKey (hKey)
+
+    ' Call ceappmgr.exe with the appropriate ini files
+       MsgBox "Desktop setup successful!" &amp; vbCrLf &amp; "Setup will launch AppMgr and terminate." &amp; vbCrLf, vbOKOnly, "ADOCE Setup is A-OK!"
+       ShellPath = Chr(34) &amp; gCEAppMgrPath &amp; Chr(34) &amp; " " &amp; Chr(34) &amp; App.Path &amp; "\Adoapmgr.ini" &amp; Chr(34)
+       Shell ShellPath, vbNormalFocus
+                      
+    Unload Me
+    Exit Sub
+Bail:
+    MsgBox "Setup did not finish successfully due to the following error condition" &amp; vbCrLf &amp; vbCrLf &amp; _
+           "(" &amp; Err.Number &amp; ") " &amp; Err.Description, vbExclamation, "Setup Error"
+    Unload Me
+
+End Sub
+
+Private Sub Form_Load()
+    Dim strCabFiles As String   ' Name of cab file
+    Dim i As Integer            ' Loop count
+    Dim strCabVar As String     '
+    Dim strKeyVal As String
+    Dim blnRetVal As Boolean
+ 
+    ' Get the full path of the Windows CE Services AppMgr program
+    blnRetVal = GetKeyValue(HKEY_LOCAL_MACHINE, _
+          "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\CEAPPMGR.EXE", _
+          "", strKeyVal)
+     If blnRetVal = True Then
+        gCEAppMgrPath = strKeyVal
+    End If
+    
+    ' Get the path to the Windows CE Services directory
+    blnRetVal = GetKeyValue(HKEY_LOCAL_MACHINE, _
+          "SOFTWARE\Microsoft\Windows CE Services", _
+          "InstalledDir", strKeyVal)
+    If blnRetVal = True Then
+        gCEServicesPath = strKeyVal
+    End If
+
+    ' Get the MajorVersion of Windows CE Services
+    blnRetVal = GetKeyValue(HKEY_LOCAL_MACHINE, _
+          "SOFTWARE\Microsoft\Windows CE Services", _
+          "MajorVersion", strKeyVal)
+    If blnRetVal = True Then
+        gCEServicesMajorVersion = Val(strKeyVal)
+    End If
+    
+    ' Get the MinorVersion of Windows CE Services
+    blnRetVal = GetKeyValue(HKEY_LOCAL_MACHINE, _
+          "SOFTWARE\Microsoft\Windows CE Services", _
+          "MinorVersion", strKeyVal)
+    If blnRetVal = True Then
+        gCEServicesMinorVersion = Val(strKeyVal)
+    End If
+    
+    If (gCEServicesMajorVersion &lt;&gt; 2) Or (gCEServicesMinorVersion &lt; 1) Then
+        cmdFinish.Enabled = False
+        lblInstr2.ForeColor = vbRed
+    End If
+End Sub
+</CODE></PRE>
+
+</BODY>
+</HTML>

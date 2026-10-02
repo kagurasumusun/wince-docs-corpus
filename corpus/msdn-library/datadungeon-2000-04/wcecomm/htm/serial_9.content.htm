@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Configuring a Serial Port</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+
+
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_configuring_a_serial_port"></A>Configuring a Serial Port</H2>
+
+<P>The most critical phase in serial communications programming is configuring the port settings with the <A HREF="../../wcesdkr/htm/cs_az_4.htm" TARGET="_top"><B>DCB</B></A> structure. Erroneously initializing the <B>DCB</B> structure is a common problem. When a serial communications function does not produce the expected results, the <B>DCB</B> structure may be in err.</P>
+
+<P>A call to the <B>CreateFile</B> function opens a serial port with default port settings. Usually, the application needs to change the defaults. Use the <A HREF="../../wcesdkr/htm/cf_dg_26.htm" TARGET="_top"><B>GetCommState</B></A> function to retrieve the default settings and use the <A HREF="../../wcesdkr/htm/cf_sw_5.htm" TARGET="_top"><B>SetCommState</B></A> function to set new port settings.</P>
+
+<P>Also, port configuration involves using the <A HREF="../../wcesdkr/htm/cs_az_1.htm" TARGET="_top"><B>COMMTIMEOUTS</B></A> structure to set the time-out values for read/write operations. When a time-out occurs, the <B>ReadFile</B> or <B>WriteFile</B> function returns the specific number of characters successfully transferred.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To configure a serial port</H4>
+
+<OL>
+	<LI>Initialize the <I>DCBlength</I> member of the <B>DCB</B> structure to the size of the structure. This initialization is required before passing this member as a variable to any function.</li>
+
+	<LI>Call the <B>GetCommState</B> function to retrieve the default settings for the port opened with the <B>CreateFile</B> function. To identify the port, specify in the <I>hPort</I> parameter the handle that <B>CreateFile</B> returns.</li>
+
+	<LI>Modify <B>DCB</B> members as required. The following table shows the <B>DCB</B> structure members most frequently modified.</li>
+</OL>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=20%>
+<H5>Member</H5>
+</TD>
+<TD width=80%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>DCBlength</I></TD>
+<TD width=80%>Before calling the <B>GetCommState</B> function, set this member to the length of the <B>DCB</B> structure. Neglecting to do this can cause a failure or return erroneous data.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>BaudRate</I></TD>
+<TD width=80%>Specifies the device communication rate. Assigns an actual baud rate or an index by specifying a CBR_ constant.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>ByteSize</I></TD>
+<TD width=80%>Specifies the bits per byte transmitted and received.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>Parity</I></TD>
+<TD width=80%>Specifies the parity scheme. Do not confuse this member with the <I>fParity</I> member, which turns parity on or off. Because parity is rarely used, this member can usually be NOPARITY.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>StopBits</I></TD>
+<TD width=80%>Specifies the number of stop bits. ONESTOPBIT is the most common setting.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fOutX</I> and <I>fInX</I></TD>
+<TD width=80%>Turns software flow control on and off.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fRtsControl</I></TD>
+<TD width=80%>Turns the RTS flow control on and off. RTS_CONTROL_ENABLE turns on the RTS line during the connection. RTS_CONTROL_HANDSHAKE turns on RTS handshaking. RTS_CONTROL_DISABLE turns off the RTS line.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fOutxCtsFlow</I></TD>
+<TD width=80%>Turns the CTS flow control on and off. To use RTS/CTS flow control, specify TRUE for this member and RTS_CONTROL_HANDSHAKE for the <I>fRtsControl</I> member.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fOutxDsrFlow</I></TD>
+<TD width=80%>Turns the DSR flow control on and off. DSR flow control is rarely used. A typical port configuration is to set this member to FALSE, while enabling the DTR line.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%><I>fDtrControl</I></TD>
+<TD width=80%>Specifies the DTR flow control. DTR_CONTROL_ENABLE turns on the DTR line during the connection. DTR_CONTROL_HANDSHAKE turns on DTR handshaking. DTR_CONTROL_DISABLE turns off the DTR line.</TD>
+</TR>
+</TABLE><BR>
+
+<OL start=4>
+	<LI>Call the <B>SetCommState</B> function to set the new port settings.</li>
+</OL>
+
+<P>The following code example shows how to use the <B>GetCommState</B> and <B>SetCommState</B> functions to configure a serial port.</P>
+
+<PRE><CODE>DCB PortDCB;
+
+// Initialize the DCBlength member. 
+PortDCB.DCBlength = sizeof (DCB); 
+
+// Get the default port setting information.
+GetCommState (hPort, &amp;PortDCB);
+
+// Change the DCB structure settings.
+PortDCB.BaudRate = 9600;              // Current baud 
+PortDCB.fBinary = TRUE;               // Binary mode; no EOF check 
+PortDCB.fParity = TRUE;               // Enable parity checking 
+PortDCB.fOutxCtsFlow = FALSE;         // No CTS output flow control 
+PortDCB.fOutxDsrFlow = FALSE;         // No DSR output flow control 
+PortDCB.fDtrControl = DTR_CONTROL_ENABLE; 
+                                      // DTR flow control type 
+PortDCB.fDsrSensitivity = FALSE;      // DSR sensitivity 
+PortDCB.fTXContinueOnXoff = TRUE;     // XOFF continues Tx 
+PortDCB.fOutX = FALSE;                // No XON/XOFF out flow control 
+PortDCB.fInX = FALSE;                 // No XON/XOFF in flow control 
+PortDCB.fErrorChar = FALSE;           // Disable error replacement 
+PortDCB.fNull = FALSE;                // Disable null stripping 
+PortDCB.fRtsControl = RTS_CONTROL_ENABLE; 
+                                      // RTS flow control 
+PortDCB.fAbortOnError = FALSE;        // Do not abort reads/writes on 
+                                      // error
+PortDCB.ByteSize = 8;                 // Number of bits/byte, 4-8 
+PortDCB.Parity = NOPARITY;            // 0-4=no,odd,even,mark,space 
+PortDCB.StopBits = ONESTOPBIT;        // 0,1,2 = 1, 1.5, 2 
+
+// Configure the port according to the specifications of the DCB 
+// structure.
+if (!SetCommState (hPort, &amp;PortDCB))
+{
+  // Could not create the read thread.
+  MessageBox (hMainWnd, TEXT("Unable to configure the serial port"), 
+              TEXT("Error"), MB_OK);
+  dwError = GetLastError ();
+  return FALSE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

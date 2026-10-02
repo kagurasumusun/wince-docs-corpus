@@ -1,0 +1,251 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<style type="text/css">
+li {
+	list-style-type: none;
+	font-family: "Verdana", "Helvetica", sans-serif;
+}
+
+ul {
+	padding-left: 1em;
+}
+
+li .arrow {
+	position: absolute;
+	margin-left: -1em;
+}
+
+li > ul {
+	border-top: 1px solid #000000;
+}
+
+li:not(:last-of-type) {
+	border-bottom: 1px solid #000000;
+}
+
+a {
+	text-decoration: none;
+}
+
+li:target > a {
+	font-weight: bold;
+}
+
+/* https://stackoverflow.com/a/24298427 */
+body > ul > li:not(:first-of-type)::before,
+body > ul ul li::before {
+  content: '';
+  display: block;
+  height:      2.0em;
+  margin-top: -2.0em;
+  visibility: hidden;
+}
+</style>
+<style type="text/css">
+body {
+	margin: 0px;
+}
+
+ul {
+	margin: 0.25em;
+	margin-top: 0px;
+}
+
+.dd-library-filter {
+	position: sticky;
+	top: 0px;
+	z-index: 100;
+	background-color: white;
+	
+	padding: 0.25em;
+}
+
+.dd-library-filter > form {
+	margin: 0px;
+}
+</style>
+
+<script type="text/javascript">
+var filter_update_req = undefined;
+var filtered_toc = undefined;
+
+function filter_update()
+{
+	var filter = document.getElementById("filter-input").value;
+	var orig_toc = document.getElementById("original-toc");
+	
+	if(filter_update_req !== undefined)
+	{
+		filter_update_req.abort();
+		filter_update_req = undefined;
+	}
+	
+	if(filtered_toc == null)
+	{
+		filtered_toc = document.createElement("ul");
+		orig_toc.insertAdjacentElement("afterend", filtered_toc);
+	}
+	
+	if(filter === "")
+	{
+		orig_toc.style.display = "block";
+		filtered_toc.style.display = "none";
+		
+		return;
+	}
+	
+	filter_update_req = new XMLHttpRequest();
+	filter_update_req.onreadystatechange = function() {
+		if(this !== filter_update_req)
+		{
+			return;
+		}
+		
+		if (this.readyState == 4 && this.status == 200) {
+			var response = JSON.parse(this.responseText);
+			
+			while(filtered_toc.firstChild)
+			{
+				filtered_toc.removeChild(filtered_toc.firstChild);
+			}
+			
+			for(var i = 0; i < response.length; ++i)
+			{
+				var a = document.createElement("a");
+				a.setAttribute("href", response[i].url);
+				a.setAttribute("target", "_top");
+				a.appendChild(document.createTextNode(response[i].title));
+				
+				var li = document.createElement("li");
+				li.appendChild(a);
+				
+				filtered_toc.appendChild(li);
+			}
+			
+			orig_toc.style.display = "none";
+			filtered_toc.style.display = "block";
+		}
+	};
+	
+	filter_update_req.open("GET", "https://library.thedatadungeon.com/search/filter?q=" + filter + "&item=msdn-2000-04", true);
+	filter_update_req.send();
+}
+</script>
+</head>
+
+<body>
+<div class="dd-library-filter">
+<form action="https://library.thedatadungeon.com/search/library" method="GET" target="_top">
+<input type="text" name="q" autocomplete="off" id="filter-input" oninput="filter_update()">
+<input type="hidden" name="item" value="msdn-2000-04">
+<input type="submit" value="Search">
+</form>
+</div>
+
+<ul id="original-toc">
+<li id="toc0"><span class="arrow">&#x25BC;</span>MSDN Library - April 2000<ul>
+<li id="toc0_0"><a class="arrow" href="toc0_0.html#toc0_0">&#x25B6;</a><a href="toc0_0.html#toc0_0">Welcome to the MSDN Library</a></li>
+<li id="toc0_1"><a class="arrow" href="toc0_1.html#toc0_1">&#x25B6;</a><a href="toc0_1.html#toc0_1">Visual Studio 6.0 Documentation</a></li>
+<li id="toc0_2"><a class="arrow" href="toc0_2.html#toc0_2">&#x25B6;</a><a href="toc0_2.html#toc0_2">Office Developer Documentation</a></li>
+<li id="toc0_3"><span class="arrow">&#x25BC;</span>Windows CE Documentation<ul>
+<li id="toc0_3_0"><a class="arrow" href="toc0_3_0.html#toc0_3_0">&#x25B6;</a><a href="../wceintro/htm/introcor.htm" target="_top">Introduction to Windows CE</a></li>
+<li id="toc0_3_1"><a class="arrow" href="toc0_3_1.html#toc0_3_1">&#x25B6;</a><a href="toc0_3_1.html#toc0_3_1">Application Development</a></li>
+<li id="toc0_3_2"><span class="arrow">&#x25BC;</span>Visual Development Environment<ul>
+<li id="toc0_3_2_0"><span class="arrow">&#x25BC;</span>Windows CE Toolkit for Visual Basic 6.0<ul>
+<li id="toc0_3_2_0_0"><a href="../vbce/welcome.htm" target="_top">Welcome to the Windows CE Toolkit for Visual Basic 6.0</a></li>
+<li id="toc0_3_2_0_1"><a href="../vbce/readme.htm" target="_top">Windows CE Toolkit for Visual Basic 6.0 Release Notes</a></li>
+<li id="toc0_3_2_0_2"><a class="arrow" href="toc0_3_2_0_2.html#toc0_3_2_0_2">&#x25B6;</a><a href="../vbce/preface.htm" target="_top">Preface</a></li>
+<li id="toc0_3_2_0_3"><a class="arrow" href="toc0_3_2_0_3.html#toc0_3_2_0_3">&#x25B6;</a><a href="toc0_3_2_0_3.html#toc0_3_2_0_3">Programmer's Guide</a></li>
+<li id="toc0_3_2_0_4"><span class="arrow">&#x25BC;</span>Programmer's Reference<ul>
+<li id="toc0_3_2_0_4_0"><a href="../vbce/langref.htm" target="_top">Introduction to the Programmer's Reference</a></li>
+<li id="toc0_3_2_0_4_1"><a class="arrow" href="toc0_3_2_0_4_1.html#toc0_3_2_0_4_1">&#x25B6;</a><a href="../vbce/objects.htm" target="_top">Objects</a></li>
+<li id="toc0_3_2_0_4_2"><a class="arrow" href="toc0_3_2_0_4_2.html#toc0_3_2_0_4_2">&#x25B6;</a><a href="../vbce/controls.htm" target="_top">Controls</a></li>
+<li id="toc0_3_2_0_4_3"><a class="arrow" href="toc0_3_2_0_4_3.html#toc0_3_2_0_4_3">&#x25B6;</a><a href="../vbce/proprts.htm" target="_top">Properties</a></li>
+<li id="toc0_3_2_0_4_4"><a class="arrow" href="toc0_3_2_0_4_4.html#toc0_3_2_0_4_4">&#x25B6;</a><a href="../vbce/methods.htm" target="_top">Methods</a></li>
+<li id="toc0_3_2_0_4_5"><span class="arrow">&#x25BC;</span><a href="../vbce/events.htm" target="_top">Events</a><ul>
+<li id="toc0_3_2_0_4_5_0"><a href="../vbce/events_1.htm" target="_top">Activate</a></li>
+<li id="toc0_3_2_0_4_5_1"><a href="../vbce/events_2.htm" target="_top">AfterLabelEdit</a></li>
+<li id="toc0_3_2_0_4_5_2"><a href="../vbce/events_3.htm" target="_top">BeforeLabelEdit</a></li>
+<li id="toc0_3_2_0_4_5_3"><a href="../vbce/events_4.htm" target="_top">ButtonClick</a></li>
+<li id="toc0_3_2_0_4_5_4"><a href="../vbce/events_5.htm" target="_top">Change</a></li>
+<li id="toc0_3_2_0_4_5_5"><a href="../vbce/events_6.htm" target="_top">Click</a></li>
+<li id="toc0_3_2_0_4_5_6"><a href="../vbce/events_7.htm" target="_top">Close</a></li>
+<li id="toc0_3_2_0_4_5_7"><a href="../vbce/events_8.htm" target="_top">Collapse</a></li>
+<li id="toc0_3_2_0_4_5_8"><a href="../vbce/events_9.htm" target="_top">ColumnClick</a></li>
+<li id="toc0_3_2_0_4_5_9"><a href="../vbce/events_10.htm" target="_top">ComboBoxChange</a></li>
+<li id="toc0_3_2_0_4_5_10"><a href="../vbce/events_11.htm" target="_top">ComboBoxClick</a></li>
+<li id="toc0_3_2_0_4_5_11"><a href="../vbce/events_12.htm" target="_top">Compare</a></li>
+<li id="toc0_3_2_0_4_5_12"><a href="../vbce/events_13.htm" target="_top">ConnectionRequest</a></li>
+<li id="toc0_3_2_0_4_5_13"><a href="../vbce/events_14.htm" target="_top">DataArrival</a></li>
+<li id="toc0_3_2_0_4_5_14"><a href="../vbce/events_15.htm" target="_top">DblClick</a></li>
+<li id="toc0_3_2_0_4_5_15"><a href="../vbce/events_16.htm" target="_top">Deactivate</a></li>
+<li id="toc0_3_2_0_4_5_16"><a href="../vbce/events_17.htm" target="_top">DropDown</a></li>
+<li id="toc0_3_2_0_4_5_17"><a href="../vbce/events_18.htm" target="_top">EnterCell</a></li>
+<li id="toc0_3_2_0_4_5_18"><a href="../vbce/events_19.htm" target="_top">Error</a></li>
+<li id="toc0_3_2_0_4_5_19"><a href="../vbce/events_20.htm" target="_top">Expand</a></li>
+<li id="toc0_3_2_0_4_5_20"><a href="../vbce/events_21.htm" target="_top">HelpClick</a></li>
+<li id="toc0_3_2_0_4_5_21"><a href="../vbce/events_22.htm" target="_top">GotFocus</a></li>
+<li id="toc0_3_2_0_4_5_22"><a href="../vbce/events_23.htm" target="_top">KeyDown</a></li>
+<li id="toc0_3_2_0_4_5_23"><a href="../vbce/events_24.htm" target="_top">KeyPress</a></li>
+<li id="toc0_3_2_0_4_5_24"><a href="../vbce/events_25.htm" target="_top">KeyUp</a></li>
+<li id="toc0_3_2_0_4_5_25"><a href="../vbce/events_26.htm" target="_top">LeaveCell</a></li>
+<li id="toc0_3_2_0_4_5_26"><a href="../vbce/events_27.htm" target="_top">Load</a></li>
+<li id="toc0_3_2_0_4_5_27"><a href="../vbce/events_28.htm" target="_top">LostFocus</a></li>
+<li id="toc0_3_2_0_4_5_28"><a href="../vbce/events_29.htm" target="_top">MenuClick</a></li>
+<li id="toc0_3_2_0_4_5_29"><a href="../vbce/events_30.htm" target="_top">MouseDown</a></li>
+<li id="toc0_3_2_0_4_5_30"><a href="../vbce/events_31.htm" target="_top">MouseMove</a></li>
+<li id="toc0_3_2_0_4_5_31"><a href="../vbce/events_32.htm" target="_top">MouseUp</a></li>
+<li id="toc0_3_2_0_4_5_32"><a href="../vbce/events_33.htm" target="_top">NodeClick</a></li>
+<li id="toc0_3_2_0_4_5_33"><a href="../vbce/events_34.htm" target="_top">OKClick</a></li>
+<li id="toc0_3_2_0_4_5_34"><a href="../vbce/events_35.htm" target="_top">OnComm</a></li>
+<li id="toc0_3_2_0_4_5_35"><a href="../vbce/events_36.htm" target="_top">Paint</a></li>
+<li id="toc0_3_2_0_4_5_36"><a href="../vbce/events_37.htm" target="_top">QueryUnload</a></li>
+<li id="toc0_3_2_0_4_5_37"><a href="../vbce/events_38.htm" target="_top">Resize</a></li>
+<li id="toc0_3_2_0_4_5_38"><a href="../vbce/events_39.htm" target="_top">RowColChange</a></li>
+<li id="toc0_3_2_0_4_5_39"><a href="../vbce/events_40.htm" target="_top">Scroll (Grid)</a></li>
+<li id="toc0_3_2_0_4_5_40"><a href="../vbce/events_41.htm" target="_top">Scroll (Intrinsic)</a></li>
+<li id="toc0_3_2_0_4_5_41"><a href="../vbce/events_42.htm" target="_top">SelChange</a></li>
+<li id="toc0_3_2_0_4_5_42"><a href="../vbce/events_43.htm" target="_top">SendComplete</a></li>
+<li id="toc0_3_2_0_4_5_43"><a href="../vbce/events_44.htm" target="_top">SendProgress</a></li>
+<li id="toc0_3_2_0_4_5_44"><a href="../vbce/events_45.htm" target="_top">Terminate</a></li>
+<li id="toc0_3_2_0_4_5_45"><a href="../vbce/events_46.htm" target="_top">Timer</a></li>
+<li id="toc0_3_2_0_4_5_46"><a href="../vbce/events_47.htm" target="_top">Unload</a></li>
+</ul>
+</li>
+<li id="toc0_3_2_0_4_6"><a class="arrow" href="toc0_3_2_0_4_6.html#toc0_3_2_0_4_6">&#x25B6;</a><a href="../vbce/function.htm" target="_top">Functions</a></li>
+<li id="toc0_3_2_0_4_7"><a class="arrow" href="toc0_3_2_0_4_7.html#toc0_3_2_0_4_7">&#x25B6;</a><a href="../vbce/constant.htm" target="_top">Constants</a></li>
+<li id="toc0_3_2_0_4_8"><a class="arrow" href="toc0_3_2_0_4_8.html#toc0_3_2_0_4_8">&#x25B6;</a><a href="../vbce/statemnt.htm" target="_top">Statements</a></li>
+<li id="toc0_3_2_0_4_9"><a class="arrow" href="toc0_3_2_0_4_9.html#toc0_3_2_0_4_9">&#x25B6;</a><a href="../vbce/operator.htm" target="_top">Operators</a></li>
+</ul>
+</li>
+<li id="toc0_3_2_0_5"><a class="arrow" href="toc0_3_2_0_5.html#toc0_3_2_0_5">&#x25B6;</a><a href="toc0_3_2_0_5.html#toc0_3_2_0_5">Appendix</a></li>
+</ul>
+</li>
+<li id="toc0_3_2_1"><a class="arrow" href="toc0_3_2_1.html#toc0_3_2_1">&#x25B6;</a><a href="toc0_3_2_1.html#toc0_3_2_1">ADO for Windows CE</a></li>
+<li id="toc0_3_2_2"><a class="arrow" href="toc0_3_2_2.html#toc0_3_2_2">&#x25B6;</a><a href="toc0_3_2_2.html#toc0_3_2_2">Microsoft ADO for Windows CE, Version 2.12</a></li>
+<li id="toc0_3_2_3"><a class="arrow" href="toc0_3_2_3.html#toc0_3_2_3">&#x25B6;</a><a href="toc0_3_2_3.html#toc0_3_2_3">Windows CE Toolkit for Visual C++ 6.0</a></li>
+</ul>
+</li>
+<li id="toc0_3_3"><a class="arrow" href="toc0_3_3.html#toc0_3_3">&#x25B6;</a><a href="../wcegloss/htm/gloss.htm" target="_top">Windows CE Glossary</a></li>
+</ul>
+</li>
+<li id="toc0_4"><a class="arrow" href="toc0_4.html#toc0_4">&#x25B6;</a><a href="toc0_4.html#toc0_4">Platform SDK</a></li>
+<li id="toc0_5"><a class="arrow" href="toc0_5.html#toc0_5">&#x25B6;</a><a href="toc0_5.html#toc0_5">SDK Documentation</a></li>
+<li id="toc0_6"><a class="arrow" href="toc0_6.html#toc0_6">&#x25B6;</a><a href="toc0_6.html#toc0_6">DDK Documentation</a></li>
+<li id="toc0_7"><a class="arrow" href="toc0_7.html#toc0_7">&#x25B6;</a><a href="toc0_7.html#toc0_7">Windows Resource Kits</a></li>
+<li id="toc0_8"><a class="arrow" href="toc0_8.html#toc0_8">&#x25B6;</a><a href="toc0_8.html#toc0_8">Knowledge Base</a></li>
+<li id="toc0_9"><a class="arrow" href="toc0_9.html#toc0_9">&#x25B6;</a><a href="toc0_9.html#toc0_9">Technical Articles</a></li>
+<li id="toc0_10"><a class="arrow" href="toc0_10.html#toc0_10">&#x25B6;</a><a href="toc0_10.html#toc0_10">Backgrounders</a></li>
+<li id="toc0_11"><a class="arrow" href="toc0_11.html#toc0_11">&#x25B6;</a><a href="toc0_11.html#toc0_11">Specifications</a></li>
+<li id="toc0_12"><a class="arrow" href="toc0_12.html#toc0_12">&#x25B6;</a><a href="toc0_12.html#toc0_12">Books</a></li>
+<li id="toc0_13"><a class="arrow" href="toc0_13.html#toc0_13">&#x25B6;</a><a href="toc0_13.html#toc0_13">Partial Books</a></li>
+<li id="toc0_14"><a class="arrow" href="toc0_14.html#toc0_14">&#x25B6;</a><a href="toc0_14.html#toc0_14">Periodicals</a></li>
+<li id="toc0_15"><a class="arrow" href="toc0_15.html#toc0_15">&#x25B6;</a><a href="toc0_15.html#toc0_15">Samples</a></li>
+</ul>
+</li>
+</ul>
+
+</body>
+</html>

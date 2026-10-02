@@ -1,0 +1,284 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing the HTTP Protocol</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+
+
+
+
+
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_accessing_the_http_protocol"></A>Accessing the HTTP Protocol</H2>
+
+<P>Use the HTTP functions provided by WinInet to use the HTTP protocol to access resources on the Internet. The following illustration shows the relationships of the WinInet functions used to access the HTTP protocol. Shaded boxes represent functions that return HINTERNET handles, while the plain boxes represent functions that use the HINTERNET handle created by the function on which they depend.</P>
+
+<P><IMG SRC="httphnd1.gif" ALT="" BORDER=0></P>
+
+<P><B>HttpAddRequestHeaders</B>, <B>HttpQueryInfo</B>, and <B>HttpSendRequest</B>, are dependent on the HINTERNET handle created by <B>HttpOpenRequest</B>. </P>
+
+<P>The following illustration shows the WinInet functions that use the HINTERNET handle created by <B>HttpOpenRequest</B> after it is sent by <B>HttpSendRequest</B>. The shaded boxes represent functions that return HINTERNET handles, while the plain boxes represent functions that use the HINTERNET handle created by the function on which they depend.</P>
+
+<P><IMG SRC="httphnd2.gif" ALT="" BORDER=0></P>
+
+<P>After <B>HttpSendRequest</B> has been used on the handle returned by <B>HttpOpenRequest</B>, <B>InternetQueryDataAvailable</B>, and <B>InternetReadFile</B>, can be used on that handle.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use the HTTP WinInet functions</H4>
+
+<OL>
+	<LI>Call the <A HREF="../../wcesdkr/htm/cf_hk_26.htm" TARGET="_top"><B>InternetOpen</B></A> function to initialize an Internet handle. 
+<P><B>InternetOpen</B> creates the root HINTERNET handle used to establish the HTTP session. The HINTERNET is used by all subsequent functions.
+</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_hk_18.htm" TARGET="_top"><B>InternetConnect</B></A> using the HINTERNET returned by <B>InternetOpen</B> to create an HTTP session.
+<P>When calling <B>InternetConnect</B>, specify INTERNET_DEFAULT_HTTP for the <I>nServerPort</I> parameter and INTERNET_SERVICE_HTTP for the <I>dwService</I> parameter.
+
+<P><B>InternetConnect</B> uses the handle returned by <B>InternetOpen</B> to create a specific HTTP session. <B>InternetConnect</B> initializes an HTTP session for the specified site, using the arguments passed to it and creates HINTERNET that is a branch off the root handle. <B>InternetConnect</B> does not attempt to access or establish a connection to the specified site.
+</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_hk_4.htm" TARGET="_top"><B>HttpOpenRequest</B></A> to open an HTTP request handle. 
+<P><B>HttpOpenRequest</B> uses the handle created by <B>InternetConnect</B> to establish a connection to the specified site.
+</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_hk_6.htm" TARGET="_top"><B>HttpSendRequest</B>,</A> using the handle created by the <B>HttpOpenRequest</B> to send a HTTP request to the HTTP server. </li>
+
+	<LI>Call <A HREF="#"><B>InternetReadFile</B></A> to download data. 
+<P>–Or–
+
+<P>Call <A HREF="../../wcesdkr/htm/cf_hk_28.htm" TARGET="_top"><B>InternetQueryDataAvailable</B></A> to query how much data is available to be read by a subsequent call to <B>InternetReadFile</B>. 
+</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_hk_16.htm" TARGET="_top"><B>InternetCloseHandle</B></A> to close the handle created by <B>HttpOpenRequest</B>. </li>
+
+	<LI>Call <B>InternetCloseHandle</B> to close the HTTP session created by<B> InternetConnect</B>. </li>
+
+	<LI>Call <B>InternetCloseHandle</B> to close the handle created by <B>InternetOpen</B>. </li>
+</OL>
+
+<P>The following example <B>GetInternetFile</B> function shows how to use the HTTP functions to establish an HTTP session and retrieve a file. Two global <B>Boolean</B> variables g_bproxy, use proxy server, and g_bOpenURL, use URL, are options set in the CeHttp application dialog. </P>
+
+<PRE><CODE>/***********************************************************************
+
+FUNCTION: 
+  GetInternetFile
+
+PURPOSE: 
+  This function demonstrates how to create and submit an HTTP request.
+  It requests the default HTML document from the server, and then 
+  displays it along with the HTTP transaction headers.
+ 
+***********************************************************************/
+BOOL GetInternetFile (LPTSTR lpszServer, LPTSTR lpszProxyServer)
+{
+  BOOL bReturn = FALSE;
+
+  HINTERNET hOpen = NULL, 
+            hConnect = NULL, 
+            hRequest = NULL;
+
+  DWORD dwSize = 0, 
+        dwFlags = INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE; 
+
+  TCHAR szErrMsg[200];
+  
+  char *lpBufferA,
+       *lpHeadersA;
+
+  TCHAR *lpBufferW,
+        *lpHeadersW;
+
+  LPTSTR AcceptTypes[2] = {TEXT("*/*"), NULL}; 
+
+ 
+  // Initialize the use of the Windows CE Internet functions.
+  if (g_bProxy)
+  {
+    hOpen = InternetOpen (TEXT("CeHttp"), INTERNET_OPEN_TYPE_PROXY, 
+                          lpszProxyServer, 0, 0);
+  }
+  else
+  {
+    hOpen = InternetOpen (TEXT("CeHttp"), INTERNET_OPEN_TYPE_PRECONFIG,
+                          NULL, 0, 0);
+  }
+
+  if (!hOpen)
+  {
+    wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("InternetOpen Error"), 
+              GetLastError());
+    return FALSE;
+  }
+  
+  if (g_bOpenURL)
+  {
+    if (!(hRequest = InternetOpenUrl (hOpen, lpszServer, NULL, 0, 
+                                      INTERNET_FLAG_RELOAD, 0)))
+    {
+      wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("InternetOpenUrl Error"),
+                GetLastError());
+      goto exit;
+    }
+  }
+  else
+  {
+    // Open an HTTP session for a specified site by using lpszServer. 
+    if (!(hConnect = InternetConnect (hOpen, 
+                                      lpszServer, 
+                                      INTERNET_INVALID_PORT_NUMBER, 
+                                      NULL, NULL, 
+                                      INTERNET_SERVICE_HTTP, 
+                                      0, 0)))
+    {
+      wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("InternetConnect Error"),
+                GetLastError());
+      goto exit;
+    }
+
+    // Open an HTTP request handle. 
+    if (!(hRequest = HttpOpenRequest (hConnect, 
+                                      TEXT("GET"), 
+                                      NULL, 
+                                      HTTP_VERSION, 
+                                      NULL, 
+                                      (LPCTSTR*)AcceptTypes, 
+                                      dwFlags, 0)))
+    {
+      wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("HttpOpenRequest Error"),
+                GetLastError());
+      goto exit;
+    }
+
+    // Send a request to the HTTP server. 
+    if (!HttpSendRequest (hRequest, NULL, 0, NULL, 0))
+    {
+      wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("HttpSendRequest Error"),
+                GetLastError());
+      goto exit;
+    }
+  }
+  
+  // Call HttpQueryInfo to find out the size of the headers.
+  HttpQueryInfo (hRequest, HTTP_QUERY_RAW_HEADERS_CRLF, NULL, &amp;dwSize,
+                 NULL);
+
+  // Allocate a block of memory for lpHeadersA.
+  lpHeadersA = new CHAR [dwSize];
+
+  // Call HttpQueryInfo again to get the headers.
+  if (!HttpQueryInfo (hRequest, 
+                      HTTP_QUERY_RAW_HEADERS_CRLF, 
+                      (LPVOID) lpHeadersA, &amp;dwSize, NULL))
+  {
+    wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("HttpQueryInfo"), 
+              GetLastError());
+    goto exit;
+  }
+  else
+  {
+    // Clear all of the existing text in the edit control and prepare  
+    // to put the new information in it.
+    SendMessage (g_hwndEdit, EM_SETSEL, 0, -1);
+    SendMessage (g_hwndEdit, WM_CLEAR, 0, 0);
+    SendMessage (g_hwndEdit, WM_PAINT, TRUE, 0);
+  }
+
+  // Terminate headers with NULL.
+  lpHeadersA [dwSize] = '\0';
+  
+  // Get the required size of the buffer that receives the Unicode 
+  // string. 
+  dwSize = MultiByteToWideChar (CP_ACP, 0, lpHeadersA, -1, NULL, 0);
+  
+  // Allocate a block of memory for lpHeadersW.
+  lpHeadersW = new TCHAR [dwSize];
+
+  // Convert headers from ASCII to Unicode
+  MultiByteToWideChar (CP_ACP, 0, lpHeadersA, -1, lpHeadersW, dwSize);  
+  
+  // Put the headers in the edit control.
+  SendMessage (g_hwndMain, WM_PUTTEXT, NULL, (LPARAM) lpHeadersW);
+   
+  // Free the blocks of memory.
+  delete[] lpHeadersA;
+  delete[] lpHeadersW;
+
+  // Allocate a block of memory for lpHeadersW.
+  lpBufferA = new CHAR [32000];
+
+  do
+  {
+    if (!InternetReadFile (hRequest, (LPVOID)lpBufferA, 32000, &amp;dwSize))
+    {
+      wsprintf(szErrMsg, TEXT("%s: %x"), TEXT("InternetReadFile Error"), 
+               GetLastError());
+      goto exit;
+    }
+
+    if (dwSize != 0)    
+    {
+      // Terminate headers with NULL.
+      lpBufferA [dwSize] = '\0';                 
+
+      // Get the required size of the buffer which receives the Unicode
+      // string. 
+      dwSize = MultiByteToWideChar (CP_ACP, 0, lpBufferA, -1, NULL, 0);
+      
+      // Allocate a block of memory for lpBufferW.
+      lpBufferW = new TCHAR [dwSize];
+      
+      // Convert the buffer from ASCII to Unicode.
+      MultiByteToWideChar (CP_ACP, 0, lpBufferA, -1, lpBufferW, dwSize);  
+
+      // Put the buffer in the edit control.
+      SendMessage (g_hwndMain, WM_PUTTEXT, NULL, (LPARAM) lpBufferW);      
+
+      // Free the block of memory.
+      delete[] lpBufferW;  
+    }    
+  } while (dwSize);
+
+  // Free the block of memory.
+  delete[] lpBufferA;  
+
+  bReturn = TRUE;
+
+exit:
+
+  // Close the Internet handles.
+  if (hOpen)
+  {
+    if (!InternetCloseHandle (hOpen))
+      wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("CloseHandle Error"), 
+                GetLastError());
+  }
+  
+  if (hConnect)
+  {
+    if (!InternetCloseHandle (hConnect))
+      wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("CloseHandle Error"), 
+                GetLastError());
+  }
+
+  if (hRequest)
+  {
+    if (!InternetCloseHandle (hRequest))
+      wsprintf (szErrMsg, TEXT("%s: %x"), TEXT("CloseHandle Error"), 
+                GetLastError());
+  }
+
+  return bReturn;
+}</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

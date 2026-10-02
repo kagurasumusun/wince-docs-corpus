@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Determining Available Network Resources</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+
+
+
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_determining_available_network_resources"></A>Determining Available Network Resources</H2>
+
+<P>To determine the resources available on a network, an application passes the address of a <A HREF="../../wcesdkr/htm/cs_az_17.htm" TARGET="_top"><B>NETRESOURCE</B></A> structure to the <B>WNetOpenEnum</B> function. Calling <A HREF="../../wcesdkr/htm/cf_sw_18.htm" TARGET="_top"><B>WNetOpenEnum</B></A> initializes an enumeration instance with the <B>NETRESOURCE</B> structure specifying the enumeration parameters.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To identify available network resources</H4>
+
+<OL>
+	<LI>Set up the <B>NETRESOURCE</B> structure to define enumeration.
+<P>To enumerate a <I>shared directory</I> on a server, change the <I>lpRemoteName</I> member in <B>NETRESOURCE</B> to the name of the server. Similarly, to enumerate servers in a domain, change the <I>lpRemoteName</I> to the name of the domain.
+
+<P>The following code example shows how to enumerate a shared directory on a server.
+
+<PRE><CODE>NETRESOURCE nr;
+
+nr.dwScope = RESOURCE_GLOBALNET;
+nr.dwType = RESOURCETYPE_DISK;  
+nr.dwUsage = RESOURCEUSAGE_CONTAINER;
+nr.lpLocalName = TEXT("");
+nr.lpRemoteName = TEXT("\\\\MyServer");
+nr.lpComment = TEXT("");
+nr.lpProvider = TEXT("");
+
+EnumerateFunc (hwnd, &amp;nr); 
+
+</CODE></PRE>
+
+<P>The following code example shows how to enumerate servers in a domain.
+
+<PRE><CODE>NETRESOURCE nr;
+
+nr.dwScope = RESOURCE_GLOBALNET;
+nr.dwType = RESOURCETYPE_DISK;  
+nr.dwUsage = RESOURCEUSAGE_CONTAINER;
+nr.lpLocalName = TEXT("");
+nr.lpRemoteName = TEXT("MyDomain");
+nr.lpComment = TEXT("");
+nr.lpProvider = TEXT("");
+
+EnumerateFunc (hwnd, &amp;nr); 
+
+</CODE></PRE>
+</li>
+
+	<LI>Call <B>WNetOpenEnum</B> to create an enumeration handle to the resource defined by <B>NETRESOURCE</B>.</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_sw_22.htm" TARGET="_top"><B>WNetEnumResource</B></A> with the enumeration handle created in the previous step to package the resource data in an array of <B>NETRESOURCE</B> structures.</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_sw_18.htm" TARGET="_top"><B>WNetCloseEnum</B></A> to close the enumeration handle.
+<P>An application can continue enumerating any container's resources.
+</li>
+</OL>
+
+<P>If the <I>dwUsage</I> member of <B>NETRESOURCE</B> returned by <B>WNetEnumResource</B> is RESOURCEUSAGE_CONTAINER, an application can continue enumerating that container by passing the address of that structure to <B>WNetOpenEnum</B>. If <I>dwUsage</I> is RESOURCEUSAGE_CONNECTABLE, an application can add a connection to the resource by passing the structure address to the <A HREF="../../wcesdkr/htm/cf_sw_16.htm" TARGET="_top"><B>WNetAddConnection3</B></A> function. For more information, see <A HREF="winnet_12.htm" TARGET="_top">Establishing a Network Connection</A>.</P>
+
+<P>The following code example shows how an application-defined function, <B>EnumerateFunc</B>, that enumerates all the resources in a subdirectory on a network. This function takes a pointer to a <B>NETRESOURCE</B> structure describing the subdirectory. Whenever <B>WNetEnumResource</B> returns a <B>NETRESOURCE</B> structure with the <I>dwUsage</I> member corresponding to RESOURCEUSAGE_CONTAINER, <B>EnumerateFunc</B> calls itself and passes a pointer to this structure in its call to <B>WNetOpenEnum</B>.</P>
+
+<PRE><CODE>BOOL WINAPI EnumerateFunc (HWND hwnd, LPNETRESOURCE lpnr)
+{
+  HANDLE hEnum;
+
+  DWORD dwIndex,
+        dwResult,
+        dwBufferSize = 16384,       
+        dwNumEntries = 0xFFFFFFFF;  // Enumerate all possible entries.
+
+  LPNETRESOURCE lpnrLocal;          // Pointer to enumerated structures.
+
+  dwResult = WNetOpenEnum (
+                    RESOURCE_GLOBALNET, // All resources on the network
+                    RESOURCETYPE_ANY,   // All resources 
+                    0,                  // Enumerate all resources.
+                    lpnr,               // The container to enumerate
+                    &amp;hEnum);            // Handle to resource
+
+  if (dwResult != ERROR_SUCCESS) 
+  {
+    ErrorHandler (hwnd, dwResult, TEXT("WNetOpenEnum"));
+    return FALSE;
+  }
+
+  // Allocate memory for NETRESOURCE structures.
+  if (!(lpnrLocal = (LPNETRESOURCE) LocalAlloc (LPTR, dwBufferSize)))
+    MessageBox (hwnd, TEXT("Not enough memory"), TEXT("Error"), MB_OK);
+    
+  do 
+  {
+    dwResult = WNetEnumResource (
+                    hEnum,              // Resource handle
+                    &amp;dwNumEntries,      // Number of entries
+                    lpnrLocal,          // LPNETRESOURCE
+                    &amp;dwBufferSize);     // Buffer size
+
+    if (dwResult == ERROR_SUCCESS) 
+    {
+      for (dwIndex = 0; dwIndex &lt; dwNumEntries; dwIndex++)
+      {
+        // Insert code here to perform operations with lpnrLocal
+        // for example, to display contents of NETRESOURCE structures.
+        // ...
+
+        // If this NETRESOURCE is a container, call the function
+        // recursively.
+        if (RESOURCEUSAGE_CONTAINER ==
+            (lpnrLocal[dwIndex].dwUsage &amp; RESOURCEUSAGE_CONTAINER))
+        {
+          if(!EnumerateFunc (hwnd, &amp;lpnrLocal[dwIndex]))
+              MessageBox (hwnd, TEXT("EnumerateFunc returned FALSE."), 
+                          TEXT("Error"), MB_OK);
+        }
+      }
+    }
+    else if (dwResult != ERROR_NO_MORE_ITEMS) 
+    {
+      ErrorHandler (hwnd, dwResult, TEXT("WNetEnumResource"));
+      break;
+    }
+  } while (dwResult != ERROR_NO_MORE_ITEMS);
+
+  LocalFree (lpnrLocal);
+
+  dwResult = WNetCloseEnum (hEnum);
+
+  if (dwResult != ERROR_SUCCESS) 
+  {
+    ErrorHandler (hwnd, dwResult, TEXT("WNetCloseEnum"));
+    return FALSE;
+  }
+
+  return TRUE;
+} 
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

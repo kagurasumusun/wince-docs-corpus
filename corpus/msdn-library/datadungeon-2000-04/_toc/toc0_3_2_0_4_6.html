@@ -1,0 +1,293 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<style type="text/css">
+li {
+	list-style-type: none;
+	font-family: "Verdana", "Helvetica", sans-serif;
+}
+
+ul {
+	padding-left: 1em;
+}
+
+li .arrow {
+	position: absolute;
+	margin-left: -1em;
+}
+
+li > ul {
+	border-top: 1px solid #000000;
+}
+
+li:not(:last-of-type) {
+	border-bottom: 1px solid #000000;
+}
+
+a {
+	text-decoration: none;
+}
+
+li:target > a {
+	font-weight: bold;
+}
+
+/* https://stackoverflow.com/a/24298427 */
+body > ul > li:not(:first-of-type)::before,
+body > ul ul li::before {
+  content: '';
+  display: block;
+  height:      2.0em;
+  margin-top: -2.0em;
+  visibility: hidden;
+}
+</style>
+<style type="text/css">
+body {
+	margin: 0px;
+}
+
+ul {
+	margin: 0.25em;
+	margin-top: 0px;
+}
+
+.dd-library-filter {
+	position: sticky;
+	top: 0px;
+	z-index: 100;
+	background-color: white;
+	
+	padding: 0.25em;
+}
+
+.dd-library-filter > form {
+	margin: 0px;
+}
+</style>
+
+<script type="text/javascript">
+var filter_update_req = undefined;
+var filtered_toc = undefined;
+
+function filter_update()
+{
+	var filter = document.getElementById("filter-input").value;
+	var orig_toc = document.getElementById("original-toc");
+	
+	if(filter_update_req !== undefined)
+	{
+		filter_update_req.abort();
+		filter_update_req = undefined;
+	}
+	
+	if(filtered_toc == null)
+	{
+		filtered_toc = document.createElement("ul");
+		orig_toc.insertAdjacentElement("afterend", filtered_toc);
+	}
+	
+	if(filter === "")
+	{
+		orig_toc.style.display = "block";
+		filtered_toc.style.display = "none";
+		
+		return;
+	}
+	
+	filter_update_req = new XMLHttpRequest();
+	filter_update_req.onreadystatechange = function() {
+		if(this !== filter_update_req)
+		{
+			return;
+		}
+		
+		if (this.readyState == 4 && this.status == 200) {
+			var response = JSON.parse(this.responseText);
+			
+			while(filtered_toc.firstChild)
+			{
+				filtered_toc.removeChild(filtered_toc.firstChild);
+			}
+			
+			for(var i = 0; i < response.length; ++i)
+			{
+				var a = document.createElement("a");
+				a.setAttribute("href", response[i].url);
+				a.setAttribute("target", "_top");
+				a.appendChild(document.createTextNode(response[i].title));
+				
+				var li = document.createElement("li");
+				li.appendChild(a);
+				
+				filtered_toc.appendChild(li);
+			}
+			
+			orig_toc.style.display = "none";
+			filtered_toc.style.display = "block";
+		}
+	};
+	
+	filter_update_req.open("GET", "https://library.thedatadungeon.com/search/filter?q=" + filter + "&item=msdn-2000-04", true);
+	filter_update_req.send();
+}
+</script>
+</head>
+
+<body>
+<div class="dd-library-filter">
+<form action="https://library.thedatadungeon.com/search/library" method="GET" target="_top">
+<input type="text" name="q" autocomplete="off" id="filter-input" oninput="filter_update()">
+<input type="hidden" name="item" value="msdn-2000-04">
+<input type="submit" value="Search">
+</form>
+</div>
+
+<ul id="original-toc">
+<li id="toc0"><span class="arrow">&#x25BC;</span>MSDN Library - April 2000<ul>
+<li id="toc0_0"><a class="arrow" href="toc0_0.html#toc0_0">&#x25B6;</a><a href="toc0_0.html#toc0_0">Welcome to the MSDN Library</a></li>
+<li id="toc0_1"><a class="arrow" href="toc0_1.html#toc0_1">&#x25B6;</a><a href="toc0_1.html#toc0_1">Visual Studio 6.0 Documentation</a></li>
+<li id="toc0_2"><a class="arrow" href="toc0_2.html#toc0_2">&#x25B6;</a><a href="toc0_2.html#toc0_2">Office Developer Documentation</a></li>
+<li id="toc0_3"><span class="arrow">&#x25BC;</span>Windows CE Documentation<ul>
+<li id="toc0_3_0"><a class="arrow" href="toc0_3_0.html#toc0_3_0">&#x25B6;</a><a href="../wceintro/htm/introcor.htm" target="_top">Introduction to Windows CE</a></li>
+<li id="toc0_3_1"><a class="arrow" href="toc0_3_1.html#toc0_3_1">&#x25B6;</a><a href="toc0_3_1.html#toc0_3_1">Application Development</a></li>
+<li id="toc0_3_2"><span class="arrow">&#x25BC;</span>Visual Development Environment<ul>
+<li id="toc0_3_2_0"><span class="arrow">&#x25BC;</span>Windows CE Toolkit for Visual Basic 6.0<ul>
+<li id="toc0_3_2_0_0"><a href="../vbce/welcome.htm" target="_top">Welcome to the Windows CE Toolkit for Visual Basic 6.0</a></li>
+<li id="toc0_3_2_0_1"><a href="../vbce/readme.htm" target="_top">Windows CE Toolkit for Visual Basic 6.0 Release Notes</a></li>
+<li id="toc0_3_2_0_2"><a class="arrow" href="toc0_3_2_0_2.html#toc0_3_2_0_2">&#x25B6;</a><a href="../vbce/preface.htm" target="_top">Preface</a></li>
+<li id="toc0_3_2_0_3"><a class="arrow" href="toc0_3_2_0_3.html#toc0_3_2_0_3">&#x25B6;</a><a href="toc0_3_2_0_3.html#toc0_3_2_0_3">Programmer's Guide</a></li>
+<li id="toc0_3_2_0_4"><span class="arrow">&#x25BC;</span>Programmer's Reference<ul>
+<li id="toc0_3_2_0_4_0"><a href="../vbce/langref.htm" target="_top">Introduction to the Programmer's Reference</a></li>
+<li id="toc0_3_2_0_4_1"><a class="arrow" href="toc0_3_2_0_4_1.html#toc0_3_2_0_4_1">&#x25B6;</a><a href="../vbce/objects.htm" target="_top">Objects</a></li>
+<li id="toc0_3_2_0_4_2"><a class="arrow" href="toc0_3_2_0_4_2.html#toc0_3_2_0_4_2">&#x25B6;</a><a href="../vbce/controls.htm" target="_top">Controls</a></li>
+<li id="toc0_3_2_0_4_3"><a class="arrow" href="toc0_3_2_0_4_3.html#toc0_3_2_0_4_3">&#x25B6;</a><a href="../vbce/proprts.htm" target="_top">Properties</a></li>
+<li id="toc0_3_2_0_4_4"><a class="arrow" href="toc0_3_2_0_4_4.html#toc0_3_2_0_4_4">&#x25B6;</a><a href="../vbce/methods.htm" target="_top">Methods</a></li>
+<li id="toc0_3_2_0_4_5"><a class="arrow" href="toc0_3_2_0_4_5.html#toc0_3_2_0_4_5">&#x25B6;</a><a href="../vbce/events.htm" target="_top">Events</a></li>
+<li id="toc0_3_2_0_4_6"><span class="arrow">&#x25BC;</span><a href="../vbce/function.htm" target="_top">Functions</a><ul>
+<li id="toc0_3_2_0_4_6_0"><a href="../vbce/function_1.htm" target="_top">Abs</a></li>
+<li id="toc0_3_2_0_4_6_1"><a href="../vbce/function_2.htm" target="_top">Array</a></li>
+<li id="toc0_3_2_0_4_6_2"><a href="../vbce/function_3.htm" target="_top">Asc</a></li>
+<li id="toc0_3_2_0_4_6_3"><a href="../vbce/function_4.htm" target="_top">Atn</a></li>
+<li id="toc0_3_2_0_4_6_4"><a href="../vbce/function_5.htm" target="_top">CBool</a></li>
+<li id="toc0_3_2_0_4_6_5"><a href="../vbce/function_6.htm" target="_top">CByte</a></li>
+<li id="toc0_3_2_0_4_6_6"><a href="../vbce/function_7.htm" target="_top">CCur</a></li>
+<li id="toc0_3_2_0_4_6_7"><a href="../vbce/function_8.htm" target="_top">CDate</a></li>
+<li id="toc0_3_2_0_4_6_8"><a href="../vbce/function_9.htm" target="_top">CDbl</a></li>
+<li id="toc0_3_2_0_4_6_9"><a href="../vbce/function_10.htm" target="_top">Chr</a></li>
+<li id="toc0_3_2_0_4_6_10"><a href="../vbce/function_11.htm" target="_top">CInt</a></li>
+<li id="toc0_3_2_0_4_6_11"><a href="../vbce/function_12.htm" target="_top">CLng</a></li>
+<li id="toc0_3_2_0_4_6_12"><a href="../vbce/function_13.htm" target="_top">Cos</a></li>
+<li id="toc0_3_2_0_4_6_13"><a href="../vbce/function_14.htm" target="_top">CreateObject</a></li>
+<li id="toc0_3_2_0_4_6_14"><a href="../vbce/function_15.htm" target="_top">CreateObjectWithEvents</a></li>
+<li id="toc0_3_2_0_4_6_15"><a href="../vbce/function_16.htm" target="_top">CSng</a></li>
+<li id="toc0_3_2_0_4_6_16"><a href="../vbce/function_17.htm" target="_top">CStr</a></li>
+<li id="toc0_3_2_0_4_6_17"><a href="../vbce/function_18.htm" target="_top">Date</a></li>
+<li id="toc0_3_2_0_4_6_18"><a href="../vbce/function_19.htm" target="_top">DateAdd</a></li>
+<li id="toc0_3_2_0_4_6_19"><a href="../vbce/function_20.htm" target="_top">DateDiff</a></li>
+<li id="toc0_3_2_0_4_6_20"><a href="../vbce/function_21.htm" target="_top">DatePart</a></li>
+<li id="toc0_3_2_0_4_6_21"><a href="../vbce/function_22.htm" target="_top">DateSerial</a></li>
+<li id="toc0_3_2_0_4_6_22"><a href="../vbce/function_23.htm" target="_top">DateValue</a></li>
+<li id="toc0_3_2_0_4_6_23"><a href="../vbce/function_24.htm" target="_top">Day</a></li>
+<li id="toc0_3_2_0_4_6_24"><a href="../vbce/function_25.htm" target="_top">DisconnectEvents</a></li>
+<li id="toc0_3_2_0_4_6_25"><a href="../vbce/function_26.htm" target="_top">Exp</a></li>
+<li id="toc0_3_2_0_4_6_26"><a href="../vbce/function_27.htm" target="_top">Filter</a></li>
+<li id="toc0_3_2_0_4_6_27"><a href="../vbce/function_28.htm" target="_top">Fix</a></li>
+<li id="toc0_3_2_0_4_6_28"><a href="../vbce/function_29.htm" target="_top">FormatCurrency</a></li>
+<li id="toc0_3_2_0_4_6_29"><a href="../vbce/function_30.htm" target="_top">FormatDateTime</a></li>
+<li id="toc0_3_2_0_4_6_30"><a href="../vbce/function_31.htm" target="_top">FormatNumber</a></li>
+<li id="toc0_3_2_0_4_6_31"><a href="../vbce/function_32.htm" target="_top">FormatPercent</a></li>
+<li id="toc0_3_2_0_4_6_32"><a href="../vbce/function_33.htm" target="_top">Hex</a></li>
+<li id="toc0_3_2_0_4_6_33"><a href="../vbce/function_34.htm" target="_top">Hour</a></li>
+<li id="toc0_3_2_0_4_6_34"><a href="../vbce/function_35.htm" target="_top">InputBox</a></li>
+<li id="toc0_3_2_0_4_6_35"><a href="../vbce/function_36.htm" target="_top">InStr</a></li>
+<li id="toc0_3_2_0_4_6_36"><a href="../vbce/function_37.htm" target="_top">InstrRev</a></li>
+<li id="toc0_3_2_0_4_6_37"><a href="../vbce/function_38.htm" target="_top">Int</a></li>
+<li id="toc0_3_2_0_4_6_38"><a href="../vbce/function_39.htm" target="_top">IsArray</a></li>
+<li id="toc0_3_2_0_4_6_39"><a href="../vbce/function_40.htm" target="_top">IsDate</a></li>
+<li id="toc0_3_2_0_4_6_40"><a href="../vbce/function_41.htm" target="_top">IsEmpty</a></li>
+<li id="toc0_3_2_0_4_6_41"><a href="../vbce/function_42.htm" target="_top">IsNull</a></li>
+<li id="toc0_3_2_0_4_6_42"><a href="../vbce/function_43.htm" target="_top">IsNumeric</a></li>
+<li id="toc0_3_2_0_4_6_43"><a href="../vbce/function_44.htm" target="_top">IsObject</a></li>
+<li id="toc0_3_2_0_4_6_44"><a href="../vbce/function_45.htm" target="_top">Join</a></li>
+<li id="toc0_3_2_0_4_6_45"><a href="../vbce/function_46.htm" target="_top">LBound</a></li>
+<li id="toc0_3_2_0_4_6_46"><a href="../vbce/function_47.htm" target="_top">LCase</a></li>
+<li id="toc0_3_2_0_4_6_47"><a href="../vbce/function_48.htm" target="_top">Left</a></li>
+<li id="toc0_3_2_0_4_6_48"><a href="../vbce/function_49.htm" target="_top">Len</a></li>
+<li id="toc0_3_2_0_4_6_49"><a href="../vbce/function_50.htm" target="_top">LoadResString</a></li>
+<li id="toc0_3_2_0_4_6_50"><a href="../vbce/function_51.htm" target="_top">Log</a></li>
+<li id="toc0_3_2_0_4_6_51"><a href="../vbce/function_52.htm" target="_top">LTrim</a></li>
+<li id="toc0_3_2_0_4_6_52"><a href="../vbce/function_53.htm" target="_top">Mid</a></li>
+<li id="toc0_3_2_0_4_6_53"><a href="../vbce/function_54.htm" target="_top">Minute</a></li>
+<li id="toc0_3_2_0_4_6_54"><a href="../vbce/function_55.htm" target="_top">Month</a></li>
+<li id="toc0_3_2_0_4_6_55"><a href="../vbce/function_56.htm" target="_top">MonthName</a></li>
+<li id="toc0_3_2_0_4_6_56"><a href="../vbce/function_57.htm" target="_top">MsgBox</a></li>
+<li id="toc0_3_2_0_4_6_57"><a href="../vbce/function_58.htm" target="_top">Now</a></li>
+<li id="toc0_3_2_0_4_6_58"><a href="../vbce/function_59.htm" target="_top">Oct</a></li>
+<li id="toc0_3_2_0_4_6_59"><a href="../vbce/function_60.htm" target="_top">Replace</a></li>
+<li id="toc0_3_2_0_4_6_60"><a href="../vbce/function_61.htm" target="_top">Right</a></li>
+<li id="toc0_3_2_0_4_6_61"><a href="../vbce/function_62.htm" target="_top">Rnd</a></li>
+<li id="toc0_3_2_0_4_6_62"><a href="../vbce/function_63.htm" target="_top">Round</a></li>
+<li id="toc0_3_2_0_4_6_63"><a href="../vbce/function_64.htm" target="_top">RTrim</a></li>
+<li id="toc0_3_2_0_4_6_64"><a href="../vbce/function_65.htm" target="_top">ScriptEngine</a></li>
+<li id="toc0_3_2_0_4_6_65"><a href="../vbce/function_66.htm" target="_top">ScriptEngineBuildVersion</a></li>
+<li id="toc0_3_2_0_4_6_66"><a href="../vbce/function_67.htm" target="_top">ScriptEngineMajorVersion</a></li>
+<li id="toc0_3_2_0_4_6_67"><a href="../vbce/function_68.htm" target="_top">ScriptEngineMinorVersion</a></li>
+<li id="toc0_3_2_0_4_6_68"><a href="../vbce/function_69.htm" target="_top">Second</a></li>
+<li id="toc0_3_2_0_4_6_69"><a href="../vbce/function_70.htm" target="_top">Sgn</a></li>
+<li id="toc0_3_2_0_4_6_70"><a href="../vbce/function_71.htm" target="_top">Sin</a></li>
+<li id="toc0_3_2_0_4_6_71"><a href="../vbce/function_72.htm" target="_top">Space</a></li>
+<li id="toc0_3_2_0_4_6_72"><a href="../vbce/function_73.htm" target="_top">Split</a></li>
+<li id="toc0_3_2_0_4_6_73"><a href="../vbce/function_74.htm" target="_top">Sqr</a></li>
+<li id="toc0_3_2_0_4_6_74"><a href="../vbce/function_75.htm" target="_top">StrComp</a></li>
+<li id="toc0_3_2_0_4_6_75"><a href="../vbce/function_76.htm" target="_top">StrReverse</a></li>
+<li id="toc0_3_2_0_4_6_76"><a href="../vbce/function_77.htm" target="_top">String</a></li>
+<li id="toc0_3_2_0_4_6_77"><a href="../vbce/function_78.htm" target="_top">Tan</a></li>
+<li id="toc0_3_2_0_4_6_78"><a href="../vbce/function_79.htm" target="_top">Time</a></li>
+<li id="toc0_3_2_0_4_6_79"><a href="../vbce/function_80.htm" target="_top">TimeSerial</a></li>
+<li id="toc0_3_2_0_4_6_80"><a href="../vbce/function_81.htm" target="_top">TimeValue</a></li>
+<li id="toc0_3_2_0_4_6_81"><a href="../vbce/function_82.htm" target="_top">Trim</a></li>
+<li id="toc0_3_2_0_4_6_82"><a href="../vbce/function_83.htm" target="_top">TypeName Function</a></li>
+<li id="toc0_3_2_0_4_6_83"><a href="../vbce/function_84.htm" target="_top">UBound</a></li>
+<li id="toc0_3_2_0_4_6_84"><a href="../vbce/function_85.htm" target="_top">UCase</a></li>
+<li id="toc0_3_2_0_4_6_85"><a href="../vbce/function_86.htm" target="_top">VarType</a></li>
+<li id="toc0_3_2_0_4_6_86"><a href="../vbce/function_87.htm" target="_top">Weekday</a></li>
+<li id="toc0_3_2_0_4_6_87"><a href="../vbce/function_88.htm" target="_top">WeekDayName</a></li>
+<li id="toc0_3_2_0_4_6_88"><a href="../vbce/function_89.htm" target="_top">Year</a></li>
+</ul>
+</li>
+<li id="toc0_3_2_0_4_7"><a class="arrow" href="toc0_3_2_0_4_7.html#toc0_3_2_0_4_7">&#x25B6;</a><a href="../vbce/constant.htm" target="_top">Constants</a></li>
+<li id="toc0_3_2_0_4_8"><a class="arrow" href="toc0_3_2_0_4_8.html#toc0_3_2_0_4_8">&#x25B6;</a><a href="../vbce/statemnt.htm" target="_top">Statements</a></li>
+<li id="toc0_3_2_0_4_9"><a class="arrow" href="toc0_3_2_0_4_9.html#toc0_3_2_0_4_9">&#x25B6;</a><a href="../vbce/operator.htm" target="_top">Operators</a></li>
+</ul>
+</li>
+<li id="toc0_3_2_0_5"><a class="arrow" href="toc0_3_2_0_5.html#toc0_3_2_0_5">&#x25B6;</a><a href="toc0_3_2_0_5.html#toc0_3_2_0_5">Appendix</a></li>
+</ul>
+</li>
+<li id="toc0_3_2_1"><a class="arrow" href="toc0_3_2_1.html#toc0_3_2_1">&#x25B6;</a><a href="toc0_3_2_1.html#toc0_3_2_1">ADO for Windows CE</a></li>
+<li id="toc0_3_2_2"><a class="arrow" href="toc0_3_2_2.html#toc0_3_2_2">&#x25B6;</a><a href="toc0_3_2_2.html#toc0_3_2_2">Microsoft ADO for Windows CE, Version 2.12</a></li>
+<li id="toc0_3_2_3"><a class="arrow" href="toc0_3_2_3.html#toc0_3_2_3">&#x25B6;</a><a href="toc0_3_2_3.html#toc0_3_2_3">Windows CE Toolkit for Visual C++ 6.0</a></li>
+</ul>
+</li>
+<li id="toc0_3_3"><a class="arrow" href="toc0_3_3.html#toc0_3_3">&#x25B6;</a><a href="../wcegloss/htm/gloss.htm" target="_top">Windows CE Glossary</a></li>
+</ul>
+</li>
+<li id="toc0_4"><a class="arrow" href="toc0_4.html#toc0_4">&#x25B6;</a><a href="toc0_4.html#toc0_4">Platform SDK</a></li>
+<li id="toc0_5"><a class="arrow" href="toc0_5.html#toc0_5">&#x25B6;</a><a href="toc0_5.html#toc0_5">SDK Documentation</a></li>
+<li id="toc0_6"><a class="arrow" href="toc0_6.html#toc0_6">&#x25B6;</a><a href="toc0_6.html#toc0_6">DDK Documentation</a></li>
+<li id="toc0_7"><a class="arrow" href="toc0_7.html#toc0_7">&#x25B6;</a><a href="toc0_7.html#toc0_7">Windows Resource Kits</a></li>
+<li id="toc0_8"><a class="arrow" href="toc0_8.html#toc0_8">&#x25B6;</a><a href="toc0_8.html#toc0_8">Knowledge Base</a></li>
+<li id="toc0_9"><a class="arrow" href="toc0_9.html#toc0_9">&#x25B6;</a><a href="toc0_9.html#toc0_9">Technical Articles</a></li>
+<li id="toc0_10"><a class="arrow" href="toc0_10.html#toc0_10">&#x25B6;</a><a href="toc0_10.html#toc0_10">Backgrounders</a></li>
+<li id="toc0_11"><a class="arrow" href="toc0_11.html#toc0_11">&#x25B6;</a><a href="toc0_11.html#toc0_11">Specifications</a></li>
+<li id="toc0_12"><a class="arrow" href="toc0_12.html#toc0_12">&#x25B6;</a><a href="toc0_12.html#toc0_12">Books</a></li>
+<li id="toc0_13"><a class="arrow" href="toc0_13.html#toc0_13">&#x25B6;</a><a href="toc0_13.html#toc0_13">Partial Books</a></li>
+<li id="toc0_14"><a class="arrow" href="toc0_14.html#toc0_14">&#x25B6;</a><a href="toc0_14.html#toc0_14">Periodicals</a></li>
+<li id="toc0_15"><a class="arrow" href="toc0_15.html#toc0_15">&#x25B6;</a><a href="toc0_15.html#toc0_15">Samples</a></li>
+</ul>
+</li>
+</ul>
+
+</body>
+</html>

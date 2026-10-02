@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Communication Events</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_using_communication_events"></A>Using Communication Events</H2>
+
+<P>A <I>communication event</I> is a notification sent by Windows CE to an application when a significant incident occurs. Using the <A HREF="../../wcesdkr/htm/cf_sw_15.htm" TARGET="_top"><B>WaitCommEvent</B></A> function, an application can block a thread until a specific event occurs. A call to the <A HREF="../../wcesdkr/htm/cf_sw_4.htm" TARGET="_top"><B>SetCommMask</B></A> function specifies which event or events must occur before processing can continue. When more than one event is specified, any single specified event that occurs causes <B>WaitCommEvent</B> to return.</P>
+
+<P>For example, this mechanism enables an application to find out when data arrives at the serial port. By waiting for a communication event that indicates data is present, an application avoids forestalling the serial port with a call to the <A HREF="../../wcesdkr/htm/kf_r_5.htm" TARGET="_top"><B>ReadFile</B></A> function that waits for data to arrive. <B>ReadFile</B> is called only when there is data to read.</P>
+
+<P>The following table lists the communication events that an application can use with the <B>WaitCommEvent</B> function.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=19%>
+<H5>Event</H5>
+</TD>
+<TD width=81%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_BREAK</TD>
+<TD width=81%>A break occurred on input.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_CTS</TD>
+<TD width=81%>The CTS signal changed state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_DSR</TD>
+<TD width=81%>The DSR signal changed state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_ERR</TD>
+<TD width=81%>A line-status error occurred. Line-status errors are CE_FRAME, CE_OVERRUN, and CE_RXPARITY.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_RING</TD>
+<TD width=81%>A ring indicator was detected.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_RLSD</TD>
+<TD width=81%>The receive-line-signal-detect signal changed state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_RXCHAR</TD>
+<TD width=81%>A character was received and placed in the input buffer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_RXFLAG</TD>
+<TD width=81%>The event character was received and placed in the input buffer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>EV_TXEMPTY</TD>
+<TD width=81%>The last character in the output buffer was sent.</TD>
+</TR>
+</TABLE><BR>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use communication events</H4>
+
+<OL>
+	<LI>Specify events to look for with a call to the <B>SetCommMask</B> function.</li>
+
+	<LI>Call the <B>WaitCommEvent</B> function and specify which events cause this function to return. When an application specifies more than one event, the <I>lpEvtMask</I> parameter points to a variable that identifies the event that caused <B>WaitCommEvent</B> to return.</li>
+
+	<LI>After <B>WaitCommEvent</B> returns, use a loop that calls <B>ReadFile</B> until all received data has been read.</li>
+
+	<LI>Call <B>SetCommMask</B> again to specify which events to look for.</li>
+</OL>
+
+<P><B>SetCommMask</B> is the first call in a loop that applications generally use to monitor a serial port and read data. The following code example shows how to use communication events for this purpose.</P>
+
+<PRE><CODE>BYTE Byte;
+DWORD dwBytesTransferred;
+
+// Specify a set of events to be monitored for the port.
+SetCommMask (hPort, EV_RXCHAR | EV_CTS | EV_DSR | EV_RLSD | EV_RING);
+
+while (hPort != INVALID_HANDLE_VALUE) 
+{
+  // Wait for an event to occur for the port.
+  WaitCommEvent (hPort, &amp;dwCommModemStatus, 0);
+
+  // Re-specify the set of events to be monitored for the port.
+  SetCommMask (hPort, EV_RXCHAR | EV_CTS | EV_DSR | EV_RING);
+
+  if (dwCommModemStatus &amp; EV_RXCHAR) 
+  {
+    // Loop for waiting for the data.
+    do 
+    {
+      // Read the data from the serial port.
+      ReadFile (hPort, &amp;Byte, 1, &amp;dwBytesTransferred, 0);
+
+      // Display the data read.
+      if (dwBytesTransferred == 1)
+        ProcessChar (Byte);
+
+    } while (dwBytesTransferred == 1);
+  }
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

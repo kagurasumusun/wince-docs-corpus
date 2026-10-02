@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing URLs Directly</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+
+
+
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_accessing_urls_directly"></A>Accessing URLs Directly</H2>
+
+<P>FTP and HTTP resources on the Internet can be accessed directly by using the <B>InternetOpenUrl</B>, <B>InternetReadFile</B>, and <B>InternetFindNextFile</B> functions. <B>InternetOpenUrl</B> opens a connection to the resource at the URL passed to the function. </P>
+
+<P>When a successful connection is established, two things can happen:
+
+<OL>
+	<LI>If the resource is a file, <B>InternetReadFile</B> can download it. </li>
+
+	<LI>If the resource is a directory, <B>InternetFindNextFile</B> can enumerate the files within the directory, except when using CERN proxies.</li>
+</OL>
+
+<P>The <B>InternetReadFile</B> function is used to download resources from an HINTERNET handle returned by the <B>InternetOpenUrl</B>, <B>FtpOpenFile</B> or the <B>HttpOpenRequest</B> function.</P>
+
+<P><B>InternetReadFile</B> accepts a void pointer variable that contains the address of a buffer and a pointer to an unsigned long integer variable that contains the buffer length. It returns the data in the buffer and the amount of data downloaded into the buffer. It returns zero bytes read and completes successfully when all available data has been read. This enables an application to use <B>InternetReadFile</B> in a loop to download the data and exit when it returns zero bytes read and completes successfully. </P>
+
+<P>The <B>InternetQueryDataAvailable</B> function can be used with<B> InternetReadFile</B>. <B>InternetQueryDataAvailable</B> takes the HINTERNET handle created by <B>InternetOpenUrl</B>, <B>FtpOpenFile</B>, or <B>HttpOpenRequest</B>, after <B>HttpSendRequest</B> has been called on the handle, and returns the number of bytes available. The application should allocate a buffer equal to the number of bytes available and use that buffer with <B>InternetReadFile</B>. This method does not always work because <B>InternetQueryDataAvailable</B> is checking the file size listed in the header and not the actual file. The data in the header file could be outdated or the header file could be missing, since it is not currently required under all standards. </P>
+
+<P>For applications that need to operate through a CERN proxy, <B>InternetOpenUrl</B> can be used to access FTP directories and files. FTP requests are packaged to appear like an HTTP request, which the CERN proxy accepts. </P>
+
+<P><B>InternetOpenUrl</B> uses the HINTERNET handle created by the <B>InternetOpen</B> function and the resource URL. The URL must include the scheme: http:, ftp:, file:, or https: and network location, for example, http://www.microsoft.com. The URL can also include a path, for example, /windows/feature/ and a resource name, for example, Default.htm. For HTTP or HTTPS requests, additional headers can be included. </P>
+
+<P><B>InternetQueryDataAvailable</B>, <B>InternetFindNextFile</B>, and <B>InternetReadFile</B>, can use the handle created by <B>InternetOpenUrl</B> to download the resource. </P>
+
+<P>The following illustration shows what handles to use with each function.</P>
+
+<P><IMG SRC="urlhand.gif" ALT="" BORDER=0></P>
+
+<P>The root HINTERNET handle created by <B>InternetOpen</B> is used by <B>InternetOpenUrl</B>. The HINTERNET handle created by <B>InternetOpenUrl</B> can be used by <B>InternetQueryDataAvailable</B>, <B>InternetReadFile</B>, and <B>InternetFindNextFile</B>, which is not pictured.</P>
+
+<P>Use the <B>InternetOpenUrl</B> function to parse the URL string, establish an Internet connection, and prepare for data download. This is practical for applications that are not concerned with protocol details, but only retrieve data related to a specific URL.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use InternetOpenUrl to access a URL</H4>
+
+<OL>
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_hk_26.htm" TARGET="_top"><B>InternetOpen</B></A> to initialize an Internet handle. </li>
+
+	<LI>Call <A HREF="#"><B>InternetOpenUrl</B></A> to open a connection to the URL, using the handle created by <B>InternetOpen</B>. 
+<P><B>InternetOpenUrl</B> returns a handle that subsequent functions can use.
+</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_hk_30.htm" TARGET="_top"><B>InternetReadFile</B></A> to download the resource file.
+<P><A HREF="../../wcesdkr/htm/cf_hk_28.htm" TARGET="_top"><B>InternetQueryDataAvailable</B></A> can use the handle returned by <B>InternetOpenUrl</B> to query how much data is available to be read by a subsequent call to <B>InternetReadFile</B>.
+</li>
+
+	<LI>Call <A HREF="../../wcesdkr/htm/cf_hk_16.htm" TARGET="_top"><B>InternetCloseHandle</B></A> to close the handle created by <B>InternetOpenUrl</B>.</li>
+
+	<LI>Call <B>InternetCloseHandle</B> to close the handle created by <B>InternetOpen</B>. 
+<P><B>InternetCloseHandle</B> terminates existing activity on the handle and discards remaining data. If <B>InternetCloseHandle</B> closes a parent handle, all child handles are also closed. If an operation requires more than one Internet handle, multiple calls may need to be made to <B>InternetCloseHandle</B>.
+</li>
+</OL>
+<p>&nbsp;</p></body>
+</HTML>

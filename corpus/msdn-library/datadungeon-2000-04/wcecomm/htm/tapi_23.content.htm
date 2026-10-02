@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>End a Call and Shutdown TAPI</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_end_a_call_and_shutdown_tapi"></A>Ending a Call and Shutting Down TAPI</H2>
+
+<P>When a user ends the call, the application should disconnect and terminate the call with <A HREF="../../wcesdkr/htm/cf_l_5.htm" TARGET="_top"><B>lineDrop</B></A>. The <B>lineDrop</B> function can also be used to drop a call in progress.</P>
+
+<P>When the application receives the LINE_CALLSTATE message indicating that the call has ended, the handle should be released before finishing the <A HREF="../../wcesdkr/htm/cf_l_4.htm" TARGET="_top"><B>lineDeallocateCall</B></A> function.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To drop a line</H4>
+
+<OL>
+	<LI>Call the <B>lineDrop</B> function.</li>
+
+	<LI>Free memory with the <B>lineDeallocateCall </B>function.</li>
+</OL>
+
+<P>The following code example shows how to use the <B>lineDrop</B> and <B>lineDeallocateCall</B> functions.</P>
+
+<PRE><CODE>g_DropCallRequestID = lineDrop (g_hCall, NULL, 0);
+lineDeallocateCall (g_hCall);
+</CODE></PRE>
+
+<P>Deallocating a call handle means that the system must free system-allocated memory related to the call after the call has been dropped. The application must call <B>lineDeallocatedCall</B> to free allocated memory.</P>
+
+<P>To finally close the line, the application should call <B>lineClose</B>. After the line has closed successfully, the handle is no longer valid.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To close a line</H4>
+
+<OL>
+	<LI><B>Cancel</B> the call using <B>lineDrop</B>.</li>
+
+	<LI><B>Close</B> the open line using <B>lineClose</B>.</li>
+
+	<LI>Reinitialize the variables.</li>
+</OL>
+
+<P>The following code example shows how to use <B>lineClose</B> to close the current line.</P>
+
+<PRE><CODE>VOID CurrentLineClose ()
+{
+  // Close the current line.
+  if (g_CurrentLineInfo.hLine)
+    lineClose (g_CurrentLineInfo.hLine);
+
+  // Reinitialize the variables.
+  g_CurrentLineInfo.hLine = NULL;
+  g_bCurrentLineAvail = TRUE;
+  g_hCall = NULL;
+}
+</CODE></PRE>
+
+<P>The <A HREF="../../wcesdkr/htm/cf_l_17.htm" TARGET="_top"><B>lineShutdown</B></A> function completely disconnects the application from TAPI. If <B>lineShutdown</B> is called when the TAPI application has lines open or calls active, the calls are closed and the line is shut down.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To disconnect TAPI from the application</H4>
+
+<UL>
+	<LI>Call lineShutdown to disconnect TAPI from the application.</li>
+</UL>
+
+<P>The following code example shows how to use <B>lineShutdown</B> to disconnect.</P>
+
+<PRE><CODE>    lineShutdown (g_hLineApp);
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

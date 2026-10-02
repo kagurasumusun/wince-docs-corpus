@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Audio Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wceddk_audio_drivers"></A>Audio Drivers</H2>
+
+<P>A waveform audio driver is responsible for processing messages from the Wave API Manager to play and record waveform audio. Waveform audio drivers are implemented as stream interface drivers that are loaded by the Device Manager. The sample waveform audio driver is named WaveDev.dll. All audio drivers use the prefix WAV to name their stream interface functions, yielding function names such as <B>WAV_Open</B>, <B>WAV_IOControl</B>, and so on.</P>
+
+<P>Audio hardware typically supports a larger set of operations than usually apply to files. For example, files commonly do not have volume controls or playing speed controls, but audio hardware can and often does have them. Fortunately, the <B>DeviceIOControl</B> portion of the stream interface allows arbitrary operations on files, making it possible to manipulate audio hardware by means of <B>WAV_IOControl</B>. To send commands to the audio hardware, the operating system passes various messages to this function. For example, to prepare the audio hardware for recording, Waveapi.dll uses <B>WAV_IOControl</B> to send the WIDM_PREPARE message to the audio driver. The messages sent to the audio driver are similar to those used by user-mode audio drivers on Windows-based desktop platforms, such as Mmdrv.dll.</P>
+
+<P>Because audio drivers rely entirely on <B>DeviceIOControl</B> function messages, the implementation of the remainder of the stream interface is relatively simple. Specifically, the <B>WAV_Read</B>, <B>WAV_Seek</B>, and <B>WAV_Write</B> functions are merely stubs that return constant values. The other stream interface functions should be fully implemented and follow the conventions described in the Reference for those functions.</P>
+
+<P>As an alternative to implementing the stream interface directly, you can use the model device driver (MDD) library—Wavemdd.lib—supplied by Microsoft. This library implements the stream interface functions in terms of the audio DDSI functions. If you use Wavemdd.lib, you must create a matching platform-dependent driver (PDD) library that implements the audio Device Driver Service-provider Interface (DDSI) functions. The PDD library is generally called Wavepdd.lib, although there is no requirement that it be called this. These two libraries can then be linked together to form Wavedev.dll.</P>
+
+<P>The following illustration shows the interaction of the audio driver with the Windows CE operating system.</P>
+
+<P><IMG SRC="wavearch.gif" ALT="" BORDER=0></P>
+
+<P>As shown in the illustration, the first step in playing and recording sounds is a call from an application to the operating system. The operating system translates such calls into <B>WAV_IOControl</B> calls to the audio driver. The operating system component that performs this translation is the Wave API Manager. The audio driver then executes the appropriate actions on the hardware. The Device Manager only loads and registers the audio driver at startup time. It is not directly involved in the operation of the driver. </P>
+
+<P>Like standard stream interface drivers, the audio driver uses registry keys both to store configuration information and to advertise itself to the operating system. If the audio driver is not already listed in Platform.reg, create a key called <B>HKEY_LOCAL_MACHINE\Drivers\Builtin\Audio</B> to store configuration information. The Device Manager creates a key in <B>HKEY_LOCAL_MACHINE\Drivers\Active</B> for the audio driver when the driver is loaded at startup time. Because the Device Manager only checks for audio drivers at startup time, drivers for add-on audio hardware still need to have their registry entries in the <B>\Builtin\Audio</B> part of the registry, although their hardware is not built into any Windows CE–based platform.</P>
+
+<P>The following table shows the stream interface functions for the audio driver.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=43%><A HREF="funct_1_375.htm" TARGET="_top"><B>WAV_Close</B></A></TD>
+<TD width=57%><A HREF="funct_1_380.htm" TARGET="_top"><B>WAV_PowerDown</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%><A HREF="funct_1_376.htm" TARGET="_top"><B>WAV_Deinit</B></A></TD>
+<TD width=57%><A HREF="funct_1_381.htm" TARGET="_top"><B>WAV_PowerUp</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%><A HREF="funct_1_377.htm" TARGET="_top"><B>WAV_Init</B></A></TD>
+<TD width=57%><A HREF="funct_1_382.htm" TARGET="_top"><B>WAV_Read</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%><A HREF="funct_1_378.htm" TARGET="_top"><B>WAV_IOControl</B></A></TD>
+<TD width=57%><A HREF="funct_1_383.htm" TARGET="_top"><B>WAV_Seek</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%><A HREF="funct_1_379.htm" TARGET="_top"><B>WAV_Open</B></A></TD>
+<TD width=57%><A HREF="funct_1_384.htm" TARGET="_top"><B>WAV_Write</B></A></TD>
+</TR>
+</TABLE><BR>
+
+<P>For more information, see <A HREF="stream.htm" TARGET="_top">Developing Stream Interface Device Drivers</A>.</P>
+
+<P>The following table shows the DDSI functions for the audio driver.</P>
+
+<TABLE cellspacing=4 cols=1>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_332.htm" TARGET="_top"><B>PDD_AudioDeinitialize</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_333.htm" TARGET="_top"><B>PDD_AudioGetInterruptType</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_334.htm" TARGET="_top"><B>PDD_AudioInitialize</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_335.htm" TARGET="_top"><B>PDD_AudioMessage</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_336.htm" TARGET="_top"><B>PDD_AudioPowerHandler</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_337.htm" TARGET="_top"><B>PDD_WaveProc</B></A></TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

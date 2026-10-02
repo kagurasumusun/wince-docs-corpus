@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Windows NT LMSSP Server Authentication</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_windows_nt_lmssp_server_authentication"></A>Windows NT LMSSP Server Authentication</H2>
+
+<P>When the application makes a second call to the <B>InitializeSecurityContext</B> function, the parameters are similar to the first call. The following code example, showing the second call to <B>InitializeSecurityContext</B>, assumes that the security buffer returned from the server is in <I>InputSecurityBuffer</I> and the length of that buffer is in <I>InputSecurityBufferSize.</I></P>
+
+<PRE><CODE>SecBufferDesc OutputBufferDescriptor,
+              InputBufferDescriptor;
+SecBuffer OutputSecurityToken,
+          InputSecurityToken;
+ULONG ulContextAttributes;
+TimeStamp tsExpiry;
+
+// Build the input buffer descriptor.
+InputBufferDescriptor.cBuffers = 1;
+InputBufferDescriptor.pBuffers = &amp;InputSecurityToken;
+InputBufferDescriptor.ulVersion = SECBUFFER_VERSION;
+
+InputSecurityToken.BufferType = SECBUFFER_TOKEN;
+InputSecurityToken.cbBuffer = InputSecurityBufferSize;
+InputSecurityToken.pvBuffer = InputSecurityBuffer;
+
+// Build the output buffer descriptor.
+OutputBufferDescriptor.cBuffers = 1;
+OutputBufferDescriptor.pBuffers = &amp;OutputSecurityToken;
+OutputBufferDescriptor.ulVersion = SECBUFFER_VERSION;
+
+OutputSecurityToken.BufferType = SECBUFFER_TOKEN;
+OutputSecurityToken.cbBuffer = pPackageInfo-&gt;cbMaxToken;
+OutputSecurityToken.pvBuffer = 
+                        LocalAlloc (0, OutputSecurityToken.cbBuffer);
+
+// Insert code here to check for memory allocation failure.
+// ...
+
+// Ignore the pszTargetName and fContextReq parameters on this
+// call. This time, instead of passing NULL for phContext, pass
+// the context handle received on the first call.
+status = InitializeSecurityContext (
+              &amp;hCredential,
+              &amp;hContext,
+              NULL,                   // No target name 
+              0,                      // No context requirements
+              0,                      // Reserved parameter
+              SECURITY_NATIVE_DREP,   // Target data representation
+              &amp;InputBufferDescriptor, // Input buffer
+              0,                      // Reserved parameter
+              &amp;hContext,              // Same as the old context
+              &amp;OutputBufferDescriptor,// Receives output security token
+              &amp;ulContextAttributes,   // Receives context attributes
+              &amp;tsExpiry);             // Receives context expiration 
+                                      // time
+</CODE></PRE>
+
+<P>If the <B>InitializeSecurityContext</B> call is successful, it returns SEC_E_OK, and the application transmits the output security buffer and buffer length to the server, as it did after the first call to <B>InitializeSecurityContext</B>. If it fails, an error value returns.</P>
+
+<P>When the application has finished setting up the security context, the application can begin using the security context in calls to the <B>MakeSignature</B> and <B>VerifySignature</B> functions to make and verify message signatures, even though the server has not yet finished authenticating the client.</P>
+<p>&nbsp;</p></body>
+</HTML>

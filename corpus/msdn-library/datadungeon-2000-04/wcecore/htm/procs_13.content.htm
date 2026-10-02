@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Wait Functions</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_wait_functions"></A>Wait Functions</H2>
+
+<P>Windows CE supports single-object and multiple-object wait functions that block or unblock a thread based on the signaled or nonsignaled state of the object. The single object function is <B>WaitForSingleObject</B>. The multiple object functions are <B>WaitForMultipleObjects</B> and <B>MsgWaitForMultipleObjects</B>.</P>
+
+<P>The <B>WaitForSingleObject</B> function enables a thread wait on a single object. The object can be a synchronization object, such as an event or mutex, or the object can be a handle to a process and thread. Handles are signaled when their processes or threads terminate. Thus, a process can monitor another process or thread and perform some action based on the status of the process or thread.</P>
+
+<P>The <B>WaitForMultipleObjects</B> and <B>MsgWaitForMultipleObjects</B> functions enable the calling thread to specify an array containing one or more synchronization object handles. These functions return when one of the following events occurs:
+
+<UL>
+	<LI>The state of any of the specified objects is set to signaled or the states of all objects have been set to signaled.</li>
+
+	<LI>The time-out interval elapses. You can set the time-out interval to INFINITE to specify that the wait will not time out.</li>
+</UL>
+
+<P>Windows CE does not support waiting for all objects to be signaled.</P>
+
+<P>The following code example shows how to use <B>CreateEvent</B> to create two event objects. It then uses the two created objects as parameters in the function call to <B>WaitForMultipleObjects</B>. <B>WaitForMultipleObjects</B> does not return until one of the objects is set to signaled. </P>
+
+<PRE><CODE>int EventsExample (void)
+{
+  HANDLE hEvents[2];
+  DWORD dwEvent;
+  int i;
+
+  for (i = 0; i &lt; 2; i++)
+  {
+    hEvents[i] = CreateEvent (NULL,   // No security attributes
+                              FALSE,  // Auto-reset event object
+                              FALSE,  // Initial state is nonsignaled
+                              NULL);  // Unnamed object
+
+    if (hEvents[i] == NULL)
+    {
+      // Your error handling code goes here.
+      MessageBox (NULL, TEXT("CreateEvent error!"),
+                  TEXT("Error"), MB_OK);
+
+      // You can use GetLastError to obtain more information.
+
+      return 0;
+    }
+  }
+
+  // Put code that uses the events here; that is, startup 
+  // of threads, which will set the events when completed.
+  // . . .
+
+  dwEvent = WaitForMultipleObjects (
+                      2,            // Number of objects in an array
+                      hEvents,      // Array of objects
+                      FALSE,        // Wait for any (required 
+                                    // under Windows CE)
+                      INFINITE);    // Indefinite wait
+
+  switch (dwEvent)
+  {
+    case WAIT_OBJECT_0 + 0:         // First event was signaled
+    case WAIT_OBJECT_0 + 1:         // Second event was signaled
+      break;
+
+    default:
+      // Your error handling code goes here.
+      MessageBox (NULL, TEXT("Wait error!"),
+                  TEXT("Error"), MB_OK);
+
+      // You can use GetLastError to obtain more information.
+
+      return 0;
+  }
+
+  return 1;
+} // End of EventsExample code
+</CODE></PRE>
+
+<P><B>MsgWaitForMultipleObjects</B> is similar to <B>WaitForMultipleObjects</B>, except that it enables you to specify input event objects in the object handle array. You select the type of input event to wait for in the <I>dwWakeMask</I> parameter. <B>MsgWaitForMultipleObjects</B> does not return if there is unread input of the specified type in the queue. It returns only when new input arrives.</P>
+
+<P>For example, a thread can use <B>MsgWaitForMultipleObjects</B> with its <I>dwWakeMask</I> parameter set to QS_KEY. This blocks its execution until the state of a specified object has been set to signaled and there is keyboard input available in the thread's input queue. The thread can use the <B>GetMessage</B> or <B>PeekMessage</B> function to retrieve the input. </P>
+
+<P>The following code example shows how to use <B>MsgWaitForMultipleObjects</B> in a message loop. The loop continues until a WM_QUIT message appears in the queue. The <I>dwWakeMask</I> parameter is set to QS_ALLINPUT so that all messages are checked. </P>
+
+<PRE><CODE>int MessageLoop (
+      HANDLE* lphObjects,   // Handles that need to be waited on
+      int     iObjCount )   // Number of handles to wait on
+{
+  while (TRUE)
+  {
+    // Block-local variables
+    DWORD dwResult;
+    MSG msgCurrent;
+
+    while (PeekMessage (&amp;msgCurrent, NULL, 0, 0, PM_REMOVE))
+    {
+      if (WM_QUIT == msgCurrent.message)
+        return 1;
+
+      DispatchMessage (&amp;msgCurrent);
+    }
+
+    dwResult = MsgWaitForMultipleObjects (iObjCount, lphObjects,
+                              FALSE, INFINITE, QS_ALLINPUT);
+
+    if (dwResult == DWORD(WAIT_OBJECT_0 + iObjCount))
+    {
+      // Some input was received -- go around loop again
+      continue;
+    }
+    else 
+    {
+      // Check for errors and handle them here. If not an error,
+      // write code which processes the result here.  Be sure to
+      // create code that provides some way to get out of the loop!
+
+      // The index for the signaled is 
+      // (dwResult - WAIT_OBJECT_0).
+    }
+  }
+} // End of MessageLoop example code
+</CODE></PRE>
+
+<P><B>Note</B>  Be careful when using the wait functions and code that directly or indirectly creates windows. If a thread creates any windows, it must process messages. Message broadcasts are sent to all the windows in the system. If you have a thread that uses a wait function with no time-out interval, the system will deadlock. One example of code that indirectly creates a window is the Component Object Model (COM) <B>CoInitialize</B> function. If you have a thread that creates windows, use <B>MsgWaitForMultipleObjects</B> rather than the other wait functions.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Navigate</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+
+
+<H1><A NAME="_wcesdk_mobile_channels_navigate"></A>Navigate</H1>
+
+<P>The <I>MC</I><B>.Navigate</B> method is a powerful and frequently usedmethod in pASP. It is designed to help examine the structure of a mobile channel, as represented in CDF, at run time. To understand the method behavior a brief discussion of the background and terminology is helpful.</P>
+
+<P>The basic operand of the <B>Navigate</B> method is an element, the smallest unit of information in a CDF file. Every element has a tag and, optionally, a value. The <I>MC</I><B>.Tag</B> and <I>MC</I><B>.Value</B> methods of pASP may be used to retrieve these strings for any element. The elements are organized into a tree structure as specified by Extensible Markup Language (XML) as the CDF file is parsed. Using the <B>Navigate</B> method, you can move to specific elements within the tree and between elements with certain relationships. </P>
+
+<P>The following discussions refer frequently to the sample CDF file and its associated parse tree, which are provided at the end of this document. The parse tree shows the internal representation of the sample CDF file. Each line of the parse tree is equivalent to an element, and all start with the element tag. Elements at the same level of indentation are siblings. In the CDF file, for example, the <B>BASE</B> element is a child of the top-level <B>CHANNEL</B> element. The first <B>HREF</B> element is a sibling of the <B>BASE</B> element. The <B>INTERVALTIME</B> element is a child of the <B>SCHEDULE</B> element. </P>
+
+<P>Many elements have default values. The default values are indicated in the parse tree by an “= [<I>string</I>]” expression following the tag of the element. </P>
+
+<P class=blue><B>To determine the default value of an element</B>
+
+<OL>
+	<LI>If the specified element has a string directly associated with it, the string is the default value.<BR><BR></LI>
+
+	<LI>If there is no direct string, but there is a child <B>VALUE</B> element, the child’s value becomes the default value. <BR><BR></LI>
+
+	<LI>If no <B>VALUE</B> element is provided, but a child <B>HREF</B> element is found, its value becomes the default value. <BR><BR></LI>
+
+	<LI>If none of these can be found, the <B>VALUE</B> is empty.</LI>
+</OL>
+
+<P>For example, the value of the first <B>ID</B> tag has a direct string, the <B>TITLE</B> tag has an explicit <B>VALUE</B> element, so this is used, and the value of first <B>LOGO</B> tag is its <B>HREF</B> element. The <B>SCHEDULE</B> tag has no direct string, <B>VALUE</B> or <B>HREF</B> children, so its value is empty.</P>
+
+<P>The <B>Navigate</B> method has the following syntax:</P>
+
+<PRE><CODE>NewElem = MC.Navigate(StartElem, NavAction, [,Match])
+</CODE></PRE>
+
+<P>The method returns a new element, or 0 if the command could not find the specified element. The following code example shows how to test this return value using standard VBScript comparisons. Other standard VBScript comparisons may be used.</P>
+
+<PRE><CODE>  IF NOT NewElem THEN
+     ' not found
+  END IF
+</CODE></PRE>
+
+<P>The <I>StartElem </I>parameter is the starting element from which to base relative movement commands. If you are using the absolute movement command “Jump,” you must use “ ” for the <I>StartElem</I> parameter. But in all other cases, <I>StartElement </I>must be a valid element returned from a previous <B>Navigate</B> method.</P>
+
+<P>The <I>NavAction</I> parameter is one of the following strings:
+
+<UL type=disc>
+	<LI>“Jump”</LI>
+</UL>
+
+<P class=indent>The “Jump” action is the first command used to get a starting element. It is equivalent to the <I>MC</I><B>.Locate</B> command. The <I>StartElem</I> parameter must be an empty string. The “Jump” action navigates directly to a specific element in the CDF as identified by the supplied identifier. For example, the statement</P>
+
+<PRE><CODE>NewElem = MC.Navigate("", "Jump", "D1")
+</CODE></PRE>
+
+<P class=indent>jumps to the first data item element in the example CDF file. The <I>NewElem</I> parameter is the <B>ITEM</B> parent element to the <B>ID</B> element, or “D1” in the example CDF file.
+
+<UL type=disc>
+	<LI>“First”</LI>
+</UL>
+
+<P class=indent>The “First” action moves to the first element at a specified level. For example, from the <B>ID</B> element of the first <B>LOGO</B> element in the example CDF file, a “First” action moves to the <B>STYLE</B> tag of that <B>LOGO</B>. More practical scenarios are to use this action to go back to the beginning of the list of <B>ITEM</B> elements under a subchannel. </P>
+
+<PRE><CODE>NewElem = MC.Navigate(StartElem, "First")
+</CODE></PRE>
+
+<UL type=disc>
+	<LI>“Out”</LI>
+</UL>
+
+<P class=indent>The “Out” action moves from the current element to the parent element.&nbsp;&nbsp;For example, from the <B>TITLE</B> element in the example CDF file, an “Out” action results in the movement to the top-level channel element.</P>
+
+<PRE><CODE>NewElem = MC.Navigate(StartElem, "Out")
+</CODE></PRE>
+
+<UL type=disc>
+	<LI>“In”</LI>
+</UL>
+
+<P class=indent>The “In” action moves to first child element beneath the current element. For example, from the first <B>USAGE</B> element in the example CDF file, the “In” action results in a movement to the <B>VALUE</B> element.</P>
+
+<PRE><CODE>NewElem = MC.Navigate(StartElem, "In")
+</CODE></PRE>
+
+<UL type=disc>
+	<LI>“Prev”</LI>
+</UL>
+
+<P class=indent>The “Prev” action moves to the previous sibling element. If it does not find a previous sibling element, it returns 0; it does not move to the parent element. For example, from the BASE="http://mySite/" ID="34droad"element in the example CDF file, the “Prev” action moves to the HREF="mctp://mySite/34droad/34droad.cdf" element&nbsp;&nbsp;Because there are no more siblings at this level, calling “Prev” again returns 0.</P>
+
+<PRE><CODE>NewElem = MC.Navigate(StartElem, "Prev")
+</CODE></PRE>
+
+<UL type=disc>
+	<LI>“Next”</LI>
+</UL>
+
+<P class=indent>The “Next” action moves to the next element at the same level. As with the “Prev” action, if it finds no such sibling element, it returns 0. For example, from the first <B>LOGO</B> tag in the example CDF file, the “Next” action results in a move to the second <B>LOGO</B> element.</P>
+
+<PRE><CODE>NewElem = MC.Navigate(StartElem, "Next")
+</CODE></PRE>
+
+<UL type=disc>
+	<LI>“Match”</LI>
+</UL>
+
+<P class=indent>The “Match” action attempts to find a sibling element with a tag matching the specified match string. It traverses as many siblings as it needs to until it either finds a match or can find no more siblings. If the “Match” action starts from a matched element, it returns the current element. To match beyond the current element, the “Match” action must follow a “Next” action.</P>
+
+<PRE><CODE>NewElem = MC.Navigate(StartElem, "Match","<B> </B>TagToMatch")
+</CODE></PRE>
+
+<UL type=disc>
+	<LI>“InMatch”</LI>
+</UL>
+
+<P class=indent>The “InMatch” action is the same as “Match” except it begins its search at the first child of the current element. This can be useful when looking for specific subtags that modify the enclosing element. The following code example shows how to look for the <B>USAGE</B> tag for a specific item. </P>
+
+<PRE><CODE>UsageElem = MC.Navigate(StartElem, "InMatch", "USAGE")
+IF UsageElem Then
+   UsageVal = MC.Val(UsageElem)
+   ' Test for specific usage...
+End If
+</CODE></PRE>
+
+<P>The only actions that use the optional third parameter are “Match” and “InMatch.”</P>
+
+</BODY>
+</HTML>

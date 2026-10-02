@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>HINTERNET Handles</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_hinternet_handles"></A>HINTERNET Handles</H2>
+
+<P>Handles created and used by the WinInet functions are called HINTERNETs. These HINTERNET handles returned by the WinInet functions in Windows CE control only Internet functions. They are not native system handles. Therefore, only an Internet function works with its corresponding Internet handle. HINTERNET handles cannot be used with functions such as <B>ReadFile</B> or <B>CloseHandle</B>. Similarly, native system handles cannot be used with the WinInet functions. For example, a handle returned by <B>CreateFile</B> cannot be passed to <B>InternetReadFile</B>. </P>
+
+<P>HINTERNET handles are maintained in a tree hierarchy in which a higher-level function must be called before a dependent function is called. The handle returned by the <B>InternetOpen</B> function is the root node. Handles returned by the <B>InternetConnect</B> function occupy the next level. Handles returned by the <B>FtpOpenFile</B>, <B>FtpFindFirstFile</B>, and <B>HttpOpenRequest</B> functions are the leaf nodes.</P>
+
+<P>The following illustration shows the hierarchy of the HINTERNET handles. Each box represents a WinInet function that returns an HINTERNET handle.</P>
+
+<P><IMG SRC="inethand.gif" ALT="" BORDER=0></P>
+
+<P>At the top level is <B>InternetOpen</B>, which creates the root HINTERNET. The next level contains <B>InternetOpenUrl</B> and <B>InternetConnect</B>. The functions that use the HINTERNET handle returned by <B>InternetConnect</B> make up the last level.</P>
+
+<P>All HINTERNET handles can be closed by using <B>InternetCloseHandle</B>. Client applications must close all HINTERNET handles derived from the HINTERNET handle to be closed before calling <B>InternetCloseHandle</B>.</P>
+
+<P>The following code example shows the handle hierarchy for the WinInet functions.</P>
+
+<PRE><CODE>HINTERNET hRootHandle, hOpenUrlHandle;
+hRootHandle = InternetOpen(
+                           TEXT("Example"), 
+                           INTERNET_OPEN_TYPE_DIRECT, 
+                           NULL, 
+                           NULL, 
+                           0);
+hOpenUrlHandle = InternetOpenUrl(
+                              hRootHandle, 
+                              TEXT("http://www.server.com/default.htm"),
+                              NULL,
+                              0,
+                              INTERNET_FLAG_RAW_DATA,
+                              0);
+
+// Close the handle created by InternetOpenUrl, so that the
+// InternetOpen handle can be closed.
+InternetCloseHandle(hOpenUrlHandle); 
+
+// Close the handle created by InternetOpen.
+InternetCloseHandle(hRootHandle);
+</CODE></PRE>
+
+<P><B>Note</B>  Handle values are recycled quickly. Therefore, if a handle is closed and a new handle is generated immediately, the new handle can have the same value as the handle just closed.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Virtual Memory</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_using_virtual_memory"></A>Using Virtual Memory</H2>
+
+<P>The virtual memory API directly allocates virtual memory. Windows CE also uses the virtual memory API to allocate memory for the heap and the stack. Use the virtual memory API when you need to reserve and allocate large blocks of memory for an application. The advantage of using virtual memory is that virtual memory does not fragment: Windows CE always allocates an integral number of pages. However, because Windows CE<B> </B>manages virtual memory in 64-KB units, you must ensure that you use all of the memory efficiently. Typically, an application wastes half of a virtual memory page per allocation. Also, Windows CE requires a slight overhead for managing the memory mapping. Finally, you must remember the reserved and committed status of each page. Therefore, if you do not think that you can use most of the 64-KB unit in your virtual memory allocation, use a heap instead.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To allocate and deallocate virtual memory</H4>
+
+<OL>
+	<LI>Call the <B>VirtualAlloc</B> function to reserve and commit virtual memory.
+<P>You can also use <B>VirtualAlloc</B> to reserve virtual memory and then have Windows CE map the memory address directly to physical memory when the pages are actually used by the application.
+</li>
+
+	<LI>Use the virtual memory that is allocated to your application.</li>
+
+	<LI>If necessary, call the <B>VirtualQuery</B> function to determine the read/write status of a virtual memory page.</li>
+
+	<LI>If necessary, call the <B>VirtualProtect</B> function to alter the access rights on committed pages.</li>
+
+	<LI>Call the <B>VirtualFree</B> function to decommit or free virtual memory and return the memory to Windows CE.
+<P>Decomitting a page unmaps the page from physical memory but keeps the virtual addresses reserved for the application.
+</li>
+</OL>
+
+<P>The following code example shows how to simultaneously reserve and commit virtual memory.</P>
+
+<PRE><CODE>#define THIRTY_K  (30 * 1024) // Definition example
+
+LPVOID lpMemory = NULL;       // Pointer to a region of memory
+LPVOID lpPage = NULL;         // Pointer to a page of memory
+
+lpMemory = VirtualAlloc (NULL, THIRTY_K,
+                         MEM_RESERVE | MEM_COMMIT,
+                         PAGE_READWRITE);
+
+if (NULL == lpMemory)
+{
+  // Your error-handling code goes here. You can use the
+  // GetLastError function to obtain more information.
+}
+
+// Your code that uses the just-allocated memory goes here.
+// For example:     LPBYTE MyPointer = (LPBYTE)lpMemory;
+//                  memset (MyPointer, 0, THIRTY_K);
+//                  return MyPointer;
+// . . .
+
+// When you are finished with the memory, you must release it.
+if (!VirtualFree (lpMemory, 0, MEM_RELEASE))
+{
+  // Your error-handling code goes here. You can use the
+  // GetLastError function to obtain more information.
+}
+
+// Remember to clear the pointer to prevent re-use.
+lpMemory = NULL;
+</CODE></PRE>
+
+<P>The following code example shows how to reserve a bundle of memory and then commit that memory, as needed.</P>
+
+<PRE><CODE>lpMemory = VirtualAlloc (NULL, THIRTY_K,
+                         MEM_RESERVE, PAGE_READWRITE);
+
+if (NULL == lpMemory)
+{
+  // Your error-handling code goes here. You can use the
+  // GetLastError function to obtain more information.
+}
+
+// Determine the page size on this system.
+SYSTEM_INFO siSystemInfo;
+
+GetSystemInfo (&amp;siSystemInfo);
+
+// Commit the first page of the just-reserved block.
+// (To commit more than one page, multiply the dwPageSize
+// parameter used below by the number of pages to commit.)
+lpPage = VirtualAlloc (lpMemory,        // Base for this commit
+                       siSystemInfo.dwPageSize,
+                                        // number of bytes
+                                        // to commit
+                       MEM_COMMIT,      // Selects the operation
+                       PAGE_READWRITE); // Selects permissions
+
+if (NULL == lpPage)
+{
+  // Your error-handling code goes here. You can use the
+  // GetLastError function to obtain more information.
+}
+
+// To commit additional pages, add the appropriate
+// offset to 'lpMemory' and call VirtualAlloc again.
+// For example, to commit the tenth page:
+// lpPage = VirtualAlloc ((LPBYTE)lpMemory + 9 * dwPageSize,
+// and so on.
+// . . .
+</CODE></PRE>
+
+<P>The following code example shows how to use the <B>VirtualQuery</B> function to examine the characteristics of a page of virtual memory that you previously allocated.</P>
+
+<PRE><CODE>DWORD dwResult;
+MEMORY_BASIC_INFORMATION mbiMemory;
+
+// Clear the results structure.
+memset (&amp;mbiMemory, 0, sizeof(MEMORY_BASIC_INFORMATION));
+
+dwResult = VirtualQuery (lpPage,        // Page to examine
+                         &amp;mbiMemory,    // Structure for results
+                         sizeof(MEMORY_BASIC_INFORMATION));
+
+if (sizeof(MEMORY_BASIC_INFORMATION) != dwResult)
+{
+  // Your error-handling code goes here.
+}
+
+// Here, write code to use the contents of the mbiMemory
+// structure that was filled in by the above call.
+// For example: if (mbiMemory.Protect != PAGE_READWRITE)
+// and so on.
+// . . .
+</CODE></PRE>
+
+<P>The following code example shows how to use <B>VirtualProtect</B> to change the characteristics of a page of virtual memory that you previously allocated. </P>
+
+<PRE><CODE>DWORD dwOldProtect;
+DWORD dwSize = 2048;  // Or, set this to 'siSystemInfo.dwPageSize'
+                      // (See the above code for how to get this.)
+
+if (!VirtualProtect (lpPage,        // Beginning of the set of
+                                    // pages to change
+                     dwSize,        // Length, in bytes, of the
+                                    // set of pages to change
+                     PAGE_READONLY, // What to change it to
+                     &amp;dwOldProtect  // Place to store the old setting
+                     ))
+{
+  // Your error-handling code goes here. You can use the
+  // GetLastError function to obtain more information.
+}
+</CODE></PRE>
+
+<P>The following code example shows how to decommit a page by using <B>VirtualFree</B>. Presumably, you could recommit the page later with different attributes. </P>
+
+<PRE><CODE>if (!VirtualFree (lpPage, 0, MEM_DECOMMIT))
+{
+  // Your error-handling code goes here. You can use the
+  // GetLastError function to obtain more information.
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>
