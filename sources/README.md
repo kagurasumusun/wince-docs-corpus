@@ -30,3 +30,27 @@ collection policy in the top-level `README.md`).
 Extracted text is never edited in place; if a source turns out to be wrong,
 fix the extraction under `corpus/` and note it in the release's
 `PROVENANCE.md`.
+
+## Still sought
+
+Found in web searches but **not downloadable from this working environment**
+(outbound network allows only github.com and package registries; the list is
+recorded here so a network-enabled run — GitHub Actions or a local machine —
+can collect them):
+
+| Source | Where | Why it matters |
+|--------|-------|----------------|
+| CE 2.0 SDK "Books Online" (Pegasus SDK API reference) | separate SDK CD, sought (see `windows-ce-2.0/PROVENANCE.md`) | the CE 2.0 Win32 API reference (the Technical Information CD has no API reference) |
+| CE 5.0 CD5 | <https://archive.org/details/en_win_ce_net_cd5> | further CE 5.0 platform docs beyond CD1 |
+| CE 6.0 R2 update | <https://archive.org/details/windows-embedded-ce-6.0-r2> | Platform Builder 6.0 R2 documentation |
+| CE 6.0 R3 update | <https://archive.org/details/CE6R3> | CE 6.0 R3 documentation (incl. the 3.5 Compact Framework reference) |
+| CE 6.0 Platform Builder SP1 | <https://archive.org/details/windows-embedded-ce-6.0-platform-builder-sp1> + Microsoft Download Center id 4097 (`Release Notes.htm` is a plain file) | Platform Builder 6.0 documentation |
+| CE 5.0 Standard SDK | Microsoft Download Center id 17310 (still live) | the CE 5.0 Standard SDK API surface |
+| MSDN Library discs (2001–2010) | Internet Archive / WinWorld | the MSDN-era captures of CE 3.0–5.0 reference, including custom-hardware docs |
+
+For page-level material the *queues* are the actionable list: the
+`queues/wayback-msdn-2010.txt` capture still has 31,135 topics that were never
+stored (the 253 stored ones were the topics duplicated by Learn), and
+`queues/mslearn-embedded.txt` is exhausted (`--dry-run` reports 0 to fetch).
+Run those from a network with access to `web.archive.org`/`learn.microsoft.com`
+(`.actions/harvest.yml` does exactly that).
