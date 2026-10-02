@@ -631,6 +631,45 @@ def wayback_bad(content):
     return any(marker in content for marker in WAYBACK_BAD_MARKERS)
 
 
+AVAILABILITY_API = "https://archive.org/wayback/available"
+WAYBACK_WRAPPER = re.compile(r"^https?://web\.archive\.org/web/[0-9]{14}[a-z_]*/")
+
+
+def wayback_target(url):
+    """https://web.archive.org/web/<ts>/<url> -> <url> (None if not wrapped)."""
+    m = WAYBACK_WRAPPER.match(url)
+    return url[m.end():] if m else None
+
+
+def wayback_snapshot(fetcher, target, timestamp, cache):
+    """Ask the availability API which snapshot of `target` really exists.
+
+    The pinned form in the queue (`/web/20100501000000/<url>`) only works when
+    the archive can redirect it to a capture; for a large part of the CE
+    namespace the capture is stored under another scheme or date and the
+    pinned request simply 404s.  The availability API answers with the exact
+    capture URL (or nothing, which means the page was never archived).
+    """
+    key = (target, timestamp[:4])
+    if key in cache:
+        return cache[key]
+    query = f"{AVAILABILITY_API}?url={urllib.parse.quote(target, safe='')}"
+    if timestamp:
+        query += f"&timestamp={timestamp}"
+    body, status = fetcher.get(query, fetcher.base_delay)
+    snapshot = None
+    if body:
+        try:
+            data = json.loads(body.decode("utf-8", "replace"))
+        except ValueError:
+            data = {}
+        closest = (data.get("archived_snapshots") or {}).get("closest") or {}
+        if closest.get("available") and closest.get("url"):
+            snapshot = closest["url"].replace("http://", "https://", 1)
+    cache[key] = snapshot
+    return snapshot
+
+
 def wayback_retimestamp(url, timestamp):
     return re.sub(r"(/web/)\d{14}(/)", r"\g<1>" + timestamp + r"\g<2>",
                   url, count=1)
@@ -676,6 +715,30 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
 
     content, status = fetcher.get(url, fetcher.base_delay)
 
+    if content is None and kind == "wayback":
+        # The pinned capture date did not work.  Ask the availability API
+        # where this topic really is, and fetch that capture instead.
+        target = wayback_target(url)
+        stamp = ""
+        m = re.search(r"/web/(\d{14})/", url)
+        if m:
+            stamp = m.group(1)
+        if target and snapshot_cache is not None:
+            snapshot = wayback_snapshot(fetcher, target, stamp, snapshot_cache)
+            if snapshot:
+                content, status = fetcher.get(snapshot, fetcher.base_delay)
+                if content is not None and wayback_bad(content):
+                    content = None
+                if content is not None and status_log is not None:
+                    status_log.append((pid, "resolved", snapshot))
+            else:
+                if status_log is not None:
+                    status_log.append((pid, "not-archived", ""))
+                if faillog:
+                    with open(faillog, "a", encoding="utf-8") as fh:
+                        fh.write(f"not-archived\t{url}\n")
+                return "not-archived", None, "not-archived"
+
     if content is None:
         if status == "robots-disallow":
             return "robots", None, status
@@ -711,6 +774,8 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
 
     written = store_page(content, directory, pid)
     have_ids.add(stored_id)
+    if kind == "wayback" and status_log is not None:
+        status_log.append((pid, "stored", url))
     return "stored", written, ""
 
 
@@ -806,6 +871,8 @@ def main():
     stopped_early = False
     run_failures = []          # (status, url) for this run, capped below
     FAILURE_SAMPLE = 40
+    snapshot_cache = {}
+    status_log = []            # (page_id, status, snapshot_url) for wayback
 
     try:
         queue_file = open(qpath, "r", encoding="utf-8", errors="replace",
@@ -818,7 +885,8 @@ def main():
         nonlocal lines
         result, written, detail = process_url(
             url, have_ids, faillog, fetcher, index_by_id,
-            dry_run=args.dry_run, wayback_retries=args.wayback_retries)
+            dry_run=args.dry_run, wayback_retries=args.wayback_retries,
+            snapshot_cache=snapshot_cache, status_log=status_log)
         with counters_lock:
             counters[result] += 1
             lines += 1
@@ -880,6 +948,30 @@ def main():
         for url in urls():
             work(url)
 
+    def write_wayback_status():
+        """Append what this run learned about the queue's topics."""
+        if not status_log or args.dry_run:
+            return
+        path = os.path.join(ROOT, "data", "reports", "wayback-status.tsv")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        rows = {}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                for line in fh:
+                    parts = line.rstrip("\n").split("\t")
+                    if len(parts) >= 4 and parts[0] != "page_id":
+                        rows[parts[0]] = parts
+        now = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
+        for pid, status, snapshot in status_log:
+            rows[pid] = [pid, status, now, snapshot]
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("page_id\tstatus\tchecked\tsnapshot\n")
+            for pid in sorted(rows):
+                fh.write("\t".join(rows[pid]) + "\n")
+        counts = collections.Counter(r[1] for r in rows.values())
+        print(f"[{qname}] wayback-status.tsv: " + ", ".join(
+            f"{k}={v:,}" for k, v in sorted(counts.items())), flush=True)
+
     def write_summary(elapsed=None):
         if not args.summary:
             return
@@ -901,6 +993,8 @@ def main():
             "stopped_early": stopped_early,
             "max_seconds": args.max_seconds,
             "failures": run_failures,
+            "wayback_status": dict(sorted(collections.Counter(
+                status for _pid, status, _snap in status_log).items())),
             "elapsed_seconds": round(elapsed, 1),
             "pages_per_second": round(counters["stored"] / elapsed, 3),
         }
@@ -938,7 +1032,8 @@ def main():
         with open(faillog, "r", encoding="utf-8") as fh:
             for ln in fh:
                 parts = ln.rstrip("\n").split("\t", 1)
-                if len(parts) == 2 and parts[0] not in ("404", "wayback-interstitial"):
+                if len(parts) == 2 and parts[0] not in (
+                        "404", "wayback-interstitial", "not-archived"):
                     pending.append(parts[1])
                 else:
                     keep.append(ln)
@@ -966,6 +1061,7 @@ def main():
     fetcher.close()
 
     elapsed = max(time.time() - t0, 1)
+    write_wayback_status()
     write_summary(elapsed)
     print(
         f"[{qname}] DONE lines={lines:,} stored={counters['stored']:,} "

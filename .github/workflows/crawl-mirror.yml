@@ -1,0 +1,108 @@
+# Crawl a documentation mirror into the corpus.
+#
+# Some sources (library.thedatadungeon.com and similar mirror sites) have no
+# API and no archive to download, so their documentation tree has to be walked
+# page by page.  tools/crawl-mirror.py does that: it starts at the seeds in
+# queues/mirrors.tsv, follows links only into the book folders the table of
+# contents points at, stores each page under its own relative path, and keeps
+# its progress in data/crawl/<name>.json so runs can be split.
+#
+# Politeness: one request in flight per host, 2.5 s between requests,
+# robots.txt honoured (library.thedatadungeon.com disallows AI-training
+# crawlers, not documentation crawlers), delay doubles on 429/503.
+#
+# Runs on demand, daily after the harvester, and whenever queues/mirrors.tsv
+# changes (so adding an entry starts that crawl).
+
+name: Crawl documentation mirror
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Entry in queues/mirrors.tsv (empty = every unfinished entry)'
+        required: false
+        default: ''
+      max_pages:
+        description: 'Pages for this run (0 = the entry default)'
+        required: false
+        default: '0'
+      max_seconds:
+        description: 'Time budget in seconds (0 = no budget)'
+        required: false
+        default: '3600'
+      dry_run:
+        description: 'Preview only (no fetching, no commits)'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    - cron: '30 20 * * *'      # 05:30 JST, after the daily harvest
+  push:
+    paths:
+      - queues/mirrors.tsv
+
+concurrency:
+  group: crawl-mirror
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Crawl
+        run: |
+          NAME="${{ github.event.inputs.name }}"
+          PAGES="${{ github.event.inputs.max_pages }}"
+          SECONDS_ARG="${{ github.event.inputs.max_seconds }}"
+          [ "$PAGES" = "0" ] && PAGES=""
+          BUDGET=""
+          if [ -n "$SECONDS_ARG" ] && [ "$SECONDS_ARG" != "0" ]; then
+            BUDGET="--max-seconds $SECONDS_ARG"
+          fi
+          DRY=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY="--dry-run"
+          fi
+          PAGE_ARG=""
+          if [ -n "$PAGES" ]; then
+            PAGE_ARG="--max-pages $PAGES"
+          fi
+          if [ -n "$NAME" ]; then
+            python3 tools/crawl-mirror.py --config queues/mirrors.tsv \
+              --only "$NAME" $PAGE_ARG $BUDGET $DRY | tee /tmp/crawl.log
+          else
+            python3 tools/crawl-mirror.py --config queues/mirrors.tsv \
+              $PAGE_ARG $BUDGET $DRY | tee /tmp/crawl.log
+          fi
+
+      - name: Refresh indexes and commit
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "wince-docs-corpus crawler"
+          git config user.email "wince-corpus-harvester@users.noreply.github.com"
+          python3 tools/build-index.py
+          python3 tools/build-index-sql.py
+          python3 tools/check-corpus.py --report || true
+          git add corpus/ data/index data/crawl data/reports queues || true
+          if git diff --staged --quiet; then
+            echo "nothing new"
+            exit 0
+          fi
+          git commit -m "corpus: mirror crawl + index refresh"
+          git pull --rebase
+          git push

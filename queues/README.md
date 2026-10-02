@@ -9,6 +9,8 @@ as `invalid` and skipped.
 | `to-fetch-mslearn.txt` | 31,635 | `learn.microsoft.com/en-us/previous-versions/windows/embedded/<id>(v=…)` — the current harvest queue. |
 | `mslearn-embedded.txt` | 38,726 | The original full enumeration of the same namespace (superset; first line is the namespace root). |
 | `wayback-msdn-2010.txt` | 31,388 | `web.archive.org/web/20100501000000/https://msdn.microsoft.com/en-us/library/<id>.aspx` — the May 2010 MSDN Library snapshot. |
+| `mirrors.tsv` | 1 | Not a URL queue: the mirror crawls (`tools/crawl-mirror.py`) with their seeds, output directory, per-run page budget and delay. |
+| `third-party-sources.md` | — | Which mirrors are accepted as sources (and which are not), with the robots/usage notes. |
 | `auto-harvest.txt` | 1 | Not a URL queue: the budget the daily automatic run reads (`<queue> <pages per run> [batch]`, or `off`). See below. |
 | `rejected-third-party-sources.txt` | 4 | Candidate sources that are **not** harvested: the collection policy is official Microsoft documentation only. Kept as a record of what was deliberately left out (a GitHub mirror, two vendor/community sites and one blog post). |
 
@@ -72,6 +74,10 @@ Notes:
   before giving up. What happened to a run is in
   `data/reports/harvest-last.json` (`fail_log.statuses` has the reasons:
   `404`, `empty-response`, `wayback-interstitial`, …).
+* Wayback topics that the Internet Archive never captured are detected: the
+  harvester asks the availability API for a real snapshot when the pinned
+  capture date fails, records `stored` / `resolved` / `not-archived` in
+  `data/reports/wayback-status.tsv` and does not retry them.
 * Failures are logged to `data/logs/fail-<queue>.log`. Entries with status
   `wayback-interstitial` are URLs the Internet Archive can only replay as its
   "JavaScript required" notice; the harvester tries other capture dates and
