@@ -48,12 +48,14 @@ SKIP_SCHEMES = ("mailto:", "javascript:", "data:", "tel:", "#")
 def load_config(path):
     entries = []
     with open(path, encoding="utf-8") as fh:
-        for line in fh:
+        for line_no, line in enumerate(fh, 1):
             line = line.rstrip("\n")
             if not line.strip() or line.lstrip().startswith("#"):
                 continue
             parts = [p.strip() for p in line.split("\t")]
-            if len(parts) < 6:
+            if len(parts) != 6:
+                print(f"[crawl] {path}: line {line_no} has {len(parts)} "
+                      f"fields, expected 6 -- ignored", file=sys.stderr)
                 continue
             name, seeds, out, toc_re, max_pages, delay = parts[:6]
             entries.append({
@@ -233,6 +235,9 @@ def main():
             if not specs:
                 print(f"no config entry named {args.only}", file=sys.stderr)
                 return 1
+        if not specs:
+            print(f"{args.config} has no usable entry", file=sys.stderr)
+            return 1
     elif args.seed:
         specs = [{"name": "cli", "seeds": args.seed,
                   "out": args.out if os.path.isabs(args.out)

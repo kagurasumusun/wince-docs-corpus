@@ -641,6 +641,48 @@ def wayback_target(url):
     return url[m.end():] if m else None
 
 
+def kind_is_wayback(queue_path):
+    """True when the queue is a wayback-*.txt queue (its lines are captures)."""
+    base = os.path.basename(queue_path)
+    if base.startswith("wayback"):
+        return True
+    try:
+        with open(queue_path, encoding="utf-8", errors="replace") as fh:
+            for i, line in enumerate(fh):
+                if i > 20:
+                    break
+                line = line.strip()
+                if line.startswith("http"):
+                    return "web.archive.org/web/" in line
+    except OSError:
+        return False
+    return False
+
+
+def known_wayback_answers():
+    """What earlier runs learned, from data/reports/wayback-status.tsv.
+
+    The file is committed, so a fresh runner starts with the answers from
+    every run before it: a topic that the Internet Archive never captured is
+    skipped without a single request, and a topic whose capture it does have
+    is fetched from that capture instead of from the pinned URL.
+    """
+    dead, snapshots = set(), {}
+    path = os.path.join(ROOT, "data", "reports", "wayback-status.tsv")
+    if not os.path.exists(path):
+        return dead, snapshots
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 4 or parts[0] == "page_id":
+                continue
+            if parts[1] == "not-archived":
+                dead.add(parts[0])
+            elif parts[1] == "resolved" and parts[3]:
+                snapshots[parts[0]] = parts[3]
+    return dead, snapshots
+
+
 def wayback_snapshot(fetcher, target, timestamp, cache):
     """Ask the availability API which snapshot of `target` really exists.
 
@@ -694,7 +736,8 @@ def store_page(content, path, page_id):
 
 
 def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
-                wayback_retries=2):
+                wayback_retries=2, snapshot_cache=None, status_log=None,
+                known_dead=None, known_snapshots=None):
     """Fetch and store one URL. Returns (result, written_path, detail)."""
 
     kind, pid = dest_for(url)
@@ -713,9 +756,17 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
         # No network access at all: report what would be fetched.
         return "would-fetch", None, ""
 
-    content, status = fetcher.get(url, fetcher.base_delay)
+    if kind == "wayback" and known_dead and pid in known_dead:
+        # An earlier run asked the availability API: no capture exists.
+        return "not-archived", None, "known"
 
-    if content is None and kind == "wayback":
+    fetch_url = url
+    if kind == "wayback" and known_snapshots and pid in known_snapshots:
+        fetch_url = known_snapshots[pid]
+
+    content, status = fetcher.get(fetch_url, fetcher.base_delay)
+
+    if content is None and kind == "wayback" and fetch_url == url:
         # The pinned capture date did not work.  Ask the availability API
         # where this topic really is, and fetch that capture instead.
         target = wayback_target(url)
@@ -873,6 +924,11 @@ def main():
     FAILURE_SAMPLE = 40
     snapshot_cache = {}
     status_log = []            # (page_id, status, snapshot_url) for wayback
+    known_dead, known_snapshots = known_wayback_answers()
+    if kind_is_wayback(qpath):
+        print(f"[{qname}] wayback answers on file: "
+              f"{len(known_dead):,} topics never archived, "
+              f"{len(known_snapshots):,} resolved captures", flush=True)
 
     try:
         queue_file = open(qpath, "r", encoding="utf-8", errors="replace",
@@ -886,7 +942,8 @@ def main():
         result, written, detail = process_url(
             url, have_ids, faillog, fetcher, index_by_id,
             dry_run=args.dry_run, wayback_retries=args.wayback_retries,
-            snapshot_cache=snapshot_cache, status_log=status_log)
+            snapshot_cache=snapshot_cache, status_log=status_log,
+            known_dead=known_dead, known_snapshots=known_snapshots)
         with counters_lock:
             counters[result] += 1
             lines += 1
@@ -917,7 +974,8 @@ def main():
         instead of re-reading the same prefix.
         """
         return (counters["stored"] + counters["would-fetch"]
-                + counters["failed"] + counters["interstitial"])
+                + counters["failed"] + counters["interstitial"]
+                + counters["not-archived"])
 
     def urls():
         nonlocal stopped_early
@@ -1043,9 +1101,14 @@ def main():
             still = []
             fetcher.base_delay = delay * 2
             for url in pending:
+                if known_dead and dest_for(url)[1] in known_dead:
+                    counters["not-archived"] += 1     # dead, no request spent
+                    continue
                 result, written, _detail = process_url(
                     url, have_ids, None, fetcher, index_by_id,
-                    wayback_retries=args.wayback_retries)
+                    wayback_retries=args.wayback_retries,
+                    snapshot_cache=snapshot_cache, status_log=status_log,
+                    known_dead=known_dead, known_snapshots=known_snapshots)
                 if result == "stored":
                     counters["stored"] += 1
                     counters["failed"] -= 1
@@ -1065,6 +1128,7 @@ def main():
     write_summary(elapsed)
     print(
         f"[{qname}] DONE lines={lines:,} stored={counters['stored']:,} "
+        f"not-archived={counters['not-archived']:,} "
         f"skipped={counters['skipped']:,} fails={counters['failed']:,} "
         f"invalid={counters['invalid']:,} robots={counters['robots']:,} "
         f"rate={counters['stored'] / elapsed:.2f} pages/s "
