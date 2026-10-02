@@ -1,26 +1,18 @@
-# Updated harvest workflow for the reorganized tree.
+# Harvest workflow (reorganized tree).
 #
 # GitHub only executes workflow files that live in .github/workflows/, and
-# pushing changes under that path requires a token with the `workflows`
-# permission, which the token available for this reorganization does not
-# have. The .github/workflows/harvest.yml copy is therefore left untouched
-# (it still refers to the pre-reorganization paths: urls/, docs/,
-# tools/make-index.py, data/harvest/).
+# pushing changes under that path requires a credential with the `workflows`
+# permission. The copy installed in .github/workflows/ is kept in sync by the
+# repository owner; this staged copy is the same job with the current tooling
+# and the extra steps that are useful after the 2026-10 additions:
 #
-# To activate this version, with a token that has the `workflows`
-# permission, either
+#   * --queue "queues/..." and tools/build-index.py (post-reorganization paths)
+#   * a --dry-run option, to preview what a queue would still fetch
+#   * the Win32 map report refresh (tools/build-win32-map.py)
+#   * data/logs/ staged, corpus/ and data/index/ committed
 #
-#     git mv .actions/harvest.yml .github/workflows/harvest.yml
-#     git commit -m "harvest: install the updated workflow"
-#     git push
-#
-# or copy the file's contents over .github/workflows/harvest.yml (for
-# example through the GitHub web UI).
-#
-# Differences from the .github copy:
-#   * --queue "queues/${{ github.event.inputs.queue }}"
-#   * python3 tools/build-index.py   (was tools/make-index.py)
-#   * git add data/index/ corpus/ data/logs/   (was docs/, data/harvest/)
+# Install with:  git mv .actions/harvest.yml .github/workflows/harvest.yml
+# (see .actions/README.md).
 
 name: Windows CE Documentation Harvester
 
@@ -39,6 +31,11 @@ on:
         description: 'Pages per batch commit & push'
         required: false
         default: '500'
+      dry_run:
+        description: 'Preview only (no fetching, no commits)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -58,13 +55,18 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Run harvester (sequential, rate-limited, batch push)
+      - name: Run harvester (rate-limited, batch push)
         run: |
           git config user.name "wince-docs-corpus harvester"
           git config user.email "wince-corpus-harvester@users.noreply.github.com"
           LIMIT_ARG=""
           if [ "${{ github.event.inputs.limit }}" != "0" ]; then
             LIMIT_ARG="--limit ${{ github.event.inputs.limit }}"
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python3 tools/harvest.py \
+              --queue "queues/${{ github.event.inputs.queue }}" $LIMIT_ARG --dry-run
+            exit 0
           fi
           python3 tools/harvest.py \
             --queue "queues/${{ github.event.inputs.queue }}" \
@@ -76,7 +78,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           python3 tools/build-index.py
           python3 tools/build-index-sql.py
-          git add data/index/ corpus/ data/logs/ || true
+          python3 tools/build-win32-map.py
+          git add data/index/ data/reports/ corpus/ data/logs/ || true
           if ! git diff --quiet || ! git diff --staged --quiet; then
             git commit -m "corpus: index refresh + final harvest batch"
             git pull --rebase
