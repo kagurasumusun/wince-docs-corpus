@@ -8,10 +8,10 @@ one place.
 ```
 corpus/win32/
 ├── api/<module>/<page>.md     Win32 API reference (17,095 pages)
-└── guide/<folder>/<page>.md   Win32 programming guides (2,068 pages)
+└── guide/<folder>/<page>.md   Win32 programming guides (3,357 pages)
 ```
 
-19,166 pages in total — `api/` covers **every page of the 183 sdk-api modules
+20,452 pages in total — `api/` covers **every page of the 183 sdk-api modules
 that document at least one CE-shared API**, so the structs, enums, callbacks
 and interfaces used together with a shared function are present as well.
 `data/reports/win32-imported.tsv` marks each page `ce_shared = yes/no`
@@ -55,7 +55,7 @@ CE page in `corpus/learn/<set>/`. Note that CE documents many of these APIs
 only as part of `corpus/chm/windows-ce-3.0/` (CE 3.0) and
 `corpus/learn/windows-ce-5.0/`.
 
-## guide/ — 2,068 pages, 18 folders
+## guide/ — 3,357 pages, 20 folders
 
 Programming guides for the subsystems CE implements. CE's own documentation is
 reference-heavy and thin on concepts, so these generic Win32 guides are the
@@ -63,29 +63,31 @@ closest thing to the "how it works" chapters of the CE platform docs:
 
 | folder | pages | topic |
 |--------|------:|-------|
-| `FileIO` | 195 | files, volumes, reparse points, transactional NTFS (not on CE) |
-| `gdi` | 337 | GDI objects, mapping modes, painting |
-| `NetMgmt` | 84 | network management |
+| `SecCrypto` | 835 | CryptoAPI: providers, hashes, certificates, CNG |
+| `com` | 452 | COM: apartments, marshalling, registration, monikers |
 | `WinSock` | 363 | Winsock 2 programming model, overlapped I/O |
-| `Memory` | 72 | virtual memory, heaps |
-| `Sync` | 46 | events, mutexes, semaphores, wait functions |
-| `ProcThread` | 68 | processes and threads |
-| `Debug` | 121 | debugging API |
-| `ipc` | 57 | pipes/mailslots/RPC basics |
-| `DevIO` | 66 | device I/O, IOCTLs |
-| `SysInfo` | 99 | system information |
-| `Power` | 61 | power management (CE power manager differs — use CE pages) |
-| `Services` | 64 | services (CE services model differs) |
+| `gdi` | 337 | GDI objects, mapping modes, painting |
 | `menurc` | 220 | menus and resources (GWES) |
-| `dlgbox` | 73 | dialog boxes (GWES) |
+| `FileIO` | 195 | files, volumes, reparse points, transactional NTFS (not on CE) |
+| `Debug` | 121 | debugging API |
+| `SysInfo` | 99 | system information |
+| `NetMgmt` | 84 | network management |
 | `inputdev` | 80 | keyboard/mouse/tablet input (GWES) |
-| `Dlls` | 23 | DLL loading |
+| `dlgbox` | 73 | dialog boxes (GWES) |
+| `Memory` | 72 | virtual memory, heaps |
+| `ProcThread` | 68 | processes and threads |
+| `DevIO` | 66 | device I/O, IOCTLs |
+| `Services` | 64 | services (CE services model differs) |
+| `Power` | 61 | power management (CE power manager differs — use CE pages) |
+| `ipc` | 57 | pipes/mailslots/RPC basics |
+| `Sync` | 46 | events, mutexes, semaphores, wait functions |
 | `Bluetooth` | 39 | Bluetooth stack |
+| `Dlls` | 23 | DLL loading |
 
-CryptoAPI (`SecCrypto`) and COM (`com`) guides are **not** extracted: they are
-available in the upstream snapshot (see `sources/microsoftdocs/`) and the CE
-side of both is already covered by `corpus/learn/`. Pass them to the extractor
-by adding them to `GUIDE_FOLDERS` in `tools/fetch-upstream.py`.
+(CryptoAPI and COM are part of the CE platform, so their guides are included;
+two sdk-api pages that upstream keeps inside guide folders —
+`Dlls/unknown/nf-unknown-dllgetdocumentation.md`,
+`inputdev/winuser/nf-winuser-setmaxtouchpadsensitivity.md` — come along.)
 
 ## Caveats
 

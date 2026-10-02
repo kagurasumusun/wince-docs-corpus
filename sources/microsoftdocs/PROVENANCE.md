@@ -50,11 +50,11 @@ Re-running `tools/fetch-upstream.py subset --source sdk-api` regenerates
 * Upstream tree: 48,212 `.md` pages under `desktop-src/` (plus images).
 
 Only the guide folders for subsystems Windows CE also implements are
-extracted, into `corpus/win32/guide/<folder>/` — **2,070 pages** from
+extracted, into `corpus/win32/guide/<folder>/` — **3,357 pages** from
 `FileIO`, `Memory`, `Sync`, `ProcThread`, `ipc`, `Dlls`, `Debug`, `DevIO`,
-`SysInfo`, `Power`, `Services`, `gdi`, `menurc`, `dlgbox`, `WinMsg`,
-`inputdev`, `WinSock`, `NetMgmt`, `Bluetooth` (see `GUIDE_FOLDERS` in
-`tools/fetch-upstream.py`).
+`SysInfo`, `Power`, `Services`, `gdi`, `menurc`, `dlgbox`, `inputdev`,
+`WinSock`, `NetMgmt`, `Bluetooth`, `SecCrypto` and `com`
+(see `GUIDE_FOLDERS` in `tools/fetch-upstream.py`).
 
 Desktop-only areas (DirectX, WMI/CIM, Active Directory schema, Hyper-V,
 MSI, Ribbon, ADSI, TAPI, printing, …) are deliberately not extracted:

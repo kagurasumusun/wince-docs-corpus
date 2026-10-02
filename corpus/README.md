@@ -15,7 +15,7 @@ corpus/
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 97,118 pages (77,953 in the CE trees + 19,165 Win32 pages).
+Total: 98,405 pages (77,953 in the CE trees + 20,452 Win32 pages).
 
 ## Sets under `corpus/learn/` (68,704 pages)
 
@@ -30,7 +30,7 @@ Total: 97,118 pages (77,953 in the CE trees + 19,165 Win32 pages).
 | `windows-embedded-compact-7` | 256 | Windows Embedded Compact 7 remote-tools reference (`(Compact 7)`). |
 | `unclassified` | 414 | Set could not be determined from page metadata. |
 
-(IDs 96,414 vs 97,118 pages: sdk-api contains the same page id in several
+(IDs differ from the page count: sdk-api contains the same page id in several
 modules — `winsock`/`winsock2` and the `A`/`W` variants of a name — so a few
 hundred page ids repeat; the SQL index keys pages by path.)
 
@@ -96,11 +96,12 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 * `msdn-library/windows-mobile-6.5/` — 34 Windows Mobile 6.5 topics in MSDN
   Library (MSHelp XML) format; see
   `msdn-library/windows-mobile-6.5/PROVENANCE.md`.
-* `win32/` — 19,165 pages from Microsoft's public Win32 documentation
+* `win32/` — 20,452 pages from Microsoft's public Win32 documentation
   repositories (`MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`): the 183
   sdk-api modules that contain a CE-shared API name (5,219 shared pages +
-  11,876 context pages) and the programming guides for the subsystems CE
-  implements. Markdown, not HTML; see `win32/README.md`. This is the
+  11,876 context pages) and 3,357 programming-guide pages for the subsystems
+  CE implements (files, GDI, Winsock, memory, sync, processes, debugging,
+  CryptoAPI, COM, …). Markdown, not HTML; see `win32/README.md`. This is the
   "w32共通部分" of the corpus: the same API is documented on the CE side in
   `learn/` and `chm/`, and `data/reports/win32-shared.tsv` maps one to the
   other, so e.g. `CreateFile` can be read from both angles.

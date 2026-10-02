@@ -108,7 +108,7 @@ Generated, committed so tools and the harvester's resume check do not have to
 rescan ~78k HTML files.
 
 * `INDEX.tsv` — `# id <TAB> book <TAB> path <TAB> title`, one row per page
-  (97,118 as of 2026-10). `book` is the corpus-relative directory
+  (98,405 as of 2026-10). `book` is the corpus-relative directory
   (`learn/windows-ce-5.0`, `win32/api/fileapi`, `chm/windows-ce-3.0`).
   Titles come from `<title>` (HTML) or the `title:` front matter (markdown),
   falling back to the catalogs. Regenerate with

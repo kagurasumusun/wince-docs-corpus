@@ -104,12 +104,16 @@ GUIDE_FOLDERS = (
     "gdi", "menurc", "dlgbox", "inputdev",
     # networking
     "WinSock", "NetMgmt", "Bluetooth",
+    # security and COM: both are part of the CE platform (CryptoAPI, COM)
+    "SecCrypto", "com",
 )
 
-# Not extracted page-by-page (they would add ~1,300 more files):  ``SecCrypto``
-# and ``com`` are available in the upstream snapshot (see ``pack`` mode) and on
-# GitHub; the Windows CE side of CryptoAPI/COM is already documented in
-# corpus/learn/.
+# Deliberately not extracted: ``lwef`` ("Legacy Windows Environment Features",
+# deprecated Windows Desktop Search 2.x), ``WES`` (Windows Embedded Standard,
+# a different product line), the DirectX/WMI/ADSchema/HyperV/... trees (no CE
+# counterpart) and ``windows-driver-docs`` (WDM/KMDF drivers, a different
+# driver model from CE).  All of them stay available in the upstream
+# repositories and in the sdk-api snapshot tarball.
 
 
 # ------------------------------------------------------------------ helpers
