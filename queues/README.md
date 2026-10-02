@@ -27,6 +27,12 @@ page budget on that line, then refreshes the indexes and commits. The same run
 starts whenever that file changes, which makes editing it the quickest way to
 start one — and `off` stops the automatic runs.
 
+Each run is time-bounded: the 4th field of `auto-harvest.txt` is a budget in
+seconds after which the harvester stops cleanly and commits what it has (the
+next run continues from there), and the job itself is capped at 120 minutes.
+That keeps a throttled host from burning runner time — the run just ends and
+resumes later.
+
 What each run did is committed as well: `data/reports/harvest-last.json` (the
 raw counters) and `data/reports/harvest-history.tsv` (one row per run, so the
 harvesting rate and the remaining backlog stay visible).

@@ -67,6 +67,10 @@ permissions:
 jobs:
   harvest:
     runs-on: ubuntu-latest
+    # Hard cap: the harvester also stops itself after --max-seconds (the 4th
+    # field of queues/auto-harvest.txt), so a slow or rate-limiting host can
+    # neither run for hours nor leave a half-finished batch uncommitted.
+    timeout-minutes: 120
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -87,6 +91,7 @@ jobs:
           LIMIT="${{ github.event.inputs.limit }}"
           BATCH="${{ github.event.inputs.batch }}"
           DRY="${{ github.event.inputs.dry_run }}"
+          BUDGET=""
           if [ -z "$QUEUE" ]; then
             # A scheduled or control-file-triggered run: the committed file
             # names the queue and the per-run budget.
@@ -95,6 +100,7 @@ jobs:
             QUEUE="${1:-}"
             LIMIT="${2:-0}"
             BATCH="${3:-500}"
+            BUDGET="${4:-5400}"
             DRY="false"
             if [ -z "$QUEUE" ] || [ "$QUEUE" = "off" ]; then
               echo "queues/auto-harvest.txt does not name a queue -- nothing to do."
@@ -109,9 +115,10 @@ jobs:
           echo "queue=$QUEUE" >> "$GITHUB_OUTPUT"
           echo "limit=$LIMIT" >> "$GITHUB_OUTPUT"
           echo "batch=$BATCH" >> "$GITHUB_OUTPUT"
+          echo "budget=$BUDGET" >> "$GITHUB_OUTPUT"
           echo "dry_run=$DRY" >> "$GITHUB_OUTPUT"
           echo "enabled=true" >> "$GITHUB_OUTPUT"
-          echo "harvesting queues/$QUEUE (limit=$LIMIT, batch=$BATCH, dry_run=$DRY)"
+          echo "harvesting queues/$QUEUE (limit=$LIMIT, batch=$BATCH, time budget=${BUDGET:-none}s, dry_run=$DRY)"
 
       - name: Run harvester (rate-limited, batch push)
         if: steps.plan.outputs.enabled == 'true'
@@ -128,10 +135,14 @@ jobs:
               --dry-run --summary data/reports/harvest-last.json
             exit 0
           fi
+          BUDGET_ARG=""
+          if [ -n "${{ steps.plan.outputs.budget }}" ]; then
+            BUDGET_ARG="--max-seconds ${{ steps.plan.outputs.budget }}"
+          fi
           python3 tools/harvest.py \
             --queue "queues/${{ steps.plan.outputs.queue }}" \
-            --batch "${{ steps.plan.outputs.batch }}" $LIMIT_ARG --push \
-            --summary data/reports/harvest-last.json
+            --batch "${{ steps.plan.outputs.batch }}" $LIMIT_ARG $BUDGET_ARG \
+            --push --summary data/reports/harvest-last.json
 
       - name: Refresh index, integrity report and final push
         if: steps.plan.outputs.enabled == 'true' && steps.plan.outputs.dry_run != 'true'

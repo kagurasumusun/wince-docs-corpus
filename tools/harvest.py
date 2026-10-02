@@ -656,33 +656,33 @@ def store_page(content, path, page_id):
 
 def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
                 wayback_retries=2):
-    """Fetch and store one URL. Returns (result, written_path)."""
+    """Fetch and store one URL. Returns (result, written_path, detail)."""
 
     kind, pid = dest_for(url)
 
     if kind is None:
-        return "invalid", None
+        return "invalid", None, "unrecognised-url"
 
     if kind == "learn":
         if pid in have_ids:
-            return "skipped", None
+            return "skipped", None, ""
     else:
         if "wb:" + pid in have_ids:
-            return "skipped", None
+            return "skipped", None, ""
 
     if dry_run:
         # No network access at all: report what would be fetched.
-        return "would-fetch", None
+        return "would-fetch", None, ""
 
     content, status = fetcher.get(url, fetcher.base_delay)
 
     if content is None:
         if status == "robots-disallow":
-            return "robots", None
+            return "robots", None, status
         if faillog:
             with open(faillog, "a", encoding="utf-8") as fh:
                 fh.write(f"{status}\t{url}\n")
-        return "failed", None
+        return "failed", None, str(status)
 
     if kind == "wayback" and wayback_bad(content):
         for timestamp in WAYBACK_FALLBACK_TIMESTAMPS[:wayback_retries]:
@@ -695,7 +695,7 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
             if faillog:
                 with open(faillog, "a", encoding="utf-8") as fh:
                     fh.write(f"wayback-interstitial\t{url}\n")
-            return "interstitial", None
+            return "interstitial", None, "wayback-interstitial"
 
     head = content[:8000].decode("utf-8", "replace")
     match = TITLE.search(head)
@@ -711,7 +711,7 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
 
     written = store_page(content, directory, pid)
     have_ids.add(stored_id)
-    return "stored", written
+    return "stored", written, ""
 
 
 def iter_chunks(file_handle, chunk_size):
@@ -756,6 +756,10 @@ def main():
                     help="ignore data/index/corpus.sqlite3 and scan the tree")
     ap.add_argument("--no-robots", action="store_true",
                     help="do not consult robots.txt (not recommended)")
+    ap.add_argument("--max-seconds", type=int, default=0, metavar="SECONDS",
+                    help="stop fetching after this many seconds and finish "
+                         "the run cleanly (0 = no budget); the queue resumes "
+                         "where it stopped on the next run")
     ap.add_argument("--summary", metavar="FILE",
                     help="write a JSON run summary (counters, rate, delay) "
                          "here; used by the Actions workflow to report what "
@@ -799,6 +803,9 @@ def main():
     counters_lock = threading.Lock()
     lines = 0
     t0 = time.time()
+    stopped_early = False
+    run_failures = []          # (status, url) for this run, capped below
+    FAILURE_SAMPLE = 40
 
     try:
         queue_file = open(qpath, "r", encoding="utf-8", errors="replace",
@@ -809,12 +816,15 @@ def main():
 
     def work(url):
         nonlocal lines
-        result, written = process_url(
+        result, written, detail = process_url(
             url, have_ids, faillog, fetcher, index_by_id,
             dry_run=args.dry_run, wayback_retries=args.wayback_retries)
         with counters_lock:
             counters[result] += 1
             lines += 1
+            if detail and result in ("failed", "interstitial") \
+                    and len(run_failures) < FAILURE_SAMPLE:
+                run_failures.append({"status": detail, "url": url})
             if written:
                 gitbatcher.add([written])
                 gitbatcher.maybe_flush()
@@ -842,10 +852,18 @@ def main():
                 + counters["failed"] + counters["interstitial"])
 
     def urls():
+        nonlocal stopped_early
         with queue_file as fh:
             for chunk in iter_chunks(fh, CHUNK_SIZE):
                 for url in chunk:
                     if args.limit and fetched() >= args.limit:
+                        return
+                    if args.max_seconds and time.time() - t0 >= args.max_seconds:
+                        stopped_early = True
+                        print(f"[{qname}] time budget of "
+                              f"{args.max_seconds}s reached after "
+                              f"{fetched():,} pages -- stopping cleanly",
+                              flush=True)
                         return
                     yield url
                 chunk.clear()
@@ -880,6 +898,9 @@ def main():
             "lines": lines,
             "counters": dict(sorted(counters.items())),
             "requests": fetcher.stats["requests"],
+            "stopped_early": stopped_early,
+            "max_seconds": args.max_seconds,
+            "failures": run_failures,
             "elapsed_seconds": round(elapsed, 1),
             "pages_per_second": round(counters["stored"] / elapsed, 3),
         }
@@ -927,7 +948,7 @@ def main():
             still = []
             fetcher.base_delay = delay * 2
             for url in pending:
-                result, written = process_url(
+                result, written, _detail = process_url(
                     url, have_ids, None, fetcher, index_by_id,
                     wayback_retries=args.wayback_retries)
                 if result == "stored":
