@@ -63,6 +63,7 @@ import contextlib
 import datetime as _dt
 import gzip
 import http.client
+import json
 import os
 import random
 import re
@@ -727,6 +728,10 @@ def main():
                     help="ignore data/index/corpus.sqlite3 and scan the tree")
     ap.add_argument("--no-robots", action="store_true",
                     help="do not consult robots.txt (not recommended)")
+    ap.add_argument("--summary", metavar="FILE",
+                    help="write a JSON run summary (counters, rate, delay) "
+                         "here; used by the Actions workflow to report what "
+                         "a run actually did")
     ap.add_argument("--wayback-retries", type=int, default=2,
                     help="other capture dates to try when archive.org "
                          "answers with an interstitial (default 2)")
@@ -745,6 +750,7 @@ def main():
     if args.dry_run:
         faillog = None
 
+    started = _dt.datetime.now(_dt.timezone.utc)
     print(f"[{qname}] indexing existing documents...", flush=True)
     index_start = time.time()
     have_ids = build_have_index(args.index_db,
@@ -819,11 +825,42 @@ def main():
         for url in urls():
             work(url)
 
+    def write_summary(elapsed=None):
+        if not args.summary:
+            return
+        elapsed = elapsed if elapsed is not None else max(time.time() - t0, 1)
+        summary = {
+            "queue": os.path.relpath(qpath, ROOT),
+            "queue_name": qname,
+            "started": started.isoformat(timespec="seconds"),
+            "finished": _dt.datetime.now(
+                _dt.timezone.utc).isoformat(timespec="seconds"),
+            "limit": args.limit,
+            "delay_seconds": delay,
+            "batch": args.batch,
+            "push": bool(args.push),
+            "dry_run": bool(args.dry_run),
+            "lines": lines,
+            "counters": dict(sorted(counters.items())),
+            "requests": fetcher.stats["requests"],
+            "elapsed_seconds": round(elapsed, 1),
+            "pages_per_second": round(counters["stored"] / elapsed, 3),
+        }
+        path = args.summary if os.path.isabs(args.summary) \
+            else os.path.join(ROOT, args.summary)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(summary, fh, indent=2, sort_keys=False)
+            fh.write("\n")
+        print(f"[{qname}] summary -> {os.path.relpath(path, ROOT)} "
+              f"(stored={counters['stored']:,})", flush=True)
+
     if args.dry_run:
         print(f"[{qname}] DRY RUN lines={lines:,} "
               f"would-fetch={counters['would-fetch']:,} "
               f"already-have={counters['skipped']:,} "
               f"invalid={counters['invalid']:,}", flush=True)
+        write_summary()
         return 0
 
     # ---- retry pass: everything that was not a hard 404 ------------------
@@ -860,6 +897,7 @@ def main():
     fetcher.close()
 
     elapsed = max(time.time() - t0, 1)
+    write_summary(elapsed)
     print(
         f"[{qname}] DONE lines={lines:,} stored={counters['stored']:,} "
         f"skipped={counters['skipped']:,} fails={counters['failed']:,} "

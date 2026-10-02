@@ -1,17 +1,31 @@
-# Harvest workflow (reorganized tree).
+# Harvest workflow.
 #
-# Runs tools/harvest.py for one queue on a GitHub runner (the only network
-# with a route to learn.microsoft.com / web.archive.org), then refreshes the
-# indexes and the integrity report:
+# Runs tools/harvest.py for one queue on a GitHub runner -- the only network
+# that has a route to learn.microsoft.com / web.archive.org -- then refreshes
+# the indexes, the integrity report and the Win32 map:
 #
-#   * --queue "queues/..." is resumable: already-stored page ids are skipped,
-#     so a run that hits the 6-hour limit continues on the next dispatch
-#   * --dry-run previews what a queue would fetch, without any request
-#   * the Win32 map report refresh (tools/build-win32-map.py)
-#   * tools/check-corpus.py --report for data/reports/{duplicates,corpus-problems}.tsv
+#   * --queue "queues/..." is resumable: page ids that are already stored are
+#     skipped, so a run that hits the 6-hour job limit simply continues on the
+#     next run, and a queue can be re-run at any time
+#   * --dry-run previews what a queue would fetch, without making a request
+#   * tools/check-corpus.py --report for
+#     data/reports/{duplicates,corpus-problems}.tsv
+#   * data/reports/harvest-last.json records what the run did (counters, rate)
 #   * data/logs/ staged, corpus/ data/index/ data/reports/ committed
 #
-# See queues/README.md for the run instructions and the size of each queue.
+# How to start a run -- three ways:
+#
+#   1. Actions tab -> "Windows CE Documentation Harvester" -> Run workflow
+#      (queue, limit, batch, dry_run), see queues/README.md
+#   2. Automatic: the daily schedule reads queues/auto-harvest.txt and
+#      harvests the queue + limit it names; the file is committed, so the
+#      budget can be changed (or set to "off") with a normal commit
+#   3. Push a change to queues/auto-harvest.txt: the run starts immediately
+#      with that file's settings (that is also the quickest way to test)
+#
+# Politeness is enforced inside tools/harvest.py: at most one request in
+# flight per host, a fixed delay per host (0.4 s learn / 1.5 s archive.org),
+# robots.txt honoured, and the delay doubles on 429/503 responses.
 
 name: Windows CE Documentation Harvester
 
@@ -35,6 +49,17 @@ on:
         required: false
         type: boolean
         default: false
+  schedule:
+    # 18:00 UTC = 03:00 JST: one chunk per day, size set by
+    # queues/auto-harvest.txt (see that file).
+    - cron: '0 18 * * *'
+  push:
+    paths:
+      - queues/auto-harvest.txt
+
+concurrency:
+  group: harvest
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -47,6 +72,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -54,24 +80,61 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Decide what to harvest
+        id: plan
+        run: |
+          QUEUE="${{ github.event.inputs.queue }}"
+          LIMIT="${{ github.event.inputs.limit }}"
+          BATCH="${{ github.event.inputs.batch }}"
+          DRY="${{ github.event.inputs.dry_run }}"
+          if [ -z "$QUEUE" ]; then
+            # A scheduled or control-file-triggered run: the committed file
+            # names the queue and the per-run budget.
+            LINE="$(grep -vE '^[[:space:]]*(#|$)' queues/auto-harvest.txt | head -1 || true)"
+            set -- $LINE
+            QUEUE="${1:-}"
+            LIMIT="${2:-0}"
+            BATCH="${3:-500}"
+            DRY="false"
+            if [ -z "$QUEUE" ] || [ "$QUEUE" = "off" ]; then
+              echo "queues/auto-harvest.txt does not name a queue -- nothing to do."
+              echo "enabled=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ ! -f "queues/$QUEUE" ]; then
+              echo "::error::queues/auto-harvest.txt names queues/$QUEUE, which does not exist"
+              exit 1
+            fi
+          fi
+          echo "queue=$QUEUE" >> "$GITHUB_OUTPUT"
+          echo "limit=$LIMIT" >> "$GITHUB_OUTPUT"
+          echo "batch=$BATCH" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$DRY" >> "$GITHUB_OUTPUT"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          echo "harvesting queues/$QUEUE (limit=$LIMIT, batch=$BATCH, dry_run=$DRY)"
+
       - name: Run harvester (rate-limited, batch push)
+        if: steps.plan.outputs.enabled == 'true'
         run: |
           git config user.name "wince-docs-corpus harvester"
           git config user.email "wince-corpus-harvester@users.noreply.github.com"
           LIMIT_ARG=""
-          if [ "${{ github.event.inputs.limit }}" != "0" ]; then
-            LIMIT_ARG="--limit ${{ github.event.inputs.limit }}"
+          if [ "${{ steps.plan.outputs.limit }}" != "0" ]; then
+            LIMIT_ARG="--limit ${{ steps.plan.outputs.limit }}"
           fi
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+          if [ "${{ steps.plan.outputs.dry_run }}" = "true" ]; then
             python3 tools/harvest.py \
-              --queue "queues/${{ github.event.inputs.queue }}" $LIMIT_ARG --dry-run
+              --queue "queues/${{ steps.plan.outputs.queue }}" $LIMIT_ARG \
+              --dry-run --summary data/reports/harvest-last.json
             exit 0
           fi
           python3 tools/harvest.py \
-            --queue "queues/${{ github.event.inputs.queue }}" \
-            --batch "${{ github.event.inputs.batch }}" $LIMIT_ARG --push
+            --queue "queues/${{ steps.plan.outputs.queue }}" \
+            --batch "${{ steps.plan.outputs.batch }}" $LIMIT_ARG --push \
+            --summary data/reports/harvest-last.json
 
       - name: Refresh index, integrity report and final push
+        if: steps.plan.outputs.enabled == 'true' && steps.plan.outputs.dry_run != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -79,9 +142,20 @@ jobs:
           python3 tools/build-index-sql.py
           python3 tools/build-win32-map.py
           python3 tools/check-corpus.py --report || true
+          python3 tools/summarize-harvest.py || true
           git add data/index/ data/reports/ corpus/ data/logs/ || true
           if ! git diff --quiet || ! git diff --staged --quiet; then
-            git commit -m "corpus: index refresh + final harvest batch"
+            git commit -m "corpus: harvest run + index refresh"
             git pull --rebase
             git push
+          fi
+
+      - name: Report harvest budget
+        if: steps.plan.outputs.enabled == 'true' && always()
+        run: |
+          if [ -f data/reports/harvest-history.tsv ]; then
+            echo "### Recent harvest runs"
+            echo '```'
+            tail -6 data/reports/harvest-history.tsv
+            echo '```'
           fi

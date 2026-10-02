@@ -28,7 +28,7 @@ derived catalogs, manifests and indexes.
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
 | `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32 pages), `extract-mvb.py` (decode Books Online into pages), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report and Win32-map generators. |
-| `.github/workflows/` | `harvest.yml` (run the harvester for a queue in `queues/`, refresh indexes/reports) and `import-win32.yml` (re-import `corpus/win32/` from the pinned MicrosoftDocs commits). Both are `workflow_dispatch` — run them from the Actions tab. |
+| `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`, refresh indexes/reports; runs on demand, daily from `queues/auto-harvest.txt`, or whenever that file changes) and `import-win32.yml` (re-import `corpus/win32/` from the pinned MicrosoftDocs commits). Both are `workflow_dispatch` — run them from the Actions tab. |
 
 ## Corpus conventions
 

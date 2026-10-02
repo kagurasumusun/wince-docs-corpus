@@ -9,7 +9,20 @@ as `invalid` and skipped.
 | `to-fetch-mslearn.txt` | 31,635 | `learn.microsoft.com/en-us/previous-versions/windows/embedded/<id>(v=…)` — the current harvest queue. |
 | `mslearn-embedded.txt` | 38,726 | The original full enumeration of the same namespace (superset; first line is the namespace root). |
 | `wayback-msdn-2010.txt` | 31,388 | `web.archive.org/web/20100501000000/https://msdn.microsoft.com/en-us/library/<id>.aspx` — the May 2010 MSDN Library snapshot. |
+| `auto-harvest.txt` | 1 | Not a URL queue: the budget the daily automatic run reads (`<queue> <pages per run> [batch]`, or `off`). See below. |
 | `rejected-third-party-sources.txt` | 4 | Candidate sources that are **not** harvested: the collection policy is official Microsoft documentation only. Kept as a record of what was deliberately left out (a GitHub mirror, two vendor/community sites and one blog post). |
+
+## Automatic run (`queues/auto-harvest.txt`)
+
+`.github/workflows/harvest.yml` also runs on a schedule: every day at 18:00 UTC
+(03:00 JST) it harvests the queue named in `queues/auto-harvest.txt`, up to the
+page budget on that line, then refreshes the indexes and commits. The same run
+starts whenever that file changes, which makes editing it the quickest way to
+start one — and `off` stops the automatic runs.
+
+What each run did is committed as well: `data/reports/harvest-last.json` (the
+raw counters) and `data/reports/harvest-history.tsv` (one row per run, so the
+harvesting rate and the remaining backlog stay visible).
 
 ## Running a queue
 
@@ -24,7 +37,8 @@ editing sandbox has no route to either, so queues are run on a GitHub runner by
    `batch` = 500, `dry_run` unchecked.
 
 Start with `dry_run: true` to see what a queue would still fetch — it makes no
-requests at all. The harvester resumes from `data/index/corpus.sqlite3`, so a
+requests at all. (For the automatic run, the equivalent is a comment-only
+`queues/auto-harvest.txt`: it does nothing at all.) The harvester resumes from `data/index/corpus.sqlite3`, so a
 queue can be re-run safely and a job that hits the 6-hour runner limit simply
 continues on the next run. `wayback-msdn-2010` is the big one: 31,135 topics
 left at ~1.5 s each, i.e. ~13 h and roughly 0.8 GB of HTML, so cap each run
