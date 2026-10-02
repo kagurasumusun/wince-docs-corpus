@@ -15,7 +15,7 @@ corpus/
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 98,405 pages (77,953 in the CE trees + 20,452 Win32 pages).
+Total: 98,313 pages (77,861 in the CE trees + 20,452 Win32 pages).
 
 ## Sets under `corpus/learn/` (68,704 pages)
 
@@ -87,12 +87,15 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
   (see `sources/windows-ce-3.0/PROVENANCE.md`).
 * `msdn-library/2010-05/` — `web.archive.org` snapshot of
   `msdn.microsoft.com/en-us/library/<id>.aspx` taken 2010-05-01
-  (queue: `queues/wayback-msdn-2010.txt`). 253 topics (152 .NET Compact
+  (queue: `queues/wayback-msdn-2010.txt`). 161 topics (60 .NET Compact
   Framework, 101 Windows CE 5.0), filed under the *same set directories* as
   the Learn pages they duplicate, because they are a different capture of the
   same documentation (2010 MSDN rendering, not Learn). The set is derived
   from the page id; ids that are not in the corpus are written to
-  `msdn-library/2010-05/unclassified/`.
+  `msdn-library/2010-05/unclassified/`. 92 further captures that turned out to
+  be the Internet Archive's "JavaScript required" interstitial rather than a
+  page were removed; `tools/harvest.py` now detects that interstitial and
+  retries other capture dates instead of storing it.
 * `msdn-library/windows-mobile-6.5/` — 34 Windows Mobile 6.5 topics in MSDN
   Library (MSHelp XML) format; see
   `msdn-library/windows-mobile-6.5/PROVENANCE.md`.

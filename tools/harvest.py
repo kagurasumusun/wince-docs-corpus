@@ -581,6 +581,32 @@ class GitBatcher:
 # ---------------------------------------------------------------------------
 # processing
 # ---------------------------------------------------------------------------
+# web.archive.org answers with an interstitial instead of the capture when the
+# replay needs JavaScript ("Impatient? The Wayback Machine requires your
+# browser to support JavaScript") or when the URL was never archived ("Hrm.
+# The Wayback Machine has not archived that URL.").  Neither is documentation,
+# so it is never stored; the harvester walks a few other capture dates first,
+# because a page that replays as an interstitial at one timestamp often
+# replays fine at another.
+WAYBACK_BAD_MARKERS = (
+    b"requires your browser to support JavaScript",
+    b"Impatient? The Wayback Machine",
+    b"has not archived that URL",
+)
+WAYBACK_FALLBACK_TIMESTAMPS = (
+    "20050101000000", "20080101000000", "20110101000000", "20130101000000",
+)
+
+
+def wayback_bad(content):
+    return any(marker in content for marker in WAYBACK_BAD_MARKERS)
+
+
+def wayback_retimestamp(url, timestamp):
+    return re.sub(r"(/web/)\d{14}(/)", r"\g<1>" + timestamp + r"\g<2>",
+                  url, count=1)
+
+
 def store_page(content, path, page_id):
     final = os.path.join(path, page_id + ".html")
     temporary = final + ".part"
@@ -599,7 +625,8 @@ def store_page(content, path, page_id):
     return final
 
 
-def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False):
+def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
+                wayback_retries=2):
     """Fetch and store one URL. Returns (result, written_path)."""
 
     kind, pid = dest_for(url)
@@ -627,6 +654,19 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False):
             with open(faillog, "a", encoding="utf-8") as fh:
                 fh.write(f"{status}\t{url}\n")
         return "failed", None
+
+    if kind == "wayback" and wayback_bad(content):
+        for timestamp in WAYBACK_FALLBACK_TIMESTAMPS[:wayback_retries]:
+            other, _ = fetcher.get(wayback_retimestamp(url, timestamp),
+                                   fetcher.base_delay)
+            if other is not None and not wayback_bad(other):
+                content = other
+                break
+        if wayback_bad(content):
+            if faillog:
+                with open(faillog, "a", encoding="utf-8") as fh:
+                    fh.write(f"wayback-interstitial\t{url}\n")
+            return "interstitial", None
 
     head = content[:8000].decode("utf-8", "replace")
     match = TITLE.search(head)
@@ -687,6 +727,9 @@ def main():
                     help="ignore data/index/corpus.sqlite3 and scan the tree")
     ap.add_argument("--no-robots", action="store_true",
                     help="do not consult robots.txt (not recommended)")
+    ap.add_argument("--wayback-retries", type=int, default=2,
+                    help="other capture dates to try when archive.org "
+                         "answers with an interstitial (default 2)")
     args = ap.parse_args()
 
     qpath = args.queue if os.path.isabs(args.queue) \
@@ -734,7 +777,7 @@ def main():
         nonlocal lines
         result, written = process_url(
             url, have_ids, faillog, fetcher, index_by_id,
-            dry_run=args.dry_run)
+            dry_run=args.dry_run, wayback_retries=args.wayback_retries)
         with counters_lock:
             counters[result] += 1
             lines += 1
@@ -789,7 +832,7 @@ def main():
         with open(faillog, "r", encoding="utf-8") as fh:
             for ln in fh:
                 parts = ln.rstrip("\n").split("\t", 1)
-                if len(parts) == 2 and parts[0] != "404":
+                if len(parts) == 2 and parts[0] not in ("404", "wayback-interstitial"):
                     pending.append(parts[1])
                 else:
                     keep.append(ln)
@@ -800,7 +843,8 @@ def main():
             fetcher.base_delay = delay * 2
             for url in pending:
                 result, written = process_url(
-                    url, have_ids, None, fetcher, index_by_id)
+                    url, have_ids, None, fetcher, index_by_id,
+                    wayback_retries=args.wayback_retries)
                 if result == "stored":
                     counters["stored"] += 1
                     counters["failed"] -= 1

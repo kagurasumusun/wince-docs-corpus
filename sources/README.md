@@ -50,7 +50,7 @@ can collect them):
 
 For page-level material the *queues* are the actionable list: the
 `queues/wayback-msdn-2010.txt` capture still has 31,135 topics that were never
-stored (the 253 stored ones were the topics duplicated by Learn), and
+stored (the 161 stored ones were the topics duplicated by Learn), and
 `queues/mslearn-embedded.txt` is exhausted (`--dry-run` reports 0 to fetch).
 Run those from a network with access to `web.archive.org`/`learn.microsoft.com`
-(`.actions/harvest.yml` does exactly that).
+(`.github/workflows/harvest.yml` does exactly that).

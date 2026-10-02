@@ -61,9 +61,12 @@ def cat_titles():
 
 
 def page_title(path):
+    # Some archived pages (the 2010-05 MSDN Library snapshot) carry the
+    # Wayback Machine banner before the document, so <title> can sit far below
+    # the first few KiB; scan the first 128 KiB instead of 8 KiB.
     try:
         with open(path, encoding="utf-8", errors="replace") as fh:
-            head = fh.read(8000)
+            head = fh.read(8000 if path.endswith(".md") else 131072)
     except OSError:
         return ""
     if path.endswith(".md"):
