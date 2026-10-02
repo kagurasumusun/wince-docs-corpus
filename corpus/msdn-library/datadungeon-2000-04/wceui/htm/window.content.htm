@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Working with Windows and Messages</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_working_with_windows_and_messages"></A>Working with Windows and Messages</H2>
+
+<P>The appearance and behavior of a window is largely determined by its inherent attributes and relationship to other windows. You assign attributes to a window by setting window styles and extended styles and by calling functions that alter window attributes. </P>
+
+<P>Windows are always rectangular. They are placed above and below each other along an imaginary line that runs perpendicular to the screen. This stack of windows is called the <I>z-order</I>. Each window has a unique position in the z-order. Windows that appear first in the z-order are considered to be in front of, or on top of, windows that appear later in the z-order. A window's position in the z-order affects its appearance. A window might partially or totally obscure another, depending on its location, size, and position in the z-order.</P>
+
+<P>A window is divided into a <I>nonclient area</I>—occupied by borders, scroll bars, and various other controls—and a <I>client area</I>, the central space inside the nonclient area. You can draw in the client area, but not in the nonclient area. In the Windows CE operating system (OS), the nonclient area of a window is controlled exclusively by the window manager. Windows CE does not send applications messages dealing with the nonclient area. The following screen shot shows the nonclient and client areas.</P>
+
+<P><IMG SRC="client.gif" ALT="" BORDER=0></P>
+
+<P>A window can be displayed or hidden, depending on whether its WS_VISIBLE style is turned on or off. A window that has the WS_VISIBLE style turned off will not be displayed on the screen. A window that has the WS_VISIBLE style turned on might or might not be displayed on the screen, depending on whether it is obscured by other windows. Covering or uncovering a window with another window does not change the WS_VISIBLE style.</P>
+
+<P>Every window has a unique identifier called a <I>window</I> <I>handle</I>. When you create a window, you receive a window handle, which you can then use to call functions that use the window. Handles are useful in applications that create multiple child windows. You can change the window handle by calling the <B>SetWindowLong</B> function and retrieve the handle by calling the <B>GetWindowLong</B> function.</P>
+
+<P>All applications have at least one window, regardless of whether they have a graphical user interface (UI). This is because Windows CE is a message-driven OS and a window is the means by which an application receives messages. Each window must be associated with a special function called a <I>window procedure</I> or <B>WinProc</B>. Windows CE calls this window procedure to pass a message to the application.</P>
+
+<P>A message consists of a <I>message identifier</I> and optional parameters. A message identifier is a named constant that identifies a message. When a window procedure receives a message, it uses a message identifier to determine how to process the message. For example:
+
+<UL>
+	<LI>The WM_CREATE message is sent to a window when it is created.</li>
+
+	<LI>The WM_DESTROY message is sent to a window when it is destroyed.</li>
+
+	<LI>The WM_PAINT message is sent to a window when the window client area has changed and must be repainted.</li>
+</UL>
+
+<P>Message parameters contain data, or the location of data, that a window procedure uses to process messages. The meaning and value of the message parameters depend on the message identifier. A message parameter can contain an integer, packed bit flags, a pointer to a structure containing additional data, or other information. A window must check the message identifier to determine how to interpret the message parameters. The term "message" is used to mean either the message identifier or the identifier and the parameters together. The specific meaning is usually clear from the context.</P>
+
+<P>The system sends a message to a window procedure by passing the message data as arguments to the procedure. The window procedure then performs an appropriate action for the message; it checks the message identifier and, while processing the message, uses data specified by the message parameters. </P>
+
+<P>If a window procedure does not process a message, it should pass the message along for default processing. The window procedure does this by calling the <B>DefWindowProc</B> function, which performs a default action and returns a message result. The window procedure must then return this value as its own message result. Most window procedures process just a few messages and pass the others on to <B>DefWindowProc</B>.</P>
+
+<P>Window procedures can be shared. The handle of the specific window receiving the message is available as an argument of the window procedure.</P>
+
+<P>In addition to having a window procedure, every Windows CE–based application must have the <B>WinMain</B> function as its entry point function. <B>WinMain </B>performs a number of tasks, including registering the window class for the main window and creating the main window. <B>WinMain </B>registers the main window class by calling the <B>RegisterClass</B> function, and it creates the main window by calling the <B>CreateWindowEx</B> function. <B>WinMain</B> does not need to do these things itself; it can call other functions to perform any or all of these tasks. For a code example of a <B>WinMain</B> function, see <A HREF="window_9.htm" TARGET="_top">Creating a Sample Application</A>. </P>
+
+<P>One task <B>WinMain</B> must perform itself is to establish a <I>message loop</I>. The message loop retrieves messages from a thread message queue and dispatches them to the appropriate window procedure. The message queue coordinates the transmission of messages for a specified thread. Each thread can have only one message queue. When a message is passed to a window, it is placed on the message queue of the window thread. The thread receives and dispatches the message. There are two ways to pass a message to a window: posting a message and sending a message. </P>
+<p>&nbsp;</p></body>
+</HTML>
