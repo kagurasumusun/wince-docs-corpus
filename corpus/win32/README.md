@@ -1,0 +1,89 @@
+# corpus/win32/
+
+The **Win32-common** half of the documentation: pages from Microsoft's public
+Win32 documentation repositories on GitHub that Windows CE shares, kept next
+to the CE-specific material so that the two halves of any API question are in
+one place.
+
+```
+corpus/win32/
+├── api/<module>/<page>.md     Win32 API reference (5,219 pages)
+└── guide/<folder>/<page>.md   Win32 programming guides (2,070 pages)
+```
+
+Format is the upstream markdown (YAML front matter with `title`, `description`,
+`helpviewer_keywords`, `ms.assetid`, …) — not HTML like the rest of the corpus.
+The upstream commit, licenses and the complete snapshots are documented in
+`sources/microsoftdocs/PROVENANCE.md`; extraction is reproducible with
+`python3 tools/fetch-upstream.py subset --source sdk-api|win32`.
+
+## api/ — 5,219 pages, 183 modules
+
+Every `MicrosoftDocs/sdk-api` page whose **API name also occurs in a Windows CE
+catalog** (`data/catalogs/*.tsv`), including `A`/`W` variants of a shared base
+name (Windows CE documents `CreateFile`, so `CreateFileA` and `CreateFileW`
+are both included):
+
+| kind | pages | example |
+|------|------:|---------|
+| `nf` function | 4,232 | `api/fileapi/nf-fileapi-createfilew.md` |
+| `ns` structure/union | 813 | `api/minwinbase/ns-minwinbase-overlapped.md` |
+| `ne` enumeration | 69 | `api/wingdi/ne-wingdi-bi_compression.md` |
+| `nn` namespace/topic | 64 | Winsock/COM namespaces |
+| `nc` callback | 26 | `api/libloaderapi/nc-libloaderapi-enumresnametypew.md` |
+| `nl` library | 10 | `api/` static library notes |
+| `ni` interface | 5 | `api/combaseapi/nf-combaseapi-cocreateinstance.md` |
+
+The join key is the normalised title in the catalogs
+(`CreateFile (Windows CE 5.0)` → `createfile`), so a page here pairs with the
+CE page in `corpus/learn/<set>/`. Note that CE documents many of these APIs
+only as part of `corpus/chm/windows-ce-3.0/` (CE 3.0) and
+`corpus/learn/windows-ce-5.0/`.
+
+## guide/ — 2,068 pages, 18 folders
+
+Programming guides for the subsystems CE implements. CE's own documentation is
+reference-heavy and thin on concepts, so these generic Win32 guides are the
+closest thing to the "how it works" chapters of the CE platform docs:
+
+| folder | pages | topic |
+|--------|------:|-------|
+| `FileIO` | 195 | files, volumes, reparse points, transactional NTFS (not on CE) |
+| `gdi` | 337 | GDI objects, mapping modes, painting |
+| `NetMgmt` | 84 | network management |
+| `WinSock` | 363 | Winsock 2 programming model, overlapped I/O |
+| `Memory` | 72 | virtual memory, heaps |
+| `Sync` | 46 | events, mutexes, semaphores, wait functions |
+| `ProcThread` | 68 | processes and threads |
+| `Debug` | 121 | debugging API |
+| `ipc` | 57 | pipes/mailslots/RPC basics |
+| `DevIO` | 66 | device I/O, IOCTLs |
+| `SysInfo` | 99 | system information |
+| `Power` | 61 | power management (CE power manager differs — use CE pages) |
+| `Services` | 64 | services (CE services model differs) |
+| `menurc` | 220 | menus and resources (GWES) |
+| `dlgbox` | 73 | dialog boxes (GWES) |
+| `inputdev` | 80 | keyboard/mouse/tablet input (GWES) |
+| `Dlls` | 23 | DLL loading |
+| `Bluetooth` | 39 | Bluetooth stack |
+
+CryptoAPI (`SecCrypto`) and COM (`com`) guides are **not** extracted: they are
+available in the upstream snapshot (see `sources/microsoftdocs/`) and the CE
+side of both is already covered by `corpus/learn/`. Pass them to the extractor
+by adding them to `GUIDE_FOLDERS` in `tools/fetch-upstream.py`.
+
+## Caveats
+
+* These are **desktop Win32** pages. They describe the full Windows API, which
+  is a superset of what Windows CE implements — a page here is a *reference*,
+  not proof that a given CE version has the API. The CE page (in
+  `corpus/learn/<set>/`) or the CE 3.0 CHM topic is the authority on that;
+  where the two disagree, the CE page wins. Typical divergences: transactional
+  NTFS and reparse points (not on CE), the services/power models, and anything
+  introduced after CE 6.0.
+* File names keep the upstream `nf-`/`ns-`/`ne-` prefixes, so a page can be
+  traced back to the upstream snapshot without a mapping file.
+* The pages carry upstream front matter (`ms.assetid`, `helpviewer_keywords`,
+  `old-location`) — useful for matching a topic to old MSDN/CHM ids.
+  `data/index/INDEX.tsv` and the SQL index include these pages with ids such as
+  `nf-fileapi-createfilew` and book `win32/api/fileapi`.

@@ -20,3 +20,6 @@ Notes:
   `web.archive.org`, with adaptive back-off on 429/503. Queue names ending in
   `wayback-msdn-2010` pick the archive delay automatically.
 * Failures are logged to `data/logs/fail-<queue>.log`.
+* The Win32 documentation is **not** in these queues: it is not crawled but
+  imported from pinned commits of MicrosoftDocs/sdk-api and MicrosoftDocs/win32
+  with `tools/fetch-upstream.py` (see `../corpus/win32/README.md`).

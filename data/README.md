@@ -95,13 +95,19 @@ history.)
 Generated, committed so tools and the harvester's resume check do not have to
 rescan ~78k HTML files.
 
-* `INDEX.tsv` — `# id <TAB> book <TAB> path <TAB> title`, one row per page.
-  `book` is the corpus-relative directory (`learn/windows-ce-5.0`).
-  Regenerate with `python3 tools/build-index.py`.
+* `INDEX.tsv` — `# id <TAB> book <TAB> path <TAB> title`, one row per page
+  (85,242 as of 2026-10). `book` is the corpus-relative directory
+  (`learn/windows-ce-5.0`, `win32/api/fileapi`, `chm/windows-ce-3.0`).
+  Titles come from `<title>` (HTML) or the `title:` front matter (markdown),
+  falling back to the catalogs. Regenerate with
+  `python3 tools/build-index.py`.
 * `corpus.sqlite3` — SQL index:
-  `pages(page_id, section, path, title, size)` and
-  `names(name, page_id, kind)` with `kind ∈ {title, const, proto, struct, enum}`
-  plus a `meta` table holding the incremental state.
+  `pages(path, page_id, section, title, size)` (keyed by path: page ids repeat
+  across sdk-api modules, e.g. `CreateFileA`/`CreateFileW` variants) and
+  `names(name, page_id, kind)` with
+  `kind ∈ {title, api, const, proto, struct, enum}` — `api` rows come from the
+  markdown pages, the others from the HTML print patterns — plus a `meta`
+  table holding the incremental state.
   Refresh with `python3 tools/build-index-sql.py` (`--full` to rebuild).
 
 ## logs/

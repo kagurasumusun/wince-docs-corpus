@@ -1,27 +1,32 @@
 # wince-docs-corpus
 
 Offline, page-per-file copy of Microsoft's official Windows CE / Windows
-Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7,
-and the .NET Compact Framework, .NET Micro Framework, POS for .NET and
-Windows Mobile 6.5 topics that shipped in the same documentation namespace.
+Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
+.NET Compact Framework, .NET Micro Framework, POS for .NET and Windows Mobile
+6.5 topics that shipped in the same documentation namespace — **plus the Win32
+documentation Windows CE shares**, so that an API question can be answered
+without breaking the offline copy.
 
-**77,953 HTML pages** in four source trees, plus the original media they were
-extracted from, the URL queues used to harvest them, and the derived
-catalogs, manifests and indexes.
+**85,242 pages**: 77,953 harvested/extracted CE pages (HTML) and 7,289 Win32
+pages (markdown, from Microsoft's public `MicrosoftDocs` repositories). The
+repository also carries the original media the pages were extracted from, the
+URL queues used to harvest them, the complete upstream snapshots, and the
+derived catalogs, manifests and indexes.
 
 ## Repository layout
 
 | Path | Contents |
 |------|----------|
-| `corpus/` | The documentation itself, one HTML file per page. See `corpus/README.md`. |
+| `corpus/` | The documentation itself, one page per file (HTML, plus markdown for the Win32 trees). See `corpus/README.md`. |
 | `corpus/learn/<set>/` | 68,704 pages harvested from `learn.microsoft.com/…/previous-versions/windows/embedded`. |
 | `corpus/chm/windows-ce-3.0/` | 8,962 pages extracted from the official Windows CE 3.0 documentation CHM. |
-| `corpus/wayback-msdn/2010-05/` | 253 pages recovered from the May 2010 Internet Archive snapshot of the MSDN Library (`.NET Compact Framework`). |
+| `corpus/win32/api/`, `corpus/win32/guide/` | 7,289 Win32-shared pages (API reference + subsystem guides) from `MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`, pinned by commit. |
+| `corpus/msdn-library/2010-05/<set>/` | 253 Internet Archive copies of MSDN topics (May 2010), filed under the set they duplicate. |
 | `corpus/msdn-library/windows-mobile-6.5/` | 34 Windows Mobile 6.5 topics in MSDN Library (MSHelp) format. |
-| `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
+| `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror) and the complete MicrosoftDocs snapshots (`sources/microsoftdocs/`), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
-| `tools/` | `harvest.py` (queue → corpus), the two index builders and the gap-report generator. |
+| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32-shared pages), the two index builders and the gap-report generator. |
 | `.github/workflows/harvest.yml` | Manual harvest workflow. Left untouched by the reorganization — it still refers to the pre-reorganization paths. |
 | `.actions/harvest.yml` | Updated copy of that workflow for this tree, staged outside `.github/` because installing it needs the GitHub `workflows` permission. See `.actions/README.md`. |
 
@@ -56,6 +61,8 @@ catalogs, manifests and indexes.
 python3 tools/build-index.py          # data/index/INDEX.tsv  (id, set, path, title)
 python3 tools/build-index-sql.py      # data/index/corpus.sqlite3 (incremental; --full to rebuild)
 python3 tools/build-gap-report.py     # data/reports/missing-pages.tsv (catalog vs corpus)
+python3 tools/fetch-upstream.py list                    # what the Win32 import would take
+python3 tools/fetch-upstream.py subset --source sdk-api # corpus/win32/api (pinned commit)
 
 # Harvest more pages (see .actions/harvest.yml for the CI variant)
 python3 tools/harvest.py --queue queues/to-fetch-mslearn.txt --limit 1000
@@ -72,9 +79,15 @@ harvester's resume check) don't have to rescan ~78k files.
 
 * Official Microsoft public documentation only — no third-party mirrors
   (see `queues/rejected-third-party-sources.txt`).
-* Polite sequential fetching: one in-flight request, fixed delay
-  (0.4 s for `learn.microsoft.com`, 1.5 s for `web.archive.org`), adaptive
-  back-off on HTTP 429/503.
+* Polite fetching: **one in-flight request per host, always** (hosts may be
+  parallelised with `--workers`, a single host never is). Fixed delay between
+  requests to the same host — 0.4 s for `learn.microsoft.com`, 1.5 s for
+  `web.archive.org` — plus jitter, `robots.txt` honoured, keep-alive
+  connections reused, adaptive back-off (×2 per 5 consecutive 429/503, capped
+  at ×20) with `Retry-After` support.
+* The Win32 pages are not crawled at all: they come from pinned commits of
+  Microsoft's public documentation repositories (one HTTPS request per
+  repository), see `sources/microsoftdocs/PROVENANCE.md`.
 * Documents only — no shared source, no sample code, no compiler binaries,
   no OS images.
 * Failed fetches are recorded in `data/logs/fail-<queue>.log` and retried
@@ -96,3 +109,10 @@ harvester's resume check) don't have to rescan ~78k files.
   `tools/make-index.py` → `tools/build-index.py`.
   Pages were deduplicated and renamed to their canonical page ids at the
   same time.
+* 2026-10 additions: `corpus/win32/` (7,289 Win32-shared pages from
+  `MicrosoftDocs/sdk-api` + `MicrosoftDocs/win32`), `sources/microsoftdocs/`
+  (full snapshots + provenance), `tools/fetch-upstream.py`,
+  `corpus/msdn-library/2010-05/` (the wayback capture, filed by set instead of
+  in its own top-level tree), and the harvest scheduler rewrite
+  (keep-alive, per-host pacing, robots.txt, sqlite resume index, `--dry-run`,
+  `--workers`).

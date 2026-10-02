@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """tools/build-index.py -- regenerate data/index/INDEX.tsv from the corpus tree.
 
-Walks every page under ``corpus/`` and writes:
+Walks every page under ``corpus/`` -- ``.html`` (harvested/extracted pages) and
+``.md`` (the Win32 material imported from MicrosoftDocs, see
+``corpus/win32/README.md``) -- and writes:
 
     # id <TAB> book <TAB> path <TAB> title
 
@@ -12,7 +14,8 @@ Walks every page under ``corpus/`` and writes:
   book   corpus-relative directory of the page, i.e. ``<source>/<set>``
          (``learn/windows-ce-5.0``, ``chm/windows-ce-3.0``, ...).
   path   repository-relative path of the HTML file.
-  title  the page's ``<title>`` with the ``| Microsoft Learn`` suffix
+  title  the page's ``<title>`` (HTML) or the ``title:`` field of its
+         front matter (markdown), with the ``| Microsoft Learn`` suffix
          stripped, falling back to the official TOC catalogs in
          ``data/catalogs/``.
 
@@ -26,6 +29,10 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORPUS = os.path.join(ROOT, "corpus")
 TITLE = re.compile(r"<title>(.*?)</title>", re.S)
+MD_TITLE = re.compile(r"^title:\s*(.+?)\s*$", re.M)
+PAGE_SUFFIXES = (".html", ".md")
+# Repository paperwork, not documentation pages.
+NOT_PAGES = {"README.md", "PROVENANCE.md"}
 
 
 def bare(page_id):
@@ -56,9 +63,13 @@ def cat_titles():
 def page_title(path):
     try:
         with open(path, encoding="utf-8", errors="replace") as fh:
-            match = TITLE.search(fh.read(8000))
+            head = fh.read(8000)
     except OSError:
         return ""
+    if path.endswith(".md"):
+        match = MD_TITLE.search(head)
+        return match.group(1).strip() if match else ""
+    match = TITLE.search(head)
     if not match:
         return ""
     return re.sub(r"\s*\|\s*Microsoft Learn\s*$", "",
@@ -72,10 +83,10 @@ def main():
         dirnames.sort()
         book = os.path.relpath(dirpath, CORPUS).replace(os.sep, "/")
         for fn in sorted(filenames):
-            if not fn.endswith(".html"):
+            if not fn.endswith(PAGE_SUFFIXES) or fn in NOT_PAGES:
                 continue
             full = os.path.join(dirpath, fn)
-            page_id = fn[:-5]
+            page_id = os.path.splitext(fn)[0]
             title = page_title(full) or cats.get(page_id, "") \
                 or cats.get(bare(page_id), "")
             rows.append((page_id, book, os.path.relpath(full, ROOT), title))

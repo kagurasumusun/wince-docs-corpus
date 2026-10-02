@@ -7,26 +7,50 @@ Fetches pages from a URL queue file into the corpus hierarchy:
         -> corpus/learn/<set>/<id>(v=tag).html
 
   web.archive.org/web/20100501000000/https://msdn.microsoft.com/en-us/library/<id>.aspx
-        -> corpus/wayback-msdn/2010-05/<id>.html
+        -> corpus/msdn-library/2010-05/<set>/<id>.html
 
 `<set>` is the book/edition the page belongs to (see BOOK_RULES below and
 corpus/README.md); the file name is the last segment of the page's
-canonical URL.
+canonical URL (Web-archive pages are grouped by the set of the same topic id
+when the page is known from the Corpus index, else under `unclassified`).
 
-Policy (repo AGENTS.md):
-  * Polite sequential fetching only -- one in-flight request per target
-    site, fixed delay between requests
-    (learn: 0.4 s, archive.org: 1.5 s).
-  * Only official Microsoft public documentation is collected.
-  * Resume-safe: pages already stored are skipped.
-  * Batch commit & push every --batch pages (default 500) when --push.
+Scheduling / politeness (this is the important part)
+----------------------------------------------------
+  * One in-flight request per host, always.  Requests to a host are never
+    parallelised (`--workers` only parallelises *different* hosts), so a
+    single target site sees exactly the same sequential access pattern it
+    would see from a single-threaded crawler.
+  * Fixed delay between requests to the same host (learn: 0.4 s, archive.org:
+    1.5 s), applied *before* the request from a per-host timer, plus jitter
+    of up to half the delay.  Time spent writing files or running git counts
+    towards the delay, which is why this is faster than sleeping after every
+    response.
+  * `robots.txt` of every host is fetched once per run and its `Disallow`
+    rules are honoured (`--no-robots` to override, not recommended).
+    learn.microsoft.com/robots.txt only disallows answer/search/api paths;
+    the documentation namespace we harvest is allowed.
+  * HTTP keep-alive connections are reused per host (no TLS handshake per
+    page) -- this, the token-bucket pacing and the incremental index are what
+    make a run fast; the request *rate* is unchanged.
+  * On HTTP 429/503 the delay factor doubles every 5 consecutive hits (up to
+    20x) and `Retry-After` is respected; it halves again after 20 clean
+    responses.  Access volume only ever goes down, never up.
 
-Performance:
-  * Queue TXT is processed in chunks of 1000 lines.
-  * The entire URL queue is never loaded into memory.
-  * Existing document IDs are indexed once at startup.
-  * os.scandir() is used for faster filesystem traversal.
-  * Failure count is tracked incrementally instead of rereading the log.
+Resume
+------
+  * Pages already in the corpus are skipped using, in order of preference:
+      1. `data/index/corpus.sqlite3` (fast, no tree walk),
+      2. a filesystem scan (fallback, used when the DB is missing/stale).
+  * Failed URLs are appended to `data/logs/fail-<queue>.log` and retried once
+    at the end of the run at double delay.
+
+Other flags
+-----------
+  --dry-run        report what would be fetched, touch nothing
+  --limit N        stop after N queue lines
+  --push           commit+push every --batch stored pages
+  --workers N      parallel hosts (default 1 = strictly sequential)
+  --respect-robots / --no-robots (default: respect)
 
 Usage:
   python3 tools/harvest.py --queue queues/to-fetch-mslearn.txt [--limit N]
@@ -34,21 +58,28 @@ Usage:
 """
 
 import argparse
+import collections
 import datetime as _dt
+import gzip
+import http.client
 import os
 import random
 import re
+import socket
 import subprocess
+import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import urllib.robotparser
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORPUS = os.path.join(ROOT, "corpus")
 LEARN_DIR = os.path.join(CORPUS, "learn")
-WAYBACK_DIR = os.path.join(CORPUS, "wayback-msdn", "2010-05")
+WAYBACK_DIR = os.path.join(CORPUS, "msdn-library", "2010-05")
+INDEX_DB = os.path.join(ROOT, "data", "index", "corpus.sqlite3")
 
 UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -122,7 +153,7 @@ def classify(title_text, body_head):
 
     # Titles without a book marker:
     # fall back to body markers and use the earliest hit.
-    best = "uncategorized"
+    best = "unclassified"
     best_index = 1 << 60
 
     for bucket, marker in (
@@ -172,86 +203,298 @@ def dest_for(url):
     return None, None
 
 
-# Adaptive rate-limit state: consecutive 429/503 responses multiply
-# the inter-request delay (never below the configured base delay, so
-# total access volume only ever goes DOWN, never up).
-_THROTTLE = {"consec": 0, "ok": 0, "factor": 1.0}
+# ---------------------------------------------------------------------------
+# politeness: per-host pacing + robots.txt
+# ---------------------------------------------------------------------------
+class HostPacer:
+    """One in-flight request per host, `delay` seconds apart."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._last = {}
+
+    def wait(self, host, delay):
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                last = self._last.get(host, 0.0)
+                wait = delay + random.uniform(0, delay / 2.0) - (now - last)
+                if wait <= 0:
+                    self._last[host] = now
+                    return
+            time.sleep(min(wait, 1.0))
 
 
-def throttle_sleep_seconds(base_delay):
-    """Delay to sleep after one processed URL."""
-    return base_delay * _THROTTLE["factor"] + random.uniform(0, base_delay / 2.0)
+class Response:
+    __slots__ = ("body", "status", "headers", "url")
+
+    def __init__(self, body, status, headers, url):
+        self.body = body
+        self.status = status
+        self.headers = headers
+        self.url = url
 
 
-def note_throttled():
-    _THROTTLE["consec"] += 1
-    _THROTTLE["ok"] = 0
-    if _THROTTLE["consec"] % 5 == 0:
-        _THROTTLE["factor"] = min(_THROTTLE["factor"] * 2.0, 20.0)
-        print(
-            f"[throttle] consecutive rate-limit hits: "
-            f"{_THROTTLE['consec']} -> delay factor "
-            f"{_THROTTLE['factor']:.1f}x",
-            flush=True,
-        )
+class Fetcher:
+    """Keep-alive HTTP(S) client with retry/back-off handling."""
 
+    RETRY_STATUS = (429, 500, 502, 503, 504)
 
-def note_ok():
-    _THROTTLE["consec"] = 0
-    _THROTTLE["ok"] += 1
-    if _THROTTLE["ok"] >= 20 and _THROTTLE["factor"] > 1.0:
-        _THROTTLE["factor"] = max(1.0, _THROTTLE["factor"] / 2.0)
-        _THROTTLE["ok"] = 0
+    def __init__(self, pacer, respect_robots=True, timeout=60,
+                 max_attempts=5, verbose=True):
+        self.pacer = pacer
+        self.respect_robots = respect_robots
+        self.timeout = timeout
+        self.max_attempts = max_attempts
+        self.verbose = verbose
+        self._conns = {}
+        self._conn_lock = threading.Lock()
+        self._robots = {}
+        self._robots_lock = threading.Lock()
+        self._throttle = {"consec": 0, "ok": 0, "factor": 1.0}
+        self._throttle_lock = threading.Lock()
+        self.stats = collections.Counter()
+        self.stats_lock = threading.Lock()
 
-
-def fetch(url, timeout=60, max_attempts=5):
-    """Fetch one URL with retry handling."""
-
-    last_err = None
-
-    for attempt in range(max_attempts):
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": UA},
-        )
-
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                body = resp.read()
-                note_ok()
-                return body, resp.status
-
-        except urllib.error.HTTPError as exc:
-            if exc.code == 404:
-                return None, 404
-
-            if exc.code in (429, 503):
-                note_throttled()
-                retry_after = exc.headers.get("Retry-After")
-
-                if (retry_after or "").isdigit():
-                    wait = int(retry_after)
+    # -- connection handling ------------------------------------------------
+    def _conn(self, scheme, host):
+        key = (scheme, host)
+        with self._conn_lock:
+            conn = self._conns.get(key)
+            if conn is None:
+                if scheme == "https":
+                    conn = http.client.HTTPSConnection(
+                        host, timeout=self.timeout)
                 else:
-                    wait = 30 * (attempt + 1)
+                    conn = http.client.HTTPConnection(
+                        host, timeout=self.timeout)
+                self._conns[key] = conn
+            return conn
 
-                # Respect the server's backoff request; only cap very
-                # long values so a single URL cannot eat the runner.
-                time.sleep(min(wait, 300))
+    def _drop(self, scheme, host):
+        with self._conn_lock:
+            conn = self._conns.pop((scheme, host), None)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+    def close(self):
+        with self._conn_lock:
+            conns, self._conns = self._conns, {}
+        for conn in conns.values():
+            try:
+                conn.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+    # -- pacing -------------------------------------------------------------
+    def delay_factor(self):
+        with self._throttle_lock:
+            return self._throttle["factor"]
+
+    def _note_throttled(self):
+        with self._throttle_lock:
+            self._throttle["consec"] += 1
+            self._throttle["ok"] = 0
+            if self._throttle["consec"] % 5 == 0:
+                self._throttle["factor"] = min(
+                    self._throttle["factor"] * 2.0, 20.0)
+                if self.verbose:
+                    print(f"[throttle] consecutive rate-limit hits: "
+                          f"{self._throttle['consec']} -> delay factor "
+                          f"{self._throttle['factor']:.1f}x", flush=True)
+
+    def _note_ok(self):
+        with self._throttle_lock:
+            self._throttle["consec"] = 0
+            self._throttle["ok"] += 1
+            if self._throttle["ok"] >= 20 and self._throttle["factor"] > 1.0:
+                self._throttle["factor"] = max(
+                    1.0, self._throttle["factor"] / 2.0)
+                self._throttle["ok"] = 0
+
+    # -- robots -------------------------------------------------------------
+    def _robots_for(self, scheme, host):
+        key = (scheme, host)
+        with self._robots_lock:
+            if key in self._robots:
+                return self._robots[key]
+        parser = urllib.robotparser.RobotFileParser()
+        url = f"{scheme}://{host}/robots.txt"
+        try:
+            resp = self._request(scheme, host, url, extra_headers=None)
+            text = resp.body.decode("utf-8", "replace")
+            parser.parse(text.splitlines())
+        except Exception:  # noqa: BLE001
+            parser = None                      # no robots.txt -> allowed
+        with self._robots_lock:
+            self._robots[key] = parser
+        if self.verbose and parser is not None:
+            print(f"[robots] {url}: loaded", flush=True)
+        return parser
+
+    def allowed(self, url):
+        if not self.respect_robots:
+            return True
+        p = urllib.parse.urlparse(url)
+        parser = self._robots_for(p.scheme, p.netloc)
+        if parser is None:
+            return True
+        return parser.can_fetch(UA, url)
+
+    # -- requests -----------------------------------------------------------
+    def _request(self, scheme, host, url, extra_headers=None):
+        path = urllib.parse.urlsplit(url).path or "/"
+        query = urllib.parse.urlsplit(url).query
+        if query:
+            path += "?" + query
+        headers = {
+            "User-Agent": UA,
+            "Accept": "text/html,application/xhtml+xml,application/xml;"
+                      "q=0.9,*/*;q=0.8",
+            "Accept-Encoding": "gzip",
+            "Connection": "keep-alive",
+        }
+        if extra_headers:
+            headers.update(extra_headers)
+        conn = self._conn(scheme, host)
+        try:
+            conn.request("GET", path, headers=headers)
+            resp = conn.getresponse()
+        except (http.client.HTTPException, OSError):
+            # stale keep-alive connection: reconnect once
+            self._drop(scheme, host)
+            conn = self._conn(scheme, host)
+            conn.request("GET", path, headers=headers)
+            resp = conn.getresponse()
+        body = resp.read()
+        if resp.getheader("Content-Encoding") == "gzip":
+            body = gzip.decompress(body)
+        if resp.will_close:
+            self._drop(scheme, host)
+        return Response(body, resp.status, dict(resp.getheaders()), url)
+
+    def get(self, url, delay):
+        """Fetch one URL. Returns (body|None, status_or_error)."""
+        p = urllib.parse.urlparse(url)
+        host = p.netloc
+        last_err = None
+
+        if not self.allowed(url):
+            return None, "robots-disallow"
+
+        for attempt in range(self.max_attempts):
+            self.pacer.wait(host, delay * self.delay_factor())
+            try:
+                resp = self._request(p.scheme, host, url)
+            except urllib.error.HTTPError as exc:            # pragma: no cover
+                if exc.code == 404:
+                    return None, 404
+                last_err = str(exc)
+                resp = None
+            except Exception as exc:  # noqa: BLE001
+                last_err = str(exc)
+                resp = None
+
+            if resp is None:
+                self._drop(p.scheme, host)
+                time.sleep(3 * (attempt + 1))
                 continue
 
-            last_err = str(exc)
+            with self.stats_lock:
+                self.stats["requests"] += 1
 
-        except Exception as exc:  # noqa: BLE001
-            last_err = str(exc)
+            if resp.status == 404:
+                return None, 404
+            if resp.status in self.RETRY_STATUS:
+                self._note_throttled()
+                retry_after = resp.headers.get("Retry-After")
+                wait = int(retry_after) if (retry_after or "").isdigit() \
+                    else 30 * (attempt + 1)
+                time.sleep(min(wait, 300))
+                continue
+            if resp.status >= 400:
+                last_err = f"HTTP {resp.status}"
+                time.sleep(3 * (attempt + 1))
+                continue
 
-        time.sleep(3 * (attempt + 1))
+            with self.stats_lock:
+                self.stats[f"status-{resp.status}"] += 1
+            self._note_ok()
+            return resp.body, resp.status
 
-    return None, last_err or "fetch-failed"
+        return None, last_err or "fetch-failed"
 
 
+# ---------------------------------------------------------------------------
+# resume index
+# ---------------------------------------------------------------------------
+def load_index_ids(db_path):
+    """Existing page ids from data/index/corpus.sqlite3, or None."""
+
+    if not os.path.exists(db_path):
+        return None
+    try:
+        import sqlite3
+
+        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        ids = set()
+        for (path,) in con.execute("SELECT path FROM pages"):
+            fn = os.path.basename(path)
+            stem = os.path.splitext(fn)[0]
+            ids.add(stem)
+            paren = stem.find("(v=")
+            if paren > 0:
+                ids.add(stem[:paren])
+        con.close()
+        return ids
+    except Exception as exc:  # noqa: BLE001
+        print(f"[index] sqlite index unusable ({exc}); falling back to scan")
+        return None
+
+
+def build_have_index(db_path=INDEX_DB, use_sqlite=True):
+    """Set of page ids (and `wb:<id>` marks) already in the corpus."""
+
+    have_ids = set()
+    if use_sqlite:
+        ids = load_index_ids(db_path)
+        if ids is not None:
+            have_ids |= ids
+            # wayback pages carry the same page ids but a `wb:` marker is
+            # only needed when they are stored under msdn-library/2010-05
+            base = os.path.join(CORPUS, "msdn-library", "2010-05")
+            if os.path.isdir(base):
+                for dirpath, _dirnames, filenames in os.walk(base):
+                    for fn in filenames:
+                        if fn.endswith(".html"):
+                            have_ids.add("wb:" + os.path.splitext(fn)[0])
+            return have_ids
+
+    for root, _dirs, files in ((LEARN_DIR, None, None),
+                               (WAYBACK_DIR, None, None)):
+        if not os.path.isdir(root):
+            continue
+        for dirpath, _dirnames, filenames in os.walk(root):
+            for fn in filenames:
+                if not fn.endswith(".html"):
+                    continue
+                base = fn[:-5]
+                have_ids.add(base)
+                paren = base.find("(v=")
+                if paren > 0:
+                    have_ids.add(base[:paren])
+                if "msdn-library" in dirpath:
+                    have_ids.add("wb:" + base)
+    return have_ids
+
+
+# ---------------------------------------------------------------------------
+# git
+# ---------------------------------------------------------------------------
 def git(*args, check=True):
-    """Run git inside repository root."""
-
     return subprocess.run(
         ["git", "-C", ROOT, *args],
         check=check,
@@ -260,561 +503,245 @@ def git(*args, check=True):
     )
 
 
-def commit_push(batch):
-    """Commit and push the current batch."""
+class GitBatcher:
+    """Stage only the files a run wrote -- `git add corpus/` on a 170k-file
+    worktree costs seconds per batch, `git add -- <paths>` costs millis."""
 
-    git(
-        "config",
-        "user.name",
-        "wince-docs-corpus harvester",
-        check=False,
-    )
+    def __init__(self, enabled, batch_size):
+        self.enabled = enabled
+        self.batch_size = batch_size
+        self.pending = []
 
-    git(
-        "config",
-        "user.email",
-        "wince-corpus-harvester@users.noreply.github.com",
-        check=False,
-    )
+    def add(self, paths):
+        if not self.enabled or not paths:
+            return
+        self.pending.extend(paths)
 
-    git(
-        "add",
-        "corpus/",
-        "data/index/",
-        "data/logs/",
-        check=False,
-    )
+    def maybe_flush(self, force=False):
+        if not self.enabled:
+            return
+        if not force and len(self.pending) < self.batch_size:
+            return
+        self.flush()
 
-    if git(
-        "diff",
-        "--staged",
-        "--quiet",
-        check=False,
-    ).returncode == 0:
-        return
-
-    timestamp = _dt.datetime.now(
-        _dt.timezone.utc
-    ).strftime("%Y-%m-%d %H:%M UTC")
-
-    commit = git(
-        "commit",
-        "-m",
-        f"corpus: harvest batch +{batch} pages ({timestamp})",
-        check=False,
-    )
-
-    if commit.returncode != 0:
-        print(
-            f"[push] commit failed: "
-            f"{commit.stderr.strip()[:200]}",
-            flush=True,
-        )
-        return
-
-    git(
-        "pull",
-        "--rebase",
-        check=False,
-    )
-
-    result = git(
-        "push",
-        check=False,
-    )
-
-    if result.returncode == 0:
-        print(
-            f"[push] ok (+{batch})",
-            flush=True,
-        )
-    else:
-        print(
-            f"[push] FAILED: "
-            f"{result.stderr.strip()[:200]}",
-            flush=True,
-        )
+    def flush(self):
+        if not self.pending:
+            return
+        paths, self.pending = self.pending, []
+        git("config", "user.name", "wince-docs-corpus harvester", check=False)
+        git("config", "user.email",
+            "wince-corpus-harvester@users.noreply.github.com", check=False)
+        for i in range(0, len(paths), 200):
+            git("add", "--", *paths[i:i + 200], check=False)
+        if git("diff", "--staged", "--quiet", check=False).returncode == 0:
+            return
+        timestamp = _dt.datetime.now(_dt.timezone.utc).strftime(
+            "%Y-%m-%d %H:%M UTC")
+        commit = git("commit", "-m",
+                     f"corpus: harvest batch +{len(paths)} pages ({timestamp})",
+                     check=False)
+        if commit.returncode != 0:
+            print(f"[push] commit failed: {commit.stderr.strip()[:200]}",
+                  flush=True)
+            return
+        git("pull", "--rebase", check=False)
+        result = git("push", check=False)
+        if result.returncode == 0:
+            print(f"[push] ok (+{len(paths)})", flush=True)
+        else:
+            print(f"[push] FAILED: {result.stderr.strip()[:200]}", flush=True)
 
 
-def build_have_index():
-    """Build an index of already harvested document IDs.
-
-    Returns:
-        set[str]: Existing IDs.
-    """
-
-    have_ids = set()
-
-    # ------------------------------------------------------------------
-    # Microsoft Learn
-    # ------------------------------------------------------------------
-
-    ms_root = LEARN_DIR
-
-    if os.path.isdir(ms_root):
-        try:
-            with os.scandir(ms_root) as books:
-                for book_entry in books:
-                    if not book_entry.is_dir():
-                        continue
-
-                    try:
-                        with os.scandir(book_entry.path) as files:
-                            for file_entry in files:
-                                if not file_entry.is_file():
-                                    continue
-
-                                name = file_entry.name
-
-                                if not name.endswith(".html"):
-                                    continue
-
-                                base = name[:-5]
-                                have_ids.add(base)
-
-                                # Versioned filename:
-                                #
-                                # aa450192(v=msdn.10).html
-                                #
-                                # Queue ID:
-                                #
-                                # aa450192
-                                #
-                                paren = base.find("(v=")
-
-                                if paren > 0:
-                                    have_ids.add(base[:paren])
-
-                    except OSError:
-                        continue
-
-        except OSError:
-            pass
-
-    # ------------------------------------------------------------------
-    # Wayback MSDN
-    # ------------------------------------------------------------------
-
-    wb_dir = WAYBACK_DIR
-
-    if os.path.isdir(wb_dir):
-        try:
-            with os.scandir(wb_dir) as files:
-                for file_entry in files:
-                    if not file_entry.is_file():
-                        continue
-
-                    name = file_entry.name
-
-                    if name.endswith(".html"):
-                        have_ids.add(
-                            "wb:" + name[:-5]
-                        )
-
-        except OSError:
-            pass
-
-    return have_ids
-
-
-def process_url(
-    url,
-    have_ids,
-    faillog,
-    delay,
-):
-    """Process one URL.
-
-    Returns:
-        "stored"
-        "skipped"
-        "failed"
-        "invalid"
-    """
-
-    kind, pid = dest_for(url)
-
-    if kind is None:
-        return "invalid"
-
-    if kind == "learn":
-        if pid in have_ids:
-            return "skipped"
-
-    else:
-        wb_id = "wb:" + pid
-
-        if wb_id in have_ids:
-            return "skipped"
-
-    content, status = fetch(url)
-
-    if content is None:
-        with open(
-            faillog,
-            "a",
-            encoding="utf-8",
-        ) as fh:
-            fh.write(
-                f"{status}\t{url}\n"
-            )
-
-        return "failed"
-
-    # Only decode a small part of the response.
-    head = content[:8000].decode(
-        "utf-8",
-        "replace",
-    )
-
-    match = TITLE.search(head)
-
-    title = (
-        match.group(1).strip()
-        if match
-        else ""
-    )
-
-    if kind == "learn":
-        book = classify(
-            title,
-            head,
-        )
-
-        directory = os.path.join(
-            LEARN_DIR,
-            book,
-        )
-
-        stored_id = pid
-
-    else:
-        directory = os.path.join(
-            WAYBACK_DIR,
-        )
-
-        stored_id = "wb:" + pid
-
-    os.makedirs(
-        directory,
-        exist_ok=True,
-    )
-
-    final = os.path.join(
-        directory,
-        pid + ".html",
-    )
-
+# ---------------------------------------------------------------------------
+# processing
+# ---------------------------------------------------------------------------
+def store_page(content, path, page_id):
+    final = os.path.join(path, page_id + ".html")
     temporary = final + ".part"
-
+    os.makedirs(path, exist_ok=True)
     try:
-        with open(
-            temporary,
-            "wb",
-        ) as fh:
+        with open(temporary, "wb") as fh:
             fh.write(content)
-
-        # Atomic replacement.
-        os.replace(
-            temporary,
-            final,
-        )
-
+        os.replace(temporary, final)
     except Exception:
-        # Do not leave .part files behind if possible.
         try:
             if os.path.exists(temporary):
                 os.remove(temporary)
         except OSError:
             pass
-
         raise
+    return final
 
+
+def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False):
+    """Fetch and store one URL. Returns (result, written_path)."""
+
+    kind, pid = dest_for(url)
+
+    if kind is None:
+        return "invalid", None
+
+    if kind == "learn":
+        if pid in have_ids:
+            return "skipped", None
+    else:
+        if "wb:" + pid in have_ids:
+            return "skipped", None
+
+    if dry_run:
+        # No network access at all: report what would be fetched.
+        return "would-fetch", None
+
+    content, status = fetcher.get(url, fetcher.base_delay)
+
+    if content is None:
+        if status == "robots-disallow":
+            return "robots", None
+        if faillog:
+            with open(faillog, "a", encoding="utf-8") as fh:
+                fh.write(f"{status}\t{url}\n")
+        return "failed", None
+
+    head = content[:8000].decode("utf-8", "replace")
+    match = TITLE.search(head)
+    title = match.group(1).strip() if match else ""
+
+    if kind == "learn":
+        directory = os.path.join(LEARN_DIR, classify(title, head))
+        stored_id = pid
+    else:
+        book = index_by_id.get(pid, "unclassified")
+        directory = os.path.join(WAYBACK_DIR, book)
+        stored_id = "wb:" + pid
+
+    written = store_page(content, directory, pid)
     have_ids.add(stored_id)
-
-    time.sleep(throttle_sleep_seconds(delay))
-
-    return "stored"
+    return "stored", written
 
 
 def iter_chunks(file_handle, chunk_size):
-    """Yield non-empty queue lines in chunks.
-
-    The queue file itself is never loaded entirely into memory.
-    """
-
     chunk = []
-
     for line in file_handle:
         url = line.strip()
-
         if not url:
             continue
-
         chunk.append(url)
-
         if len(chunk) >= chunk_size:
             yield chunk
             chunk = []
-
     if chunk:
         yield chunk
 
 
+def index_sets_by_id():
+    """page id -> set directory, from the flat learn corpus."""
+
+    index = {}
+    for dirpath, _dirnames, filenames in os.walk(LEARN_DIR):
+        book = os.path.basename(dirpath)
+        for fn in filenames:
+            if fn.endswith(".html"):
+                index.setdefault(fn[:-5], book)
+    return index
+
+
 def main():
     ap = argparse.ArgumentParser()
-
-    ap.add_argument(
-        "--queue",
-        required=True,
-    )
-
-    ap.add_argument(
-        "--queue-name",
-        default=None,
-    )
-
-    ap.add_argument(
-        "--limit",
-        type=int,
-        default=0,
-    )
-
-    ap.add_argument(
-        "--delay",
-        type=float,
-        default=0.0,
-    )
-
-    ap.add_argument(
-        "--batch",
-        type=int,
-        default=500,
-    )
-
-    ap.add_argument(
-        "--push",
-        action="store_true",
-    )
-
+    ap.add_argument("--queue", required=True)
+    ap.add_argument("--queue-name", default=None)
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--delay", type=float, default=0.0)
+    ap.add_argument("--batch", type=int, default=500)
+    ap.add_argument("--push", action="store_true")
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--workers", type=int, default=1,
+                    help="parallel hosts (never parallelises one host)")
+    ap.add_argument("--index-db", default=INDEX_DB)
+    ap.add_argument("--no-index", action="store_true",
+                    help="ignore data/index/corpus.sqlite3 and scan the tree")
+    ap.add_argument("--no-robots", action="store_true",
+                    help="do not consult robots.txt (not recommended)")
     args = ap.parse_args()
 
-    qpath = (
-        args.queue
-        if os.path.isabs(args.queue)
-        else os.path.join(
-            ROOT,
-            args.queue,
-        )
-    )
+    qpath = args.queue if os.path.isabs(args.queue) \
+        else os.path.join(ROOT, args.queue)
+    qname = args.queue_name or os.path.basename(qpath).replace(".txt", "")
 
-    qname = (
-        args.queue_name
-        or os.path.basename(qpath).replace(
-            ".txt",
-            "",
-        )
-    )
+    default_delay = {"wayback-msdn-2010": 1.5}.get(qname, 0.4)
+    delay = args.delay if args.delay > 0 else default_delay
 
-    default_delay = {
-        "wayback-msdn-2010": 1.5,
-    }.get(
-        qname,
-        0.4,
-    )
+    logdir = os.path.join(ROOT, "data", "logs")
+    os.makedirs(logdir, exist_ok=True)
+    faillog = os.path.join(logdir, f"fail-{qname}.log")
+    if args.dry_run:
+        faillog = None
 
-    delay = (
-        args.delay
-        if args.delay > 0
-        else default_delay
-    )
-
-    logdir = os.path.join(
-        ROOT,
-        "data",
-        "logs",
-    )
-
-    os.makedirs(
-        logdir,
-        exist_ok=True,
-    )
-
-    faillog = os.path.join(
-        logdir,
-        f"fail-{qname}.log",
-    )
-
-    # --------------------------------------------------------------
-    # Build resume index once.
-    # --------------------------------------------------------------
-
-    print(
-        f"[{qname}] indexing existing documents...",
-        flush=True,
-    )
-
+    print(f"[{qname}] indexing existing documents...", flush=True)
     index_start = time.time()
+    have_ids = build_have_index(args.index_db,
+                                use_sqlite=not args.no_index)
+    print(f"[{qname}] existing IDs={len(have_ids):,} "
+          f"index_time={time.time() - index_start:.2f}s "
+          f"(source={'sqlite' if not args.no_index else 'scan'})",
+          flush=True)
+    index_by_id = index_sets_by_id()
 
-    have_ids = build_have_index()
+    pacer = HostPacer()
+    fetcher = Fetcher(pacer, respect_robots=not args.no_robots)
+    fetcher.base_delay = delay
+    gitbatcher = GitBatcher(enabled=args.push and not args.dry_run,
+                            batch_size=args.batch)
 
-    index_time = time.time() - index_start
-
-    print(
-        f"[{qname}] existing IDs={len(have_ids):,} "
-        f"index_time={index_time:.2f}s",
-        flush=True,
-    )
-
-    # --------------------------------------------------------------
-    # Counters
-    # --------------------------------------------------------------
-
+    counters = collections.Counter()
     lines = 0
-    stored = 0
-    skipped = 0
-    failed = 0
-    invalid = 0
-
-    since_batch = 0
-
     t0 = time.time()
 
-    # --------------------------------------------------------------
-    # Process queue in 1000-line chunks.
-    # --------------------------------------------------------------
-
     try:
-        queue_file = open(
-            qpath,
-            "r",
-            encoding="utf-8",
-            errors="replace",
-            buffering=1024 * 1024,
-        )
+        queue_file = open(qpath, "r", encoding="utf-8", errors="replace",
+                          buffering=1024 * 1024)
     except OSError as exc:
-        print(
-            f"[{qname}] queue open failed: {exc}",
-            flush=True,
-        )
+        print(f"[{qname}] queue open failed: {exc}", flush=True)
         return 1
 
     with queue_file as fh:
-        for chunk in iter_chunks(
-            fh,
-            CHUNK_SIZE,
-        ):
-            # Respect --limit without reading more chunks.
-            if args.limit:
-                remaining = args.limit - lines
-
-                if remaining <= 0:
-                    break
-
-                if len(chunk) > remaining:
-                    chunk = chunk[:remaining]
-
-            # ------------------------------------------------------
-            # Process this 1000-line chunk.
-            # ------------------------------------------------------
-
+        for chunk in iter_chunks(fh, CHUNK_SIZE):
             for url in chunk:
+                if args.limit and lines >= args.limit:
+                    break
                 lines += 1
+                result, written = process_url(
+                    url, have_ids, faillog, fetcher, index_by_id,
+                    dry_run=args.dry_run)
+                counters[result] += 1
+                if written:
+                    gitbatcher.add([written])
+                    gitbatcher.maybe_flush()
 
-                result = process_url(
-                    url,
-                    have_ids,
-                    faillog,
-                    delay,
-                )
-
-                if result == "stored":
-                    stored += 1
-                    since_batch += 1
-
-                elif result == "skipped":
-                    skipped += 1
-
-                elif result == "failed":
-                    failed += 1
-
-                else:
-                    invalid += 1
-
-                # Progress output.
-                #
-                # Avoid printing every single URL because stdout itself
-                # can become a noticeable bottleneck.
-                if lines % 200 == 0:
-                    elapsed = max(
-                        time.time() - t0,
-                        1,
-                    )
-
-                    rate = stored / elapsed
-
+                if lines % 200 == 0 or result in ("stored", "would-fetch"):
+                    elapsed = max(time.time() - t0, 1)
+                    rate = (counters["stored"] or counters["would-fetch"]) \
+                        / elapsed
                     print(
-                        f"[{qname}] "
-                        f"lines={lines:,} "
-                        f"stored={stored:,} "
-                        f"skipped={skipped:,} "
-                        f"failed={failed:,} "
-                        f"rate={rate:.2f} pages/s",
-                        flush=True,
-                    )
+                        f"[{qname}] lines={lines:,} "
+                        f"stored={counters['stored']:,} "
+                        f"would-fetch={counters['would-fetch']:,} "
+                        f"skipped={counters['skipped']:,} "
+                        f"failed={counters['failed']:,} "
+                        f"rate={rate:.2f} pages/s", flush=True)
 
-                # --------------------------------------------------
-                # Batch commit/push.
-                # --------------------------------------------------
-
-                if (
-                    args.push
-                    and since_batch >= args.batch
-                ):
-                    commit_push(
-                        since_batch,
-                    )
-
-                    since_batch = 0
-
-            # Release the chunk before reading the next 1000 lines.
-            chunk.clear()
-
-            # ------------------------------------------------------
-            # Chunk progress.
-            # ------------------------------------------------------
-
-            elapsed = max(
-                time.time() - t0,
-                1,
-            )
-
-            rate = stored / elapsed
-
-            print(
-                f"[{qname}] chunk done "
-                f"lines={lines:,} "
-                f"stored={stored:,} "
-                f"skipped={skipped:,} "
-                f"failed={failed:,} "
-                f"rate={rate:.2f} pages/s",
-                flush=True,
-            )
-
-            if (
-                args.limit
-                and lines >= args.limit
-            ):
+            if args.limit and lines >= args.limit:
                 break
 
-    # --------------------------------------------------------------
-    # Retry pass: failures that were not hard 404s get one more
-    # attempt at double delay (sequential; no extra concurrency).
-    # --------------------------------------------------------------
+    if args.dry_run:
+        print(f"[{qname}] DRY RUN lines={lines:,} "
+              f"would-fetch={counters['would-fetch']:,} "
+              f"already-have={counters['skipped']:,} "
+              f"invalid={counters['invalid']:,}", flush=True)
+        return 0
 
-    if failed and os.path.exists(faillog):
-        pending = []
-        keep = []
+    # ---- retry pass: everything that was not a hard 404 ------------------
+    if counters["failed"] and faillog and os.path.exists(faillog):
+        pending, keep = [], []
         with open(faillog, "r", encoding="utf-8") as fh:
             for ln in fh:
                 parts = ln.rstrip("\n").split("\t", 1)
@@ -823,58 +750,34 @@ def main():
                 else:
                     keep.append(ln)
         if pending:
-            print(
-                f"[{qname}] retry pass: {len(pending)} URLs "
-                f"at {delay * 2:.1f}s delay",
-                flush=True,
-            )
+            print(f"[{qname}] retry pass: {len(pending)} URLs "
+                  f"at {delay * 2:.1f}s delay", flush=True)
             still = []
+            fetcher.base_delay = delay * 2
             for url in pending:
-                result = process_url(
-                    url,
-                    have_ids,
-                    os.devnull,
-                    delay * 2,
-                )
+                result, written = process_url(
+                    url, have_ids, None, fetcher, index_by_id)
                 if result == "stored":
-                    stored += 1
-                    since_batch += 1
-                    failed -= 1
+                    counters["stored"] += 1
+                    counters["failed"] -= 1
+                    gitbatcher.add([written])
                 else:
                     still.append(url)
-                time.sleep(throttle_sleep_seconds(delay * 2))
             with open(faillog, "w", encoding="utf-8") as fh:
                 fh.writelines(keep)
                 for url in still:
                     fh.write(f"retry-failed\t{url}\n")
 
-    # --------------------------------------------------------------
-    # Final batch.
-    # --------------------------------------------------------------
+    gitbatcher.flush()
+    fetcher.close()
 
-    if args.push and since_batch:
-        commit_push(
-            since_batch,
-        )
-
-    elapsed = max(
-        time.time() - t0,
-        1,
-    )
-
-    rate = stored / elapsed
-
+    elapsed = max(time.time() - t0, 1)
     print(
-        f"[{qname}] DONE "
-        f"lines={lines:,} "
-        f"stored={stored:,} "
-        f"skipped={skipped:,} "
-        f"fails={failed:,} "
-        f"invalid={invalid:,} "
-        f"rate={rate:.2f} pages/s",
-        flush=True,
-    )
-
+        f"[{qname}] DONE lines={lines:,} stored={counters['stored']:,} "
+        f"skipped={counters['skipped']:,} fails={counters['failed']:,} "
+        f"invalid={counters['invalid']:,} robots={counters['robots']:,} "
+        f"rate={counters['stored'] / elapsed:.2f} pages/s "
+        f"requests={fetcher.stats['requests']:,}", flush=True)
     return 0
 
 

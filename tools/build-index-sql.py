@@ -6,11 +6,12 @@ every page in corpus/ so tools (and the harvester resume check) do not
 have to rescan ~78k HTML files on every run.
 
 Schema
-  pages(page_id TEXT PRIMARY KEY, section TEXT, path TEXT, title TEXT,
+  pages(path TEXT PRIMARY KEY, page_id TEXT, section TEXT, title TEXT,
         size INTEGER)
   names(name TEXT, page_id TEXT, kind TEXT,
         PRIMARY KEY(name, page_id, kind))
-      kind: 'title'  - name parsed from the page <title>
+      kind: 'api'    - markdown page name (nf-createfilew.md -> CreateFileW)
+            'title'  - name parsed from the page <title>
             'const'  - `NAME = value` / `#define NAME value` print
             'proto'  - C prototype printed on the page
             'struct' - typedef struct/union printed on the page
@@ -21,6 +22,12 @@ Schema
 Incremental: unchanged files (mtime+size) are skipped; changed/new
 files are re-extracted; files removed from disk drop their rows.
 --full rebuilds from scratch.
+
+Handles both page formats in corpus/: ``.html`` (harvested Learn pages, CHM
+extractions, MSDN Library captures) and ``.md`` (the Win32 pages imported from
+MicrosoftDocs, see corpus/win32/README.md).  Markdown pages get their title
+from the ``title:`` front-matter field and their API name from the ``nf-`` /
+``ns-`` / ... file-name prefix instead of the HTML print patterns.
 
 Writes are wrapped in a single transaction; the DB is safe to commit
 to git (WAL off, page_size 4096).
@@ -57,8 +64,36 @@ def strip_scripts(h):
     return re.sub(r"<script.*?</script>", "", h, flags=re.S)
 
 
+MD_TITLE = re.compile(r"^title:\s*(.+?)\s*$", re.M)
+MD_NAME = re.compile(r"^(?:nf|ns|ne|nc|ni|nn|nl|na)-[^-]+-(.+)$")
+
+
+def extract_markdown(path):
+    """Return (title, [(name, kind), ...]) for one markdown page."""
+    try:
+        head = open(path, encoding="utf-8", errors="replace").read(4000)
+    except OSError:
+        return "", []
+    match = MD_TITLE.search(head)
+    title = match.group(1).strip() if match else ""
+    rows = []
+    # "CreateFileW function (fileapi.h)" -> CreateFileW
+    tn = re.match(r"([A-Za-z_]\w*)\s+(?:function|structure|enumeration|"
+                  r"union|macro|interface|callback|class|method)\b", title)
+    if tn:
+        rows.append((tn.group(1), "api"))
+    else:
+        stem = os.path.splitext(os.path.basename(path))[0]
+        name = MD_NAME.match(stem)
+        if name:
+            rows.append((name.group(1), "api"))
+    return title, rows
+
+
 def extract(path, page_id):
-    """Return (title, [(name, kind), ...]) for one HTML file."""
+    """Return (title, [(name, kind), ...]) for one page file."""
+    if path.endswith(".md"):
+        return extract_markdown(path)
     try:
         raw = open(path, encoding="utf-8", errors="replace").read()
     except OSError:
@@ -124,8 +159,9 @@ def main():
     con.execute("PRAGMA page_size=4096")
     con.executescript("""
     CREATE TABLE IF NOT EXISTS pages(
-      page_id TEXT PRIMARY KEY, section TEXT, path TEXT,
+      path TEXT PRIMARY KEY, page_id TEXT, section TEXT,
       title TEXT, size INTEGER);
+    CREATE INDEX IF NOT EXISTS idx_pages_page_id ON pages(page_id);
     CREATE TABLE IF NOT EXISTS names(
       name TEXT, page_id TEXT, kind TEXT,
       PRIMARY KEY(name, page_id, kind));
@@ -146,8 +182,10 @@ def main():
         if row:
             state = json.loads(row[0])
             state_json = row[0]
-    files = sorted(glob.glob(os.path.join(CORPUS, "**", "*.html"),
-                             recursive=True))
+    files = sorted(
+        f for pat in ("*.html", "*.md")
+        for f in glob.glob(os.path.join(CORPUS, "**", pat), recursive=True)
+        if os.path.basename(f) not in ("README.md", "PROVENANCE.md"))
     changed = removed = 0
     live = set()
     tx = con
@@ -175,7 +213,7 @@ def main():
             .replace(os.sep, "/")
         tx.execute(
             "INSERT OR REPLACE INTO pages VALUES(?,?,?,?,?)",
-            (page_id, section, rel, title, st.st_size))
+            (rel, page_id, section, title, st.st_size))
         tx.executemany(
             "INSERT OR IGNORE INTO names VALUES(?,?,?)",
             [(n, page_id, k) for n, k in rows])
@@ -187,7 +225,7 @@ def main():
             ver = base.find("(v=")
             page_id = base if ver < 0 else base[:ver] + "|" + base[ver + 3:-1]
             tx.execute("DELETE FROM names WHERE page_id=?", (page_id,))
-            tx.execute("DELETE FROM pages WHERE page_id=?", (page_id,))
+            tx.execute("DELETE FROM pages WHERE path=?", (rel,))
             del state[rel]
             removed += 1
     new_state_json = json.dumps(state)

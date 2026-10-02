@@ -1,0 +1,435 @@
+---
+UID: NS:wincrypt._CRYPT_OID_INFO
+title: CRYPT_OID_INFO (wincrypt.h)
+description: Contains information about an object identifier (OID).
+helpviewer_keywords: ["*PCRYPT_OID_INFO","CCRYPT_OID_INFO","CCRYPT_OID_INFO structure [Security]","CRYPT_ENCRYPT_ALG_OID_GROUP_ID","CRYPT_ENHKEY_USAGE_OID_GROUP_ID","CRYPT_EXT_OR_ATTR_OID_GROUP_ID","CRYPT_HASH_ALG_OID_GROUP_ID","CRYPT_OID_INFO","CRYPT_OID_INFO structure [Security]","CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM","CRYPT_OID_INFO_ECC_WRAP_PARAMETERS_ALGORITHM","CRYPT_OID_INFO_HASH_PARAMETERS_ALGORITHM","CRYPT_OID_INFO_MGF1_PARAMETERS_ALGORITHM","CRYPT_OID_INFO_NO_SIGN_ALGORITHM","CRYPT_OID_INFO_OAEP_PARAMETERS_ALGORITHM","CRYPT_OID_INHIBIT_SIGNATURE_FORMAT_FLAG","CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG","CRYPT_OID_PUBKEY_ENCRYPT_ONLY_FLAG","CRYPT_OID_PUBKEY_SIGN_ONLY_FLAG","CRYPT_OID_USE_PUBKEY_PARA_FOR_PKCS7_FLAG","CRYPT_POLICY_OID_GROUP_ID","CRYPT_PUBKEY_ALG_OID_GROUP_ID","CRYPT_RDN_ATTR_OID_GROUP_ID","CRYPT_SIGN_ALG_OID_GROUP_ID","PCCRYPT_OID_INFO","PCCRYPT_OID_INFO structure pointer [Security]","PCRYPT_OID_INFO","PCRYPT_OID_INFO structure pointer [Security]","_crypto2_crypt_oid_info","security.crypt_oid_info","wincrypt/CCRYPT_OID_INFO","wincrypt/CRYPT_OID_INFO","wincrypt/PCCRYPT_OID_INFO","wincrypt/PCRYPT_OID_INFO"]
+old-location: security\crypt_oid_info.htm
+tech.root: security
+ms.assetid: 06ba0f60-778d-450b-8f71-23471b8c4e2c
+ms.date: 05/26/2026
+ms.keywords: '*PCRYPT_OID_INFO, CCRYPT_OID_INFO, CCRYPT_OID_INFO structure [Security], CRYPT_ENCRYPT_ALG_OID_GROUP_ID, CRYPT_ENHKEY_USAGE_OID_GROUP_ID, CRYPT_EXT_OR_ATTR_OID_GROUP_ID, CRYPT_HASH_ALG_OID_GROUP_ID, CRYPT_OID_INFO, CRYPT_OID_INFO structure [Security], CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM, CRYPT_OID_INFO_ECC_WRAP_PARAMETERS_ALGORITHM, CRYPT_OID_INFO_HASH_PARAMETERS_ALGORITHM, CRYPT_OID_INFO_MGF1_PARAMETERS_ALGORITHM, CRYPT_OID_INFO_NO_SIGN_ALGORITHM, CRYPT_OID_INFO_OAEP_PARAMETERS_ALGORITHM, CRYPT_OID_INHIBIT_SIGNATURE_FORMAT_FLAG, CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG, CRYPT_OID_PUBKEY_ENCRYPT_ONLY_FLAG, CRYPT_OID_PUBKEY_SIGN_ONLY_FLAG, CRYPT_OID_USE_PUBKEY_PARA_FOR_PKCS7_FLAG, CRYPT_POLICY_OID_GROUP_ID, CRYPT_PUBKEY_ALG_OID_GROUP_ID, CRYPT_RDN_ATTR_OID_GROUP_ID, CRYPT_SIGN_ALG_OID_GROUP_ID, PCCRYPT_OID_INFO, PCCRYPT_OID_INFO structure pointer [Security], PCRYPT_OID_INFO, PCRYPT_OID_INFO structure pointer [Security], _crypto2_crypt_oid_info, security.crypt_oid_info, wincrypt/CCRYPT_OID_INFO, wincrypt/CRYPT_OID_INFO, wincrypt/PCCRYPT_OID_INFO, wincrypt/PCRYPT_OID_INFO'
+req.header: wincrypt.h
+req.include-header: 
+req.target-type: Windows
+req.target-min-winverclnt: Windows XP [desktop apps only]
+req.target-min-winversvr: Windows Server 2003 [desktop apps only]
+req.kmdf-ver: 
+req.umdf-ver: 
+req.ddi-compliance: 
+req.unicode-ansi: 
+req.idl: 
+req.max-support: 
+req.namespace: 
+req.assembly: 
+req.type-library: 
+req.lib: 
+req.dll: 
+req.irql: 
+targetos: Windows
+req.typenames: CRYPT_OID_INFO, *PCRYPT_OID_INFO
+req.redist: 
+ms.custom: 19H1
+f1_keywords:
+ - _CRYPT_OID_INFO
+ - wincrypt/_CRYPT_OID_INFO
+ - PCRYPT_OID_INFO
+ - wincrypt/PCRYPT_OID_INFO
+ - CRYPT_OID_INFO
+ - wincrypt/CRYPT_OID_INFO
+dev_langs:
+ - c++
+topic_type:
+ - APIRef
+ - kbSyntax
+api_type:
+ - HeaderDef
+api_location:
+ - Wincrypt.h
+api_name:
+ - CRYPT_OID_INFO
+---
+
+# CRYPT_OID_INFO structure
+
+## -description
+
+The <b>CRYPT_OID_INFO</b> structure contains information about an <a href="/windows/win32/SecGloss/o-gly">object identifier</a> (OID). These structures give the relationship among an OID identifier, its name, its group, and other information about the OID. These structures can be listed by using 
+the <a href="/windows/win32/api/wincrypt/nf-wincrypt-cryptenumoidinfo">CryptEnumOIDInfo</a> function. New CRYPT_OID_STRUCTURES can be added by using 
+the <a href="/windows/win32/api/wincrypt/nf-wincrypt-cryptregisteroidinfo">CryptRegisterOIDInfo</a> function.
+
+## -struct-fields
+
+### -field cbSize
+
+The size, in bytes, of this structure.
+
+### -field pszOID
+
+The OID associated with this OID information.
+
+### -field pwszName
+
+The display name associated with an OID.
+
+### -field dwGroupId
+
+The group identifier value associated with this OID information. 
+
+This member can be one of the following <b>dwGroupId</b> group identifiers.
+
+<table>
+<tr>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_ENCRYPT_ALG_OID_GROUP_ID"></a><a id="crypt_encrypt_alg_oid_group_id"></a><dl>
+<dt><b>CRYPT_ENCRYPT_ALG_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+Encryption algorithms
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_ENHKEY_USAGE_OID_GROUP_ID"></a><a id="crypt_enhkey_usage_oid_group_id"></a><dl>
+<dt><b>CRYPT_ENHKEY_USAGE_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+Enhanced key usages
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_EXT_OR_ATTR_OID_GROUP_ID"></a><a id="crypt_ext_or_attr_oid_group_id"></a><dl>
+<dt><b>CRYPT_EXT_OR_ATTR_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+Extensions or attributes
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_HASH_ALG_OID_GROUP_ID"></a><a id="crypt_hash_alg_oid_group_id"></a><dl>
+<dt><b>CRYPT_HASH_ALG_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+Hash algorithms
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_POLICY_OID_GROUP_ID"></a><a id="crypt_policy_oid_group_id"></a><dl>
+<dt><b>CRYPT_POLICY_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+Policies
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_PUBKEY_ALG_OID_GROUP_ID"></a><a id="crypt_pubkey_alg_oid_group_id"></a><dl>
+<dt><b>CRYPT_PUBKEY_ALG_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+Public key algorithms
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_RDN_ATTR_OID_GROUP_ID"></a><a id="crypt_rdn_attr_oid_group_id"></a><dl>
+<dt><b>CRYPT_RDN_ATTR_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+RDN attributes
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_SIGN_ALG_OID_GROUP_ID"></a><a id="crypt_sign_alg_oid_group_id"></a><dl>
+<dt><b>CRYPT_SIGN_ALG_OID_GROUP_ID</b></dt>
+</dl>
+</td>
+<td width="60%">
+Signature algorithms
+
+</td>
+</tr>
+</table>
+
+### -field DUMMYUNIONNAME
+
+### -field DUMMYUNIONNAME.dwValue
+
+A numeric value associated with this OID information. This member is used with <b>dwGroupId</b> CRYPT_SIGN_ALG_OID_GROUP_ID.
+
+### -field DUMMYUNIONNAME.Algid
+
+The algorithm identifier associated with this OID information. 
+
+This member applies for the following values of <b>dwGroupId</b>:
+
+<ul>
+<li>CRYPT_HASH_ALG_OID_GROUP_ID</li>
+<li>CRYPT_ENCRYPT_ALG_OID_GROUP_ID</li>
+<li>CRYPT_PUBKEY_ALG_OID_GROUP_ID</li>
+<li>CRYPT_SIGN_ALG_OID_GROUP_ID</li>
+</ul>
+
+### -field DUMMYUNIONNAME.dwLength
+
+This member is not implemented. It is always set to zero.
+
+### -field ExtraInfo
+
+Extra information used to find or register OID information. This member applies for the following values of <b>dwGroupId</b>: 
+
+<ul>
+<li>CRYPT_PUBKEY_ALG_OID_GROUP_ID</li>
+<li>CRYPT_SIGN_ALG_OID_GROUP_ID</li>
+<li>CRYPT_RDN_ATTR_OID_GROUP_ID</li>
+</ul>
+
+The OIDs in the CRYPT_ENCRYPT_ALG_OID_GROUP_ID OID group have a bit length set for the AES algorithms in the DWORD[0] member of the ExtraInfo member.
+
+The OIDs in the CRYPT_PUBKEY_ALG_OID_GROUP_ID group have a flag set in the DWORD[0] member of the ExtraInfo member.
+
+The OIDs in the ECC curve name public keys, for example, szOID_ECC_CURVE_P256 ("1.2.840.10045.3.1.7"), have a flag set in the DWORD[0] member, a BCRYPT_ECCKEY_BLOB dwMagic field value set in the DWORD[1] member, and a bit length where the BCRYPT_ECCKEY_BLOB cbKey value equals dwBitLength / 8 + ((dwBitLength % 8) ? 1 : 0) set in the DWORD[2] member of the ExtraInfo member.
+
+The OIDs in the CRYPT_SIGN_ALG_OID_GROUP_ID group have a public key algorithm identifier set in the DWORD[0] member,  a flag set in the DWORD[1] member, and an optional provider type set in the DWORD[2] member of the ExtraInfo member.
+
+The OIDs in the CRYPT_RDN_ATTR_OID_GROUP_ID group have a null-terminated list of acceptable RDN attribute value types set in an array of <b>DWORD</b> values in the ExtraInfo member. An omitted list implies an array of values where the first value in the array is  CERT_RDN_PRINTABLE_STRING, the second value in the array is CERT_RDN_UNICODE_STRING, and the third value in the array is zero.
+
+The following values are used for the flags in the <b>ExtraInfo</b> member.
+
+<table>
+<tr>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_INHIBIT_SIGNATURE_FORMAT_FLAG"></a><a id="crypt_oid_inhibit_signature_format_flag"></a><dl>
+<dt><b>CRYPT_OID_INHIBIT_SIGNATURE_FORMAT_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+This flag is no longer used.
+
+Stop the reformatting of the signature before the <a href="/windows/desktop/api/wincrypt/nf-wincrypt-cryptverifysignaturea">CryptVerifySignature</a> function is called or after the <a href="/windows/desktop/api/wincrypt/nf-wincrypt-cryptsignhasha">CryptSignHash</a> function is called.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG"></a><a id="crypt_oid_no_null_algorithm_para_flag"></a><dl>
+<dt><b>CRYPT_OID_NO_NULL_ALGORITHM_PARA_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+Omit <b>NULL</b> parameters when encoding.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_PUBKEY_ENCRYPT_ONLY_FLAG"></a><a id="crypt_oid_pubkey_encrypt_only_flag"></a><dl>
+<dt><b>CRYPT_OID_PUBKEY_ENCRYPT_ONLY_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+The public key is only used for encryption.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_PUBKEY_SIGN_ONLY_FLAG"></a><a id="crypt_oid_pubkey_sign_only_flag"></a><dl>
+<dt><b>CRYPT_OID_PUBKEY_SIGN_ONLY_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+The public key is only used for signatures.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_USE_PUBKEY_PARA_FOR_PKCS7_FLAG"></a><a id="crypt_oid_use_pubkey_para_for_pkcs7_flag"></a><dl>
+<dt><b>CRYPT_OID_USE_PUBKEY_PARA_FOR_PKCS7_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+This flag is no longer used.
+
+Include the parameters of the public key algorithm in the <i>digestEncryptionAlgorithm</i> parameters for the PKCS #7 message.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_USE_CURVE_NAME_FOR_ENCODE_FLAG"></a><a id="crypt_oid_use_curve_name_for_encode_flag"></a><dl>
+<dt><b>CRYPT_OID_USE_CURVE_NAME_FOR_ENCODE_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+Use the CNG curve name for the encoding.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_USE_CURVE_PARAMETERS_FOR_ENCODE_FLAG"></a><a id="crypt_oid_use_curve_parameters_for_encode_flag"></a><dl>
+<dt><b>CRYPT_OID_USE_CURVE_PARAMETERS_FOR_ENCODE_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+Use the CNG curve parameters for the encoding.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_PUBKEY_PURE_ONLY_FLAG"></a><a id="crypt_oid_pubkey_pure_only_flag"></a><dl>
+<dt><b>CRYPT_OID_PUBKEY_PURE_ONLY_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+A post-quantum key that should only be used for "Pure" signing.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_PUBKEY_PREHASH_ONLY_FLAG"></a><a id="crypt_oid_pubkey_prehash_only_flag"></a><dl>
+<dt><b>CRYPT_OID_PUBKEY_PREHASH_ONLY_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+A post-quantum key that should only be used for "PreHash" signing. Uses a single hash algorithm per PQ parameter set.
+
+</td>
+</tr>
+<tr>
+<td width="40%"><a id="CRYPT_OID_COMPOSITE_ECDSA_FLAG"></a><a id="crypt_oid_composite_ecdsa_flag"></a><dl>
+<dt><b>CRYPT_OID_COMPOSITE_ECDSA_FLAG</b></dt>
+<dt></dt>
+</dl>
+</td>
+<td width="60%">
+A composite signature key that uses both a post-quantum and ECDSA signature algorithm. When set, the Signature Byte Length is the Max Length.
+
+</td>
+</tr>
+</table>
+
+#### Post-quantum use
+
+**CRYPT_PUBKEY_ALG_OID_GROUP_ID** has the following *ExtraInfo* fields when used with PQ OIDs (above):
+
+| Field | Description |
+|--|--|
+| DWORD[0] | Flags |
+| DWORD[1] | Public Magic (e.g. **BCRYPT_MLDSA_PUBLIC_MAGIC**) |
+| DWORD[2] | Private Magic (e.g. **BCRYPT_MLDSA_PRIVATE_SEED_MAGIC**) |
+| DWORD[4] | Public Key Byte Length |
+| DWORD[5] | Private Key Byte Length |
+| DWORD[6] | Signature Byte Length |
+
+**CRYPT_SIGN_ALG_OID_GROUP_ID** has the following *ExtraInfo* fields when used with PQ OIDs: 
+
+| Field | Description |
+|--|--|
+| DWORD[0] | Flags |
+| DWORD[1] | Signature Byte Length |
+
+**CRYPT_HASH_ALG_OID_GROUP_ID** can be set to L”NoHash” to indicate no hash before signing, and the PQ key will directly sign the *ToBeSigned* bytes. 
+
+### -field pwszCNGAlgid
+
+The algorithm identifier string passed to the CNG functions (the BCrypt* and NCrypt* functions that are defined in Bcrypt.h and Ncrypt.h). CNG functions use algorithm identifier strings, such as L"SHA1", instead of the [ALG_ID](/windows/win32/SecCrypto/alg-id) data type constants, such as **CALG_SHA1**. **Windows Server 2003 and Windows XP:** This member is not available.
+
+> [!NOTE]
+> The **pwszCNGAlgid** member is only available if you include the following statement in your code.
+
+```cpp
+#define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
+```
+
+This member applies for the following values of **dwGroupId**:
+
+- CRYPT_HASH_ALG_OID_GROUP_ID
+- CRYPT_ENCRYPT_ALG_OID_GROUP_ID
+- CRYPT_PUBKEY_ALG_OID_GROUP_ID
+- CRYPT_SIGN_ALG_OID_GROUP_ID
+
+Set the *pwszCNGAlgid* member to the empty string, L"", for the other values of **dwGroupId**.
+
+The *pwszCNGAlgid* member can also be set to a string value that is not passed directly to the CNG functions. The following table lists these values and their meanings:
+
+| Value | Meaning |
+|--|--|
+| **CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM** | The ECC curve algorithm is obtained from the encoded parameters of the OID algorithm. |
+| **CRYPT_OID_INFO_ECC_WRAP_PARAMETERS_ALGORITHM** | The key wrap algorithm is obtained from the encoded parameters of the OID algorithm. |
+| **CRYPT_OID_INFO_HASH_PARAMETERS_ALGORITHM** | The hash algorithm is obtained from the encoded parameters of the OID algorithm. |
+| **CRYPT_OID_INFO_MGF1_PARAMETERS_ALGORITHM** | The PKCS #1 v2.1 mask generation hash algorithm is obtained from the encoded parameters of the OID algorithm. |
+| **CRYPT_OID_INFO_NO_SIGN_ALGORITHM** | A public key algorithm that indicates the signature value is an unsigned hash. |
+| **CRYPT_OID_INFO_OAEP_PARAMETERS_ALGORITHM** | The RSAES-OAEP padding hash algorithm is obtained from the encoded parameters of the OID algorithm. |
+| **CRYPT32_MLDSA_44_ALGORITHM**<br/>`L"ML-DSA:44"` | The ML-DSA algorithm with parameter set 44 (NIST security category 2). |
+| **CRYPT32_MLDSA_65_ALGORITHM**<br/>`L"ML-DSA:65"` | The ML-DSA algorithm with parameter set 65 (NIST security category 3). |
+| **CRYPT32_MLDSA_87_ALGORITHM**<br/>`L"ML-DSA:87"` | The ML-DSA algorithm with parameter set 87 (NIST security category 5). |
+| **CRYPT_OID_INFO_NO_HASH_ALGORITHM**<br/>`L"NoHash"` | For PQ digital signatures, indicates there is no hash before signing, and the PQ key will directly sign the ToBeSigned bytes. |
+| **CRYPT32_COMPOSITE_MLDSA_44_ECDSA_P256_SHA256_ALGORITHM**<br/>`L"Composite-ML-DSA:44-ECDSA-P256-SHA256"` | This composite algorithm combines CNG ML-DSA 44 and ECDSA P-256 into one key. |
+| **CRYPT32_COMPOSITE_MLDSA_65_ECDSA_P256_SHA512_ALGORITHM**<br/>`L"Composite-ML-DSA:65-ECDSA-P256-SHA512"` | This composite algorithm combines CNG ML-DSA 65 and ECDSA P-256 into one key. |
+| **CRYPT32_COMPOSITE_MLDSA_65_ECDSA_P384_SHA512_ALGORITHM**<br/>`L"Composite-ML-DSA:65-ECDSA-P384-SHA512"` | This composite algorithm combines CNG ML-DSA 65 and ECDSA P-384 into one key. |
+| **CRYPT32_COMPOSITE_MLDSA_87_ECDSA_P384_SHA512_ALGORITHM**<br/>`L"Composite-ML-DSA:87-ECDSA-P384-SHA512"` | This composite algorithm combines CNG ML-DSA 87 and ECDSA P-384 into one key. |
+| **CRYPT32_MLKEM_512_ALGORITHM**<br/>`L"ML-KEM:512"` | The ML-KEM algorithm with parameter set 512 (NIST security category 2). |
+| **CRYPT32_MLKEM_768_ALGORITHM**<br/>`L"ML-KEM:768"` | The ML-KEM algorithm with parameter set 768 (NIST security category 3). |
+| **CRYPT32_MLKEM_1024_ALGORITHM**<br/>`L"ML-KEM:1024"` | The ML-KEM algorithm with parameter set 1024 (NIST security category 5). |
+| **CRYPT32_COMPOSITE_MLKEM_768_P256_ALGORITHM**<br/>`L"Composite-ML-KEM:768-P256"` | This composite algorithm combines ML-KEM 768 and ECDH P256 into one key. |
+| **CRYPT32_COMPOSITE_MLKEM_768_X25519_ALGORITHM**<br/>`L"Composite-ML-KEM:768-X25519"` | This composite algorithm combines ML-KEM 768 and curve25519 into one key. |
+| **CRYPT32_COMPOSITE_MLKEM_1024_P384_ALGORITHM**<br/>`L"Composite-ML-KEM:1024-P384"` | This composite algorithm combines ML-KEM 1024 and ECDH P384 into one key. |
+
+### -field pwszCNGExtraAlgid
+
+An extra algorithm string, other than the string in the <b>pwszCNGAlgid</b> member,  that can be passed to the CNG functions (the BCrypt* and NCrypt* functions that are defined in Bcrypt.h and Ncrypt.h).
+
+
+<b>Windows Server 2003 and Windows XP:  </b>This member is not available.
+
+<div class="alert"><b>Note</b>  This member is only available if you include the following statement in your code.</div>
+<div> </div>
+
+```cpp
+#define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
+```
+
+
+For the signature algorithms (CRYPT_SIGN_ALG_OID_GROUP_ID), this member is the public key algorithm string to pass to the CNG functions.
+
+For ECC signatures, this member is the special CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM string value.
+
+For unsigned signatures, this member is the special CRYPT_OID_INFO_NO_SIGN_ALGORITHM string value.
+
+For ECC curve name public keys, for example, szOID_ECC_CURVE_P256 ("1.2.840.10045.3.1.7"), this is the special CRYPT_OID_INFO_ECC_PARAMETERS_ALGORITHM string value.
+
+For the other values of <b>dwGroupId</b>, set the <b>pwszCNGExtraAlgid</b> member to the empty string, L"".
+
+## -see-also
+
+<a href="/windows/desktop/api/wincrypt/nf-wincrypt-cryptfindoidinfo">CryptFindOIDInfo</a>
+
+
+
+<a href="/windows/desktop/api/wincrypt/nf-wincrypt-cryptregisteroidinfo">CryptRegisterOIDInfo</a>
+
+
+
+<a href="/windows/desktop/api/wincrypt/nf-wincrypt-cryptunregisteroidinfo">CryptUnregisterOIDInfo</a>
