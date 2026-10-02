@@ -1,16 +1,11 @@
 # Refresh the Win32-shared material in corpus/win32/ and the reports.
 #
-# Staged in .actions/ because GitHub only executes workflow files under
-# .github/workflows/, and pushing to that path requires a credential with the
-# `workflows` permission. Install with:
-#
-#     git mv .actions/import-win32.yml .github/workflows/import-win32.yml
-#
 # What it does (one HTTPS request per repository, no crawling):
 #   1. download the pinned MicrosoftDocs/sdk-api commit
 #   2. re-extract corpus/win32/api/ (CE-shared API names + their modules)
 #   3. re-extract corpus/win32/guide/ (CE-relevant subsystems)
 #   4. refresh data/reports/win32-{shared,imported}.tsv and the indexes
+#   5. re-run the corpus integrity check (data/reports/corpus-problems.tsv)
 #
 # Update UPSTREAM in tools/fetch-upstream.py to move to a newer commit; the
 # new snapshot tarball has to be committed too (sources/microsoftdocs/).
@@ -67,13 +62,15 @@ jobs:
           python3 tools/build-win32-map.py
           python3 tools/build-index.py
           python3 tools/build-index-sql.py
+          python3 tools/check-corpus.py --report || true
 
       - name: Commit
         if: ${{ github.event.inputs.push == 'true' }}
         run: |
           git config user.name "wince-docs-corpus importer"
           git config user.email "wince-corpus-harvester@users.noreply.github.com"
-          git add corpus/win32 data/reports data/index sources/microsoftdocs
+          git add corpus/win32 data/reports/win32-imported.tsv \
+            data/reports/win32-shared.tsv data/index sources/microsoftdocs
           if git diff --staged --quiet; then
             echo "nothing to commit"
             exit 0
