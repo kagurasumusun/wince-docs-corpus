@@ -39,7 +39,11 @@ def main():
         data = json.load(fh)
     counters = data.get("counters", {})
     row = {key: counters.get(key, 0) for key in COLUMNS}
-    row.update({key: data.get(key, "") for key in COLUMNS})
+    for key in COLUMNS:
+        if key in data:                  # queue, lines, requests, elapsed, ...
+            row[key] = data[key]
+        elif key in counters:
+            row[key] = counters[key]
 
     history_path = args.history if os.path.isabs(args.history) \
         else os.path.join(ROOT, args.history)
@@ -51,11 +55,15 @@ def main():
         fh.write("\t".join(str(row.get(col, "")) for col in COLUMNS) + "\n")
 
     if not args.quiet:
+        fails = data.get("fail_log", {}).get("statuses") or {}
         print(f"{data.get('queue')}: stored={row['stored']} "
               f"skipped={row['skipped']} failed={row['failed']} "
               f"interstitial={row['interstitial']} "
               f"requests={row['requests']} "
               f"elapsed={row['elapsed_seconds']}s")
+        if fails:
+            print("failure reasons: " + ", ".join(
+                f"{k}={v}" for k, v in sorted(fails.items())))
         if not row["stored"] and row["skipped"]:
             print("note: nothing new -- the queue may be exhausted")
     return 0

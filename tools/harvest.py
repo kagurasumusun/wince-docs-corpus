@@ -262,6 +262,8 @@ class Fetcher:
     """Keep-alive HTTP(S) client with retry/back-off handling."""
 
     RETRY_STATUS = (429, 500, 502, 503, 504)
+    REDIRECT_STATUS = (301, 302, 303, 307, 308)
+    MAX_REDIRECTS = 5
 
     def __init__(self, pacer, respect_robots=True, timeout=60,
                  max_attempts=5, verbose=True):
@@ -409,26 +411,51 @@ class Fetcher:
         if not self.allowed(url):
             return None, "robots-disallow"
 
-        for attempt in range(self.max_attempts):
-            with self.pacer.slot(host, delay * self.delay_factor()):
-                try:
-                    resp = self._request(p.scheme, host, url)
-                except urllib.error.HTTPError as exc:  # pragma: no cover
-                    if exc.code == 404:
-                        return None, 404
-                    last_err = str(exc)
-                    resp = None
-                except Exception as exc:  # noqa: BLE001
-                    last_err = str(exc)
-                    resp = None
+        hops = 0
+        while True:
+            # A redirect is not content: follow it (same host only, so the
+            # per-host pacing and robots.txt still apply) instead of storing
+            # the empty body the redirect carries.
+            if not self.allowed(url):
+                return None, "robots-disallow"
+            p = urllib.parse.urlparse(url)
+            host = p.netloc
+            resp = None
 
-            if resp is None:
+            for attempt in range(self.max_attempts):
+                with self.pacer.slot(host, delay * self.delay_factor()):
+                    try:
+                        resp = self._request(p.scheme, host, url)
+                    except urllib.error.HTTPError as exc:  # pragma: no cover
+                        last_err = str(exc)
+                        resp = None
+                    except Exception as exc:  # noqa: BLE001
+                        last_err = str(exc)
+                        resp = None
+
+                if resp is not None:
+                    break
                 self._drop(p.scheme, host)
                 time.sleep(3 * (attempt + 1))
-                continue
+
+            if resp is None:
+                return None, last_err or "fetch-failed"
 
             with self.stats_lock:
                 self.stats["requests"] += 1
+
+            if resp.status in self.REDIRECT_STATUS:
+                location = resp.headers.get("Location")
+                hops += 1
+                if not location:
+                    return None, "redirect-without-location"
+                if hops > self.MAX_REDIRECTS:
+                    return None, "too-many-redirects"
+                target = urllib.parse.urljoin(url, location)
+                if urllib.parse.urlparse(target).netloc != host:
+                    return None, "redirect-offsite"
+                url = target
+                continue
 
             if resp.status == 404:
                 return None, 404
@@ -447,9 +474,10 @@ class Fetcher:
             with self.stats_lock:
                 self.stats[f"status-{resp.status}"] += 1
             self._note_ok()
+            if not resp.body.strip():
+                # HTTP 200 with nothing in it: never store an empty page.
+                return None, "empty-response"
             return resp.body, resp.status
-
-        return None, last_err or "fetch-failed"
 
 
 # ---------------------------------------------------------------------------
@@ -732,9 +760,9 @@ def main():
                     help="write a JSON run summary (counters, rate, delay) "
                          "here; used by the Actions workflow to report what "
                          "a run actually did")
-    ap.add_argument("--wayback-retries", type=int, default=2,
+    ap.add_argument("--wayback-retries", type=int, default=3,
                     help="other capture dates to try when archive.org "
-                         "answers with an interstitial (default 2)")
+                         "answers with an interstitial (default 3)")
     args = ap.parse_args()
 
     qpath = args.queue if os.path.isabs(args.queue) \
@@ -800,16 +828,25 @@ def main():
                     f"would-fetch={counters['would-fetch']:,} "
                     f"skipped={counters['skipped']:,} "
                     f"failed={counters['failed']:,} "
+                    f"fetched={fetched():,} "
                     f"rate={rate:.2f} pages/s", flush=True)
 
+    def fetched():
+        """Pages that cost a request (or would in --dry-run).
+
+        `--limit` counts these, not queue lines: lines whose page is already
+        stored are free, so successive runs walk forward through the queue
+        instead of re-reading the same prefix.
+        """
+        return (counters["stored"] + counters["would-fetch"]
+                + counters["failed"] + counters["interstitial"])
+
     def urls():
-        sent = 0
         with queue_file as fh:
             for chunk in iter_chunks(fh, CHUNK_SIZE):
                 for url in chunk:
-                    if args.limit and sent >= args.limit:
+                    if args.limit and fetched() >= args.limit:
                         return
-                    sent += 1
                     yield url
                 chunk.clear()
 
@@ -846,6 +883,17 @@ def main():
             "elapsed_seconds": round(elapsed, 1),
             "pages_per_second": round(counters["stored"] / elapsed, 3),
         }
+        if faillog and os.path.exists(faillog):
+            statuses = collections.Counter()
+            with open(faillog, encoding="utf-8", errors="replace") as fh:
+                for line in fh:
+                    status = line.split("\t", 1)[0].strip()
+                    if status:
+                        statuses[status] += 1
+            summary["fail_log"] = {
+                "path": os.path.relpath(faillog, ROOT),
+                "statuses": dict(sorted(statuses.items())),
+            }
         path = args.summary if os.path.isabs(args.summary) \
             else os.path.join(ROOT, args.summary)
         os.makedirs(os.path.dirname(path), exist_ok=True)

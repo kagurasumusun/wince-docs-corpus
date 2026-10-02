@@ -29,6 +29,7 @@ publications, and as a fallback if a Learn page ever disappears.
   support JavaScript" interstitial, which the harvester used to store like any
   other response. They were removed from the corpus. `tools/harvest.py` now
   recognises the interstitial (and the "Hrm. The Wayback Machine has not
-  archived that URL" notice), never stores it, and tries other capture dates
-  (`2005`/`2008`/`2011`/`2013`) before logging the URL as
-  `wayback-interstitial` in `data/logs/fail-wayback-msdn-2010.log`.
+  archived that URL" notice), never stores it, follows archive.org's redirects
+  to the capture it actually serves, and tries other capture dates
+  (`2005`/`2008`/`2011`) before logging the URL as `wayback-interstitial` in
+  `data/logs/fail-wayback-msdn-2010.log`. Empty responses are refused too.

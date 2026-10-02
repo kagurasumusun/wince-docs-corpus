@@ -94,7 +94,8 @@ The checker also reports how many pages belong to each index (`INDEX.tsv`,
 harvest or import.
 
 `harvest-last.json` / `harvest-history.tsv` — what the last harvester run did
-(counters from `tools/harvest.py --summary`, written by the workflow) and one
+(counters plus a `fail_log.statuses` breakdown from `tools/harvest.py
+--summary`, written by the workflow) and one
 row per run (`finished`, `queue`, `lines`, `stored`, `skipped`, `failed`,
 `invalid`, `robots`, `interstitial`, `requests`, `elapsed_seconds`), appended by
 `python3 tools/summarize-harvest.py`. They are how a scheduled run's progress

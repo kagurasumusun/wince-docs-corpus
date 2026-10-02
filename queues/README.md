@@ -12,6 +12,13 @@ as `invalid` and skipped.
 | `auto-harvest.txt` | 1 | Not a URL queue: the budget the daily automatic run reads (`<queue> <pages per run> [batch]`, or `off`). See below. |
 | `rejected-third-party-sources.txt` | 4 | Candidate sources that are **not** harvested: the collection policy is official Microsoft documentation only. Kept as a record of what was deliberately left out (a GitHub mirror, two vendor/community sites and one blog post). |
 
+## What `--limit` counts
+
+`--limit N` counts **pages fetched**, not queue lines: lines whose page is
+already stored cost nothing, so successive runs walk forward through a queue
+instead of re-reading the same prefix. A run on a fully harvested queue
+therefore finishes in seconds without making a request.
+
 ## Automatic run (`queues/auto-harvest.txt`)
 
 `.github/workflows/harvest.yml` also runs on a schedule: every day at 18:00 UTC
@@ -52,6 +59,13 @@ Notes:
 * Rate limits: 0.4 s between `learn.microsoft.com` requests, 1.5 s for
   `web.archive.org`, with adaptive back-off on 429/503. Queue names ending in
   `wayback-msdn-2010` pick the archive delay automatically.
+* Redirects are followed (same host only, so the pacing still applies) and an
+  empty HTTP 200 is treated as a failure — the harvester never stores an empty
+  page. Archive.org answers with its "JavaScript required" interstitial for
+  some captures; the harvester then tries other capture dates (2005/2008/2011)
+  before giving up. What happened to a run is in
+  `data/reports/harvest-last.json` (`fail_log.statuses` has the reasons:
+  `404`, `empty-response`, `wayback-interstitial`, …).
 * Failures are logged to `data/logs/fail-<queue>.log`. Entries with status
   `wayback-interstitial` are URLs the Internet Archive can only replay as its
   "JavaScript required" notice; the harvester tries other capture dates and
