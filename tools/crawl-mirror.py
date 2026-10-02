@@ -194,6 +194,11 @@ class Crawl:
             return False
         if self.spec["toc_re"] and self.spec["toc_re"].search(p.path):
             return True                     # the table of contents itself
+        if "/_toc/" in p.path and self.spec["toc_re"]:
+            # Another section's table of contents (the mirror's other
+            # library sections sit next to ours under _toc/): following it
+            # would walk out of the documentation set we came for.
+            return False
         segments = p.path.split("/")
         for segment in segments:
             if segment in self.dirs:
@@ -226,7 +231,8 @@ class Crawl:
         """Absolute, in-tree links, plus book directories learned from TOCs."""
         text = body.decode("utf-8", "replace")
         found = []
-        is_toc = bool(self.spec["toc_re"] and self.spec["toc_re"].search(url))
+        is_toc = bool(self.spec["toc_re"] and self.spec["toc_re"].search(url)) \
+            and "/_toc/" in url
         for raw in HREF_RE.findall(text):
             if raw.startswith(SKIP_SCHEMES) or raw.startswith("#"):
                 continue
@@ -261,6 +267,7 @@ class Crawl:
     def visit(self, url, queue):
         """Fetch one URL: store it, skip it, or queue what it links to."""
         if not self.allowed(url):
+            self.done.add(url)      # out of scope: do not queue it again
             return
         if ALT_PATH in urllib.parse.urlsplit(url).path:
             self.skipped["alt-page"] += 1

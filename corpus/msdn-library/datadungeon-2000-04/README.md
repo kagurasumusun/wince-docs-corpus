@@ -37,16 +37,18 @@ UTF-8, and the files keep the mirror's own names and relative paths.
 
 * `tools/crawl-mirror.py` with the `datadungeon-ce` entry of
   `queues/mirrors.tsv`; the workflow `.github/workflows/crawl-mirror.yml`
-  runs it on demand, daily (20:30 UTC, after the harvester) and whenever
-  `queues/mirrors.tsv` changes.
+  runs it on demand, twice a day (08:00 and 20:30 UTC) and whenever
+  `queues/mirrors.tsv` changes. Only the CE section is walked: a link into
+  another section of the same Library is not followed.
 * Politeness: one request at a time, 2.5 s apart, ~24 pages/minute. The
   site's robots.txt disallows named AI-training crawlers (GPTBot, ClaudeBot,
   anthropic-ai, Amazonbot, CCBot, Google-Extended) — not this one; the crawler
   uses the honest `wince-docs-corpus-harvester` user agent and honours the
   file, and backs off when a server asks for it.
 * Progress lives in `data/crawl/datadungeon-ce.json` (committed), so runs are
-  split at 600 pages and continue where the last one stopped; a finished tree
-  is never fetched twice.
+  split and continue where the last one stopped, a finished tree is never
+  fetched twice, and a run that dies still hands over what it collected (the
+  workflow commits the state even when the crawl step fails).
 * This is a mirror, not an official Microsoft download: it belongs to
   `corpus/msdn-library/` with the other mirror copies, see
   `../../../queues/third-party-sources.md`. An alternative, offline source
@@ -54,8 +56,8 @@ UTF-8, and the files keep the mirror's own names and relative paths.
   archive.org (`MSDN_Library_April_2000_DVD`), which the mirror itself
   documents as its origin.
 
-Crawled so far: 271 pages — 202 tables of contents, 66 documents and the
-glossary, from 600 requests (first run, 2026-10-02). The frontier
-(`data/crawl/datadungeon-ce.json`) has 4,149 URLs queued, most of them the CE
-SDK reference (`wcesdkr/`), the programming guides (`wcecore/`, `wceui/`,
-`wcecomm/`, `wcesvcs/`) and the remaining tables of contents.
+Crawled so far: 1,171 pages after two runs (2026-10-02). The frontier
+(`data/crawl/datadungeon-ce.json`) still has 7,291 URLs queued, mostly the CE
+SDK reference (`wcesdkr/`, ~3,200) and the MFC/ATL, VB, DDK and driver
+libraries; `python3 tools/crawl-mirror.py --status` prints the current
+tally. Runs are 1,200 documents each, twice a day.
