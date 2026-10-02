@@ -17,11 +17,11 @@
 #
 #   1. Actions tab -> "Windows CE Documentation Harvester" -> Run workflow
 #      (queue, limit, batch, dry_run), see queues/README.md
-#   2. Automatic: the daily schedule reads queues/auto-harvest.txt and
-#      harvests the queue + limit it names; the file is committed, so the
-#      budget can be changed (or set to "off") with a normal commit
-#   3. Push a change to queues/auto-harvest.txt: the run starts immediately
-#      with that file's settings (that is also the quickest way to test)
+#   2. Push a change to queues/auto-harvest.txt: the run starts immediately
+#      with that file's settings (that is also the quickest way to test);
+#      the file is committed, so the budget lives in the repository and an
+#      "off" line (as now) keeps a push from doing anything
+#   3. A schedule, if one is added below, reads queues/auto-harvest.txt
 #
 # Politeness is enforced inside tools/harvest.py: at most one request in
 # flight per host, a fixed delay per host (0.4 s learn / 1.5 s archive.org),
@@ -49,10 +49,10 @@ on:
         required: false
         type: boolean
         default: false
-  schedule:
-    # 18:00 UTC = 03:00 JST: one chunk per day, size set by
-    # queues/auto-harvest.txt (see that file).
-    - cron: '0 18 * * *'
+  # No schedule: both page queues are done (see queues/auto-harvest.txt, which
+  # is `off`), so the automatic collection is the mirror crawl instead
+  # (crawl-mirror.yml, twice a day).  Add a cron line here again when a new
+  # queue exists - a scheduled run reads queues/auto-harvest.txt.
   push:
     paths:
       - queues/auto-harvest.txt
