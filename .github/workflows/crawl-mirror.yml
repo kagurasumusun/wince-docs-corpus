@@ -92,13 +92,18 @@ jobs:
           fi
 
       - name: Refresh indexes and commit
-        if: ${{ github.event.inputs.dry_run != 'true' }}
+        # `always()` on purpose: a crawl that dies half way through (a
+        # broken page, a network error) must still hand over the pages and
+        # the frontier it did collect.  The run itself stays red.
+        if: ${{ always() && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "wince-docs-corpus crawler"
           git config user.email "wince-corpus-harvester@users.noreply.github.com"
           python3 tools/build-index.py
           python3 tools/build-index-sql.py
           python3 tools/check-corpus.py --report || true
+          echo "--- crawl state (errors and skips are recorded here) ---"
+          head -c 1200 data/crawl/*.json || true
           git add corpus/ data/index data/crawl data/reports queues || true
           if git diff --staged --quiet; then
             echo "nothing new"

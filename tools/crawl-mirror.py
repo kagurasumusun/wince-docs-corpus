@@ -125,6 +125,8 @@ class Crawl:
         self.stored = 0
         self.errors = collections.Counter()
         self.skipped = collections.Counter()
+        self.failures = []         # capped list of "Exception: text :: url"
+        self.last_save = 0
         self.load()
 
     @staticmethod
@@ -141,6 +143,7 @@ class Crawl:
                 data = json.load(fh)
             self.done = set(data.get("done", []))
             self.dirs = set(data.get("dirs", []))
+            self.failures = list(data.get("failures", []))
             if "pending" in data:
                 self.pending = set(data["pending"])
             else:
@@ -173,6 +176,9 @@ class Crawl:
         with open(self.state_path, "w", encoding="utf-8") as fh:
             json.dump({"done": sorted(self.done), "dirs": sorted(self.dirs),
                        "pending": sorted(self.pending),
+                       "errors": dict(self.errors),
+                       "skipped": dict(self.skipped),
+                       "failures": self.failures[-20:],
                        "updated": _dt.datetime.now(
                            _dt.timezone.utc).isoformat(timespec="seconds")},
                       fh, indent=1)
@@ -252,6 +258,59 @@ class Crawl:
         return os.path.join(self.spec["out"], rel)
 
     # -- main loop -----------------------------------------------------------
+    def visit(self, url, queue):
+        """Fetch one URL: store it, skip it, or queue what it links to."""
+        if not self.allowed(url):
+            return
+        if ALT_PATH in urllib.parse.urlsplit(url).path:
+            self.skipped["alt-page"] += 1
+            self.done.add(url)
+            return
+        if self.dry_run:
+            self.stored += 1
+            print(f"  would fetch {url}")
+            return
+        body, status = self.fetcher.get(url, self.spec["delay"])
+        if body is None and url.endswith(".content.htm"):
+            # Not every page of the mirror has the `X.content.htm` form:
+            # fall back to the plain page.  The rule is deterministic, so a
+            # run that resumes from a saved frontier works the same way.
+            original = self.wrapper_url(url)
+            body, status = self.fetcher.get(original, self.spec["delay"])
+            if body is None:
+                self.errors[str(status)] += 1
+                self.done.add(url)
+                return
+            self.skipped["no-content-page"] += 1
+            self.done.add(url)
+            url = original
+        if body is None:
+            self.errors[str(status)] += 1
+            return
+        # Follow everything, store the documentation: the wrappers are
+        # navigation chrome, their links are still worth walking.
+        if any(mark in body for mark in WRAPPER_MARKERS):
+            self.skipped["wrapper"] += 1
+            self.done.add(url)
+            for link in self.links(url, body):
+                if link not in self.done and link not in self.seen:
+                    queue.append(link)
+            return
+        body = to_utf8(body)
+        dest = self.dest_for(url)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(dest, "wb") as fh:
+            fh.write(body)
+        self.done.add(url)
+        self.stored += 1
+        for link in self.links(url, body):
+            if link not in self.done and link not in self.seen:
+                queue.append(link)
+        if self.stored % 25 == 0:
+            print(f"[crawl] stored={self.stored:,} queued={len(queue):,} "
+                  f"dirs={len(self.dirs)} errors={dict(self.errors)} "
+                  f"skipped={dict(self.skipped)}", flush=True)
+
     def run(self, max_pages, max_seconds):
         queue = collections.deque(sorted(self.pending)
                                   or [self.prefer_content(u)
@@ -270,58 +329,22 @@ class Crawl:
             if url in self.done or url in self.seen:
                 continue
             self.seen.add(url)
-            if not self.allowed(url):
-                continue
-            if ALT_PATH in urllib.parse.urlsplit(url).path:
-                self.skipped["alt-page"] += 1
+            try:
+                self.visit(url, queue)
+            except Exception as exc:                      # noqa: BLE001
+                # One unparsable URL, one unreadable path: record it and
+                # keep going.  The state file carries the details, because a
+                # runner's job log is not always reachable afterwards.
+                self.errors[type(exc).__name__] += 1
+                self.failures.append(f"{type(exc).__name__}: {exc} :: {url}")
+                print(f"[crawl] FAILED {url}: {type(exc).__name__}: {exc}",
+                      flush=True)
                 self.done.add(url)
-                continue
-            if self.dry_run:
-                self.stored += 1
-                print(f"  would fetch {url}")
-                continue
-            body, status = self.fetcher.get(url, self.spec["delay"])
-            if body is None and url.endswith(".content.htm"):
-                # Not every page of the mirror has the `X.content.htm` form:
-                # fall back to the plain page.  The rule is deterministic, so
-                # a run that resumes from a saved frontier works the same way.
-                original = self.wrapper_url(url)
-                body, status = self.fetcher.get(original, self.spec["delay"])
-                if body is None:
-                    self.errors[str(status)] += 1
-                    self.done.add(url)
-                    continue
-                self.skipped["no-content-page"] += 1
-                self.done.add(url)
-                url = original
-            if body is None:
-                self.errors[str(status)] += 1
-                continue
-            # Follow everything, store the documentation: the wrappers are
-            # navigation chrome, their links are still worth walking.
-            if any(mark in body for mark in WRAPPER_MARKERS):
-                self.skipped["wrapper"] += 1
-                self.done.add(url)
-                for link in self.links(url, body):
-                    if link not in self.done and link not in self.seen:
-                        queue.append(link)
-                continue
-            body = to_utf8(body)
-            dest = self.dest_for(url)
-            os.makedirs(os.path.dirname(dest), exist_ok=True)
-            with open(dest, "wb") as fh:
-                fh.write(body)
-            self.done.add(url)
-            self.stored += 1
-            for link in self.links(url, body):
-                if link not in self.done and link not in self.seen:
-                    queue.append(link)
-            if self.stored % 25 == 0:
+            if self.stored and self.stored % 25 == 0 \
+                    and self.stored != self.last_save:
+                self.last_save = self.stored
                 self.pending = set(queue)
                 self.save()
-                print(f"[crawl] stored={self.stored:,} queued={len(queue):,} "
-                      f"dirs={len(self.dirs)} errors={dict(self.errors)} "
-                      f"skipped={dict(self.skipped)}", flush=True)
         self.pending = set(queue)
         self.save()
         return self.stored
