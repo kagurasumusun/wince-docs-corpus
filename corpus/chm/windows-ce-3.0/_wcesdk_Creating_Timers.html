@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Creating Timers (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="A timer is a system resource that can notify an application at regular intervals. An application associates a timer with a window and sets the timer for a specific time-out period."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Creating Timers" />
+<MSHelp:RLTitle Title="Creating Timers (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="creating, timers" />
+<MSHelp:Keyword Index="K" Term="timers, creating" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Creating_Timers" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="cersrc.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923133">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_creating_timers"></A>Creating Timers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>A <I>timer</I> is a system resource that can notify an application at regular intervals. An application associates a timer with a window and sets the timer for a specific time-out period. Each time the specified interval, or <I>time-out value</I>, for a specified timer elapses, the system uses a WM_TIMER message to notify the window associated with the timer; because the accuracy of a timer depends on the system clock rate and how often the application retrieves messages from the message queue, the time-out value is only approximate. The smallest possible interval that a timer can measure is the system tick interval.</P>
+
+<P>To create a timer, call the <B>SetTimer</B> function. The timer can be associated with a particular window or with just the thread. If you associate the timer with a window, message loop processing will cause the WM_TIMER message to be dispatched to the window procedure for the window. If you do not associate the timer with a window, you must design the message loop to recognize and handle the WM_TIMER message.</P>
+
+<P>The following code example shows how to create a timer and associate the time with a window by using the <B>SetTimer</B> function.</P>
+
+<PRE class="code">SetTimer(hWnd, ID_TIMER1, 2000, NULL);</PRE>
+
+<P>If the call to <B>SetTimer</B> includes a <B>TimerProc</B> callback function, the procedure is called when the timer expires. This call is done inside the <B>GetMessage</B> or <B>PeekMessage</B> function. This means that a thread must be executing a message loop to service a timer, even if you are using a timer callback procedure.</P>
+
+<P>The following code example shows how to include a callback function when you call <B>SetTimer</B>.</P>
+
+<PRE class="code">SetTimer(hWnd, ID_TIMER2, 1000, (TIMERPROC)Timer2Proc);</PRE>
+
+<P>The following code example shows a sample <B>TimerProc</B> callback function that draws text in a window and makes a sound when the function is called after the timer expires.</P>
+
+<PRE class="code">VOID CALLBACK Timer2Proc(
+                        HWND hWnd, // handle of window for timer messages
+                        UINT uMsg,    // WM_TIMER message
+                        UINT idEvent, // timer identifier
+                        DWORD dwTime  // current system time
+                        )
+{
+  RECT rt;
+
+  // Clear the window.
+  InvalidateRect(hWnd, NULL, TRUE);
+  UpdateWindow(hWnd);
+  HDC hdc = GetDC(hWnd);
+  GetClientRect(hWnd, &amp;rt);
+  MessageBeep(MB_ICONQUESTION);
+  DrawText(hdc, TEXT("   Timer2 - Did you hear it?   "), 
+          _tcslen(TEXT("   Timer2 - Did you hear it?   ")), &amp;rt, 
+          DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+  ReleaseDC(hWnd, hdc);
+  return;
+}</PRE>
+
+<P>A new timer starts timing its interval as soon as it is created. An application can change a time-out value for a timer by calling the <B>SetTimer</B> function, and it can destroy a timer by calling the <B>KillTimer</B> function. To use system resources efficiently, applications should destroy unnecessary timers.</P>
+
+<P>The following example shows how to destroy a timer by calling <B>KillTimer</B>.</P>
+
+<PRE class="code">KillTimer(hWnd, ID_TIMER1);</PRE>
+
+<P>You can use the timer and window identifiers to identify timers that are associated with a window. You can identify timers that are not associated with a particular window by using the identifier that is returned by the <B>SetTimer</B> call.</P>
+
+<P>Timer messages have low priority in the message queue. Although you know that the window associated with a timer is notified sometime after the timer interval expires, you cannot know the exact time it will receive the notification.</P>
+
+<P>Timers expire at regular intervals, but a timer that expires multiple times before being serviced does not generate multiple WM_TIMER messages.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

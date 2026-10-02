@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoRegisterClassObject</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="CoRegisterClassObject" />
+<MSHelp:RLTitle Title="CoRegisterClassObject" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_CoRegisterClassObject" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926963">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_coregisterclassobject"></A>CoRegisterClassObject</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function registers an EXE class object with OLE so other applications can connect to it. EXE object applications should call <B>CoRegisterClassObject</B> on startup. It can also be used to register internal objects for use by the same EXE or other code (such as DLLs) that the EXE uses.</P>
+
+<PRE class="syntax"><B>STDAPI CoRegisterClassObject(</B>
+<B>REFCLSID </B><I>rclsid</I><B>,</B>
+<B>IUnknown *</B><I>pUnk</I><B>,</B>
+<B>DWORD </B><I>dwClsContext</I><B>,</B>
+<B>DWORD </B><I>flags</I><B>,</B>
+<B>LPDWORD  </B><I>lpdwRegister</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>rclsid</I></DT>
+
+<DD>[in] CLSID to be registered.</dd>
+
+<DT><I>pUnk</I></DT>
+
+<DD>[in] Pointer to the <A HREF="_wcesdk_com_iunknown.htm">IUnknown</A><B> </B>interface on the class object whose availability is being published.</dd>
+
+<DT><I>dwClsContext</I></DT>
+
+<DD>[in] Context in which the executable code is to be run. For information on these context values, see the <B>CLSCTX</B> enumeration.</dd>
+
+<DT><I>flags</I></DT>
+
+<DD>[in] How connections are made to the class object. For information on these flags, see the <B>REGCLS</B> enumeration.</dd>
+
+<DT><I>lpdwRegister</I></DT>
+
+<DD>[out] Pointer to a value that identifies the class object registered; later used by the <A HREF="_wcesdk_com_corevokeclassobject.htm">CoRevokeClassObject</A> function to revoke the registration.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>This function supports the standard return values E_INVALIDARG, E_OUTOFMEMORY, and E_UNEXPECTED, as well as the following:
+
+<DL>
+<DT>S_OK </DT>
+
+<DD>The class object was registered successfully.</dd>
+
+<DT>CO_E_OBJISREG </DT>
+
+<DD>Already registered in the class object table.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>Only EXE object applications call <B>CoRegisterClassObject</B>. Object handlers or DLL object applications do not call this function &#0151; instead, they must implement and export the <A HREF="_wcesdk_com_dllgetclassobject.htm">DllGetClassObject</A> function.</P>
+
+<P>At startup, a multiple-use EXE object application must create a class object (with the <A HREF="_wcesdk_com_iclassfactory_iunknown.htm">IClassFactory</A> interface on it), and call <B>CoRegisterClassObject</B> to register the class object. Object applications that support several different classes (such as multiple types of embeddable objects) must allocate and register a different class object for each.</P>
+
+<P>Multiple registrations of the same class object are independent and do not produce an error. Each subsequent registration yields a unique key in <I>lpdwRegister</I>.</P>
+
+<P>Multiple document interface (MDI) applications must register their class objects. Single document interface (SDI) applications must register their class objects only if they can be started by means of the /Embedding switch.</P>
+
+<P>The server for a class object should call <B>CoRevokeClassObject</B> to revoke the class object (remove its registration) when all of the following are true:
+
+<UL type="disc">
+	<LI>There are no existing instances of the object definition.</li>
+
+	<LI>There are no locks on the class object.</li>
+
+	<LI>The application providing services to the class object is not under user control (not visible to the user on the display).</li>
+</UL>
+
+<P>After the class object is revoked, when its reference count reaches zero, the class object can be released, allowing the application to exit. </P>
+
+<P>For information on the <I>flags</I> parameter, refer to the <B>REGCLS</B> enumeration.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Objbase.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Ole232.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_cogetclassobject.htm">CoGetClassObject</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

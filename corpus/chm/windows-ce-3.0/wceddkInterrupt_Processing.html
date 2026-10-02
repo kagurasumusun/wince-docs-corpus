@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Interrupt Processing (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="Most peripheral devices cause or signal interrupts on the bus of a Windows CE&#0150;based platform in order to receive service from the operating system."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Interrupt Processing" />
+<MSHelp:RLTitle Title="Interrupt Processing (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="interrupt processing in stream interface drivers" />
+<MSHelp:Keyword Index="K" Term="stream interface drivers, interrupt processing in" />
+<MSHelp:Keyword Index="A" Term="wceddkInterrupt_Processing" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="overview.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924473">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkinterrupt_processing"></A>Interrupt Processing</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Most peripheral devices cause or signal interrupts on the bus of a Windows CE&#0150;based platform in order to receive service from the operating system. Some examples of devices that can use interrupts are PC Cards, onboard timers, audio input devices, keyboards, touch screens, pointing devices, etc. Nearly any type of peripheral, whether it is built into a Windows CE-based platform or not, might use interrupts as the principle method of initiating servicing actions by the operating system. Because these peripheral devices can cause or signal interrupts, their device drivers must process interrupts in order to service their devices. Device drivers for USB client devices that use interrupt transfers are a special case; such USB client devices do generate interrupts, but the interrupts are processed by the USB host controller, not by the device drivers themselves.</P>
+
+<P>Interrupt processing in Windows CE is broken into two components, a kernel-mode Interrupt Service Routine (ISR) and a user-mode Interrupt Service Thread (IST). ISRs are generally small, very fast pieces of assembly code. Their sole job is to return a logical interrupt ID to the kernel. The kernel then invokes the proper IST to perform any possibly lengthy operations that must occur to fully process the interrupt. For example, a serial port might raise an interrupt when data arrives from a modem device. The serial port ISR would inform the kernel that the serial port had an interrupt. The kernel would call the serial port IST, which could then access the serial port hardware's receive buffer to transfer the data into a buffer, for use by an application.</P>
+
+<P>Device drivers must therefore do two things when they are loaded at boot time. First, they must register their ISR with the kernel, so that the kernel calls the ISR when the appropriate physical interrupt occurs. Second, they must spawn an IST, which then registers to receive interrupt notifications. ISTs can use the <B>InterruptInitialize</B> function to register themselves, and use the <B>WaitForSingleObject</B> function to wait for interrupt events. Stream interface drivers generally do these things when their <A HREF="wceddkxxx_init.htm"><B><I>XXX_Init</I></B></A> function is called; native device drivers that do not use the stream interface must find a convenient time during initialization to register their ISR and spawn an IST.</P>
+
+<P>The following illustration shows the interaction of components during interrupt processing.</P>
+
+<P class="fig"><IMG SRC="intrrupt.gif" ALT="" BORDER=0></P>
+
+<P>The exception handler is the primary target of all interrupts. When an interrupt occurs, the kernel jumps directly to the exception handler. The exception handler then calls the ISR registered to handle the current interrupt. OEMs register their ISRs with the exception handler at system boot time. First, the kernel calls the <B>OEMInit</B> function in the OAL. Next, <B>OEMInit</B> calls the <B>HookInterrupt</B> function to inform the exception handler of which ISRs correspond to individual physical interrupt lines. A few subroutines in the OAL, such as the <B>OEMInterruptEnable</B>, <B>OEMInterruptDisable</B>, and <B>OEMInterruptDone</B> functions, are also used in interrupt processing. The interrupt handler manages the details of registering a driver for a particular interrupt and deregistering it later. It also maintains communication among the ISR, the IST, and subroutines within the OAL.</P>
+
+<P>Monolithic drivers can use the <B>Interrupt Event Handler Support</B> interface provided by the kernel. This interface is a lightweight process-synchronization model based on standard Win32 events. The interface consists of event-related functions, such as <B>CreateEvent</B>, <B>SetEvent</B>, <B>ResetEvent</B>, and <B>WaitForSingleObject</B>, and the Windows CE kernel <B>InterruptDone</B>,<B> InterruptDisable</B>, and <B>InterruptInitialize </B>functions. Layered drivers use the same functions to process interrupts, but you need not use these functions to port layered drivers because the model device driver (MDD) layer &#0151; which does not require modification &#0151; already contains the proper calls to these functions.</P>
+
+<P>Windows CE uses this two-level structure for interrupt processing because, when an interrupt occurs, some other interrupts may be masked while the ISR is running. In Windows CE 2.12 and earlier, interrupts could not be nested at all, so all interrupts were masked while an ISR was in progress. Therefore, in Windows CE 2.12 and earlier, it was critically important that ISRs complete in a minimum amount of time. An ISR that used too much time could cause other interrupts to be missed entirely, resulting in erratic or sluggish performance of the whole system. By separating interrupt processing into a very short ISR and a longer IST, interrupts could be masked for as little time as possible.</P>
+
+<P>Windows CE 3.0 and later allow nested interrupts, in conjunction with the <A HREF="wceddkreal_time_priority_system.htm">Real-Time Priority System</A>. In Windows CE 3.0 and later, interrupts of a higher priority may preempt ISRs of a lower priority; ISRs now only mask interrupts of equal or lower priority than themselves. The kernel handles the details of saving an ISR's state when a higher priority interrupt occurs and restoring it after the high priority ISR has completed. In most cases, a preempted ISR does not detect that it has been preempted. The level of interrupt nesting is limited solely by what the Windows CE-based platform's hardware can support.</P>
+
+<P>ISTs for some types of peripheral devices do not receive interrupt notifications from the kernel directly. For peripherals that connect to a Windows CE-based platform via some intermediate hardware, the device driver for that intermediate hardware should have a mechanism for passing the interrupt notification up to the top level device driver. For example, PC Cards connect to Windows CE-based platforms through a PC Card slot, which is a separate piece of hardware and has its own device driver. Thus, when a PC Card device raises an interrupt, it is actually the PC Card slot hardware that signals the physical interrupt on the system bus. The PC Card slot's device driver has an ISR and IST that handle the physical interrupt, and pass it to the device driver for the PC Card device by means of the <B>CardRequestIRQ</B> function. Other peripherals with similar connection methods behave similarly. Generally, the intermediate hardware's device driver has some facility that allows another device driver to register a callback function, which the intermediate device driver calls when an interrupt occurs.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

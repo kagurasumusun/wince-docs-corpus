@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IFilterMapper::RegisterFilter</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IFilterMapper::RegisterFilter" />
+<MSHelp:RLTitle Title="IFilterMapper::RegisterFilter" />
+<MSHelp:Keyword Index="A" Term="wcesdkrifiltermapper__registerfilter" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_931967">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrifiltermapper__registerfilter"></A>IFilterMapper::RegisterFilter</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>Adds a filter to the registry; the filter can then be enumerated. </P>
+
+<PRE class="syntax"><B>HRESULT RegisterFilter(</B>
+<B>CLSID</B> <I>clsid</I>,
+<B>LPCWSTR</B> <I>Name</I>,
+<B>DWORD </B><I>dwMerit</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>clsid</I> </DT>
+
+<DD>[in] Globally unique identifier (GUID) of the filter. </dd>
+
+<DT><I>Name</I> </DT>
+
+<DD>[in] Descriptive name for the filter. </dd>
+
+<DT><I>dwMerit</I> </DT>
+
+<DD>[in] Position in the order of enumeration. Filters with higher merit are enumerated first. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Returns an <B>HRESULT</B> value. </P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The merit (as defined by the <I>dwMerit</I> parameter) controls the order in which the filter graph manager tries filters when performing an operation as a result of a call to <A HREF="wcesdkrigraphbuilder__connect.htm">IGraphBuilder::Connect</A>, <A HREF="wcesdkrigraphbuilder__render.htm">IGraphBuilder::Render</A>, or <A HREF="wcesdkrigraphbuilder__renderfile.htm">IGraphBuilder::RenderFile</A>. The filter graph manager finds all filters registered with the correct media type and then tries the one with the highest merit, using other criteria in the registration to choose between filters with equal merit. </P>
+
+<P>The following predefined values exist for the <I>dwMerit</I> parameter. Other values, such as MERIT_NORMAL-1, can be used. Using the formula (MERIT_NORMAL+MERIT_UNLIKELY)/2 to calculate the merit value is advisable, because it leaves some low-order bits available for making even finer distinctions. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=46%>0x900000 </TD>
+<TD width=54%>Hardware renderer filter. Filters with this merit value are tried first. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>MERIT_PREFERRED (0x800000) </TD>
+<TD width=54%>Filter, such as a renderer, that is likely to complete the operation directly. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>0x680000 </TD>
+<TD width=54%>MPEG decompression filter. These are tried before AVI decompressors because the latter require more time to determine if they work in the filter graph. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>MERIT_NORMAL (0x600000) </TD>
+<TD width=54%>Filter that may contribute to the completion of a connection. AVI decompression filters and splitter transform filters are registered to this value. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>MERIT_UNLIKELY (0x400000) </TD>
+<TD width=54%>Filter that may contribute to the completion of a connection (a color space conversion filter, for example). The filter graph manager uses this filter only if other options have failed. Register source filters with this value. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>MERIT_DO_NOT_USE (0x200000) </TD>
+<TD width=54%>Filter that will never contribute to the completion of a connection. Filters registered with this value (or less) will never be tried by the filter graph manager when automatically building a filter graph. Use this to register filters that must be added explicitly, either as part of a predefined filter graph or by adding them using <A HREF="wcesdkrifiltergraph__addfilter.htm">IFilterGraph::AddFilter</A>. Examples include tee filters or effects filters. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>MERIT_HW_COMPRESSOR (0x100050) </TD>
+<TD width=54%>Hardware compressor filter. Filters registered with this value will never be tried by the filter graph manager when automatically building a filter graph. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>MERIT_SW_COMPRESSOR (0x100000) </TD>
+<TD width=54%>Software compressor filter. Filters registered with this value will never be tried by the filter graph manager when automatically building a filter graph. </TD>
+</TR>
+</table></div>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

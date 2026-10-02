@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::GetTimeOfLastChange</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IMoniker::GetTimeOfLastChange" />
+<MSHelp:RLTitle Title="IMoniker::GetTimeOfLastChange" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IMoniker_GetTimeOfLastChange" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926641">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_imoniker_gettimeoflastchange"></A>IMoniker::GetTimeOfLastChange</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This<B> </B>method returns the time the object was last changed.</P>
+
+<PRE class="syntax"><B>HRESULT GetTimeOfLastChange( </B>
+<B>IBindCtx *</B><I>pbc</I><B>, </B>
+<B>IMoniker *</B><I>pmkToLeft</I><B>, </B>
+<B>FILETIME *</B><I>pFileTime</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the bind context to be used in this binding operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. For more information, see <B>IBindCtx</B>.</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. This parameter is primarily used by moniker Implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.</dd>
+
+<DT><I>pFileTime</I></DT>
+
+<DD>[out] Pointer to the <A HREF="wcesdkrfiletime_str.htm">FILETIME</A> structure receiving the time of last change. A value of {0xFFFFFFFF,0x7FFFFFFF} indicates an error (for example, exceeded time limit, information not available).</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>The method supports the standard return value E_UNEXPECTED, as well as the values described in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Value</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>S_OK</TD>
+<TD width=63%>The method successfully returned a time.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>MK_E_EXCEEDEDDEADLINE</TD>
+<TD width=63%>The binding operation could not be completed within the time limit specified by the bind context's <A HREF="_wcesdk_com_bind_opts.htm">BIND_OPTS</A> structure. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>MK_E_CONNECTMANUALLY</TD>
+<TD width=63%>The operation was unable to connect to the storage for this object, possibly because a network device could not be connected to. For more information, see <A HREF="_wcesdk_com_imoniker_bindtoobject.htm">IMoniker::BindToObject</A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>MK_E_UNAVAILABLE</TD>
+<TD width=63%>The time of the change is unavailable, and will not be available no matter what deadline is used.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>If you're caching information returned by the object identified by the moniker, you may want to ensure that your information is up-to-date. To do so, you would call <B>IMoniker::GetTimeOfLastChange</B> and compare the time returned with the time you last retrieved information from the object. </P>
+
+<P>For the monikers stored within linked objects, <B>IMoniker::GetTimeOfLastChange</B> is primarily called by the default handler's implementation of <A HREF="_wcesdk_com_ioleobject_isuptodate.htm">IOleObject::IsUpToDate</A>. Container applications call <B>IOleObject::IsUpToDate</B> to determine if a linked object (or an embedded object that contains linked objects) is up-to-date without actually binding to the object. This enables an application to determine quickly which linked objects require updating when the end user opens a document. The application can then bind only those linked objects that need updating (after prompting the end user to determine whether they should be updated), instead of binding every linked object in the document.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>It is important to perform this operation quickly because, for linked objects, this method is called when a user first opens a compound document. Consequently, your <B>IMoniker::GetTimeOfLastChange</B> implementation should not bind to any objects. In addition, your implementation should check the deadline parameter in the bind context and return MK_E_EXCEEDEDDEADLINE if the operation cannot be completed by the specified time.</P>
+
+<P>There are a number of strategies you can use in your implementations: 
+
+<UL type="disc">
+	<LI>For many types of monikers, the <I>pmkToLeft</I> parameter identifies the container of the object identified by this moniker. If this is true of your moniker class, you can simply call <B>IMoniker::GetTimeOfLastChange</B> on the <I>pmkToLeft</I> parameter, since an object cannot have changed at a date later than its container. </li>
+
+	<LI>You can get a pointer to the Running Object Table (ROT) by calling <B>IBindCtx::GetRunningObjectTable</B> on the <I>pbc</I> parameter, and then calling <B>IRunningObjectTable::GetTimeOfLastChange</B>, since the ROT generally records the time of last change.</li>
+
+	<LI>You can get the storage associated with this moniker (or the <I>pmkToLeft</I> moniker) and return the storage's last modification time with a call to <A HREF="_wcesdk_com_istorage_stat.htm">IStorage::Stat</A>.</li>
+</UL>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Oaidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_imoniker_bindtoobject.htm">IMoniker::BindToObject</A>, <A HREF="_wcesdk_com_ioleobject_isuptodate.htm">IOleObject::IsUpToDate</A>, <A HREF="_wcesdk_com_istorage_stat.htm">IStorage::Stat</A>, <A HREF="_wcesdk_com_bind_opts.htm">BIND_OPTS</A>, <A HREF="wcesdkrfiletime_str.htm">FILETIME</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

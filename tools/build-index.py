@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""tools/build-index.py -- regenerate data/index/INDEX.tsv from the corpus tree.
+
+Walks every page under ``corpus/`` and writes:
+
+    # id <TAB> book <TAB> path <TAB> title
+
+  id     page id -- the file name without ``.html``.  For Microsoft Learn
+         harvests this is the last segment of the page's canonical URL
+         (``aa450192(v=msdn.10)``); for the official CHM extraction and
+         the Wayback snapshot it is the original topic file name.
+  book   corpus-relative directory of the page, i.e. ``<source>/<set>``
+         (``learn/windows-ce-5.0``, ``chm/windows-ce-3.0``, ...).
+  path   repository-relative path of the HTML file.
+  title  the page's ``<title>`` with the ``| Microsoft Learn`` suffix
+         stripped, falling back to the official TOC catalogs in
+         ``data/catalogs/``.
+
+Regenerate with::
+
+    python3 tools/build-index.py
+"""
+import os
+import re
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CORPUS = os.path.join(ROOT, "corpus")
+TITLE = re.compile(r"<title>(.*?)</title>", re.S)
+
+
+def bare(page_id):
+    """``aa450192(v=msdn.10)`` -> ``aa450192``"""
+    i = page_id.find("(v=")
+    return page_id[:i] if i > 0 else page_id
+
+
+def cat_titles():
+    """id -> title, from the official catalogs in data/catalogs/."""
+    titles = {}
+    catalog_dir = os.path.join(ROOT, "data", "catalogs")
+    for fn in sorted(os.listdir(catalog_dir)):
+        if not fn.endswith(".tsv") or fn.startswith("."):
+            continue
+        with open(os.path.join(catalog_dir, fn), encoding="utf-8",
+                  errors="replace") as fh:
+            for line in fh:
+                if not line.strip() or line.startswith("#"):
+                    continue
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) >= 2:
+                    titles.setdefault(bare(parts[0]), parts[1])
+                    titles.setdefault(parts[0], parts[1])
+    return titles
+
+
+def page_title(path):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            match = TITLE.search(fh.read(8000))
+    except OSError:
+        return ""
+    if not match:
+        return ""
+    return re.sub(r"\s*\|\s*Microsoft Learn\s*$", "",
+                  match.group(1).strip())
+
+
+def main():
+    cats = cat_titles()
+    rows = []
+    for dirpath, dirnames, filenames in os.walk(CORPUS):
+        dirnames.sort()
+        book = os.path.relpath(dirpath, CORPUS).replace(os.sep, "/")
+        for fn in sorted(filenames):
+            if not fn.endswith(".html"):
+                continue
+            full = os.path.join(dirpath, fn)
+            page_id = fn[:-5]
+            title = page_title(full) or cats.get(page_id, "") \
+                or cats.get(bare(page_id), "")
+            rows.append((page_id, book, os.path.relpath(full, ROOT), title))
+
+    out = os.path.join(ROOT, "data", "index", "INDEX.tsv")
+    with open(out, "w", encoding="utf-8") as fh:
+        fh.write("# id\tbook\tpath\ttitle\n")
+        for row in rows:
+            fh.write("\t".join(x.replace("\t", " ") for x in row) + "\n")
+    print(f"{out}: {len(rows)} rows")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>How the Base Classes Implement Connection (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="The CBasePin class and its derived base classes, CBaseOutputPin and CBaseInputPin, implement most of the mechanism for the most common connection scenarios, much of which can be overridden by the derived filter class for more control of the process."/>
+<xml>
+<MSHelp:TOCTitle Title="How the Base Classes Implement Connection" />
+<MSHelp:RLTitle Title="How the Base Classes Implement Connection (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_How_the_Base_Classes_Implement_Connection" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924080">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_how_the_base_classes_implement_connection"></A>How the Base Classes Implement Connection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The <a href="wcesdkrcbasepin_class.htm">CBasePin</a> class and its derived base classes, <a href="wcesdkrcbaseoutputpin_class.htm">CBaseOutputPin</a> and <a href="wcesdkrcbaseinputpin_class.htm">CBaseInputPin</a>, implement most of the mechanism for the most common connection scenarios, much of which can be overridden by the derived filter class for more control of the process. </P>
+
+<P>The connection procedure relies on the implementation of four interfaces: 
+
+<OL type="1">
+	<LI><a href="wcesdkripin_interface.htm">IPin</a>, which is implemented by the <B>CBasePin</B> class and inherited by the <B>CBaseInputPin</B> and <B>CBaseOutputPin</B> classes. </li>
+
+	<LI><a href="wcesdkrienummediatypes_interface.htm">IEnumMediaTypes</a>, which is implemented by the <a href="wcesdkrcenummediatypes_class.htm">CEnumMediaTypes</a> class and passed out by the <a href="wcesdkripin__enummediatypes.htm">IPin::EnumMediaTypes</a> method. </li>
+
+	<LI><a href="wcesdkrimeminputpin_interface.htm">IMemInputPin</a>, which is implemented by the <B>CBaseInputPin</B> class. </li>
+
+	<LI><a href="wcesdkrimemallocator_interface.htm">IMemAllocator</a>, which is implemented by the <a href="wcesdkrcbaseallocator_class.htm">CBaseAllocator</a> class and passed out by the <a href="wcesdkrimeminputpin__getallocator.htm">IMemInputPin::GetAllocator</a> method. </li>
+</OL>
+
+<P>The <B>IMemInputPin</B> and <B>IMemAllocator</B> interfaces are necessary only if the filter belonging to the connecting input pin (called the <I>downstream filter</I>) is expected to provide a shared memory allocator for transporting samples between the pins. However, the base class implementation in <B>CBaseInputPin</B> assumes this condition and implements <B>IMemInputPin</B> to provide an allocator object to a connected output pin that requests it. </P>
+
+<P>In the connection scenario of the default base class, the pin classes derived from <B>CBaseInputPin</B> and <B>CBaseOutputPin</B> need only to override and implement a few member functions and can let the base classes do the remaining work. Base classes derived from these classes, such as <a href="wcesdkrctransforminputpin_class.htm">CTransformInputPin</a> and <a href="wcesdkrctransformoutputpin_class.htm">CTransformOutputPin</a>, do much of the required implementation to provide a default connection scheme. </P>
+
+<P>Pin classes derived from <B>CBaseInputPin</B> and <B>CBaseOutputPin</B> need only to override the following member functions to enable pin connection. 
+
+<UL type="disc">
+	<LI><a href="wcesdkrcbasepin__checkmediatype.htm">CBasePin::CheckMediaType</a>, which is called for every media type proposed by the media type enumerator. The overriding member function must accept or reject the proposed media type. </li>
+
+	<LI><a href="wcesdkrcbasepin__getmediatype.htm">CBasePin::GetMediaType</a>, which is called by the media type of the output pin enumerator to suggest media types already agreed on by the input pin for transform filters. This member function also presents the type of media a source filter will produce. </li>
+</UL>
+
+<P>Additionally, the output pin derived from the <B>CBaseOutputPin</B> class must override the <a href="wcesdkrcbaseoutputpin__decidebuffersize.htm">CBaseOutputPin::DecideBufferSize</a> member function. This is called by the base classes to let the output pin inform any acquired allocator of the size and type of media samples that the output pin will provide. This is done by the output pin of the filter because the derived filter class should know the type and size of the data it will send to the input pin of the connected filter. </P>
+
+<P>To see the context of these overriding functions, it is helpful to step through the execution of the connection code in the class library. All connection takes place in the scope of one <a href="wcesdkrcbasepin__connect.htm">CBasePin::Connect</a> member function. </P>
+
+<P>This section contains the following topics. 
+
+<UL type="disc">
+	<LI>The Filter Graph Manager Starts the Connection</li>
+
+	<LI>Negotiating Media Types with <B>CBasePin::AgreeMediaType</B></li>
+
+	<LI>Determining a Media Type with <B>CBasePin::TryMediaTypes</B></li>
+</UL>
+
+<H2 class="dtH2">The Filter Graph Manager Starts the Connection</H2>
+
+<P>The connection starts when the filter graph manager calls the <a href="wcesdkripin__connect.htm">IPin::Connect</a> method on the output pin, passing it a pointer to the input pin to which it is connecting. The filter graph manager has previously retrieved pointers to the <a href="wcesdkripin_interface.htm">IPin</a> interfaces of both filters, for example, by calling the <a href="wcesdkribasefilter__enumpins.htm">IBaseFilter::EnumPins</a> method on each connecting filter. The <B>EnumPins</B> method creates a <a href="wcesdkrcenumpins_class.htm">CEnumPins</a> object to enumerate the pins, which the enumerator does by repeatedly calling the <a href="wcesdkrcbasefilter__getpin.htm">CBaseFilter::GetPin</a> member function of the derived filter, which the derived filter must implement. </P>
+
+<P>The <a href="wcesdkrcbasepin__connect.htm">CBasePin::Connect</a> implementation of <B>IPin::Connect</B> does much of the work in this case. It calls the following functions. 
+
+<UL type="disc">
+	<LI><a href="wcesdkrcbasepin__checkconnect.htm">CheckConnect</a> which is overridden by <a href="wcesdkrcbaseoutputpin_class.htm">CBaseOutputPin</a></li>
+
+	<LI><a href="wcesdkrcbasepin__agreemediatype.htm">AgreeMediaType</a> which is implemented by <a href="wcesdkrcbasepin_class.htm">CBasePin</a></li>
+</UL>
+
+<P>The <B>CBasePin::CheckConnect</B> implementation simply determines that the pin directions are different. The overriding <a href="wcesdkrcbaseoutputpin__checkconnect.htm">CBaseOutputPin::CheckConnect</a>member function calls the <a href="_wcesdk_com_Iunknown_QueryInterface.htm">IUnknown::QueryInterface</a> method of the connected input pin to retrieve a pointer to the <a href="wcesdkrimeminputpin_interface.htm">IMemInputPin</a> interface of that pin. This will be used later in the connection process to request an allocator from the connected input pin. (Your derived class can override <B>CBaseOutputPin::CheckConnect</B> and omit retrieving the <B>IMemInputPin</B> interface if the output pin already has an allocator; for example, it might want to use the allocator from an upstream filter to eliminate copying.) </P>
+
+<H2 class="dtH2">Negotiating Media Types with CBasePin::AgreeMediaType</H2>
+
+<P>The <a href="wcesdkrcbasepin__agreemediatype.htm">CBasePin::AgreeMediaType</a> member function is called next and attempts to negotiate a media type that both pins agree on. It does this by trying to find a media type presented by the connected input pin with which the output pin agrees. If that fails, it tries to find a media type preferred by the output pin that the connected input pin agrees with. </P>
+
+<P><B>CBasePin::AgreeMediaType</B> calls the following member functions and methods. 
+
+<UL type="disc">
+	<LI><a href="wcesdkripin__enummediatypes.htm">IPin::EnumMediaTypes</a> on the connected pin. </li>
+
+	<LI><a href="wcesdkrcbasepin__trymediatypes.htm">CBasePin::TryMediaTypes</a> in the derived output pin class. </li>
+</UL>
+
+<P>The <B>IPin::EnumMediaTypes</B> method of the connected input pin is called to return a media type enumerator (<a href="wcesdkrienummediatypes_interface.htm">IEnumMediaTypes</a>). This allows the output pin to examine the list of preferred media types belonging to the input pin. </P>
+
+<P>The <a href="wcesdkrienummediatypes__next.htm">IEnumMediaTypes::Next</a> method of the enumerator calls the <a href="wcesdkrcbasepin__getmediatype.htm">GetMediaType</a> member function of the derived input pin to retrieve each media type. If <B>GetMediaType</B> is not implemented, the base class implementation returns an error but this does not necessarily break the connection. (Pins are not required to have a preferred media type if one pin or the other can propose a type that they both accept. If neither pin can propose types, the connection will fail.) </P>
+
+<H3 class="dtH3">Determining a Media Type with CBasePin::TryMediaTypes</H3>
+
+<P><a href="wcesdkrcbasepin__agreemediatype.htm">CBasePin::AgreeMediaType</a> calls <a href="wcesdkrcbasepin__trymediatypes.htm">CBasePin::TryMediaTypes</a> next. The <B>TryMediaTypes</B> member function cycles through the preferred media types of the connected input pin and calls the <a href="wcesdkrcbasepin__checkmediatype.htm">CBasePin::CheckMediaType</a> member function of the derived output pin class for each one it finds. <B>CheckMediaType</B> must be implemented by your derived output pin class. If <B>CheckMediaType</B> accepts the media type, the <a href="wcesdkripin__receiveconnection.htm">IPin::ReceiveConnection</a> method of the connected input pin is called with the media type to determine if the connected input pin accepts this media type. If so, <B>TryMediaTypes</B> calls the <a href="wcesdkrcbaseoutputpin__completeconnect.htm">CBaseOutputPin::CompleteConnect</a> member function to finish the connection to the input pin. </P>
+
+<P>If the input pin has no media types that the output type can use, <B>CBasePin::AgreeMediaType</B> repeats the entire process, using the enumerator for the media types of the output pin. (That is, it gets its own enumerator and calls <B>TryMediaTypes</B> with each of its preferred media types.) Again, the enumerator calls <a href="wcesdkrcbasepin__getmediatype.htm">GetMediaType</a> for each media type in the list. In this case, <B>GetMediaType</B> should be implemented to provide a media type. If the filter is a source filter, it will have a definite media type to export. If the filter is a transform filter, the media type will be established between the filter's input pin and its connected pin; the transform filter should query for that media type or simply use the enumerator of the upstream filter (unless the transform filter changes the media type from input pin to output pin). </P>
+
+<P><B>CheckMediaType</B> is called by <B>CBasePin::TryMediaTypes</B>, even when <B>TryMediaTypes</B> enumerates the list of the preferred media types of the output pin. This is because the owning filter might be a transform-inplace filter that is simply using the media type (and enumerator) of an upstream filter; this is the point at which the filter determines if the media type is compatible. The input pin of this transform filter might defer selecting a media type when it is connected, in which case it would be up to the output pin of the transform filter to ensure the media type is compatible with its transform. </P>
+
+<P>If a media type can be established, <B>TryMediaTypes</B> eventually calls the <B>CBaseOutputPin::CompleteConnect</B> member function to negotiate a memory allocator. </P>
+
+<P>First, the <B>CBaseOutputPin::CompleteConnect</B> member function calls the <a href="wcesdkrcbaseoutputpin__decideallocator.htm">CBaseOutputPin::DecideAllocator</a> member function. This member function negotiates a shared memory allocator with the input pin. It does this by first calling the <a href="wcesdkrimeminputpin__getallocator.htm">IMemInputPin::GetAllocator</a> method of the connected input pin, which retrieves a pointer to an <a href="wcesdkrimemallocator_interface.htm">IMemAllocator</a> interface provided by the input pin. </P>
+
+<P>Then, <B>CompleteConnect</B> calls the pure virtual <a href="wcesdkrcbaseoutputpin__decidebuffersize.htm">CBaseOutputPin::DecideBufferSize</a> member function, which your derived output pin class must override and implement because only the derived class can determine the required buffer size for its media type. </P>
+
+<P>Finally, <B>CompleteConnect</B> calls the <a href="wcesdkrimeminputpin__notifyallocator.htm">IMemInputPin::NotifyAllocator</a> method of the connected pin to inform the input pin of the allocator to use and to provide a pointer to it. The input pin can reject this allocator, in which case the output pin can retry with a different allocator or fail the connection. If your derived class is not using the allocator of the connected input pin, override <B>CBaseOutputPin::DecideAllocator</B> in your derived class to call the <B>NotifyAllocator</B> member function with an allocator. </P>
+
+<H2 class="dtH2">When a Reconnection Should Occur</H2>
+
+<P>Reconnection is always performed through the <a href="wcesdkrifiltergraph_interface.htm">IFilterGraph</a> interface on the filter graph manager. Reconnect by calling the <a href="wcesdkrifiltergraph2__reconnectex.htm">IFilterGraph2::ReconnectEx</a> method or the <a href="wcesdkrifiltergraph__reconnect.htm">IFilterGraph::Reconnect</a> method, both of which pass the <a href="wcesdkripin_interface.htm">IPin</a> interfaces of the two pins to be reconnected. The <B>ReconnectEx</B> method specifies a media type and thus removes the burden of remembering what type to reconnect with from the pins, which makes the reconnection more likely to succeed. </P>
+
+<P>Filters are typically connected with the upstream filter first and the downstream filter second. Therefore, the filter negotiates the connection on its input pin before information is available about the filter being connected to its output pin. When the output pin of the filter connects, it may become clear that the media type or allocator that was established for the input pin of the filter are not appropriate. In this case, the input connection can be broken and reconnected. </P>
+
+<P>For example, consider the following connection scenario. An audio effects filter (for example, a reverberation effect) is inserted between an MPEG-audio decompressor filter and another audio effects filter. During the upstream connection to the decompressor filter, a media type is chosen - for example, 22.05 kHz, 16-bit mono. However, in this scenario, when the reverberation filter connects its output pin, the downstream filter will accept only an 11.025 kHz, 16-bit mono media type. Therefore, after connecting with the downstream filter, the reverberation effects filter must then reconnect with the upstream filter and negotiate for an 11.025 kHz media type. </P>
+
+<P>But media types are not the only reason for reconnection. In many cases, the filter is a <I>transform-inplace filter</I>; that is, a filter that does not require that it either alters the media type or copies the data. Such a filter can be designed to use an allocator of some other filter (upstream or downstream), and likewise use the media type of another filter. That is, the filter is doing its transform "in place" in the buffer of another filter (for example, in the file buffer of the source filter or the video buffer of the rendering filter). </P>
+
+<P>The general rule is that filters of this type should offer the allocator of the downstream filter to the upstream filter, once the allocator has been established for the output pin. This requires a reconnection of the input pin so that, when the input pin is asked for an allocator (in <a href="wcesdkrimeminputpin__getallocator.htm">IMemInputPin::GetAllocator</a>) by the upstream output pin, it can offer the allocator retrieved from the downstream filter by the output pin of the transform filter. Therefore, in-place transforms always reconnect. </P>
+
+<P>There are a couple of important rules to follow when requesting a reconnection. </P>
+
+<P>First, a filter must never request a reconnection unless it is certain that the reconnection will succeed. If the reconnection fails, it causes an asynchronous error in the filter graph for which there is no obvious cleanup. Any error that occurs (for example, from incompatible media types) should occur when the pins are connected the first time, when there are ample retry options available at more than one level (by the filter graph manager or the application at least). </P>
+
+<P>Second, a filter should request a reconnection on the same thread as the call to <a href="wcesdkripin__connect.htm">IPin::Connect</a>. For example, the following scenario attempts reconnection on a separate thread and will cause problems. 
+
+<OL type="1">
+	<LI>The filter graph manager calls <B>Connect</B> on a pin. </li>
+
+	<LI>The filter pin carries out the <B>Connect</B> method and creates a thread, which starts to determine whether everything is okay for the connection. </li>
+
+	<LI><B>Connect</B> returns to the filter graph manager. </li>
+
+	<LI>The filter graph manager returns to the application. </li>
+
+	<LI>The application calls the <a href="wcesdkrimediacontrol__run.htm">IMediaControl::Run</a> method of the filter graph manager to start the filter graph, and the filters start running. </li>
+
+	<LI>The thread from the initial connection calls the <B>IFilterGraph2::ReconnectEx</B> or <B>IFilterGraph::Reconnect</B> method and the filter graph manager attempts to carry out reconnection. </li>
+
+	<LI>Failure occurs because the filters cannot reconnect while in the running state. </li>
+</OL>
+
+<P>The filter graph has code to prevent this failure as long as the <B>IFilterGraph2::ReconnectEx</B> or <B>IFilterGraph::Reconnect</B> method takes effect while the filter graph is still processing the <a href="wcesdkrigraphbuilder__connect.htm">IGraphBuilder::Connect</a> method. Calling the filter graph to reconnect before returning from the <B>IPin::Connect</B> method is the best way to ensure this problem does not occur. The best way to achieve this is to perform all of this on the same thread.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

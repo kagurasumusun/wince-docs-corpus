@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Managing Program Memory</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Managing Program Memory" />
+<MSHelp:RLTitle Title="Managing Program Memory (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="applications, managing program memory" />
+<MSHelp:Keyword Index="K" Term="managing, program memory" />
+<MSHelp:Keyword Index="K" Term="program memory, managing" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Managing_Program_Memory" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="memmanag.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922235">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_managing_program_memory"></A>Managing Program Memory</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>One of the main sections of random access memory (RAM) in a device that is based on Microsoft Windows CE is called the <I>program memory</I>. With program memory, an application dynamically allocates memory for strings, structures, and other data. These allocations are for the lifetime of the application and are deallocated as or after the application completes its task. As such, program memory fills the same function that RAM does in a desktop computer.</P>
+
+<P>Windows CE uses a virtual memory system to manage and allocate program memory. Virtual memory is a style of memory management that separates how an application requests memory from the way that Windows CE provides memory. The application requests a block of virtual memory, and Windows CE maps that virtual memory address to a physical address. Subsequent memory allocations are not mapped necessarily to subsequent physical memory locations. Instead, Windows CE maps to whatever physical memory is available, regardless of the location of the memory on the device. The following illustration shows how virtual memory maps to physical memory.</P>
+
+<P class="fig"><IMG SRC="vir_mem1.gif" ALT="" BORDER=0></P>
+
+<P>Virtual memory allows the application to avoid managing memory allocation. Because the application uses virtual memory addresses instead of physical memory addresses, the application detects contiguous memory. Windows CE has a total of 4 gigabytes (GB) of virtual address space. Of the 4-GB virtual address space, Windows&nbsp;CE reserves 32 slots of 32 megabytes (MB) to run processes. Each process receives one 32MB slot for dynamic memory requirements, including process code segments, loaded dynamic-link libraries (DLLs), thread stacks, and created heaps. The rest of the virtual address space is reserved for the Windows CE operating system (OS). Windows CE uses these memory addresses for tasks such as memory-mapped files and large virtual allocations, neither of which come out of the process slots. Note, however that Windows CE can only address 512 MB of physical memory.</P>
+
+<P>Windows CE allocates virtual memory in pages. A page is a unit of memory that is either 1,024 bytes or 4,096 bytes in length. Windows CE marks each page as either free, reserved, or committed:
+
+<UL type="disc">
+	<LI>A free page can be allocated to any application at any time.</li>
+
+	<LI>A reserved page is held for an application, but has not been mapped yet to physical memory.</li>
+
+	<LI>A committed page has been allocated to physical memory and is currently in use by an application.</li>
+</UL>
+
+<P>Windows CE allocates pages along 64-kilobyte (KB) regions. Any function that reserves virtual memory pages automatically rounds up to the nearest 64KB region. You can allocate memory more efficiently if you reserve virtual memory blocks in 64KB regions. After you reserve the region, you then can go back and commit pages within the region, as needed.</P>
+
+<P>Before allocating memory, use the <B>GetSystemInfo</B> and <B>GlobalMemoryStatus</B> functions to return information about your Windows CE&#0150;based device. <B>GetSystemInfo</B> returns information such as which microprocessor a device has, the memory page size, and the virtual addresses that are available to your application. <B>GlobalMemoryStatus</B> returns general information about memory allocation on the device. You also can use the <B>GetStoreInformation</B> function to determine how much memory is allocated to the object store.</P>
+
+<P>You can use the virtual memory application programming interface (API) to manage virtual memory directly. The functions in the virtual memory API include <B>VirtualFree</B>, <B>VirtualProtect</B>, and <B>VirtualQuery</B>. In addition, Windows CE uses the virtual memory in other memory allocations. Both the heap and the stack indirectly use virtual memory in their API sets. The fourth type of memory, the static data block, does not have a direct virtual memory address; instead, you place information in the static data block before compiling your application.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, April 02, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

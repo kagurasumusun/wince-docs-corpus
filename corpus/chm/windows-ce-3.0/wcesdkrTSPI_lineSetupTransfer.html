@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TSPI_lineSetupTransfer</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="TSPI_lineSetupTransfer" />
+<MSHelp:RLTitle Title="TSPI_lineSetupTransfer" />
+<MSHelp:Keyword Index="A" Term="wcesdkrTSPI_lineSetupTransfer" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_930164">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrtspi_linesetuptransfer"></A>TSPI_lineSetupTransfer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>The <B>TSPI_lineSetupTransfer</B> function initiates a transfer of the call specified by <I>hdCall</I>. It establishes a consultation call, <I>lphdConsultCall</I>, on which the party can be dialed that can become the destination of the transfer.</P>
+
+<PRE class="syntax"><B>LONG TSPIAPI TSPI_lineSetupTransfer(</B>
+<B>DRV</B>_<B>REQUESTID</B> <I>dwRequestID,</I>           
+<B>HDRVCALL</B> <I>hdCall</I>,                     
+<B>HTAPICALL</B> <I>htConsultCall</I>,             
+<B>LPHDRVCALL</B> <I>lphdConsultCall</I>,          
+<B>LPLINECALLPARAMS</B> <B>const</B> <I>lpCallParams</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwRequestID </I></DT>
+
+<DD>The identifier of the asynchronous request. </dd>
+
+<DT><I>hdCall</I> </DT>
+
+<DD>The handle to the call to be transferred. The call state of <I>hdCall</I> can be connected. </dd>
+
+<DT><I>htConsultCall</I> </DT>
+
+<DD>The TAPI handle to the new, temporary consultation call. The service provider must save this and use it in all subsequent calls to the LINEEVENT procedure reporting events on the new consultation call. </dd>
+
+<DT><I>lphdConsultCall</I> </DT>
+
+<DD>A pointer to an HDRVCALL representing the service provider's identifier for the new consultation call. The service provider must fill this location with its handle for the new consultation call before this procedure returns. This handle is ignored by TAPI if the function results in an error. The call state of <I>hdConsultCall </I>is not applicable. 
+
+<P>When setting a call up for transfer, another call (a consultation call) is automatically allocated to enable the application (through TAPI) to dial the address (using <B>TSPI_lineDial</B>) of the party to where the call is to be transferred. The originating party can carry on a conversation over this consultation call prior to completing the transfer. 
+
+
+<P>This transfer procedure may not be valid for some line devices. Instead of calling this procedure, TAPI may need to unhold an existing held call (using <B>TSPI_lineUnhold)</B> to identify the destination of the transfer. On switches that support cross-address call transfer, the consultation call can exist on a different address than the call to be transferred. It may also be necessary to set up the consultation call as an entirely new call using <B>TSPI_lineMakeCall</B>, to the destination of the transfer. 
+
+
+<P>The transferHeld and transferMake flags in the <B>LINEADDRESSCAPS</B> data structure report what model the service provider uses. 
+</dd>
+
+<DT><I>lpCallParams</I> </DT>
+
+<DD>A pointer to call parameters to be used when establishing the consultation call. This parameter can be set to NULL if no special call setup parameters are desired (the service provider uses defaults). </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Returns <I>dwRequestID</I>, or an error number if an error occurs. The <I>lResult</I> actual parameter of the corresponding ASYNC_COMPLETION is zero if the function succeeds, or an error number if an error occurs. Possible return values are as follows: </P>
+
+<P>LINEERR_INVALCALLHANDLE, LINEERR_INVALBEARERMODE, LINEERR_INVALCALLSTATE, LINEERR_INVALRATE, LINEERR_CALLUNAVAIL, LINEERR_INVALCALLPARAMS, LINEERR_NOMEM, LINEERR_INVALLINESTATE, LINEERR_OPERATIONUNAVAIL, LINEERR_INVALMEDIAMODE, LINEERR_OPERATIONFAILED, LINEERR_INUSE, LINEERR_RESOURCEUNAVAIL, LINEERR_NOMEM, LINEERR_BEARERMODEUNAVAIL, LINEERR_RATEUNAVAIL, LINEERR_INVALADDRESSMODE, LINEERR_USERUSERINFOTOOBIG. </P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The service provider returns LINEERR_INVALCALLSTATE if the call to be transferred is not in a valid state.</P>
+
+<P>This operation sets up the transfer of the call specified by <I>hdCall</I>. The setup phase of a transfer establishes a consultation call to send the address of the destination (the party to be transferred to) to the switch, while the call to be transferred is kept on hold. This new call is referred to as a consultation call (<I>hdConsultCall</I>) and can be manipulated (for example, dropped) independently of the original call.</P>
+
+<P>When the consultation call has reached the dialtone call state, TAPI can continue transferring the call either by dialing the destination address and tracking its progress, or by unholding an existing call. The transfer of the original call to the selected destination is completed using <B>TSPI_lineCompleteTransfer</B>.</P>
+
+<P>While the consultation call exists, the original call typically transitions to the onholdPendingTransfer state.</P>
+
+<P>The <B>TSPI</B>_<B>lineUnhold</B> function can recover calls that have the call state onHoldPendingTransfer. If this is done, any consultation call typically goes to the idle state.</P>
+
+<P>In telephony environments that follow the transferHeld or transferMake transfer models, this procedure returns LINEERR_OPERATIONFAILED and does not allocate a consultation call handle.</P>
+
+<P>A consultation call can be canceled by invoking <B>TSPI_lineDrop</B> on it. After dropping a consultation call, the original call typically transitions back to the connected state.</P>
+
+<P>This function differs from the corresponding TAPI function in that it follows the TSPI model for beginning the lifetime of a call. TAPI and the service provider exchange opaque handles representing the call with one another. In addition, the service provider is permitted to do callbacks for the new call before it returns from this procedure. In any case, the service provider must also treat the handle it returned as "not yet valid" until after the matching ASYNC_COMPLETION message reports success. In other words, it must not issue any LINEEVENT messages for the new call or include it in call counts in messages or status data structures for the line.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Tapicomn.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Coredll.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrtspi_lineblindtransfer.htm">TSPI_lineBlindTransfer</A>, <A HREF="wcesdkrtspi_linecompletetransfer.htm">TSPI_lineCompleteTransfer</A>, <A HREF="wcesdkrtspi_linedial.htm">TSPI_lineDial</A>, <A HREF="wcesdkrtspi_linedrop.htm">TSPI_lineDrop</A>, <A HREF="wcesdkrtspi_lineswaphold.htm">TSPI_lineSwapHold</A>, <A HREF="wcesdkrtspi_lineunhold.htm">TSPI_lineUnhold</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

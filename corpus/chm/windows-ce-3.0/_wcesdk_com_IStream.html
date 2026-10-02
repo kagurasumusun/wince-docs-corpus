@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IStream</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IStream" />
+<MSHelp:RLTitle Title="IStream:IUnknown" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IStream" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_929547">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_istream"></A>IStream:IUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This interface supports reading and writing data to stream objects. Stream objects contain the data in a structured storage object, where storages provide the structure. Simple data can be written directly to a stream, but most frequently, streams are elements nested within a storage object. They are similar to standard files.</P>
+
+<P>The <B>IStream</B> interface supports reading and writing data to stream objects. Stream objects contain the data in a structured storage object, where storages provide the structure. Simple data can be written directly to a stream, but most frequently, streams are elements nested within a storage object. They are similar to standard files.</P>
+
+<P>The <B>IStream</B> interface defines methods similar to the MS-DOS FAT file functions. For example, each stream object has its own access rights and a seek pointer. The main difference between a stream object and a DOS file is that streams are not opened using a file handle, but through an <B>IStream</B> interface pointer.</P>
+
+<P>The methods in this interface present your object's data as a contiguous sequence of bytes that you can read or write. There are also methods for committing and reverting changes on streams open in transacted mode and methods for restricting access to a range of bytes in the stream.</P>
+
+<P>Streams can remain open for long periods of time without consuming file system resources. The <B>IStream::Release</B> method is similar to a close function on a file. Once released, the stream object is no longer valid and cannot be used.</P>
+
+<P>Clients of asynchronous monikers can choose between a <I>data-pull </I>or <I>data-push </I>model for driving an asynchronous <A HREF="_wcesdk_com_imoniker_bindtostorage.htm"><B>IMoniker::BindToStorage</B></A> operation and for receiving asynchronous notifications.The table below compares the behavior of&nbsp;&nbsp;asynchronous <B>ISequentialStream::Read </B>and <A HREF="_wcesdk_com_istream_seek.htm"><B>IStream::Seek</B></A><B> </B>calls returned in <B>IBindStatusCallback::OnDataAvailable</B> in these two download models:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>IStream method call</TH>
+<TH width=37%>Behavior in <I>data-pull </I>model</TH>
+<TH width=39%>Behavior in <I>data-push</I> model</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><B>Read</B> is called to read partial data, that is, not all the available data.</TD>
+<TD width=37%>Returns S_OK. The client must continue to read all available data before returning from <B>IBindStatusCallback::OnDataAvailable</B> or else the bind operation is blocked, that is, read until S_FALSE or E_PENDING is returned.</TD>
+<TD width=39%>Returns S_OK. Even if the client returns from <B>IBindStatusCallback::OnDataAvailable</B> at this point the bind operation continues and <B>IBindStatusCallback::OnDataAvailable</B> will be called again repeatedly until the binding finishes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><B>Read</B> is called to read all the available data</TD>
+<TD width=37%>Returns E_PENDING if the bind operation has not completed, and <B>IBindStatusCallback::OnDataAvailable</B> will be called again when more data is available. </TD>
+<TD width=39%>Same as data-pull model.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><B>Read</B> is called to read all the available data and the bind operation is over (end-of-file)</TD>
+<TD width=37%>Returns S_FALSE. There will be a subsequent call to <B>IBindStatusCallback::OnDataAvailable</B> with the <I>grfBSC</I> flag set to BSCF_LASTDATANOTIFICATION.</TD>
+<TD width=39%>Same as data-pull model.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><B>Seek</B> is called</TD>
+<TD width=37%><B>Seek</B> doesn't work in data-pull model</TD>
+<TD width=39%><B>Seek</B> doesn't work in data-push model.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>When to Implement</B></P>
+
+<P>Implement <B>IStream</B> on a container or object application when you require functionality not provided by the COM compound file implementation. The specification of <B>IStream</B> defines more functionality that the COM implementation supports. In addition, if you are creating a stream object that is larger than the heap in your machine's memory and you are using a global memory handle, the compound file implementation calls <B>GlobalRealloc</B> internally whenever it needs more memory, which can be extremely inefficient. In this case, the preferred solution is to implement an <B>IStream</B> that uses memory allocated by <B>VirtualAlloc</B> instead of <B>GlobalAlloc</B>. This can reserve a large chunk of virtual address space and then commit memory within that address space as required. No data copying occurs and memory is committed only as it is needed. For more information, refer to <B>IStream - Compound File Implementation</B>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Most containers do not implement <B>ISequentialStream</B> as a separate interface, and you are not required to provide it separately even if you provide an <B>IStream</B> implementation. For example, the compound file implementation of structured storage does not succeed on a <B>QueryInterface</B> for <B>ISequentialStream</B> but it includes the <B>Read</B> and <B>Write</B> methods through the <B>IStream</B> interface pointer. The same is true for the NTFS Native Structured Storage implementation.</BLOCKQUOTE>
+
+<P class="label"><B>When to Use</B></P>
+
+<P>Call the methods of the <B>IStream</B> interface from a container or application to read and write the data for an object. Since stream objects can be marshaled to other processes, applications can share the data in storage objects without having to use global memory.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Method</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_clone.htm"><B>IStream::Clone</B></A></TD>
+<TD width=72%>Creates a new stream object with its own seek pointer that references the same bytes as the original stream.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_commit.htm"><B>IStream::Commit</B></A></TD>
+<TD width=72%>Ensures that any changes made to a stream object opened in transacted mode are reflected in the parent storage object. If the stream object is opened in direct mode, this method has no effect other than flushing all memory buffers to the next level storage object. The OLE compound file implementation of streams does not support opening streams in transacted mode.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_copyto.htm"><B>IStream::CopyTo</B></A></TD>
+<TD width=72%>Copies a specified number of bytes from the current seek pointer in the stream to the current seek pointer in another stream.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_lockregion.htm"><B>IStream::LockRegion</B></A></TD>
+<TD width=72%>Restricts access to a specified range of bytes in the stream. Supporting this functionality is optional since some file systems do not provide it.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_read.htm"><B>IStream::Read</B></A></TD>
+<TD width=72%>Reads a specified number of bytes from the stream object into memory, starting at the current seek pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_revert.htm"><B>IStream::Revert</B></A></TD>
+<TD width=72%>Discards all changes that have been made to a transacted stream since the last <B>IStream::Commit</B> call. This method has no effect on streams open in direct mode and streams using the OLE compound file implementation of <B>IStream::Revert</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_seek.htm"><B>IStream::Seek</B></A></TD>
+<TD width=72%>Changes the seek pointer to a new location relative to the current seek pointer or the beginning or end of the stream.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_setsize.htm"><B>IStream::SetSize</B></A></TD>
+<TD width=72%>Resizes of the stream object.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_stat.htm"><B>IStream::Stat</B></A></TD>
+<TD width=72%>Retrieves the <B>STATSTG </B>structure for this stream object.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_unlockregion.htm"><B>IStream::UnlockRegion</B></A></TD>
+<TD width=72%>Removes the access restriction on a range of bytes previously restricted with <B>IStream::LockRegion</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="_wcesdk_com_istream_write.htm"><B>IStream::Write</B></A></TD>
+<TD width=72%>Writes a specified number of bytes into the stream object starting at the current seek pointer.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Objidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>The Prepare Phase for Line Drawing (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="Line drawing begins when an application calls Polyline. GDI handles the call to Polyline. GDI validates that there are at least two vertices and that the line style is not NULL."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="The Prepare Phase for Line Drawing" />
+<MSHelp:RLTitle Title="The Prepare Phase for Line Drawing (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="The Prepare Phase for Line Drawing" />
+<MSHelp:Keyword Index="A" Term="wceddkThe_Prepare_Phase_for_Line_Drawing" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="display.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925445">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkthe_prepare_phase_for_line_drawing"></A>The Prepare Phase for Line Drawing</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Line drawing begins when an application calls <B>Polyline</B>. GDI handles the call to <B>Polyline</B>. GDI validates that there are at least two vertices and that the line style is not NULL. GDI then calls the GPE <B>DrvStrokePath</B> function or, for a wide pen, <B>DrvFillPath</B>. When GDI calls the GPE member function, it passes the following information from the device context: surface object, path object, clip rectangle, the brush, the ROP2 value, and the line attributes (solid or dashed). These parameters were either set by an application or are realized attributes. GPE uses some of the input parameters to set the members of its <A HREF="wceddkgpelineparms.htm"><B>GPELineParms</B></A> structure.</P>
+
+<P>GPE then calls the display driver's <A HREF="wceddkgpe_line.htm"><B>GPE::Line</B></A> function, passing in the <B>GPELineParms</B> and passing the value <I>gpePrepare</I>. The driver examines the properties of the line to be drawn. The driver then chooses whether it should use the GPE <B>EmulatedLine</B> function or handle the line with its own accelerated function.</P>
+
+<P>Before selecting an accelerated function, the driver must check whether the hardware can handle the line style and ROP. In the sample ATI display driver, available in the platform\cepc\drivers\display\ati directory of your Platform Builder installation, the driver sets the function pointer to <B>EmulatedLine</B> by default, but chooses hardware acceleration for lines that are both in video memory and use ROP 0x0D0D. The following code sample illustrates this.</P>
+
+<PRE class="code">if (phase == gpeSingle || phase == gpePrepare)
+    {
+        pLineParms-&gt;pLine = EmulatedLine;
+        if (((ATISurf*)(pLineParms-&gt;pDst))-&gt;InVideoMemory() 
+            &amp;&amp; pLineParms-&gt;mix == 0x0d0d)
+            {
+                pLineParms-&gt;pLine = (SCODE (GPE::*)(struct GPELineParms
+                                     *)) AcceleratedSolidLine;
+            }
+    }</PRE>
+
+<P>Also in the prepare phase, the driver can optionally perform additional processing, such as initializing the hardware registers with the selected color. After the prepare phase, control returns to the GPE <B>DrvStrokePath</B> function.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

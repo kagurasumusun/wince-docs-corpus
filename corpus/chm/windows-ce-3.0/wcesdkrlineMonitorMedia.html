@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineMonitorMedia</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="lineMonitorMedia" />
+<MSHelp:RLTitle Title="lineMonitorMedia" />
+<MSHelp:Keyword Index="A" Term="wcesdkrlineMonitorMedia" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_930046">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrlinemonitormedia"></A>lineMonitorMedia</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This function enables and disables the detection of media types (modes) on the specified call. When a media type is detected, a message is sent to the application. </P>
+
+<PRE class="syntax"><B>LONG WINAPI lineMonitorMedia(</B>
+<B>HCALL </B><I>hCall</I><B>,</B>
+<B>DWORD </B><I>dwMediaModes</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hCall </I></DT>
+
+<DD>A handle to the call. The call state of <I>hCall</I> can be any state except idle. </dd>
+
+<DT><I>dwMediaModes</I> </DT>
+
+<DD>The media types to be monitored. A value of 0 for the <I>dwMediaModes</I> parameter cancels all media type detection. This parameter uses one or more of the LINEMEDIAMODE_ Constants. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Returns zero if the request succeeds or a negative error number if an error occurs. Possible return values are: </P>
+
+<P>LINEERR_INVALCALLHANDLE, LINEERR_OPERATIONUNAVAIL, LINEERR_INVALCALLSTATE, LINEERR_OPERATIONFAILED, LINEERR_INVALMEDIAMODE, LINEERR_RESOURCEUNAVAIL, LINEERR_NOMEM, LINEERR_UNINITIALIZED.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The media types specified with <A HREF="wcesdkrlineopen.htm">lineOpen</A> relate only to enabling the detection of these media types by the service provider for the purpose of handing off new incoming calls to the proper application. They do not impact any of the media-mode notification messages that are expected because of a previous invocation of <B>lineMonitorMedia</B>. </P>
+
+<P>This function is considered successful if media type monitoring has been correctly initiated, not when media type monitoring has terminated. Media monitoring for a given media type remains in effect until it is explicitly disabled by calling <B>lineMonitorMedia</B> with a <I>dwMediaModes</I> parameter set to zero, until the call transitions to idle, or when the application deallocates its call handle for the call. The <B>lineMonitorMedia</B> function is primarily an event reporting mechanism. The media type (mode) of the call, as indicated in <A HREF="wcesdkrlinecallinfo_str.htm">LINECALLINFO</A>, is not affected by the service provider's detection of the media type. Only the controlling application can change a call's media type. </P>
+
+<P>Default media monitoring performed by the service provider corresponds to the union of all media types specified on <B>lineOpen</B>. </P>
+
+<P>Although this function can be invoked in any call state, a call's media type can typically only be detected while the call is in certain call states. These states can be device specific. For example, in ISDN, a message can indicate the media type of the media stream before the media stream exists. Similarly, distinctive ringing or the called identifier information about the call can be used to identify the media type of a call. Otherwise, the call may have to be answered (call in the connected state) to allow a service provider to determine the call's media type by filtering the media stream. Because filtering a call's media stream implies a computational overhead, applications should disable media monitoring when not required. By default, media monitoring is enabled for newly incoming calls, because a call's media type selects the application that should handle the call. </P>
+
+<P>An outgoing application that deals with voice media types may want to monitor the call for silence (a tone) to distinguish who or what is at the called end of a call. For example, a person at home can answer calls with just a short "hello." A person in the office can provide a longer greeting, indicating name and company name. An answering machine can typically have an even longer greeting. </P>
+
+<P>Because media-mode detection enabled by <B>lineMonitorMedia</B> is implemented as a read-only operation of the call's media stream, it is not disruptive. </P>
+
+<P>Monitoring of media on a conference call applies only to the <I>hConfCall</I> parameter, not to the individual participating calls. </P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>1.0 and later</TD>
+<TD width=19%>Tapi.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Coredll.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrlinecallinfo_str.htm">LINECALLINFO</A>, <A HREF="wcesdkrlineopen.htm">lineOpen</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

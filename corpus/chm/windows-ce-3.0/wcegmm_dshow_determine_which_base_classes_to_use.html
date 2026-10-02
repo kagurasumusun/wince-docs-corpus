@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Determine Which Base Classes to Use (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="Before choosing a base class for your transform filter, you must first decide whether your filter needs more than one input and output pin. If it does, you should derive your filter class from CBaseFilter."/>
+<xml>
+<MSHelp:TOCTitle Title="Determine Which Base Classes to Use" />
+<MSHelp:RLTitle Title="Determine Which Base Classes to Use (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_determine_which_base_classes_to_use" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924096">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_determine_which_base_classes_to_use"></A>Determine Which Base Classes to Use</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Before choosing a base class for your transform filter, you must first decide whether your filter needs more than one input and output pin. If it does, you should derive your filter class from <a href="wcesdkrcbasefilter_class.htm">CBaseFilter</a>. </P>
+
+<P>If your filter needs to perform a video transform, you should derive your filter class from <a href="wcesdkrcvideotransformfilter_class.htm">CVideoTransformFilter</a>. </P>
+
+<P>Otherwise, you should derive your filter class from <a href="wcesdkrctransformfilter_class.htm">CTransformFilter</a> or <a href="wcesdkrctransinplacefilter_class.htm">CTransInPlaceFilter</a>. To determine which one to use, you must decide whether your filter must copy media samples or can transform them in place. Because every copy operation uses valuable CPU cycles, filter developers should avoid copying media samples, if possible. It is best to write a filter to modify media samples in place on an allocator acquired from another filter. In some cases, this isn't possible, and you must perform a copy operation. </P>
+
+<P>Where no copy is needed, the run-time overhead of a transform-inplace filter isn't much more than that of a function. However, by packaging the transform as a filter, you get the full flexibility of the filter graph architecture. </P>
+
+<P>Some reasons that you might write a filter as a copy transform filter rather than a transform-inplace filter are: 
+
+<UL type="disc">
+	<LI>If the transformation generates more data on output than there is space already allocated for the input (for example, a decompressor filter), or if the transformation generates less data on output and must consolidate memory. </li>
+
+	<LI>If the original media data must be preserved. This is the case with the splitter, where the transform filter splits off a stream of data. </li>
+
+	<LI>If a decompressor filter is performing temporal compression, relying on adjacent frames for information about what has changed frame to frame. In this case, you must make a separate copy, primarily because the decompressor can't allow another filter to have access to the original data to modify it. </li>
+
+	<LI>If the filter relies on a queue; for example, a filter that creates a queue to help smooth the delivery of irregularly spaced video frames would need to copy the samples. </li>
+</UL>
+
+<P>Once you determine whether the transform filter will copy media samples or transform them in place, you must decide which base class or classes to use and which member functions you must override and implement. You can then define your derived classes. </P>
+
+<P>Some member functions in the base classes must be overridden in your derived class because they are either declared as pure virtual in the base classes (they have no implementation), or have default implementations that do nothing but return an error value. </P>
+
+<P>You derive your filter class from the transform base classes <B>CTransformFilter</B>, <B>CTransInPlaceFilter</B>, or <B>CVideoTransformFilter</B>, or from the more generic <B>CBaseFilter</B> filter class. Most of the connection, media type, and allocator negotiation code is handled in the base classes and inherited by the transform classes. The transform classes make it possible to create a filter by deriving just one filter class (no pin classes). The transform classes make assumptions about the workings of transform filters that make the process of creating a transform filter easier. </P>
+
+<P>To learn more about <B>CTransformFilter</B> and <B>CTransInPlaceFilter</B> and which of their member functions are typically overridden by the derived class, see <A HREF="wcegmm_dshow_using_the_ctransformfilter_and_ctransinplacefilter_transform_base_classes.htm">Using the CTransformFilter and CTransInPlaceFilter Transform Base Classes</A>. </P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -2,8 +2,8 @@
 """build-index-sql.py [--db PATH] [--full]
 
 Build/refresh data/index/corpus.sqlite3 - a persistent SQL index of
-every harvested page so tools (and the harvester resume check) do not
-have to rescan ~87k HTML files on every run.
+every page in corpus/ so tools (and the harvester resume check) do not
+have to rescan ~78k HTML files on every run.
 
 Schema
   pages(page_id TEXT PRIMARY KEY, section TEXT, path TEXT, title TEXT,
@@ -35,6 +35,7 @@ import sqlite3
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CORPUS = os.path.join(ROOT, "corpus")
 
 TITLE = re.compile(r"<title>([^<]*)", re.I)
 # "CeGetDeviceId Function (Ceutil.h)", "NAME (Windows CE 5.0)"
@@ -132,12 +133,18 @@ def main():
     CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
     """)
     state = {}
-    if not args.full:
+    if args.full:
+        # --full rebuilds from scratch: drop any rows left over from a
+        # previous layout of the corpus (paths and sections change when
+        # the tree is reorganised).
+        con.executescript("DELETE FROM pages; DELETE FROM names; "
+                          "DELETE FROM meta;")
+    else:
         row = con.execute(
             "SELECT value FROM meta WHERE key='state'").fetchone()
         if row:
             state = json.loads(row[0])
-    files = sorted(glob.glob(os.path.join(ROOT, "docs", "**", "*.html"),
+    files = sorted(glob.glob(os.path.join(CORPUS, "**", "*.html"),
                              recursive=True))
     changed = removed = 0
     live = set()
@@ -162,10 +169,11 @@ def main():
             continue
         title, rows = extract(f, page_id)
         tx.execute("DELETE FROM names WHERE page_id=?", (page_id,))
+        section = os.path.dirname(os.path.relpath(f, CORPUS)) \
+            .replace(os.sep, "/")
         tx.execute(
             "INSERT OR REPLACE INTO pages VALUES(?,?,?,?,?)",
-            (page_id, rel.split(os.sep)[1] + "/" + rel.split(os.sep)[2]
-             if rel.count(os.sep) >= 2 else rel, rel, title, st.st_size))
+            (page_id, section, rel, title, st.st_size))
         tx.executemany(
             "INSERT OR IGNORE INTO names VALUES(?,?,?)",
             [(n, page_id, k) for n, k in rows])

@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Playing and Recording (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="The basic operation for playing involves an interrupt and two direct memory access (DMA) buffers for output data. The Wave API Manager prepares the data blocks and sends them to the audio driver's MDD layer."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Playing and Recording" />
+<MSHelp:RLTitle Title="Playing and Recording (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="Audio, Playing, Recording" />
+<MSHelp:Keyword Index="A" Term="wceddkPlaying_and_Recording" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="acmdrv.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925123">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkplaying_and_recording"></A>Playing and Recording</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The basic operation for playing involves an interrupt and two direct memory access (DMA) buffers for output data. The Wave API Manager prepares the data blocks and sends them to the audio driver's MDD layer. The MDD checks to see if the block has data to be played. If so, it calls the <B>PDD_WaveProc</B> function by using the WPDM_START message. The PDD is responsible for copying data from the block to the temporary DMA buffers. Then, the DMA is started to play the data. When the first of the two buffers is finished playing, an interrupt occurs. The PDD should report the interrupt to be of type AUDIO_STATE_OUT_PLAYING. If there is more data to be played, the MDD sends the message WPDM_CONTINUE. Otherwise, it sends WPDM_ENDOFDATA. As data blocks finish playing, the MDD marks them as done and sends them back to the Wave API Manager.</P>
+
+<P>The PDD should alternate between the two DMA buffers, filling one buffer as the other is playing. If the reserve buffer is not full before the first buffer's data is finished playing, the PDD layer should report this with the return value AUDIO_STATE_OUT_UNDERFLOW. This gives the MDD layer an opportunity to synchronize and continue playing.</P>
+
+<P>Recording uses a mechanism that is similar to that used by playing, but in reverse order. Recording starts with the PDD message WPDM_START as before, but no data is copied until the first DMA buffer is full. Then, the PDD copies the data from the DMA buffer into the user block. Again, as blocks are filled, the MDD returns them to the Wave API Manager. Recording continues until the user application requests a stop and sends the WPDM_STOP message.</P>
+
+<P>Note that audio drivers should always inspect the header information on audio data to ensure that the format matches what the driver expects. Unusual alignments of the header with respect to physical page boundies can sometimes cause the format to appear different than it really is, in cases where some of the header data falls onto a page that has not been loaded yet. The driver should always verify that the audio data is in PCMWAVEFORMAT or WAVEFORMATEX format before accessing the data.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Creating a Tree-View Image List (Windows CE 3.0 User Interface Services)</title>
+<meta name="Description" Content="Each item in a tree-view control can have four bit images that are associated with it:       An image such as an open folder, which appears when the item is selected     An image such as a closed folder, which is displayed when the item is not selected"/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Creating a Tree-View Image List" />
+<MSHelp:RLTitle Title="Creating a Tree-View Image List (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="image lists, creating for tree-view controls" />
+<MSHelp:Keyword Index="K" Term="tree-view controls, creating image list for" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_Creating_a_Tree_View_Image_List" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="ctrls.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_923182">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_creating_a_tree_view_image_list"></A>Creating a Tree-View Image List</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Each item in a tree-view control can have four bit images that are associated with it:
+
+<UL type="disc">
+	<LI>An image such as an open folder, which appears when the item is selected</li>
+
+	<LI>An image such as a closed folder, which is displayed when the item is not selected</li>
+
+	<LI>An overlay image, which is drawn transparently over the selected or unselected image</li>
+
+	<LI>A state image, which is an additional image that is displayed to the left of the selected or unselected image. You can use state images, such as checked and cleared check boxes, to indicate application-defined item states.</li>
+</UL>
+
+<P>By default, a tree-view control does not display item images. To display item images, you must create image lists and associate them with the control.</P>
+
+<P>A tree-view control can have two image lists: a normal image list and a state image list. A normal image list stores the selected, unselected, and overlay images. A state image list stores state images.</P>
+
+<P class="labelproc"><B>To create an image list</B>
+
+<OL type="1">
+	<LI>Call the <B>ImageList_Create</B> function, and use other functions related to image lists to add bitmaps to the image list.</li>
+
+	<LI>Associate the image list with the tree-view control by using the TVM_SETIMAGELIST message. TVM_GETIMAGELIST retrieves a handle to one of the image lists of a tree-view control.</li>
+</OL>
+
+<P>In addition to the selected and unselected images, the normal image list of a tree-view control can contain up to four overlay images. Overlay images are designed to be drawn transparently over the selected and unselected images. To assign an index for an overlay mask to an image in the normal image list, call the <B>ImageList_SetOverlayImage</B> function.</P>
+
+<P>By default, all items display the first image in the normal image list for both the selected and unselected states. Also, by default, items do not display overlay images or state images. You can change these default behaviors for an item by sending the TVM_INSERTITEM message or the TVM_SETITEM message. These messages use the <B>TVITEM</B> structure to specify indexes for the image lists indexes for an item.</P>
+
+<P>To associate an overlay image with an item, use the <B>INDEXTOOVERLAYMASK</B> macro to specify an index for an overlay mask in the <I>state</I> member of the <B>TVITEM</B> structure for the item. You also must set the TVIS_OVERLAYMASK bits in the <I>stateMask</I> member. Indexes for Overlay masks are one-based; an index of zero indicates that the application does not specify an overlay image.</P>
+
+<P>To associate a state image with an item, use the <B>INDEXTOSTATEIMAGEMASK</B> macro to specify an index for the state image in the <I>state</I> member of the <B>TVITEM</B> structure of the item. The index identifies an image in the state image list of the control.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;You can speed up the creation of large tree views by disabling the painting of the tree view before you add the items. You do this by sending a WM_SETREDRAW message that has the redraw flag set to FALSE. When you have finished adding items, re-enable painting by sending a WM_SETREDRAW message that has the redraw flag set to TRUE.</BLOCKQUOTE>
+
+<P>The following code example shows how to create and set an image list for a tree-view control, and then redraw the control by using the new images.</P>
+
+<PRE class="code">BOOL InitTreeViewImageLists (HWND hwndTreeView)
+{
+  HBITMAP hBmp;          // Handle to the bitmaps to be added
+
+  // Create the image list for the item pictures.
+  if ((g_hImgList = ImageList_Create (CX_BITMAP, CY_BITMAP, ILC_MASK, 
+                                      NUM_BITMAPS, 0)) == NULL)
+    return FALSE;
+
+  // Load the bitmap resource.
+  hBmp = LoadBitmap (g_hInst, MAKEINTRESOURCE (IDB_IMAGES));
+
+  // Add the images to the image list, generating a mask from the 
+  // bitmap.
+  if (ImageList_AddMasked (g_hImgList, hBmp, RGB (0, 255, 0)) == -1)
+  {
+    return FALSE;
+  }
+
+  // Delete the bitmap object, and free system resources.
+  DeleteObject (hBmp);
+
+  // If not all of the images were added, then return.
+  if (ImageList_GetImageCount (g_hImgList) &lt; NUM_BITMAPS)
+    return FALSE;
+
+  // Set the image list for the tree-view control, and redraw the
+  // control by using the new images.
+  TreeView_SetImageList (hwndTreeView, g_hImgList, TVSIL_NORMAL);
+  
+  return TRUE;
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

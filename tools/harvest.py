@@ -4,10 +4,14 @@
 Fetches pages from a URL queue file into the corpus hierarchy:
 
   learn.microsoft.com/.../previous-versions/windows/embedded/<id>(v=tag)
-        -> docs/mslearn/<book>/<id>.html
+        -> corpus/learn/<set>/<id>(v=tag).html
 
   web.archive.org/web/20100501000000/https://msdn.microsoft.com/en-us/library/<id>.aspx
-        -> docs/wayback-msdn/2010-05/<id>.html
+        -> corpus/wayback-msdn/2010-05/<id>.html
+
+`<set>` is the book/edition the page belongs to (see BOOK_RULES below and
+corpus/README.md); the file name is the last segment of the page's
+canonical URL.
 
 Policy (repo AGENTS.md):
   * Polite sequential fetching only -- one in-flight request per target
@@ -25,7 +29,7 @@ Performance:
   * Failure count is tracked incrementally instead of rereading the log.
 
 Usage:
-  python3 tools/harvest.py --queue urls/to-fetch-mslearn.txt [--limit N]
+  python3 tools/harvest.py --queue queues/to-fetch-mslearn.txt [--limit N]
       [--delay S] [--batch 500] [--push] [--queue-name NAME]
 """
 
@@ -42,6 +46,9 @@ import urllib.request
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CORPUS = os.path.join(ROOT, "corpus")
+LEARN_DIR = os.path.join(CORPUS, "learn")
+WAYBACK_DIR = os.path.join(CORPUS, "wayback-msdn", "2010-05")
 
 UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -64,6 +71,12 @@ BOOK_RULES = (
     (r"\(Windows Mobile[^)]*\)", None),
     (r"\(Handheld PC[^)]*\)", "handheld-pc"),
     (r"\(Palm-size PC[^)]*\)", "palm-size-pc"),
+    (r"\(Microsoft\.PointOfService[^)]*\)", "pos-for-net"),
+    (
+        r"\((?:Microsoft\.SPOT|Microsoft\.Web\.Services|"
+        r"Microsoft\.NetMicroFramework|Ws|Dpws|System\.Ext)[^)]*\)",
+        "dotnet-micro-framework",
+    ),
     (r"\(Microsoft\.RemoteToolSdk[^)]*\)", "windows-embedded-ce-6.0"),
     (r"\(Compact 7\)", "windows-embedded-compact-7"),
     (
@@ -266,9 +279,9 @@ def commit_push(batch):
 
     git(
         "add",
-        "docs/",
+        "corpus/",
         "data/index/",
-        "data/harvest/",
+        "data/logs/",
         check=False,
     )
 
@@ -336,11 +349,7 @@ def build_have_index():
     # Microsoft Learn
     # ------------------------------------------------------------------
 
-    ms_root = os.path.join(
-        ROOT,
-        "docs",
-        "mslearn",
-    )
+    ms_root = LEARN_DIR
 
     if os.path.isdir(ms_root):
         try:
@@ -386,12 +395,7 @@ def build_have_index():
     # Wayback MSDN
     # ------------------------------------------------------------------
 
-    wb_dir = os.path.join(
-        ROOT,
-        "docs",
-        "wayback-msdn",
-        "2010-05",
-    )
+    wb_dir = WAYBACK_DIR
 
     if os.path.isdir(wb_dir):
         try:
@@ -478,9 +482,7 @@ def process_url(
         )
 
         directory = os.path.join(
-            ROOT,
-            "docs",
-            "mslearn",
+            LEARN_DIR,
             book,
         )
 
@@ -488,10 +490,7 @@ def process_url(
 
     else:
         directory = os.path.join(
-            ROOT,
-            "docs",
-            "wayback-msdn",
-            "2010-05",
+            WAYBACK_DIR,
         )
 
         stored_id = "wb:" + pid
@@ -633,7 +632,7 @@ def main():
     logdir = os.path.join(
         ROOT,
         "data",
-        "harvest",
+        "logs",
     )
 
     os.makedirs(

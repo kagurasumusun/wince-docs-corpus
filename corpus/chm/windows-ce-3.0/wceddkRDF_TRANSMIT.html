@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>RDF_TRANSMIT (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="The RDF_TRANSMIT callback function performs data transmissions. This callback function is mandatory."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="RDF_TRANSMIT" />
+<MSHelp:RLTitle Title="RDF_TRANSMIT (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="RDF_TRANSMIT" />
+<MSHelp:Keyword Index="A" Term="wceddkRDF_TRANSMIT" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="apiref" />
+<MSHelp:Attr Name="Filename" Value="funct_1.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+<MSHelp:Attr Name="APIName" Value="RDF_TRANSMIT" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925033">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkrdf_transmit"></A>RDF_TRANSMIT</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The <B>RDF_TRANSMIT</B> callback function performs data transmissions. This callback function is mandatory.</P>
+
+<PRE class="syntax"><B>NTSTATUS (*ReaderFunction[RDF_TRANSMIT])(</B>
+<B>  PSMARTCARD_EXTENSION </B><I>SmartcardExtension</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT>SmartcardExtension </DT>
+
+<DD>Points to the smart card extension of the device. <I>SmartcardExtension-&gt;MajorIoControlCode</I> contains IOCTL_SMARTCARD_TRANSMIT. <I>SmartcardExtension-&gt;IoRequest.RequestBuffer</I> points to an <B>SCARD_IO_REQUEST</B> structure followed by data to be transmitted to the card. <I>SmartcardExtension-&gt;IoRequest.RequestBufferLength</I> contains the number of bytes to be transmitted to the card. <I>SmartcardExtension-&gt;IoRequest.ReplyBufferLength</I> contains the size of the reply buffer. On output, <I>SmartcardExtension-&gt;IoRequest.ReplyBuffer</I> points to the buffer that receives the <B>SCARD_IO_REQUEST</B> structure, plus the result of the card, and <I>SmartcardExtension-&gt;IoRequest.Information</I> receives the actual number of bytes returned by the card, plus the size of <B>SCARD_IO_REQUEST</B> structure.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>When this function is called, <I>SmartcardExtension-&gt;IoRequest.RequestBuffer</I> points to a <B>SCARD_IO_REQUEST</B> structure followed by data to be transmitted. SCARD_IO_REQUEST has the following format:</P>
+
+<PRE class="code">typedef struct _SCARD_IO_REQUEST{
+    DWORD dwProtocol;   // Protocol identifier
+    DWORD cbPciLength;  // Protocol Control Information Length
+} SCARD_IO_REQUEST, *PSCARD_IO_REQUEST, *LPSCARD_IO_REQUEST;
+ </PRE>
+
+<P>The dwProtocol member must contain the protocol identifier that was returned by a call to IOCTL_SMARTCARD_SET_PROTOCOL. </P>
+
+<P>The cbPciLength member contains the size of this structure, which is usually eight. This structure will be used mainly for future implementations. </P>
+
+<P>The structure is followed by (protocol) data to be transmitted to the card. Depending on the protocol to be used for this transmission, the library offers several support functions. See <A HREF="wceddksmartcardt1request.htm">SmartcardT1Request</A>. </P>
+
+<P>Note, RequestBuffer and ReplyBuffer point to the same system buffer. If you use the library function SmartcardxxRequest and SmartcardxxReply, you do not have to worry that you might overwrite the input buffer. If you do not use these functions, make a copy of the RequestBuffer before you start transmissions.</P>
+
+<P>The implementation requires you to copy the SCARD_IO_REQUEST structure to the ReplyBuffer, followed by the data received from the card. Again, if you use the SmartcardxxRequest and SmartcardxxReply functions, you do not need to copy the structure because the library does this.</P>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>This function returns an NTSTATUS value. Possible values are the following:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Meaning</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>STATUS_SUCCESS</TD>
+<TD width=50%>Transmission successful.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>STATUS_NO_MEDIA</TD>
+<TD width=50%>No card is in the reader.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>STATUS_IO_TIMEOUT</TD>
+<TD width=50%>The request has timed out.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>STATUS_INVALID_DEVICE_REQUEST</TD>
+<TD width=50%>The protocol defined by <B>dwProtocol</B> is invalid.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=17%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>3.0 and later</TD>
+<TD width=17%>&nbsp;</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TSPI_lineSetDevConfig</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="TSPI_lineSetDevConfig" />
+<MSHelp:RLTitle Title="TSPI_lineSetDevConfig" />
+<MSHelp:Keyword Index="A" Term="wcesdkrTSPI_lineSetDevConfig" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_930159">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrtspi_linesetdevconfig"></A>TSPI_lineSetDevConfig</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>The <B>TSPI_lineSetDevConfig </B>function restores the configuration of a device associated one-to-one with the line device from an "" data structure previously obtained using <B>TSPI</B>_<B>lineGetDevConfig</B>. The contents of this data structure are specific to the line [service provider] and device class.</P>
+
+<PRE class="syntax"><B>LONG</B> <B>TSPIAPI</B> <B>TSPI</B>_<B>lineSetDevConfig(</B>
+<B>DWORD</B> <I>dwDeviceID</I>,             
+<B>LPVOID</B> <B>const</B> <I>lpDeviceConfig</I>,  
+<B>DWORD</B> <I>dwSize</I>,                 
+<B>LPCWSTR</B> <I>lpszDeviceClass</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwDeviceID </I></DT>
+
+<DD>The line device to be configured. </dd>
+
+<DT><I>lpDeviceConfig</I> </DT>
+
+<DD>A pointer to the configuration data structure that is returned in the variable portion of the VARSTRING structure by <B>TSPI</B>_<B>lineGetDevConfig</B>. </dd>
+
+<DT><I>dwSize</I> </DT>
+
+<DD>The number of bytes in the structure pointed to by <I>lpDeviceConfig</I>. This value is returned in the <I>dwStringSize</I> member in the <B>VARSTRING</B> structure returned by TSPI_lineGetDevConfig. </dd>
+
+<DT><I>lpszDeviceClass</I> </DT>
+
+<DD>A pointer to a null-terminated Unicode string that specifies the device class of the device whose configuration is to be restored. Valid device class strings are the same as those specified for the <B>TSPI</B>_<B>lineGetID</B> function when it is applied to a "line" device (that is, when <I>dwSelect</I> has the value LINECALLSELECT_LINE). </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Returns zero if the function succeeds, or an error number if an error occurs. Possible return values are: </P>
+
+<P>LINEERR_INVALDEVICECLASS, LINEERR_NOMEM, LINEERR_INVALPOINTER, LINEERR_OPERATIONUNAVAIL, LINEERR_INVALPARAM, LINEERR_OPERATIONFAILED, LINEERR_INVALLINESTATE, LINEERR_RESOURCEUNAVAIL, LINEERR_NODRIVER. </P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The call state is device specific.</P>
+
+<P>The service provider returns LINEERR_INVALPARAM if the information contained in the structure pointed to by lpDeviceConfig is not valid for this device.</P>
+
+<P>The service provider returns LINEERR_INVALLINESTATE if the device configuration cannot be changed in the current line state. The line may be in use by another application.</P>
+
+<P>This function can be used to restore the configuration of a device associated one-to-one with the line device from a data structure previously retrieved from the service provider using the <B>TSPI</B>_<B>lineGetDevConfig</B> function. The <I>lpszDeviceClass</I> parameter selects which of among possibly several different classes of devices is to have its configuration restored. The set of supported classes is restricted to those whose devices correspond one-to-one with the line device. For more information about common device classes, see TSPI Device Classes.</P>
+
+<P>A service provider typically allows the tapi/line device class under this function. It restores parameters that have "line" scope, such as the list of addresses in this line and the list of physical hardware devices such as COMM ports corresponding to the addresses or the maximum number of concurrent calls (if configurable).</P>
+
+<P>In general, this function does NOT allow media-related device classes such as mci waveaudio, low level wave, or datamodem device classes, because these usually apply to a particular call or a particular address. Because there can be more than one of these per line device, the identification of the particular call or address simply by the line device identifier parameter in this function is ambiguous. An exception can be made for call-specific or address-specific device classes in cases where there is class configuration information that applies to the entire line device scope, such as initial defaults.</P>
+
+<P>There are several reasons why exceptional support for call-specific and address-specific device classes is of only limited value under this function. First, because these classes can be ambiguous on multiple-address, multiple-call service providers, only a subset of service providers support them. Application programs are not likely to add a device-specific dependency on the inclusion of these classes in this function. Second, as higher-level media classes emerge that implement high-level protocols such as dial-in file system access in terms of low-level transport APIs, configuration for these classes tends toward instance scope instead of class scope. The high-level media API has to supply its own functions to configure call-specific or address-specific instances.</P>
+
+<P>Whatever sort of devices and device classes this function supports, it can potentially affect two kinds of configuration information: permanent and temporary. Permanent information survives across different "opens" of the line, and even across different "inits" of the service provider itself. Temporary information survives only within a unique "open" of the line. When the line is closed, any such temporary information that has been set or retrieved through <B>TSPI</B>_<B>lineGetDevConfig</B> can revert to default or undefined values. The caller can reliably retrieve any temporary configuration only by a sequence such as <B>TSPI_lineOpen</B>, <B>TSPI</B>_<B>lineConfigDialog</B>, <B>TSPI</B>_<B>lineGetDevConfig</B>. The caller can reliably set temporary configuration information retrieved by such a sequence through a sequence such as <B>TSPI</B>_<B>lineOpen</B>, <B>TSPI</B>_<B>lineSetDevConfig</B>. The temporary part of configuration remains stable only until the next <B>TSPI</B>_<B>lineConfigDialog</B>, <B>TSPI</B>_<B>lineSetDevConfig</B>, or <B>TSPI</B>_<B>lineClose</B>. The service provider must take care of storing any permanent part of the configuration, and reloading it whenever the service provider is initialized.</P>
+
+<P>The exact format of the data contained within the structure passed to this function is specific to the line and device class API, is undocumented, and is undefined. The structure passed to this function cannot be directly accessed or manipulated by the application, but can only be stored intact and later used from a previous <B>TSPI</B>_<B>lineGetDevConfig</B> to obtain the settings. The structure also cannot necessarily be passed to other devices, even of the same device class (although this may work in some instances, it is not guaranteed). A service provider should check this data structure for consistency to guard against failures due to a client application passing incompatible information.</P>
+
+<P><B>Note</B> Some service providers may permit the configuration to be set while a device is in use, and others may not.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>3.0 and later</TD>
+<TD width=19%>Tapicomn.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Coredll.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrtspi_lineclose.htm">TSPI_lineClose</A>, <A HREF="wcesdkrtspi_linegetdevconfig.htm">TSPI_lineGetDevConfig</A>, <A HREF="wcesdkrtspi_linegetid.htm">TSPI_lineGetID</A>, <A HREF="wcesdkrtspi_lineopen.htm">TSPI_lineOpen</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

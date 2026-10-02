@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Playing Sounds (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="Playing a sound consists of the following steps:       Lock a portion of the secondary buffer using IDirectSoundBuffer::Lock."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="Playing Sounds" />
+<MSHelp:RLTitle Title="Playing Sounds (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="playing sounds" />
+<MSHelp:Keyword Index="K" Term="sounds, playing" />
+<MSHelp:Keyword Index="A" Term="wcegmm_Playing_Sounds_dsound" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dsover.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924195">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_playing_sounds_dsound"></A>Playing Sounds</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Playing a sound consists of the following steps:
+
+<OL type="1">
+	<LI>Lock a portion of the secondary buffer using <a href="wcesdkrIDirectSoundBuffer_Lock_dsound.htm">IDirectSoundBuffer::Lock</a>. This method returns a pointer to the address where writing will begin, based on the offset from the beginning of the buffer that you pass in to the method.</li>
+
+	<LI>Write the audio data to the buffer.</li>
+
+	<LI>Unlock the buffer using <a href="wcesdkrIDirectSoundBuffer_Unlock_dsound.htm">IDirectSoundBuffer::Unlock</a>.</li>
+
+	<LI>Send the sound to the primary buffer and from there to the output device using <a href="wcesdkrIDirectSoundBuffer_Play_dsound.htm">IDirectSoundBuffer::Play</a>. If the buffer is a streaming buffer, it will continue playing in a loop as steps 1 to 3 are repeated. </li>
+</OL>
+
+<P>Because streaming sound buffers usually play continually and are conceptually circular, DirectSound returns two write pointers when locking a sound buffer. For example, if you tried to lock 3,000 bytes beginning at the midpoint of a 4,000-byte buffer, the <B>Lock</B> method would return one pointer to the last 2,000 bytes of the buffer, and a second pointer to the first 1,000 bytes. The second pointer is NULL if the locked portion of the buffer does not wrap around.</P>
+
+<P>Normally the buffer stops playing automatically when the end is reached. However, if the DSBPLAY_LOOPING flag was set in the <I>dwFlags</I> parameter to the <B>Play</B> method, the buffer plays repeatedly until the application calls the <a href="wcesdkrIDirectSoundBuffer_Stop_dsound.htm">IDirectSoundBuffer::Stop</a> method.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;When using a waveout driver, DirectSound will use waveOutGetPosition which returns a 32 bit value. This value will wrap in just under 7 hours, making the DirectSound subsystem unstable. If your application requires prolonged continous playback of audio with DirectSound, a DirectSound driver should be developed to avoid this problem.</BLOCKQUOTE>
+
+<P>For streaming sound buffers, your application is responsible for ensuring that each block of data is written to the buffer ahead of the current play position. (For more on the play position, see <A HREF="wcegmm_current_play_and_write_positions_dsound.htm">Current Play and Write Positions</A>.) Applications should write at least 1 second ahead of the current play position to minimize the possibility of gaps in the audio output during playback.</P>
+
+<P>The following C example writes data to a sound buffer, starting at the offset into the buffer passed in <I>dwOffset</I>:</P>
+
+<PRE class="code">BOOL AppWriteDataToBuffer( 
+    LPDIRECTSOUNDBUFFER lpDsb,  // the DirectSound buffer
+    DWORD dwOffset,             // our own write cursor
+    LPBYTE lpbSoundData,        // start of our data
+    DWORD dwSoundBytes)         // size of block to copy
+{ 
+    LPVOID  lpvPtr1; 
+    DWORD   dwBytes1; 
+    LPVOID  lpvPtr2; 
+    DWORD   dwBytes2; 
+    HRESULT hr; 
+ 
+    // Obtain memory address of write block. This will be in two parts
+    // if the block wraps around.
+    hr = lpDsb-&gt;lpVtbl-&gt;Lock(lpDsb, dwOffset, dwSoundBytes, &amp;lpvPtr1, 
+        &amp;dwBytes1, &amp;lpvPtr2, &amp;dwBytes2, 0); 
+ 
+    // If DSERR_BUFFERLOST is returned, restore and retry lock. 
+    if (DSERR_BUFFERLOST == hr) 
+    { 
+        lpDsb-&gt;lpVtbl-&gt;Restore(lpDsb); 
+        hr = lpDsb-&gt;lpVtbl-&gt;Lock(lpDsb, dwOffset, dwSoundBytes, 
+            &amp;lpvPtr1, &amp;dwAudio1, &amp;lpvPtr2, &amp;dwAudio2, 0); 
+    } 
+    if SUCCEEDED(hr) 
+    { 
+        // Write to pointers. 
+        CopyMemory(lpvPtr1, lpbSoundData, dwBytes1); 
+        if (NULL != lpvPtr2) 
+        { 
+            CopyMemory(lpvPtr2, lpbSoundData+dwBytes1, dwBytes2); 
+        } 
+        // Release the data back to DirectSound. 
+        hr = lpDsb-&gt;lpVtbl-&gt;Unlock(lpDsb, lpvPtr1, dwBytes1, lpvPtr2, 
+            dwBytes2); 
+        if SUCCEEDED(hr) 
+        { 
+            // Success. 
+            return TRUE; 
+        } 
+    } 
+    // Lock, Unlock, or Restore failed. 
+    return FALSE; 
+} 
+ </PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineGenerateDigits</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="lineGenerateDigits" />
+<MSHelp:RLTitle Title="lineGenerateDigits" />
+<MSHelp:Keyword Index="A" Term="wcesdkrlineGenerateDigits" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_930027">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrlinegeneratedigits"></A>lineGenerateDigits</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>The <B>lineGenerateDigits</B> function initiates the generation of the specified digits on the specified call as inband tones using the specified signaling mode. Invoking this function with a NULL value for <I>lpszDigits</I> aborts any digit generation currently in progress. Invoking <B>lineGenerateDigits</B> or <B>lineGenerateTone</B> while digit generation is in progress aborts the current digit generation or tone generation and initiates the generation of the most recently specified digits or tone. </P>
+
+<PRE class="syntax"><B>LONG WINAPI lineGenerateDigits(</B>
+<B>HCALL </B><I>hCall</I><B>,</B>
+<B>DWORD </B><I>dwDigitMode</I><B>,</B>
+<B>LPCSTR </B><I>lpszDigits</I><B>,</B>
+<B>DWORD </B><I>dwDuration</I><B> );</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hCall</I> </DT>
+
+<DD>A handle to the call. The application must be an owner of the call. Call state of <I>hCall</I> can be any state. </dd>
+
+<DT><I>dwDigitMode</I> </DT>
+
+<DD>The format to be used for signaling these digits. Note that <I>dwDigitMode</I> is allowed to have only a single flag set. This parameter uses one of the LINEDIGITMODE_ Constants. </dd>
+
+<DT><I>lpszDigits</I> </DT>
+
+<DD>A pointer to a null-terminated character buffer that contains the digits to be generated. Valid characters are those specified for the LINEDIGITMODE_ Constants provided in <I>dwDigitModes</I>. 
+
+<P>In addition, ',' (comma) is also a valid character. A comma injects an extra delay between the signaling of the previous and next digits it separates. The duration of this pause is configuration defined, and the line's device capabilities indicate what this duration is. Multiple commas can be used to inject longer pauses. Invalid digits are ignored during the generation, rather than being reported as errors. 
+
+
+<P>'!' (exclamation) is a valid character. This character causes a "hookflash" operation, as described for dialable addresses. 
+</dd>
+
+<DT><I>dwDuration</I> </DT>
+
+<DD>Both the duration in milliseconds of DTMF digits and pulse and DTMF inter-digit spacing. A value of 0 uses a default value. The <I>dwDuration</I> parameter must be within the range specified by <I>MinDialParams</I> and <I>MaxDialParams</I> in <B>LINEDEVCAPS</B>. If out of range, the actual value is set to the nearest value in the range. </dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>Returns zero if the request succeeds or a negative error number if an error occurs. Possible return values are: </P>
+
+<P>LINEERR_INVALCALLHANDLE, LINEERR_NOTOWNER, LINEERR_INVALCALLSTATE, LINEERR_OPERATIONUNAVAIL, LINEERR_INVALDIGITMODE, LINEERR_OPERATIONFAILED, LINEERR_INVALPOINTER, LINEERR_RESOURCEUNAVAIL, LINEERR_NOMEM, LINEERR_UNINITIALIZED.</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>The <B>lineGenerateDigits</B> function is considered to have completed successfully when the digit generation has been successfully initiated, not when all digits have been generated. In contrast to <B>lineDial</B>, which dials digits in a network-dependent fashion, <B>lineGenerateDigits</B> guarantees to produce the digits as inband tones over the voice channel using DTMF or hookswitch dial pulses when using pulse. The <B>lineGenerateDigits</B> function is generally not suitable for making calls or dialing. It is intended for end-to-end signaling over an established call. </P>
+
+<P>After all digits in <I>lpszDigits</I> have been generated, or after digit generation has been aborted or canceled, a LINE_GENERATE message is sent to the application. </P>
+
+<P>Only one inband generation request (tone generation or digit generation) is allowed to be in progress per call across all applications that are owners of the call. Digit generation on a call is canceled by initiating either another digit generation request or a tone generation request. To cancel the current digit generation, the application can invoke <B>lineGenerateDigits</B> and specify NULL for the <I>lpszDigits</I> parameter. </P>
+
+<P>Depending on the service provider and hardware, the application can monitor the digits it generates itself. If that is not desired, the application can disable digit monitoring while generating digits. </P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>1.0 and later</TD>
+<TD width=19%>Tapi.h</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>Coredll.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrlinedevcaps_str.htm">LINEDEVCAPS</A>, <A HREF="wcesdkrlinegeneratetone.htm">lineGenerateTone</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

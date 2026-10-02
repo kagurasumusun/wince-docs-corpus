@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::GetDisplayName</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IMoniker::GetDisplayName" />
+<MSHelp:RLTitle Title="IMoniker::GetDisplayName" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IMoniker_GetDisplayName" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926640">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_imoniker_getdisplayname"></A>IMoniker::GetDisplayName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This method returns the display name.</P>
+
+<PRE class="syntax"><B>HRESULT GetDisplayName( </B>
+<B>IBindCtx *</B><I>pbc</I><B>, </B>
+<B>IMoniker *</B><I>pmkToLeft</I><B>, </B>
+<B>LPOlESTR * </B><I>ppszDisplayName</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <B>IBindCtx</B> interface on the bind context to be used in this operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. For more information, see <B>IBindCtx</B>.</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.</dd>
+
+<DT><I>ppszDisplayName</I></DT>
+
+<DD>[out] Address of <B>LPOLESTR</B> pointer variable that receives a pointer to the display name string. When successful, this string is a zero-terminated wide character string (two bytes per character) that contains the display name of the moniker. The implementation must use <B>IMalloc::Alloc</B> to allocate the string returned in <I>ppszDisplayName</I>, and the caller is responsible for calling <B>IMalloc::Free</B> to free it. Both the caller and the implementation of this method use the COM task allocator returned by <A HREF="_wcesdk_com_cogetmalloc.htm">CoGetMalloc</A>. If an error occurs, the implementation must set *<I>ppszDisplayName</I> should be set to NULL.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>The method supports the standard return value E_OUTOFMEMORY, as well as the values described in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Value</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>S_OK</TD>
+<TD width=62%>The display name was successfully supplied.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>MK_E_EXCEEDEDDEADLINE </TD>
+<TD width=62%>The binding operation could not be completed within the time limit specified by the bind context's <A HREF="_wcesdk_com_bind_opts.htm">BIND_OPTS</A> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_NOTIMPL</TD>
+<TD width=62%>There is no display name.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P><B>IMoniker::GetDisplayName</B> provides a string that is a displayable representation of the moniker. A display name is not a complete representation of a moniker's internal state; it is simply a form that can be read by users. As a result, it is possible (though rare) for two different monikers to have the same display name. While there is no guarantee that the display name of a moniker can be parsed back into that moniker when calling the <A HREF="_wcesdk_com_mkparsedisplayname.htm">MkParseDisplayName</A> function with it, failure to do so is rare.</P>
+
+<P>As examples, the file moniker implementation of this method supplies the path the moniker represents, and an item moniker's display name is the string identifying the item that is contained in the moniker. </P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>It is possible that retrieving a moniker's display name may be an expensive operation. For efficiency, you may want to cache the results of the first successful call to <B>IMoniker::GetDisplayName</B>, rather than making repeated calls.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>If you are writing a moniker class in which the display name does not change, simply cache the display name and supply the cached name when requested. If the display name can change over time, getting the current display name might mean that the moniker has to access the object's storage or bind to the object, either of which can be expensive operations. If this is the case, your implementation of <B>IMoniker::GetDisplayName</B> should return MK_E_EXCEEDEDDEADLINE if the name cannot be retrieved by the time specified in the bind context's <B>BIND_OPTS</B> structure.</P>
+
+<P>A moniker that is intended to be part of a generic composite moniker should include any preceding delimiter (such as '\') as part of its display name. For example, the display name returned by an item moniker includes the delimiter specified when it was created with the <A HREF="_wcesdk_com_createitemmoniker.htm">CreateItemMoniker</A> function. The display name for a file moniker does not include a delimiter because file monikers are always expected to be the leftmost component of a composite.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Oaidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_cogetmalloc.htm">CoGetMalloc</A>, <A HREF="_wcesdk_com_createitemmoniker.htm">CreateItemMoniker</A>, <A HREF="_wcesdk_com_mkparsedisplayname.htm">MkParseDisplayName</A>, <A HREF="_wcesdk_com_bind_opts.htm">BIND_OPTS</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

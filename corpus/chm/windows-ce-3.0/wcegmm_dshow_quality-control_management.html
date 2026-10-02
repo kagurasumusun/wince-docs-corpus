@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>Quality-Control Management (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="Quality control is a mechanism for adjusting the rate of data flow through the filter graph in response to run-time performance. If a renderer filter is receiving too much data or too little data, it can send a quality message."/>
+<xml>
+<MSHelp:TOCTitle Title="Quality-Control Management" />
+<MSHelp:RLTitle Title="Quality-Control Management (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_quality-control_management" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924087">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_quality-control_management"></A>Quality-Control Management</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Quality control is a mechanism for adjusting the rate of data flow through the filter graph in response to run-time performance. If a renderer filter is receiving too much data or too little data, it can send a <I>quality message</I>. The quality message requests an adjustment in the data rate. By default, quality messages travel upstream from the renderer until they reach a filter that can respond (if any). An application can also implement a custom quality manager. In that case, the renderer passes quality messages directly to the application's quality manager. </P>
+
+<P>This article contains the following topics.
+
+<UL type="disc">
+	<LI>Quality Messages</li>
+
+	<LI>Default Quality Control</li>
+</UL>
+
+<H2 class="dtH2">Quality Messages</H2>
+
+<P>Quality messages are defined with the <a href="wcesdkrstructs__quality.htm">Quality</a> structure. This structure contains the following members:
+
+<UL type="disc">
+	<LI><I>Type</I><B>:</B> Either Famine, indicating that the filter is receiving too little data, or Flood, indicating that the filter is receiving too much data. </li>
+
+	<LI><I>Proportion</I><B>:</B> The requested adjustment in the data rate, from a baseline of 1000. For example, 750 indicates 75% and 1500 indicates 150%. </li>
+
+	<LI><I>Late</I><B>:</B> Reference time indicating how late the most recent sample arrived. The value is negative if the sample arrived early. </li>
+
+	<LI><I>TimeStamp</I><B>:</B> The time stamp on the most recent sample. </li>
+</UL>
+
+<P>For example, suppose that a sample with a time stamp of 240 milliseconds (ms) reaches the renderer at 280 ms, stream time. The renderer creates a quality message of type Famine. The sample arrived 40 ms late, so the <I>Late </I>member is 400000. (All reference times are in 100-nanosecond units.) The <I>TimeStamp</I> member is 2400000.</P>
+
+<P>For the <I>Proportion</I> member, the renderer might use a running average to calculate the value. Perhaps samples have been arriving on time, and this sample is an anomaly. In that case the renderer might request only a small correction. On the other hand, if samples are consistently late, the renderer might request a larger correction.</P>
+
+<P>Quality control is handled through the <a href="wcesdkriqualitycontrol_interface.htm">IQualityControl</a> interface. It contains two methods.
+
+<UL type="disc">
+	<LI><a href="wcesdkriqualitycontrol__notify.htm">Notify</a>: Sends a quality message. </li>
+
+	<LI><a href="wcesdkriqualitycontrol__setsink.htm">SetSink</a>: Specifies a custom quality manager. </li>
+</UL>
+
+<P>An object that implements <B>IQualityControl</B> receives quality messages through its <B>Notify</B> method. It can either handle the message or pass the message to another object. If the application calls the object's <B>SetSink</B> method, the object should delegate quality control to the specified quality manager.</P>
+
+<H2 class="dtH2">Default Quality Control</H2>
+
+<P>The <A HREF="wcegmm_filter_base_classes.htm">filter base classes</A> implement some default behaviors for video quality control.</P>
+
+<P>Quality messages start at the renderer. The base class for video renderers is <a href="wcesdkrcbasevideorenderer_class.htm">CBaseVideoRenderer</a>, which has the following behavior:
+
+<OL type="1">
+	<LI>When the video renderer receives a sample, it compares the time stamp on the sample with the current reference time. </li>
+
+	<LI>The video renderer generates a quality message. In the base class, the <I>Proportion</I> member of the quality message is limited to a range of 500 (50%) to 2000 (200%). Values outside this range could result in abrupt quality changes. </li>
+
+	<LI>By default, the video renderer sends the quality message to the upstream output pin (the pin connected to its input pin). Applications can override this behavior by calling the <a href="wcesdkriqualitycontrol__setsink.htm">SetSink</a> method. </li>
+</OL>
+
+<P>What happens next depends on the upstream filter. Typically, this is a transform filter. The base class for transform filters is <a href="wcesdkrctransformfilter_class.htm">CTransformFilter</a>, which uses the <a href="wcesdkrctransforminputpin_class.htm">CTransformInputPin</a> and <a href="wcesdkrctransformoutputpin_class.htm">CTransformOutputPin</a> classes to implement input and output pins. Together, these classes have the following behavior:
+
+<OL type="1">
+	<LI>The <a href="wcesdkrctransformoutputpin__notify.htm">CTransformOutputPin::Notify</a> method calls <a href="wcesdkrctransformfilter__alterquality.htm">CTransformFilter::AlterQuality</a>, a private method on the filter base class. </li>
+
+	<LI>Derived filters can override <B>AlterQuality</B> to handle the quality message. By default, <B>AlterQuality</B> ignores the quality message. </li>
+
+	<LI>If <B>AlterQuality</B> does not handle the quality message, the output pin calls <a href="wcesdkrcbaseinputpin__passnotify.htm">CBaseInputPin::PassNotify</a>, a private method on the filter's input pin. </li>
+
+	<LI><B>PassNotify</B> passes the quality message to the appropriate place &#0151; the next upstream output pin, or a custom quality manager. </li>
+</OL>
+
+<P>Assuming that no transform filter handles the quality message, the message eventually reaches the output pin on the source filter. In the base classes, <a href="wcesdkrcbasepin__notify.htm">CBasePin::Notify</a> returns E_NOTIMPL. How a particular source filter handles quality messages depends on the nature of the source. Some sources, such as live video capture, cannot perform meaningful quality control. Other sources can adjust the rate at which they deliver samples.</P>
+
+<P>The base video renderer implements <a href="wcesdkrIQualityControl__Notify.htm">IQualityControl::Notify</a>, which means you can pass quality messages to the renderer itself. If you set the <I>Proportion</I> member to a value less than 1000, the video renderer inserts a wait period between each frame that it renders, in effect slowing down the renderer. (You might do this to reduce system usage, for example.) For more information, see <a href="wcesdkrcbasevideorenderer__throttlewait.htm">CBaseVideoRenderer::ThrottleWait</a>. Setting the <I>Proportion</I> member to a value greater than 1000 has no effect.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

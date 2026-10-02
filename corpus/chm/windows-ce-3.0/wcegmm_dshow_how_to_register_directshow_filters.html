@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>How to Register DirectShow Filters (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="This article describes how to make a Microsoft DirectShow filter self-registering. It contains the following sections."/>
+<xml>
+<MSHelp:TOCTitle Title="How to Register DirectShow Filters" />
+<MSHelp:RLTitle Title="How to Register DirectShow Filters (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_how_to_register_directshow_filters" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="True" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924091">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_how_to_register_directshow_filters"></A>How to Register DirectShow Filters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This article describes how to make a Microsoft DirectShow filter self-registering. It contains the following sections.
+
+<UL type="disc">
+	<LI>Layout of the Registry Keys</li>
+
+	<LI>Registering a Filter</li>
+
+	<LI>Unregistering a Filter</li>
+</UL>
+
+<P>This article does not describe how to create a DLL. For information on creating DLLs, see <A HREF="wcegmm_dshow_how_to_create_a_dll.htm">How to Create a DLL</A>.</P>
+
+<H2 class="dtH2">Layout of the Registry Keys</H2>
+
+<P>The DLL that contains the filter is registered as the filter's COM server. When an application calls <a href="_wcesdk_COM_CoCreateInstance.htm">CoCreateInstance</a> to create the filter, the Microsoft Windows COM library uses this registry entry to locate the DLL. </P>
+
+<P>The registry entry for the DLL is as follows. See %_WINCEROOT%\public\directx\oak\files\directx.reg for further examples.</P>
+
+<PRE class="code">HKEY_CLASSES_ROOT
+    CLSID
+        <I>Filter CLSID</I>
+            REG_SZ: (Default) = <I>Friendly name of filter</I>
+            REG_DWORD: Merit = <I>Filter merit value.  Filters with higher merit are enumerated first</I>
+
+            InprocServer32
+                REG_SZ: (Default) = File name of the DLL
+                REG_SZ: ThreadingModel = Both
+
+            Pins
+            Pin Name
+REG_DWORD: Direction = {0|1} Input(0) or Output(1)
+REG_DWORD: IsRendered = {0|1} Pin Renders its Data
+REG_DWORD: AllowedZero = {0|1} Filter does not require pin to be connected
+REG_DWORD: AllowedMany = {0|1} Filter may have many such pins
+            Types
+MajorType GUID
+SubType GUID
+Specifies the media types supported by the pin {MajorType GUID}\{SubType GUID}.  If SubType is GUID_NULL ({0000-...-0000}), the pin may be queried to accept connections with any SubType within the MajorType.  A pin may have several such entries and a filter may have several pin entries.</PRE>
+
+<P>The registry entry for the filter information is:</P>
+
+<PRE class="code">HKEY_CLASSES_ROOT
+    Filter
+          Filter CLSID
+               REG_SZ: (Default) = Friendly Name</PRE>
+
+<P>Filter CLSIDs listed under the Filter key will be enumerated as candidates in the intelligent connect process of <a href="wcesdkrigraphbuilder__renderfile.htm">RenderFile</a> when the graph builder tries to assemble the correct filters to play back a given source media.</P>
+
+<H2 class="dtH2">Registering a Filter</H2>
+
+<P>One can either register filters statically at image creation time by adding appropriate entries to the platform registry file or dynamically as follows. Note that if the registry on the device in not in non-volatile RAM and one is registering filters dynamically, that regsrv32.exe must be explicitly called everytime the registry information is lost or the filters will not be found by <a href="wcesdkrigraphbuilder__renderfile.htm">RenderFile</a> and COM.</P>
+
+<P class="labelproc"><B>To register a filter</B>
+
+<OL type="1">
+	<LI>Declare filter information. </li>
+
+	<LI>In the factory template for the filter, include a pointer to the filter information. </li>
+
+	<LI>Implement the <B>DllRegisterServer</B> function. </li>
+</OL>
+
+<P>The sections that follow describe these steps in detail.</P>
+
+<H3 class="dtH3">Declare Filter Information</H3>
+
+<P>The first step is to declare the filter information. DirectShow defines a set of structures for describing filters, pins, and media types:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Structure</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>AMOVIESETUP_FILTER</TD>
+<TD width=50%>Describes a filter</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>AMOVIESETUP_PIN</TD>
+<TD width=50%>Describes a pin</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>AMOVIESETUP_MEDIATYPE</TD>
+<TD width=50%>Describes a media type.</TD>
+</TR>
+</table></div>
+
+<P>These structures are nested. The AMOVIESETUP_FILTER structure has a pointer to an array of AMOVIESETUP_PIN structures, and each AMOVIESETUP_PIN structure has a pointer to an array of AMOVIESETUP_MEDIATYPE structures.</P>
+
+<P>The structures provide enough information for the <a href="wcesdkrIfilterMapper_interface.htm">IFilterMapper</a> interface to locate a filter. They are not a complete description of a filter. For example, if the filter creates multiple instances of the same pin, declare one AMOVIESETUP_PIN structure for that pin. Also, a filter is not required to support every combination of media types that it registers. </P>
+
+<P>Declare these structures as global variables within your DLL. The following example shows a filter with one output pin.</P>
+
+<PRE class="code">static const WCHAR g_wszName[] = L"Some Filter";
+
+AMOVIESETUP_MEDIATYPE sudMediaTypes[] = {
+    { &amp;MEDIATYPE_Video, &amp;MEDIASUBTYPE_RGB24 },
+    { &amp;MEDIATYPE_Video, &amp;MEDIASUBTYPE_RGB32 },
+};
+
+AMOVIESETUP_PIN sudOutputPin = {
+    L"Output",      // Pin string name.
+    FALSE,          // Is this pin rendered?
+    TRUE,           // Is it an output pin?
+    FALSE,          // Can the filter create zero instances?
+    FALSE,          // Does the filter create multiple instances?
+    &amp;GUID_NULL,     // Connects to filter.
+    NULL,           // Connects to pin.
+    2,              // Number of media types.
+    sudMediaTypes   // Pointer to media types.
+};
+
+AMOVIESETUP_FILTER sudFilterReg = {
+    &amp;CLSID_SomeFilter,      // Filter CLSID.
+    g_wszName,              // Filter name.
+    MERIT_NORMAL,           // Merit.
+    1,                      // Number of pin types.
+    &amp;sudPins                // Pointer to pin information.
+};</PRE>
+
+<P>The filter name is declared as a static global variable, because it will be used again elsewhere.</P>
+
+<P>Your filter must also override the base class GetSetupData method to return the setup data structure as shown below:</P>
+
+<PRE class="code">LPAMOVIESETUP_FILTER CSomeFilter::GetSetupData() 
+{
+    return (LPAMOVIESETUP_FILTER) &amp; sudFilterReg;
+}</PRE>
+
+<H3 class="dtH3">Declare the Factory Template</H3>
+
+<P>The next step is to declare the factory template for your filter. A factory template is a C++ class that contains information for the class factory. In your DLL, declare a global array of factory templates, one for each filter or COM component in your DLL. The array must be named <I>g_Templates</I>. For more information about factory templates, see <A HREF="wcegmm_dshow_how_to_create_a_dll.htm">How to Create a DLL</A>.</P>
+
+<P>The <I>m_pAMovieSetup_Filter</I> member of the factory template is a pointer to the AMOVIESETUP_FILTER structure described previously. The following example shows a factory template, using the structure given in the previous example.</P>
+
+<PRE class="code">CFactoryTemplate g_Templates[] =
+{
+    {
+        g_wszName,                      // Name.
+        &amp;CLSID_SomeFilter,              // CLSID.
+        CSomeFilter::CreateInstance,    // Creation function.
+        NULL,
+        &amp;sudFilterReg                   // Pointer to filter information.
+    }
+};
+int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);</PRE>
+
+<H3 class="dtH3">Implement DllRegisterServer</H3>
+
+<P>The final step is to implement the <B>DllRegisterServer</B> function. The DLL that contains the component must export this function. The function will be called by a set-up application, or when the user runs the Regsvr32.exe tool.</P>
+
+<P>The following example shows a minimal implementation of <B>DlLRegisterServer</B>.</P>
+
+<PRE class="code">STDAPI DllRegisterServer(void)
+{
+    return AMovieDLLRegisterServer(TRUE);
+}</PRE>
+
+<P>The DirectShow function <a href="wcesdkrdll_setup_functs__amoviedllregisterserver.htm">AMovieDLLRegisterServer</a> creates registry entries for every component declared in the <I>g_Templates</I> array.</P>
+
+<P>Filter categories introduced with <B>AMovieDLLRegisterServer2</B> are not currently supported on Windows CE.</P>
+
+<H2 class="dtH2">Unregistering a Filter</H2>
+
+<P>To unregister a filter, implement the <B>DllUnregisterServer</B> function. Within this function, call the DirectShow <a href="wcesdkrdll_setup_functs__amoviedllregisterserver.htm">AMovieDLLRegisterServer</a> function with a value of FALSE. </P>
+
+<P>The following example shows how to unregister a filter.</P>
+
+<PRE class="code">STDAPI DllUnregisterServer()
+{
+    return AMovieDLLRegisterServer(FALSE);
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

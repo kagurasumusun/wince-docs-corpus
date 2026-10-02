@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>How to Implement IUnknown (Windows CE 3.0 Graphics and Multimedia)</title>
+<meta name="Description" Content="Microsoft DirectShow is based on the Component Object Model (COM). If you write your own filter, you must implement it as a COM object. The DirectShow base classes provide a framework from which to do this."/>
+<xml>
+<MSHelp:TOCTitle Title="How to Implement IUnknown" />
+<MSHelp:RLTitle Title="How to Implement IUnknown (Windows CE 3.0)" />
+<MSHelp:Keyword Index="A" Term="wcegmm_dshow_how_to_implement_iunknown" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="dshow.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924089">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcegmm_dshow_how_to_implement_iunknown"></A>How to Implement IUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>Microsoft DirectShow is based on the Component Object Model (COM). If you write your own filter, you must implement it as a COM object. The DirectShow base classes provide a framework from which to do this. Using the base classes is not required, but it can simplify the development process. This article describes some of the internal details of COM objects and their implementation in the DirectShow base classes.</P>
+
+<P>This article assumes that you know how to program COM client applications &#0151; in other words, that you understand the methods in <a href="_wcesdk_com_IUnknown.htm">IUnknown</a> - but does not assume any prior experience developing COM objects. DirectShow handles many of the details of developing a COM object. If you have experience developing COM objects, you should read Using <B>CUnknown</B>, which describes the <a href="wcesdkrcunknown_class.htm">CUnknown</a> base class.</P>
+
+<P>COM is a specification, not an implementation. It defines the rules that a component must follow; putting those rules into effect is left to the developer. In DirectShow, all objects derive from a set of C++ base classes. The base class constructors and methods do most of the COM "bookkeeping" work, such as keeping a consistent reference count. By deriving your filter from a base class, you inherit the functionality of the class. To use base classes effectively, you need a general understanding of how they implement the COM specification.</P>
+
+<P>This article contains the following topics.
+
+<UL type="disc">
+	<LI>How <B>IUnknown</B> Works</li>
+
+	<LI>Using <B>CUnknown</B></li>
+
+	<LI>Summary</li>
+</UL>
+
+<H2 class="dtH2">How IUnknown Works</H2>
+
+<P>The methods in <B>IUnknown</B> enable an application to query for interfaces on the component and manage the component's reference count. This section contains the following topics.
+
+<UL type="disc">
+	<LI>Reference Count</li>
+
+	<LI>Interface Queries</li>
+
+	<LI>Aggregation and Delegation</li>
+</UL>
+
+<H3 class="dtH3">Reference Count</H3>
+
+<P>The reference count is an internal variable, incremented in the <a href="_wcesdk_com_Iunknown_AddRef.htm">IUnknown::AddRef</a> method and decremented in the <a href="_wcesdk_com_Iunknown_Release.htm">IUnknown::Release</a> method. The base classes manage the reference count and synchronize access to the reference count among multiple threads. </P>
+
+<H3 class="dtH3">Interface Queries</H3>
+
+<P>Querying for an interface is also straightforward. The caller passes two parameters: an interface identifier (IID), and the address of a pointer. If the component supports the requested interface, it sets the pointer to the interface, increments its own reference count, and returns S_OK. Otherwise, it sets the pointer to NULL and returns E_NOINTERFACE. The following pseudocode shows the general outline of the <a href="_wcesdk_com_Iunknown_QueryInterface.htm">IUnknown::QueryInterface</a> method. Component aggregation, described in the next section, introduces some additional complexity.</P>
+
+<PRE class="code">if (IID == IID_IUnknown)
+    set pointer to (IUnknown *)this
+    AddRef
+    return S_OK
+
+else if (IID == IID_ISomeInterface)
+    set pointer to (ISomeInterface *)this
+    AddRef
+    return S_OK
+
+else if ... 
+
+else
+    set pointer to NULL
+    return E_NOINTERFACE</PRE>
+
+<P>The only difference between the <B>QueryInterface</B> method of one component and the <B>QueryInterface</B> method of another is the list of IIDs that each component tests. For every interface that the component supports, the component must test for the IID of that interface.</P>
+
+<H3 class="dtH3">Aggregation and Delegation</H3>
+
+<P>Component aggregation must be transparent to the caller. Therefore, the aggregate must expose a single <a href="_wcesdk_com_IUnknown.htm">IUnknown</a> interface, with the aggregated component deferring to the outer component's implementation. Otherwise, the caller would see two different <B>IUnknown</B> interfaces in the same aggregate. If the component is not aggregated, it uses its own implementation. </P>
+
+<P>To support this behavior, the component must add a level of indirection. A <I>delegating IUnknown</I> delegates the work to the appropriate place: to the outer component, if there is one, or to the component's internal version. A <I>nondelegating IUnknown</I> does the work, as described in the previous section.</P>
+
+<P>The delegating version is public and keeps the name <B>IUnknown</B>. The nondelegating version is renamed <a href="wcesdkrinondelegatingunknown_interface.htm">INonDelegatingUnknown</a>. This name is not part of the COM specification, because it is not a public interface. </P>
+
+<P>When the client creates an instance of the component, it calls the <a href="_wcesdk_com_IClassFactory_CreateInstance.htm">IClassFactory::CreateInstance</a> method. One parameter is a pointer to the aggregating component's <B>IUnknown</B> interface, or is NULL if the new instance is not aggregated. In its constructor method, the component uses this parameter to store a member variable that indicates which <B>IUnknown</B> interface to use, as shown in the following example.</P>
+
+<PRE class="code">CMyComponent::CMyComponent(IUnknown *pOuterUnkown)
+{
+    if (pOuterUnknown == NULL)
+        m_pUnknown = (IUnknown *)(INonDelegatingUnknown *)this;
+    else
+        m_pUnknown = pOuterUnknown;
+
+    [ ... more constructor code ... ]
+}</PRE>
+
+<P>Each method in the delegating <B>IUnknown</B> calls its nondelegating counterpart, as shown in the following example.</P>
+
+<PRE class="code">HRESULT QueryInterface(REFIID iid, void **ppv) 
+{
+    return m_pUnknown-&gt;QueryInterface(iid, ppv);
+}</PRE>
+
+<P>By the nature of delegation, the delegating methods look identical in every component. Only the nondelegating versions change.</P>
+
+<H2 class="dtH2">Using CUnknown</H2>
+
+<P>DirectShow implements <B>IUnknown</B> in a base class called <a href="wcesdkrcunknown_class.htm">CUnknown</a>. You can use <B>CUnknown</B> to derive other classes, overriding only the methods that change across components. Most of the other base classes in DirectShow derive from <B>CUnknown</B>, so your component can inherit directly from <B>CUnknown</B> or from another base class.</P>
+
+<P>This section contains the following topics.
+
+<UL type="disc">
+	<LI><B>INonDelegatingUnknown</B></li>
+
+	<LI><B>IUnknown</B></li>
+
+	<LI>Class Constructor</li>
+</UL>
+
+<H3 class="dtH3">INonDelegatingUnknown</H3>
+
+<P><B>CUnknown</B> implements <B>INonDelegatingUnknown</B>. It manages reference counts internally, and in most situations your derived class can inherit the two reference-counting methods with no change. Be aware that <B>CUnknown</B> deletes itself when the reference count drops to zero. On the other hand, you must override <a href="wcesdkrcunknown__nondelegatingqueryinterface.htm">NonDelegatingQueryInterface</a>, because the method in the base class returns E_NOINTERFACE if it receives any IID other than IID_IUnknown. In your derived class, test for the IIDs of interfaces that you support, as shown in the following example.</P>
+
+<PRE class="code">STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv)
+{
+    if (riid == IID_ISomeInterface)
+    {
+        return GetInterface((ISomeInterface*)this, ppv);
+    }
+    // default
+    return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+}</PRE>
+
+<P>The utility function <a href="wcesdkrobject_pin_functs__getinterface.htm">GetInterface</a> sets the pointer, increments the reference count in a thread-safe way, and returns S_OK. In the default case, call the base class method and return the result. If you derive from another base class, call its <B>NonDelegatingQueryInterface</B> method instead. This enables you to support all the interfaces that the parent class supports.</P>
+
+<H3 class="dtH3">IUnknown</H3>
+
+<P>As mentioned earlier, the delegating version of <a href="_wcesdk_com_IUnknown.htm">IUnknown</a> is the same for every component, because it does nothing more than invoke the correct instance of the nondelegating version. For convenience, the header file Combase.h contains a macro, <a href="wcesdkriunknown_macro__declare_iunknown.htm">DECLARE_IUNKNOWN</a>, which declares the three delegating methods as inline methods. It expands to the following code.</P>
+
+<PRE class="code">STDMETHODIMP QueryInterface(REFIID riid, void **ppv) {      
+    return GetOwner()-&gt;QueryInterface(riid,ppv);            
+};                                                          
+STDMETHODIMP_(ULONG) AddRef() {                             
+    return GetOwner()-&gt;AddRef();                            
+};                                                          
+STDMETHODIMP_(ULONG) Release() {                            
+    return GetOwner()-&gt;Release();                           
+};</PRE>
+
+<P>The utility function <a href="wcesdkrcunknown__getowner.htm">GetOwner</a> retrieves a pointer to the <B>IUnknown</B> interface of the component that owns this component. For an aggregated component, the owner is the outer component. Otherwise, the component owns itself. Include the DECLARE_IUNKNOWN macro in the public section of your class definition.</P>
+
+<H3 class="dtH3">Class Constructor</H3>
+
+<P>Your class constructor should invoke the constructor method for the parent class, in addition to anything it does that is specific to your class. The following example is a typical constructor method.</P>
+
+<PRE class="code">CMyComponent(TCHAR *tszName, LPUNKNOWN pUnk, HRESULT *phr) 
+    : CUnknown(tszName, pUnk, phr)
+{ 
+    /* Other initializations */ 
+};</PRE>
+
+<P>The method takes the following parameters, which it passes directly to the <a href="wcesdkrCunknown__CUnknown.htm">CUnknown</a> constructor method.
+
+<UL type="disc">
+	<LI><I>tszName</I> specifies a name for the component. </li>
+
+	<LI><I>pUnk</I> is a pointer to the aggregating <a href="_wcesdk_com_IUnknown.htm">IUnknown</a>. </li>
+
+	<LI><I>pHr</I> is a pointer to an HRESULT value, indicating the success or failure of the method. </li>
+</UL>
+
+<H2 class="dtH2">Summary</H2>
+
+<P>The following example shows a derived class that supports <a href="_wcesdk_com_IUnknown.htm">IUnknown</a> and a hypothetical interface named <B><I>ISomeInterface</I></B>.</P>
+
+<PRE class="code">class CMyComponent : public CUnknown, public ISomeInterface
+{
+public:
+
+    DECLARE_IUNKNOWN;
+
+    STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv)
+    {
+        if( riid == IID_ISomeInterface )
+        {
+            return GetInterface((ISomeInterface*)this, ppv);
+        }
+        return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+    }
+
+    CMyComponent(TCHAR *tszName, LPUNKNOWN pUnk, HRESULT *phr) 
+        : CUnknown(tszName, pUnk, phr)
+    { 
+        /* Other initializations */ 
+    };
+
+    // More declarations will be added later.
+};</PRE>
+
+<P>This example illustrates the following points.
+
+<UL type="disc">
+	<LI>The <a href="wcesdkrCunknown_class.htm">CUnknown</a> class implements the <B>IUnknown</B> interface. The new component inherits from <B>CUnknown</B> and from any interfaces that the component supports. The component could derive instead from another base class that inherits from <B>CUnknown</B>. </li>
+
+	<LI>The DECLARE_IUNKNOWN macro declares the delegating <B>IUnknown</B> methods as inline methods. </li>
+
+	<LI>The <B>CUnknown</B> class provides the implementation for <a href="wcesdkrInonDelegatingUnknown_interface.htm">INonDelegatingUnknown</a>. </li>
+
+	<LI>To support an interface other than <B>IUnknown</B>, the derived class must override the <a href="wcesdkrCunknown__NonDelegatingQueryInterface.htm">NonDelegatingQueryInterface</a> method and test for the IID of the new interface. </li>
+
+	<LI>The class constructor invokes the constructor method for <B>CUnknown</B>. </li>
+</UL>
+
+<P>The next step in writing a filter is to enable an application to create new instances of the component. This requires an understanding of DLLs and their relation to class factories and class constructor methods. For more information, see <A HREF="wcegmm_dshow_how_to_create_a_dll.htm">How to Create a DLL</A>.</P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 18, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registry Settings</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="Registry Settings" />
+<MSHelp:RLTitle Title="Registry Settings (Windows CE)" />
+<MSHelp:Keyword Index="K" Term="registry settings" />
+<MSHelp:Keyword Index="A" Term="wceipcRegistrySettings" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="Filename" Value="dcom.rtf" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_922469">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceipcregistrysettings"></A>Registry Settings</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>The<I> EnableRemoteConnect </I>and <I>LegacyMutualAthentication </I>registry settings are not supported on Windows CE and, if they are present, will be ignored.</P>
+
+<P>The<I> DefaultAccessPermission</I>, <I>DefaultLaunchPermission</I>, <I>AccessPermission</I>, and <I>LaunchPermission</I> keys hold a REG_BINARY value that contains the access-control list (ACL) of the principals who can launch classes on the current system. The ACL has the following structure:</P>
+
+<PRE class="code">typedef struct {
+    WORD  wVersion;
+    WORD  wPad;
+    GUID  gClass;
+    WCHAR szPerms[1];
+} Permissions;</PRE>
+
+<P>The <I>wVersion</I> field should be set to = 3,</P>
+
+<P>The <I>gClass</I> field contains the globally unique identifier (GUID) of the <B>AccessControl</B> object and should be set to CLSID_DCOMAccessControl. This value is ignored in the <I>LaunchPermissions</I> and <I>DefaultLaunchPermission</I> keys.</P>
+
+<P>The <I>szPerms</I> field is an access string that the <B>AccessControl::Load</B> receives from the <B>IStream</B> interface. It uses the following BNF syntax:</P>
+
+<PRE class="code">szPerms := ""
+szPerms := AccessList
+AccessList := IndividualControl
+AccessList := IndividualControl;AccessList
+IndividualControl := Principal
+IndividualControl := -Principal
+Principal := @groupname
+Principal := username
+Principal := @star
+star := *</PRE>
+
+<P class="label"><B>Examples</B></P>
+
+<P>The following string allows "user1" and "user2", and the "administrator" group; and restricts "user3" user and the "villains" group:</P>
+
+<PRE class="code">"user1;user2;-user3;@administrators;-@villains"</PRE>
+
+<P>Strings are interpreted sequentially &#0151; in other words, if "user1" is a member of the "group1" group, the following strings will allow "user1":</P>
+
+<PRE class="code">user1
+@group1
+@group1;user1
+user1;@group1
+@group1;-user1
+user1;-@group1
+user1;-user1
+*;-user1;-@group1</PRE>
+
+<P>The following strings will restrict "user1":</P>
+
+<PRE class="code">-user1
+-@group1
+-user1;@group1
+-@group1;user1
+-user1;user1
+-user1;*</PRE>
+
+<P>Note that:
+
+<UL type="disc">
+	<LI>Group names are prefixed by "@" (the "at" sign).</li>
+
+	<LI>User names or groups are prefixed by "-" to disallow access.</li>
+
+	<LI>The wildcard character "*" or "@*" allows all users, while the wildcard character "-*" or "-@*" denies all users. The wildcard character "*" is a group and must be marked as such. Parsers inside DCOM understand both "@*" and "*" syntax, but they always use "@*" syntax themselves.</li>
+</UL>
+
+<P>Note also that, in order to be able to use the remoting functionality of DCOM, the access credentials of the user must be set in the <B>HKEY_CURRENT_USER\Comm\Ident</B> ; the computer name should be set to a unique (on local network) value in the <B>HKEY_LOCAL_MACHINE\Ident</B> . In order for NTLM authentication to work, the domain must be configured in the <B>HKEY_LOCAL_MACHINE\Comm\Redir</B> .</P>
+
+<P class="label"><B>Example</B></P>
+
+<PRE class="code"><code class="ce">[HKEY_LOCAL_MACHINE\Ident]
+    "Name"="WinCEDCOMServer"
+    "Desc"="DCOM server box"
+    "OrigName"="WinCE"
+    
+[HKEY_LOCAL_MACHINE\Comm\Redir]
+    "DefaultDomain"="REDMOND"</code></PRE>
+
+<P>See the <a href="_wcesdk_Security_Support_Provider_Interface.htm">Security Support Provider Interface</a> topic in this SDK documentation for more information on local and pass-through authentication, as well as usage and configuration.</P>
+<!--Footer-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, February 03, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+</div>
+</BODY>
+</HTML>

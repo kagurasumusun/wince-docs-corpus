@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<title>CardMapWindow (Windows CE 3.0 Device Driver Developement)</title>
+<meta name="Description" Content="This function maps an area in PC Card memory or I/O space to system memory and returns a pointer used to access the mapped region."/>
+
+    <xml>
+<MSHelp:TOCTitle Title="CardMapWindow" />
+<MSHelp:RLTitle Title="CardMapWindow (Windows CE 3.0)" />
+<MSHelp:Keyword Index="K" Term="CardMapWindow" />
+<MSHelp:Keyword Index="A" Term="wceddkCardMapWindow" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="Technology" Value="kbdevice" />
+<MSHelp:Attr Name="TopicType" Value="apiref" />
+<MSHelp:Attr Name="Filename" Value="funct_1.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+<MSHelp:Attr Name="APIName" Value="CardMapWindow" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_924700">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Microsoft&nbsp;Windows&nbsp;CE&nbsp;3.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wceddkcardmapwindow"></A>CardMapWindow</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+
+<P>This function maps an area in PC Card memory or I/O space to system memory and returns a pointer used to access the mapped region.</P>
+
+<PRE class="syntax"><B>PVOID CardMapWindow(</B>
+<B>CARD_WINDOW_HANDLE</B> <I>hCardWindow </I>
+<B>UINT32 </B><I>uCardAddress </I>
+<B>UINT32 </B><I>uSize </I>
+<B>PUINT32</B> <I>pGranularity</I> <B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>hCardWindow</I></DT>
+
+<DD>Handle to a memory window returned by a call to the <B>CardRequestWindow</B> function.</dd>
+
+<DT><I>uCardAddress</I></DT>
+
+<DD>Specifies a PC Card offset address.</dd>
+
+<DT><I>uSize</I></DT>
+
+<DD>Specifies the number of bytes to map.</dd>
+
+<DT><I>pGranularity</I></DT>
+
+<DD>Must be NULL.</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>A <B>PVOID</B> pointer mapped to the requested region. Callers must use GetLastError to determine of the call was successful, since <B>CardMapWindow</B> will return 0x00 when mapping a PC Card offset address starting at emmory address 0. <B>GetLastError</B> returns one of the following values:
+
+<DL>
+<DT>CERR_SUCCESS</DT>
+
+<DD>The mapping operation completed successfully.</dd>
+
+<DT>CERR_BAD_WINDOW</DT>
+
+<DD>Indicates that the <I>hWin</I> window handle is invalid.</dd>
+
+<DT>CERR_BAD_HANDLE</DT>
+
+<DD>Indicates that an <I>hCardWindow</I> driver handle is invalid.</dd>
+
+<DT>CERR_BAD_SIZE</DT>
+
+<DD>Indicates that the value specified for <I>uSize</I> is invalid.</dd>
+
+<DT>CERR_OUT_OF_RESOURCE</DT>
+
+<DD>Indicates that Card Services is unable to set up a memory window to read the CIS.</dd>
+
+<DT>CERR_IN_USE</DT>
+
+<DD>Indicates that another driver owns the memory window as well.</dd>
+</DL>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>If this function fails, a previous mapping of the window might be invalid.</P>
+
+<P>The offset from the returned mapped virtual address must be multiplied by the value pointed to by <I>pGranularity</I>.</P>
+
+<P>The pointer returned by this function can be used to access the PC Card directly. Drivers should access the memory in a <B>try/except</B> routine to avoid faulting the system on card removal.</P>
+
+<P>The pointer to the mapped PC Card memory that this function returns is to non-cached shared memory. This function calls the <B>VirtualAlloc</B> function with flags to allocate non-cached memory. This guarantees that a PC Card device and its driver detect the same information when they access the same memory location.</P>
+
+<P>To provide reliable access to the mapped PC Card memory, driver code should declare the pointer to the PC Card memory with the <B>volatile</B> type qualifier.</P>
+
+<P>Most Windows CE&#0150;based platforms use three fixed memory-mapped ranges to access the PC Card address spaces: attribute memory, I/O memory, and common memory. The address returned from this function is a virtual address mapped to the physical address corresponding to the caller's request. This function prevents multiple drivers from allocating overlapping ranges within each address space, though multiple allocations are permitted within each space. A single driver is enabled to map a range that overlaps its own previously allocated ranges.</P>
+
+<P>Designers of Windows CE&#0150;based platforms that support programmable windows through a standard PC Card socket controller can define a combination of fixed memory-mapped ranges and programmable ranges in their PCMCIA PDD implementation. If the requested range cannot be mapped within one of the fixed regions, one of the programmable regions can be used. To avoid memory contention, Windows CE ensures that only one mapped range exists within a programmable range. The programmable ranges are not large, about 32 KB, but they can access any 32 KB range within the 64 MB PC Card address space.</P>
+
+<P>In Windows CE versions 3.0 and later, CardGetParsedTuple will calculate and fill in all default fields in CISTPL_CFTABLE_ENTRY structures and set the <I>ContainsDefaults</I> member to TRUE for every entry returned. Earlier versions of Windows CE returned the tuples exactly as represented in the card information structure. Use CardGetFirstTuple and CardGetNextTuple if you need to retrieve tuple data as it is stored on the PC Card.</P>
+
+<P class="label"><B>Driver name</B></P>
+
+<P>PCMCIA</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=18%>Versions</TH>
+<TH width=19%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=18%>1.0 and later</TD>
+<TD width=19%>&nbsp;</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wceddkcard_window_handle.htm">CARD_WINDOW_HANDLE</A>, <A HREF="wceddkcardrequestwindow.htm">CardRequestWindow</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer"></div>
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, July 13, 2004</font></p>
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Footer End-->
+</BODY>
+</HTML>

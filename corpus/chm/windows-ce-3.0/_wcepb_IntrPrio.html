@@ -1,0 +1,214 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IntrPrio</TITLE>
+
+    <xml>
+<MSHelp:TOCTitle Title="IntrPrio" />
+<MSHelp:RLTitle Title="IntrPrio" />
+<MSHelp:Keyword Index="K" Term="IntrPrio" />
+<MSHelp:Keyword Index="A" Term="_wcepb_IntrPrio" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwce50" />
+<MSHelp:Attr Name="TopicType" Value="kbArticle" />
+<MSHelp:Attr Name="Filename" Value="oal_gv.rtf" />
+<MSHelp:Attr Name="ContainsCode" Value="True" />
+<MSHelp:Attr Name="ContainsRegistryKeys" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_925801">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcepb_intrprio"></A>IntrPrio</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This global variable array provides the MIPS and SHx kernel with information about which nested interrupts are masked while the current interrupt is being handled. </P>
+
+<PRE class="syntax"><B>extern BYTE</B> IntrPrio[]<B>;</B></PRE>
+
+<P class="label"><B>Remarks (MIPS kernel)</B></P>
+
+<P>Because there is not a hard-coded priority scheme in MIPS architecture, the kernel utilizes two structures that provides information about nested interrupts. These structures, <B>IntrPriority</B> and <B>IntrMask</B>, provide the kernel with information about which interrupts are masked while the current interrupt is being handled. The <B>IntrPriority</B> table determines, for any given combination of simultaneously pending interrupts, which interrupt is to be given the highest priority. The resulting interrupt is then serviced first. The <B>IntrMask</B> table defines how to set the interrupt mask while servicing that particular interrupt. Access to <B>IntrMask</B> is gained by declaring the IntrPrio variable in the OAL. </P>
+
+<P><B>IntrPriority</B> contains one entry for each combination of bits in the 6-bit interrupt field. The entry defines which interrupt should be serviced. The value is the bit number multiplied by four. For example, if interrupts 1 and 3 are both pending, <B>IntrPriority[0xA]</B> = 1*4 would indicate that interrupt 1 should be serviced first. Multiplying the bit number by four is used to speed indexing into the IntrMask array in the kernel code.</P>
+
+<P>The <B>IntrMask</B> table tells the kernel which interrupt mask to set in the CPU during the execution of the interrupt service routine. A one indicates the interrupt at that bit is masked (the value is negated and shifted before programming the status register).</P>
+
+<P>The following code example shows how <B>IntrMask</B> is used.</P>
+
+<PRE class="code">// OEM Review : Disabled nested interrupts
+IntrMask:
+.byte   0x3f   // 00 0000   // for spurious interrupt
+.byte   0x3f   // 00 0001
+.byte   0x3f   // 00 0010
+.byte   0x3f   // 00 0100
+.byte   0x3f   // 00 1000
+.byte   0x3f   // 01 0000
+.byte   0x3f   // 10 0000
+.byte   0x00   // padding</PRE>
+
+<P class="label"><B>Remarks (SHx kernel)</B></P>
+
+<P>In the SHx architecture, the kernel utilizes the <B>IntrPrio</B> structure to provide the kernel with the information on which nested interrupts are masked when the current interrupt is being handled. Access to <B>IntrPrio</B> is gained by declaring the IntrPrio variable in the OAL.</P>
+
+<P>IntrPrio represents an array of 112 possible interrupts. The interrupts are values from 0x200 to 0xfe0: interrupt 0x200 is equivalent to IntrPrio[0] and 0xfe0 is equivalent to IntrPrio[111]. In the current version of the SHx kernel only initializes nesting for the first 16 interrupts. The value in each array entry identifies which interrupts are to be disabled when the current interrupt is being handled. To support nested interrupts, the defaults in the following table are used:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=21%>Interrupt</TH>
+<TH width=79%>Mask</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x200</TD>
+<TD width=79%>0xf</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x220</TD>
+<TD width=79%>0xe</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x240</TD>
+<TD width=79%>0xd</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x260</TD>
+<TD width=79%>0xc</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x280</TD>
+<TD width=79%>0xb</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x2a0</TD>
+<TD width=79%>0xa</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x2c0</TD>
+<TD width=79%>0x9</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x2e0</TD>
+<TD width=79%>0x8</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x300</TD>
+<TD width=79%>0x7</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x320</TD>
+<TD width=79%>0x6</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x340</TD>
+<TD width=79%>0x5</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x360</TD>
+<TD width=79%>0x4</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x380</TD>
+<TD width=79%>0x3</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x3a0</TD>
+<TD width=79%>0x2</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x3c0</TD>
+<TD width=79%>0x1</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>0x3e0</TD>
+<TD width=79%>0x0</TD>
+</TR>
+</table></div>
+
+<P>To disable nested interrupts, 0xF can be assigned to each array element according to the following code example.</P>
+
+<PRE class="code">// OEMREVIEW : This disables interrupt nesting
+//
+{
+    extern BYTE IntrPrio[];
+    int i;
+
+    // for each INTEVT 0x200 - 0xfe0 (0=0x200, 1=0x220, etc)
+    for (i = 0; i &lt; 0x70; i++) {
+        IntrPrio[i] = 0xF;  // Mask all interrupts
+    }
+}</PRE>
+
+<P>The <B>IntrPrio</B> table must be modified in the <B>OEMInit</B> function before normal operations begin.</P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=19%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=16%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=19%>3.0 and later</TD>
+<TD width=18%>&nbsp;</TD>
+<TD width=16%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

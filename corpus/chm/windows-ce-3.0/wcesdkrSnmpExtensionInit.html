@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SnmpExtensionInit</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="SnmpExtensionInit" />
+<MSHelp:RLTitle Title="SnmpExtensionInit" />
+<MSHelp:Keyword Index="A" Term="wcesdkrSnmpExtensionInit" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_929685">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wcesdkrsnmpextensioninit"></A>SnmpExtensionInit</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>The Microsoft SNMP service calls the <B>SnmpExtensionInit</B> function to initialize the SNMP extension agent DLL. This function is an element of the SNMP Extension Agent API. </P>
+
+<PRE class="syntax"><B>BOOL SnmpExtensionInit(</B> 
+<B>DWORD</B> <I>dwUptimeReference</I><B>,</B><I> </I>
+<B>Handle </B><I>dwUptimeReference</I><B>, </B>
+<B>AsnObjectIdentifier</B> <I>pFirstSupportedRegion</I>;</PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>dwUptimeReference</I> </DT>
+
+<DD>[in] Specifies a time-zero reference for the extension agent. </dd>
+</DL>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>Extension agents should ignore this parameter. The SNMP extension agent DLL should use the <A HREF="wcesdkrsnmpsvcgetuptime.htm">SnmpSvcGetUptime</A>, function to retrieve the number of centiseconds the SNMP service has been running. For more information, see the following Remarks section. </BLOCKQUOTE>
+
+<DL>
+<DT><I>phSubagentTrapEvent</I></DT>
+
+<DD>[out] Pointer to an event handle the extension agent passes back to the SNMP service. This handle is used to notify the service that the extension agent has one or more traps to send. For additional information about allocating and deallocating the event handle, see the following Remarks section. </dd>
+
+<DT><I>pFirstSupportedRegion</I></DT>
+
+<DD>[out] Pointer to an <A HREF="wcesdkrasnobjectidentifier.htm">AsnObjectIdentifier</A> structure to receive the first MIB subtree that the extension agent supports. For additional information about allocating and deallocating resources for this structure, see the following Remarks section. 
+
+<P>The extension agent can register additional MIB subtrees by implementing the <A HREF="wcesdkrsnmpextensioninitex.htm">SnmpExtensionInitEx</A> entry point function. 
+</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>If the function succeeds, the return value is TRUE. </P>
+
+<P>If the function fails, the return value is FALSE</P>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>Extension agents should ignore the <I>dwUptimeReference</I> parameter. Instead, they should call the <A HREF="wcesdkrsnmpsvcgetuptime.htm">SnmpSvcGetUptime</A> function to retrieve the number of centiseconds that the Microsoft SNMP service has been running. Because the <I>dwUptimeReference</I> parameter stores the elapsed time as a <B>DWORD</B> value in milliseconds, the time can wrap to zero and reflect an inaccurate time interval. </P>
+
+<P>The extension agent notifies the SNMP service that it needs to send one or more traps by setting the event handle passed back in the <I>phSubagentTrapEvent</I> parameter to the signaled state. After this event has been signaled, the SNMP service repeatedly calls the extension agent's <A HREF="wcesdkrsnmpextensiontrap.htm">SnmpExtensionTrap</A> entry point until the function returns a value of FALSE. This indicates that the extension agent has no more traps to send. If the extension agent does not generate traps, the <I>phSubagentTrapEvent </I>parameter should return a value of NULL. </P>
+
+<P>The SNMP extension agent must allocate and deallocate resources for the trap event handle. When the SNMP service calls the <B>SnmpExtensionInit </B>function, the extension agent must call the <A HREF="_wcesdk_win32_createevent.htm">CreateEvent</A> function to allocate the event handle. The extension agent passes the handle to the SNMP service in the <I>phSubagentTrapEvent </I>parameter. When the SNMP service calls the <A HREF="wcesdkrsnmpextensionclose.htm">SnmpExtensionClose</A> function, the extension agent must deallocate resources for the trap event handle. </P>
+
+<P>The SNMP service makes a copy of the <A HREF="wcesdkrasnobjectidentifier.htm">AsnObjectIdentifier</A> structure the extension agent returns in the <I>pFirstSupportedRegion</I> parameter. The extension agent must allocate and deallocate the resources associated with the original structure. It can do this when the SNMP service calls the <A HREF="wcesdkrsnmpextensionclose.htm">SnmpExtensionClose</A> function. </P>
+
+<P class="label"><B>Requirements </B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs on</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>3.0 and later</TD>
+<TD width=18%>Snmp.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>Snmp.lib</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="wcesdkrasnobjectidentifier.htm">AsnObjectIdentifier</A>, <A HREF="_wcesdk_win32_createevent.htm">CreateEvent</A>, <A HREF="wcesdkrsnmpextensiontrap.htm">SnmpExtensionTrap</A>, <A HREF="wcesdkrsnmpsvcgetuptime.htm">SnmpSvcGetUptime</A>, <A HREF="wcesdkrsnmpextensionclose.htm">SnmpExtensionClose</A></P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>

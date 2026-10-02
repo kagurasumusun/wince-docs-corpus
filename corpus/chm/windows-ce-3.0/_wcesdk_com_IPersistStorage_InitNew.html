@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML xmlns:MSHelp="http://msdn.microsoft.com/mshelp" DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPersistStorage::InitNew</TITLE>
+<xml>
+<MSHelp:TOCTitle Title="IPersistStorage::InitNew" />
+<MSHelp:RLTitle Title="IPersistStorage::InitNew" />
+<MSHelp:Keyword Index="A" Term="_wcesdk_com_IPersistStorage_InitNew" />
+<MSHelp:Attr Name="DocSet" Value="kbwcedoc" />
+<MSHelp:Attr Name="Locale" Value="kbEnglish" />
+<MSHelp:Attr Name="Product" Value="kbwince" />
+<MSHelp:Attr Name="ProductVers" Value="kbceplat30" />
+<MSHelp:Attr Name="Source" Value="Documentation" />
+<MSHelp:Attr Name="Status" Value="Same" />
+<MSHelp:Attr Name="TargetOS" Value="WinCE" />
+<MSHelp:Attr Name="TargetOSVers" Value="kbwince30" />
+<MSHelp:Attr Name="TopicType" Value="kbSyntax" />
+<MSHelp:Attr Name="ContainsCode" Value="False" />
+</xml>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT><META NAME="msdnID" CONTENT="_926653">
+</HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY"><!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>
+<!--BANNER TITLE START-->Microsoft Windows CE 3.0<!--BANNER TITLE END-->
+</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_wcesdk_com_ipersiststorage_initnew"></A>IPersistStorage::InitNew</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<div class="tablediv">
+	<table class="dtTABLE" width="100%" cellspacing="0" cellpadding="0">
+	<tr><th align="left"><img class="note" src="../scripts/note.gif"></img>Important: </th></tr>
+	<tr><td>This is retired content. This content is outdated and is no longer being maintained. It is provided as a courtesy for individuals who are still using these technologies. This content may contain URLs that were valid when originally published, but now link to sites or pages that no longer exist.</td></tr>
+	</table>
+</div>
+<!--Content Start-->
+<P>This<B> </B>method initializes a new object, providing a pointer to the storage to be used for the object.</P>
+
+<PRE class="syntax"><B>HRESULT InitNew( </B>
+<B>IStorage *</B><I>pStg</I><B>);</B></PRE>
+
+<P class="label"><B>Parameters</B>
+
+<DL>
+<DT><I>pStg</I></DT>
+
+<DD>[in] <A HREF="_wcesdk_com_istorage.htm">IStorage</A> pointer to the new storage object to be initialized. The container creates a nested storage object in its storage object (see <A HREF="_wcesdk_com_istorage_createstorage.htm">IStorage::CreateStorage</A>). Then, the container calls the <A HREF="_wcesdk_com_writeclassstg.htm">WriteClassStg</A> function to initialize the new storage object with the object class identifier (CLSID).</dd>
+</DL>
+
+<P class="label"><B>Return Values</B></P>
+
+<P>One of the values described in the following table is returned.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK</TD>
+<TD width=65%>The new storage object was successfully initialized.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CO_E_ALREADYINITIALIZED</TD>
+<TD width=65%>The object has already been initialized by a previous call to either the <A HREF="_wcesdk_com_ipersiststorage_load.htm">IPersistStorage::Load</A> method or the <B>IPersistStorage::InitNew</B> method.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_OUTOFMEMORY</TD>
+<TD width=65%>The storage object was not initialized due to a lack of memory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_FAIL</TD>
+<TD width=65%>The storage object was not initialized for some reason other than a lack of memory.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Remarks</B></P>
+
+<P>A container application can call this method when it needs to initialize a new object, for example, with an InsertObject command.</P>
+
+<P>An object that supports the <A HREF="_wcesdk_com_ipersiststorage.htm">IPersistStorage</A> interface must have access to a valid storage object at all times while it is running. This includes the time just after the object has been created but before it has been made persistent. The object's container must provide the object with a valid <B>IStorage</B> pointer to the storage during this time through the call to <B>IPersistStorage::InitNew</B>. Depending on the container's state, a temporary file might have to be created for this purpose.</P>
+
+<P>If the object wants to retain the <B>IStorage</B> instance, it must call <A HREF="_wcesdk_com_iunknown_addref.htm">IUnknown::AddRef</A> to increment its reference count.</P>
+
+<P>After the call to <B>IPersistStorage::InitNew</B>, the object is in either the loaded or running state. For example, if the object class has an in-process server, the object will be in the running state. However, if the object uses the default handler, the container's call to <B>InitNew</B> only invokes the handler's implementation which does not run the object. Later if the container runs the object, the handler calls the <B>IPersistStorage::InitNew</B> method for the object.</P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>Rather than calling <B>IPersistStorage::InitNew</B> directly, you typically call the <A HREF="_wcesdk_com_olecreate.htm">OleCreate</A> helper function which does the following:
+
+<OL type="1">
+	<LI>Calls the <A HREF="_wcesdk_com_cocreateinstance.htm">CoCreateInstance</A> function to create an instance of the object class</li>
+
+	<LI>Queries the new instance for the <A HREF="_wcesdk_com_ipersiststorage.htm">IPersistStorage</A> interface</li>
+
+	<LI>Calls the <B>IPersistStorage::InitNew</B> method to initialize the object</li>
+</OL>
+
+<P>The container application should cache the <B>IPersistStorage</B> pointer to the object for use in later operations on the object.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>An implementation of <B>IPersistStorage::InitNew</B> should initialize the object to its default state, taking the following steps:
+
+<OL type="1">
+	<LI>Pre-open and cache the pointers to any streams or storages that the object will need to save itself to this storage.</li>
+
+	<LI>Call <B>IPersistStorage::AddRef</B> and cache the storage pointer that is passed in.</li>
+
+	<LI>Call the <B>WriteFmtUserTypeStg</B> function to write the native clipboard format and user type string for the object to the storage object.</li>
+
+	<LI>Set the dirty flag for the object.</li>
+</OL>
+
+<P>The first two steps are particularly important for ensuring that the object can save itself in low memory situations. Pre-opening and holding onto pointers to the stream and storage interfaces guarantee that a save operation to this storage will not fail due to insufficient memory.</P>
+
+<P>Your implementation of this method should return the CO_E_ALREADYINITIALIZED error code if it receives a call to either the <B>IPersistStorage::InitNew</B> method or the <A HREF="_wcesdk_com_ipersiststorage_load.htm">IPersistStorage::Load</A> method after it is already initialized.</P>
+
+<P class="label"><B>Requirements</B></P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Runs On</TH>
+<TH width=20%>Versions</TH>
+<TH width=18%>Defined in</TH>
+<TH width=15%>Include</TH>
+<TH width=20%>Link to</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE OS</TD>
+<TD width=20%>2.0 and later</TD>
+<TD width=18%>Oleidl.h</TD>
+<TD width=15%>&nbsp;</TD>
+<TD width=20%>&nbsp;</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This API is part of the complete Windows CE OS package as provided by Microsoft. The functionality of a particular platform is determined by the original equipment manufacturer (OEM) and some devices may not support this API.</BLOCKQUOTE>
+
+<P class="label"><B>See Also</B></P>
+
+<P><A HREF="_wcesdk_com_writeclassstg.htm">WriteClassStg</A>, <A HREF="_wcesdk_com_ipersiststorage.htm">IPersistStorage</A>, <A HREF="_wcesdk_com_istorage.htm">IStorage</A>, <A HREF="_wcesdk_com_istorage_createstorage.htm">IStorage::CreateStorage</A>, <A HREF="_wcesdk_com_ipersiststorage_load.htm">IPersistStorage::Load</A>, <A HREF="_wcesdk_com_iunknown_addref.htm">IUnknown::AddRef</A> </P>
+<!--Content End--><!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">Last updated on Friday, May 26, 2006</font></p>
+<!--Copyright Start-->
+<p><a href="CE30_Copyright.htm"><font size="1">&copy; 2004 Microsoft Corporation. All rights reserved.<font></a></p>
+<!--Copyright End-->
+<br>
+</div><!--Footer End-->
+</BODY>
+</HTML>
