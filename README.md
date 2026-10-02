@@ -22,7 +22,8 @@ catalogs, manifests and indexes.
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
 | `tools/` | `harvest.py` (queue → corpus), the two index builders and the gap-report generator. |
-| `.github/workflows/harvest.yml` | Manual workflow: run the harvester, then refresh the index. |
+| `.github/workflows/harvest.yml` | Manual harvest workflow. Left untouched by the reorganization — it still refers to the pre-reorganization paths. |
+| `.actions/harvest.yml` | Updated copy of that workflow for this tree, staged outside `.github/` because installing it needs the GitHub `workflows` permission. See `.actions/README.md`. |
 
 ## Corpus conventions
 
@@ -56,7 +57,7 @@ python3 tools/build-index.py          # data/index/INDEX.tsv  (id, set, path, ti
 python3 tools/build-index-sql.py      # data/index/corpus.sqlite3 (incremental; --full to rebuild)
 python3 tools/build-gap-report.py     # data/reports/missing-pages.tsv (catalog vs corpus)
 
-# Harvest more pages (see .github/workflows/harvest.yml for the CI variant)
+# Harvest more pages (see .actions/harvest.yml for the CI variant)
 python3 tools/harvest.py --queue queues/to-fetch-mslearn.txt --limit 1000
 python3 tools/harvest.py --queue queues/to-fetch-mslearn.txt --batch 500 --push
 ```
