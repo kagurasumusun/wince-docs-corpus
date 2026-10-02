@@ -39,6 +39,10 @@ directories. `PEGSDK.MVB` and `PEGDDK.MVB` need a one-line fix in helpdeco's
 commit is recorded above. `RELNOTES.HLP` is decoded with `-y` so that
 helpdeco does not stop at its "overwrite bm0.bmp?" prompt.
 
+The topic titles are the API names, so the pages are searchable with
+`python3 tools/find-api.py <name>` (see `data/README.md` for how the SQL index
+picks them up).
+
 One page appears twice in `PEGSDK/` (`AB30G.html`, `AB93G.html` —
 `GetColumnProperties` under two different headings); both are kept, which is
 why `data/reports/duplicates.tsv` reports a single duplicate group.

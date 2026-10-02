@@ -49,6 +49,11 @@ TITLE = re.compile(r"<title>([^<]*)", re.I)
 TITLENAME = re.compile(
     r"^([A-Za-z_]\w+)\s*(?:\((?:Windows|RAPI)\b|\b(?:Function|Structure|"
     r"Enumeration|Macro|Constant|Notification|Message|Union|Callback)\b)")
+BARE_NAME = re.compile(r"^[A-Za-z_]\w{1,60}$")
+# "CreateFile", "BM_CLICK", "LINEINITINFO", "listview_setitem" are API names;
+# single capitalised words ("Introduction", "Terms") are section headings.
+CAMEL_NAME = re.compile(r"^[A-Za-z]+[A-Z_]\w*$")
+ALL_CAPS_NAME = re.compile(r"^[A-Z][A-Z0-9_]{2,}$")
 CONST_DEF = re.compile(r"#?define\s+([A-Za-z_]\w+)\s+(\S.*?)$")
 CONST_EQ = re.compile(
     r"([A-Za-z_]\w*)\s*=\s*(\(?\s*(?:0[xX][0-9a-fA-F]+|\d+)\s*\)?)\s*,?\s*$")
@@ -90,6 +95,30 @@ def extract_markdown(path):
     return title, rows
 
 
+def symbol_title(h, name):
+    """True when a page titled with a bare word really documents that name.
+
+    Multimedia Viewer topics are titled with the bare API name
+    ("AddFontResource", "BM_CLICK", "hostent"), but section headings are bare
+    words too, so the page must also write the name like a symbol: a signature
+    ("name("), a typedef ("} name"), or inside a <pre> block.
+    """
+    if ALL_CAPS_NAME.match(name) or CAMEL_NAME.match(name):
+        return True
+    body = re.sub(r"<head>.*?</head>", "", strip_scripts(h), flags=re.S | re.I)
+    body = re.sub(r"<h1[^>]*>.*?</h1>", "", body, flags=re.S | re.I)
+    pre = html.unescape(re.sub(r"<[^>]+>", " ", " ".join(
+        re.findall(r"<pre[^>]*>(.*?)</pre>", body, flags=re.S))))
+    flat = html.unescape(re.sub(r"<[^>]+>", " ", body))
+    esc = re.escape(name)
+    return bool(
+        len(re.findall(r"\b" + esc + r"\b", flat)) >= 2
+        or re.search(r"\b" + esc + r"\s*\(", flat)
+        or re.search(r"}\s*" + esc + r"\b", flat)
+        or re.search(r"\btypedef\b[^;]{0,200}\b" + esc + r"\b", flat)
+        or re.search(r"\b" + esc + r"\b", pre))
+
+
 def extract(path, page_id):
     """Return (title, [(name, kind), ...]) for one page file."""
     if path.endswith(".md"):
@@ -105,6 +134,8 @@ def extract(path, page_id):
     tn = TITLENAME.match(title)
     if tn and not re.fullmatch(r"[A-Z][a-z]+", tn.group(1)):
         rows.append((tn.group(1), "title"))
+    elif BARE_NAME.match(title) and symbol_title(raw, title):
+        rows.append((title, "title"))
     h = strip_scripts(raw)
     # pre blocks + table cells: the two print carriers used by the
     # harvested MSDN/Learn trees

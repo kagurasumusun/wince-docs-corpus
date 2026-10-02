@@ -130,8 +130,11 @@ rescan ~78k HTML files.
   across sdk-api modules, e.g. `CreateFileA`/`CreateFileW` variants) and
   `names(name, page_id, kind)` with
   `kind ∈ {title, api, const, proto, struct, enum}` — `api` rows come from the
-  markdown pages, the others from the HTML print patterns — plus a `meta`
-  table holding the incremental state.
+  markdown pages, the others from the HTML print patterns; HTML pages whose
+  title is a bare identifier (`CreateFile`, `BM_CLICK`, `hostent`) contribute a
+  `title` name when the page also writes it like a symbol, which is what makes
+  the CE 1.0/3.0 and Windows Mobile pages searchable with `tools/find-api.py`
+  — plus a `meta` table holding the incremental state.
   Refresh with `python3 tools/build-index-sql.py` (`--full` to rebuild).
 
 ## logs/
