@@ -44,6 +44,48 @@ ROOT = harvest.ROOT
 HREF_RE = re.compile(r"""(?:href|src)\s*=\s*["']?([^"'\s>]+)""", re.I)
 SKIP_SCHEMES = ("mailto:", "javascript:", "data:", "tel:", "#")
 
+# The Data Dungeon mirror wraps every document in a little frameset (a header
+# bar, the library's table of contents in one iframe, the document itself in
+# another).  The document is `<name>.content.htm`; the wrapper carries the
+# marker below and is navigation chrome, not documentation.
+WRAPPER_MARKERS = (b"chmweb_content_frame", b"ddl_page_header")
+# `_alts/` holds "other versions of this page" lists - links into the same
+# document in the mirror's other library editions, not documentation.
+ALT_PATH = "/_alts/"
+CHARSET_RE = re.compile(rb"charset\s*=\s*[\"']?([A-Za-z0-9_.:-]+)", re.I)
+CP1252 = {"windows-1252", "cp1252", "iso-8859-1", "latin-1", "iso8859-1"}
+UTF8 = {"utf-8", "utf8", "ascii", "us-ascii"}
+
+
+def to_utf8(body):
+    """Decode a page the way its own meta tag says and re-encode as UTF-8.
+
+    The mirror serves the MSDN documents as Windows-1252; the corpus keeps
+    every page as UTF-8 (see corpus/README.md), so the bytes are converted
+    while the markup itself is untouched.
+    """
+    match = CHARSET_RE.search(body[:2048])
+    charset = match.group(1).decode("ascii", "replace").lower() if match else ""
+    if charset in UTF8:
+        return body
+    if not charset:
+        # No declaration: trust a clean UTF-8 decode, else it is the
+        # Windows-1252 the mirror uses for everything else.
+        try:
+            body.decode("utf-8")
+            return body
+        except UnicodeDecodeError:
+            codec = "cp1252"
+    elif charset in CP1252:
+        codec = "cp1252"
+    else:
+        codec = charset
+    try:
+        text = body.decode(codec)
+    except (UnicodeDecodeError, LookupError):
+        text = body.decode("cp1252", "replace")
+    return text.encode("utf-8")
+
 
 def load_config(path):
     entries = []
@@ -82,6 +124,7 @@ class Crawl:
         self.seen = set()
         self.stored = 0
         self.errors = collections.Counter()
+        self.skipped = collections.Counter()
         self.load()
 
     @staticmethod
@@ -151,6 +194,28 @@ class Crawl:
                 return True
         return False
 
+    def content_url(self, url):
+        """The document of a wrapped page: `X.htm` -> `X.content.htm`.
+
+        Returns None when the URL is not a wrapper candidate.
+        """
+        parts = urllib.parse.urlsplit(url)
+        path = parts.path
+        if not path.endswith(".htm") or path.endswith(".content.htm"):
+            return None
+        if "/_toc/" in path or ALT_PATH in path:
+            return None
+        return url[: -len(".htm")] + ".content.htm"
+
+    @staticmethod
+    def wrapper_url(content_url):
+        """`X.content.htm` -> `X.htm`: the page to fall back to."""
+        return content_url[: -len(".content.htm")] + ".htm"
+
+    def prefer_content(self, url):
+        """Point a link at the document inside the wrapper, if it has one."""
+        return self.content_url(url) or url
+
     def links(self, url, body):
         """Absolute, in-tree links, plus book directories learned from TOCs."""
         text = body.decode("utf-8", "replace")
@@ -175,7 +240,7 @@ class Crawl:
                 head = rel.split("/", 1)[0]
                 if head and not head.startswith("_") and head != "images":
                     self.dirs.add(head)
-            found.append(absolute)
+            found.append(self.prefer_content(absolute))
         return found
 
     def dest_for(self, url):
@@ -188,7 +253,9 @@ class Crawl:
 
     # -- main loop -----------------------------------------------------------
     def run(self, max_pages, max_seconds):
-        queue = collections.deque(sorted(self.pending) or self.spec["seeds"])
+        queue = collections.deque(sorted(self.pending)
+                                  or [self.prefer_content(u)
+                                      for u in self.spec["seeds"]])
         if self.pending:
             print(f"[crawl] resuming with {len(self.pending):,} queued URLs")
         started = time.time()
@@ -205,14 +272,41 @@ class Crawl:
             self.seen.add(url)
             if not self.allowed(url):
                 continue
+            if ALT_PATH in urllib.parse.urlsplit(url).path:
+                self.skipped["alt-page"] += 1
+                self.done.add(url)
+                continue
             if self.dry_run:
                 self.stored += 1
                 print(f"  would fetch {url}")
                 continue
             body, status = self.fetcher.get(url, self.spec["delay"])
+            if body is None and url.endswith(".content.htm"):
+                # Not every page of the mirror has the `X.content.htm` form:
+                # fall back to the plain page.  The rule is deterministic, so
+                # a run that resumes from a saved frontier works the same way.
+                original = self.wrapper_url(url)
+                body, status = self.fetcher.get(original, self.spec["delay"])
+                if body is None:
+                    self.errors[str(status)] += 1
+                    self.done.add(url)
+                    continue
+                self.skipped["no-content-page"] += 1
+                self.done.add(url)
+                url = original
             if body is None:
                 self.errors[str(status)] += 1
                 continue
+            # Follow everything, store the documentation: the wrappers are
+            # navigation chrome, their links are still worth walking.
+            if any(mark in body for mark in WRAPPER_MARKERS):
+                self.skipped["wrapper"] += 1
+                self.done.add(url)
+                for link in self.links(url, body):
+                    if link not in self.done and link not in self.seen:
+                        queue.append(link)
+                continue
+            body = to_utf8(body)
             dest = self.dest_for(url)
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             with open(dest, "wb") as fh:
@@ -226,8 +320,8 @@ class Crawl:
                 self.pending = set(queue)
                 self.save()
                 print(f"[crawl] stored={self.stored:,} queued={len(queue):,} "
-                      f"dirs={len(self.dirs)} errors={dict(self.errors)}",
-                      flush=True)
+                      f"dirs={len(self.dirs)} errors={dict(self.errors)} "
+                      f"skipped={dict(self.skipped)}", flush=True)
         self.pending = set(queue)
         self.save()
         return self.stored
@@ -297,7 +391,8 @@ def main():
         finally:
             fetcher.close()
         print(f"[crawl] {spec['name']}: stored={stored:,} "
-              f"total={len(crawl.done):,} errors={dict(crawl.errors)}")
+              f"total={len(crawl.done):,} errors={dict(crawl.errors)} "
+              f"skipped={dict(crawl.skipped)}")
         if crawl.errors:
             exit_code = 0  # errors are recorded in the state for the next run
     return exit_code

@@ -22,6 +22,17 @@ wcemfc/, wceatl/, vcce/, vbce/, wceddk/, wcesdkr/  tools and libraries
 wcehpc/, wceapc/, mobchan/, adoce/, _alts/         platform-specific guides
 ```
 
+## What is stored (and what is not)
+
+The mirror serves every document twice: `X.htm` is a small frameset page (the
+site's header bar, the library table of contents in one iframe, the document
+in another) and `X.content.htm` is the document itself. Only the documents are
+kept — the crawler rewrites a link to `X.content.htm`, walks the wrapper when
+there is no such page, and skips both the wrapper chrome and the `_alts/`
+"other versions of this page" lists (navigation into the mirror's other
+library editions). Everything is re-encoded from the mirror's Windows-1252 to
+UTF-8, and the files keep the mirror's own names and relative paths.
+
 ## How it is collected
 
 * `tools/crawl-mirror.py` with the `datadungeon-ce` entry of
@@ -43,4 +54,8 @@ wcehpc/, wceapc/, mobchan/, adoce/, _alts/         platform-specific guides
   archive.org (`MSDN_Library_April_2000_DVD`), which the mirror itself
   documents as its origin.
 
-Crawled so far: 600 pages (first run, 2026-10-02).
+Crawled so far: 271 pages — 202 tables of contents, 66 documents and the
+glossary, from 600 requests (first run, 2026-10-02). The frontier
+(`data/crawl/datadungeon-ce.json`) has 4,149 URLs queued, most of them the CE
+SDK reference (`wcesdkr/`), the programming guides (`wcecore/`, `wceui/`,
+`wcecomm/`, `wcesvcs/`) and the remaining tables of contents.

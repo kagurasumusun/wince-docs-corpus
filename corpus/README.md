@@ -19,7 +19,7 @@ corpus/
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 106,439 pages (85,987 in the CE trees + 20,452 Win32 pages) — see
+Total: 106,110 pages (85,658 in the CE trees + 20,452 Win32 pages) — see
 the per-tree READMEs for the provenance of each, and `../queues/
 third-party-sources.md` for the mirror policy.
 
@@ -99,7 +99,7 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 * `msdn-library/datadungeon-2000-04/` — the Windows CE documentation of the
   MSDN Library April 2000 (CE 2.12/3.0 era), crawled from
   <https://library.thedatadungeon.com/> (`queues/mirrors.tsv`,
-  `tools/crawl-mirror.py`); 600 pages of it are collected so far and the
+  `tools/crawl-mirror.py`); 271 pages of it are collected so far and the
   daily crawl continues where it stopped
 * `kb/` — 257 Windows CE KnowledgeBase articles from
   <https://github.com/jeffpar/kbarchive>; see `kb/README.md`.
