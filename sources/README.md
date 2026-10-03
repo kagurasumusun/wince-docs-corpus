@@ -1,7 +1,12 @@
 # sources/
 
 The verbatim official media the corpus was extracted from — **reference
-material, not corpus text**, with one exception: for Windows CE 2.0 the CD's
+material, not corpus text**.  Media fetched by `.github/workflows/import-media.yml`
+for an `import-scratch` entry in `queues/media.tsv` is never kept here at all:
+the runner fetches it to a scratch directory, imports its documentation pages
+and discards the image (a PROVENANCE.md next to the imported pages records
+where they came from).  What follows is about the media that *is* kept, with
+one exception: for Windows CE 2.0 the CD's
 payload is itself HTML (the "Windows CE Developer" site mirror, 41 pages), and
 those files stay here verbatim rather than in `corpus/` because their original
 site-relative names (`default.htm`, `prodinfo/vcce.htm`, …) and directory
@@ -40,7 +45,7 @@ can collect them):
 
 | Source | Where | Why it matters |
 |--------|-------|----------------|
-| CE 2.0 SDK "Books Online" (Pegasus SDK API reference) | separate SDK CD, sought (see `windows-ce-2.0/PROVENANCE.md`) | the CE 2.0 Win32 API reference (the Technical Information CD has no API reference) |
+| CE 2.0 SDK "Books Online" (Pegasus SDK API reference) | Internet Archive `MPLATSDK.20` (02/98) — in progress, see `queues/media.tsv` | the CE 2.0 Win32 API reference (the Technical Information CD has no API reference); the medium is fetched by a runner, its documentation pages go to `corpus/mvb/windows-ce-2.0-sdk/`, the image itself is not kept |
 | CE 5.0 CD5 | <https://archive.org/details/en_win_ce_net_cd5> | further CE 5.0 platform docs beyond CD1 |
 | CE 6.0 R2 update | <https://archive.org/details/windows-embedded-ce-6.0-r2> | Platform Builder 6.0 R2 documentation |
 | CE 6.0 R3 update | <https://archive.org/details/CE6R3> | CE 6.0 R3 documentation (incl. the 3.5 Compact Framework reference) |

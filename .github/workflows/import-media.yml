@@ -2,10 +2,16 @@
 #
 # The working environment this corpus is maintained from cannot reach
 # archive.org, a runner can.  tools/import-media.py downloads the files of an
-# item into sources/<name>/ (verbatim, with a PROVENANCE.md that records the
-# item URL, size and md5 of every file), prints an inventory of what the
-# medium holds, and -- for entries whose action is `import` -- copies the
+# item to a scratch directory, prints an inventory of what the medium holds,
+# and -- for entries whose action is `import`/`import-scratch` -- copies the
 # documentation pages (HTML, CHM, WinHelp/MVB) into the corpus.
+#
+# For an `import-scratch` entry the medium is *not* kept: this is a
+# documentation corpus, so the image goes to .cache/media/ (git-ignored) and is
+# discarded after the import while a PROVENANCE.md next to the imported pages
+# records the item, file, size and md5 it came from.  Binaries, headers,
+# samples and toolchains inside the medium are counted and skipped; an
+# `import` entry keeps the medium under sources/ as before.
 #
 # Runs on demand, and whenever queues/media.tsv changes (that is the quickest
 # way to start it: edit the file, or set an entry's action from `inventory` to
@@ -51,10 +57,14 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install 7-Zip
+      - name: Install 7-Zip and unshield
         run: |
           which 7z || sudo apt-get install -y p7zip-full
           7z | head -3
+          # InstallShield cabinets (the SDK media of the 1990s use them, and
+          # 7z cannot read them): `unshield x` unpacks an .cab or its setup.ins
+          which unshield || sudo apt-get install -y unshield
+          unshield -h 2>&1 | head -2
 
       - name: Build helpdeco (for WinHelp/MVB documentation)
         continue-on-error: true

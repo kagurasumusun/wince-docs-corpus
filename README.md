@@ -28,6 +28,11 @@ and support articles, one page per file. Nothing else is imported.
   everything inside a CD image, keeps the documentation files and counts the
   rest (`bin/`, `samples/`, toolchains) as skipped. Code that a documentation
   page quotes as part of its own text is part of that page.
+* **Media itself is not collected either.** A medium imported on a runner
+  (`import-scratch` in `queues/media.tsv`) is fetched to a scratch directory,
+  its documentation pages are copied out and the image is discarded; the pages
+  carry the provenance (item, file, size, md5) instead. Only media that has no
+  other home is kept under `sources/`.
 * **Not collected**: another product's documentation that a CE page links to.
   The crawl of the MSDN Library April 2000 refuses the desktop Visual C++ trees
   (`vcmfc`, `vccore`, …) because that material is not CE documentation and the

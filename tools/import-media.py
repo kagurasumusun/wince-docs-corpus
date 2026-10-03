@@ -20,15 +20,21 @@ What "documentation" means here, per file type inside the medium:
 * ``.chm``                      unpacked with 7z (see tools/extract-chm.py)
 * ``.hlp``/``.mvb``             decoded with helpdeco (if it is on PATH; see
                                 tools/extract-mvb.py for the MVB recipe)
-* ``.zip``/``.cab``/``.exe``/``.iso``/``.7z``
-                                unpacked with 7z and then scanned again
+* ``.iso``                      read with tools/iso9660.py (no 7z needed)
+* ``.cab``                      InstallShield cabinets are unpacked with
+                                ``unshield`` when it is on PATH
+* ``.zip``/``.exe``/``.7z``     unpacked with 7z and then scanned again
 
 Everything else (binaries, sources, samples, images) is skipped and counted,
 so the inventory says what the medium holds without importing it.
 
-The medium itself is kept verbatim under ``sources/<name>/`` and gets a
+By default the medium is kept verbatim under ``sources/<name>/`` and gets a
 ``PROVENANCE.md`` recording the Internet Archive item, the file name, size
-and md5 of every file that was downloaded.
+and md5 of every file that was downloaded.  Action ``import-scratch`` is for a
+medium that is *not* kept: it is fetched to ``.cache/media/<name>/``, the
+documentation pages go to the corpus, and a ``PROVENANCE.md`` next to those
+pages records where they came from.  Either way, only documentation is
+imported - this is a documentation corpus, not a source-code mirror.
 """
 
 import argparse
@@ -52,6 +58,9 @@ BASE_URL = "https://archive.org"          # overridable with --base-url
 USER_AGENT = ("wince-docs-corpus/2.0 "
               "(+https://github.com/kagurasumusun/wince-docs-corpus)")
 ARCHIVE = ("archive", "archive.zip", "archive.rar", "archive.7z")
+# Media that is fetched and thrown away again (scratch mode) still needs its
+# provenance recorded - next to the pages it produced, not next to the image.
+_SCRATCH = {}
 ARCHIVE_EXT = (".iso", ".zip", ".7z", ".rar", ".cab", ".exe", ".msi", ".img",
                ".bin", ".tar", ".gz", ".tgz")
 PAGE_EXT = (".htm", ".html")
@@ -115,7 +124,39 @@ def download(url, dest, attempts=3):
     raise RuntimeError(f"could not download {url}: {last_error}")
 
 
-def fetch_item(item, name, pattern):
+def provenance_text(item, data, rows, medium_note):
+    meta = data.get("metadata", {})
+    lines = [f"# {medium_note} — provenance", "",
+             f"* Internet Archive item: <https://archive.org/details/{item}>",
+             f"* Title: {meta.get('title', '')}",
+             f"* Creator / date: {meta.get('creator', '')} / "
+             f"{meta.get('date', '')}",
+             f"* Collected: {_today()} by tools/import-media.py "
+             "(via .github/workflows/import-media.yml)", "",
+             "| File | Bytes | md5 (Internet Archive) | URL |",
+             "|------|------:|------------------------|-----|"]
+    for name, size, md5, url in rows:
+        lines.append(f"| `{name}` | {size:,} | `{md5}` | {url} |")
+    return "\n".join(lines) + "\n"
+
+
+def write_scratch_provenance(out, item, data, rows):
+    """The medium was not kept: record where the pages came from instead."""
+    os.makedirs(out, exist_ok=True)
+    rel = os.path.relpath(out, ROOT) if out.startswith(ROOT) else out
+    text = provenance_text(item, data, rows, rel)
+    text += (
+        "\nThe medium itself is **not** kept in this repository: "
+        ".github/workflows/import-media.yml\ndownloads it to a scratch "
+        "directory, imports the documentation pages of the\ntree above and "
+        "discards the image. Binaries, headers, samples and toolchains\nare "
+        "not part of this corpus - see \"What is collected\" in the "
+        "top-level\nREADME.\n")
+    with open(os.path.join(out, "PROVENANCE.md"), "w", encoding="utf-8") as fh:
+        fh.write(text)
+
+
+def fetch_item(item, name, pattern, keep=True):
     data = metadata(item)
     files = [f for f in data.get("files", [])
              if f.get("source") == "original"
@@ -125,7 +166,8 @@ def fetch_item(item, name, pattern):
     if not files:
         log(f"[media] {item}: nothing matches {pattern!r}")
         return 1
-    out = os.path.join(ROOT, "sources", name)
+    out = (os.path.join(ROOT, "sources", name) if keep
+           else os.path.join(ROOT, ".cache", "media", name))
     os.makedirs(out, exist_ok=True)
     rows = []
     for entry in files:
@@ -139,33 +181,27 @@ def fetch_item(item, name, pattern):
             log(f"[media] {entry['name']}: {size:,} bytes, md5 {md5}")
         rows.append((entry["name"], os.path.getsize(dest),
                      entry.get("md5", ""), url))
-    write_provenance(out, item, data, rows)
+    if keep:
+        write_provenance(out, item, data, rows)
+    else:
+        # No medium in the repository: the provenance goes next to the pages.
+        _SCRATCH[name] = {"rows": rows, "data": data, "item": item}
     inventory(out, name)
     return 0
 
 
 def write_provenance(out, item, data, rows):
+    """Provenance of a medium that stays in the repository (sources/<name>)."""
     path = os.path.join(out, "PROVENANCE.md")
     if os.path.exists(path):
         return
-    meta = data.get("metadata", {})
-    lines = [f"# sources/{os.path.basename(out)} — provenance", "",
-             f"* Internet Archive item: <https://archive.org/details/{item}>",
-             f"* Title: {meta.get('title', '')}",
-             f"* Creator / date: {meta.get('creator', '')} / "
-             f"{meta.get('date', '')}",
-             f"* Collected: {_today()} by tools/import-media.py "
-             "(via .github/workflows/import-media.yml)", "",
-             "| File | Bytes | md5 (Internet Archive) | URL |",
-             "|------|------:|------------------------|-----|"]
-    for name, size, md5, url in rows:
-        lines.append(f"| `{name}` | {size:,} | `{md5}` | {url} |")
-    lines += ["",
-              "The files here are the untouched medium. The documentation pages",
-              "extracted from them are under `corpus/` (see the tree's own",
-              "README for what was taken).", ""]
+    text = provenance_text(item, data, rows,
+                           f"sources/{os.path.basename(out)}")
+    text += ("\nThe files here are the untouched medium. The documentation "
+             "pages\nextracted from them are under `corpus/` (see the tree's "
+             "own README\nfor what was taken).\n")
     with open(path, "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines))
+        fh.write(text)
 
 
 def _today():
@@ -197,6 +233,42 @@ def unpack(seven, source, dest):
     return True
 
 
+def unpack_iso(source, dest):
+    """Read an ISO 9660 image with tools/iso9660.py; no external tool needed."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import iso9660  # noqa: E402  (local tool, same directory)
+    try:
+        image = iso9660.ISO9660(source)
+    except Exception as exc:                                  # noqa: BLE001
+        log(f"[media] {os.path.basename(source)}: not ISO 9660 ({exc})")
+        return False
+    entries = [e for e in image.entries if not e.is_dir]
+    for entry in entries:
+        target = os.path.join(dest, *entry.path.split("/"))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        with open(target, "wb") as fh:
+            fh.write(image.read(entry))
+    log(f"[media] {os.path.basename(source)}: ISO 9660, "
+        f"{len(entries)} file(s) read with tools/iso9660.py")
+    return True
+
+
+def unpack_cab(source, dest):
+    """Unpack an InstallShield cabinet with unshield (7z cannot read them)."""
+    tool = shutil.which("unshield")
+    if not tool:
+        return False
+    os.makedirs(dest, exist_ok=True)
+    result = subprocess.run([tool, "x", "-d", dest, source],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        tail = (result.stderr or result.stdout or "").strip().splitlines()
+        log(f"[media] unshield could not unpack {os.path.basename(source)}: "
+            f"{tail[-1] if tail else 'no output'}")
+        return False
+    return True
+
+
 def walk_medium(root, seven, depth=0, unpacked=None, prefix=""):
     """Yield (path, kind, rel) for every interesting file below root.
 
@@ -218,14 +290,24 @@ def walk_medium(root, seven, depth=0, unpacked=None, prefix=""):
                 stem = re.sub(r"\.(iso|zip|7z|rar|cab|exe|msi|img|bin|tar|gz|tgz)$",
                               "", name, flags=re.I)
                 inner_prefix = f"{prefix}{stem}/"
-                if seven:
+                if seven or lower.endswith(".iso") or lower.endswith(".cab"):
                     target = os.path.join(
                         tempfile.gettempdir(), "media-unpack", f"d{depth}",
                         hashlib.md5(key.encode()).hexdigest()[:12])
-                    if os.path.isdir(target) or unpack(seven, path, target):
+                    done = os.path.isdir(target)
+                    if not done and lower.endswith(".iso"):
+                        done = unpack_iso(path, target)
+                    if not done and lower.endswith(".cab"):
+                        done = unpack_cab(path, target)
+                    if not done and seven:
+                        done = unpack(seven, path, target)
+                    if done:
                         unpacked[key] = target
                         yield from walk_medium(target, seven, depth + 1,
                                                unpacked, inner_prefix)
+                        continue
+                    # Could not look inside: count it as the asset it is.
+                    yield path, "asset", rel
                     continue
                 if lower.endswith(".zip"):
                     # A machine without 7z can still look inside a zip.
@@ -415,21 +497,34 @@ def run_config(config, only, dry_run=False):
             log(f"[media] no config entry named {only}")
             return 1
     for entry in entries:
-        source_dir = os.path.join(ROOT, "sources", entry["name"])
+        scratch = entry["action"] == "import-scratch"
+        wanted = entry["action"] in ("import", "import-scratch")
+        source_dir = (os.path.join(ROOT, ".cache", "media", entry["name"])
+                      if scratch else
+                      os.path.join(ROOT, "sources", entry["name"]))
         if not os.path.isdir(source_dir) or not os.listdir(source_dir):
-            log(f"[media] {entry['name']}: fetching {entry['item']}")
+            log(f"[media] {entry['name']}: fetching {entry['item']}"
+                f"{' (scratch: the medium is not kept)' if scratch else ''}")
             if dry_run:
                 continue
-            if fetch_item(entry["item"], entry["name"], entry["pattern"]):
+            if fetch_item(entry["item"], entry["name"], entry["pattern"],
+                          keep=not scratch):
                 return 1
         else:
-            log(f"[media] {entry['name']}: already in sources/, inventory:")
+            log(f"[media] {entry['name']}: already fetched, inventory:")
             inventory(source_dir, entry["name"])
-        if entry["action"] == "import" and entry["out"]:
+        if wanted and entry["out"]:
             out = entry["out"] if os.path.isabs(entry["out"]) else os.path.join(
                 ROOT, entry["out"])
             log(f"[media] {entry['name']}: importing pages into {entry['out']}")
             extract_pages(source_dir, out, entry["name"], dry_run)
+            if scratch and not dry_run and entry["name"] in _SCRATCH:
+                scratch_info = _SCRATCH[entry["name"]]
+                write_scratch_provenance(out, scratch_info["item"],
+                                         scratch_info["data"],
+                                         scratch_info["rows"])
+                log(f"[media] {entry['name']}: provenance written to "
+                    f"{os.path.relpath(os.path.join(out, 'PROVENANCE.md'), ROOT)}")
     return 0
 
 

@@ -3,20 +3,28 @@
 # name <TAB> archive.org item <TAB> file pattern <TAB> corpus output dir <TAB> action
 #
 # A push that changes this file starts .github/workflows/import-media.yml,
-# which fetches every entry that is not in sources/ yet, inventories it, and
-# imports the documentation pages of the entries whose action is `import`.
-# The medium itself is kept verbatim under sources/<name>/ with a
-# PROVENANCE.md; already fetched media is never downloaded twice, and an
+# which fetches every entry that is not fetched yet, inventories it, and
+# imports the documentation pages of the entries whose action is `import`
+# or `import-scratch`; already fetched media is never downloaded twice and an
 # already extracted component is skipped.
 #
-# windows-ce-2.0-sdk: Microsoft Windows CE Platform SDK (H/PC) 2.0 (02/98).
-# This is the CE 2.0 SDK whose "Books Online" the corpus has been looking for
-# since the CE 2.0 Technical Information CD turned out to carry no API
-# reference (see sources/windows-ce-2.0/PROVENANCE.md).  Action is
-# The medium is an InstallShield disc: the documentation of the SDK is inside
-# the cabinets (`data1.cab`, `_sys1.cab`), which 7z reads on the runner.
-# Action `import` unpacks the ISO, then the cabinets, keeps the documentation
-# files (WinHelp .hlp -> tools/extract-mvb.py, HTML, CHM) and counts
-# everything else (the SDK's binaries, headers and samples) as skipped - see
-# "What is collected" in the top-level README.
-windows-ce-2.0-sdk	MPLATSDK.20	\.iso$	corpus/mvb/windows-ce-2.0-sdk	import
+#   inventory        download (if needed) + list what the medium holds
+#   import           ... and copy its documentation into the corpus; the
+#                    medium is kept verbatim under sources/<name>/ with a
+#                    PROVENANCE.md
+#   import-scratch   ... and copy its documentation into the corpus; the
+#                    medium is fetched to .cache/media/ and thrown away again
+#                    (an InstallShield-era installer disc is ~40 MB of mostly
+#                    binaries and samples - the corpus keeps pages, not media)
+#
+# Either way only documentation is imported: this is a documentation corpus,
+# so a medium's source files, headers, samples and toolchains are counted in
+# the inventory and skipped (see "What is collected" in the top-level README).
+#
+# windows-ce-2.0-sdk: Microsoft Windows CE Platform SDK (H/PC) 2.0 (02/98) -
+# the CE 2.0 SDK whose Books Online the corpus has been looking for since the
+# CE 2.0 Technical Information CD turned out to carry no API reference (see
+# sources/windows-ce-2.0/PROVENANCE.md).  The disc is an InstallShield
+# installer: the documentation is inside data1.cab/_sys1.cab, which the
+# workflow unpacks with `unshield` (7z cannot read InstallShield cabinets).
+windows-ce-2.0-sdk	MPLATSDK.20	\.iso$	corpus/mvb/windows-ce-2.0-sdk	import-scratch
