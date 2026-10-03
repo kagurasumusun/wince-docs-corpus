@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Converting Rich Ink Data</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_converting_rich_ink_data"></A>Converting Rich Ink Data</H2>
+
+<P>After a user enters data into a Rich Ink control, the control stores the data in an internal .pwi file. In order to use this data in other applications, you need to convert the .pwi file to a .rtf file or a text file. </P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To convert a .pwi file data to an alternate file format</H4>
+
+<OL>
+	<LI>Load RichInk.dll.</li>
+
+	<LI>Create a Rich Ink control.</li>
+
+	<LI>Use the <B>SendMessage</B> function to send an EM_STREAMIN message with SF_PWI in the WPARAM to the Rich Ink control.
+<P>This streams the Rich Ink data in from a specified memory block.
+</li>
+
+	<LI>Use <B>SendMessage</B> to send an EM_STREAMIN message with SF_UTEXT in the WPARAM to the Rich Ink control.
+<P>In addition to translating the Rich Ink data in the specified memory block into Unicode, this call returns the size of the Unicode data in bytes.
+
+<P>You can also stream RTF or ASCII text by changing the WPARAM to SF_RTF or SF_TEXT.
+</li>
+
+	<LI>Allocate memory for the converted text.</li>
+
+	<LI>Steam the converted text to the memory that you allocated.</li>
+</OL>
+
+<P>The following code example shows how Windows CE Services version 2.2 converts Rich Ink data to Unicode using. Windows CE Services is a set of technologies that makes Windows CE–based devices Web-enabled.</P>
+
+<PRE><CODE>#define EM_STREAMIN         (WM_USER + 73)
+#define EM_STREAMOUT            (WM_USER + 74)
+
+typedef DWORD (CALLBACK *EDITSTREAMCALLBACK)
+(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb);
+
+typedef struct _editstream
+{
+    DWORD dwCookie;     /* user value passed to callback as first parameter */
+    DWORD dwError;      /* last error */
+EDITSTREAMCALLBACK pfnCallback;
+} EDITSTREAM;
+
+typedef struct tagCOOKIE
+{
+HANDLE hFile;
+LPBYTE pbStart;
+LPBYTE pbCur;
+LONG   bCount;
+DWORD  dwError;
+} COOKIE, * PCOOKIE;
+
+// Stream formats:
+#define SF_TEXT      0x0001
+#define SF_RTF       0x0002
+#define SF_UNICODE   0x0010                // Unicode data of some kind
+#define SF_UTEXT        SF_TEXT | SF_UNICODE     // Unicode text file
+#define SFF_PWI      0x0800
+#define SF_PWI      ( SF_RTF | SFF_PWI | 0x010000 )  // A Pocket Word
+                                                     // Ink (.pwi) file
+//The first step is to load RichInk.dll.
+
+HINSTANCE    hLib;
+hLib = LoadLibrary( TEXT(“richink.dll” ) );
+if (!hLib)
+return ERROR;
+ 
+//The next step is to create a Rich Ink window.
+
+HWND    hwndInk = NULL;
+hwndInk = CreateWindow(“richink”, ES_READONLY, CW_USEDEFAULT,
+CW_USEDEFAULT, CW_USEDEFAULT, 
+CW_USEDEFAULT, NULL, 0, NULL, NULL);
+if (!hwndInk)
+return ERROR;
+
+//With the Rich Ink window, we can send EM_STREAMIN and EM_STREAMOUT //messages in a manner similar to the Rich Edit desktop control.
+    
+EDITSTREAM    es;
+COOKIE        cookie;
+
+// Stream in the Rich Ink data from a memory block.
+memset(&amp;cookie, 0, sizeof(cookie));
+cookie.dwError          = 0;
+cookie.pbStart          = (LPBYTE)pb;        // Pointer to a memory block
+cookie.pbCur            = cookie.pbStart;
+cookie.bCount    = cb;            // Size of the Rich Ink data
+es.dwCookie             = (DWORD)&amp;cookie;
+es.dwError              = 0;
+es.pfnCallback          = BufferReadCallback;
+lResult = SendMessage (hwndInk, EM_STREAMIN, (WPARAM)SF_PWI, (LPARAM)&amp;es);
+
+// Next, call stream out to get the size of the Unicode text.
+cookie.dwError          = 0;
+cookie.pbStart          = 0;
+cookie.pbCur            = 0;
+cookie.bCount    = 0;
+es.dwCookie             = (DWORD)&amp;cookie;
+es.dwError              = 0;
+es.pfnCallback          = BufferWriteCallback;
+lResult = SendMessage (hwndInk, EM_STREAMOUT, (WPARAM)SF_UTEXT, (LPARAM)&amp;es);
+
+// Allocate memory and stream the Unicode text to it.
+sz = (LPWSTR)LocalAlloc(LPTR, (cbSz = Cookie.pbCur - Cookie.pbStart) + 2);
+// Check for an allocation error.
+
+cookie.dwError    = 0;
+cookie.pbStart     = (LPBYTE)sz;
+cookie.pbCur          = cookie.pbStart;
+cookie.bCount    = cbSz;
+es.dwCookie             = (DWORD)&amp;cookie;
+es.dwError              = 0;
+es.pfnCallback          = BufferWriteCallback;
+lResult = SendMessage (hwndInk, EM_STREAMOUT, (WPARAM)SF_UTEXT, (LPARAM)&amp;es);
+</CODE></PRE>
+
+<P>The following code example shows the functions that are called in the previous code example.</P>
+
+<PRE><CODE>static DWORD CALLBACK BufferReadCallback(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
+{
+PCOOKIE pCookie = (PCOOKIE)dwCookie;
+LONG    bytesLeft;
+LONG    bytesRead;
+
+// Calculate the bytes read.
+bytesRead = pCookie-&gt;pbCur - pCookie-&gt;pbStart;
+
+// Calculate the bytes left to read.
+if (bytesRead &lt; pCookie-&gt;bCount)
+{
+// Calculate the bytes left to read.
+bytesLeft = pCookie-&gt;bCount - bytesRead;
+}
+else
+{
+bytesLeft = 0;
+}
+
+// Do not read past the end of the buffer.
+if (cb &gt; bytesLeft) cb = bytesLeft;
+
+// Set the bytes read.
+*pcb = cb;
+
+// Copy any bytes.
+if (cb)
+{
+memcpy(pbBuff, pCookie-&gt;pbCur, cb);
+pCookie-&gt;pbCur += cb;
+}
+
+// Return no error.
+return 0;
+
+} // BufferReadCallback()
+
+static DWORD CALLBACK BufferWriteCallback(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
+{
+PCOOKIE pCookie = (PCOOKIE)dwCookie;
+
+// Do not overwrite the end of the buffer. If there is no output 
+// buffer, then only determine the space required for the data stream.
+
+If (pCookie-&gt;pbStart &amp;&amp; (pCookie-&gt;pbCur + cb &gt; pCookie-&gt;pbStart + pCookie-&gt;bCount))
+{
+// Writing all this data would overflow the buffer.
+// Only write the data that will fit.
+cb = pCookie-&gt;pbStart + pCookie-&gt;bCount - pCookie-&gt;pbCur;
+}
+
+*pcb = cb;
+if (pCookie-&gt;pbStart)
+memcpy(pCookie-&gt;pbCur, pbBuff, cb); pCookie-&gt;pbCur += cb;
+
+return 0;
+
+} // BufferWriteCallback()</CODE></PRE>
+
+<P>The example above streams Unicode text. By changing the callback functions, data can be read from or written to a file.</P>
+<p>&nbsp;</p></body>
+</HTML>

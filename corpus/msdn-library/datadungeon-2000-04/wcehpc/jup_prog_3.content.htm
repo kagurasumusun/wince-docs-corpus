@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling Low-Memory Situations</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<TABLE ALIGN=right WIDTH=0 BORDER=0><TR><TD>
+
+
+
+</TD></TR></TABLE>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_handling_low_memory_situations"></A>Handling Low-Memory Situations</H2>
+
+<P>Windows CE uses a series of memory thresholds to conserve system resources. The following table shows values for memory thresholds. The values are based on a 1-KB memory page; values for a 4-KB memory page are provided in parentheses.</P>
+
+<TABLE cellspacing=4 cols=3 width=464>
+
+<TR VALIGN="top">
+<TD width=19%>
+<H5>Threshold</H5>
+</TD>
+<TD width=17%>
+<H5>Value</H5>
+</TD>
+<TD width=64%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>Hibernation threshold</TD>
+<TD width=17%>128 KB<BR>
+(160 KB)</TD>
+<TD width=64%>The point at which a system enters a limited-memory state. A system sends a WM_HIBERNATE message when its memory falls below this value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>Low-memory threshold</TD>
+<TD width=17%>64 KB <BR>
+(48 KB)</TD>
+<TD width=64%>The minimum available memory that a system must maintain when it is in a low-memory state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=19%>Critical-memory threshold</TD>
+<TD width=17%>16 KB<BR>
+(48 KB)</TD>
+<TD width=64%>The minimum available memory that a system must maintain when it is in a critical-memory state.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following table shows the maximum memory allocations that Windows CE allows in the low-memory and critical-memory states.</P>
+
+<TABLE cellspacing=4 cols=3 width=464>
+
+<TR VALIGN="top">
+<TD width=20%>
+<H5>State</H5>
+</TD>
+<TD width=14%>
+<H5>Value</H5>
+</TD>
+<TD width=66%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%>Low-memory</TD>
+<TD width=14%>16 KB</TD>
+<TD width=66%>The maximum amount of memory that the system allows the <A HREF="../wcesdkr/htm/kf_v_181.htm" TARGET="_top"><B>VirtualAlloc</B></A> function to allocate when the system is in a low-memory state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%>Critical-memory</TD>
+<TD width=14%>8 KB</TD>
+<TD width=66%>The maximum amount of memory that the system allows <B>VirtualAlloc</B> to allocate when the system is in a critical memory state.</TD>
+</TR>
+</TABLE><BR>
+
+<P>Windows CE must respond to four limited-memory scenarios. These scenarios occur when an application takes one of the following actions:
+
+<UL>
+	<LI>Requests less memory than the low-memory maximum</li>
+
+	<LI>Requests more memory than the low-memory maximum</li>
+
+	<LI>Requests less memory than the critical-memory maximum</li>
+
+	<LI>Requests more memory than the critical-memory maximum</li>
+</UL>
+
+<P>If an application calls <B>VirtualAlloc</B> and requests less memory than the low-memory maximum but enough to cause the system to fall below the low-memory threshold, the system displays a<B> System Out of Memory</B> dialog box. This dialog box is discussed in more detail in the next section. In this case, the user must either select applications for the system to close or allocate more RAM to program memory. If the user chooses to close applications, the system sends WM_CLOSE messages. If an application receives a WM_CLOSE message but does not shut down within eight seconds, the system displays an <B>End Task/Wait</B> dialog box. This gives the user the choice of terminating the application or seeing if the application closes itself.</P>
+
+<P>Any <B>VirtualAlloc</B> call fails if it causes the amount of available memory in the system to fall below the low-memory threshold. The system does not display the <B>System Out of Memory </B>dialog box. The <A HREF="../wcesdkr/htm/kf_jl_16.htm" TARGET="_top"><B>LocalAlloc</B></A> function does not necessarily have the same constraints as <B>VirtualAlloc</B>. Depending on the state of the system heap, a call to <B>LocalAlloc</B> succeeds even if it makes memory fall below the low-memory threshold. </P>
+
+<P>If an application calls <B>VirtualAlloc</B> to request less memory than the critical memory maximum, the system displays the <B>System Out of Memory </B>dialog box. The user must either select applications for the system to close or increase the amount of RAM allocated to program memory, if there is any available RAM. The system calls the <A HREF="../wcesdkr/htm/kf_tu.htm" TARGET="_top"><B>TerminateProcess</B></A> function to terminate any applications selected by the user.</P>
+
+<P>Applications that call <B>VirtualAlloc</B> fail if the function causes the amount of available memory in the system to fall below the critical memory threshold. Depending on the state of the system heap, a call to <B>LocalAlloc</B> can succeed even if it makes memory fall below the low-memory threshold.</P>
+
+<P><B>Note</B>  The system polls memory every five seconds.</P>
+
+<P>It is possible to totally skip over both the low-memory and critical memory thresholds. Whenever the system attempts to allocate more than 16 KB of memory, it has the potential to fail without displaying the <B>System Out of Memory </B>dialog box and without sending a low-memory warning to the user. In the same manner, any memory allocation greater than 8 KB, while in a low-memory state, has the potential to fail. Therefore, your application should not allocate large amounts of memory in its shutdown code. The user already knows that a low-memory situation exists. Instead, use small memory allocations, such as 4 KB or less, whenever possible. By consistently using small memory allocations in your applications, you avoid bypassing the low-memory and critical-memory thresholds. Your memory allocations activate the <B>System Out of Memory </B>dialog box and gives a user the opportunity to respond.</P>
+<p>&nbsp;</p></body>
+</HTML>

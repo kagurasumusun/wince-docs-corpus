@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sending and Receiving Data Over a Serial Connection</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_vbce_sending_and_receiving_data_over_a_serial_connection"></A>Sending and Receiving Data Through a Serial Connection</H2>
+
+<P>After you make a connection to the serial port by setting <B>PortOpen</B> to <B>True</B>, you can send and receive data through the connection. Whenever the <B>Comm</B> control sends or receives data, the<B> </B>control initiates the <B>OnComm </B>event to communicate with your application. The <B>OnComm</B> event also initiates the event when the control detects an error condition. The <B>OnComm</B> event<B> </B>changes the value of the <B>CommEvent </B>property to indicate the cause of the event.</P>
+
+<P>The <B>Comm </B>control uses buffers to store data transferred through the control. Each buffer has an associated threshold property that controls the frequency of the <B>OnComm </B>event. The threshold property for the receive buffer is <B>Rthreshold</B>, and the threshold property for the transmit buffer is <B>SThreshold</B>.<B> </B></P>
+
+<P>The <B>RThreshold</B> property determines how often the <B>OnComm </B>event responds to incoming data. For example, if you set <B>RThreshold</B> to 1, the <B>OnComm </B>event initiates each time a character is placed into the receive buffer. The <B>SThreshold</B> property determines how often the <B>OnComm</B> event responds to outgoing data. For example, if you set <B>SThreshold</B> to 1, the <B>OnComm </B>event initiates each time all data is sent and the transmit buffer is empty. When the <B>OnComm </B>event starts in response to incoming data, the control sets the value of the <B>CommEvent </B>property to <B>comEvReceive</B>. When this occurs, you can use the <B>Input</B> property to read the new data from the receive buffer. The incoming data in the receive buffer can be either binary or character-based. You can determine how the control interprets the incoming data by setting the <B>InputMode </B>property. Set <B>InputMode</B> to <B>comInputModeText </B>for data that uses the ASCII character set and <B>comInputModeBinary </B>for all other data, such as data that has embedded control characters.</P>
+
+<P>The <B>InputLen </B>property controls the number of characters the <B>Input </B>property reads from the buffer. Setting <B>InputLen </B>to 0 causes <B>Input </B>to read the entire buffer. In addition, you can use the <B>InBufferCount </B>property to determine the number of characters in the receive buffer. </P>
+
+<P>The following code example shows how to receive data from a serial connection, one byte at a time.</P>
+
+<PRE><CODE>Private Sub Comm1_OnComm()
+  Dim TmpStr As String
+  Comm1.InputLen = 1
+  If Comm1.CommEvent = comEvReceive Then
+    While Comm1.InBufferCount &gt; 0
+      TmpStr = TmpStr &amp; Comm1.Input
+    Wend
+    Msgbox TmpStr,,” The input buffer received:”
+  End If
+End Sub
+</CODE></PRE>
+
+<P>You cannot set the buffer sizes for the <B>Comm </B>control because the toolkit does not support the <B>InBufferSize </B>and <B>OutBufferSize </B>properties. To clear the receive buffer, set <B>InBufferCount </B>to 0.</P>
+
+<P>To send data, you can use the <B>Output</B> property to place new data into the transmit buffer. When the <B>OnComm </B>event initiates in response to outgoing data, the control sets the value of the <B>CommEvent </B>property to <B>comEvSend</B>. You can use the <B>OutBufferCount </B>property to determine the number of characters in the transmit buffer. To clear the transmit buffer, set <B>OutBufferCount </B>to 0.</P>
+
+<P><B>Note</B>  Setting the value for the <B>RThreshold</B> property or the <B>SThreshold</B> property to 0 prevents the <B>OnComm </B>event from initiating.</P>
+
+<P>For more information about using the <B>Comm</B> control, see the corresponding Visual Basic 6.0 documentation for the <B>MSComm</B> control.</P>
+<p>&nbsp;</p></body>
+</HTML>
