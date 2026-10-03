@@ -12,6 +12,7 @@ corpus/
 ├── chm/windows-ce-5.0/       the 98 component CHMs of the CE 5.0 CD1
 ├── chm/windows-ce-4.2/       emulator + remote tools CHMs of CE .NET 4.2
 ├── mvb/windows-ce-1.0/       CE 1.0 books (Multimedia Viewer/WinHelp era)
+├── mvb/windows-ce-2.0-sdk/   CE 2.0 SDK (H/PC) debugger reference + disc ReadMe
 ├── kb/                       Windows CE KnowledgeBase articles (CE 1.0/2.0 era)
 ├── win32/api/, win32/guide/  Win32 reference + guides (MicrosoftDocs)
 └── msdn-library/
@@ -107,8 +108,18 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
   <https://library.thedatadungeon.com/> (`queues/mirrors.tsv`,
   `tools/crawl-mirror.py`); 2,372 pages of it are collected so far and the
   crawl continues twice a day where it stopped
+* Nothing in `corpus/` is source code: the trees hold pages only, and a medium
+  is never unpacked into the corpus (see "What is collected" in the top-level
+  `README.md`; `tools/check-corpus.py` reports a `source_files` count).
 * `kb/` — 257 Windows CE KnowledgeBase articles from
   <https://github.com/jeffpar/kbarchive>; see `kb/README.md`.
+* `mvb/windows-ce-2.0-sdk/` — 293 pages of the Microsoft Windows CE Platform
+  SDK (H/PC) 2.0 disc (02/98, Internet Archive `MPLATSDK.20`): the CE debugger
+  reference (`windbg.hlp`, 292 pages) and the disc's ReadMe. The disc's
+  InfoViewer Books Online (`.ivt`) is not decodable yet; the SDK itself
+  (headers, libraries, samples) is deliberately not imported. The medium is
+  fetched to a scratch directory and discarded — see
+  `mvb/windows-ce-2.0-sdk/README.md`.
 * `mvb/windows-ce-1.0/` — the CE 1.0 Books Online (`PEGSDK.MVB` 1,919 pages,
   `PEGDDK.MVB` 181, `RELNOTES.HLP` 4) decoded from the Multimedia Viewer
   format with helpdeco and converted by `tools/extract-mvb.py`; see

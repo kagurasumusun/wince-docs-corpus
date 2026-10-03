@@ -8,7 +8,7 @@ list and to extract the documentation files of such a medium - nothing else is
 imported, and the medium itself stays untouched.
 
     python3 tools/iso9660.py sources/windows-ce-2.0-sdk/MPLATSDK.20.ISO
-    python3 tools/iso9660.py <iso> --grep '\.hlp$'
+    python3 tools/iso9660.py <iso> --grep "\.hlp$"
     python3 tools/iso9660.py <iso> --extract docs/ --out /tmp/iso-out
 
 Only the directory tree is parsed (Primary and Joliet Supplementary Volume

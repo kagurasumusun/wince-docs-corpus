@@ -28,6 +28,11 @@ What "documentation" means here, per file type inside the medium:
 Everything else (binaries, sources, samples, images) is skipped and counted,
 so the inventory says what the medium holds without importing it.
 
+A config row may carry a 6th field, a regex: documentation files whose path
+inside the medium matches it are refused - a medium holds help for its own
+viewer and IDE, which is not documentation *of the product* the corpus is
+about.  Refused files are counted (``excluded``) and not imported.
+
 By default the medium is kept verbatim under ``sources/<name>/`` and gets a
 ``PROVENANCE.md`` recording the Internet Archive item, the file name, size
 and md5 of every file that was downloaded.  Action ``import-scratch`` is for a
@@ -334,7 +339,7 @@ def walk_medium(root, seven, depth=0, unpacked=None, prefix=""):
                 yield path, "other", rel
 
 
-def inventory(root, label):
+def inventory(root, label, exclude=""):
     """Print (and return) what a medium holds, without importing anything."""
     seven = seven_zip()
     counts = collections.Counter()
@@ -352,8 +357,10 @@ def inventory(root, label):
         counts[ext] += 1
         if len(examples[ext]) < 3:
             examples[ext].append(rel)
+    refused = re.compile(exclude, re.I) if exclude else None
     log(f"[media] {label}: {sum(counts.values()):,} files "
-        f"({pages:,} HTML pages, {help_files:,} WinHelp/MVB, {chms:,} CHM)")
+        f"({pages:,} HTML pages, {help_files:,} WinHelp/MVB, {chms:,} CHM"
+        f"{', import excludes ' + exclude if refused else ''})")
     for ext, number in counts.most_common(20):
         first = examples[ext][0][:70] if examples[ext] else ""
         log(f"    {ext:10s} {number:6,d}   e.g. {first}")
@@ -395,12 +402,17 @@ PLACEHOLDER = re.compile(rb"<title>\s*(Topic Not Found|Page Not Found)\s*"
                          rb"</title>", re.I)
 
 
-def extract_pages(root, out, label, dry_run=False):
+def extract_pages(root, out, label, dry_run=False, exclude=""):
     """Copy the documentation pages of a medium into the corpus."""
     seven = seven_zip()
-    imported = skipped = 0
+    refused = re.compile(exclude, re.I) if exclude else None
+    imported = skipped = excluded = 0
     for path, kind, rel in walk_medium(root, seven):
         if kind != "documentation":
+            continue
+        if refused and refused.search(rel):
+            excluded += 1
+            log(f"    {rel}: excluded by {exclude!r}")
             continue
         ext = os.path.splitext(path)[1].lower()
         if ext in PAGE_EXT:
@@ -434,7 +446,8 @@ def extract_pages(root, out, label, dry_run=False):
             imported += extract_helpfile(path, out, rel, dry_run)
         log(f"    {os.path.basename(path)}: {kind} ({ext})")
     log(f"[media] {label}: imported {imported:,} pages "
-        f"({skipped} placeholders/empties skipped)")
+        f"({skipped} placeholders/empties skipped"
+        f"{f', {excluded} excluded by {exclude!r}' if excluded else ''})")
     return imported
 
 
@@ -485,8 +498,12 @@ def load_config(path):
                 continue
             name, item, pattern, out = parts[:4]
             action = parts[4] if len(parts) > 4 else "inventory"
+            exclude = parts[5] if len(parts) > 5 else ""
+            if exclude:
+                re.compile(exclude)                  # fail on a bad regex here
             entries.append({"name": name, "item": item, "pattern": pattern,
-                            "out": out, "action": action})
+                            "out": out, "action": action,
+                            "exclude": exclude})
     return entries
 
 
@@ -513,12 +530,13 @@ def run_config(config, only, dry_run=False):
                 return 1
         else:
             log(f"[media] {entry['name']}: already fetched, inventory:")
-            inventory(source_dir, entry["name"])
+            inventory(source_dir, entry["name"], entry.get("exclude", ""))
         if wanted and entry["out"]:
             out = entry["out"] if os.path.isabs(entry["out"]) else os.path.join(
                 ROOT, entry["out"])
             log(f"[media] {entry['name']}: importing pages into {entry['out']}")
-            extract_pages(source_dir, out, entry["name"], dry_run)
+            extract_pages(source_dir, out, entry["name"], dry_run,
+                          entry.get("exclude", ""))
             if scratch and not dry_run and entry["name"] in _SCRATCH:
                 scratch_info = _SCRATCH[entry["name"]]
                 write_scratch_provenance(out, scratch_info["item"],

@@ -45,7 +45,7 @@ can collect them):
 
 | Source | Where | Why it matters |
 |--------|-------|----------------|
-| CE 2.0 SDK "Books Online" (Pegasus SDK API reference) | Internet Archive `MPLATSDK.20` (02/98) — in progress, see `queues/media.tsv` | the CE 2.0 Win32 API reference (the Technical Information CD has no API reference); the medium is fetched by a runner, its documentation pages go to `corpus/mvb/windows-ce-2.0-sdk/`, the image itself is not kept |
+| CE 2.0 SDK "Books Online" — **partly collected**: the SDK disc's `windbg.hlp` and ReadMe are imported (`corpus/mvb/windows-ce-2.0-sdk/`), but its Books Online is InfoViewer `.ivt` (10 books, `data1/Online_help_files/`), which no tool here decodes | Internet Archive `MPLATSDK.20` (02/98), see `queues/media.tsv` | the CE 2.0 Win32 API reference itself comes from the MSDN Library sets already in the corpus; an `.ivt` decoder would add the SDK's own platform documentation |
 | CE 5.0 CD5 | <https://archive.org/details/en_win_ce_net_cd5> | further CE 5.0 platform docs beyond CD1 |
 | CE 6.0 R2 update | <https://archive.org/details/windows-embedded-ce-6.0-r2> | Platform Builder 6.0 R2 documentation |
 | CE 6.0 R3 update | <https://archive.org/details/CE6R3> | CE 6.0 R3 documentation (incl. the 3.5 Compact Framework reference) |
