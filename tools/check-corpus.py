@@ -102,7 +102,9 @@ def read_index_tsv():
     seen, missing = set(), []
     with open(INDEX_TSV, newline="", encoding="utf-8") as fh:
         for row in csv.DictReader(fh, delimiter="\t"):
-            path = row["path"]
+            path = row.get("path")
+            if not path:                      # a row the writer mangled
+                continue
             seen.add(path)
             if not os.path.isfile(os.path.join(ROOT, path)):
                 missing.append(path)

@@ -18,11 +18,12 @@ corpus/
 └── msdn-library/
     ├── 2010-05/<set>/        Internet Archive copies of MSDN topics
     ├── techshelps/<set>/     MSDN Library CE 1.0/2.0 sets (techshelps mirror)
+    ├── wcedevcon-99/         the CE 3.0 SDK documentation + DevCon '99 site
     ├── datadungeon-2000-04/  MSDN Library April 2000 CE documentation (crawled)
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 130,478 pages (110,026 in the CE trees + 20,452 Win32 pages, as of
+Total: 137,911 pages (117,459 in the CE trees + 20,452 Win32 pages, as of
 2026-10-04; the April 2000 crawl is still running) — see
 the per-tree READMEs for the provenance of each, and `../queues/
 third-party-sources.md` for the mirror policy.
@@ -114,6 +115,14 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
   `README.md`; `tools/check-corpus.py` reports a `source_files` count).
 * `kb/` — 257 Windows CE KnowledgeBase articles from
   <https://github.com/jeffpar/kbarchive>; see `kb/README.md`.
+* `msdn-library/wcedevcon-99/` — 7,437 pages from the **Windows CE Developers
+  Conference DevCon '99 Conference CD** (1999): the Windows CE 3.0 SDK
+  documentation in HTML (SDK Reference 3,315 pages, Auto PC 995, DDK 741, SDK
+  Guide 456, comm/UI/core/services/…), its 37 component CHMs and three WinHelp
+  books, plus the conference site. 4,978 URLs were dropped from the April 2000
+  crawl frontier (book by book, after comparing the pages both sides hold)
+  because this disc already carries them — see
+  `msdn-library/wcedevcon-99/README.md`.
 * `mvb/windows-ce-2.0-sdk/` — 293 pages of the Microsoft Windows CE Platform
   SDK (H/PC) 2.0 disc (02/98, Internet Archive `MPLATSDK.20`): the CE debugger
   reference (`windbg.hlp`, 292 pages) and the disc's ReadMe. The disc's

@@ -157,7 +157,12 @@ jobs:
           git add data/index/ data/reports/ corpus/ data/logs/ || true
           if ! git diff --quiet || ! git diff --staged --quiet; then
             git commit -m "corpus: harvest run + index refresh"
-            git pull --rebase
+            # Another run may have committed while this one worked: merge
+            # instead of stopping on the generated files.
+            git pull --rebase || {
+              git rebase --abort || true
+              git merge --no-edit -X ours "origin/${{ github.ref_name }}"
+            }
             git push
           fi
 

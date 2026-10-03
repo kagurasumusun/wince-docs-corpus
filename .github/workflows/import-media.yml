@@ -109,21 +109,44 @@ jobs:
           python3 tools/import-media.py --config queues/media.tsv $ONLY $DRY \
             2>&1 | tee data/reports/media-last.txt
 
-      - name: Refresh indexes and commit
-        if: ${{ github.event.inputs.dry_run != 'true' }}
+      - name: Commit the imported pages
+        # `always()`: a medium that imports 7,000 pages and then fails on the
+        # last one must still hand the pages over (and the receipt that says
+        # it was imported).  The pages are committed before the index is
+        # rebuilt, so a rebuild failure cannot cost them.
+        if: ${{ always() && github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "wince-docs-corpus importer"
+          git config user.email "wince-corpus-harvester@users.noreply.github.com"
+          git add sources/ corpus/ queues data/reports/media-imported.tsv \
+            data/reports/media-last.txt || true
+          if git diff --staged --quiet; then
+            echo "no new pages"
+          else
+            git commit -m "media: fetch and import"
+            git pull --rebase || {
+              git rebase --abort || true
+              git merge --no-edit -X ours "origin/${{ github.ref_name }}"
+            }
+            git push
+          fi
+
+      - name: Refresh the index
+        if: ${{ always() && github.event.inputs.dry_run != 'true' }}
         run: |
           python3 tools/build-index.py
           python3 tools/build-index-sql.py
           python3 tools/check-corpus.py --report || true
-          git config user.name "wince-docs-corpus importer"
-          git config user.email "wince-corpus-harvester@users.noreply.github.com"
-          git add sources/ corpus/ data/index data/reports queues || true
+          git add data/index data/reports || true
           if git diff --staged --quiet; then
-            echo "nothing new"
+            echo "index is current"
             exit 0
           fi
-          git commit -m "media: fetch and import + index refresh"
-          git pull --rebase
+          git commit -m "index: refresh after the import"
+          git pull --rebase || {
+            git rebase --abort || true
+            git merge --no-edit -X ours "origin/${{ github.ref_name }}"
+          }
           git push
 
       - name: Report the outcome

@@ -56,8 +56,11 @@ UTF-8, and the files keep the mirror's own names and relative paths.
   archive.org (`MSDN_Library_April_2000_DVD`), which the mirror itself
   documents as its origin.
 
-Crawled so far: 2,371 pages after three runs (2026-10-02/03). The frontier
-(`data/crawl/datadungeon-ce.json`) still has 9,701 URLs queued, mostly the CE
-SDK reference and the MFC/ATL, VB, DDK and driver libraries;
+Crawled so far: 3,571 pages after five runs (2026-10-02/03). The DevCon '99 CD
+(`../wcedevcon-99/`) turned out to carry the CE 3.0 SDK books of this Library,
+so 4,978 of the queued URLs were taken out of the frontier after checking them
+book by book (`tools/mark-crawl-covered.py`, `data/reports/crawl-covered.tsv`);
+3,990 URLs are left — mostly the CE MFC and ATL reference (`wcemfc`, `wceatl`),
+VB, the PDA guides and the collection guides the disc does not have —
 `python3 tools/crawl-mirror.py --status` prints the current tally. Runs are
 1,200 documents each, twice a day.

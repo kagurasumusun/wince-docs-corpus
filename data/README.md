@@ -96,6 +96,11 @@ The checker also reports how many pages belong to each index (`INDEX.tsv`,
 `corpus.sqlite3`) and compares them with the files on disk; run it after any
 harvest or import.
 
+`crawl-covered.tsv` — URLs taken out of a crawl's frontier because a medium had
+already brought the same pages in (see `tools/mark-crawl-covered.py`): the URL,
+its page id, which tree covers it and why.  Written when the frontier is
+pruned, so the decision is visible rather than buried in the crawl state.
+
 `media-imported.tsv` — the receipt of finished `queues/media.tsv` imports (item,
 exclude, action, output tree, pages, date).  A scratch medium is gone by the
 time the run ends, so the receipt is what keeps the next run from downloading

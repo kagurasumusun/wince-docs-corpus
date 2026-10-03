@@ -62,6 +62,13 @@ def cat_titles():
     return titles
 
 
+def clean_title(text):
+    """A title on one line: some pages carry a multi-line <title> (the DevCon
+    '99 sponsor pages), which would otherwise split the TSV row it is written
+    into."""
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def page_title(path):
     # Some archived pages (the 2010-05 MSDN Library snapshot) carry the
     # Wayback Machine banner before the document, so <title> can sit far below
@@ -73,12 +80,12 @@ def page_title(path):
         return ""
     if path.endswith(".md"):
         match = MD_TITLE.search(head)
-        return match.group(1).strip() if match else ""
+        return clean_title(match.group(1)) if match else ""
     match = TITLE.search(head)
     if not match:
         return ""
-    return re.sub(r"\s*\|\s*Microsoft Learn\s*$", "",
-                  match.group(1).strip())
+    return clean_title(re.sub(r"\s*\|\s*Microsoft Learn\s*$",
+                              "", match.group(1)))
 
 
 def main():

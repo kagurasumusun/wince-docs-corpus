@@ -7,8 +7,8 @@ Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
 documentation Windows CE shares**, so that an API question can be answered
 without breaking the offline copy.
 
-**130,478 pages** (2026-10-04 — `data/index/INDEX.tsv` is the live count):
-110,026 extracted/harvested/mirrored CE pages and 20,452 Win32 pages
+**137,911 pages** (2026-10-04 — `data/index/INDEX.tsv` is the live count):
+117,459 extracted/harvested/mirrored CE pages and 20,452 Win32 pages
 (markdown, from Microsoft's public `MicrosoftDocs` repositories). The
 repository also carries the media the pages were extracted from, the URL
 queues used to harvest them, the complete upstream snapshots, and the derived
@@ -54,7 +54,8 @@ and support articles, one page per file. Nothing else is imported.
 | `corpus/mvb/windows-ce-1.0/` | 2,104 pages decoded from the CE 1.0 Books Online (Multimedia Viewer books + WinHelp release notes). |
 | `corpus/mvb/windows-ce-2.0-sdk/` | 293 pages of the Windows CE Platform SDK (H/PC) 2.0 disc (02/98): the CE debugger reference (`windbg.hlp`) and the disc ReadMe. The disc's InfoViewer Books Online has no decoder yet; the SDK's headers, libraries and samples are deliberately not imported. |
 | `corpus/msdn-library/techshelps/` | 5,165 pages of the MSDN Library's Windows CE 1.0/2.0 sets, from the techshelps mirror (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED). |
-| `corpus/msdn-library/datadungeon-2000-04/` | The Windows CE documentation of the MSDN Library April 2000 (CE 2.12/3.0 era), crawled page by page from library.thedatadungeon.com — 2,372 pages so far, the crawl continues twice a day. |
+| `corpus/msdn-library/datadungeon-2000-04/` | The Windows CE documentation of the MSDN Library April 2000 (CE 2.12/3.0 era), crawled page by page from library.thedatadungeon.com — 3,571 pages so far, the crawl continues twice a day. |
+| `corpus/msdn-library/wcedevcon-99/` | 7,437 pages from the Windows CE Developers Conference DevCon '99 CD (1999): the CE 3.0 SDK documentation in HTML (SDK Reference, Auto PC, DDK, SDK Guide, …), its component CHMs and the conference site. |
 | `corpus/kb/` | 257 Windows CE KnowledgeBase articles (CE 1.0/2.0/2.1x era, the CE toolkits, H/PC, Palm-size PC, Pocket PC). |
 | `corpus/win32/api/`, `corpus/win32/guide/` | 20,452 Win32 pages: 5,219 CE-shared API pages, 11,876 module-context pages, 3,357 subsystem guides (from `MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`, pinned by commit). `data/reports/win32-shared.tsv` maps the shared surface, `tools/find-api.py` looks a name up on both sides. |
 | `corpus/msdn-library/2010-05/<set>/` | 161 Internet Archive copies of MSDN topics (May 2010), filed under the set they duplicate. |
@@ -62,7 +63,7 @@ and support articles, one page per file. Nothing else is imported.
 | `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror) and the complete MicrosoftDocs snapshots (`sources/microsoftdocs/`), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
-| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32 pages), `extract-mvb.py` (decode Books Online into pages), `extract-chm.py` (unpack documentation CHMs), `crawl-mirror.py` (crawl a documentation mirror), `import-media.py` + `iso9660.py` (fetch a CD image from the Internet Archive and import its documentation), `import-techshelps.py` / `import-kbarchive.py` (third-party sources), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report and Win32-map generators. |
+| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32 pages), `extract-mvb.py` (decode Books Online into pages), `extract-chm.py` (unpack documentation CHMs), `crawl-mirror.py` (crawl a documentation mirror) + `mark-crawl-covered.py` (take pages a medium already brought out of a crawl's frontier), `import-media.py` + `iso9660.py` (fetch a CD image from the Internet Archive and import its documentation), `import-techshelps.py` / `import-kbarchive.py` (third-party sources), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report and Win32-map generators. |
 | `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`; runs on demand or whenever `queues/auto-harvest.txt` changes), `crawl-mirror.yml` (crawl the mirror sites in `queues/mirrors.tsv`, twice a day — this is the live collection), `extract-chm.yml` (unpack the documentation CHMs of a media set in `queues/chm-sets.tsv`), `import-media.yml` (fetch a CD image from the Internet Archive and import its documentation, `queues/media.tsv`) and `import-win32.yml` (re-import `corpus/win32/` from the pinned MicrosoftDocs commits). All are `workflow_dispatch` — run them from the Actions tab. |
 
 ## Corpus conventions

@@ -51,7 +51,7 @@ can collect them):
 | CE 6.0 R3 update | <https://archive.org/details/CE6R3> | CE 6.0 R3 documentation (incl. the 3.5 Compact Framework reference) |
 | CE 6.0 Platform Builder SP1 | <https://archive.org/details/windows-embedded-ce-6.0-platform-builder-sp1> + Microsoft Download Center id 4097 (`Release Notes.htm` is a plain file) | Platform Builder 6.0 documentation |
 | CE 5.0 Standard SDK | Microsoft Download Center id 17310 (still live) | the CE 5.0 Standard SDK API surface |
-| MSDN Library discs (2001–2010) | Internet Archive / WinWorld | the MSDN-era captures of CE 3.0–5.0 reference, including custom-hardware docs |
+| MSDN Library discs (2001–2010) | Internet Archive / WinWorld | the MSDN-era captures of CE 3.0–5.0 reference, including custom-hardware docs (the **CE 3.0 SDK documentation** of that era arrived as a conference CD instead: `windowscedevcon99conferencecd`, imported to `corpus/msdn-library/wcedevcon-99/`) |
 
 For page-level material the *queues* are the actionable list, and as of
 2026-10 both of them are done: `queues/mslearn-embedded.txt` is exhausted
