@@ -39,7 +39,8 @@ documentation it finds. Of the 1,383 files on the disc:
 ## Not extracted
 
 `data1/Online_help_files/` holds the disc's **Books Online in InfoViewer
-format** — `Mips.ivi` + `Mips.ivt` and nine more book/index pairs. No tool here
+format** — `Mips.ivi` + `Mips.ivt` and nine more book/index pairs (the WinHelp
+files the run imported sit in `data1/Online_help_files/iv5/`). No tool here
 decodes `.ivt`, so those books are still unread; the Win32 API reference of
 CE 2.0 itself is covered by the MSDN Library sets already in the corpus
 (`corpus/msdn-library/techshelps/` CEGUIDE/WCEDDK, `corpus/msdn-library/datadungeon-2000-04/`).

@@ -7,11 +7,12 @@ Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
 documentation Windows CE shares**, so that an API question can be answered
 without breaking the offline copy.
 
-**130,185 pages**: 109,733 extracted/harvested/mirrored CE pages and 20,452
-Win32 pages (markdown, from Microsoft's public `MicrosoftDocs` repositories). The
-repository also carries the original media the pages were extracted from, the
-URL queues used to harvest them, the complete upstream snapshots, and the
-derived catalogs, manifests and indexes.
+**130,478 pages** (2026-10-04 — `data/index/INDEX.tsv` is the live count):
+110,026 extracted/harvested/mirrored CE pages and 20,452 Win32 pages
+(markdown, from Microsoft's public `MicrosoftDocs` repositories). The
+repository also carries the media the pages were extracted from, the URL
+queues used to harvest them, the complete upstream snapshots, and the derived
+catalogs, manifests and indexes.
 
 ## What is collected — and what is not
 
@@ -51,6 +52,7 @@ and support articles, one page per file. Nothing else is imported.
 | `corpus/chm/windows-ce-4.2/` | 566 pages: the emulator board and remote-tools reference of the CE .NET 4.2 Platform Builder Emulation Edition media. |
 | `corpus/chm/windows-ce-3.0/` | 8,962 pages extracted from the official Windows CE 3.0 documentation CHM. |
 | `corpus/mvb/windows-ce-1.0/` | 2,104 pages decoded from the CE 1.0 Books Online (Multimedia Viewer books + WinHelp release notes). |
+| `corpus/mvb/windows-ce-2.0-sdk/` | 293 pages of the Windows CE Platform SDK (H/PC) 2.0 disc (02/98): the CE debugger reference (`windbg.hlp`) and the disc ReadMe. The disc's InfoViewer Books Online has no decoder yet; the SDK's headers, libraries and samples are deliberately not imported. |
 | `corpus/msdn-library/techshelps/` | 5,165 pages of the MSDN Library's Windows CE 1.0/2.0 sets, from the techshelps mirror (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED). |
 | `corpus/msdn-library/datadungeon-2000-04/` | The Windows CE documentation of the MSDN Library April 2000 (CE 2.12/3.0 era), crawled page by page from library.thedatadungeon.com — 2,372 pages so far, the crawl continues twice a day. |
 | `corpus/kb/` | 257 Windows CE KnowledgeBase articles (CE 1.0/2.0/2.1x era, the CE toolkits, H/PC, Palm-size PC, Pocket PC). |
