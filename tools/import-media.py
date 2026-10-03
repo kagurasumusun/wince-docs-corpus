@@ -38,8 +38,11 @@ By default the medium is kept verbatim under ``sources/<name>/`` and gets a
 and md5 of every file that was downloaded.  Action ``import-scratch`` is for a
 medium that is *not* kept: it is fetched to ``.cache/media/<name>/``, the
 documentation pages go to the corpus, and a ``PROVENANCE.md`` next to those
-pages records where they came from.  Either way, only documentation is
-imported - this is a documentation corpus, not a source-code mirror.
+pages records where they came from, while ``data/reports/media-imported.tsv``
+keeps a later run from downloading the same image again (``--force`` redoes it).
+Action ``inventory-scratch`` only probes such a medium: fetch it, list what it
+holds, throw it away.  Either way, only documentation is imported - this is a
+documentation corpus, not a source-code mirror.
 """
 
 import argparse
@@ -68,6 +71,11 @@ ARCHIVE = ("archive", "archive.zip", "archive.rar", "archive.7z")
 _SCRATCH = {}
 ARCHIVE_EXT = (".iso", ".zip", ".7z", ".rar", ".cab", ".exe", ".msi", ".img",
                ".bin", ".tar", ".gz", ".tgz")
+# What has been imported already.  A scratch medium is downloaded to a
+# directory a runner throws away, so without this a later run would download
+# the same image again to import the same pages; the receipt says which
+# (item, exclude) pair has been imported where, and --force redoes it anyway.
+IMPORTED = os.path.join(ROOT, "data", "reports", "media-imported.tsv")
 PAGE_EXT = (".htm", ".html")
 HELP_EXT = (".hlp", ".mvb", ".mvw", ".gid")
 # Assets, binaries, toolchains and source code: counted, never imported.  A
@@ -483,6 +491,37 @@ def extract_helpfile(path, out, rel, dry_run=False):
     return pages
 
 
+def imported_state():
+    """name -> {item, exclude, action, out, pages, date} of finished imports."""
+    rows = {}
+    if not os.path.exists(IMPORTED):
+        return rows
+    with open(IMPORTED, encoding="utf-8") as fh:
+        keys = fh.readline().rstrip("\n").lstrip("# ").split("\t")
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) != len(keys):
+                continue
+            row = dict(zip(keys, parts))
+            rows[row.get("name", "")] = row
+    return rows
+
+
+def mark_imported(entry, pages, out):
+    """Record a finished import so the next run does not fetch it again."""
+    os.makedirs(os.path.dirname(IMPORTED), exist_ok=True)
+    keys = ["name", "item", "exclude", "action", "out", "pages", "date"]
+    rows = imported_state()
+    rows[entry["name"]] = {
+        "name": entry["name"], "item": entry["item"],
+        "exclude": entry.get("exclude", ""), "action": entry["action"],
+        "out": entry["out"], "pages": str(pages), "date": _today()}
+    with open(IMPORTED, "w", encoding="utf-8", newline="") as fh:
+        fh.write("# " + "\t".join(keys) + "\n")
+        for name in sorted(rows):
+            fh.write("\t".join(rows[name].get(k, "") for k in keys) + "\n")
+
+
 def load_config(path):
     entries = []
     with open(path, encoding="utf-8") as fh:
@@ -507,16 +546,26 @@ def load_config(path):
     return entries
 
 
-def run_config(config, only, dry_run=False):
+def run_config(config, only, dry_run=False, force=False):
     entries = load_config(config)
     if only:
         entries = [e for e in entries if e["name"] == only]
         if not entries:
             log(f"[media] no config entry named {only}")
             return 1
+    done = imported_state()
     for entry in entries:
-        scratch = entry["action"] == "import-scratch"
+        scratch = entry["action"] in ("import-scratch", "inventory-scratch")
         wanted = entry["action"] in ("import", "import-scratch")
+        if scratch and wanted and not force and not dry_run:
+            receipt = done.get(entry["name"])
+            if receipt and receipt["item"] == entry["item"] \
+                    and receipt["exclude"] == entry.get("exclude", "") \
+                    and receipt["action"] == entry["action"]:
+                log(f"[media] {entry['name']}: already imported on "
+                    f"{receipt['date']} ({receipt['pages']} pages) - "
+                    f"nothing to fetch (--force to redo)")
+                continue
         source_dir = (os.path.join(ROOT, ".cache", "media", entry["name"])
                       if scratch else
                       os.path.join(ROOT, "sources", entry["name"]))
@@ -535,8 +584,10 @@ def run_config(config, only, dry_run=False):
             out = entry["out"] if os.path.isabs(entry["out"]) else os.path.join(
                 ROOT, entry["out"])
             log(f"[media] {entry['name']}: importing pages into {entry['out']}")
-            extract_pages(source_dir, out, entry["name"], dry_run,
-                          entry.get("exclude", ""))
+            pages = extract_pages(source_dir, out, entry["name"], dry_run,
+                                  entry.get("exclude", ""))
+            if scratch and not dry_run:
+                mark_imported(entry, pages, out)
             if scratch and not dry_run and entry["name"] in _SCRATCH:
                 scratch_info = _SCRATCH[entry["name"]]
                 write_scratch_provenance(out, scratch_info["item"],
@@ -563,13 +614,16 @@ def main():
     ap.add_argument("--extract", action="store_true",
                     help="import the documentation pages into --out")
     ap.add_argument("--out", help="corpus directory to import into")
+    ap.add_argument("--force", action="store_true",
+                    help="import even if data/reports/media-imported.tsv says "
+                         "this entry is already done")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     globals()["BASE_URL"] = args.base_url.rstrip("/")
 
     if args.config:
         return run_config(os.path.join(ROOT, args.config), args.only,
-                          args.dry_run)
+                          args.dry_run, args.force)
 
     if args.item:
         if not args.name:

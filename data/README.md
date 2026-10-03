@@ -96,6 +96,11 @@ The checker also reports how many pages belong to each index (`INDEX.tsv`,
 `corpus.sqlite3`) and compares them with the files on disk; run it after any
 harvest or import.
 
+`media-imported.tsv` — the receipt of finished `queues/media.tsv` imports (item,
+exclude, action, output tree, pages, date).  A scratch medium is gone by the
+time the run ends, so the receipt is what keeps the next run from downloading
+the same image again; `--force` overrides it.
+
 `crawl-last.txt` — what the last mirror crawl did (which pages it stored, what
 it skipped and why it stopped), for the same reason: the runner's job log is
 not readable from here, and a crawl that dies half way through commits its
