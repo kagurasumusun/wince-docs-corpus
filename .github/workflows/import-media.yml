@@ -72,6 +72,8 @@ jobs:
           helpdeco 2>&1 | head -3 || echo "helpdeco not built (MVB import will be skipped)"
 
       - name: Fetch and import
+        id: media
+        continue-on-error: true
         run: |
           set -o pipefail
           NAME="${{ github.event.inputs.name }}"
@@ -79,7 +81,11 @@ jobs:
           [ -n "$NAME" ] && ONLY="--only $NAME"
           DRY=""
           [ "${{ github.event.inputs.dry_run }}" = "true" ] && DRY="--dry-run"
-          python3 tools/import-media.py --config queues/media.tsv $ONLY $DRY
+          mkdir -p data/reports
+          # The job log of a run is not readable from the environment this
+          # corpus is maintained from, so the run's own output is committed.
+          python3 tools/import-media.py --config queues/media.tsv $ONLY $DRY \
+            2>&1 | tee data/reports/media-last.log
 
       - name: Refresh indexes and commit
         if: ${{ github.event.inputs.dry_run != 'true' }}
@@ -97,3 +103,9 @@ jobs:
           git commit -m "media: fetch and import + index refresh"
           git pull --rebase
           git push
+
+      - name: Report the outcome
+        if: ${{ steps.media.outcome == 'failure' && github.event.inputs.dry_run != 'true' }}
+        run: |
+          echo "the import failed; data/reports/media-last.log has the reason"
+          exit 1

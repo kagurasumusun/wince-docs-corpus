@@ -42,11 +42,15 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.parse
 import urllib.request
 import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_URL = "https://archive.org"          # overridable with --base-url
+USER_AGENT = ("wince-docs-corpus/2.0 "
+              "(+https://github.com/kagurasumusun/wince-docs-corpus)")
 ARCHIVE = ("archive", "archive.zip", "archive.rar", "archive.7z")
 ARCHIVE_EXT = (".iso", ".zip", ".7z", ".rar", ".cab", ".exe", ".msi", ".img",
                ".bin", ".tar", ".gz", ".tgz")
@@ -66,26 +70,42 @@ def log(message):
 # ---------------------------------------------------------------------------
 # downloading
 # ---------------------------------------------------------------------------
+def open_url(url, timeout):
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    return urllib.request.urlopen(request, timeout=timeout)
+
+
 def metadata(item):
-    url = f"https://archive.org/metadata/{urllib.parse.quote(item)}"
-    with urllib.request.urlopen(url, timeout=60) as fh:
+    url = f"{BASE_URL}/metadata/{urllib.parse.quote(item)}"
+    with open_url(url, 60) as fh:
         return json.load(fh)
 
 
-def download(url, dest):
+def download(url, dest, attempts=3):
     log(f"[media] {url}")
     os.makedirs(os.path.dirname(dest), exist_ok=True)
-    digest = hashlib.md5()
-    with urllib.request.urlopen(url, timeout=600) as response, \
-            open(dest + ".part", "wb") as out:
-        while True:
-            chunk = response.read(1 << 20)
-            if not chunk:
-                break
-            out.write(chunk)
-            digest.update(chunk)
-    os.replace(dest + ".part", dest)
-    return digest.hexdigest(), os.path.getsize(dest)
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        digest = hashlib.md5()
+        try:
+            with open_url(url, 600) as response, \
+                    open(dest + ".part", "wb") as out:
+                while True:
+                    chunk = response.read(1 << 20)
+                    if not chunk:
+                        break
+                    out.write(chunk)
+                    digest.update(chunk)
+            os.replace(dest + ".part", dest)
+            return digest.hexdigest(), os.path.getsize(dest)
+        except Exception as exc:                          # noqa: BLE001
+            last_error = exc
+            log(f"[media] attempt {attempt}/{attempts} failed: "
+                f"{type(exc).__name__}: {exc}")
+            if os.path.exists(dest + ".part"):
+                os.remove(dest + ".part")
+            time.sleep(5 * attempt)
+    raise RuntimeError(f"could not download {url}: {last_error}")
 
 
 def fetch_item(item, name, pattern):
@@ -102,7 +122,7 @@ def fetch_item(item, name, pattern):
     os.makedirs(out, exist_ok=True)
     rows = []
     for entry in files:
-        url = (f"https://archive.org/download/{urllib.parse.quote(item)}/"
+        url = (f"{BASE_URL}/download/{urllib.parse.quote(item)}/"
                f"{urllib.parse.quote(entry['name'])}")
         dest = os.path.join(out, entry["name"])
         if os.path.exists(dest):
@@ -410,6 +430,8 @@ def main():
     ap = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--base-url", default=BASE_URL,
+                    help="archive host (for tests; default archive.org)")
     ap.add_argument("--config", help="queues/media.tsv (declare media to fetch)")
     ap.add_argument("--only", help="one entry of --config")
     ap.add_argument("--item", help="Internet Archive item to download")
@@ -422,6 +444,7 @@ def main():
     ap.add_argument("--out", help="corpus directory to import into")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+    globals()["BASE_URL"] = args.base_url.rstrip("/")
 
     if args.config:
         return run_config(os.path.join(ROOT, args.config), args.only,
