@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Hive-based Registry Initialization</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfOEMIoControl">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIOCTLHALGETREGSECUREKEYS">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIOCTLHALINITREGISTRY">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conEventRegistration">
+</OBJECT>
+<OBJECT ID="hhobj_5" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIOCTLHALGETHIVERAMREGION">
+</OBJECT>
+<OBJECT ID="hhobj_6" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIOCTLHALGETHIVECLEANFLAG">
+</OBJECT>
+<OBJECT ID="hhobj_7" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSetCurrentUser">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50tskinitializingthefilebasedregistry"></A>Hive-based Registry Initialization</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following steps show the process that Filesys.exe uses to initialize the hive-based registry.
+
+<OL type="1">
+	<LI>Filesys.exe calls <A HREF="JavaScript:hhobj_1.Click()">OEMIoControl</A> with <A HREF="JavaScript:hhobj_2.Click()">IOCTL_HAL_GETREGSECUREKEYS</A> two times. The first call is a query to find out the required data buffer size. The second call is a query to get the buffer of secure key data. For more information, see <A HREF="wce50conrequestingadditionalsecureregistrykeys.htm">Requesting Additional Secure Registry Keys</A>.</li>
+
+	<LI>Filesys.exe mounts the boot hive (Boot.hv) from ROM. The boot hive contains the information that Filesys.exe needs to determine where the registry is stored and to start the drivers that are required to access it.</li>
+
+	<LI>Filesys.exe calls <B>OEMIoControl</B> with IOCTL <A HREF="JavaScript:hhobj_3.Click()">IOCTL_HAL_INITREGISTRY</A>, to give the OAL a chance to add data to the registry early in the boot process.</li>
+
+	<LI>Filesys.exe creates named events for all event names in the <B>HKEY_LOCAL_MACHINE\System\Events</B> registry location in the boot hive. These events are set by the processes that own them. For more information, see <A HREF="JavaScript:hhobj_4.Click()">Ready-Event Registration</A>.</li>
+
+	<LI>Filesys.exe starts Device.exe if the registry value <B>Start DevMgr</B> under <B>HKEY_LOCAL_MACHINE\init\BootVars</B> is set to 1.</li>
+
+	<LI>Filesys.exe loads the Storage Manager if <B>HKEY_LOCAL_MACHINE\System\StorageManager</B> points to a loadable DLL. Filesys.exe creates a thread to initialize the Storage Manager. The thread will exit when initialization is complete.</li>
+
+	<LI>Filesys.exe creates an event called "SYSTEM/BootPhase2", which is triggered when the file system containing the system registry is loaded. This file system is identified by the <CODE>"MountFlags"=2</CODE> bitmask in its Storage Manager profile.</li>
+
+	<LI>Filesys.exe waits for a file system to register as the storage location for registry hives.</li>
+
+	<LI>If the registry hives are not being stored on a file system, Filesys.exe calls <B>OEMIoControl</B> with <A HREF="JavaScript:hhobj_5.Click()">IOCTL_HAL_GET_HIVE_RAM_REGION</A> to find out if the registry data should be stored in a reserved area of RAM, instead of in a file.</li>
+
+	<LI>Filesys.exe mounts the ROM portion of the system registry, Default.hv.</li>
+
+	<LI>Filesys.exe calls <B>OEMIoControl</B> with with <A HREF="JavaScript:hhobj_6.Click()">IOCTL_HAL_GET_HIVE_CLEAN_FLAG</A> and the HIVECLEANFLAG_SYSTEM flag to determine whether the OAL indicates that the system hive should be cleaned and recreated with data from ROM.</li>
+
+	<LI>If a clean registry is not required, the system registry hive file (System.hv) is loaded from the file system that contains it. A signature in the system hive file is checked against a signature in the ROM portion of the system registry. If the signatures do not match, then a clean registry is required, even if this is not indicated by <B>IOCTL_HAL_GET_HIVE_CLEAN_FLAG</B>.</li>
+
+	<LI>If a clean registry is required, the old registry hive file is deleted and a new hive file is created.</li>
+
+	<LI>Filesys.exe invalidates any currently open system registry handles before swapping out the boot registry hive.</li>
+
+	<LI>Filesys.exe migrates the changes from the boot registry hive to the system hive.</li>
+
+	<LI>If the boot is not a clean boot, Filesys.exe sets the registry value <B>RegPersisted</B> under <B>HKEY_LOCAL_MACHINE</B> to 1. At this point, non-user specific registry data becomes available.</li>
+
+	<LI>Filesys.exe determines where the user profiles are stored by looking at the registry value ProfileDir under <B>HKEY_LOCAL_MACHINE\init\BootVars</B>.</li>
+
+	<LI>Filesys.exe calls <B>OEMIoControl</B> with <B>IOCTL_HAL_GET_HIVE_CLEAN_FLAG</B> and the HIVECLEANFLAG_USERS flag, to determine whether the OAL indicates that the user profiles should be cleaned. If so, all user profile directories are removed, along with their contents.</li>
+
+	<LI>Filesys.exe determines if the default user profile should be loaded. If the registry value <B>NoDefaultUser</B> under <B>HKEY_LOCAL_MACHINE\init\BootVars</B> is set to 1, a call to <A HREF="JavaScript:hhobj_7.Click()">SetCurrentUser</A> is required to load a user profile. If <B>NoDefaultUser</B> is set to 0, the default user profile is loaded.
+<P>The name of the default user is determined by the value of <B>DefaultUser</B>, a REG_SZ value, in <B>HKEY_LOCAL_MACHINE\init\BootVars</B>. The <B>DefaultUser</B> is set to the name of the user to use as the default profile when the system boots. If it is an existing user, the appropriate user hive is loaded. If it is a new user, the user profile can be created. If <B>DefaultUser</B> is not set, a user by the name "default" is loaded. You can choose a default user name with the following registry key.
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\init\BootVars]
+    "DefaultUser"=&lt;<I>username</I>&gt;</PRE>
+</li>
+
+	<LI>When Filesys.exe loads the user registry, it performs the following actions:
+<OL type="a">
+	<LI>Mounts the ROM portion of the user registry hive from the User.hv file in ROM.</li>
+
+	<LI>Mounts the remaining portion of the user registry hive from the User.hv file in the user profile directory on the persistent file system.</li>
+
+	<LI>A signature in the user hive file is checked against a signature in the ROM portion of the user registry. If the signatures do not match, then a clean registry is required. The User.hv file in the user profile directory is deleted and a new hive file is created. No other files in the user profile directory are affected.</li>
+
+	<LI>If the user registry is not clean, Filesys.exe sets the registry value <B>RegPersisted</B> under <B>HKEY_CURRENT_USER</B> to 1.</li>
+</OL>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50confilesysexebootprocess.htm">Filesys.exe Boot Process</A> | <A HREF="wce50tskinitializingtheobjectstorebasedregistry.htm">RAM-based Registry Initialization</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Hive-based%20Registry%20Initialization (wce50tskinitializingthefilebasedregistry.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

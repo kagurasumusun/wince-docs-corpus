@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>License Acquisition</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfShellExecuteEx">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIDispatch">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriInternetExplorerBrowserControlHostOrient">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIDispatchInvoke">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conlicenseacquisition"></A>License Acquisition</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>License acquisition is the process of obtaining a license from a DRM license server to allow your device to play back DRM-protected content. Licenses are associated with the combination of a specific device and a specific piece of content. </P>
+
+<P>Windows CE-based devices cannot act as DRM license servers.</P>
+
+<P>The process of license acquisition can be either silent or nonsilent:
+
+<UL type="disc">
+	<LI>In a silent acquisition, the entire process of negotiating the request for, and acceptance of, the license takes place between the Windows CE-based device and the licensing server without any user input or interaction. </li>
+
+	<LI>In a nonsilent license acquisition, the user will be asked for information and confirmation before the digital certificate is transferred. This process is facilitated by the license acquisition OCX.  </li>
+</UL>
+
+<P>A platform can support both silent and nonsilent license acquisition methods.  The following diagram shows a typical method for integrating both methods into a single architecture.</P>
+
+<P class="fig"><IMG SRC="cxdrmlicenseacquisition.gif" ALT="" BORDER=0></P>
+
+<P>The license acquisition OCX can only be hosted inside of a Web page. It acts as the bridge between the Web-based interface that a content owner would use to gather information to generate licenses and the DRM license server. The license acquisition OCX is required to support nonsilent license acquisitions. This OCX is used exclusively by the DRM components in Windows CE.</P>
+
+<H2 class="dtH2">Nonsilent License Acquisition</H2>
+
+<P>Nonsilent acquisition occurs when a piece of content is DRM-protected and the license server indicates that direct user interaction is required in order to acquire the license.  This user interaction is initiated by the Windows Media splitter and results in a call to <A HREF="JavaScript:hhobj_1.Click()">ShellExecuteEx</A> to launch the browser and load a web page specified by the license server.  This web page will in turn redirect the browser to a web page used by the content provider to manage the process of authorizing the user to receive the license.</P>
+
+<P>After the interaction with the user is completed and the license has been authorized, the licensing server sends the license to the device.  The browser then loads the license acquisition OCX (cedrm2.dll) and the OCX consumes the license and writes it to the license store.  This completes the transaction for acquiring the license.  </P>
+
+<P>In this process, the user had to navigate away from the web page containing the content they were originally trying to play.  The user will probably want to immediately return to the content once the license is acquired.  Windows CE provides a way to notify the client that a DRM license acquisition process is complete.  This allows your application to manage the user experience after the license is acquired.  Your application could, for example, automatically redirect the browser to the original content if the license acquisition was successful.</P>
+
+<P>Upon completing the license acquisition process, the license acquisition OCX makes an internal call to <B>IDocHostUIHandler::GetExternal</B> to obtain an <A HREF="JavaScript:hhobj_2.Click()">IDispatch</A> interface from the browser's host application.  For information on <B>IDocHostUIHandler </B>see the Advanced Hosting Reference in the <A HREF="JavaScript:hhobj_3.Click()">Internet Explorer Browser Control Host</A> documentation.</P>
+
+<P>Once the OCX obtains the <B>IDispatch</B> interface, it calls the <B>LicenseAcquired</B> method, which you must implement in your browser's host application.  This function has one parameter, a BOOL where a value of TRUE indicates that a license has been acquired and FALSE otherwise.</P>
+
+<P>You must make provision within your browser's host application to support the license acquisition OCX's internal calling sequence.  The following code shows how to enable the <B>GetExternal</B> method inside your browser's host application so it can return the <B>IDispatch</B> interface to the OCX.  </P>
+
+<PRE class="code">// IDocHostUIHandler methods
+STDMETHOD(GetExternal)(IDispatch **ppDispatch) 
+{
+  *ppDispatch = (IDispatch *)this;
+  return S_OK;
+}</PRE>
+
+<P>Your application can implement a separate object for <B>IDispatch</B> requests instead of using <CODE>this</CODE> in <B>GetExternal</B>.</P>
+
+<P>When a license is acquired the OCX initiates a call to <A HREF="JavaScript:hhobj_4.Click()">IDispatch::Invoke</A>.  This means that your implementation of <B>IDispatch::Invoke</B> requires a new dispatch ID.  The following code shows how to create the dispatch ID.</P>
+
+<PRE class="code">#define DISPID_LICENSEACQUIRED    /* Provide your ID number here */
+
+[id(DISPID_LICENSEACQUIRED), helpstring("Fired when License is
+acquired."), helpcontext(0x0000)]
+
+HRESULT LicenseAcquired([in] VARIANT_BOOL varResult );</PRE>
+
+<P>The following code shows how you can modify your <B>IDispatch::Invoke</B> method.</P>
+
+<PRE class="code">case DISPID_LICENSEACQUIRED :
+  VARIANT_BOOL fAcquired;
+  fAcquired = pdparams-&gt;rgvarg[0].boolVal;
+  LicenseAcquired( fAcquired ) ;
+  break ;</PRE>
+
+<P>The following code shows a possible definition for your <B>LicenseAcquired</B> method.</P>
+
+<PRE class="code">HRESULT   LicenseAcquired( VARIANT_BOOL varRestult )
+{
+  MessageBox(NULL, L"License”, "Notification",MB_OK|MB_ICONSTOP);
+
+  /* ... Handle the outcome of the license acquisition ... */
+
+  return S_OK ;
+}</PRE>
+
+<P>At this point, your application has received notification on the status of the license.  From here you can control the user experience of a successful or failed license acquisition.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oridigitalrightsmanagement.htm">DRM Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: License%20Acquisition (wce50conlicenseacquisition.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

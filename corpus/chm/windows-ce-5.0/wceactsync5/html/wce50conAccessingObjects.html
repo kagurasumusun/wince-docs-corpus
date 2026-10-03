@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing Objects</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conaccessingobjects"></A>Accessing Objects</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To access an object, the service manager needs to pass the object's unique <B>HREPLITEM</B> handle to an <B>IReplStore</B> or <B>IReplObjHandler</B> method. To the service manager, the handle is a 32-bit number created by the desktop provider. To the desktop provider, the handle is a pointer to an internal structure or class instance.</P>
+
+<P>Using the time stamp or version number in the <B>HREPLITEM</B>, the desktop provider can determine whether two handles represent the same object, as well as which of the two handles represents the more-recent version. <B>IReplStore::CompareItem</B> compare the object identifiers contained in the two handles. The following table shows the possible return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=15%>Value</TH>
+<TH width=85%>Condition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>1</TD>
+<TD width=85%>The first object identifier is greater than the second object identifier.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>0</TD>
+<TD width=85%>The first object identifier is equal to the second object identifier.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>&#0150;1</TD>
+<TD width=85%>The first object identifier is less than the second object identifier.</TD>
+</TR>
+</table></div>
+
+<P>Because the object identifiers are stored in an ascending-identifier sequence, the service manager can perform an efficient binary search, rather than checking every entry in the table.</P>
+
+<P>The following code example shows how to implement <B>IReplStore::CompareItem</B>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">STDMETHODIMP_(int) CStore::CompareItem
+(
+   HREPLITEM hItem1,  // points to handle of first  object
+   HREPLITEM hItem2   // points to handle of second object
+   // Both handles are guaranteed to be returned by
+   // IReplStore::FindFirstObject or IReplStore::FindNextObject.
+)
+{
+   CItem *pItem1 = (CItem*)hItem1;
+   CItem *pItem2 = (CItem*)hItem2;
+
+   if (pItem1-&gt;m_uid == pItem2-&gt;m_uid)
+       return  0;
+
+   if (pItem1-&gt;m_uid &lt;  pItem2-&gt;m_uid)
+       return -1;
+
+   return 1;
+}</PRE>
+
+<P><B>CFolder </B>and <B>CItem</B> are COM classes based on <B>CReplObject</B>. The following code example shows the definition of these classes.</P>
+
+<PRE class="code">#define OT_ITEM    1
+#define OT_FOLDER  2
+
+class CReplObject
+{
+public:
+   virtual ~CReplObject() {}
+   UINT     m_uType;
+};
+
+class CFolder: public CReplObject
+{
+public:
+   CFolder (void) { m_uType = OT_FOLDER; }
+   virtual ~CFolder() {}
+};
+
+class CItem: public CReplObject
+{
+public:
+   CItem (void)
+   { m_uType = OT_ITEM;
+     memset (&amp;m_ftModified, 0, sizeof (m_ftModified));
+   }
+   virtual ~CItem() {}
+   UINT     m_uid;
+   FILETIME m_ftModified;
+};</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condevelopingthedesktopprovider.htm">Developing the Desktop Provider</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Accessing%20Objects (wce50conaccessingobjects.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

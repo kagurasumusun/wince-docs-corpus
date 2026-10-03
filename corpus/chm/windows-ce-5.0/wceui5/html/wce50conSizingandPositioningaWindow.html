@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sizing and Positioning a Window</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consizingandpositioningawindow"></A>Sizing and Positioning a Window</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The size and position of a window are expressed as a bounding rectangle that is specified in coordinates that are relative to the screen or to the parent window. Typically, window dimensions and coordinates are measured in pixels.</P>
+
+<P>When you create a window, you can set the initial size and position of the window directly, or instruct the system to calculate the initial size and position by specifying the value CW_USEDEFAULT for the <I>nWidth</I> and <I>nHeight</I> parameters in the <B>CreateWindow</B> or <B>CreateWindowEx</B> function. After creating a window, set the window size or position by calling the <B>MoveWindow</B> or <B>SetWindowPos</B> function. For Windows CE 2.12 and earlier, changing the size of a window invalidates the entire window, which causes the OS to send a WM_PAINT message to your application. For Windows CE 3.0, changing the size of a window does not invalidate the entire window.</P>
+
+<P>If you need to create a window with a client area of a specified size, call the <B>AdjustWindowRectEx</B> function to calculate the required size of a window, based on the preferred size of the client area. Pass the resulting size values to the <B>CreateWindowEx</B> function.</P>
+
+<P>If you want to override the default minimum resize dimensions, change the values (in pixels) for the following registry entries:</P>
+
+<PRE class="code">HKEY_LOCAL_MACHINE\System\GWE\cxMinSize
+HKEY_LOCAL_MACHINE\System\GWE\cyMinSize</PRE>
+
+<P>Although you can create a window of any size, it should not exceed the screen size of the target device. Before setting a window size, check the width and height of the screen by using the <B>GetSystemMetrics</B> function with the SM_CXSCREEN and SM_CYSCREEN flags, respectively.</P>
+
+<P>You can call the <B>GetWindowRect</B> function to retrieve the coordinates of the bounding rectangle of a window. <B>GetWindowRect</B> fills a <B>RECT</B> structure with the coordinates of the upper-left and lower-right corners of the window. The coordinates are relative to the upper-left corner of the screen, even for a child window. The <B>ScreenToClient</B> or <B>MapWindowPoints</B> function maps the screen coordinates of the bounding rectangle of a child window to coordinates that are relative to the client area of the parent window.</P>
+
+<P>The <B>GetClientRect</B> function retrieves the position and size of the client area of the window. Because coordinates are relative to the client area itself, the upper-left corner of the client area is always at coordinates (0, 0), and the coordinates of the lower-right corner are the width and height of the client area. Furthermore, because the command bar is part of the client area in Windows CE, it is included in the dimensions that are returned by <B>GetClientRect</B>.</P>
+
+<P>To retrieve the handle to the window that occupies a particular point on the screen, call the <B>WindowFromPoint</B> function. Call the <B>ChildWindowFromPoint</B> function to retrieve the handle to the child window that occupies a specified point in the client area of the parent window. To convert the client coordinates of a specified point into screen coordinates, call the <B>ClientToScreen</B> function. To convert the screen coordinates of a specified point into client coordinates, call the <B>ScreenToClient</B> function.</P>
+
+<P>To change the position of a window in the z-order, call the <B>SetWindowPos</B> function. This function is used to create a topmost window. A <I>topmost window</I> is a window that has the WS_EX_TOPMOST style. Do not confuse topmost with top-level. Top-level refers to whether or not a window has a parent window, whereas topmost refers to a specific style that controls the z-order for the window. Topmost windows are located above all non-topmost sibling windows in the z-order. To create a topmost window, specify the WS_EX_TOPMOST style when you create the window, or call <B>SetWindowPos</B> and set the <I>hWndInsertAfter</I> parameter to HWND_TOPMOST. </P>
+
+<P>A window might lose its topmost style by calling <B>SetWindowPos</B> and setting the <I>hWndInsertAfter</I> parameter to HWND_NOTOPMOST. If a window is positioned directly after a non-topmost window, that window loses its WS_EX_TOPMOST style. You can set the <B>SetWindowLong</B> function to give a window the WS_EX_TOPMOST style; however, this function does not change the z-order of the window.</P>
+
+<P>The defer window API, which consists of the <B>DeferWindowPos</B>, <B>BeginDeferWindowPos</B>, and <B>EndDeferWindowPos</B> functions, is an alternative to making repeated calls to <B>SetWindowPos</B>. These functions enable you to queue up several changes in window position and to execute them simultaneously.</P>
+
+<P>Occasionally, topmost windows can disappear behind the desktop. This typically occurs when one of the following rules governing the use of topmost windows is broken:
+
+<UL type="disc">
+	<LI>When creating an owned window, if the owner of the window is designated WS_EX_TOPMOST, the owned window must be a topmost window, too.</li>
+
+	<LI>When calling <B>SetWindowPos</B> to change the topmost attribute of a window, you must change the topmost attribute of all of its owned windows.</li>
+
+	<LI>When changing the topmost attribute of a window, do not call <B>SetWindowLong</B>. </li>
+
+	<LI>When changing the z-order of a member of an owned group of windows, you must respect the topmost attribute of other windows.</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conworkingwithwindowsandmessages.htm">Working with Windows and Messages</A> | <A HREF="wce50origwesapplicationdevelopment.htm">GWES Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Sizing%20and%20Positioning%20a%20Window (wce50consizingandpositioningawindow.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

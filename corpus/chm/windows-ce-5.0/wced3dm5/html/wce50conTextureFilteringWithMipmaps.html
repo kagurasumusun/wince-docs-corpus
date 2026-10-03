@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Texture Filtering with Mipmaps</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50contexturefilteringwithmipmaps"></A>Texture Filtering with Mipmaps</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A <I>mipmap</I> is a sequence of textures, each of which is a progressively lower resolution representation of the same image. The height and width of each image, or level, in the mipmap is a power of two smaller than the previous level. Mipmaps do not have to be square. </P>
+
+<P>A high-resolution mipmap image is used for objects that are close to the user. Lower-resolution images are used as the object appears farther away. Mipmapping improves the quality of rendered textures at the expense of using more memory.</P>
+
+<P>Microsoft&reg; Direct3D&reg; Mobile represents mipmaps as a chain of attached surfaces. The highest resolution texture is at the head of the chain and has the next level of the mipmap as an attachment. In turn, that level has an attachment that is the next level in the mipmap, and so on, down to the lowest resolution level of the mipmap.</P>
+
+<P>The following illustrations shows an example of these levels. The bitmap textures represent a sign on a container in a 3-D, first-person game. When created as a mipmap, the highest-resolution texture is first in the set. Each succeeding texture in the mipmap set is smaller in height and width by a power of 2. In this case, the maximum-resolution mipmap is 256 pixels by 256 pixels. The next, texture is 128x128. The last texture in the chain is 64x64.</P>
+
+<P>This sign has a maximum distance from which it is visible. If the user begins far away from the sign, the game displays the smallest texture in the mipmap chain, which in this case the 64x64 texture.</P>
+
+<P class="fig"><IMG SRC="dx3d-mip1.gif" ALT="" BORDER=0></P>
+
+<P>As the user moves the point of view closer to the sign, progressively higher-resolution textures in the mipmap chain are used. The resolution in the following illustration is 128x128.</P>
+
+<P class="fig"><IMG SRC="dx3d-mip2.gif" ALT="" BORDER=0></P>
+
+<P>The highest-resolution texture is used when the user's point of view is at the minimum allowable distance from the sign.</P>
+
+<P class="fig"><IMG SRC="dx3d-mip3.gif" ALT="" BORDER=0></P>
+
+<P>This is a computationally lower-overhead way of simulating perspective for textures. Rather than render a single texture at many resolutions, it is faster to use multiple textures at varying resolutions. </P>
+
+<P>Direct3D Mobile can assess which texture in a mipmap set is the closest resolution to the desired output, and it can map pixels into its texel space. If the resolution of the final image is between the resolutions of the textures in the mipmap set, Direct3D Mobile can examine texels in both mipmaps and blend their color values together.</P>
+
+<P>To use mipmaps, your application must build a set of mipmaps. Applications apply mipmaps by selecting the mipmap set as the first texture in the set of current textures. For more information, see <A HREF="wce50conmultipletextureblending.htm">Multiple Texture Blending</A>. </P>
+
+<H2 class="dtH2">Creating a Set of Mipmaps</H2>
+
+<P>The following code example shows how your application can call the <A HREF="wce50lrfidirect3dmobiledevicecreatetexture.htm">IDirect3DMobileDevice::CreateTexture</A> method to build a chain of five mipmap levels: 256&times;256, 128&times;128, 64&times;64, 32&times;32, and 16&times;16.</P>
+
+<PRE class="code">// This code example assumes that the variable d3dmDevice is a
+// valid pointer to a IDirect3DMobileDevice interface.
+
+IDirect3DMobileTexture * pMipMap;
+
+d3dmDevice-&gt;CreateTexture(256, 256, 5, 0, D3DMFMT_R8G8B8, D3DMPOOL_MANAGED, &amp;pMipMap);</PRE>
+
+<P>The first two parameters that are accepted by <B>CreateTexture</B> are the size and width of the top-level texture. The third parameter specifies the number of levels in the texture. If you set this to zero, Direct3D Mobile creates a chain of surfaces, each a power of two smaller than the previous one, down to the smallest possible size of 1x1. The fourth parameter specifies the usage for this resource; in this case, 0 is specified to indicate no specific usage for the resource. The fifth parameter specifies the surface format for the texture. Use a value from the <A HREF="wce50lrfd3dmformat.htm">D3DMFORMAT</A> enumerated type for this parameter. The sixth parameter specifies a member of the <A HREF="wce50lrfd3dmpool.htm">D3DMPOOL</A> enumerated type indicating the memory class into which to place the created resource. Unless you are using dynamic textures, D3DPOOL_MANAGED is recommended. The final parameter takes the address of a pointer to a <A HREF="wce50lrfidirect3dmobiletexture.htm">IDirect3DMobileTexture</A> interface.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Each surface in a mipmap chain has dimensions that are one-half that of the previous surface in the chain. If the top-level mipmap has dimensions of 256&times;128, the dimensions of the second-level mipmap are 128&times;64, the third-level is 64&times;32, and so on, down to 1&times;1. You cannot request a number of mipmap levels in <B>Levels</B> that would cause either the width or height of any mipmap in the chain to be smaller than 1. In the simple case of a 4&times;2 top-level mipmap surface, the maximum value allowed for <B>Levels</B> is three. The top-level dimensions are 4&times;2, the second-level dimensions are 2&times;1, and the dimensions for the third level are 1&times;1. A value larger than 3 in <B>Levels</B> results in a fractional value in the height of the second-level mipmap, and is therefore disallowed.</BLOCKQUOTE>
+
+<H2 class="dtH2">Selecting and Displaying a Mipmap</H2>
+
+<P>Call the <A HREF="wce50lrfidirect3dmobiledevicesettexture.htm">IDirect3DMobileDevice::SetTexture</A> method to set the mipmap texture set as the first texture in the list of current textures. For more information, see <A HREF="wce50conmultipletextureblending.htm">Multiple Texture Blending</A>.</P>
+
+<P>After your application selects the mipmap texture set, it must assign values from the <A HREF="wce50lrfd3dmtexturefiltertype.htm">D3DMTEXTUREFILTERTYPE</A> enumerated type to the D3DMTSS_MIPFILTER texture stage state. Direct3D Mobile then automatically performs mipmap texture filtering. Enabling mipmap texture filtering is demonstrated in the following code example.</P>
+
+<PRE class="code">d3dmDevice-&gt;SetTexture(0, pMipMap);
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_MIPFILTER, D3DMTEXF_POINT);</PRE>
+
+<P>Your application can also manually traverse a chain of mipmap surfaces by using the <A HREF="wce50lrfidirect3dmobiletexturegetsurfacelevel.htm">IDirect3DMobileTexture::GetSurfaceLevel</A> method and specifying the mipmap level to retrieve. The following code example traverses a mipmap chain from highest to lowest resolutions.</P>
+
+<PRE class="code">IDirect3DMobileSurface * pSurfaceLevel;
+
+for (int iLevel = 0; iLevel &lt; pMipMap-&gt;GetLevelCount(); iLevel++)
+{
+    pMipMap-&gt;GetSurfaceLevel(iLevel, &amp;pSurfaceLevel);
+
+    //Process this level.
+
+    pSurfaceLevel-&gt;Release();
+}</PRE>
+
+<P>Applications need to manually traverse a mipmap chain to load bitmap data into each surface in the chain. This is typically the only reason to traverse the chain. An application can retrieve the number of levels in a mipmap by calling <A HREF="wce50lrfidirect3dmobilebasetexturegetlevelcount.htm">IDirect3DMobileBaseTexture::GetLevelCount</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contexturefiltering.htm">Texture Filtering</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Texture%20Filtering%20with%20Mipmaps (wce50contexturefilteringwithmipmaps.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

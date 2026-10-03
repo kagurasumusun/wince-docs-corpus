@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPersistFile::Save</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfipersistfilesave"></A>IPersistFile::Save</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method saves a copy of the object into the specified file.</P>
+
+<PRE class="syntax"><B>HRESULT Save(</B>
+  <B>LPCOLESTR </B><I>pszFileName</I><B>,</B>
+  <B>BOOL </B><I>fRemember</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszFileName</I></DT>
+
+<DD>[in] Points to a zero-terminated string containing the absolute path of the file to which the object should be saved. If <I>pszFileName</I> is NULL, the object should save its data to the current file, if there is one.</dd>
+
+<DT><I>fRemember</I></DT>
+
+<DD>[in] Indicates whether the <I>pszFileName</I> parameter is to be used as the current working file. 
+
+<P>If TRUE, <I>pszFileName</I> becomes the current file and the object should clear its dirty flag after the save. 
+
+
+<P>If FALSE, this save operation is a Save A Copy As ... operation. In this case, the current file is unchanged and the object should not clear its dirty flag. 
+
+
+<P>If <I>pszFileName</I> is NULL, the implementation should ignore the <I>fRemember</I> flag.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<DL>
+<DT>S_OK </DT>
+
+<DD>The object was successfully saved.</dd>
+
+<DT>E_FAIL </DT>
+
+<DD>The file was not saved.</dd>
+</DL>
+
+<P><B>IPersistFile::Save</B> STG_E_* errors.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This method can be called to save an object to the specified file in one of three ways:
+
+<UL type="disc">
+	<LI>Save. Call <A HREF="wce50lrfipersistfilegetcurfile.htm">IPersistFile::GetCurFile</A> first to determine whether the object has an associated file name. If so, call <B>IPersistFile::Save</B> specifying NULL for the <I>pszFileName</I> parameter in this method to indicate that the object should be saved to its current file. Then call <A HREF="wce50lrfipersistfilesavecompleted.htm">IPersistFile::SaveCompleted</A> to indicate completion.</li>
+
+	<LI>Save As. Call <B>IPersistFile::Save</B> specifying TRUE in the <I>fRemember</I> parameter and a non-NULL value, indicating the name of the new file the object is to be saved to, for the <I>pszFileName</I> parameter . Then call <B>IPersistFile::SaveCompleted</B> to indicate completion.</li>
+
+	<LI>Save a Copy As. Call <B>IPersistFile::Save</B> specifying FALSE in the <I>fRemember</I> parameter and a non-NULL value, indicating the name of the new file the object is to be copied to, for the <I>pszFileName</I> parameter.</li>
+</UL>
+
+<P>The implementer must detect which type of save operation the caller is requesting. </P>
+
+<P>If the <I>pszFileName</I> parameter is NULL, a Save is being requested. </P>
+
+<P>If the <I>pszFileName</I> parameter is not NULL, use the value of the <I>fRemember</I> parameter to distinguish between a Save As and a Save a Copy As.</P>
+
+<P>In Save or Save As operations, <B>IPersistFile::Save</B> clears the internal dirty flag after the save and sends <A HREF="wce50lrfiadvisesinkonsave.htm">IAdviseSink::OnSave</A> notifications to any advisory connections (see also <A HREF="wce50lrfioleadviseholdersendonsave.htm">IOleAdviseHolder::SendOnSave</A>). Also, in these operations, the object is in NoScribble mode until it receives an <B>IPersistFile::SaveCompleted</B> call. </P>
+
+<P>In NoScribble mode, the object must not write to the file.</P>
+
+<P>In the Save As scenario, the implementation should also send <A HREF="wce50lrfiadvisesinkonrename.htm">IAdviseSink::OnRename</A> notifications to any advisory connections (see also <A HREF="wce50lrfioleadviseholdersendonrename.htm">IOleAdviseHolder::SendOnRename</A>).</P>
+
+<P>In the Save a Copy As scenario, the implementation does not clear the internal dirty flag after the save.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Notes to Callers</H4>
+
+<P>OLE does not call <B>IPersistFile::Save</B>. Typically, applications would not call it unless they are saving an object to a file directly, which is generally left to the end-user.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfioleadviseholdersendonrename.htm">IOleAdviseHolder::SendOnRename</A> | <A HREF="wce50lrfioleadviseholdersendonsave.htm">IOleAdviseHolder::SendOnSave</A> | <A HREF="wce50lrfipersistfilegetcurfile.htm">IPersistFile::GetCurFile</A> | <A HREF="wce50lrfipersistfilesavecompleted.htm">IPersistFile::SaveCompleted</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IPersistFile::Save (wce50lrfipersistfilesave.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

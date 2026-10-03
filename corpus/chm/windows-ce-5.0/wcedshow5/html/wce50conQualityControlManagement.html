@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Quality-Control Management</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conqualitycontrolmanagement"></A>Quality-Control Management</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Quality control is a mechanism for adjusting the rate of data flow through the filter graph in response to run-time performance. If a renderer filter is receiving too much data or too little data, it can send a <I>quality message</I>. The quality message requests an adjustment in the data rate. By default, quality messages travel upstream from the renderer until they reach a filter that can respond (if any). An application can also implement a custom quality manager. In that case, the renderer passes quality messages directly to the application's quality manager. </P>
+
+<P>This topic addresses the following subjects:
+
+<UL type="disc">
+	<LI><A HREF="#wce50conqualitycontrolmanagementanchor1">Quality Messages</A></li>
+
+	<LI><A HREF="#wce50conqualitycontrolmanagementanchor2">Default Quality Control</A></li>
+</UL>
+
+<H2 class="dtH2"><A NAME="wce50conqualitycontrolmanagementanchor1"></A>Quality Messages</H2>
+
+<P>Quality messages are defined with the <A HREF="wce50lrfquality.htm">Quality</A> structure. This structure contains the following members:
+
+<UL type="disc">
+	<LI><B>Type</B>: Either Famine, indicating that the filter is receiving too little data, or Flood, indicating that the filter is receiving too much data. </li>
+
+	<LI><B>Proportion</B>: The requested adjustment in the data rate, from a baseline of 1000. For example, 750 indicates 75% and 1500 indicates 150%. </li>
+
+	<LI><B>Late</B>: Reference time indicating how late the most recent sample arrived. The value is negative if the sample arrived early. </li>
+
+	<LI><B>TimeStamp</B>: The time stamp on the most recent sample. </li>
+</UL>
+
+<P>For example, suppose that a sample with a time stamp of 240 milliseconds (ms) reaches the renderer at 280 ms, stream time. The renderer creates a quality message of type Famine. The sample arrived 40 ms late, so the <B>Late</B><I> </I>member is 400000. (All reference times are in 100-nanosecond units.) The <B>TimeStamp</B> member is 2400000.</P>
+
+<P>For the <B>Proportion</B> member, the renderer might use a running average to calculate the value. Perhaps samples have been arriving on time, and this sample is an anomaly. In that case the renderer might request only a small correction. On the other hand, if samples are consistently late, the renderer might request a larger correction.</P>
+
+<P>Quality control is handled through the <A HREF="wce50lrfiqualitycontrolinterface.htm">IQualityControl</A> interface. It contains two methods:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfiqualitycontrolnotify.htm">Notify</A>: Sends a quality message. </li>
+
+	<LI><A HREF="wce50lrfiqualitycontrolsetsink.htm">SetSink</A>: Specifies a custom quality manager. </li>
+</UL>
+
+<P>An object that implements <B>IQualityControl</B> receives quality messages through its <B>Notify</B> method. It can either handle the message or pass the message to another object. If the application calls the object's <B>SetSink</B> method, the object should delegate quality control to the specified quality manager.</P>
+
+<H2 class="dtH2"><A NAME="wce50conqualitycontrolmanagementanchor2"></A>Default Quality Control</H2>
+
+<P>The <A HREF="wce50confilterbaseclasses.htm">filter base classes</A> implement some default behaviors for video quality control.</P>
+
+<P>Quality messages start at the renderer. The base class for video renderers is <A HREF="wce50lrfcbasevideorendererclass.htm">CBaseVideoRenderer</A>, which has the following behavior:</P>
+
+<P>When the video renderer receives a sample, it compares the time stamp on the sample with the current reference time. </P>
+
+<P>The video renderer generates a quality message. In the base class, the <B>Proportion</B> member of the quality message is limited to a range of 500 (50%) to 2000 (200%). Values outside this range could result in abrupt quality changes. </P>
+
+<P>By default, the video renderer sends the quality message to the upstream output pin (the pin connected to its input pin). Applications can override this behavior by calling the <A HREF="wce50lrfiqualitycontrolsetsink.htm">SetSink</A> method. </P>
+
+<P>What happens next depends on the upstream filter. Typically, this is a transform filter. The base class for transform filters is <A HREF="wce50lrfctransformfilterclass.htm">CTransformFilter</A>, which uses the <A HREF="wce50lrfctransforminputpinclass.htm">CTransformInputPin</A> and <A HREF="wce50lrfctransformoutputpinclass.htm">CTransformOutputPin</A> classes to implement input and output pins. Together, these classes have the following behavior:</P>
+
+<P>The <A HREF="wce50lrfctransformoutputpinnotify.htm">CTransformOutputPin::Notify</A> method calls <A HREF="wce50lrfctransformfilteralterquality.htm">CTransformFilter::AlterQuality</A>, a private method on the filter base class. </P>
+
+<P>Derived filters can override <B>AlterQuality</B> to handle the quality message. By default, <B>AlterQuality</B> ignores the quality message. </P>
+
+<P>If <B>AlterQuality</B> does not handle the quality message, the output pin calls <A HREF="wce50lrfcbaseinputpinpassnotify.htm">CBaseInputPin::PassNotify</A>, a private method on the filter's input pin. </P>
+
+<P><B>PassNotify</B> passes the quality message to the appropriate place &#0151; the next upstream output pin, or a custom quality manager. </P>
+
+<P>Assuming that no transform filter handles the quality message, the message eventually reaches the output pin on the source filter. In the base classes, <A HREF="wce50lrfcbasepinnotify.htm">CBasePin::Notify</A> returns E_NOTIMPL. How a particular source filter handles quality messages depends on the nature of the source. Some sources, such as live video capture, cannot perform meaningful quality control. Other sources can adjust the rate at which they deliver samples.</P>
+
+<P>The base video renderer implements <A HREF="wce50lrfiqualitycontrolnotify.htm">IQualityControl::Notify</A>, which means you can pass quality messages to the renderer itself. If you set the <B>Proportion</B> member to a value less than 1000, the video renderer inserts a wait period between each frame that it renders, in effect slowing down the renderer. (You might do this to reduce system usage, for example.) For more information, see <A HREF="wce50lrfcbasevideorendererthrottlewait.htm">CBaseVideoRenderer::ThrottleWait</A>. Setting the <B>Proportion</B> member to a value greater than 1000 has no effect.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Quality-Control%20Management (wce50conqualitycontrolmanagement.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

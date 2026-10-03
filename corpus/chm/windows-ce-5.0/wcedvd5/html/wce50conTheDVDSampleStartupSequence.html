@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>The DVDSample Startup Sequence</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conthedvdsamplestartupsequence"></A>The DVDSample Startup Sequence</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This topic provides a high-level summary of the tasks that DVDSample performs prior to entering its main message loop. The tasks are presented here in a flattened list even though they execute in several nested steps in the source code. </P>
+
+<P>For a graphical representation of how the object classes in DVDSample relate to one another see <A HREF="wce50conarchitecturaloverviewofdvdsample.htm">Architectural Overview of DVDSample</A>.</P>
+
+<H4 class="dtH4">Instantiating CApp</H4>
+
+<P>After loading the necessary header files, the application begins by instantiating a <B>CApp</B> object. This object is DVDSample. It contains all of the logic for the entire application. Upon instantiation, the application object instantiates objects from two other classes, <B>CParentLevels</B> and <B>CDVDLanguages</B>. </P>
+
+<P>The parental level and language objects are simple helper objects that provide DVDSample with easy access to information from the DVD-Video standard.</P>
+
+<H4 class="dtH4">Entering WinMain</H4>
+
+<P>The first task performed in WinMain is a call to <B>CApp::SetAppValues</B>. This assigns the application's window handle to a global variable and it identifies the name of the application.</P>
+
+<P>The second task is the initialization of the <B>CApp</B> object. This is the entry point to the majority of DVDSample's startup activities. It is where the application window is created and both the <B>CAppState</B> object and the <B>CDvdCore</B> object are instantiated and initialized.</P>
+
+<H4 class="dtH4">Instantiating CAppState</H4>
+
+<P>The <B>CAppState</B> object maintains a record of the various playback parameters associated with DVDSample's user interface. It exposes an internal callback interface, <B>IDVDCallback</B>, which is used to provide notification for playback events that require updates to <A HREF="wce50conthedvdsamplecontrolpanel.htm">the DVDSample control panel</A>. </P>
+
+<P>DVDSample's control panel graphics resources are loaded into memory when the <B>CAppState</B> object is initialized. Once the graphics for the buttons are loaded, all of the fonts and font properties are loaded. </P>
+
+<P>This font data is used in the portions of the control panel that show textual information such as the title and chapter numbers and the playback status messages.</P>
+
+<P>After the <B>CAppState</B> object is created, execution returns to the <B>CApp::InitInstance</B> method and DVDSample menus are created for the application window's command bar. At this point, the command bar is only created in memory. It is not yet visible in the window.</P>
+
+<P>The <B>CDVDCore</B> object is instantiated after the menu bars are created.</P>
+
+<H4 class="dtH4">Instantiating CDvdCore</H4>
+
+<P>The <B>CDvdCore</B> object provides the link between the data coming directly from the DVD drive and the user interface elements of the application.</P>
+
+<P><B>CDvdCore</B> object is initialized immediately after it is instantiated. The initialization process involves three distinct steps: obtaining DVD-Video API interface pointers, instantiating additional internal objects, and creating a thread to monitor the DVD drive.</P>
+
+<P>The steps that DVDSample uses to obtain the DVD-Video API interface in <B>CDvdCore::InitDVDInterfaces</B> pointers are very similar to the process described in <A HREF="wce50confundamentaldvdvideoapiinterfaces.htm">Fundamental DVD-Video API Interfaces</A>. First the <B>DVDData</B> and <B>DVDNavigationManager</B> objects are created and then the <A HREF="wce50lrfidvdrom.htm">IDVDROM</A>, <A HREF="wce50lrfidvdvideovolume.htm">IDVDVideoVolume</A>, <A HREF="wce50lrfidvdnavigationmanager.htm">IDVDNavigationManager</A>, and <A HREF="wce50lrfidvduseroperation.htm">IDVDUserOperation</A> pointers are obtained.</P>
+
+<P>Initializing the <B>CDvdCore</B> object next involves instantiating and initializing three key internal objects in the <B>CDvdCore::InitInternalObjects</B> method. The first object that is instantiated in this method is from the <B>CDVDSampleEventSink</B> class. </P>
+
+<P>This object's <B>Connect</B> method identifies the <B>CDVDSampleEventSink</B> methods as the implementations of the <A HREF="wce50lrfidvdnavdatastatussink.htm">IDVDNavDataStatusSink</A> and <A HREF="wce50lrfidvdnavigatorsink.htm">IDVDNavigatorSink</A> interfaces. This established the link between the DVD-Video API and DVDSample.</P>
+
+<P>The second internal object is from the <B>CDevMon</B> class. This object is used to monitor the DVD drive and send notifications when the drive is or is not ready for playback. </P>
+
+<P>Upon initialization, the <B>CDevMon</B> object searches the system to find a handle to the DVD drive. It also creates a new thread and identifies the <B>CDevMon::ThreadProc</B> as the starting point for the thread's execution. Within <B>CDevMon::ThreadProc</B>, processing is suspended until a window becomes available to receive the thread's messages. </P>
+
+<P>When the window does become available, the thread begins listening on the system's device manager notification queue. Whenever a notification is received from the DVD drive, a call to <B>CDevMon::Notify</B> communicates the drive readiness state back to the monitoring thread's window. </P>
+
+<P>Execution on the main thread continues while <B>CDevMon::ThreadProc</B> is determining the status of the DVD drive on the monitoring thread. The third internal object to instantiated by the <B>CDvdCore</B> object is from the <B>CDvdVideo</B> class. </P>
+
+<P>The <B>CDvdVideo</B> object uses DirectDraw to manage the primary display surface and the overlay display surface for DVD playback in a window. DVDSample will play back to a window on the device's desktop if the device's hardware will allow it, for more information see <A HREF="wce50consettingupdirectdrawindvdsample.htm">Setting up DirectDraw in DVDSample</A>.</P>
+
+<P>With the last of the internal objects created, execution returns to the method that initialized the <B>CDvdCore</B> object. While the monitoring thread is already running in the background, the infrastructure needed to complete the event sinks supported by the monitoring thread is created with the <B>CDvdCore::InitMessageSink</B> method. </P>
+
+<P>This method creates a window that the <B>CDvdCore</B> object uses for DVD playback. This window is set to receive messages from the DVD Video API through the <B>CDVDSampleEventSink</B> object and messages about the state of the DVD drive from the <B>CDevMon</B> object. This window may be made visible later on, depending on the video capabilities of the Windows CE device.</P>
+
+<P>The final step of initializing the <B>CDvdCore</B> object is to set the aspect ratio of the display through a call to the <B>CDvdCore::SetPlaybackOptions</B> method.</P>
+
+<H4 class="dtH4">The Final Steps</H4>
+
+<P>Once all of the objects needed to run DVDSample are created only a few tasks remain. To finish the process of initializing the <B>CApp</B> object, the title of the control panel window is defined and the control panel is made visible to the user. Execution then returns to the remaining part of WinMain where the accelerator tables for DVDSample are loaded into memory.</P>
+
+<P>DVDSample then enters its message loop.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conarchitecturaloverviewofdvdsample.htm">Architectural Overview of DVDSample</A> | <A HREF="wce50conthedvdsamplecontrolpanel.htm">The DVDSample Control Panel</A> | <A HREF="wce50confundamentaldvdvideoapiinterfaces.htm">Fundamental DVD-Video API Interfaces</A> | <A HREF="wce50lrfidvdrom.htm">IDVDROM</A> | <A HREF="wce50lrfidvdvideovolume.htm">IDVDVideoVolume</A> | <A HREF="wce50lrfidvdnavigationmanager.htm">IDVDNavigationManager</A> | <A HREF="wce50lrfidvduseroperation.htm">IDVDUserOperation</A> | <A HREF="wce50lrfidvdnavdatastatussink.htm">IDVDNavDataStatusSink</A> | <A HREF="wce50lrfidvdnavigatorsink.htm">IDVDNavigatorSink</A> | <A HREF="wce50conexaminingthedvdsamplesampleapplication.htm">Examining the DVDSample Sample Application</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: The%20DVDSample%20Startup%20Sequence (wce50conthedvdsamplestartupsequence.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

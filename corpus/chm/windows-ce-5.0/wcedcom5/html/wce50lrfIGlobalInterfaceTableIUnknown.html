@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IGlobalInterfaceTable</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfThreadProc">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateThread">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateThread">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfThreadProc">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiglobalinterfacetableiunknown"></A>IGlobalInterfaceTable:IUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This interface allows any apartment in a process to get access to an interface implemented on an object in any other apartment in the process. The three methods allow you to do the following: 
+
+<UL type="disc">
+	<LI>Register an interface as a global (process-wide) interface. </li>
+
+	<LI>Get a pointer to that interface from any other apartment through a cookie. </li>
+
+	<LI>Revoke the global registration of an interface. </li>
+</UL>
+
+<P>The <B>IGlobalInterfaceTable</B> interface is an efficient way for a process to store an interface pointer in a memory location that can be accessed from multiple apartments within the process, such as process-wide variables and agile (free-threaded marshaled) objects containing interface pointers to other objects. </P>
+
+<P>An agile object is unaware of the underlying COM infrastructure in which it runs &#0151; in other words, what apartment, context, and thread it is executing on. </P>
+
+<P>The object may be holding on to interfaces that are specific to an apartment or context. For this reason, calling these interfaces from wherever the agile component is executing may not always work properly. </P>
+
+<P>The global interface table avoids this problem by guaranteeing that a valid proxy (or direct pointer) to the object is used, based on where the agile object is executing. </P>
+
+<P>The global interface table is not portable across process or machine boundaries, so it cannot be used in place of the normal parameter-passing mechanism. </P>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>You should not implement this interface. The standard implementation provides complete thread-safe functionality.</P>
+
+<H4 class="dtH4">When to Use</H4>
+
+<P>Use this interface when an interface implemented on an object in one apartment must be stored in memory accessible for use by other apartments. To create the global interface table object and get a pointer to this interface, make the following call.</P>
+
+<PRE class="code">CoCreateInstance(CLSID_StdGlobalInterfaceTable,
+                            NULL,
+                            CLSCTX_INPROC_SERVER,
+                            IID_IGlobalInterfaceTable,
+                            (void **)&amp;gpGIT)</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>When creating the global interface table object using the above call, you must link to the library Uuid.lib. This will resolve the external symbols CLSID_StdGlobalInterfaceTable and IID_IGlobalInterfaceTable.</BLOCKQUOTE>
+
+<P>There is a single instance of the global interface table per process, so all calls to this function in a process return the same instance. </P>
+
+<P>After calling the <A HREF="wce50lrfcocreateinstance.htm">CoCreateInstance</A> function, register the interface you want to make available process-wide from the apartment in which it resides with a call to the <A HREF="wce50lrfiglobalinterfacetableregisterinterfaceinglobal.htm">IGlobalInterfaceTable::RegisterInterfaceInGlobal</A> method. </P>
+
+<P>This supplies a pointer to a cookie (through the <I>pdwCookie</I> parameter) that identifies the interface and its location. An apartment that wants a pointer to this interface then calls the <A HREF="wce50lrfiglobalinterfacetablegetinterfacefromglobal.htm">IGlobalInterfaceTable::GetInterfaceFromGlobal</A> method with this cookie, and the implementation then supplies an interface pointer to the calling apartment. </P>
+
+<P>To revoke the interface's global registration, any apartment may call the <A HREF="wce50lrfiglobalinterfacetablerevokeinterfacefromglobal.htm">IGlobalInterfaceTable::RevokeInterfaceFromGlobal</A> method.</P>
+
+<P>A simple example of its use would be when you want to pass an interface pointer on an object in a single-threaded apartment (STA) to a worker thread in another apartment. Rather than having to marshal it into a stream and pass the stream to the worker thread as a thread parameter, this interface allows you simply to pass a cookie.</P>
+
+<P>When you register the interface in the global interface table, you get a cookie that you can use instead of passing the actual pointer whenever you need to pass the pointer either to a non-method parameter that is going to another apartment (as a parameter to the <A HREF="JavaScript:hhobj_1.Click()">ThreadProc</A> function through the <A HREF="JavaScript:hhobj_2.Click()">CreateThread</A> function) or to in-process memory accessible outside your apartment.</P>
+
+<P>Care is required because using global interfaces places the extra burden on the programmer for managing problems such as race conditions and mutual exclusion, which are associated with accessing global state from multiple threads simultaneously.</P>
+
+<H4 class="dtH4">Methods</H4>
+
+<P>The following table shows the methods for this interface in the order that the compiler calls the methods. Like all COM interfaces, this interface inherits the methods for the <A HREF="wce50lrfiunknown.htm">IUnknown</A> interface.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=41%>IUnknown method</TH>
+<TH width=59%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%><A HREF="wce50lrfiunknownqueryinterface.htm">QueryInterface</A></TD>
+<TD width=59%>Returns pointers to supported interfaces. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%><A HREF="wce50lrfiunknownaddref.htm">AddRef</A></TD>
+<TD width=59%>Increments reference count. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%><A HREF="wce50lrfiunknownrelease.htm">Release</A></TD>
+<TD width=59%>Decrements reference count. </TD>
+</TR>
+</table></div>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=41%>IGlobalInterfaceTable method</TH>
+<TH width=59%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%><A HREF="wce50lrfiglobalinterfacetableregisterinterfaceinglobal.htm">RegisterInterfaceInGlobal</A></TD>
+<TD width=59%>Permits access to a given interface from any apartment in a process. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%><A HREF="wce50lrfiglobalinterfacetablerevokeinterfacefromglobal.htm">RevokeInterfaceFromGlobal</A></TD>
+<TD width=59%>Revokes the registration of a global (process-wide) interface. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%><A HREF="wce50lrfiglobalinterfacetablegetinterfacefromglobal.htm">GetInterfaceFromGlobal</A></TD>
+<TD width=59%>Gives the calling apartment access to an interface registered as global. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_3.Click()">CreateThread</A> | <A HREF="JavaScript:hhobj_4.Click()">ThreadProc</A> | <A HREF="wce50lrfiglobalinterfacetablegetinterfacefromglobal.htm">IGlobalInterfaceTable::GetInterfaceFromGlobal</A> | <A HREF="wce50lrfiglobalinterfacetableregisterinterfaceinglobal.htm">IGlobalInterfaceTable::RegisterInterfaceInGlobal</A> | <A HREF="wce50lrfiglobalinterfacetablerevokeinterfacefromglobal.htm">IGlobalInterfaceTable::RevokeInterfaceFromGlobal</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IGlobalInterfaceTable (wce50lrfiglobalinterfacetableiunknown.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

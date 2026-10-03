@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoResult::GetAlternates</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecoresultgetalternates"></A>ISpRecoResult::GetAlternates</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method gets an array of pointers to alternate phrases.</P>
+
+<PRE class="syntax"><B>HRESULT GetAlternates(</B>
+  <B>ULONG </B><I>ulStartElement</I><B>,</B>
+  <B>ULONG </B><I>cElements</I><B>,</B>
+  <B>ULONG </B><I>ulRequestCount</I><B>,</B>
+  <B>ISpPhraseAlt** </B><I>ppPhrases</I><B>,</B>
+  <B>ULONG* </B><I>pcPhrasesReturned</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>ulStartElement</I> </DT>
+
+<DD>[in] Starting element to consider for the alternates. This is a zero-based value. </dd>
+
+<DT><I>cElements</I> </DT>
+
+<DD>[in] Number of elements to consider. All elements can be requested by using the enumeration value SPPR_ALL_ELEMENTS of type <A HREF="wce50lrfspphraserng.htm">SPPHRASERNG</A>. </dd>
+
+<DT><I>ulRequestCount</I> </DT>
+
+<DD>[in] Number of requested alternate phrase elements. </dd>
+
+<DT><I>ppPhrases</I> </DT>
+
+<DD>[out] Address of a pointer to an array of <B>ISpPhraseAlt</B> objects representing the alternate phrases. The elements between the start of the <I>ulStartElement</I> element and the end of the <I>ulStartElement</I> and <I>cElements</I> element combined is the portion that will change. The rest of the elements will be included in each alternate phrase. </dd>
+
+<DT><I>pcPhrasesReturned</I> </DT>
+
+<DD>[out] Pointer to the actual number of alternate phrases retrieved. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Value</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>S_OK </TD>
+<TD width=63%>Function completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_POINTER </TD>
+<TD width=63%><I>pcPhrasesReturned</I> is an invalid pointer. However, <I>ppPhrases</I> does not contain <I>ulRequestCount</I> allocations. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_OUTOFMEMORY </TD>
+<TD width=63%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_INVALIDARG </TD>
+<TD width=63%><I>ulStartElement</I> is not less than the number of elements in owning interface. However, the number of expected elements exceeds the number of available elements in the owning interface. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>S_FALSE </TD>
+<TD width=63%>No analyzer is present or there is no driver data. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>FAILED(hr) </TD>
+<TD width=63%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Call the method <A HREF="wce50lrfisprecocontextsetmaxalternates.htm">ISpRecoContext::SetMaxAlternates</A> before using <B>ISpRecoResult::GetAlternates</B> in order to get dictation alternates on command and control grammars.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method to retrieve and commit an alternate phrase.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// ... obtain a recognition result object from the recognizer...
+// get the recognized phrase object
+hr = cpRecoResult-&gt;GetPhrase(&amp;pPhrase);
+// Check hr
+// get the phrase's text
+hr = pPhrase-&gt;GetText(SP_GETWHOLEPHRASE, SP_GETWHOLEPHRASE, TRUE, &amp;pwszText,
+NULL);
+// Check hr
+// ... check the phrase's text... assume the phrase is not a correct
+recognition
+// setup MY_MAX_ALTERNATES phrase alternate objects 
+CComPtr&lt;ISpPhraseAlt&gt;   pcpPhrase[MY_MAX_ALTERNATES];
+ULONG ulCount;
+// get the top MY_MAX_ALTERNATES alternates to the entire recognized phrase
+hr = cpRecoResult-&gt;GetAlternates(pPhrase-&gt;Rule.ulFirstElement,
+pPhrase-&gt;Rule.ulCountOfElements, 
+MY_MAX_ALTERNATES,
+pcpPhraseAlt,
+&amp;ulCount);
+// Check hr
+// check each alternate in order of highest likelihood
+for (int i = 0; i &lt; ulCount; i++) {
+  hr = pcpPhraseAlt[i]-&gt;GetText(SP_GETWHOLEPHRASE, SP_GETWHOLEPHRASE, TRUE,
+  &amp;pwszAlternate, NULL);
+  // Check hr
+  // ... check if this alternate is more appropriate ...
+  // if it is more appropriate, then commit the alternate
+  if (fMoreAppropriate) {
+    hr = pcpPhraseAlt[i]-&gt;Commit();
+    // Check hr
+  }
+  // free the alternate text
+  if (pwszAlternate) ::CoTaskMemFree(pwszAlternate);
+}
+// free the initial phrase object
+if (pPhrase) ::CoTaskMemFree(pPhrase);</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecoresult.htm">ISpRecoResult</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoResult::GetAlternates (wce50lrfisprecoresultgetalternates.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

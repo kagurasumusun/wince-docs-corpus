@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Source and Target Rectangles in Video Renderers</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfBITMAPINFOHEADER">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consourceandtargetrectanglesinvideorenderers"></A>Source and Target Rectangles in Video Renderers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>There are three sizes found in the <A HREF="wce50lrfvideoinfo.htm">VIDEOINFO</A>, <A HREF="wce50lrfvideoinfoheader.htm">VIDEOINFOHEADER</A>, and <A HREF="wce50lrfvideoinfoheader2.htm">VIDEOINFOHEADER2</A> format structures of video media types. This topic explains what they are and how they work. </P>
+
+<P>First, there is a size in the <B>bmiHeader</B> member of these structures. The <B>bmiHeader</B> member is a <A HREF="JavaScript:hhobj_1.Click()">BITMAPINFOHEADER</A> structure with its own width and height members, <B>bmiHeader.biWidth</B> and <B>bmiHeader.biHeight</B>. </P>
+
+<P>Second, there is a rectangle in the <B>rcSource</B> member of these structures; and last, there is a rectangle in the <B>rcTarget</B> member of these structures. </P>
+
+<P>Assume you have two filters, A and B, and that these filters are connected to each other (A on the left, or upstream, and B on the right, or downstream) with a certain video media type. </P>
+
+<P>The buffers that pass between filters A and B have the size (<B>bmiHeader.biWidth</B>, <B>bmiHeader.biHeight</B>). </P>
+
+<P>Filter A should take a portion of its input video determined by <B>rcSource</B> and stretch that video to fill the <B>rcTarget</B> portion of the buffer. </P>
+
+<P>The portion of the input video to use is based on how <B>rcSource</B> compares to the (<B>biWidth</B>, <B>biHeight</B>) size of the media type that filters A and B originally connected with. </P>
+
+<P>If <B>rcSource</B> is empty, filter A uses its entire input video. </P>
+
+<P>If <B>rcTarget</B> is empty, filter A fills the entire output buffer. </P>
+
+<P>For example, assume filter A is receiving video data that is 160 &times; 120 pixels. Assume also that filter A is connected to filter B with the following media type. </P>
+
+<BLOCKQUOTE class="dtBlock">
+(<B>biWidth</B>, <B>biHeight</B>): 320, 240 </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+<B>rcSource</B>: (0, 0, 0, 0) </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+<B>rcTarget</B>: (0, 0, 0, 0) </BLOCKQUOTE>
+
+<P>This means that filter A will stretch the video it receives by 2 in both the x and y directions, and fill a 320 &times; 240 output buffer. </P>
+
+<P>As another example, assume filter A is receiving 160 &times; 120 video data, and that it is connected to filter B with the following media type. </P>
+
+<BLOCKQUOTE class="dtBlock">
+(<B>biWidth</B>, <B>biHeight</B>): 320, 240 </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+<B>rcSource</B>: (0, 0, 160, 240) </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+<B>rcTarget</B>: (0, 0, 0, 0) </BLOCKQUOTE>
+
+<P>The <B>rcSource</B> member is relative to the connected buffer size of 320, 240. Because the specified <B>rcSource</B> (0, 0, 160, 240) is the left half of the buffer, filter A will take the left half of its input video, or the (0, 0, 80, 120) portion, and stretch the video to a size of (320, 240) (by 4 in the x direction, and by 2 in the y direction) and filling the 320 &times; 240 output buffer. </P>
+
+<P>Now assume that filter A calls <A HREF="wce50lrfimemallocatorgetbuffer.htm">GetBuffer</A>, and the media sample returned has a media type attached to it, signifying that filter B wants filter A to provide a different size or kind of video than it has previously been providing. </P>
+
+<P>Assume the new media type is as follows: </P>
+
+<BLOCKQUOTE class="dtBlock">
+(<B>biWidth</B>, <B>biHeight</B>): 640, 480 </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+<B>rcSource</B>: (0, 0, 160, 120) </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+<B>rcTarget</B>: (0, 0, 80, 60) </BLOCKQUOTE>
+
+<P>This means that the media sample has a buffer that is 640 &times; 480. </P>
+
+<P>The <B>rcSource</B> member is relative to the original connected media type (320, 240) not to the new media type of (640, 480), so <B>rcSource</B> specifies that the top-left corner (25%) of the input video is to be used.</P>
+
+<P>This portion of the input video is placed in the top-left (80, 60) pixels of the 640 &times; 480 output buffer, as specified by <B>rcTarget</B> of (0, 0, 80, 60). </P>
+
+<P>Because filter A is receiving 160 &times; 120 video, the top-left corner of the input video is an (80, 60) piece, the same size of the output bitmap, and no stretching is required. </P>
+
+<P>Filter A will place no data in the other pixels of the output buffer, and will leave those bits untouched. The <B>rcSource</B> member is bounded by the <B>biWidth</B> and <B>biHeight</B> of the original connected media type between filters A and B, and <B>rcTarget</B> is bounded by the new <B>biWidth</B> and <B>biHeight</B> of the media sample. </P>
+
+<P>In the preceding example, <B>rcSource</B> could not go outside the boundaries of (0, 0, 320, 240) and <B>rcTarget</B> could not go outside the boundaries of (0, 0, 640, 480). </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Source%20and%20Target%20Rectangles%20in%20Video%20Renderers (wce50consourceandtargetrectanglesinvideorenderers.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>RTC Client API OS Design Development</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriDevelopingVoIPPhone">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriWindowsMessenger">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriDevelopingVoIPPhone">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conWindowsCEModulesandComponents">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50orirtcclientosdesigndevelopment"></A>RTC Client API OS Design Development</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Windows CE includes the released version of the RTC Client API, version 1.2, and includes the following functionality: 
+
+<UL type="disc">
+	<LI>Setting up VoIP connections among Windows CE-based devices, .NET-based devices, Microsoft Windows XP-based systems, third-party SIP user agents, and PSTN phones. 
+<P>The audio functionality includes Automatic Gain Control (AGC). AGC automatically adjusts the output volume heard by the receiver so it remains constant, independent of the input volume. 
+
+<P>For example, this means that if the sender's environmental noise increases, the output volume doesn't also increase and require the receiver to move the headset away from their ear. 
+
+<P>AGC works by varying the output volume inversely with the input volume. 
+</li>
+
+	<LI>Initiating text-messaging sessions, which can occur simultaneously with voice connections. </li>
+
+	<LI>Receiving presence information to see if your contacts are online, enabling you to change your own presence state and send notifications, and monitoring who is watching the user's online presence. </li>
+</UL>
+
+<P>The RTC Client API is built on the Session Initiation Protocol (SIP), which is an Internet Engineering Task Force (IETF) standard. SIP connects and receives calls to and from other SIP clients. </P>
+
+<P>When a connection is established using SIP, the RTC Client API uses the real-time transport protocol (RTP) to transfer media between the connected parties.</P>
+
+<P>Windows CE includes multiple technologies that use the communication functionality provided by the RTC Client API. For example, the IP phone support in Windows CE is built on top of the RTC Client API. Windows Messenger for Microsoft Windows CE is a client application that can use the RTC Client API to transmit and receive text and presence information.</P>
+
+<P>For more information about IP phone support, see <A HREF="JavaScript:hhobj_1.Click()">Developing an IP Phone</A>. </P>
+
+<P>For more information about Windows Messenger, see <A HREF="JavaScript:hhobj_2.Click()">Windows Messenger</A>.</P>
+
+<H4 class="dtH4">OS Design Information</H4>
+
+<P>The following table shows operating system design information for RTC.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=46%>Concept</TH>
+<TH width=54%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>Dependencies</TD>
+<TD width=54%>TCP/IP
+<P>Winsock 2.2</P>
+
+<P>Audio hardware </P>
+
+<P>Cryptography Services</P>
+
+<P>Schannel</P>
+
+<P>XML Core Services</P>
+
+<P>XML Query Languages</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>Hardware considerations</TD>
+<TD width=54%>Audio hardware appropriate for your use cases</TD>
+</TR>
+</table></div>
+
+<P>For fully functional audio capabilities, one or more of the following solutions must be implemented: 
+
+<UL type="disc">
+	<LI>A PCI bus must be reserved for an appropriate audio card. </li>
+
+	<LI>If the audio is onboard, it must have an AC97 codec and a codec controller that provides hardware-assisted audio data transfer to and from the codec. The controller must have the following:
+<UL type="disc">
+	<LI>Enough bandwidth to service the audio and other devices in the system. </li>
+
+	<LI>An interrupt mechanism that can notify the driver when a data transfer is complete.</li>
+
+	<LI>Sufficient buffering capabilities in audio data to allow the interrupt service thread to start another data transfer without causing audio breakup. </li>
+</UL>
+</li>
+</UL>
+
+<H4 class="dtH4">Modules and Components</H4>
+
+<P>The following components and modules implement the RTC Client API.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Item</TH>
+<TH width=33%>Module</TH>
+<TH width=34%>Component</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>NAT Interface </TD>
+<TD width=33%>dpnhupnp </TD>
+<TD width=34%>None</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>PINT Stack </TD>
+<TD width=33%>rtcclient </TD>
+<TD width=34%>None</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>RTC Client API</TD>
+<TD width=33%>rtcclient </TD>
+<TD width=34%>None</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>RTP and Codecs </TD>
+<TD width=33%>dxmrtp </TD>
+<TD width=34%>None</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>SIP Stack </TD>
+<TD width=33%>rtcclient </TD>
+<TD width=34%>None</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Implementation Considerations</H4>
+
+<P>The following table shows the Sysgen variables for RTC. </P>
+
+<P>Other Windows CE technologies, such as the VoIP Application Interface Layer (VAIL) and Telephony User Interface (TUI), use RTC. For information about Sysgen variables used by the VAIL, see <A HREF="wce50orivoiposdesigndevelopment.htm">VAIL OS Design Development</A>. For information about Sysgen variables used by the TUI, see <A HREF="wce50contelephonyuserinterfaceosdesigndevelopment.htm">TUI OS Design Development</A>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Sysgen variable</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>SYSGEN_VOIP</TD>
+<TD width=72%>Adds the programming interface that provides messaging, presence, and audio between any two IP-enabled devices. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>SYSGEN_VOIP_SIREN </TD>
+<TD width=72%>Adds the Siren/G.722.1 codecs. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orireal-timecommunicationsrtcclientapi.htm">Real-time Communications (RTC) Client API</A> | <A HREF="wce50orivoiceoveripphonevoip.htm">Voice over IP Phone</A> | <A HREF="JavaScript:hhobj_3.Click()">Developing an IP Phone</A> | <A HREF="JavaScript:hhobj_4.Click()">Windows CE Modules and Components</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: RTC%20Client%20API%20OS%20Design%20Development (wce50orirtcclientosdesigndevelopment.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

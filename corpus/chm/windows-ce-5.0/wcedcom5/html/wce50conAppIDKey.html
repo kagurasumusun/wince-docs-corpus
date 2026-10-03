@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AppID Key</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conCreatingaSecureDevice">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conappidkey"></A>AppID Key</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This key groups the configuration options, a set of named values, for one or more distributed COM objects into one centralized location in the registry. To simplify the management of common security and configuration settings, DCOM objects hosted by the same executable are grouped into one <B>AppID</B>. The <B>HKEY_LOCAL_MACHINE\SOFTWARE\Classes</B> key corresponds to the <B>HKEY_CLASSES_ROOT</B> key, which was retained for compatibility with earlier versions of COM. The AppID value is stored under the following registry key: </P>
+
+<P><B>HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppID\{<I>AppID_value</I>}\<I>named_value</I> = <I>value</I> </B></P>
+
+<P>AppIDs are located in a newly created registry key hierarchy. The <I>AppID_value</I> is a 128-bit Globally Unique Identifier (GUID) that identifies the <B>AppID</B> key. </P>
+
+<P>AppIDs are mapped to executables and classes using the following two different mechanisms: 
+
+<UL type="disc">
+	<LI>Classes indicate the corresponding <B>AppID</B> under the <B>CLSID</B> key in a named-value "AppID" of type REG_SZ. This contains the string value corresponding to the <I>AppID_value</I> under the <B>AppID</B> key. This mapping is used during activation. </li>
+
+	<LI>Executables are registered under the <B>AppID</B> key in a named value indicating the module name (such as "MYOLDAPP.EXE"). This named value is of type REG_SZ and contains the string representation of the AppID associated with the executable. This mapping is used to obtain the default access permissions and authentication level. </li>
+</UL>
+
+<P>For COM servers, the mapping is usually generated and written to the registry during the registration process or when running dcomcnfg.exe. However, COM clients that want to set security using the AppID key must create appropriate registry keys and specify the required mapping by calling Win32 registry functions or using regedit. Then values such as <B>AccessPermissions</B> or <B>AuthenticationLevel</B> can be set for the client. For example, if the name of your executable for your client process is "YourClient.exe" and you want to set the authentication level to None; use guidgen.exe or uuidgen.exe to create the GUID that is the AppID for your executable. Then, you would set values in the registry as shown in the following code example, where 00000001 represents an authentication level of None: </P>
+
+<PRE class="code">[REGEDIT4] 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppID\yourclient.exe] 
+@="YourClient" 
+"AppID"="{YourGuid}" 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppID\{YourGuid}] 
+@="YourClient" 
+"AuthenticationLevel"=dword:00000001 </PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The <B>AuthenticationLevel</B> named value is supported only the full version of COM.</BLOCKQUOTE>
+
+<P>The following table shows the named values for the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Classes\APPID\{AppID_value}</B> key.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Value : type</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>RemoteServerName</B></TD>
+<TD width=73%>A server may install the <B>RemoteServerName</B> named-value on client machines to configure the client to request the object be run at a particular machine whenever an activation function is called for which a <A HREF="wce50lrfcoserverinfo.htm">COSERVERINFO</A> structure is not specified. 
+<P>One of the parameters of the distributed COM activation is a pointer to a <B>COSERVERINFO</B> structure. When this value is not NULL, the information in the <B>COSERVERINFO</B> structure overrides the setting of the <B>RemoteServerName</B> key for the function call. </P>
+
+<P><B>RemoteServerName</B> allows simple configuration management of client applications &#0150; they may be written without hard-coded server names, and can be configured by modifying the <B>RemoteServerName</B> registry values of the classes of objects they use. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>ActivateAtStorage</B></TD>
+<TD width=73%>The <B>ActivateAtStorage</B> capability provides a transparent way to allow clients to locate running objects on the same machine as the data that they use. This reduces network traffic, because the object performs local file-system calls instead of calls across the network.
+<P>Servers can install this named-value on client machines. When this value is not overridden by certain parameters passed to distributed COM activation API functions, the <B>ActivateAtStorage</B> named-value configures the client to instantiate objects on the same machine as the persistent state they are using or from which they are initialized. </P>
+
+<P>The <B>ActivateAtStorage</B> named-value can be set by the server to configure the client to instantiate its objects on the same machine as the persistent state used or from which the objects are initialized. The value is a REG_SZ; any value beginning with "Y" or "y" means that <B>ActivageAtStorage</B> should be used. </P>
+
+<P>When a value is set for <B>ActivateAtStorage</B>, this becomes the default behavior in calls to the <A HREF="wce50lrfcogetinstancefromfile.htm">CoGetInstanceFromFile</A> and <A HREF="wce50lrfcogetinstancefromistorage.htm">CoGetInstanceFromIStorage</A> functions, as well as to the file moniker implementation of <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A>. </P>
+
+<P>In all of these calls, specifying a <B>COSERVERINFO</B> structure overrides the setting of <B>ActivateAtStorage</B> for the duration of the function call. The caller can pass COSERVERINFO information to <B>IMoniker::BindToObject</B> through the <A HREF="wce50lrfbindopts2.htm">BIND_OPTS2</A> structure. </P>
+
+<P>The value set for <B>ActivateAtStorage</B> is also the default behavior when CLSCTX_REMOTE_SERVER is specified if no registry information for the class is installed on the client's machine. Client applications written to take advantage of <B>ActivateAtStorage</B> may therefore require less administration. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>LaunchPermission</B> : REG_BINARY</TD>
+<TD width=73%>Contains data describing the Access Control List (ACL) of the principals that can start new servers for this class. The <B>LaunchPermission</B> named-value may be added, under any <B>AppID</B> key, to limit activation by remote clients of specific classes. 
+<P>Upon receiving a local or remote request to launch the server of this class, the ACL described by the <B>LaunchPermission</B> value is checked while impersonating the client, and its success either allows or disallows the launching of the server. If this value does not exist, the machine-wide <B>DefaultLaunchPermission</B> value is checked in the same way as a default to determine if the class code can be launched. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>AccessPermission</B> : REG_BINARY</TD>
+<TD width=73%>Contains data describing the Access Control List (ACL) of the principals that can access instances of this class. This ACL is only used by applications that do not call <A HREF="wce50lrfcoinitializesecurity.htm">CoInitializeSecurity</A>. 
+<P>This named-value is a REG_BINARY. It contains data describing the Access Control List (ACL) of the principals that can access instances of this class. Upon receiving a request to connect to an existing object of this class, the ACL is checked by the application being called while impersonating the caller. If the access-check fails, the connection is disallowed. If this named-value does not exist, the machine-wide <B>DefaultAccessPermission</B> ACL is tested in an identical manner (see above) as a default to determine if the connection is to be allowed. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>DllSurrogate</B></TD>
+<TD width=73%>Enables DLL servers to run in a surrogate process. If an empty string is specified, the system-supplied surrogate is used; otherwise the value specifies the path of the surrogate to be used. 
+<P><B>HKEY_CLASSES_ROOT </B>is equivalent to <B>HKEY_LOCAL MACHINE\SOFTWARE\Classes</B>. These keys can be used interchangeably. <B>HKEY_CLASSES_ROOT </B>also provides compatibility with Microsoft&reg; Windows 3.1 and Windows 95. </P>
+
+<P>The <B>DllSurrogate</B> named value specifies that the class is a DLL that is to be activated in a surrogate EXE process, and the surrogate process to be used. The <I>surrogate_</I>path value is of type REG_SZ. To use the system-supplied generic surrogate process, set <I>surrogate_</I>path to an empty string or NULL. To specify another surrogate process, set <I>surrogate_</I>path to the path of the surrogate. As in the specification of the path of an EXE server under the <B>LocalServer32</B> key, a full path specification is not necessary. The surrogate EXE must be written to properly communicate with the DCOM. </P>
+
+<P>The <B>DllSurrogate</B> named value must be present for a DLL server to be activated in a surrogate. Activation refers to a call to <A HREF="wce50lrfcogetclassobject.htm">CoGetClassObject</A>, <A HREF="wce50lrfcocreateinstance.htm">CoCreateInstance</A>, <A HREF="wce50lrfcocreateinstanceex.htm">CoCreateInstanceEx</A>, <A HREF="wce50lrfcogetinstancefromfile.htm">CoGetInstanceFromFile</A>, <A HREF="wce50lrfcogetinstancefromistorage.htm">CoGetInstanceFromIStorage</A>, or <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A>. DLL servers can be written using standard development tools such as Microsoft Visual Basic&reg; and Microsoft Visual Studio&reg;. Running DLLs in a surrogate process provides the benefits of an executable implementation, including fault isolation, the ability to serve multiple clients simultaneously, and allowing the server to provide services to remote clients in a distributed environment. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>AuthenticationLevel</B> : REG_DWORD</TD>
+<TD width=73%>Sets the authentication level for all applications that do not call <A HREF="wce50lrfcoinitializesecurity.htm">CoInitializeSecurity</A> or for applications that call <B>CoInitializeSecurity</B> and specify an AppID. The <B>AuthenticationLevel</B> value is similar to the <B>LegacyAuthenticationLevel</B> value. If the <B>AuthenticationLevel</B> value is present, it will be used instead of the <B>LegacyAuthenticationLevel</B> value for that AppID. 
+<P>Values correspond to the <B>RPC_C_AUTHN_LEVEL_<I>xxx</I> </B>constants. The following values are valid: 
+
+<UL type="disc">
+	<LI>1 = RPC_C_AUTHN_LEVEL_NONE</li>
+
+	<LI>2 = RPC_C_AUTHN_LEVEL_CONNECT</li>
+
+	<LI>3 = RPC_C_AUTHN_LEVEL_CALL</li>
+
+	<LI>4 = RPC_C_AUTHN_LEVEL_PKT</li>
+
+	<LI>5 = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY</li>
+
+	<LI>6 = RPC_C_AUTHN_LEVEL_PKT_PRIVACY</li>
+</UL>
+
+<P>If the <B>AuthenticationLevel</B> value is of the wrong type or out of range, <B>CoInitializeSecurity</B> will fail, causing interface marshaling to fail. This will prevent the application from making any calls at all (cross-apartment, cross-thread, cross-process, or cross-machine). </P>
+
+<P>The <B>AuthenticationLevel</B> and <B>AccessPermission</B> values under the AppID are independent. If one is not present, the default will be used. The following rules list the interaction between the <B>AuthenticationLevel</B> value and the <B>AccessPermission</B> value. 
+
+<UL type="disc">
+	<LI>If the <B>AuthenticationLevel</B> is NONE, the <B>AccessPermission</B> and <B>DefaultAccessPermission</B> values are ignored (for that application). </li>
+
+	<LI>If the <B>AuthenticationLevel</B> is not present and the <B>LegacyAuthenticationLevel</B> is NONE, the <B>AccessPermission</B> and <B>DefaultAccessPermission</B> values are ignored (for that application). </li>
+</UL>
+</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concomregistrysettings.htm">COM and DCOM Registry Settings</A> | <A HREF="wce50concomsecurity.htm">COM and DCOM Security</A> | <A HREF="wce50oricomponentservicescomanddcom.htm">Component Services (COM and DCOM)</A> | <A HREF="JavaScript:hhobj_1.Click()">Enhancing the Security of a Device</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: AppID%20Key (wce50conappidkey.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

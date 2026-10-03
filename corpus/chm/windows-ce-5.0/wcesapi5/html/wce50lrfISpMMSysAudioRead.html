@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpMMSysAudio::Read</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispmmsysaudioread"></A>ISpMMSysAudio::Read</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method reads the data from the audio device. The audio device should not be directly manipulated when performing speech recognition (see <A HREF="wce50lrfisprecognizer.htm">ISpRecognizer</A>).</P>
+
+<PRE class="syntax"><B>HRESULT Read(</B>
+  <B>void* </B><I>pv</I><B>, </B>
+  <B>ULONG </B><I>cb</I><B>,</B>
+  <B>ULONG* </B><I>pcbRead</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pv</I></DT>
+
+<DD>[in] Pointer to the buffer into which the stream data is read. If an error occurs, this value is NULL. </dd>
+
+<DT><I>cb</I></DT>
+
+<DD>[in] Number of bytes of data to attempt to read from the audio device. </dd>
+
+<DT><I>pcbRead</I></DT>
+
+<DD>[out] Pointer to actual number of bytes read from the stream object. If set to NULL, no byte value is retrieved. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Value</TH>
+<TH width=60%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>S_OK</TD>
+<TD width=60%>Function completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SPERR_AUDIO_BUFFER_OVERFLOW </TD>
+<TD width=60%>SAPI's internal audio buffer has filled, and the device has been closed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SPERR_AUDIO_BUFFER_UNDERFLOW </TD>
+<TD width=60%>The multimedia object has not received audio data from the device quickly enough, and the device has been closed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SPERR_AUDIO_STOPPED </TD>
+<TD width=60%>Multimedia device state has been set to stopped. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>E_OUTOFMEMORY </TD>
+<TD width=60%>Exceeded available memory </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>E_POINTER </TD>
+<TD width=60%>At least one of <I>pcbRead</I> or <I>pv</I> are invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>STG_E_ACCESSDENIED </TD>
+<TD width=60%>Multimedia device is read-only and no bytes will be read. Error will occur when reading from an output device. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>FAILED(hr) </TD>
+<TD width=60%>Appropriate error message.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>SAPI automatically stores data in a buffer before it is read from the device. Buffering the audio data ensures that applications and SAPI-compliant speech recognition engines will not lose real-time audio data.</P>
+
+<P>An errant application or speech recognition engine that does not call Read often enough could frequently fill the audio buffer. To ensure that large amounts of system memory are not filled, SAPI limits the buffer size to 30 times the average bytes per second (<A HREF="wce50lrfwaveformatex353.htm">WAVEFORMATEX</A>-&gt;nAvgBytesPerSec) - approximately 30 seconds. If the audio buffer is filled, then SAPI will automatically set the device state to SPAS_CLOSED (see <A HREF="wce50lrfspaudiostate.htm">SPAUDIOSTATE</A>) and return a buffer overflow error (for example, SPERR_AUDIO_BUFFER_OVERFLOW) when <B>ISpMMSysAudio::Read</B> is called.</P>
+
+<P>An errant multimedia device (and, or driver) that does not return audio data quickly enough could greatly reduce the speed of a speech application or SR engine. To prevent the degradation of application or SR engine performance, SAPI requires that the multimedia device return data at least once every five seconds. If the audio is not returned before five seconds, SAPI will automatically set the device state to SPAS_CLOSED (see <A HREF="wce50lrfspaudiostate.htm">SPAUDIOSTATE</A>) and return a buffer underflow error (for example, SPERR_AUDIO_BUFFER_UNDERFLOW) when <B>ISpMMSysAudio::Read</B> is called.</P>
+
+<P>Applications should manually reopen the audio device (see <A HREF="wce50lrfispaudiosetstate.htm">ISpAudio::SetState</A>) to prevent losing input data that could impact the user.</P>
+
+<P>For Speech Recognition engines, SAPI will automatically attempt to restart the multimedia device after the SR Engine exits the <A HREF="wce50lrfispsrenginerecognizestream.htm">ISpSREngine::RecognizeStream</A> call.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispmmsysaudio.htm">ISpMMSysAudio</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpMMSysAudio::Read (wce50lrfispmmsysaudioread.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

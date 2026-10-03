@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::InitFromData</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfioleobjectinitfromdata"></A>IOleObject::InitFromData</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This<B> </B>method initializes a newly created object with data from a specified data object, which can reside either in the same container or on the clipboard.</P>
+
+<PRE class="syntax"><B>HRESULT InitFromData( </B>
+  <B>IDataObject* </B><I>pDataObject</I><B>, </B>
+  <B>BOOL </B><I>fCreation</I><B>, </B>
+  <B>DWORD </B><I>dwReserved</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pDataObject</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfidataobjectiunknown.htm">IDataObject</A> interface on the data object from which the initialization data is to be obtained. 
+
+<P>This parameter can be NULL, which indicates that the caller wants to know if it is worthwhile trying to send data; that is,<I> </I>whether the container is capable of initializing an object from data passed to it. 
+
+
+<P>The data object to be passed can be based on either the selection in the container document or on data transferred to the container from an external source.
+</dd>
+
+<DT><I>fCreation</I></DT>
+
+<DD>[in] Boolean value that is set to TRUE if the container is inserting a new object inside itself and initializing that object with data from the current selection. 
+
+<P>The values is set to FALSE if a more general programmatic data transfer, most likely from a source other than the current selection.
+</dd>
+
+<DT><I>dwReserved</I></DT>
+
+<DD>[in] Reserved for future use; set to zero.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>One of the values in the following table is returned.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Value</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_OK</TD>
+<TD width=72%>If <I>pDataObject </I>is not NULL, the object successfully attempted to initialize itself from the provided data.
+<P>If <I>pDataObject</I> is NULL, the object can attempt a successful initialization.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_FALSE</TD>
+<TD width=72%>If <I>pDataObject</I> is not NULL, the object made no attempt to initialize itself.
+<P>If <I>pDataObject</I> is NULL, the object cannot attempt to initialize itself from the data provided.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>E_NOTIMPL</TD>
+<TD width=72%>The object does not support <B>InitFromData</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>OLE_E_NOTRUNNING</TD>
+<TD width=72%>The object is not running and therefore cannot perform the operation.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This method enables a container document to insert within itself a new object whose content is based on a current data selection within the container. For example, a spreadsheet document might want to create a graph object based on data in a selected range of cells.</P>
+
+<P>Using this method, a container can also replace the contents of an embedded object with data transferred from another source. This provides a convenient way of updating an embedded object.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Notes to Callers</H4>
+
+<P>Following initialization, the container should call <A HREF="wce50lrfioleobjectgetmiscstatus.htm">IOleObject::GetMiscStatus</A> to check the value of the OLEMISC_INSERTNOTREPLACE bit. </P>
+
+<P>If the bit is on, the new object inserts itself following the selected data. </P>
+
+<P>If the bit is off, the new object replaces the selected data.</P>
+
+<H4 class="dtH4">Notes to Implementers</H4>
+
+<P>A container specifies whether to base a new object on the current selection by passing TRUE or FALSE to the <I>fCreation</I> parameter, or by the object returning S_FALSE:
+
+<UL type="disc">
+	<LI>If <I>fCreation</I> is TRUE, the container is attempting to create a <I>new</I> instance of an object, initializing it with the selected data specified by the data object.</li>
+
+	<LI>If <I>fCreation</I> is FALSE, the caller is attempting to replace the object's current contents with that pointed to by <I>pDataObject</I>. 
+<P>The usual constraints that apply to an object during a paste operation should be applied here. For example, if the type of the data provided is unacceptable, the object should fail to initialize and return S_FALSE.
+</li>
+
+	<LI>If the object returns S_FALSE, it cannot initialize itself from the provided data.</li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Oleidl.h, Oleidl.idl.<BR>
+<B>Link Library:</B> Oleaut32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfioleobjectiunknown.htm">IOleObject</A> | <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A> | <A HREF="wce50lrfidataobjectiunknown.htm">IDataObject</A> | <A HREF="wce50lrfioleobjectgetmiscstatus.htm">IOleObject::GetMiscStatus</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IOleObject::InitFromData (wce50lrfioleobjectinitfromdata.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

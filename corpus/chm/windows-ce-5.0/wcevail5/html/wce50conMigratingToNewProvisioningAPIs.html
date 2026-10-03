@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Migrating to New Initialization and Provisioning APIs</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmigratingtonewprovisioningapis"></A>Migrating to New Initialization and Provisioning APIs</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The way that VAIL handles initialization and provisioning in Windows CE 5.0 has changed significantly from how it was handled in Windows CE .NET 4.2. </P>
+
+<P>In summary, Windows CE .NET 4.2 tied the retrieval and use of provisioning information together, while Windows CE 5.0 separates the management of the data from the use of the data.</P>
+
+<P>In Windows CE .NET 4.2, the VAIL handled both retrieving and using provisioning information. To do this, it used directory client objects that retrieved provisioning information from an LDAP server, file, or string. These objects were accessible using the now unsupported <A HREF="wce50lrfivoipdirectoryclientiunknown.htm">IVoIPDirectoryClient</A> interface. </P>
+
+<P>In Windows CE 5.0, the VAIL provides a single configuration data store object that manages provisioning and other setting information. Applications &#0151; like the TUI &#0151; access this object through the <A HREF="wce50lrfivoipconfigurationdatastoreiunknown.htm">IVoIPConfigurationDataStore</A> interface.</P>
+
+<P>The <B>IVoIPConfigurationDataStore</B> interface manages provisioning information, but doesn't handle provisioning itself. For this, application code &#0151; again, like code in the TUI &#0151; calls the <A HREF="wce50lrfivoipmgr2registerwithsipserver.htm">IVoIPMgr2::RegisterWithSIPServer</A> method and passes information it has retrieved using the data store. </P>
+
+<P>This topic summarizes the changes but does not provide detailed information about provisioning. For this information about provisioning using the configuration data store, see <A HREF="wce50conipphoneprovisioning.htm">IP Phone Provisioning</A>.</P>
+
+<H2 class="dtH2">SYSGEN Variable Changes</H2>
+
+<P>The following SYSGEN variables are no longer supported:
+
+<UL type="disc">
+	<LI>SYSGEN_VOIPPHONE_FILEPROV</li>
+
+	<LI>SYSGEN_VOIPPHONE_LDAPPROV</li>
+
+	<LI>SYSGEN_VOIPPHONE_MANPROV</li>
+</UL>
+
+<P>Instead, the IP phone design template uses this SYSGEN variable:
+
+<UL type="disc">
+	<LI>SYSGEN_VOIPPHONE_CONFIGURATIONSTORE </li>
+</UL>
+
+<P>SYSGEN_VOIPPHONE_CONFIGURATIONSTORE brings in support for provisioning from an XML file, from a string containing XML, and from an LDAP server.</P>
+
+<H2 class="dtH2">API Changes</H2>
+
+<P>In Windows CE .NET 4.2, application code used the <A HREF="wce50lrfivoipmgrinitialize.htm">IVoIPMgr::Initialize</A> and <A HREF="wce50lrfivoipmgrreregister.htm">IVoIPMgr::Reregister</A> methods, along with the <A HREF="wce50lrfivoipmgrparameters.htm">IVoIPMgr::Parameters</A>, <A HREF="wce50lrfvoipmgrparameters.htm">VoIPMgrParameters</A>, and <A HREF="wce50lrfdirectoryclientregparams.htm">DirectoryClientRegParams</A> elements.</P>
+
+<P>Windows CE 5.0 does not support these elements. Instead, application code, like code in the TUI, uses the configuration data store. </P>
+
+<P>The data store is an object that provides settings. Behind the scenes, the object loads these settings from the registry, from an XML file or string containing XML, or from an LDAP server.</P>
+
+<P>Instead of calling <B>IVoIPMgr::Initialize</B>, code now calls <A HREF="wce50lrfivoipmgr2initializeex.htm">IVoIPMgr2::InitializeEx</A>. <B>InitializeEx</B> takes only a reference to an <A HREF="wce50lrfivoipuiiunknown.htm">IVoIPUI</A> implementation, in contrast to <B>Initialize</B>, which also took an <B>VoIPMgrParameters</B> structure. </P>
+
+<P>In Windows CE .NET 4.2, the <B>Initialize</B> implementation uses data in the <B>VoIPMgrParameters</B> structure to connect via a directory client object and ultimately retrieve provisioning information. </P>
+
+<P>In Windows CE 5.0, application code uses the configuration data store directly to retrieve the provisioning information.</P>
+
+<P>Similarly, instead of calling <B>IVoIPMgr::Reregister</B>, code now calls <A HREF="wce50lrfivoipmgr2registerwithsipserver.htm">IVoIPMgr2::RegisterWithSIPServer</A>. The contents of the <A HREF="wce50lrfsipserverregistrationparameters.htm">SIPServerRegistrationParameters</A> structure expected by <B>RegisterWithSIPServer</B> can be retrieved by application code using the data store.</P>
+
+<P>For example code that calls <B>InitializeEx</B>, see the TUI <B>CVoIPApp::InitializeVoIPMgr </B>method in the VoIPApp.cpp file in %_WINCEROOT%\Public\VoIP\Oak\Phone\TUI\App. </P>
+
+<P>To see how the TUI registers with the SIP server by first using the data store to retrieve provisioning information and then calling <B>RegisterWithSIPServer</B>, examine the <B>CVoIPApp::ReprovisionVoIPMgr</B> method, also in VoIPApp.cpp.</P>
+
+<H2 class="dtH2">File Format Changes</H2>
+
+<P>Windows CE .NET 4.2 used a provisioning file that the file directory client understood. </P>
+
+<P>The Windows CE 5.0 configuration data store uses an XML provisioning file with a different schema: the root element has the name VoIPConfiguration, and can contain any number of elements with names as specified in the <A HREF="wce50lrfconfig_data_.htm">CONFIG_DATA_</A> topic. </P>
+
+<P>For example XML that follows this format, see <A HREF="wce50conconfigurationdatastoreexamplexml.htm">Configuration Data Store Example XML</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orivoipmigration.htm">VAIL Migration</A> | <A HREF="wce50conprovisioningtuiapplication.htm">Provisioning the TUI Application</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Saturday, May 22, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Migrating%20to%20New%20Initialization%20and%20Provisioning%20APIs (wce50conmigratingtonewprovisioningapis.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

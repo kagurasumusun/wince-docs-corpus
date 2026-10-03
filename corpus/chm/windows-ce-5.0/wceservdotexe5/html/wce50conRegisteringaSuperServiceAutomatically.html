@@ -1,0 +1,57 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registering a Super Service Automatically</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conregisteringasuperserviceautomatically"></A>Registering a Super Service Automatically</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>It is possible for a super service to be started automatically on Services.exe initialization at system startup. It can also be started automatically when the <A HREF="wce50lrfactivateservice.htm">ActivateService</A> function is called on a given service. Services.exe will call the service <A HREF="wce50lrfxxxiocontrol319.htm">xxx_IOControl (Services.exe)</A> function and pass the IOCTL_SERVICE_REGISTER_SOCKADDR value after calling <A HREF="wce50lrfxxxinit318.htm">xxx_Init (Services.exe)</A> if the SERVICE_INIT_STOPPED flag has been set in the <I>Context</I> registry value of the particular service. If the service has the potential to be run from a super service, <B>xxx_IOControl</B> will return TRUE, otherwise it will return FALSE and Services.exe will not proceed further.</P>
+
+<P>If super service support exists, then the ports for the given service will be bound before any other services can be initialized. The protocols are listed as subkeys located in the registry under <B>HKEY_LOCAL_MACHINE\Services\</B>&lt;<I>Service</I>&gt;<B>\Accept\</B>. In the following example, a Telnet server is configured to listen on TCP ports 23 and 24.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Services\TELNETD]
+    "Context"=0x00000001 //SERVICE_INIT_STOPPED, use super server
+[HKEY_LOCAL_MACHINE\Services\TELNETD\Accept\TCP-23]
+    ; TCP port 23, default Telnet Port
+    "SockAddr"=hex:02,00,00,17,00,00,00,00,00,00,00,00,00,00,00,00
+[HKEY_LOCAL_MACHINE\Services\TELNETD\Accept\TCP-24]
+    ; Also listen on TCP port 24
+    "SockAddr"=hex:02,00,00,18,00,00,00,00,00,00,00,00,00,00,00,00</PRE>
+
+<P>After each new socket has been bound successfully, the socket address associated with it will be passed to the service by a call to <B>xxx_IOControl</B>. If <B>xxx_IOControl</B> returns FALSE, then the socket will be closed. </P>
+
+<P>The <B>SockAddr</B> is a hexadecimal value that specifies a <A HREF="wce50lrfsockaddr.htm">sockaddr</A> data structure. This contains the protocol, port, and optionally the address that should be used for listening for a particular service. Although in the previous example both ports are using TCP/IP, any protocol on the device that is supported through the Winsock interface may be bound to by using an appropriate <B>SockAddr</B> value.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consuperservices.htm">Super Services</A> | <A HREF="wce50lrfxxxiocontrol319.htm">xxx_IOControl (Services.exe)</A> | <A HREF="wce50lrfactivateservice.htm">ActivateService</A> | <A HREF="wce50lrfxxxinit318.htm">xxx_Init (Services.exe)</A> | <A HREF="wce50lrfsockaddr.htm">sockaddr</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Registering%20a%20Super%20Service%20Automatically (wce50conregisteringasuperserviceautomatically.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

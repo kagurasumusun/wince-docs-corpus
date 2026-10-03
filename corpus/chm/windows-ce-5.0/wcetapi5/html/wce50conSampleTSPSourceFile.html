@@ -1,0 +1,1357 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample TSP Source File</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consampletspsourcefile"></A>Sample TSP Source File</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example illustrates how to write a customized TSP by using the TSPI that is supported in Windows CE.</P>
+
+<PRE class="code">/*++
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+Copyright (c) 1995-2000 Microsoft Corporation.  All rights reserved.
+
+Module Name:  
+
+    Samptspi.c
+
+Abstract:  
+
+    Core functions for the Windows CE sample TAPI Service Provider
+
+Notes:
+
+
+--*/
+
+#include "Windows.h"
+#include "Types.h"
+#include "Tchar.h"
+#include "Memory.h"
+#include "Mcx.h"
+#include "Tspi.h"
+#include "Linklist.h"
+#include "Samptspi.h"
+#include "Tapicomn.h"
+
+
+TSPIGLOBALS TspiGlobals;
+
+const GETIDINFO aGetID[] ={{TEXT("tapi/line"),     STRINGFORMAT_BINARY},
+                           {TEXT("comm"),          STRINGFORMAT_UNICODE},
+                           {TEXT("comm/datamodem"),STRINGFORMAT_BINARY},
+                           {TEXT("ndis"),          STRINGFORMAT_BINARY}};
+
+const TCHAR g_szDeviceClass[] = TEXT("com");
+
+// Some generic strings for later
+//
+const TCHAR szSemicolon[] = TEXT(";");
+
+DEVCFG DefaultDevCfg;
+
+// Debug Zones.
+#ifdef DEBUG
+
+// Defines to ease setting of dpCurSettings.ulZoneMask
+#define DEBUG_INIT         0x0001
+#define DEBUG_CALLSTATE    0x0400
+#define DEBUG_MISC         0x0800
+#define DEBUG_ALLOC        0x1000
+#define DEBUG_FUNCTION     0x2000
+#define DEBUG_WARNING      0x4000
+#define DEBUG_ERROR        0x8000
+
+DBGPARAM dpCurSettings = {
+    TEXT("Samptspi"), {
+        TEXT("Init"),TEXT(""),TEXT(""),TEXT(""),
+        TEXT(""),TEXT(""),TEXT(""),TEXT(""),
+        TEXT(""),TEXT(""),TEXT("Call State"),TEXT("Misc"),
+        TEXT("Alloc"),TEXT("Function"),TEXT("Warning"),TEXT("Error") },
+    DEBUG_INIT
+};
+#endif
+
+extern BOOL LineConfigEdit(HWND hParent, PDEVCFG pCfg);
+
+
+
+
+
+// **********************************************************************
+// TSPI_provider functions
+// **********************************************************************
+
+LONG TSPIAPI
+TSPI_providerInit(
+    DWORD             dwTSPIVersion,            // TSPI Version - in
+    DWORD             dwPermanentProviderID,    // Permanent Provider ID - in
+    DWORD             dwLineDeviceIDBase,       // Line Base ID - in
+    DWORD             dwPhoneDeviceIDBase,      // Phone Base ID - in
+    DWORD             dwNumLines,               // Number of lines - in
+    DWORD             dwNumPhones,              // Number of phones - in
+    ASYNC_COMPLETION  lpfnCompletionProc,       // Pointer to callback - in
+    LPDWORD           lpdwTSPIOptions           // Optional Behavior Flags - out
+    )
+{
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("+TSPI_providerInit, dwPPID 0x%X, dwDeviceIDBase 0x%X, dwNumLines 0x%X\r\n"),
+              dwPermanentProviderID,
+              dwLineDeviceIDBase,
+              dwNumLines));
+    
+    TspiGlobals.fnCompletionCallback = lpfnCompletionProc;
+
+    DefaultDevCfg.wWaitBong = 90;
+    DefaultDevCfg.dwModemOptions = MDM_FLOWCONTROL_SOFT;
+    DefaultDevCfg.dwCallSetupFailTimer = 180;
+
+    DefaultDevCfg.commconfig.dwSize = sizeof(COMMCONFIG);
+    DefaultDevCfg.commconfig.wVersion = SAMPTSPI_VERSION;
+    DefaultDevCfg.commconfig.wReserved = 0;
+    DefaultDevCfg.commconfig.dwProviderSubType = SAMPTSPI_SUBTYPE;
+    DefaultDevCfg.commconfig.dwProviderOffset = 0;
+    DefaultDevCfg.commconfig.dwProviderSize = 0;
+    
+    DefaultDevCfg.commconfig.dcb.DCBlength          = sizeof(DCB);
+    DefaultDevCfg.commconfig.dcb.BaudRate           = CBR_19200;
+    DefaultDevCfg.commconfig.dcb.fBinary            = TRUE;
+    DefaultDevCfg.commconfig.dcb.fParity            = TRUE;
+    DefaultDevCfg.commconfig.dcb.fOutxCtsFlow       = TRUE;
+    DefaultDevCfg.commconfig.dcb.fOutxDsrFlow       = TRUE;
+    DefaultDevCfg.commconfig.dcb.fDtrControl        = DTR_CONTROL_HANDSHAKE;
+    DefaultDevCfg.commconfig.dcb.fDsrSensitivity    = TRUE;
+    DefaultDevCfg.commconfig.dcb.fTXContinueOnXoff  = TRUE;
+    DefaultDevCfg.commconfig.dcb.fOutX              = FALSE;
+    DefaultDevCfg.commconfig.dcb.fInX               = FALSE;
+    DefaultDevCfg.commconfig.dcb.fErrorChar         = FALSE;
+    DefaultDevCfg.commconfig.dcb.fNull              = FALSE;
+    DefaultDevCfg.commconfig.dcb.fRtsControl        = RTS_CONTROL_TOGGLE;
+    DefaultDevCfg.commconfig.dcb.fAbortOnError      = TRUE;
+    DefaultDevCfg.commconfig.dcb.wReserved          = 0;
+    DefaultDevCfg.commconfig.dcb.XonLim             = 3;
+    DefaultDevCfg.commconfig.dcb.XoffLim            = 12;
+    DefaultDevCfg.commconfig.dcb.ByteSize           = 8;
+    DefaultDevCfg.commconfig.dcb.Parity             = EVENPARITY;
+    DefaultDevCfg.commconfig.dcb.StopBits           = ONESTOPBIT;
+    DefaultDevCfg.commconfig.dcb.XonChar            = 0;
+    DefaultDevCfg.commconfig.dcb.XoffChar           = 0;
+    DefaultDevCfg.commconfig.dcb.ErrorChar          = 0;
+    DefaultDevCfg.commconfig.dcb.EofChar            = 0;
+    DefaultDevCfg.commconfig.dcb.EvtChar            = 0;
+    DefaultDevCfg.commconfig.dcb.wReserved1         = 0;
+
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("-TSPI_providerInit\r\n")));
+    return SUCCESS;
+}
+
+LONG TSPIAPI
+TSPI_providerInstall(
+    HWND   hwndOwner,
+    DWORD  dwPermanentProviderID
+    )
+{
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("+TSPI_providerInstall, dwPPID 0x%X\r\n"),
+              dwPermanentProviderID ));
+    
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("-TSPI_providerInstall\r\n")));
+
+    return SUCCESS;
+}
+
+LONG TSPIAPI
+TSPI_providerShutdown(
+    DWORD    dwTSPIVersion
+    )
+{
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("+TSPI_providerShutdown\r\n")));
+
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("-TSPI_providerShutdown\r\n")));
+    return SUCCESS;
+}
+
+
+LONG TSPIAPI TSPI_providerEnumDevices(DWORD dwPermanentProviderID,
+                                      LPDWORD   lpdwNumLines,
+                                      LPDWORD   lpdwNumPhones,
+                                      HPROVIDER hProvider,
+                                      LINEEVENT lpfnLineEventProc,
+                                      PHONEEVENT lpfnPhoneEventProc
+                                      )
+
+{
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("+TSPI_providerEnumDevices\r\n")));
+
+    *lpdwNumLines = 0;
+
+    // This should be the same event proc that gets passed in to
+    // lineOpen, but I need it here and now so that I can notify
+    // TAPI about devices that are coming and going.
+    TspiGlobals.fnLineEventProc  = lpfnLineEventProc;
+
+    TspiGlobals.dwProviderID     = dwPermanentProviderID;
+    TspiGlobals.hProvider        = hProvider;
+    
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("-TSPI_providerEnumDevices\r\n")));
+    return SUCCESS;
+}
+
+// **********************************************************************
+// TSPI_line functions
+// **********************************************************************
+
+//
+// This function serves as a stub in the vtbl for any of the TSPI
+// functions that are chosen not to be supported.
+//
+LONG TSPIAPI
+TSPI_Unsupported( void )
+{
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_Unsupported\r\n")));
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_Unsupported\r\n")));
+    return LINEERR_OPERATIONUNAVAIL;
+}
+
+LONG TSPIAPI
+TSPI_lineClose(
+    HDRVLINE hdLine
+    )
+{
+    PTLINEDEV  pLineDev;
+  
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineClose\r\n")));
+
+    if ((pLineDev = GetLineDevfromHandle ((DWORD)hdLine)) == NULL)
+        return LINEERR_OPERATIONFAILED;
+
+     // Make sure that nothing is left open
+    DevlineClose(pLineDev, TRUE);
+
+    // Reinit the line device
+    NullifyLineDevice(pLineDev);
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineClose\r\n")));
+    return SUCCESS;
+}
+
+//
+// Close a specified open line device
+// 
+LONG TSPIAPI
+TSPI_lineConfigDialogEdit(
+    DWORD dwDeviceID,
+    HWND hwndOwner, 
+    LPCWSTR lpszDeviceClass,
+    LPVOID const lpDeviceConfigIn, 
+    DWORD dwSize,
+    LPVARSTRING lpDeviceConfigOut
+    )
+{
+    PTLINEDEV pLineDev;
+    BYTE cbSize;
+    DWORD dwRet = SUCCESS;
+    PDEVCFG pCfg;
+    
+    DEBUGMSG(ZONE_FUNCTION, (TEXT("+TSPI_lineConfigDialogEdit\r\n")));
+    
+    // Validate the input/output buffer
+    //
+    if (lpDeviceConfigOut == NULL)
+        return LINEERR_INVALPOINTER;
+
+    if (lpDeviceConfigIn == NULL)
+        return LINEERR_INVALPOINTER;
+
+    if (lpDeviceConfigOut-&gt;dwTotalSize &lt; sizeof(VARSTRING))
+        return LINEERR_STRUCTURETOOSMALL;
+
+    // Validate the requested device class
+    //
+    if (lpszDeviceClass != NULL)
+    {
+        if (!ValidateDevCfgClass(lpszDeviceClass))
+            return LINEERR_INVALDEVICECLASS;
+    };
+
+    // Validate the device ID
+    //
+    if ((pLineDev = GetLineDevfromID(dwDeviceID)) == NULL)
+        return LINEERR_NODEVICE;
+
+    // Set the output buffer size
+    //
+    cbSize  = sizeof( DEVCFG );
+    lpDeviceConfigOut-&gt;dwUsedSize = sizeof(VARSTRING);
+    lpDeviceConfigOut-&gt;dwNeededSize = sizeof(VARSTRING) + cbSize;
+
+    if (dwSize &lt; sizeof(DEVCFG)) {
+        return LINEERR_INVALPARAM;
+    }
+
+    // Validate the output buffer size
+    //
+    if (lpDeviceConfigOut-&gt;dwTotalSize &gt;= lpDeviceConfigOut-&gt;dwNeededSize)
+    {
+        // Initialize the buffer
+        //
+        lpDeviceConfigOut-&gt;dwStringFormat = STRINGFORMAT_BINARY;
+        lpDeviceConfigOut-&gt;dwStringSize   = cbSize;
+        lpDeviceConfigOut-&gt;dwStringOffset = sizeof(VARSTRING);
+        lpDeviceConfigOut-&gt;dwUsedSize    += cbSize;
+        pCfg = (PDEVCFG)(lpDeviceConfigOut+1);
+        memcpy(pCfg, lpDeviceConfigIn, sizeof(DEVCFG));
+
+        // Bring up property sheets for modems, and get the updated commconfig
+        //
+        LineConfigEdit(hwndOwner, pCfg);
+    }
+    else
+    {
+        DEBUGMSG(ZONE_FUNCTION,
+                 (TEXT("Insufficient space in output buffer (passed %d, needed %d)\r\n"),
+                  lpDeviceConfigOut-&gt;dwTotalSize, lpDeviceConfigOut-&gt;dwNeededSize));
+    }
+
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineConfigDialogEdit x%X (Used %d, Need %d)\r\n"),
+              dwRet, lpDeviceConfigOut-&gt;dwUsedSize, lpDeviceConfigOut-&gt;dwNeededSize));
+    return dwRet;
+}
+
+//
+// Terminate a call or abandon a call attempt that is in progress
+// 
+LONG TSPIAPI
+TSPI_lineDrop(DRV_REQUESTID dwRequestID,
+              HDRVCALL hdCall,
+              LPCSTR lpsUserUserInfo,
+              DWORD dwSize
+    )
+{
+    PTLINEDEV pLineDev;
+    DWORD    dwRet;
+  
+    DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+             (TEXT("+TSPI_lineDrop\r\n")));
+
+    if ((pLineDev = GetLineDevfromHandle ((DWORD)hdCall)) == NULL)
+        return LINEERR_INVALCALLHANDLE;
+
+
+
+    if (pLineDev-&gt;fTakeoverMode)
+    {
+        // The TAPI docs state that the app is required to close the handle after
+        // calling line drop.
+        pLineDev-&gt;fTakeoverMode = FALSE;
+        pLineDev-&gt;DevState = DEVST_DISCONNECTED;
+
+        NewCallState(pLineDev, LINECALLSTATE_IDLE, 0L);
+
+        TspiGlobals.fnCompletionCallback(dwRequestID, 0L);
+        DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+                 (TEXT("-TSPI_lineDrop\r\n")));
+        return dwRequestID;
+    }
+    else
+    {
+        // Disconnect the line. Grab the CloseCS
+        // to ensure that the app does not try to drop a line
+        // while the dialer thread is in the process of closing
+        // the handle.
+        EnterCriticalSection(&amp;pLineDev-&gt;OpenCS);
+        dwRet = DevlineDrop(pLineDev);
+        LeaveCriticalSection(&amp;pLineDev-&gt;OpenCS);
+        
+        if (dwRet == SUCCESS)
+        {
+            pLineDev-&gt;dwPendingID = INVALID_PENDINGID;
+            pLineDev-&gt;dwPendingType = INVALID_PENDINGOP;
+            DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+                     (TEXT("-TSPI_lineDrop, Success\r\n")));
+            return dwRet;
+        }
+        else
+        {
+            // Note that Windows CE does not do asynch drops right now.
+            DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+                     (TEXT("-TSPI_lineDrop, Asynchronous\r\n")));
+            pLineDev-&gt;dwPendingID = dwRequestID;
+            pLineDev-&gt;dwPendingType = PENDING_LINEDROP;
+            return dwRequestID;
+        }
+    }    
+}
+
+
+static const WCHAR szProviderName[] = TEXT("SAMPTSPI");
+
+//
+// Determine telephony capabilites for the specified device.
+// 
+LONG TSPIAPI
+TSPI_lineGetDevCaps(
+    DWORD dwDeviceID,
+    DWORD dwTSPIVersion,
+    DWORD dwExtVersion,
+    LPLINEDEVCAPS lpLineDevCaps
+    )
+{
+    PTLINEDEV pLineDev;
+    int  cbLineNameLen = 0;
+    int cbDevSpecificLen = 0;
+    int cbProviderNameLen = 0;
+    int cbAvailMem = 0;
+    DWORD dwRet = SUCCESS;
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineGetDevCaps\r\n")));
+
+     // A device caps structure must be filled in that is specific to
+     // the device.
+    if ((pLineDev = GetLineDevfromID ((DWORD)dwDeviceID)) == NULL)
+        return LINEERR_NODEVICE;
+
+    // Check to see how much memory is needed.
+    cbLineNameLen = (_tcslen(pLineDev-&gt;szFriendlyName) + 1) * sizeof(TCHAR);
+    cbProviderNameLen = (wcslen(szProviderName) + 1) * sizeof(WCHAR);
+    
+    lpLineDevCaps-&gt;dwUsedSize = sizeof(LINEDEVCAPS);
+    
+    cbAvailMem = (int) (lpLineDevCaps-&gt;dwTotalSize - lpLineDevCaps-&gt;dwUsedSize);
+  
+    // Enter the size that is ideally needed.
+    lpLineDevCaps-&gt;dwNeededSize = lpLineDevCaps-&gt;dwUsedSize +
+        cbLineNameLen +         // room for linename
+        cbProviderNameLen +     // room for provider name
+        (2*sizeof(WORD));       // and room for DevSpecific info
+
+    // On Windows CE, there is no VCOMM available for an app
+    // to determine the device type (modem or DCC/NULL). So, a DevSpecific
+    // field is added, which is a WORD indicating the device type.
+    // DT_NULL, DT_PCMCIA_MODEM, and so on. This is followed by a second word that is
+    // 1 if the device is ready/available, or 0 if the device is not currently
+    // available (a removed PC card, for example).
+    if (cbAvailMem &gt;= sizeof(DWORD) )
+    {
+        *(LPWORD)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwUsedSize) = pLineDev-&gt;wDeviceType;
+        *((LPWORD)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwUsedSize) + 1) = pLineDev-&gt;wDeviceAvail;
+        
+        DEBUGMSG(ZONE_FUNCTION,
+                 (TEXT("Storing Device Type x%X, available x%X\r\n"),
+                  pLineDev-&gt;wDeviceType,
+                  pLineDev-&gt;wDeviceAvail));
+
+        lpLineDevCaps-&gt;dwDevSpecificSize = sizeof( DWORD );
+        lpLineDevCaps-&gt;dwDevSpecificOffset = lpLineDevCaps-&gt;dwUsedSize;
+        lpLineDevCaps-&gt;dwUsedSize += lpLineDevCaps-&gt;dwDevSpecificSize;
+        cbAvailMem -= lpLineDevCaps-&gt;dwDevSpecificSize;
+    }
+    else
+    {
+        lpLineDevCaps-&gt;dwDevSpecificSize = 0;
+        lpLineDevCaps-&gt;dwDevSpecificOffset = 0;
+        lpLineDevCaps-&gt;dwNeededSize += sizeof(WORD);
+    }
+    
+     // If the provider info fits, also append the name
+    if (cbAvailMem &gt;= cbLineNameLen)
+    {
+        _tcscpy((LPWSTR)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwUsedSize),
+                pLineDev-&gt;szFriendlyName);
+        lpLineDevCaps-&gt;dwLineNameSize = cbLineNameLen;
+        lpLineDevCaps-&gt;dwLineNameOffset = lpLineDevCaps-&gt;dwUsedSize;
+        lpLineDevCaps-&gt;dwUsedSize += cbLineNameLen;
+        cbAvailMem -= cbLineNameLen;
+    }
+    else
+    {
+        lpLineDevCaps-&gt;dwLineNameSize = 0;
+        lpLineDevCaps-&gt;dwLineNameOffset = 0;
+    }
+    
+
+    if (cbAvailMem &gt;= cbProviderNameLen)
+    {
+        _tcscpy((LPWSTR)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwUsedSize), szProviderName);
+        lpLineDevCaps-&gt;dwProviderInfoSize = cbProviderNameLen;
+        lpLineDevCaps-&gt;dwProviderInfoOffset = lpLineDevCaps-&gt;dwUsedSize;
+        lpLineDevCaps-&gt;dwUsedSize += cbProviderNameLen;
+        cbAvailMem -= cbProviderNameLen;
+    }
+    else
+    {
+        lpLineDevCaps-&gt;dwProviderInfoSize = 0;
+        lpLineDevCaps-&gt;dwProviderInfoOffset = 0;
+    }
+
+     // You do not have permanent IDs.
+    lpLineDevCaps-&gt;dwPermanentLineID = 0;
+    lpLineDevCaps-&gt;dwStringFormat = STRINGFORMAT_UNICODE;
+    lpLineDevCaps-&gt;dwAddressModes = LINEADDRESSMODE_ADDRESSID;
+    lpLineDevCaps-&gt;dwNumAddresses = 1;
+
+     // Bearer mode &amp; information
+    lpLineDevCaps-&gt;dwMaxRate      = pLineDev-&gt;dwMaxDCERate;
+    lpLineDevCaps-&gt;dwBearerModes  = pLineDev-&gt;dwBearerModes;
+
+     // Media mode
+    lpLineDevCaps-&gt;dwMediaModes = pLineDev-&gt;dwMediaModes;
+
+    // Wait-for-bong can be simulated if the modem is not capable of
+    // supporting it.
+    lpLineDevCaps-&gt;dwDevCapFlags  = pLineDev-&gt;dwDevCapFlags |
+        LINEDEVCAPFLAGS_DIALBILLING |
+        LINEDEVCAPFLAGS_CLOSEDROP;
+
+    lpLineDevCaps-&gt;dwRingModes         = 1;
+    lpLineDevCaps-&gt;dwMaxNumActiveCalls = 1;
+
+     // Line device state to be notified
+    lpLineDevCaps-&gt;dwLineStates = LINEDEVSTATE_CONNECTED |
+        LINEDEVSTATE_DISCONNECTED |
+        LINEDEVSTATE_OPEN |
+        LINEDEVSTATE_CLOSE |
+        LINEDEVSTATE_INSERVICE |
+        LINEDEVSTATE_OUTOFSERVICE |
+        LINEDEVSTATE_REMOVED |
+        LINEDEVSTATE_RINGING |
+        LINEDEVSTATE_REINIT;
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineGetDevCaps x%X\r\n"),
+              dwRet));
+    return dwRet;
+}
+
+//
+// Determine device configuration for the specified device.
+// 
+LONG TSPIAPI
+TSPI_lineGetDevConfig(
+    DWORD dwDeviceID,
+    LPVARSTRING lpDeviceConfig,
+    LPCWSTR lpszDeviceClass
+    )
+{
+    PTLINEDEV pLineDev;
+    DWORD dwRet = SUCCESS;
+    BYTE  cbSize;
+    PDEVCFG pDevCfg;
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineGetDevConfig\r\n")));
+
+    // Validate the requested device class
+    //
+    if (lpszDeviceClass != NULL)
+    {
+        if (!ValidateDevCfgClass(lpszDeviceClass))
+            return LINEERR_INVALDEVICECLASS;
+    }
+    
+    // Validate the buffer
+    //
+    if (lpDeviceConfig == NULL)
+        return LINEERR_INVALPOINTER;
+
+    if (lpDeviceConfig-&gt;dwTotalSize &lt; sizeof(VARSTRING))
+        return LINEERR_STRUCTURETOOSMALL;
+
+    // Validate the device ID
+    //
+    if ((pLineDev = GetLineDevfromID (dwDeviceID)) == NULL)
+        return LINEERR_NODEVICE;
+    
+    // Validate the buffer size
+    //
+    cbSize = sizeof(DEVCFG);
+    lpDeviceConfig-&gt;dwUsedSize = sizeof(VARSTRING);
+    lpDeviceConfig-&gt;dwNeededSize = sizeof(VARSTRING) + cbSize;
+
+    if (lpDeviceConfig-&gt;dwTotalSize &gt;= lpDeviceConfig-&gt;dwNeededSize)
+    {
+        // The Windows CE Networking and Dial-up Connections application does not store the DEVCFG
+        // that is associated with a connectoid until the user changes the settings.
+        // This means that it can end up using settings from a previous connection,
+        // instead of the defaults that it expects.
+        pDevCfg = (PDEVCFG)(((LPBYTE)lpDeviceConfig) + sizeof(VARSTRING));
+        *pDevCfg = pLineDev-&gt;DevCfg;
+        
+        lpDeviceConfig-&gt;dwStringFormat = STRINGFORMAT_BINARY;
+        lpDeviceConfig-&gt;dwStringSize = cbSize;
+        lpDeviceConfig-&gt;dwStringOffset = sizeof(VARSTRING);
+        lpDeviceConfig-&gt;dwUsedSize += cbSize;
+
+        DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+                 (TEXT("  TSPI_lineGetDevConfig (DevID %d):\r\n"),
+                  dwDeviceID));
+    }
+    else
+    {
+        // Not enough room
+        DEBUGMSG(ZONE_FUNCTION,
+                 (TEXT("  TSPI_lineGetDevConfig needed %d bytes, had %d\r\n"),
+                  lpDeviceConfig-&gt;dwNeededSize, lpDeviceConfig-&gt;dwTotalSize));
+    };
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineGetDevConfig x%X (Used %d, Need %d)\r\n"),
+              dwRet, lpDeviceConfig-&gt;dwUsedSize, lpDeviceConfig-&gt;dwNeededSize));
+    return dwRet;
+}
+
+//
+// Get the device ID for the specified device. The caller
+// can use the returned ID with the corresponding media (for example, for
+// serial lines the ID can be passed to ReadFile(), WriteFile(),
+// and so on).
+// 
+LONG TSPIAPI
+TSPI_lineGetID(
+    HDRVLINE       hdLine,
+    DWORD          dwAddressID,
+    HDRVCALL       hdCall,
+    DWORD          dwSelect,
+    LPVARSTRING    lpDeviceID,
+    LPCWSTR        lpszDeviceClass
+    )
+{
+    PTLINEDEV   pLineDev;
+    UINT       cbPort;
+    UINT       idClass;
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineGetID - ProcPerm=0x%X\r\n"),
+           GetCurrentPermissions()));
+
+    switch (dwSelect)
+    {
+        case LINECALLSELECT_ADDRESS:
+            if (dwAddressID != 0)
+            {
+                DEBUGMSG(ZONE_FUNCTION,
+                         (TEXT("-TSPI_lineGetID - INVALADDRESSID\r\n")));
+                return LINEERR_INVALADDRESSID;
+            }
+             // FALLTHROUGH
+
+        case LINECALLSELECT_LINE:
+            if ((pLineDev = GetLineDevfromHandle ((DWORD)hdLine)) == NULL)
+            {
+                DEBUGMSG(ZONE_FUNCTION,
+                         (TEXT("-TSPI_lineGetID - INVALLINEHANDLE\r\n")));
+                return LINEERR_INVALLINEHANDLE;
+            }
+            break;
+
+        case LINECALLSELECT_CALL:
+            if ((pLineDev = GetLineDevfromHandle ((DWORD)hdCall)) == NULL)
+            {
+                DEBUGMSG(ZONE_FUNCTION,
+                         (TEXT("-TSPI_lineGetID - INVALCALLHANDLE\r\n")));
+                return LINEERR_INVALCALLHANDLE;
+            }
+            break;
+
+        default:
+            DEBUGMSG(ZONE_FUNCTION,
+                     (TEXT("-TSPI_lineGetID - Invalid dwSelect x%X\r\n"),
+                         dwSelect));
+            return LINEERR_OPERATIONFAILED;
+    }
+
+
+     // Determine the device class
+     //
+    for (idClass = 0; idClass &lt; MAX_SUPPORT_CLASS; idClass++)
+    {
+        
+        DEBUGMSG(ZONE_FUNCTION,
+                 (TEXT("Comparing strings %s to %s\r\n"),
+                  lpszDeviceClass, aGetID[idClass].szClassName));
+        if (_tcsicmp(lpszDeviceClass, aGetID[idClass].szClassName) == 0)
+            break;
+    };
+   DEBUGMSG(ZONE_FUNCTION,
+          (TEXT("Class ID = %d (%s)\r\n"), idClass,
+           aGetID[idClass].szClassName));
+    
+     // Calculate the required size
+     //
+    switch (idClass)
+    {
+        case TAPILINE:
+            cbPort = sizeof(DWORD);
+            break;
+
+        case COMM:
+            cbPort = (_tcslen(pLineDev-&gt;szFriendlyName) + 1) * sizeof(TCHAR);
+            break;
+
+        case COMMMODEM:
+            cbPort = (_tcslen(pLineDev-&gt;szFriendlyName) + 1) * sizeof(TCHAR) + sizeof(DWORD);
+            break;
+
+        default:
+            DEBUGMSG(ZONE_FUNCTION,
+                     (TEXT("-TSPI_lineGetID - Invalid ID Class x%X\r\n"),
+                      idClass ));
+            return LINEERR_OPERATIONFAILED;
+    };
+
+     // Calculate the required size
+     //
+    lpDeviceID-&gt;dwNeededSize = sizeof(VARSTRING) + cbPort;
+    lpDeviceID-&gt;dwStringFormat = aGetID[idClass].dwFormat;
+    ASSERT(lpDeviceID-&gt;dwUsedSize == sizeof(VARSTRING));
+    if ((lpDeviceID-&gt;dwTotalSize - lpDeviceID-&gt;dwUsedSize) &lt;
+        cbPort)
+    {
+        DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineGetID - Inusufficient space\r\n")));
+        return SUCCESS;
+    }
+    
+     // Enough space exists to return valid information
+     //
+    lpDeviceID-&gt;dwStringSize   = cbPort;
+    lpDeviceID-&gt;dwStringOffset = sizeof(VARSTRING);
+    lpDeviceID-&gt;dwUsedSize    += cbPort;
+
+
+     // Return the valid information
+    switch (idClass)
+    {
+        case TAPILINE:
+        {
+            LPDWORD lpdwDeviceID;
+
+            lpdwDeviceID = (LPDWORD)(((LPBYTE)lpDeviceID) + sizeof(VARSTRING));
+            *lpdwDeviceID = (DWORD) pLineDev-&gt;dwDeviceID;
+            DEBUGMSG(ZONE_MISC,
+                     (TEXT("-TSPI_lineGetID TAPILINE - Device ID x%X\r\n"),
+                      pLineDev-&gt;dwDeviceID));
+            break;
+        }
+        case COMM:
+        {
+            _tcsncpy( (LPWSTR)((LPBYTE)lpDeviceID + sizeof(VARSTRING)),
+                      pLineDev-&gt;szFriendlyName, (cbPort/sizeof(TCHAR)) );
+            DEBUGMSG(ZONE_MISC,
+                     (TEXT("-TSPI_lineGetID COMM - Device name \"%s\" (len %d)\r\n"),
+                      pLineDev-&gt;szFriendlyName, (cbPort/sizeof(TCHAR))));
+            break;
+        }
+        case COMMMODEM:
+        {
+            LPDWORD lpdwDeviceHandle;
+
+            lpdwDeviceHandle = (LPDWORD)(((LPBYTE)lpDeviceID) + sizeof(VARSTRING));
+            if (pLineDev-&gt;hDevice != (HANDLE)INVALID_DEVICE)
+            {
+                *lpdwDeviceHandle = (DWORD)pLineDev-&gt;hDevice;
+            SetHandleOwner((HANDLE)*lpdwDeviceHandle, GetCallerProcess());
+            }
+            else
+            {
+                *lpdwDeviceHandle = (DWORD)NULL;
+            };
+            _tcscpy((LPWSTR)(lpdwDeviceHandle+1), pLineDev-&gt;szFriendlyName );
+            DEBUGMSG(ZONE_MISC,
+                     (TEXT("-TSPI_lineGetID COMMMODEM - Device Handle x%X, Device name %s\r\n"),
+                      *lpdwDeviceHandle, pLineDev-&gt;szFriendlyName));
+            break;
+        }
+    };
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineGetID\r\n")));
+    
+    return SUCCESS;
+}
+
+LONG TSPIAPI
+TSPI_lineMakeCall(
+    DRV_REQUESTID          dwRequestID,
+    HDRVLINE               hdLine,
+    HTAPICALL              htCall,
+    LPHDRVCALL             lphdCall,
+    LPCWSTR                lpszDestAddress,
+    DWORD                  dwCountryCode,
+    LPLINECALLPARAMS const lpCallParams
+    )
+{
+    PTLINEDEV pLineDev;
+    DWORD dwRet;
+    BOOL  fDoTakeover = FALSE;
+
+    DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS, (TEXT("+TSPI_lineMakeCall\r\n")));
+
+    if (lpszDestAddress) {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+            (TEXT("+TSPI_lineMakeCall(%s)\r\n"), lpszDestAddress));
+    }
+
+    if ((pLineDev = GetLineDevfromHandle ((DWORD)hdLine)) == NULL)
+    {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR|ZONE_CALLS,
+                 (TEXT("-TSPI_lineMakeCall ** Invalid Handle\r\n")));
+        return LINEERR_INVALLINEHANDLE;
+    }
+    
+     // See if there is a free call structure.
+    if (pLineDev-&gt;dwCall &amp; CALL_ALLOCATED)
+    {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR|ZONE_CALLS,
+                 (TEXT("-TSPI_lineMakeCall ** Call already allocated\r\n")));
+        return LINEERR_CALLUNAVAIL;
+    }    
+
+    // By default, do not perform blind dialing.
+    pLineDev-&gt;dwDialOptions &amp;= ~MDM_BLIND_DIAL;
+
+
+     // Examine LINECALLPARAMS, if it is present.
+    if (lpCallParams)
+    {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR|ZONE_CALLS,
+                 (TEXT("   lineMakeCall - Check CallParams\r\n")));
+        
+        if (lpCallParams-&gt;dwBearerMode &amp; LINEBEARERMODE_PASSTHROUGH)
+        {
+            fDoTakeover = TRUE;
+        }
+        else
+        {
+             // This check is to prevent G3FAX from being used without pass-through...
+             // (You can dial only with DATAMODEM)
+            if ((lpCallParams-&gt;dwMediaMode &amp;
+                 (LINEMEDIAMODE_DATAMODEM)) == 0)
+            {
+                DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR|ZONE_CALLS,
+                         (TEXT("-TSPI_lineMakeCall ** Invalid Media Mode\r\n")));
+                return LINEERR_INVALMEDIAMODE;
+            }
+        }
+
+        pLineDev-&gt;dwCurBearerModes = lpCallParams-&gt;dwBearerMode;
+        pLineDev-&gt;dwCurMediaModes = lpCallParams-&gt;dwMediaMode;
+
+        DEBUGMSG(ZONE_MISC,
+                 (TEXT("   lineMakeCall - got media &amp; bearer modes\r\n")));
+
+        if (!(lpCallParams-&gt;dwCallParamFlags &amp; LINECALLPARAMFLAGS_IDLE))
+        {
+            DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+             (TEXT("LINECALLPARAMFLAGS_IDLE: not set, no dialtone detect\r\n") ));
+             // Turn on blind dialing
+            pLineDev-&gt;dwDialOptions |= MDM_BLIND_DIAL;
+        }
+
+
+    }
+    else
+    {
+         // set the standard defaults - for peg tapi, it is DATAMODEM
+        ASSERT(pLineDev-&gt;dwMediaModes &amp; LINEMEDIAMODE_DATAMODEM);
+        pLineDev-&gt;dwCurMediaModes = LINEMEDIAMODE_DATAMODEM;
+
+        pLineDev-&gt;dwCurBearerModes = pLineDev-&gt;dwBearerModes &amp; ~LINEBEARERMODE_PASSTHROUGH;
+    }
+
+     // Is there a telephone number?
+     //
+    if (!fDoTakeover)
+    {
+         // Validate lpszDestAddress, and get the processed form of it.
+        DEBUGMSG(ZONE_MISC|ZONE_CALLS,
+                 (TEXT("TSPI_lineMakeCall - validating destination address\r\n")));
+        dwRet = ValidateAddress(pLineDev, lpszDestAddress, pLineDev-&gt;szAddress);
+        if (SUCCESS != dwRet)
+        {
+            DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR|ZONE_CALLS,
+                     (TEXT("-TSPI_lineMakeCall ** Invalid Address\r\n")));
+            return dwRet;
+        }
+
+         // if the lpszDestAddress was NULL or "", you just want to perform a
+         // dial-tone detection. It is expected that lineDial will be called.
+         // Setting the szAddress to ";" will accomplish this.
+        if ('\0' == pLineDev-&gt;szAddress[0])
+        {
+            _tcscpy(pLineDev-&gt;szAddress, szSemicolon);
+        }
+    }
+
+     // Record the call attributes
+    pLineDev-&gt;htCall = htCall;
+    pLineDev-&gt;dwCall = CALL_ALLOCATED;
+    pLineDev-&gt;dwCallState = LINECALLSTATE_UNKNOWN;
+
+    *lphdCall = (HDRVCALL)pLineDev;
+
+     // It is allowed to make a call to an already opened line if the line is monitoring
+     // a call. Therefore, if the line is in use, try making a call. The make-call
+     // routine will return error if the state is not appropriate.
+     //
+    if (((dwRet = DevlineOpen(pLineDev)) == SUCCESS) ||
+        (dwRet == LINEERR_ALLOCATED))
+    {
+        if (fDoTakeover)
+        {
+            DEBUGMSG(ZONE_MISC|ZONE_CALLS,
+                     (TEXT("   lineMakeCall - Takeover\r\n")));
+            
+            // For takeover, no calling is actually done.  Just open the
+            // port, so that the application can get the device handle from
+            // lineGetID.
+            if (pLineDev-&gt;DevState == DEVST_DISCONNECTED)
+            {
+                // You can go into pass-through only if device is not in use
+
+                // OK, the device was opened above, so now you just need to
+                // let the apps know that the call state has changed.
+                pLineDev-&gt;DevState = DEVST_CONNECTED;
+                TspiGlobals.fnCompletionCallback(dwRequestID, 0L);
+                NewCallState(pLineDev, LINECALLSTATE_CONNECTED, 0L);
+
+                pLineDev-&gt;fTakeoverMode = TRUE;
+                dwRet = dwRequestID;
+            }
+            else
+            {
+                dwRet = LINEERR_OPERATIONFAILED;
+            }
+        }
+        else
+        {
+             // The call can be made here
+            pLineDev-&gt;dwPendingID = dwRequestID;
+            pLineDev-&gt;dwPendingType = PENDING_LINEMAKECALL;
+
+            DEBUGMSG(ZONE_CALLS,
+                     (TEXT("\tTSPI_lineMakeCall, Ready to make call for ReqID x%X\r\n"),
+                      pLineDev-&gt;dwPendingID));
+
+            if (((dwRet = DevlineMakeCall(pLineDev)) != SUCCESS) &amp;&amp;
+                (IS_TAPI_ERROR(dwRet)))
+            {
+                DEBUGMSG(ZONE_CALLS | ZONE_ERROR,
+                         (TEXT("\tDevLineMakeCall error - dwRet x%X. Closing port\r\n"),
+                          dwRet));
+                DevlineClose(pLineDev, TRUE);
+            }
+        }
+    };
+
+     // Check if an error occurs
+     //
+    if (IS_TAPI_ERROR(dwRet))
+    {
+        DEBUGMSG(ZONE_CALLS,
+                 (TEXT("\tTSPI_lineMakeCall, Ret Code x%X, invalidating pending ID.\r\n"),
+                  dwRet ));
+        
+        pLineDev-&gt;dwPendingID   = INVALID_PENDINGID;
+        pLineDev-&gt;dwPendingType = INVALID_PENDINGOP;
+
+         // Deallocate the call from this line
+        pLineDev-&gt;htCall = NULL;
+        pLineDev-&gt;dwCall = 0;
+        *lphdCall = NULL;
+    };
+
+    DEBUGMSG(ZONE_FUNCTION|ZONE_CALLS,
+             (TEXT("-TSPI_lineMakeCall, dwRet x%X\r\n"),
+              dwRet));
+    return dwRet;
+    
+}
+
+LONG TSPIAPI
+TSPI_lineNegotiateTSPIVersion(
+    DWORD dwDeviceID,
+    DWORD dwLowVersion,
+    DWORD dwHighVersion,
+    LPDWORD lpdwTSPIVersion
+    )
+{
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineNegotiateTSPIVersion\r\n")));
+    
+
+     // Check the range of the device ID
+     //
+    if((dwDeviceID == INITIALIZE_NEGOTIATION)
+       || (GetLineDevfromID(dwDeviceID) != NULL)
+        )
+    {
+         // Check the version range
+         //
+        if((dwLowVersion &gt; SPI_VERSION) || (dwHighVersion &lt; SPI_VERSION))
+        {
+            *lpdwTSPIVersion = 0;
+            DEBUGMSG(ZONE_FUNCTION,
+                     (TEXT("-TSPI_lineNegotiateTSPIVersion - SPI Ver x%X out of TAPI range x%X..x%X\r\n"),
+                      SPI_VERSION, dwLowVersion, dwHighVersion));
+            return LINEERR_INCOMPATIBLEAPIVERSION;
+        }
+        else
+        {
+            *lpdwTSPIVersion = SPI_VERSION;
+            DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineNegotiateTSPIVersion - Ver x%X\r\n"),
+              SPI_VERSION));
+            return SUCCESS;
+        };
+    };
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineNegotiateTSPIVersion - No Device\r\n")));
+
+     // The requested device does not exist.
+    return LINEERR_NODEVICE;
+}
+
+LONG TSPIAPI
+TSPI_lineOpen(
+    DWORD dwDeviceID,
+    HTAPILINE htLine,
+    LPHDRVLINE lphdLine,
+    DWORD dwTSPIVersion,
+    LINEEVENT lineEventProc)
+{
+    PTLINEDEV pLineDev;
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineOpen DevID x%X, HTapiLine x%X, SPI Ver x%X\r\n"),
+              dwDeviceID, htLine, dwTSPIVersion));
+
+
+     // Validate the device ID
+    if ((pLineDev = GetLineDevfromID(dwDeviceID)) == NULL)
+    {
+        DEBUGMSG(ZONE_ERROR,
+                 (TEXT("TSPI_lineOpen, could not find device for dwId x%X\r\n"),
+                  dwDeviceID));
+        return LINEERR_NODEVICE;
+    }
+
+     // Update the line device
+    *lphdLine           = (HDRVLINE)pLineDev;
+    pLineDev-&gt;lpfnEvent = lineEventProc;
+    pLineDev-&gt;htLine    = htLine;
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineOpen\r\n")));
+    return SUCCESS;
+}
+
+LONG TSPIAPI
+TSPI_lineSetDevConfig(
+    DWORD dwDeviceID,
+    LPVOID const lpDeviceConfig,
+    DWORD dwSize,
+    LPCWSTR lpszDeviceClass
+    )
+{
+    PTLINEDEV    pLineDev;
+    PDEVCFG  pDevCfg;
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineSetDevConfig\r\n")));
+
+     // Validate the requested device class
+     //
+    if (!ValidateDevCfgClass(lpszDeviceClass))
+    {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR,
+                 (TEXT("-TSPI_lineSetDevConfig : LINEERR_INVALDEVICECLASS\r\n")));
+        return LINEERR_INVALDEVICECLASS;
+    }
+    
+     // Validate the buffer
+     //
+    if (lpDeviceConfig == NULL)
+    {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR,
+                 (TEXT("-TSPI_lineSetDevConfig : LINEERR_INVALPOINTER\r\n")));
+        return LINEERR_INVALPOINTER;
+    }
+    
+     // Validate the device ID
+     //
+    if ((pLineDev = GetLineDevfromID(dwDeviceID)) == NULL)
+    {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR,
+                 (TEXT("-TSPI_lineSetDevConfig : LINEERR_NODEVICE\r\n")));
+        return LINEERR_NODEVICE;
+    }
+    
+     // Verify the structure size
+     //
+    pDevCfg = (PDEVCFG)lpDeviceConfig;
+    if (dwSize != sizeof(DEVCFG))
+    {
+        DEBUGMSG(ZONE_FUNCTION|ZONE_ERROR,
+                 (TEXT("-TSPI_lineSetDevConfig : LINEERR_INVALPARAM\r\n")));
+        return LINEERR_INVALPARAM;
+    }
+    
+     // Get the new settings
+    pLineDev-&gt;DevCfg = *pDevCfg;
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineSetDevConfig\r\n")));
+        
+    return SUCCESS;
+}
+
+LONG TSPIAPI
+TSPI_lineSetStatusMessages(
+    HDRVLINE hdLine,
+    DWORD dwLineStates,
+    DWORD dwAddressStates
+    )
+{
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_lineSetStatusMessages\r\n")));
+
+     // Record these settings and filter the notifications, based
+     // on these settings.
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_lineSetStatusMessages\r\n")));
+    return SUCCESS;
+}
+
+//
+// LONG TSPIAPI TSPI_providerCreateLineDevice()
+//
+// Dynamically creates a new device. This entry point will be
+// called by devloader whenever it adds a new device that lists
+// Samptspi.dll as the service provider.  
+//
+LONG TSPIAPI
+TSPI_providerCreateLineDevice(
+    HKEY    hActiveKey,    // Registry key for this active device
+    LPCWSTR lpszDevPath,   // Registry path for this device
+    LPCWSTR lpszDeviceName // Device name
+    )
+{
+    PTLINEDEV ptLineDev;
+    DWORD   dwRet;
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_providerCreateLineDevice %s.\r\n"),
+              lpszDeviceName));
+
+    dwRet = (DWORD) -1;     // Assume failure
+
+    // It is possible that this device already exists (for example,
+    // if it is a PC card that was removed and reinserted.)
+    // So, scan the current device list to look for it, and use
+    // the existing entry if it is found. Otherwise, create a device.
+    ptLineDev = createLineDev( hActiveKey, lpszDevPath, lpszDeviceName );
+    
+    if( NULL != ptLineDev )
+    {
+        dwRet = ptLineDev-&gt;dwDeviceID;
+    }
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_providerCreateLineDevice, return x%X.\r\n"),
+              dwRet));
+    return dwRet;
+}
+
+//
+// LONG TSPIAPI TSPI_providerDeleteLineDevice()
+//
+// Removes a device from the system.
+//
+// NOTE: Devload actually does not know which devices were added,
+// so it is possible that this device is not one for which
+// a lineDevice entry was created. Note that a device is never removed.
+// It is only marked as disconnected. It might get
+// reintroduced to the system later.
+//
+LONG TSPIAPI TSPI_providerDeleteLineDevice(
+    DWORD Identifier    // dwDeviceID associated with this device
+    )
+{
+    DWORD   dwRet;
+    PTLINEDEV ptLineDev;
+    
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("+TSPI_providerDeleteLineDevice, x%X.\r\n"),
+              Identifier));
+
+     // Get the name of the device, and check its validity
+    if ( (DWORD)-1 == Identifier )
+        return LINEERR_BADDEVICEID;
+     
+    dwRet = LINEERR_OPERATIONFAILED;     // Assume failure
+
+     // See if such a device is actually in the system
+    if( ptLineDev = GetLineDevfromID(Identifier) )
+    {
+        // OK, send a DEVSTATE_DISCONNECTED to TAPI.
+        DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+                 (TEXT("\tSend disconnect for ptLine x%X, htLine x%X\r\n"),
+                  ptLineDev, ptLineDev-&gt;htLine));
+        
+        TspiGlobals.fnLineEventProc( ptLineDev-&gt;htLine,
+                                     0,
+                                     LINE_LINEDEVSTATE,
+                                     LINEDEVSTATE_DISCONNECTED,
+                                     0,
+                                     0 );
+        
+        // And this Settings key is no longer valid.
+        RegCloseKey( ptLineDev-&gt;hSettingsKey );
+
+        // And mark this as disconnected, so that GetDevCaps can return this info.
+        ptLineDev-&gt;wDeviceAvail = 0;
+        
+    }
+    else
+    {
+        // Could not find the specified device
+        DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+                 (TEXT("-TSPI_providerDeleteLineDevice, invalid device id x%X.\r\n"),
+                  Identifier));
+    }
+    
+    DEBUGMSG(ZONE_FUNCTION|ZONE_INIT,
+             (TEXT("-TSPI_providerDeleteLineDevice.\r\n")));
+    return dwRet;
+}
+
+BOOL
+DllEntry (HANDLE  hinstDLL,
+        DWORD   Op,
+        LPVOID  lpvReserved)
+{
+   switch (Op) {
+        case DLL_PROCESS_ATTACH :
+            DEBUGREGISTER(hinstDLL);
+            DEBUGMSG (ZONE_FUNCTION, (TEXT("TSPI:DllEntry(ProcessAttach)\r\n")));
+
+             // TSPIGlobals, and so forth.
+            TSPIDLL_Load( );
+            TspiGlobals.hInstance = hinstDLL;   // Instance handle needed to
+                                                // load dialog resources
+            break;
+            
+        case DLL_PROCESS_DETACH :
+        case DLL_THREAD_DETACH :
+        case DLL_THREAD_ATTACH :
+        default :
+            break;
+   }
+   return TRUE;
+}
+
+
+// **********************************************************************
+// Now a vtbl must be provided that can be used to access the functions.
+// **********************************************************************
+
+TSPI_PROCS tspi_procs;
+
+LONG TSPIAPI TSPI_lineGetProcTable(
+    LPTSPI_PROCS *lplpTspiProcs
+    )
+{
+    PDWORD pdw;
+    LONG i;
+
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("+TSPI_providerGetVtbl, ptr = x%X\r\n"),
+              &amp;tspi_procs));
+
+    if (tspi_procs.TSPI_lineClose != TSPI_lineClose) {
+
+    for (pdw = (PDWORD)&amp;tspi_procs, i = 0;
+         i &lt; sizeof(TSPI_PROCS)/sizeof(DWORD);
+         pdw++,i++) {
+         *pdw = (DWORD)TSPI_Unsupported;
+    }
+
+    tspi_procs.TSPI_lineClose = TSPI_lineClose;
+    tspi_procs.TSPI_lineDrop = TSPI_lineDrop;
+    tspi_procs.TSPI_lineGetDevCaps = TSPI_lineGetDevCaps;
+    tspi_procs.TSPI_lineGetDevConfig = TSPI_lineGetDevConfig;
+    tspi_procs.TSPI_lineGetID = TSPI_lineGetID;
+    tspi_procs.TSPI_lineMakeCall = TSPI_lineMakeCall;
+    tspi_procs.TSPI_lineNegotiateTSPIVersion = TSPI_lineNegotiateTSPIVersion;
+    tspi_procs.TSPI_lineOpen = TSPI_lineOpen;
+    tspi_procs.TSPI_lineSetDevConfig = TSPI_lineSetDevConfig;
+    tspi_procs.TSPI_lineSetStatusMessages = TSPI_lineSetStatusMessages;
+    tspi_procs.TSPI_providerInit = TSPI_providerInit;
+    tspi_procs.TSPI_providerInstall = TSPI_providerInstall;
+    tspi_procs.TSPI_providerShutdown = TSPI_providerShutdown;
+    tspi_procs.TSPI_providerEnumDevices = TSPI_providerEnumDevices;
+    tspi_procs.TSPI_providerCreateLineDevice = TSPI_providerCreateLineDevice;
+    tspi_procs.TSPI_providerDeleteLineDevice = TSPI_providerDeleteLineDevice;
+    tspi_procs.TSPI_lineConfigDialogEdit = TSPI_lineConfigDialogEdit;
+    }
+    *lplpTspiProcs = &amp;tspi_procs;
+    
+    DEBUGMSG(ZONE_FUNCTION,
+             (TEXT("-TSPI_providerGetVtbl, ptr = x%X\r\n"),
+              &amp;tspi_procs));
+    return SUCCESS;
+}  </PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consampletsp.htm">Sample TSP</A> | <A HREF="wce50consampletspheaderfile.htm">Sample TSP Header File</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Sample%20TSP%20Source%20File (wce50consampletspsourcefile.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

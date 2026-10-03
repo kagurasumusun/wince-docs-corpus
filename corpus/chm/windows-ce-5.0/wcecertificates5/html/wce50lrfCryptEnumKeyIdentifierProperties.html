@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptEnumKeyIdentifierProperties</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptenumkeyidentifierproperties"></A>CryptEnumKeyIdentifierProperties</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function enumerates key identifiers and their properties. This function is not called in a loop. Rather, it loops internally until the last key identifier property is enumerated or the callback function returns FALSE. The callback function is called if the <I>dwPropId</I> parameter is zero or if the key identifier's properties match the <I>dwPropId</I> parameter.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CryptEnumKeyIdentifierProperties(</B>
+  <B>const CRYPT_HASH_BLOB* </B><I>pKeyIdentifier</I><B>,</B>
+  <B>DWORD</B> <I>dwPropId</I><B>,</B>
+  <B>DWORD</B> <I>dwFlags</I><B>,</B>
+  <B>LPCWSTR</B> <I>pwszComputerName</I><B>,</B>
+  <B>void* </B><I>pvReserved</I><B>,</B>
+  <B>void* </B><I>pvArg</I><B>,</B>
+  <B>PFN_CRYPT_ENUM_KEYID_PROP</B> <I>pfnEnum</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pKeyIdentifier</I> </DT>
+
+<DD>[in] Optional. Pointer to a <A HREF="wce50lrfblobcryptography.htm">CRYPT_HASH_BLOB</A> structure containing the key identifier.
+
+<P>If the <I>pKeyIdentifier</I> parameter is NULL, the function enumerates all key identifiers.
+
+
+<P>If the <I>pKeyIdentifier</I> parameter is not NULL, the callback function <I>pfnEnum</I> is only called for the specified key identifier.
+</dd>
+
+<DT><I>dwPropId</I> </DT>
+
+<DD>[in] Specifies the property identifier to be listed.
+
+<P>If the <I>dwPropId</I> parameter is set to zero, this function calls the callback function with all the properties.
+
+
+<P>If <I>dwPropId</I> is not zero and <I>pKeyIdentifier</I> is NULL, the callback function is called only for those key identifiers that have the specified property. The value of the <I>cProp</I> parameter of the function pointed to by the <I>pfnEnum</I> parameter is set to one. All key identifiers that do not have the property are skipped.
+
+
+<P>Any certificate property identifier can be used.
+</dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>[in] Bitmask of flags. By default, the CurrentUser's list of key identifiers is searched. If this parameter has a value of CRYPT_KEYID_MACHINE_FLAG, the search is instead performed on the list of key identifiers of the <B>LocalMachine</B> if <I>pwszComputerName</I> is NULL, or on the list of key identifiers of a remote computer if <I>pwszComputerName</I> is not NULL.</dd>
+
+<DT><I>pwszComputerName</I> </DT>
+
+<DD>[in] Optional. Pointer to a name of a remote computer to be searched. If the <I>dwFlags</I> parameter has a value of CRYPT_KEYID_MACHINE_FLAG, it searches the remote computer for a list of key identifiers. If the local computer is to be searched rather than a remote computer, the <I>pwszComputerName</I> parameter is set to NULL.</dd>
+
+<DT><I>pvReserved</I> </DT>
+
+<DD>[in] Reserved for future use and must be set to NULL.</dd>
+
+<DT><I>pvArg</I> </DT>
+
+<DD>[in] Optional. Pointer to data to be passed to the callback function. The type is a void that allows the application to declare, define, and initialize a structure or argument to hold any information.</dd>
+
+<DT><I>pfnEnum</I> </DT>
+
+<DD>[in] Pointer to an application-defined callback function that is executed for each key identifier entry matching the input parameters. For details about the callback functions parameters, see the Remarks section.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function repeatedly calls the callback function pointed to by the <I>pfnEnum</I> parameter until the last key identifier is enumerated or the callback returns FALSE.</P>
+
+<P>If the main function succeeds, the return value is nonzero, TRUE.</P>
+
+<P>If the function fails, the return value is zero, or FALSE.</P>
+
+<P>For extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>A key identifier can have the same properties as a certificate context.</P>
+
+<P>The following example shows the signature for the callback function pointed to by the <I>pfnEnum</I> parameter.</P>
+
+<PRE class="code">BOOL (WINAPI *PFN_CRYPT_ENUM_KEYID_PROP)(
+  const CRYPT_HASH_BLOB* pKeyIdentifier,
+  DWORD dwFlags,
+  void* pvReserved,
+  void* pvArg,
+  DWORD cProp,
+  DWORD* rgdwPropId,
+  void** rgpvData,
+  DWORD* rgcbData
+);</PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pKeyIdentifier</I> </DT>
+
+<DD>Pointer to a <B>CRYPT_HASH_BLOB</B> structure containing the key identifier. For more information, see <A HREF="wce50lrfblobcryptography.htm">BLOB</A>.</dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>Reserved for future use and must be set to zero.</dd>
+
+<DT><I>pvReserved</I> </DT>
+
+<DD>Reserved for future use and must be set to NULL.</dd>
+
+<DT><I>pvArg</I> </DT>
+
+<DD>Pointer to an argument that is passed through from the callback function.</dd>
+
+<DT><I>cProp</I> </DT>
+
+<DD>Count of elements in the array pointed to by the <I>rgdwPropId</I> parameter.</dd>
+
+<DT><I>rgdwPropId</I> </DT>
+
+<DD>Pointer to an array of property identifiers. Each entry in the array is one of the value types listed in the table for the <I>dwPropId</I> parameter in the <A HREF="wce50lrfcryptsetkeyidentifierproperty.htm">CryptSetKeyIdentifierProperty</A> function.</dd>
+
+<DT><I>rgpvData</I> </DT>
+
+<DD>Pointer to an array that contains pointers to <I>pvData</I> elements corresponding to the elements in the array pointed to by the <I>rgdwPropId</I> parameter.
+
+<P>For CERT_KEY_PROV_INFO_PROP_ID, the <I>rgpvData</I> element points to a <A HREF="wce50lrfcryptkeyprovinfo.htm">CRYPT_KEY_PROV_INFO</A> structure. For all other properties, the <I>rgpvData</I> element points to an array of bytes.
+</dd>
+
+<DT><I>rgcbData</I> </DT>
+
+<DD>Array of <B>DWORDs</B> that specify the size, in bytes, of corresponding elements in the <I>rgpvData</I> array.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns TRUE to continue enumeration.</P>
+
+<P>Returns FALSE and sets the last error code to stop enumeration.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcryptgetkeyidentifierproperty.htm">CryptGetKeyIdentifierProperty</A> | <A HREF="wce50lrfcryptsetkeyidentifierproperty.htm">CryptSetKeyIdentifierProperty</A> | <A HREF="wce50lrfblobcryptography.htm">CRYPT_HASH_BLOB</A> | <A HREF="wce50lrfcryptkeyprovinfo.htm">CRYPT_KEY_PROV_INFO</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptEnumKeyIdentifierProperties (wce50lrfcryptenumkeyidentifierproperties.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

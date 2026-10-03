@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Context Semantics</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concontextsemantics"></A>Context Semantics</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A security context is the set of security attributes and rules in effect during a communication session. These attributes and rules include such information as the identities of the principal and information about the keys, ciphers, and algorithms being used. For Security Support Provider Interface (SSPI), a security context is an opaque structure created through an exchange involving the <A HREF="wce50lrfinitializesecuritycontext.htm">InitializeSecurityContext</A> function and the <A HREF="wce50lrfacceptsecuritycontext.htm">AcceptSecurityContext</A> function.</P>
+
+<P>The SSPI supports three types of security contexts: 
+
+<UL type="disc">
+	<LI>Connection </li>
+
+	<LI>Datagram </li>
+
+	<LI>Stream </li>
+</UL>
+
+<H2 class="dtH2">Connection Context</H2>
+
+<P>With a connection context, the caller of the function is responsible for formatting messages. The caller also relies on the security provider to authenticate connections and to ensure the integrity of specific parts of the message. Most context options are available to connection contexts. These options include mutual authentication, replay detection, and sequence detection. A security package sets the SECPKG_FLAG_CONNECTION flag to indicate that it supports connection semantics.</P>
+
+<H2 class="dtH2">Datagram Context</H2>
+
+<P>A datagram context, or connectionless context, has slightly different semantics from a connection context. A connectionless context implies that the server has no way of determining when the client has shut down or otherwise terminated the connection. In other words, no termination notice is passed from the transport application to the server, as would occur in a connection context. A security package sets the SECPKG_FLAG_DATAGRAM flag to indicate that it supports datagram semantics. If a client specifies the ISC_REQ_DATAGRAM flag in its call to the <B>InitializeSecurityContext</B> function, the following characteristics apply:
+
+<UL type="disc">
+	<LI>The security package does not produce an authentication binary large object (BLOB) on the first call to <B>InitializeSecurityContext</B>. However, the client can immediately use the returned security context in a call to the <A HREF="wce50lrfmakesignature.htm">MakeSignature</A> function to generate a message signature.</li>
+
+	<LI>The security package must enable the context to be reestablished multiple times to allow the server to drop the connection without notice. Enabling the context to be reestablished multiple times also implies that any keys used in the <B>MakeSignature</B> and <A HREF="wce50lrfverifysignature.htm">VerifySignature</A> functions can be reset to a consistent state. For more information about key states, see <A HREF="wce50oricryptography.htm">Cryptography</A>.</li>
+
+	<LI>The security package must enable the caller to specify sequence data, and must also enable the receiver to return that same sequence data back to the caller. This is not exclusive of any sequence data maintained by the package.</li>
+</UL>
+
+<H2 class="dtH2">Stream Context</H2>
+
+<P>A stream context is different from both a connection context and a datagram context. The caller is not interested in formatting, but rather a raw stream of data. A stream context handles help to secure stream protocols. </P>
+
+<P>A security package that supports stream contexts has the following characteristics:
+
+<UL type="disc">
+	<LI>The security package sets the SECPKG_FLAG_STREAM flag to indicate that it supports stream semantics, just as it would set a flag to indicate support for connection and datagram semantics.</li>
+
+	<LI>A transport application requests stream semantics by setting the ISC_REQ_STREAM and ASC_REQ_STREAM flags in the calls to the <B>InitializeSecurityContext</B> and <B>AcceptSecurityContex</B>t functions.</li>
+
+	<LI>The application calls the <A HREF="wce50lrfquerycontextattributes.htm">QueryContextAttributes</A> function with a <A HREF="wce50lrfsecpkgcontextstreamsizes.htm">SecPkgContext_StreamSizes</A> structure to query the security context both for the number of buffers to provide and the sizes to reserve for headers or trailers.</li>
+
+	<LI>The application provides extra buffer descriptors during actual data processing. By specifying stream semantics, the caller indicates it will perform extra operations so that the security provider can block messages. These extra operations include passing a list of buffers when the <B>MakeSignature</B> and <B>VerifySignature</B> functions are called. When a message is received from a stream-oriented channel, the caller passes a buffer. The following table shows the buffer types associated with these functions.<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=10%>Buffer</TH>
+<TH width=22%>Length</TH>
+<TH width=68%>Buffer type</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>1</TD>
+<TD width=22%>Message length</TD>
+<TD width=68%>SECBUFFER_DATA</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>2</TD>
+<TD width=22%>0</TD>
+<TD width=68%>SECBUFFER_EMPTY</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>3</TD>
+<TD width=22%>0</TD>
+<TD width=68%>SECBUFFER_EMPTY</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>4</TD>
+<TD width=22%>0</TD>
+<TD width=68%>SECBUFFER_EMPTY</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>5</TD>
+<TD width=22%>0</TD>
+<TD width=68%>SECBUFFER_EMPTY</TD>
+</TR>
+</table></div>
+</li>
+</UL>
+
+<P>The security package then authenticates the BLOB. The following table shows what the buffer list looks like, if the function returns successfully.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=10%>Buffer</TH>
+<TH width=24%>Length</TH>
+<TH width=66%>Buffer type</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>1</TD>
+<TD width=24%>Header length</TD>
+<TD width=66%>SECBUFFER_STREAM_HEADER</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>2</TD>
+<TD width=24%>Data length</TD>
+<TD width=66%>SECBUFFER_DATA</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>3</TD>
+<TD width=24%>Trailer length</TD>
+<TD width=66%>SECBUFFER_STREAM_TRAILER</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>4</TD>
+<TD width=24%>0</TD>
+<TD width=66%>SECBUFFER_EMPTY</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>5</TD>
+<TD width=24%>0</TD>
+<TD width=66%>SECBUFFER_EMPTY</TD>
+</TR>
+</table></div>
+
+<P>The following table shows an alternate return value for buffer 4.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=10%>Buffer</TH>
+<TH width=24%>Length</TH>
+<TH width=66%>Buffer type</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>4</TD>
+<TD width=24%><I>X</I></TD>
+<TD width=66%>SECBUFFER_EXTRA</TD>
+</TR>
+</table></div>
+
+<P>The buffer listed in the previous table indicates that data in this buffer is part of the next record, and has not yet been processed.</P>
+
+<P>Conversely, the following table shows what the returned buffer list would look like if the message function returns the SEC_E_INCOMPLETE_MESSAGE error message.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=10%>Buffer</TH>
+<TH width=24%>Length</TH>
+<TH width=66%>Buffer type</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>1</TD>
+<TD width=24%><I>X</I></TD>
+<TD width=66%>SECBUFFER_MISSING</TD>
+</TR>
+</table></div>
+
+<P>The buffer described in the previous table indicates that more data is needed to process the record. Unlike most errors returned from a message function, this buffer type does not indicate that the context has been compromised. Security providers must not update their state in this condition.</P>
+
+<P>Similarly, on the sender's side of the communication, the caller can call the <B>MakeSignature</B> function, in which case the security package may need to reallocate the buffer. The following table shows the buffer list that the caller can provide to be more efficient.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=10%>Buffer</TH>
+<TH width=24%>Length</TH>
+<TH width=66%>Buffer type</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>1</TD>
+<TD width=24%>Header Length</TD>
+<TD width=66%>SECBUFFER_STREAM_HEADER</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>2</TD>
+<TD width=24%>Data Length</TD>
+<TD width=66%>SECBUFFER_DATA</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>3</TD>
+<TD width=24%>Trailer Length</TD>
+<TD width=66%>SECBUFFER_STREAM_TRAILER</TD>
+</TR>
+</table></div>
+
+<P>Using a buffer, like the one described in the previous table, enables the caller to use buffers more efficiently. By calling the <B>QueryContextAttributes</B> function to determine the amount of space to reserve before calling <B>MakeSignature</B>, the operation is more efficient for the application and the security package.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conauthenticationservices.htm">Authentication Services</A> | <A HREF="wce50consecuritysupportproviderinterface.htm">Security Support Provider Interface Architecture</A> | <A HREF="wce50consecuritypackages.htm">Security Packages</A> | <A HREF="wce50conauthenticationservicessecurity.htm">Authentication Services Security</A> | <A HREF="wce50conauthenticationservicesregistrysettings.htm">Authentication Services Registry Settings</A> | <A HREF="wce50grfauthenticationservicesreference.htm">Authentication Services Reference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Context%20Semantics (wce50concontextsemantics.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

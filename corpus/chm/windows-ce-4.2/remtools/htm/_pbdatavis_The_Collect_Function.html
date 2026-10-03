@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Collect Function</TITLE>
+<!--Filename: remote_performance_monitor.rtf--><SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Manager&nbsp;Help</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_pbdatavis_the_collect_function"></A>Collect Function</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The system calls the <B>Collect</B> function for each application whenever a performance monitoring application calls the <B>RegQueryValueEx</B> function to collect performance data. The <B>Collect</B> function returns the performance data for the application.</P>
+
+<P>The following code example shows the syntax for the <B>Collect</B> function.</P>
+
+<PRE class="code">DWORD WINAPI CollectPerformanceData(
+LPWSTR lpwszValue, 
+LPVOID *lppData, 
+LPDWORD lpcbBytes, 
+LPDWORD lpcObjectTypes 
+);</PRE>
+
+<P><I>CollectPerformanceData</I> is a placeholder for a function name defined by the application.</P>
+
+<P><I>lpwszValue</I> is a pointer to a string specified by the performance monitoring application in a call to the <B>RegQueryValueEx</B> function.</P>
+
+<P><I>lppData</I> is a pointer to a pointer to the location where the data is to be placed. On successful exit, set <I>lppData</I> to the next byte in the buffer available for data. The data returned must be a multiple of a <B>DWORD</B> in length. It must conform to the <A HREF="_pbdatavis_perf_object_type.htm">PERF_OBJECT_TYPE</A> structure. If the <B>Collect</B> function fails, do not change the value of <I>lppData</I>.</P>
+
+<P><I>lpcbBytes</I> is a pointer to a 32-bit value that specifies the size, in bytes, of the <I>lppData</I> buffer. On successful exit, set <I>lpcbBytes</I> to the size, in bytes, of the data written to the <I>lppData</I> buffer. This value must be a multiple of four. If the <B>Collect</B> function fails, set <I>lpcbBytes</I> to zero.</P>
+
+<P><I>lpcObjectTypes</I> is the number of object type definitions being returned. On successful exit, set <I>lpcObjectTypes</I> to the number of object type definitions being returned. If the <B>Collect</B> function fails, set <I>lpcObjectTypes</I> to zero.</P>
+
+<P>If the requested data specified by <I>lpwszValue</I> does not correspond to any of the object indexes supported by your program, leave <I>lppData</I> unchanged, and set <I>lpcbBytes</I> and <I>lpcObjectTypes</I> both to zero. This action indicates that no data is returned. If your data collection is time-consuming, you should respond only to specific requests and costly requests. You should also lower the priority of the thread collecting the data, so that it does not adversely affect system performance.</P>
+
+<P>The following table shows the values that the <B>Collect</B> function must return.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Return value</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ERROR_MORE_DATA</TD>
+<TD width=73%>Indicates that the size of the <I>lppData</I> buffer as specified by <I>lpcbBytes</I> is not large enough to store the data to be returned. In this case, leave <I>lppData</I> unchanged, and set <I>lpcbBytes</I> and <I>lpcObjectTypes</I> to zero. No attempt is made to indicate the required buffer size, because this may change before the next call.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ERROR_SUCCESS</TD>
+<TD width=73%>Return this value in all other cases, even if no data is returned or an error occurs. To report errors other than insufficient buffer size, use the system event log, but do not flood the event log with errors on every data collection operation.</TD>
+</TR>
+</table></div>
+
+<P>To provide more information to the user, the <B>Collect</B> function should write any error that prevents the function from completing successfully in the system event log.</P>
+
+<P>Multiple threads may call the Collect function concurrently, so you should be careful how you initialize and use temporary data. Static variables should be used only if you intend to share the data across threads.</P>
+
+<P>You can perform the following tasks with the <B>Collect</B> function:
+
+<UL type="disc">
+	<LI>Validate the shared memory pointer and check that the <B>Open</B> function has successfully completed. If the <B>Open</B> function fails, it should have already logged an event, so the <B>Collect</B> function does not need to report this error.</li>
+
+	<LI>Determine the type of the data request. If the request is for a specific object or list of objects, search for its index in the list of object and counter indexes. If you do not find a match, the <B>Collect</B> function should return no data.</li>
+
+	<LI>Request ownership of the mutex for the shared memory object. Wait to get access to the data in the shared memory block.</li>
+
+	<LI>Estimate the size of the data to make sure there is enough room for the data in the buffer. If the estimated size of the data is larger than the available size, return a status of ERROR_MORE_DATA. The system passes this error to the thread that issued the call to <B>RegQueryValueEx</B> to request the data.</li>
+
+	<LI>Copy the performance data from the shared memory to the performance data structure to be returned.</li>
+</UL>
+
+<P>When all data has been transferred from the shared memory file to the performance data buffer, release the shared memory mutex and update the pointers and counter fields. Updating the pointers and counter fields is very important to prevent an access violation from the application, monitor, or system due to misleading buffer length information.</P>
+
+<P>After the <B>Collect</B> function returns successfully, the system performs the following tests in an attempt to catch logic errors. The first test to fail generates an event log message and, in most cases, the data is discarded to prevent any further problems caused by invalid pointers. These tests are typically enabled. The following code example shows how to disable the tests by changing a registry value.</P>
+
+<PRE class="code">HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Perflib
+ExtCounterTestLevel = Test_Level</PRE>
+
+<P>The <B>Test_Level</B> is a REG_DWORD that specifies the test level. Test level 1 requests all tests. Test level 2 requests basic tests. Test level 3 requests no tests. The default is test level 1.</P>
+
+<P>The data buffer performs the following basic tests:
+
+<UL type="disc">
+	<LI>Checks whether the <I>BytesLeft</I> return value is consistent with the returned pointer. The returned value of the <I>BytesLeft</I> argument to the <B>Collect</B> function is compared to the returned buffer pointer. If all is consistent, the <I>BytesLeft</I> value added to the original buffer pointer passed in to the <B>Collect</B> function should be the same as the buffer pointer returned by the function. If they are not the same, a warning message is logged and the <I>BytesLeft</I> parameter is replaced by the value computed by finding the difference between the buffer pointer after the function call and the buffer pointer before the function call. This is somewhat risky because it assumes the <I>BytesLeft</I> value is incorrect, when it is possible that the buffer pointer is incorrect.</li>
+
+	<LI>Checks whether the returned buffer pointer exceeds the allocated buffer extent. The actual buffer passed to the <B>Collect</B> function is allocated specifically for that function call by the performance library and contains a 1-kilobyte (KB) guard page above and below the size indicated by the remaining size of the buffer. A separate buffer is used to allow testing of the returned data for the extensible counter DLL  without corrupting the caller's buffer. If the returned buffer pointer&#0151;the pointer to the next byte after this object's data&#0151;exceeds the size of this buffer&#0151;not including guard pages&#0151;then the buffer is assumed to be invalid and discarded because it is too large to be copied into the caller's buffer. This test consists of two parts. If the buffer pointer exceeds the end of the buffer, but not the end of the guard page, then a buffer overrun error is logged. If the buffer pointer is past the end of the guard page, then a heap error is logged because the heap that the buffer was allocated from could have been corrupted, causing other memory errors.</li>
+
+	<LI>Checks whether the guard pages are corrupt. The 1-KB Guard Pages above and below the block of memory passed to the collect procedure are initialized with a data pattern before the <B>Collect</B> function is called. This data pattern is checked after the collect procedure returns. If any discrepancy is detected, a buffer overrun or other memory error is assumed and the buffer is discarded.</li>
+</UL>
+
+<P>The data buffer performs the following tests only if you use test level 1:
+
+<UL type="disc">
+	<LI>Tests the field consistency of the object <I>TotalByteLength</I>. This test examines the objects returned by the extensible counter to see if the sum of the length of the objects returned is the same as the value of the size of the returned buffer. Because the <B>Collect</B> function generally returns one or more object structures&#0151;including the instance definitions, counter definitions, and data&#0151;the sum of the length of each object should be the same as the number of bytes returned. A failure here may indicate the object is not computing the value of the <I>TotalByteLength</I> field correctly. This can cause an application that is using the data to fail.</li>
+
+	<LI>Tests the field consistency of the instance <I>ByteLength</I>. This test is similar to the test for <I>TotalByteLength.</I> This test examines the list of instances of each object that returns multiple instances and verifies whether the next object or the end of buffer follows the last instance. If an inconsistency is detected, the buffer is discarded to prevent the application from crashing because of a lost pointer.</li>
+</UL>
+
+</BODY>
+</HTML>

@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Client and Server Error Handling</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conclientandservererrorhandling"></A>Client and Server Error Handling</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The <B>SoapServer</B> and <B>SoapClient</B> objects (accessed using the <A HREF="wce50lrfisoapserver.htm">ISoapServer</A> and <A HREF="wce50lrfisoapclient.htm">ISoapClient</A> interfaces) handle errors in a specific way. </P>
+
+<P>The server handles errors using the following steps:
+
+<OL type="1">
+	<LI>If the COM object on the server returns an error, the <B>SoapServer</B> object queries the COM object for the <A HREF="wce50lrfisoaperror.htm">ISOAPError</A> interface. </li>
+
+	<LI>If the COM object implements the <B>ISOAPError</B> interface, the <B>SoapServer</B> object creates a &lt;Fault&gt; element that meets the following conditions:
+<UL type="disc">
+	<LI>The &lt;faultcode&gt; child element is set to the string returned by the <A HREF="wce50lrffaultcodepropertyisoaperror.htm">faultcode property</A> of the <B>ISOAPError</B> interface with a namespace prefix that identifies the namespace URI returned by the <A HREF="wce50lrffaultcodensproperty.htm">faultcodeNS property</A> of the <B>ISOAPError</B> interface.</li>
+
+	<LI>The &lt;faultstring&gt; child element is set to the value returned by the <A HREF="wce50lrffaultstringpropertyisoaperror.htm">faultstring property</A> of the <B>ISOAPError</B> interface.</li>
+
+	<LI>The &lt;faultactor&gt; child element is set to the value returned by the <A HREF="wce50lrffaultactorpropertyisoaperror.htm">faultactor property</A> of the <B>ISOAPError</B> interface. 
+<P>If the <B>faultactor</B> property returns an empty string or a null value, the &lt;faultactor&gt; child element is set to the service address specified in the Web Services Description Language (WSDL) document used to initialize the server.
+</li>
+
+	<LI>The &lt;detail&gt; child element is set to the XML text returned by the <A HREF="wce50lrfdetailpropertyisoaperror.htm">detail property</A> of the <B>ISOAPError</B> interface. 
+<P>The detail property must contain valid XML content, with text strings placed inside elements and properly escaped according to XML rules.
+</li>
+</UL>
+</li>
+
+	<LI>If the COM object does not implement the <B>ISOAPError</B> interface, but supports the COM <A HREF="wce50lrfierrorinfo.htm">IErrorInfo</A> interface, the <B>SoapServer</B> object creates a &lt;Fault&gt; element that meets the following conditions:
+<UL type="disc">
+	<LI>The &lt;faultcode&gt; child element is set to <code class="ce">"SOAP-ENV:Client"</code>.</li>
+
+	<LI>The &lt;faultstring&gt; child element is set to the value returned by the <B>GetDescription</B> method of the <B>IErrorInfo</B> interface.</li>
+
+	<LI>The &lt;faultactor&gt; child element is set to the service address specified in the WSDL document used to initialize the server.</li>
+
+	<LI>The &lt;detail&gt; child element is set to the content described in <A HREF="wce50conunderstandingthesoapfaultdetailcontents.htm">Understanding the SOAP Fault &lt;detail&gt; Contents</A>.</li>
+</UL>
+</li>
+
+	<LI>If the COM object does not support the <B>ISOAPError</B> interface or the <B>IErrorInfo</B> interface, the <B>SoapServer</B> object creates a &lt;Fault&gt; element that meets the following conditions:
+<UL type="disc">
+	<LI>The &lt;faultcode&gt; child element is set to <code class="ce">"SOAP-ENV:Client"</code>.</li>
+
+	<LI>The &lt;faultstring&gt; child element is set to a message containing the name of the method that failed.</li>
+
+	<LI>the &lt;faultactor&gt; child element is set to the service address specified in the WSDL document used to initialize the server.</li>
+
+	<LI>The &lt;detail&gt; child element is set to the content described in the <A HREF="wce50conunderstandingthesoapfaultdetailcontents.htm">Understanding the SOAP Fault &lt;detail&gt; Contents</A>.</li>
+</UL>
+</li>
+</OL>
+
+<P>In client error handling, if the server returns a SOAP message containing a &lt;Fault&gt; element to the client, the &lt;faultcode&gt;, &lt;faultstring&gt;, &lt;faultactor&gt; and &lt;detail&gt; element values in the SOAP message are copied to the corresponding properties in the <B>SoapClient</B> object. </P>
+
+<P>Also, the client generates an <B>ErrorInfo</B> object that can be used through the <B>Err</B> object.</P>
+
+<P>If the error occurs on the client (for example, during initialization), the <B>SoapClient</B> object generates values for its error properties: <B>faultcode</B>, <B>faultstring</B>, <B>faultactor</B>, and <B>detail</B>. </P>
+
+<P>As with an error occurring on the server, the <B>SoapClient</B> also sets an <B>ErrorInfo</B> object.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consoaptoolkit.htm">SOAP Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Client%20and%20Server%20Error%20Handling (wce50conclientandservererrorhandling.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

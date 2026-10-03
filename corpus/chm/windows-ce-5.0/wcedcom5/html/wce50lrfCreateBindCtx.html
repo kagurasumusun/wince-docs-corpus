@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateBindCtx</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcreatebindctx"></A>CreateBindCtx</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function supplies a pointer to an implementation of <B>IBindCtx</B>, an object that stores information about a particular moniker-binding operation. </P>
+
+<PRE class="syntax"><B>WINOLEAPI CreateBindCtx( </B>
+  <B>DWORD</B> <I>reserved</I><B>,</B> 
+  <B>LPBC FAR* </B><I>ppbc </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>reserved</I></DT>
+
+<DD>[in] Reserved for future use. Set to zero.</dd>
+
+<DT><I>ppbc</I></DT>
+
+<DD>[out] Address of <B>IBindCtx</B>* pointer variable that receives the interface pointer to the new bind context object. When the function is successful, the caller is responsible for calling <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> on the bind context. A NULL value for the bind context indicates that an error occurred.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>S_OK indicates that the bind context was allocated and initialized successfully. The standard return value E_OUTOFMEMORY is also supported.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>CreateBindCtx</B> is most commonly used in the process of locating and getting a pointer to an interface by identifying it through a moniker, or, binding a moniker, as in the following steps:
+
+<OL type="1">
+	<LI>Get a pointer to a bind context by calling the <B>CreateBindCtx</B> function.</li>
+
+	<LI>Call the <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A> method on the moniker. This retrieves an interface pointer to the object to which the moniker refers. </li>
+
+	<LI>Release the bind context.</li>
+
+	<LI>Use the interface pointer. </li>
+
+	<LI>Release the interface pointer. </li>
+</OL>
+
+<P>The following code example shows these steps.</P>
+
+<PRE class="code">// pMnk is an IMoniker * that points to a previously acquired moniker 
+IFoo *pFoo; 
+IBindCtx *pbc; 
+ 
+CreateBindCtx( 0, &amp;pbc ); 
+pMnk-&gt;BindToObject( pbc, NULL, IID_IFoo, &amp;pFoo ); 
+pbc-&gt;Release(); 
+// pFoo now points to the object; safe to use pFoo 
+pFoo-&gt;Release(); </PRE>
+
+<P>Bind contexts are also used in other methods of the <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> interface besides <B>IMoniker::BindToObject</B>. </P>
+
+<P>A bind context retains references to the objects that are bound during the binding operation, causing the bound objects to remain active (keeping the object's server running) until the bind context is released. Reusing a bind context when subsequent operations bind to the same object can improve performance. You should, however, release the bind context as soon as possible, because you could be keeping the objects activated unnecessarily. </P>
+
+<P>A bind context contains a <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> structure. This contains parameters that apply to all steps in a binding operation. When you create a bind context using <B>CreateBindCtx</B>, the fields of the <B>BIND_OPTS</B> structure are initialized to the following values.</P>
+
+<PRE class="code">cbStruct = sizeof(BIND_OPTS) 
+grfFlags = 0 
+grfMode = STGM_READWRITE 
+dwTickCountDeadline = 0. </PRE>
+
+<P>You can call the <B>IBindCtx::SetBindOptions</B> method to modify these default values.</P>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.10 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> | <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A> | <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> | <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CreateBindCtx (wce50lrfcreatebindctx.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

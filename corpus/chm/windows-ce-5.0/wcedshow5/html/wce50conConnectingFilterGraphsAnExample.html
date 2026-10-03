@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Connecting Filter Graphs: An Example</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conconnectingfiltergraphsanexample"></A>Connecting Filter Graphs: An Example</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To better understand the allocation model for a transform-inplace filter, the following illustration shows a simple and common example of a filter graph that demonstrates the model of the transform-inplace filter offering its downstream allocator to its upstream filter. </P>
+
+<P>Consider what happens when InPlace E is connected to VidRen F. </P>
+
+<P>Upon connection, the video renderer filter (VidRen F) offers its allocator for use by the upstream in-place filter (InPlace E). </P>
+
+<P>Because it is a transform-inplace filter, InPlace E offers the allocator to the next filter upstream, InPlace D, and so on.</P>
+
+<P>This reconnection and renegotiation occurs until it encounters either the source filter or a copy transform filter. In this case it meets a decompressor, CopyDec C. (The copy transform filter cannot offer its allocator upstream, because it must perform a copy operation.) </P>
+
+<P>As a result, the decompressor will write directly to the video renderer's buffer, which might be a DirectDraw surface. </P>
+
+<P>This demonstrates why it is a good practice to write a transform filter as a transform-inplace filter and pass allocators from the renderer upstream, if possible. </P>
+
+<P>On the other hand, consider filters InPlace B and CopyDec C. What if the downstream filter from a transform-inplace filter is a copy transform filter instead of a renderer? </P>
+
+<P>In this case, the copy transform filter will offer to create its own allocator on its input pin (the base classes handle this), and the transform-inplace filter can then offer that allocator downstream upon reconnection (the same as if it were connected to a renderer filter). </P>
+
+<P>However, even though CopyDec C can create its own allocator (from its <A HREF="wce50lrfimeminputpingetallocator.htm">IMemInputPin::GetAllocator</A> method), the source filter, Source A, uses its own buffer, say, a file. </P>
+
+<P>So when InPlace B connects to CopyDec C, InPlace B will have accepted the source filter's allocator already and will force that allocator to be used for the transport between itself and the decompressor filter. </P>
+
+<P>InPlace B can then provide the upstream filter, Source A, with the option of using the allocator offered by CopyDec C, but the source filter will refuse this allocator so that an extra copy does not have to be made from the file buffer to the decompressor's input buffer. </P>
+
+<P>Therefore, any upstream filter can force the use of its allocator downstream but should have good reason to do so (such as if it already has a buffer). </P>
+
+<P>In this example, only one copy is being made (by the decompression filter) between the file buffer and the video memory. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Connecting%20Filter%20Graphs:%20An%20Example (wce50conconnectingfiltergraphsanexample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

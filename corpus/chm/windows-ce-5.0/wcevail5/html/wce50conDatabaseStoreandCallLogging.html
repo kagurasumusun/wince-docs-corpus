@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Database Store and Call Logging</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoCreateInstance">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condatabasestoreandcalllogging"></A>Database Store and Call Logging</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The VAIL uses the following interfaces for persistent database storage:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfivoipcalllogdbiunknown.htm">IVoIPCallLogDB</A> stores call log records. These records indicate the type, start time, end time, and duration of the call, and the name and URI of the other party. </li>
+
+	<LI><A HREF="wce50lrfivoipcallerinfodbiunknown.htm">IVoIPCallerInfoDB</A> stores caller-specific information, such as friendly name, speed dial index, specialized ringtone, blocked status, and forwarding URI.</li>
+</UL>
+
+<P>These interfaces are pluggable and have implementations that can be replaced by an OEM. </P>
+
+<P>The supplied implementations use Windows CE databases and store information locally on the device. An OEM can replace either database implementation by replacing the CLSID in the registry with the CLSID of the new implementation. </P>
+
+<P>To replace the implementations, change the CLSID in the CallLogDB or CallerInfoDB registry entry in this location: HKEY_CLASSES_ROOT\CLSID\254D6845-7CF1-4B90-A658-E4C430C3A7BE\Plugins.</P>
+
+<P>The VoIP manager initializes each database by performing the following steps:
+
+<OL type="1">
+	<LI>Calls <A HREF="JavaScript:hhobj_1.Click()">CoCreateInstance</A> using the CLSID retrieved from the registry.</li>
+
+	<LI>Calls <B>QueryInterface</B> for IID_IVoIPCallLogDB or IID_IVoIPCallerInfoDB. </li>
+
+	<LI>Calls <A HREF="wce50lrfivoipcalllogdbinit.htm">IVoIPCallLogDB::Init</A> or <A HREF="wce50lrfivoipcallerinfodbinit.htm">IVoIPCallerInfoDB::Init</A> with the URI of the phone used in provisioning.</li>
+</OL>
+
+<P>If initialization fails, <A HREF="wce50lrfivoipmgrinitialize.htm">IVoIPMgr::Initialize</A> still succeeds. The phone is functional; however, calls are not logged by the VoIP manager. In addition, the database flag is missing from the current state variable of the VoIP manager. For more information, see <A HREF="wce50lrfivoipmgrstate.htm">IVoIPMgr::State</A>. </P>
+
+<P>If an application attempts to access a database through the VoIP manager after initialization fails, the API returns the error <A HREF="wce50lrfvoipe.htm">VOIP_E_NODB</A>.</P>
+
+<P>The databases are associated with the phone URI. In the default implementation, if a phone is provisioned with one URI and reprovisioned with another URI, the database used by the VoIP manager changes. Therefore, if the user has a dataset stored in a database using one URI, and the URI changes, the data in the database appears to be missing. </P>
+
+<P>After a call is terminated, the VoIP manager logs the call to the appropriate database. If this database does not exist, logging does not take place but the phone is functional.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50convailobjectsinterfaces.htm">VAIL Objects and Interfaces</A> | <A HREF="wce50grfvoipapplicationinterfacelayerreference.htm">VAIL Reference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Saturday, May 22, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Database%20Store%20and%20Call%20Logging (wce50condatabasestoreandcalllogging.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

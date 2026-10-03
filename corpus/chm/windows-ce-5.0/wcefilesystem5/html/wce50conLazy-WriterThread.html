@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Lazy-Writer Thread</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conlazy-writerthread"></A>Lazy-Writer Thread</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Each cache has its own lazy-writer thread that searches for and commits dirty sectors. By default, the priority of this thread is set at idle, however, you can override this priority for a profile using the following registry setting:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\System\StorageManager\Profiles\&lt;<I>Profile Name</I>&gt;\FATFS]
+    "LazyWriterThreadPrio256"=dword:xx</PRE>
+
+<P>The lazy-writer thread uses the following algorithm.</P>
+
+<PRE class="code">if (event set indicating that there are dirty sectors to commit) {
+    while (TRUE){
+        Enter main critical section protecting the cache from main threads;
+        if (no more dirty sectors) {
+            Leave main critical section;
+            break;
+        }
+        Find first dirty run of sectors to commit;
+        Commit those dirty sectors;
+        Leave main critical section;
+    }
+}
+Reset event indicating there are no dirty sectors to commit.</PRE>
+
+<P>A main thread will not be able to interrupt the lazy-writer thread while it is committing dirty sectors. However, since the lazy-writer thread always leaves the main critical section, a main thread will have priority in fulfilling its requests. The dirty sectors check occurs while the lazy-writer thread holds the critical section to prevent race condictions with a main thread from checking the dirty sector count and resetting the event.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concachemanager.htm">Cache Manager</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Lazy-Writer%20Thread (wce50conlazy-writerthread.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

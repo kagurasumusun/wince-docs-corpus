@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>C++ COM Code Example: Opening a Queue to Read Messages</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conccomcodeexampleopeningaqueuetoreadmessages"></A>C++ COM Code Example: Opening a Queue to Read Messages</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example opens a known public queue (creating a new queue if the queue is not found) with receive access.</P>
+
+<PRE class="code">// main.cpp
+//
+// sample program for the MSMQ COM usage
+#include "stdafx.h"
+//
+// MSMQ COM sample using smart pointer
+//
+// following sample code receives a message in a private queue named "Q1"
+//
+#include &lt;atlbase.h&gt;
+#include &lt;mqoai.h&gt;
+// mqoa.lib should be included to the projet
+// mqoa.lib is under %_WINCEROOT%\Public\SERVERS\OAK\LIB\X86\RETAIL
+//#import "mqoa.dll" no_namespace   // not supported
+HRESULT OpenAndReadQ1()
+{
+   CComQIPtr&lt;IMSMQQueueInfo, &amp;IID_IMSMQQueueInfo&gt; ipQueueInfo;
+   HRESULT hr = S_OK;
+// hr = ipQueueInfo.CoCreateInstance(CLSID_MSMQQueueInfo);  // this form is not supported
+   hr = CoCreateInstance(
+         CLSID_MSMQQueueInfo,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQQueueInfo,
+         (void**)(&amp;ipQueueInfo.p));
+   if(hr != S_OK)
+      return hr;
+   hr = ipQueueInfo-&gt;put_PathName(L".\\private$\\Q1");
+   if(hr != S_OK)
+      return hr;
+   CComQIPtr&lt;IMSMQQueue, &amp;IID_IMSMQQueue&gt; ipReceiveQueue;
+   hr = ipQueueInfo-&gt;Open(MQ_RECEIVE_ACCESS, MQ_DENY_NONE, &amp;ipReceiveQueue);
+   if(hr != S_OK)
+   {
+      printf("queue open error\r\n");
+      return hr;
+   }
+   printf("queue opened\r\n");
+   CComQIPtr&lt;IMSMQMessage, &amp;IID_IMSMQMessage&gt; ipMessage;
+   VARIANT vtFalse;
+   VariantInit(&amp;vtFalse);
+   vtFalse.vt = VT_BOOL;
+   vtFalse.boolVal = FALSE;
+   
+   VARIANT vtTrue;
+   VariantInit(&amp;vtTrue);
+   vtFalse.vt = VT_BOOL;
+   vtFalse.boolVal = TRUE;
+   VARIANT vtReceiveTimeout;
+   VariantInit(&amp;vtReceiveTimeout);
+   vtReceiveTimeout.lVal = ((long)1000);        // 1 second receive timeout.
+   vtReceiveTimeout.vt = VT_I4;
+   hr = ipReceiveQueue-&gt;Receive(&amp;vtFalse, &amp;vtTrue, &amp;vtTrue, &amp;vtReceiveTimeout, &amp;ipMessage);
+   if(hr != S_OK)   // if errornous end
+   {
+      ipReceiveQueue-&gt;Close();
+      if(hr == MQ_ERROR_IO_TIMEOUT)
+         printf("time out\r\n");
+      else
+         printf("received error 0x%0X\r\n", hr);
+      return hr;
+   }
+   VARIANT vtText;
+   VariantInit(&amp;vtText);
+   hr = ipMessage-&gt;get_Body(&amp;vtText);
+   if(hr != S_OK)
+   {
+      ipReceiveQueue-&gt;Close();
+      return -1;
+   }
+   wprintf(L"received: %s\r\n", vtText.bstrVal);
+   SysFreeString(vtText.bstrVal);
+   ipReceiveQueue-&gt;Close();
+   return hr;
+}
+int WINAPI WinMain(   HINSTANCE hInstance,
+               HINSTANCE hPrevInstance,
+               LPTSTR    lpCmdLine,
+               int       nCmdShow)
+{
+   printf("MSMQ COM sample\r\n");
+
+   HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+   if(hr == S_OK)
+   {
+      OpenAndReadQ1();
+      CoUninitialize();
+   }
+
+   return 0;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orimessagequeuing.htm">MSMQ Application Development</A> | <A HREF="wce50conmessagequeuingcomsupport.htm">MSMQ COM Support</A> | <A HREF="wce50conusingthecomcomponents.htm">Using the COM Components</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: C++%20COM%20Code%20Example:%20Opening%20a%20Queue%20to%20Read%20Messages (wce50conccomcodeexampleopeningaqueuetoreadmessages.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

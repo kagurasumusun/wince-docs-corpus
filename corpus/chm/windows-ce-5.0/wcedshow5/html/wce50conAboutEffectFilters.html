@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>About Effect Filters</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conabouteffectfilters"></A>About Effect Filters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In DirectShow, <I>effect filters</I> are defined as filters that apply an effect to media data, but do not change the media type. </P>
+
+<P>Because the input and output media formats are the same, and the applied effect cannot change the format, effect filters often contain a code that checks the media formatting. </P>
+
+<P>If the filter derives from one of the transform filter base classes, <A HREF="wce50lrfctransformfilterclass.htm">CTransformFilter</A> or <A HREF="wce50lrfctransinplacefilterclass.htm">CTransInPlaceFilter</A>, the filter typically checks the format with the <A HREF="wce50lrfcbasepincheckmediatype.htm">CheckMediaType</A>, <A HREF="wce50lrfctransformfiltercheckinputtype.htm">CTransformFilter::CheckInputType</A>, and <A HREF="wce50lrfctransformfilterchecktransform.htm">CheckTransform</A> methods. </P>
+
+<P>If the filter does not derive from one of the transform filter base classes, its pins typically check the format by calling the <B>CBasePin::CheckMediaType</B> member function. </P>
+
+<P>For more information, see <A HREF="wce50conhowthebaseclassesimplementconnection.htm#wce50conhowthebaseclassesimplementconnectionanchor2">Negotiating Media Types with CBasePin::AgreeMediaType</A>. </P>
+
+<P>Choose a base class for your effect filter class that provides the greatest amount of the functionality you need. </P>
+
+<P>Often, the base class is one of the transform filter base classes. If none of the higher-level base classes support your required functionality, you can choose <A HREF="wce50lrfcbasefilterclass.htm">CBaseFilter</A> or <A HREF="wce50lrfcbasepinclass.htm">CBasePin</A> as your base class. </P>
+
+<P>If you want the user to be able to manipulate the effect, you must create and display your effect filter's property page and provide a mechanism for returning the user's input to the filter. </P>
+
+<P>To do this, implement a property page class, the <B>ISpecifyPropertyPages</B> interface (which exposes property pages), and a custom interface that changes property page values. </P>
+
+<P>Typically, property pages use controls such as a slider, button, or check box to receive user input. You also must provide the resource file that displays the controls on the property page. </P>
+
+<P>To implement the property page class, create a class that derives from the <A HREF="wce50lrfcbasepropertypageclass.htm">CBasePropertyPage class</A> and implements the <A HREF="wce50lrfcbasepropertypageonreceivemessage.htm">CBasePropertyPage::OnReceiveMessage</A> method, the <A HREF="wce50lrfcpersiststreamsetdirty.htm">CPersistStream::SetDirty</A> method, and a data member for each effect parameter. </P>
+
+<P>To access the two interfaces, derive your effect filter class from <B>ISpecifyPropertyPages</B> and the custom interface, and then query for the interfaces. </P>
+
+<P>You can query for all the interfaces you need by overriding the <B>NonDelegatingQueryInterface</B> method as shown in the following code example (<B>IGargle</B> is the custom interface). </P>
+
+<PRE class="code">STDMETHODIMP CGargle::NonDelegatingQueryInterface(REFIID riid, void **ppv)
+{
+    CheckPointer(ppv,E_POINTER);
+    if (riid == IID_IGargle) {
+        return GetInterface((IGargle *) this, ppv);
+    } else if (riid == IID_ISpecifyPropertyPages) {
+        return GetInterface((ISpecifyPropertyPages *) this, ppv);
+    } else if (riid == IID_IPersistStream) {
+        return GetInterface((IPersistStream *) this, ppv);
+    } else {
+        return CTransInPlaceFilter::NonDelegatingQueryInterface(riid, ppv);
+    }
+} </PRE>
+
+<P>The effect filter's custom interface typically supplies a put and a get method for each effect parameter. For example, the <B>IGargle</B> custom interface supplies <B>put_GargleRate</B> and <B>get_GargleRate</B> methods. </P>
+
+<P>The <B>IContrast</B> custom interface in the Contrast sample supplies <B>put_ContrastLevel</B> and <B>get_ContrastLevel</B> methods. When the user accesses one of the controls on the property page, the page generates a windows message. The property page class's <B>OnReceiveMessage</B> member function handles this message. </P>
+
+<P>The following code fragment from the Contrast sample demonstrates this message generation and handling. IDB_DEFAULT is the resource ID of the Default button. </P>
+
+<P>The user clicks this button to set the video contrast to its default state. </P>
+
+<P>The <B>CContrastProperties</B> class implements the property page and the <B>IContrast::put_DefaultContrastLevel</B> method sets the contrast level to its default value. </P>
+
+<PRE class="code">BOOL CContrastProperties::OnReceiveMessage(HWND hwnd, UINT uMsg, 
+    WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+       case WM_COMMAND:
+        {
+          if (LOWORD(wParam) == IDB_DEFAULT)
+            {
+            pIContrast()-&gt;put_DefaultContrastLevel();
+            SendMessage(m_hwndSlider, TBM_SETPOS, TRUE, 0L);
+              SetDirty();
+        }
+            return (LRESULT) 1;
+        }
+...</PRE>
+
+<P>Effect filters use critical sections internally to protect the global filter state. </P>
+
+<P>Effect filters can lock a critical section to ensure that data flow through the filter graph is serialized and that the global filter state does not change while an effect is occurring. DirectShow locks a critical section by declaring a <A HREF="wce50lrfcautolockclass.htm">CAutoLock</A> class object. </P>
+
+<P>Typically, effect filters lock the critical section as soon as they enter the function that applies the effect. </P>
+
+<P>For example, in the following code fragment, the function that applies the effect is <B>MessItAbout</B>. </P>
+
+<PRE class="code">// Declare the critical section data member in 
+// the effect filter class definition.
+CCritSec   m_GargleLock; 
+
+void CGargle::MessItAbout(PBYTE pb, int cb)
+{
+    CAutoLock l(&amp;m_GargleLock);</PRE>
+
+<P>The <B>put</B> and <B>get</B> methods of the effect properties (for example, <B>put_GargleRate</B>) typically lock the critical section so effect values cannot change in the middle of an update. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: About%20Effect%20Filters (wce50conabouteffectfilters.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

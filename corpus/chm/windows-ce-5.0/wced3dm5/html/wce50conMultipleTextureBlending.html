@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Multiple Texture Blending</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmultipletextureblending"></A>Multiple Texture Blending</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Microsoft&reg; Direct3D&reg; Mobile can blend as many as eight textures onto primitives in a single pass. The use of multiple texture blending can profoundly increase the frame rate of a Direct3D Mobile application. An application employs multiple texture blending to apply textures, shadows, specular lighting, diffuse lighting, and other special effects in a single pass.</P>
+
+<H2 class="dtH2">Texture Stages and the Texture Blending Cascade</H2>
+
+<P>Direct3D Mobile supports single-pass multiple texture blending through the use of <I>texture stages</I>. A texture stage takes two arguments and performs a blending operation on them, passing on the result for further processing or for rasterization. You can visualize a texture stage as shown in the following illustration.</P>
+
+<P class="fig"><IMG SRC="dx3d-texstg.gif" ALT="" BORDER=0></P>
+
+<P>As the preceding illustration shows, texture stages blend two arguments by using a specified operator. Common operations include simple modulation or addition of the color or alpha components of the arguments, but more than two dozen operations are supported. The arguments for a stage can be an associated texture, the iterated color or alpha (iterated during Gouraud shading), arbitrary color and alpha, or the result from the previous texture stage.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Direct3D Mobile distinguishes color blending from alpha blending. Applications set blending operations and arguments for color and alpha individually, and the results of those settings are independent of one another.</BLOCKQUOTE>
+
+<P>The combination of arguments and operations used by multiple blending stages define a simple flow-based blending language. The results from one stage flow down to another stage, from that stage to the next, and so on. The concept of results flowing from stage to stage to eventually be rasterized on a polygon is often called the <I>texture blending cascade</I>. The following illustration shows how individual texture stages make up the texture blending cascade.</P>
+
+<P class="fig"><IMG SRC="dx3d-tcascade.gif" ALT="" BORDER=0></P>
+
+<P>Each stage in a device has a zero-based index. Direct3D Mobile allows up to four blending stages, although you should always check device capabilities to determine how many stages the current hardware supports. The first blending stage is at index 0, the second is at 1, and so on, up to index 3. The system blends stages in increasing index order. </P>
+
+<P>Use only the number of stages you need; the unused blending stages are disabled by default. So, if your application only uses the first two stages, it need only set operations and arguments for stage 0 and 1. The system blends the two stages, and ignores the disabled stages. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;If your application varies the number of stages it uses for different situations &#0151; such as four stages for some objects, and only two for others &#0151; you do not need to explicitly disable all previously used stages. If you disable the color operation for the first unused stage, all stages with a higher index will not be applied. You can disable texture mapping altogether by setting the color operation for the first texture stage (stage 0).</BLOCKQUOTE>
+
+<H2 class="dtH2">Texture Blending Operations and Arguments</H2>
+
+<P>Applications associate a blending stage with each texture in the set of current textures. Direct3D Mobile evaluates each blending stage in order, beginning with the first texture in the set and ending with the fourth. </P>
+
+<P>Direct3D Mobile applies the information from each texture in the set of current textures to the blending stage that is associated with it. Applications control what information from a texture stage is used by calling <A HREF="wce50lrfidirect3dmobiledevicesettexturestagestate.htm">IDirect3DMobileDevice::SetTextureStageState</A>. You can set separate operations for the color and alpha channels, and each operation uses two arguments. Specify color channel operations by using the D3DMTSS_COLOROP stage state; specify alpha operations by using D3DTSS_ALPHAOP. Both stage states use values from the <A HREF="wce50lrfd3dmtextureop.htm">D3DMTEXTUREOP</A> enumerated type.</P>
+
+<P>Texture blending arguments use the <B>D3DMTSS_COLORARG1</B>, <B>D3DMTSS_COLORARG2</B>, <B>D3DMTSS_ALPHARG1</B>, and <B>D3DMTSS_ALPHARG2</B> members of the <A HREF="wce50lrfd3dmtexturestagestatetype.htm">D3DMTEXTURESTAGESTATETYPE</A> enumerated type. The corresponding argument values are identified using <A HREF="wce50lrfd3dmtavalues.htm">D3DMTA Values</A>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;You can disable a texture stage &#0151; and any subsequent texture blending stages in the cascade &#0151; by setting the color operation for that stage to D3DMTOP_DISABLE. Disabling the color operation effectively disables the alpha operation as well. Alpha operations cannot be disabled when color operations are enabled. Setting the alpha operation to D3DMTOP_DISABLE when color blending is enabled causes undefined behavior.</BLOCKQUOTE>
+
+<P>To determine the supported texture blending operations of a device, query the <B>TextureCaps</B> member of the <A HREF="wce50lrfd3dmcaps.htm">D3DMCAPS</A> structure.</P>
+
+<H2 class="dtH2">Assigning the Current Textures</H2>
+
+<P>Direct3D Mobile maintains a list of up to four current textures. It blends these textures onto all the primitive it renders. Only textures created as texture interface pointers can be used in the set of current textures. </P>
+
+<P>Applications call the <A HREF="wce50lrfidirect3dmobiledevicesettexturestagestate.htm">IDirect3DMobileDevice::SetTextureStageState</A> method to assign textures into the set of current textures. The first parameter must be from the a number in the range of 0-3, inclusive. Pass the texture interface pointer as the second parameter. </P>
+
+<P>The following code shows how a texture can be assigned to the set of current textures.</P>
+
+<PRE class="code">// This code example assumes that the variable d3dmDevice is a
+// valid pointer to an IDirect3DMobileDevice interface and pTexture
+// is a valid pointer to an IDirect3DMobileBaseTexture interface.
+
+// Set the third texture.
+d3dmDevice-&gt;SetTexture(2, pTexture);</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Software devices do not support assigning a texture to more than one texture stage at a time. </BLOCKQUOTE>
+
+<H2 class="dtH2">Creating Blending Stages</H2>
+
+<P>A blending stage is a set of texture operations and their arguments that define how textures are blended. When making a blending stage, applications invoke the <A HREF="wce50lrfidirect3dmobiledevicesettexturestagestate.htm">IDirect3DMobileDevice::SetTextureStageState</A> method. The first call specifies the operation that is performed. Two additional invocations define the arguments to which the operation is applied. The following code example shows the creation of a blending stage.</P>
+
+<PRE class="code">// This example assumes that d3dmDevice is a valid pointer to an
+// IDirect3DMobileDevice interface.
+ 
+// Set the operation for the first texture.
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLOROP, D3DMTOP_ADD);
+ 
+// Set argument 1 to the texture color.
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLORARG1, D3DMTA_TEXTURE);
+ 
+// Set argument 2 to the iterated diffuse color.
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLORARG2, D3DMTA_DIFFUSE);</PRE>
+
+<P>Texel data in textures contain color and alpha values. Applications can define separate operations for both color and alpha values in a single blending stage. Each operation, color and alpha, has its own arguments. For details, see <A HREF="wce50lrfd3dmtexturestagestatetype.htm">D3DMTEXTURESTAGESTATETYPE</A>.</P>
+
+<P>Although not part of the Direct3D Mobile API, you can insert the following macros into your application to abbreviate the code required for creating texture blending stages.</P>
+
+<PRE class="code">#define SetTextureColorStage( dev, i, arg1, op, arg2 )     \
+   dev-&gt;SetTextureStageState( i, D3DMTSS_COLOROP, op);      \
+   dev-&gt;SetTextureStageState( i, D3DMTSS_COLORARG1, arg1 ); \
+   dev-&gt;SetTextureStageState( i, D3DMTSS_COLORARG2, arg2 );
+
+#define SetTextureAlphaStage( dev, i, arg1, op, arg2 )     \
+   dev-&gt;SetTextureStageState( i, D3DMTSS_ALPHAOP, op);      \
+   dev-&gt;SetTextureStageState( i, D3DMTSS_ALPHARG1, arg1 );  \
+   dev-&gt;SetTextureStageState( i  D3DMTSS_ALPHARG2, arg2 );</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contextureblending.htm">Texture Blending</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Multiple%20Texture%20Blending (wce50conmultipletextureblending.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

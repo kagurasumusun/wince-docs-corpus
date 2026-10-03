@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertGetCertificateChain</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcertgetcertificatechain"></A>CertGetCertificateChain</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function builds a certificate chain context starting from an end certificate and going back, if possible, to a trusted root certificate. This is the primary API used to verify a certificate against a root store.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CertGetCertificateChain(</B>
+  <B>HCERTCHAINENGINE </B><I>hChainEngine</I><B>, </B>
+  <B>PCCERT_CONTEXT </B><I>pCertContext</I><B>, </B>
+  <B>LPFILETIME </B><I>pTime</I><B>,</B>
+  <B>HCERTSTORE </B><I>hAdditionalStore</I><B>,</B>
+  <B>PCERT_CHAIN_PARA </B><I>pChainPara</I><B>,</B>
+  <B>DWORD </B><I>dwFlags</I><B>,</B>
+  <B>LPVOID </B><I>pvReserved</I><B>,</B>
+  <B>PCCERT_CHAIN_CONTEXT* </B><I>ppChainContext</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hChainEngine </I></DT>
+
+<DD>[in] Optional. Handle to the chain engine, which includes name space and cache, to be used. If the value of this parameter is NULL, the default chain engine, HHCE_CURRENT_USER, is used. This parameter can be set to HCCE_LOCAL_MACHINE.</dd>
+
+<DT><I>pCertContext </I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A> structure of the end certificate, the certificate for which a chain is being built. This certificate context will be the element with zero index in the first simple chain.</dd>
+
+<DT><I>pTime </I></DT>
+
+<DD>[in] Optional. Pointer to a FILETIME variable indicating the time for which the chain is to be validated. Note that the time does not affect root store checking. The current system time is used if NULL is passed to this parameter. Trust in a particular certificate being a trusted root is based on the current state of the root store and not the state of the root store at a time passed in by this parameter.</dd>
+
+<DT><I>hAdditionalStore </I></DT>
+
+<DD>[in] Handle to any additional store to search for supporting certificates. This parameter can be NULL if no additional store is to be searched.</dd>
+
+<DT><I>pChainPara </I></DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfcertchainpara.htm">CERT_CHAIN_PARA</A> structure that includes chain-building parameters.</dd>
+
+<DT><I>dwFlags </I></DT>
+
+<DD>[in] Flag values indicating special processing. The CERT_CHAIN_CACHE_END_CERT flag can be used. When this flag is set, the end certificate is cached, which might speed up the chain-building process. By default, the end certificate is not cached and it would need to be verified each time a chain is built for it. </dd>
+
+<DT><I>pvReserved </I></DT>
+
+<DD>[in] Reserved parameter that must be set to NULL.</dd>
+
+<DT><I>ppChainContext</I> </DT>
+
+<DD>[in] Pointer to a pointer to the chain context created.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is nonzero, or TRUE.</P>
+
+<P>If the function fails, the return value is zero, or FALSE. For extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When an application requests a certificate chain, the structure returned is in the form of a <A HREF="wce50lrfcertchaincontext.htm">CERT_CHAIN_CONTEXT</A> structure. This context contains an array of <A HREF="wce50lrfcertsimplechain.htm">CERT_SIMPLE_CHAIN</A> structures where each simple chain goes from an end certificate to a self-signed certificate. Because Windows CE does not support certificate trust lists, there is only one CERT_SIMPLE_CHAIN in the array. Each simple chain contains the chain of certificates, summary trust information about the chain, and trust information about each certificate element in the chain.</P>
+
+<P>The desktop operating system supports the following <I>dwFlags </I>flags that Windows CE does not support:</P>
+
+<P>CERT_CHAIN_REVOCATION_CHECK_END_CERT</P>
+
+<P>CERT_CHAIN_REVOCATION_CHECK_CHAIN</P>
+
+<P>CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT</P>
+
+<P>CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY.</P>
+
+<H4 class="dtH4">Example Code</H4>
+
+<P>This example code demonstrates the use of <B>CertGetCertificateChain</B> to verify a certificate. In addition, it also shows how to verify that the DNS name in the certificate matches the name of the server that is being connected to. </P>
+
+<PRE class="code">#include &lt;wincrypt.h&gt;
+ 
+HRESULT VerifyServerCertificate(
+    PCCERT_CONTEXT  pCertContextServer,
+    PWSTR           pwszServerName)
+{
+    PCCERT_CHAIN_CONTEXT    pChainContext   = NULL;
+    CERT_CHAIN_PARA         ChainPara;
+    PCERT_SIMPLE_CHAIN      pSimpleChain;
+    PCCERT_CONTEXT          pRootCert;
+    WCHAR*                  pwszName        = NULL;
+    DWORD                   dwErr           = NO_ERROR;
+    DWORD                  cchName;
+    DWORD                  dwTrustErrorMask = ~(CERT_TRUST_IS_NOT_TIME_NESTED|CERT_TRUST_REVOCATION_STATUS_UNKNOWN);
+ 
+    ZeroMemory(&amp;ChainPara, sizeof(ChainPara));
+    ChainPara.cbSize = sizeof(ChainPara);
+ 
+    if(!CertGetCertificateChain(
+                            NULL,
+                            pCertContextServer,
+                            NULL,
+                            pCertContextServer-&gt;hCertStore,
+                            &amp;ChainPara,
+                            0,
+                            NULL,
+                            &amp;pChainContext))
+    {
+        dwErr = GetLastError();
+ 
+        EapTlsTrace(TEXT("CertGetCertificateChain failed and returned 0x%x"), dwErr);
+        pChainContext = NULL;
+        goto LDone;
+    }
+ 
+    pSimpleChain = pChainContext-&gt;rgpChain[0];
+ 
+    dwTrustErrorMask &amp;= pSimpleChain-&gt;TrustStatus.dwErrorStatus;
+    if (dwTrustErrorMask)
+    {
+        if (dwTrustErrorMask &amp; (CERT_TRUST_IS_PARTIAL_CHAIN | CERT_TRUST_IS_UNTRUSTED_ROOT))
+            dwErr = SEC_E_UNTRUSTED_ROOT;
+        else if (dwTrustErrorMask &amp; (CERT_TRUST_IS_NOT_TIME_VALID))
+            dwErr = SEC_E_CERT_EXPIRED;
+        else
+            dwErr = SEC_E_CERT_UNKNOWN;
+        goto LDone;
+    }
+    // Compare the DNS name in the certificate with the server.
+    dwErr = SEC_E_CERT_UNKNOWN;     // Could be a better error.
+    // Get the DNS name from the certificate.
+    
+    pwszName = NULL;
+    cchName = CertGetNameStringW(pCertContextServer,
+                        CERT_NAME_DNS_TYPE,
+                        0,
+                        NULL,
+                        NULL,
+                        0);
+    if (cchName &gt; 1)
+    {
+        pwszName = LocalAlloc(0, sizeof(WCHAR)*cchName);
+        if (pwszName)
+        {
+            cchName = CertGetNameStringW(pCertContextServer,
+                        CERT_NAME_DNS_TYPE,
+                        0,
+                        NULL,
+                        pwszName,
+                        cchName);
+            if (cchName &gt; 1 &amp;&amp; wcsicmp(pwszServerName, pwszName) == 0)
+                dwErr = ERROR_SUCCESS;
+        }
+    }
+                        
+LDone:
+ 
+    if (pChainContext)
+    {
+        CertFreeCertificateChain(pChainContext);
+    }
+ 
+    LocalFree(pwszName);
+ 
+    return(dwErr);
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcertfreecertificatechain.htm">CertFreeCertificateChain</A> | <A HREF="wce50lrfcertduplicatecertificatechain.htm">CertDuplicateCertificateChain</A> | <A HREF="wce50lrfcertchaincontext.htm">CERT_CHAIN_CONTEXT</A> | <A HREF="wce50lrfcertchainpara.htm">CERT_CHAIN_PARA</A> | <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A> | <A HREF="wce50lrfcertsimplechain.htm">CERT_SIMPLE_CHAIN</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CertGetCertificateChain (wce50lrfcertgetcertificatechain.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

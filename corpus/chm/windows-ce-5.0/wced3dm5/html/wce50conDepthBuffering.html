@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Depth Buffering</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condepthbuffering"></A>Depth Buffering</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Depth buffering is an operation that halts processing on pixels that are obscured by pixels that have already been rendered at the same position and that are nearer to the viewer. The Direct3D Mobile's depth buffer support halts processing on a pixel whose depth value fails a test with the depth value stored in the depth buffer at the given point. Depth buffering support is controlled by a variety of render states and requires the existence of a depth buffer.</P>
+
+<P>Depth buffering operations occur very early in the rasterization phase. Direct3D Mobile performs the depth test as soon as a depth value has been generated for a pixel by interpolation. That way the pixel may be discarded before any time is spent on unnecessarily processing the pixel for effects that could never be seen.</P>
+
+<P>The results of the depth buffer test are temporarily stored per pixel for use in the stencil buffering test. In fact, stencil buffer processing is performed on pixels that fail the depth test, even though no other pixel processing is performed. If the pixel passes the depth buffer test, the pixel's depth value is passed further down the pipeline to the pixel write stage.</P>
+
+<H2 class="dtH2">Depth Buffer Properties</H2>
+
+<P>The depth buffer is a channel in the depth stencil buffer. It is created implicitly as part of the creation of the default swap chain at device creation time.  Fro more infromation, see <A HREF="wce50concreatingdirect3dmobiledevice.htm">Creating a Direct3D Mobile Device</A>. The format of the depth buffer determines how many bits are available for depth buffering. The depth buffer must always have the same x and y pixel dimensions as the render target.</P>
+
+<P>If a depth buffer was not created as part of the device creation, then the depth buffer functionality is off and may not be turned on.</P>
+
+<H2 class="dtH2">Depth Comparison</H2>
+
+<P>The depth comparison occurs after the rasterizer has interpolated the depth value has for the pixel. Microsoft&reg; Direct3D Mobile&reg; fetches the depth value corresponding to that pixel from the depth buffer and then compares it to the interpolated value using a depth comparison function. The depth value from the depth buffer is treated as the reference value in this comparison. If the function returns TRUE, then pixel processing continues. If the function returns FALSE, then processing for the pixel is halted immediately and the next pixel is processed.</P>
+
+<P>The value of these render states can be set by calling with the D3DMRS_SCOPESCALEDEPTHBIAS and D3DMRS_DEPTHBIAS flags containing the appropriate values.</P>
+
+<P>You can specify which depth comparison function to use by calling the IDirect3DMobileDevice::SetRenderState method and setting the D3DMRS_ZFUNC render state (see <A HREF="wce50lrfd3dmrenderstatetype.htm">D3DMRENDERSTATETYPE</A>) to a value from the <A HREF="wce50lrfd3dmcmpfunc.htm">D3DMCMPFUNC</A> enumeration.</P>
+
+<H2 class="dtH2">Z and W Buffering</H2>
+
+<P>Direct3D Mobile drivers can support either Z buffering or W buffering. You can set a value for the D3DMRS_ZENABLE render state to indicate which type of depth buffering you would prefer to use in your application.</P>
+
+<H2 class="dtH2">Depth Biasing</H2>
+
+<P>When two primitives are coplanar it is neither one has an inherent rendering priority over the other. This results in an effect know as Z-fighting where the two primitives may appear bleed through one another. </P>
+
+<P>To help mitigate Z-fighting, Direct3D Mobile allows you to add a biasing factor pixel's depth value before it is tested against the value in the depth buffer. The depth biasing support in Direct3D Mobile is similar to DirectX 9 implementation for Windows-based desktop systems in that it uses the D3DMRS_DEPTHBIAS and D3DMRS_SLOPESCALEDEPTHBIAS render states. </P>
+
+<P>In Direct3D Mobile there are two biasing values that can be set, D3DMRS_SLOPESCALEDEPTHBIAS and the D3DMRS_DEPTHBIAS render states &#0150; both of which can be used to compute the depth offset. The offset is added to the primitive's interpolated depth value to produce a final depth value that is used for depth testing. </P>
+
+<P>The offset used for biasing calculations is defined as the following:</P>
+
+<PRE class="code">Offset = m * D3DMRS_SLOPESCALEDEPTHBIAS + D3DMRS_DEPTHBIAS</PRE>
+
+<P>Where <CODE>m</CODE> is the maximum depth slope of the triangle being rendered and is defined as:</P>
+
+<PRE class="code">m = max(abs( delta z / delta x ), abs( delta z / delta y ))</PRE>
+
+<P>You can enable depth biasing can be enabled by setting values for one or both of these render states. The default value for both render states is zero. Setting both render states to zero disables depth biasing. The units for the D3DMRS_DEPTHBIAS and D3DMRS_SLOPESCALEDEPTHBIAS render states depend on whether the application uses Z-buffering or W-buffering. The application must provide suitable values.</P>
+
+<P>Depth bias is not applied to point or line primitives. However, bias does needs to be applied to triangles drawn in wireframe mode.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conperpixeloperations.htm">Per Pixel Operations</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Depth%20Buffering (wce50condepthbuffering.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

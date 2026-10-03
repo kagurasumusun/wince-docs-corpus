@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CFHookProc</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcfhookproc"></A>CFHookProc</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function receives messages intended for the default dialog box procedure of the <B>Font</B> dialog box. This function is an application-defined callback function that you use with <A HREF="wce50lrfchoosefont159.htm">ChooseFont (function)</A>.</P>
+
+<P>The <B>LPCFHOOKPROC</B> type defines a pointer to this callback function. <B>CFHookProc</B> is a placeholder for the application-defined function name. </P>
+
+<PRE class="syntax"><B>UINT (APIENTRY* LPCFHOOKPROC)(</B>
+  <B>HWND </B><I>hdlg</I><B>,</B>
+  <B>UINT</B> <I>uiMsg</I><B>,</B>
+  <B>WPARAM</B> <I>wParam</I><B>,</B>
+  <B>LPARAM</B> <I>lParam</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hdlg</I></DT>
+
+<DD>[in] Handle to the <B>Font</B> dialog box for which the message is intended.</dd>
+
+<DT><I>uiMsg</I></DT>
+
+<DD>[in] Unsigned integer that identifies the message being received.</dd>
+
+<DT><I>wParam</I></DT>
+
+<DD>[in] Specifies additional information about the message. The exact meaning depends on the value of the <I>uiMsg</I> parameter.</dd>
+
+<DT><I>lParam</I></DT>
+
+<DD>[in] Specifies additional information about the message. The exact meaning depends on the value of the <I>uiMsg</I> parameter. If the <I>uiMsg</I> parameter indicates the <A HREF="wce50lrfwminitdialog.htm">WM_INITDIALOG</A> message, <I>lParam</I> is a pointer to a <A HREF="wce50lrfchoosefont160.htm">CHOOSEFONT (structure)</A>, which contains the values that the application specified when it created the dialog box.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Return zero if you want the default dialog box procedure to process the message. Return a nonzero value if you want the default dialog box procedure to ignore the message.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When you use the <B>ChooseFont</B> function to create a <B>Font</B> dialog box, you can provide a <B>CFHookProc</B> hook function to process messages intended for the dialog box procedure. To enable the hook function, use the <B>CHOOSEFONT</B> structure that you passed to <B>ChooseFont</B>. Specify the address of the hook function in the <B>lpfnHook</B> member of <B>CHOOSEFONT</B> and specify CF_ENABLEHOOK in the <B>Flags</B> member.</P>
+
+<P>The default dialog box procedure processes the WM_INITDIALOG message before passing the message to <B>CFHookProc</B>. For all other messages, the hook function receives the message first. The return value of the hook function then determines whether the default dialog box procedure processes or ignores the message.</P>
+
+<P>If <B>CFHookProc</B> processes the <A HREF="wce50lrfwmctlcolordlg.htm">WM_CTLCOLORDLG</A> message, <B>CFHookProc</B> must return a valid brush handle for painting the background of the dialog box. In general, if the hook function processes any WM_CTLCOLOR* message, the hook function must return a valid brush handle for painting the background of the specified control.</P>
+
+<P>Do not call the <A HREF="wce50lrfenddialog.htm">EndDialog</A> function from <B>CFHookProc</B>. Instead, the hook function can call the <A HREF="wce50lrfpostmessage.htm">PostMessage</A> function to post a <A HREF="wce50lrfwmcommand.htm">WM_COMMAND</A> message with the <B>IDABORT</B> value set to the dialog box procedure. Posting <B>IDABORT</B> closes the dialog box and causes the dialog box procedure to return FALSE. If you need to know why the hook function closed the dialog box, you must provide your own communication mechanism between the hook function and your application.</P>
+
+<P>You can subclass the standard controls of a common dialog box. The dialog box procedure, however, can also subclass the controls. Therefore, you should subclass controls when your hook function processes the WM_INITDIALOG message. Doing so ensures that your subclass function receives the control-specific messages before the subclass function set by the dialog box procedure. </P>
+
+<P>The hook procedure can send the <A HREF="wce50lrfwmchoosefontgetlogfont.htm">WM_CHOOSEFONT_GETLOGFONT</A> message to the dialog box to retrieve the current values of the dialog box.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Commdlg.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcommondialogsfunctions.htm">Common Dialog Boxes Functions</A> | <A HREF="wce50lrfchoosefont159.htm">ChooseFont (function)</A> | <A HREF="wce50lrfenddialog.htm">EndDialog</A> | <A HREF="wce50lrfpostmessage.htm">PostMessage</A> | <A HREF="wce50lrfwmchoosefontgetlogfont.htm">WM_CHOOSEFONT_GETLOGFONT</A> | <A HREF="wce50lrfwmcommand.htm">WM_COMMAND</A> | <A HREF="wce50lrfwmctlcolordlg.htm">WM_CTLCOLORDLG</A> | <A HREF="wce50lrfwminitdialog.htm">WM_INITDIALOG</A> | <A HREF="wce50lrfchoosefont160.htm">CHOOSEFONT (structure)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CFHookProc (wce50lrfcfhookproc.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

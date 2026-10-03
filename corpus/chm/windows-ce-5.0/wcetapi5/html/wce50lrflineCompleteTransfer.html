@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineCompleteTransfer</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrflinecompletetransfer"></A>lineCompleteTransfer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function completes the transfer of the specified call to the party connected in the consultation call. </P>
+
+<PRE class="syntax"><B>LONG WINAPI lineCompleteTransfer(</B>
+  <B>HCALL </B><I>hCall</I><B>,</B>
+  <B>HCALL </B><I>hConsultCall</I><B>,</B>
+  <B>LPHCALL </B><I>lphConfCall</I><B>,</B>
+  <B>DWORD </B><I>dwTransferMode</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCall</I> </DT>
+
+<DD>Handle to the call to be transferred. The application must be an owner of this call. The call state of <I>hCall</I> must be onHold or onHoldPendingTransfer. </dd>
+
+<DT><I>hConsultCall</I> </DT>
+
+<DD>Handle to the call that represents a connection with the destination of the transfer. The application must be an owner of this call. The call state of <I>hConsultCall</I> must be connected, ringback, busy, or proceeding. </dd>
+
+<DT><I>lphConfCall</I> </DT>
+
+<DD>Pointer to a memory location where an <I>hCall</I> handle can be returned. If <I>dwTransferMode</I> is LINETRANSFERMODE_CONFERENCE, the newly created conference call is returned in <I>lphConfCall</I> and the application becomes the sole owner of the conference call. Otherwise, this parameter is ignored by TAPI. </dd>
+
+<DT><I>dwTransferMode</I> </DT>
+
+<DD>Specifies how the initiated transfer request is to be resolved. This parameter uses one of the <A HREF="wce50lrflinetransfermode.htm">LINETRANSFERMODE</A> constants. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns a positive request identifier if the function is completed asynchronously, or a negative error number if an error occurs. The <I>dwParam2</I> parameter of the corresponding <A HREF="wce50lrflinereply.htm">LINE_REPLY</A> message is zero if the function succeeds or it is a negative error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLHANDLE</TD>
+<TD width=50%>The handle to the call to be transferred is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOTOWNER</TD>
+<TD width=50%>The application is not the owner of this call.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLSTATE</TD>
+<TD width=50%>The call state of <I>hCall</I> is not onHold or onHoldPendingTransfer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCONSULTCALLHANDLE</TD>
+<TD width=50%>The handle to the call that represents a connection with the destination of the transfer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALTRANSFERMODE</TD>
+<TD width=50%>The transfer mode is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resources are unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALPOINTER</TD>
+<TD width=50%>The pointer is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_UNINITIALIZED</TD>
+<TD width=50%>A parameter is uninitialized.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The LINE_REPLY message sent in response to a call to the <B>lineCompleteTransfer</B> function is based on the status of the call specified by the <I>hCall</I> parameter. </P>
+
+<P>This operation completes the transfer of the original call, <I>hCall</I>, to the party currently connected by <I>hConsultCall</I>. The consultation call is typically dialed on the consultation call allocated as part of the <A HREF="wce50lrflinesetuptransfer.htm">lineSetupTransfer</A> function, but it can be any call to which the switch is capable of transferring <I>hCall</I>. </P>
+
+<P>The transfer request can be resolved either as a transfer or as a three-way conference call. When resolved as a transfer, the parties connected by <I>hCall</I> and <I>hConsultCall</I> are connected to each other, and both <I>hCall</I> and <I>hConsultCall</I> are typically cleared from the application's line and transition to the idle state. The application's call handle remains valid after the transfer has completed. The application must deallocate its handle with the <A HREF="wce50lrflinedeallocatecall.htm">lineDeallocateCall</A> function. </P>
+
+<P>When resolved as a conference, all three parties enter into a conference call. Both existing call handles remain valid but transition to the conferenced state. A conference call handle is created and returned, and it transitions to the connected state. </P>
+
+<P>If the <A HREF="wce50lrflinegetconfrelatedcalls.htm">lineGetConfRelatedCalls</A> function is called immediately after <B>lineCompleteTransfer</B> with the result that the calls are conferenced, <B>lineGetConfRelatedCalls</B> may not return a complete list of related calls. This is because TAPI waits to receive a LINE_CALLSTATE message indicating that the call has entered LINECALLSTATE_CONFERENCED before it considers the call to actually be part of the conference. That is, it waits for the service provider to confirm the conferenced state. After the application has received the LINE_CALLSTATE message, <B>lineGetConfRelatedCalls</B> returns complete information. </P>
+
+<P>It can also be possible to perform a blind transfer of a call using <A HREF="wce50lrflineblindtransfer.htm">lineBlindTransfer</A>. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This function is for TAPI version 2.0 and later.</BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Tapi.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrflineblindtransfer.htm">lineBlindTransfer</A> | <A HREF="wce50lrflinedeallocatecall.htm">lineDeallocateCall</A> | <A HREF="wce50lrflinegetconfrelatedcalls.htm">lineGetConfRelatedCalls</A> | <A HREF="wce50lrflinesetuptransfer.htm">lineSetupTransfer</A> | <A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> | <A HREF="wce50lrflinereply.htm">LINE_REPLY</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: lineCompleteTransfer (wce50lrflinecompletetransfer.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

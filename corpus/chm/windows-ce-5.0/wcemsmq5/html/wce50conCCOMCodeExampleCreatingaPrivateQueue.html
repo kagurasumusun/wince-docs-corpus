@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>C++ COM Code Example: Creating a Private Queue</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conccomcodeexamplecreatingaprivatequeue"></A>C++ COM Code Example: Creating a Private Queue</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example creates a private queue on the local machine. </P>
+
+<P>If a queue with the same pathname exists, an error message is displayed and no queue is created.</P>
+
+<PRE class="code">//
+// MSMQ COM sample using smart pointer
+//
+// following sample code creates a private queue named "Q1"
+//
+
+#include &lt;atlbase.h&gt;
+#include &lt;mqoai.h&gt;
+// should include mqoa.lib to the projet
+// mqoa.lib is under %_WINCEROOT%\Public\SERVERS\OAK\LIB\X86\RETAIL
+//#import "mqoa.dll" no_namespace   // not supported
+
+
+HRESULT CreateQueueQ1()
+{
+   CComQIPtr&lt;IMSMQQueueInfo, &amp;IID_IMSMQQueueInfo&gt; ipQueueInfo;
+   HRESULT hr = S_OK;
+// hr = ipQueueInfo.CoCreateInstance(CLSID_MSMQQueueInfo);  // this form is not supported
+   hr = CoCreateInstance(
+         CLSID_MSMQQueueInfo,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQQueueInfo,
+         (void**)(&amp;ipQueueInfo.p));
+   if(hr != S_OK)
+      return hr;
+
+   hr = ipQueueInfo-&gt;put_PathName(L".\\private$\\Q1");
+   if(hr != S_OK)
+      return hr;
+
+   VARIANT vtFalse;
+   VariantInit(&amp;vtFalse);
+   vtFalse.vt = VT_BOOL;
+   vtFalse.boolVal = FALSE;
+   hr = ipQueueInfo-&gt;Create(&amp;vtFalse, &amp;vtFalse);
+   return hr;
+}
+
+
+int main(int argc, WCHAR* argv[])
+{
+   HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+   if(hr == S_OK)
+   {
+      CreateQueueQ1();
+      CoUninitialize();
+   }
+   return 0;</PRE>
+
+<P>}</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orimessagequeuing.htm">MSMQ Application Development</A> | <A HREF="wce50conmessagequeuingcomsupport.htm">MSMQ COM Support</A> | <A HREF="wce50conusingthecomcomponents.htm">Using the COM Components</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: C++%20COM%20Code%20Example:%20Creating%20a%20Private%20Queue (wce50conccomcodeexamplecreatingaprivatequeue.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

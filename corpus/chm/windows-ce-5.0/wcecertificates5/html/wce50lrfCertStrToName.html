@@ -1,0 +1,344 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertStrToName</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcertstrtoname"></A>CertStrToName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function converts a NULL-terminated X500 string to an encoded certificate name. The input string is expected to be formatted the same as the output from the <A HREF="wce50lrfcertnametostr.htm">CertNameToStr</A> function.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CertStrToName(</B>
+  <B>DWORD</B> <I>dwCertEncodingType</I><B>,</B>
+  <B>LPCTSTR</B> <I>pszX500</I><B>,</B>
+  <B>DWORD</B> <I>dwStrType</I><B>,</B>
+  <B>void* </B><I>pvReserved</I><B>,</B>
+  <B>BYTE* </B><I>pbEncoded</I><B>,</B>
+  <B>DWORD* </B><I>pcbEncoded</I><B>,</B>
+  <B>LPCTSTR* </B><I>ppszError</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwCertEncodingType</I></DT>
+
+<DD>[in] Specifies the encoding type used. Currently, only X509_ASN_ENCODING is used; however, additional encoding types may be added in the future.</dd>
+
+<DT><I>pszX500</I> </DT>
+
+<DD>[in] Pointer to the NULL-terminated X500 string to be converted.</dd>
+
+<DT><I>dwStrType</I> </DT>
+
+<DD>[in] Specifies the type of the input string. The following table shows the possible types of input strings for the <I>dwStrType</I> parameter.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>String type</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_OID_NAME_STR</TD>
+<TD width=53%>Default. Input can contain a case-insensitive X500 key (CN=), a case-insensitive OID. prefixed object identifier (OID.1.2.3.4.5.6=), or an object identifier (OID).
+<P>If no flags are combined with a bitwise <B>OR</B> operation into the <I>dwStrType </I>parameter, the input is allowed to contain "," or ";" as RDN separators and "+" as the multiple RDN value separator.</P>
+
+<P>Quoting is supported. A quote can be included in a quoted value by double quoting, for example (CN="Bob ""Gage"""). A value starting with a "#" is treated as ASCII hex and converted to a CERT_RDN_OCTET_STRING. Embedded white space is skipped (1.2.3 = # AB CD 01 is the same as 1.2.3=#ABCD01).</P>
+
+<P>White space surrounding the keys, object identifiers, and values is removed.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_X500_NAME_STR</TD>
+<TD width=53%>Same as CERT_OID_NAME_STR.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_COMMA_FLAG</TD>
+<TD width=53%>This flag can be combined with a bitwise <B>OR</B> operation into <I>dwStrType</I> to only allow the "," as the RDN separator.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_SEMICOLON_FLAG</TD>
+<TD width=53%>This flag can be combined with a bitwise <B>OR</B> operation into <I>dwStrType</I> to only allow the ";" as the RDN separator.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_CRLF_FLAG</TD>
+<TD width=53%>This flag can be combined with a bitwise <B>OR</B> operation into <I>dwStrType</I> to only allow "\r" or "\n" as the RDN separator.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_NO_PLUS_FLAG</TD>
+<TD width=53%>This flag can be combined with a bitwise <B>OR</B> operation into <I>dwStrType</I> to ignore "+" as a separator and not allow multiple values per RDN.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_NO_QUOTING_FLAG</TD>
+<TD width=53%>This flag can be combined with a bitwise <B>OR</B> operation into <I>dwStrType</I> to inhibit quoting.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_DISABLE_IE4_UTF8_FLAG</TD>
+<TD width=53%>This flag can be combined with a bitwise <B>OR</B> operation into <I>dwStrType</I> to skip the initial attempt to decode as UTF8.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_SIMPLE_NAME_STR</TD>
+<TD width=53%>Not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_REVERSE_FLAG</TD>
+<TD width=53%>This flag can be combined with a bitwise <B>OR</B> operation into <I>dwStrType</I> to specify that the order of the RDNs is to be reversed after converting from the string and before encoding. See <B>CertNameToStr</B> for a demonstration of this flags usage.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG</TD>
+<TD width=53%>Can be combined with other <I>dwStrType</I> values to select the CERT_RDN_T61_STRING encoded value type instead of CERT_RDN_UNICODE_STRING. Can be used if all the UNICODE characters are less than or equal to 0xFF.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_NAME_STR_ENABLE_UTF8_UNICODE_FLAG</TD>
+<TD width=53%>Can be combined with other <I>dwStrType</I> values to select the CERT_RDN_UTF8_STRING encoded value type instead of CERT_RDN_UNICODE_STRING.</TD>
+</TR>
+</table></div>
+
+
+
+<P>The following table shows the X500 keys that are supported.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=17%>Key</TH>
+<TH width=53%>Object identifier</TH>
+<TH width=30%>RDN value type</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>CN</TD>
+<TD width=53%>szOID_COMMON_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>L</TD>
+<TD width=53%>szOID_LOCALITY_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>O</TD>
+<TD width=53%>szOID_ORGANIZATION_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>OU</TD>
+<TD width=53%>szOID_ORGANIZATIONAL_UNIT_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>Email</TD>
+<TD width=53%>szOID_RSA_emailAddr</TD>
+<TD width=30%>Only IA5</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>C</TD>
+<TD width=53%>szOID_COUNTRY_NAME</TD>
+<TD width=30%>Only Printable</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>S</TD>
+<TD width=53%>szOID_STATE_OR_PROVINCE_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>ST</TD>
+<TD width=53%>szOID_STATE_OR_PROVINCE_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>STREET</TD>
+<TD width=53%>szOID_STREET_ADDRESS</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>T</TD>
+<TD width=53%>szOID_TITLE</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>Title</TD>
+<TD width=53%>szOID_TITLE</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>G</TD>
+<TD width=53%>szOID_GIVEN_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>GivenName</TD>
+<TD width=53%>szOID_GIVEN_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>I</TD>
+<TD width=53%>szOID_INITIALS</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>Initials</TD>
+<TD width=53%>szOID_INITIALS</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>SN</TD>
+<TD width=53%>szOID_SUR_NAME</TD>
+<TD width=30%>Printable, T61</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>DC</TD>
+<TD width=53%>szOID_DOMAIN_COMPONENT</TD>
+<TD width=30%>IA5, UTF8 </TD>
+</TR>
+</table></div>
+
+
+
+<P>If either Printable or T61 is allowed as the RDN value type for the key (CN=), Printable is selected if the name string parts are restricted to the following character set: 
+
+
+<P>A, B, ..., Z
+
+
+<P>a, b, ..., z
+
+
+<P>0, 1, ..., 9
+
+
+<P>(space) ' ( ) +, - . / : = ?
+</dd>
+
+<DT><I>pvReserved</I> </DT>
+
+<DD>[in] Reserved for future use and must be set to NULL.</dd>
+
+<DT><I>pbEncoded</I> </DT>
+
+<DD>[out] Pointer to a buffer to receive the encoded structure.
+
+<P>This parameter can be NULL to set the size of the key usage for memory allocation purposes.
+</dd>
+
+<DT><I>pcbEncoded</I> </DT>
+
+<DD>[in, out] On input, pointer to a <B>DWORD</B> to specify the size, in bytes, of the buffer pointed to by the <I>pbEncoded</I> parameter. On output, the <B>DWORD</B> contains the number of bytes stored or to be stored in the buffer.</dd>
+
+<DT><I>ppszError</I> </DT>
+
+<DD>[out] Optional. Pointer to a pointer to receive an error indication about an invalid input string.
+
+<P>If the input string is invalid, the <I>ppszError</I> parameter is updated by this function to point to the beginning of the invalid character sequence. If no errors are detected in the input string, <I>ppszError</I> is set to NULL.
+
+
+<P>The <I>ppszError</I> parameter can be set to NULL by the application not interested in receiving a pointer to any invalid character sequence found.
+
+
+<P>The <I>ppszError</I> parameter is updated with a non-NULL pointer for the following errors: 
+
+
+<P>CRYPT_E_INVALID_X500_STRING 
+
+
+<P>CRYPT_E_INVALID_NUMERIC_STRING
+
+
+<P>CRYPT_E_INVALID_PRINTABLE_STRING
+
+
+<P>CRYPT_E_INVALID_IA5_STRING
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is nonzero, or TRUE.</P>
+
+<P>If the function fails, the return value is zero, or FALSE.</P>
+
+<P>For extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The T61 types are UTF-8 encoded.</P>
+
+<P>The desktop operating system supports the flag PKCS_7_ASN_ENCODING, but Windows CE does not and ignores the flag when it is specified.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcertnametostr.htm">CertNameToStr</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CertStrToName (wce50lrfcertstrtoname.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

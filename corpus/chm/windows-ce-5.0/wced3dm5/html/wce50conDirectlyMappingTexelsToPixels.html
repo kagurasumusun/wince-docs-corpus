@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Directly Mapping Texels to Pixels</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condirectlymappingtexelstopixels"></A>Directly Mapping Texels to Pixels</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Applications often need to apply textures to geometry in a scene so that texels map directly to on-screen pixels. For example, take an application that needs to display text within a texture on an object within a scene. To clearly display textual information in a texture, the application needs some way to ensure that the textured geometry receives texels undisrupted by texture filtering. Failing this, the resulting image is often blurred, or in the case of point-sampled texture filtering, can cause rough edges. </P>
+
+<P>Because the Microsoft&reg; Direct3D&reg; Mobile pixel and texture sampling rules are carefully defined to unify pixel and texture sampling while supporting image and texture filtering, getting the texels in a texture to map directly to on-screen pixels can be a significant and often frustrating challenge. Overcoming this challenge requires a clear understanding of how Direct3D Mobile maps the floating-point texture coordinates for a vertex to the integer pixel coordinates used by the rasterizer.</P>
+
+<P>Direct3D Mobile performs the following computations to map floating point texture coordinates to texel addresses.</P>
+
+<P class="fig"><IMG SRC="dx3d-texcoord_to_texel.gif" ALT="" BORDER=0></P>
+
+<P>In these formulas, <I>T<SUB>x</SUB></I> and <I>T<SUB>y</SUB></I> are the horizontal and vertical output texel coordinates, and <I>u</I> and <I>v</I> are the horizontal and vertical texture coordinates supplied for the vertex. The <I>M<SUB>x</SUB></I> and <I>M<SUB>y</SUB></I> elements represent the number of horizontal or vertical texels at the current mipmap level. The remainder of this discussion targets horizontal mapping of texels to pixels; keep in mind that mapping in the vertical is identical to the horizontal case.</P>
+
+<P>Placing the texture coordinate limits 0.0 and 1.0 into these formulas maps a texture coordinate of 0.0 halfway between the first and last texels of a repeated texture map. The coordinate 1.0 is mapped halfway between the last texel of the current iteration of the texture map and the next iteration. For a repeated texture that is four texels wide, at mipmap level 0, the following illustration shows where the system maps the coordinates 0.0 and 1.0.</P>
+
+<P class="fig"><IMG SRC="dx3d-4texel_mapping.gif" ALT="" BORDER=0></P>
+
+<P>Given an understanding of this mapping, you can apply a simple bias to your screen-space geometry coordinates to force the system to map each texel to a corresponding pixel. For example, to draw a four-sided polygon that maps each texel from the preceding texture to one, and only one, pixel on the screen, you must force geometry coordinates to overlap the pixels, effectively placing the center of each texel at the center of each pixel. The result is the 1-to-1 mapping often sought-after by applications.</P>
+
+<P>To map the texture with a 4-texel width to the pixel coordinates 0 through 3, draw a four-sided polygon, from two triangles, that has screen-space coordinates of –0.5 to 3.5 and texture coordinates of 0.0 to 1.0. For example, take the pixel at screen coordinate 0.0. Because 0.0 is one-half pixel away from the first vertex, at -0.5, and the total width is 4.0, the iterated texture coordinate is 0.125. Scaling this by the texture size, which is 4, results in the coordinate 0.5. Subtracting this 0.5 bias produces a texture address of 0.0, which fully maps to the first texel in the map.</P>
+
+<P>To summarize, texture coordinates overlap the texture map evenly on both sides. The following illustration shows the mapping of a texture that is four texels wide.</P>
+
+<P class="fig"><IMG SRC="dx3d-overlap_even.gif" ALT="" BORDER=0></P>
+
+<P>The system normalizes pixel coordinates in the same way it normalizes texel coordinates. Therefore, if the vertices overlap the pixels into which to render, and if the vertices use texture coordinates of 0.0 and 1.0, the pixels and texels line up. If both are of similar size and properly aligned, they match exactly, texel to pixel, as shown in the following figure.</P>
+
+<P class="fig"><IMG SRC="dx3d-pixel_texel_overlap.gif" ALT="" BORDER=0></P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contexturecoordinates.htm">Texture Coordinates</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Directly%20Mapping%20Texels%20to%20Pixels (wce50condirectlymappingtexelstopixels.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

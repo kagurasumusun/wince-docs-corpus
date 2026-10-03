@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Lost Devices</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conlostdevices"></A>Lost Devices</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A Microsoft&reg; Direct3D&reg; Mobile device can be in either an operational state or a lost state. The operational state is the normal state of the device; the device executes and presents all rendering as expected. The device makes a transition to the lost state when an event &#0151; such as the loss of keyboard focus in a full-screen application &#0151; causes rendering to become impossible. The lost state is characterized by the silent failure of all rendering operations, which means that the rendering methods can return success codes even though the rendering operations fail. In this situation, the D3DMERR_DEVICELOST error code (see <A HREF="wce50lrfdirect3dmobileerrorcodes.htm">D3DMERR Values</A>) is returned by <A HREF="wce50lrfidirect3dmobiledevicepresent.htm">IDirect3DMobileDevice::Present</A>.</P>
+
+<P>By design, the full set of scenarios that can cause a device to become lost is not specified. Some typical examples include loss of focus or when a system dialog is initialized. Devices can also be lost due to a power management event, or when another application assumes full-screen operation. In addition, any failure from <A HREF="wce50lrfidirect3dmobiledevicereset.htm">IDirect3DMobileDevice::Reset</A> puts the device into a lost state.</P>
+
+<H2 class="dtH2">Responding to a Lost Device</H2>
+
+<P>If a device is lost, the application queries the device to see if it can be restored to the operational state. If not, the application waits until the device can be restored. </P>
+
+<P>If the device can be restored, the application prepares the device by destroying all video-memory resources and any swap chains. Then, the application calls the <A HREF="wce50lrfidirect3dmobiledevicereset.htm">IDirect3DMobileDevice::Reset</A> method. <B>Reset</B> is the only method that has an effect when a device is lost, and is the only method by which an application can change the device from a lost to an operational state. <B>Reset</B> will fail unless the application releases all resources that are allocated in D3DPOOL_VIDEOMEM (see <A HREF="wce50lrfd3dmpool.htm">D3DMPOOL</A>), including those created by the <A HREF="wce50lrfidirect3dmobiledevicecreaterendertarget.htm">IDirect3DMobileDevice::CreateRenderTarget</A> and <A HREF="wce50lrfidirect3dmobiledevicecreatedepthstencilsurface.htm">IDirect3DMobileDevice::CreateDepthStencilSurface</A> methods.</P>
+
+<P>For the most part, the high-frequency calls of Direct3D Mobile do not return any information about whether the device has been lost. The application can continue to call rendering methods, such as <A HREF="wce50lrfidirect3dmobiledevicedrawprimitive.htm">IDirect3DMobileDevice::DrawPrimitive</A>, without receiving notification of a lost device. Internally, these operations are discarded until the device is reset to the operational state.</P>
+
+<P>The application can determine what to do on encountering a lost device by querying the return value of the <A HREF="wce50lrfidirect3dmobiledevicetestcooperativelevel.htm">IDirect3DMobileDevice::TestCooperativeLevel</A> method.
+
+<UL type="disc">
+	<LI>If the method returns D3DM_OK, the device is operational.</li>
+
+	<LI>If the device is lost but cannot be restored at the current time, the return value is D3DMERR_DEVICELOST. This is the case when a full-screen device loses focus. Applications should respond by pausing until the device can be reset. A D3DMERR_DEVICENOTRESET return code from <B>TestCooperativeLevel</B> indicates this situation.</li>
+
+	<LI>If the device is lost and can be restored, the return code from <B>TestCooperativeLevel</B> is D3DMERR_DEVICENOTRESET. Note that the return code from the <A HREF="wce50lrfidirect3dmobiledevicepresent.htm">IDirect3DMobileDevice::Present</A> method is still D3DMERR_DEVICELOST.</li>
+</UL>
+
+<P>In all cases, destroying video-memory resources is a prerequisite to calling <B>Reset</B>, even if the device has not been lost.</P>
+
+<H2 class="dtH2">Lost Devices and Locking Operations</H2>
+
+<P>Internally, Direct3D Mobile does enough work to ensure that a lock operation will succeed after a device is lost. However, it is not guaranteed that the video-memory resource's data will be accurate during the lock operation. It is guaranteed that no error code will be returned. This allows applications to be written without concern for device loss during a lock operation.</P>
+
+<H2 class="dtH2">Lost Devices and Resources</H2>
+
+<P>Resources can consume video memory. Because a lost device is disconnected from the video memory owned by the adapter, it is not possible to guarantee allocation of video memory when the device is lost. As a result, all resource creation methods are implemented to succeed by returning D3DM_OK, but do in fact allocate only dummy system memory. Because any video-memory resource must be destroyed before the device is resized, there is no issue of over-allocating video memory. These dummy surfaces allow lock and copy operations to appear to function normally until the application calls <A HREF="wce50lrfidirect3dmobiledevicepresent.htm">IDirect3DMobileDevice::Present</A> and discovers that the device has been lost.</P>
+
+<P>All video memory must be released before a device can be reset from a lost state to an operational state. This means that the application should release any swap chains created with <A HREF="wce50lrfidirect3dmobiledevicecreateadditionalswapchain.htm">IDirect3DMobileDevice::CreateAdditionalSwapChain</A> and any resources placed in the D3DMPOOL_VIDEOMEM memory class. The application need not release resources in the D3DMPOOL_MANAGED or D3DMPOOL_SYSTEMMEM memory classes. Other state data is automatically destroyed by the transition to an operational state. </P>
+
+<P>You are encouraged to develop applications with a single code path to respond to device loss. This code path is likely to be similar, if not identical, to the code path taken to initialize the device at startup.</P>
+
+<H2 class="dtH2">Lost Devices and Retrieved Data</H2>
+
+<P>Direct3D Mobile allows applications to copy generated or previously written images from video-memory resources to nonvolatile system-memory resources. Because the source images of such transfers might be lost at any time, Direct3D Mobile allows such copy operations to fail when the device is lost.</P>
+
+<P>The copy operation <A HREF="wce50lrfidirect3dmobiledevicecopyrects.htm">IDirect3DMobileDevice::CopyRects</A> can return D3DMERR_DEVICELOST when the source object is in volatile memory (D3DMPOOL_VIDEOMEM) and the destination object is in nonvolatile memory (D3DMPOOL_SYSTEMMEM or D3DMPOOL_MANAGED). Another copy operation, <A HREF="wce50lrfidirect3dmobiledevicegetfrontbuffer.htm">IDirect3DMobileDevice::GetFrontBuffer</A>, can fail due to retrieving data from the primary surface. Note that these cases are the only instance of D3DMERR_DEVICELOST outside of the <A HREF="wce50lrfidirect3dmobiledevicepresent.htm">IDirect3DMobileDevice::Present</A>, <A HREF="wce50lrfidirect3dmobiledevicetestcooperativelevel.htm">IDirect3DMobileDevice::TestCooperativeLevel</A>, and <A HREF="wce50lrfidirect3dmobiledevicereset.htm">IDirect3DMobileDevice::Reset</A> methods.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condirect3dmobiledevice.htm">Direct3D Mobile Devices</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Lost%20Devices (wce50conlostdevices.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

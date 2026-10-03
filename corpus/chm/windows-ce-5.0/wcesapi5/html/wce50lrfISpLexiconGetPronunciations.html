@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpLexicon::GetPronunciations</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisplexicongetpronunciations"></A>ISpLexicon::GetPronunciations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method gets pronunciations and parts of speech for a word. The method retrieves lexicon pronunciation information in the following order:
+
+<OL type="1">
+	<LI>Pronunciation from user lexicon (could have multiple pronunciations) </li>
+
+	<LI>Pronunciation from application lexicon(s) (could have multiple pronunciations) </li>
+
+	<LI>Pronunciation from the added lexicons in the same order the lexicons were added. </li>
+</OL>
+
+<P>The expected order of priority is the same as that retrieved from the previous list by <B>GetPronunciations</B>.</P>
+
+<PRE class="syntax"><B>HRESULT GetPronunciations(</B>
+  <B>const WCHAR* </B><I>pszWord</I><B>,</B>
+  <B>LANGID </B><I>LangID</I><B>,</B>
+  <B>DWORD </B><I>dwFlags</I><B>,</B>
+  <B>SPWORDPRONUNCIATIONLIST* </B><I>pWordPronunciationList</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszWord</I> </DT>
+
+<DD>[in] Pointer to a search keyword. The length must be less than or equal to <A HREF="wce50lrfspmaxwordlength.htm">SP_MAX_WORD_LENGTH</A>. </dd>
+
+<DT><I>LangID</I> </DT>
+
+<DD>[in] Language identifier of the word. Can be zero to indicate that the word can be of any LANGID. </dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>[in] Pointer to bitwise flags of type <A HREF="wce50lrfsplexicontype.htm">SPLEXICONTYPE</A> indicating the lexicons searched for this word. </dd>
+
+<DT><I>pWordPronunciationList</I> </DT>
+
+<DD>[in, out] Pointer to an <A HREF="wce50lrfspwordpronunciationlist.htm">SPWORDPRONUNCIATIONLIST</A> structure identifying the retrieved pronunciations and parts of speech. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value </TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>S_OK </TD>
+<TD width=50%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SP_WORD_EXISTS_WITHOUT_PRONUNCIATION </TD>
+<TD width=50%>The word exists but does not have a pronunciation. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>E_POINTER </TD>
+<TD width=50%><I>pWordPronunciationList</I> is not a valid write pointer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>E_INVALIDARG </TD>
+<TD width=50%>At least one of the parameters is invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>E_OUTOFMEMORY </TD>
+<TD width=50%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SPERR_UNINITIALIZED </TD>
+<TD width=50%>The interface has not been initialized. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SPERR_NOT_IN_LEX </TD>
+<TD width=50%>Word is not found in the lexicon. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>FAILED(hr) </TD>
+<TD width=50%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following example is a code fragment demonstrating the use of this method.</P>
+
+<PRE class="code">SPWORDPRONUNCIATIONLIST spwordpronlist; 
+memset(&amp;spwordpronlist, 0, sizeof(spwordpronlist)); 
+hr = pISpLexicon-&gt;GetPronunciations(L"resume", 409, eLEXTYPE_USER |
+eLEXTYPE_APP, &amp;spwordpronlist);
+//test for results
+if( !SUCCEEDED(hr)) return;
+for (
+    SPWORDPRONUNCIATION pwordpron = pwordpronlist-&gt;pFirstWordPron;
+    wordpron != NULL;
+    wordpron = pwordpron-&gt;pNextWordPron
+    )
+{
+   DoSomethingWith(pwordpron-&gt;ePartOfSpeech, 
+                   pwordpron-&gt;szPronunciation);
+}
+//free all the buffers
+CoTaskMemFree(spwordpronlist.pvBuffer);</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisplexicon.htm">ISpLexicon</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpLexicon::GetPronunciations (wce50lrfisplexicongetpronunciations.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

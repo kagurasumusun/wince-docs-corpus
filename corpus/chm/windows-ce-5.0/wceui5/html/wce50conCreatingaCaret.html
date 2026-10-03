@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Caret</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingacaret"></A>Creating a Caret</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A <I>caret</I> is a flashing line or block in the window client area that indicates the place where text or graphics will be inserted. Windows CE provides one caret per message queue. You should create a caret only when its associated window has the keyboard focus or is active. You should destroy the caret before the window loses the keyboard focus or becomes inactive. Once you create a caret, you can change how frequently a caret blinks, modify the caret position within a window, or temporarily remove a caret from view by hiding it. An application should create and display a caret while processing the <A HREF="wce50lrfwmsetfocus.htm">WM_SETFOCUS</A> message. Windows CE sends the WM_SETFOCUS message to a window when it receives the keyboard focus.</P>
+
+<P class="labelproc"><B>To create and display a caret in a window</B>
+
+<OL type="1">
+	<LI>Call the <A HREF="wce50lrfcreatecaret.htm">CreateCaret</A> function when the window receives focus. Windows CE formats a caret by inverting the pixel color within the rectangle specified by the caret's position, width, and height.</li>
+
+	<LI>Set the caret position by calling the <A HREF="wce50lrfsetcaretpos.htm">SetCaretPos</A> function.</li>
+
+	<LI>Make the caret visible by calling the <A HREF="wce50lrfshowcaret.htm">ShowCaret</A> function. When the caret appears, it begins flashing.</li>
+</OL>
+
+<P>The following code example shows how to create and display a caret.</P>
+
+<PRE class="code">// Caret height and width
+#define CARETHEIGHT 15
+#define CARETWIDTH   2
+
+if (!CreateCaret(hWnd, 0, CARETWIDTH, CARETHEIGHT))
+    MessageBox(hWnd, TEXT("CreateCaret failed."), TEXT("CreateCaret"), 
+               MB_OK);
+
+// Show the caret at the intial position (0,0).
+ShowCaret(hWnd);</PRE>
+
+<P>The elapsed time, in milliseconds, that is required to invert the caret is called the <I>blink time</I>. The <I>flash time</I> is the elapsed time, in milliseconds, that is required to display, invert, and restore the caret's display. The flash time of a caret is twice as much as the blink time. The caret will blink as long as the thread that owns the message queue processes messages. A user can set the blink time of the caret by using Control Panel, and applications should maintain the settings that the user has chosen. An application can determine the caret blink time by using the <A HREF="wce50lrfgetcaretblinktime.htm">GetCaretBlinkTime</A> function. If you are writing an application that enables the user to adjust the blink time, such as a Control Panel application, use the <B>SetCaretBlinkTime</B> function to set the blink time rate to a specified number of milliseconds.</P>
+
+<P>The following code example shows how the double the current blink time for the caret.</P>
+
+<PRE class="code">UINT i = GetCaretBlinkTime();
+SetCaretBlinkTime(i * 2);</PRE>
+
+<P>To determine the caret position, use the <A HREF="wce50lrfgetcaretpos.htm">GetCaretPos</A> function. An application can move a caret in a window by using the <B>SetCaretPos</B> function. A window can move a caret only if it already owns the caret. <B>SetCaretPos</B> can move the caret whether or not it is visible.</P>
+
+<P>The following code example shows how to obtain the position of the caret and displays that position in a message box.</P>
+
+<PRE class="code">POINT pt; //Position of the caret in the client window 
+GetCaretPos(&amp;pt);
+wsprintf(szTemp,TEXT("X Pos: %d Y Pos: %d"), pt.x, pt.y);
+MessageBox(hWnd, szTemp, TEXT("GetCaretPos"), MB_OK);</PRE>
+
+<P>You can temporarily remove a caret by hiding it, or you can permanently remove the caret by destroying it. To hide the caret, use the <A HREF="wce50lrfhidecaret.htm">HideCaret</A> function. This is useful when the application must redraw the screen while processing a message, but must keep the caret out of view. When the application finishes drawing, it can display the caret again by using the <B>ShowCaret</B> function. Hiding the caret does not destroy its shape or invalidate the insertion point. Hiding the caret is cumulative; that is, if the application calls <A HREF="wce50lrfhidecaret.htm">HideCaret</A> five times, it must also call <B>ShowCaret</B> five times before the caret will reappear.</P>
+
+<P>To remove the caret from the screen and destroy its shape, use the <A HREF="wce50lrfdestroycaret.htm">DestroyCaret</A> function. <B>DestroyCaret</B> destroys the caret only if the window involved in the current task owns the caret.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingresources147.htm">Using Resources</A> | <A HREF="wce50origwesapplicationdevelopment.htm">GWES Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20a%20Caret (wce50concreatingacaret.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

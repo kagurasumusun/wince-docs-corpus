@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Light Mapping with Textures</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conlightmappingwithtextures"></A>Light Mapping with Textures</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>For an application to realistically render a 3-D scene, it must take into account the effect that light sources have on the appearance of the scene. Although techniques such as flat and Gouraud shading are valuable tools in this respect, they can be insufficient for your needs. Microsoft&reg; Direct3D&reg; Mobile supports multipass and multiple texture blending. These capabilities enable your application to render scenes with a more realistic appearance than scenes rendered with shading techniques alone. By applying one or more light maps, your application can map areas of light and shadow onto its primitives.</P>
+
+<P>A light map is a texture or group of textures that contains information about lighting in a 3-D scene. You can store the lighting information in the alpha values of the light map, in the color values, or in both.</P>
+
+<P>If you implement light mapping using multipass texture blending, your application should render the light map onto its primitives on the first pass. It should use a second pass to render the base texture. The exception to this is specular light mapping. In that case, render the base texture first; then add the light map.</P>
+
+<P>Multiple texture blending enables your application to render the light map and the base texture in one pass. If the user's hardware provides for multiple texture blending, your application should take advantage of it when performing light mapping. This significantly improves your application's performance.</P>
+
+<P>Using light maps, a Direct3D Mobile application can achieve a variety of lighting effects when it renders primitives. It can map not only monochrome and colored lights in a scene, but it can also add details such as specular highlights and diffuse lighting.</P>
+
+<H2 class="dtH2">Monochrome Light Maps</H2>
+
+<P>Some older 3-D accelerator boards do not support texture blending using the alpha value of the destination pixel. For more information, see <A HREF="wce50conalphatextureblending.htm">Alpha Texture Blending</A>. These adapters also generally do not support multiple texture blending. If your application is running on an adapter such as this, it can use multipass texture blending to perform monochrome light mapping. </P>
+
+<P>To perform monochrome light mapping, an application stores the lighting information in the alpha data of its light map textures. The application uses the texture filtering capabilities of Direct3D Mobile to perform a mapping from each pixel in the primitive's image to a corresponding texel in the light map. It sets the source blending factor to the alpha value of the corresponding texel.</P>
+
+<P>The following code example shows how an application can use a texture as a monochrome light map.</P>
+
+<PRE class="code">// This example assumes that d3dmDevice is a valid pointer to an
+// IDirect3DMobileDevice interface and that lptexLightMap is a valid
+// pointer to a texture that contains monochrome light map data.
+
+// Set the light map texture as the current texture.
+d3dmDevice-&gt;SetTexture(0, lptexLightMap);
+
+// Set the color operation.
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLOROP, D3DMTOP_SELECTARG1);
+
+// Set argument 1 to the color operation.
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLORARG1,
+       D3DMTA_TEXTURE | D3DMTA_ALPHAREPLICATE);</PRE>
+
+<P>Because display adapters that do not support destination alpha blending usually do not support multiple texture blending, this example sets the light map as the first texture, which is available on all 3-D accelerator cards. The sample code sets the color operation for the texture's blending stage to blend the texture data with the primitive's existing color. It then selects the first texture and the primitive's existing color as the input data.</P>
+
+<H2 class="dtH2">Color Light Maps</H2>
+
+<P>Your application will usually render 3-D scenes more realistically if it uses colored light maps. A colored light map uses the RGB data in the light map for its lighting information. </P>
+
+<P>The following code example shows light mapping with RGB color data.</P>
+
+<PRE class="code">// This example assumes that d3dmDevice is a valid pointer to an
+// IDirect3DMobileDevice interface and that lptexLightMap is a valid
+// pointer to a texture that contains RGB light map data.
+ 
+// Set the light map texture as the first texture.
+d3dmDevice-&gt;SetTexture(0, lptexLightMap);
+
+d3dmDevice-&gt;SetTextureStageState( 0,D3DMTSS_COLOROP, D3DMTOP_MODULATE );
+d3dmDevice-&gt;SetTextureStageState( 0,D3DMTSS_COLORARG1, D3DMTA_TEXTURE );
+d3dmDevice-&gt;SetTextureStageState( 0,D3DMTSS_COLORARG2, D3DMTA_DIFFUSE );</PRE>
+
+<P>This example sets the light map as the first texture. It then sets the state of the first blending stage to modulate the incoming texture data. It uses the first texture and the current color of the primitive as the arguments to the modulate operation.</P>
+
+<H2 class="dtH2">Specular Light Maps</H2>
+
+<P>When illuminated by a light source, shiny objects &#0151; those that use highly reflective materials &#0151; receive specular highlights. In some cases, the specular highlights produced by the lighting module is not accurate. To produce a more appealing highlight, Direct3D Mobile applications can apply specular light maps to primitives.</P>
+
+<P>To perform specular light mapping, first modulate the specular light map with the primitive's existing texture. Then add the monochrome or RGB light map.</P>
+
+<P>The following code example shows this process.</P>
+
+<PRE class="code">// This example assumes that d3dmDevice is a valid pointer to an
+// IDirect3DMobileDevice interface.
+// lptexBaseTexture is a valid pointer to a texture.
+// lptexSpecLightMap is a valid pointer to a texture that contains RGB
+// specular light map data.
+// lptexLightMap is a valid pointer to a texture that contains RGB
+// light map data.
+
+// Set the base texture.
+d3dmDevice-&gt;SetTexture(0, lptexBaseTexture );
+
+// Set the base texture operation and arguments.
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLOROP, D3DMTOP_MODULATE );
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLORARG1, D3DMTA_TEXTURE );
+d3dmDevice-&gt;SetTextureStageState(0, D3DMTSS_COLORARG2, D3DMTA_DIFFUSE );
+
+// Set the specular light map.
+d3dmDevice-&gt;SetTexture(1, lptexSpecLightMap);
+
+// Set the specular light map operation and args.
+d3dmDevice-&gt;SetTextureStageState(1, D3DMTSS_COLOROP, D3DMTOP_ADD );
+d3dmDevice-&gt;SetTextureStageState(1, D3DMTSS_COLORARG1, D3DMTA_TEXTURE );
+d3dmDevice-&gt;SetTextureStageState(1, D3DMTSS_COLORARG2, D3DMTA_CURRENT );
+ 
+// Set the RGB light map.
+d3dmDevice-&gt;SetTexture(2, lptexLightMap);
+ 
+// Set the RGB light map operation and arguments.
+d3dmDevice-&gt;SetTextureStageState(2,D3DMTSS_COLOROP, D3DMTOP_MODULATE);
+d3dmDevice-&gt;SetTextureStageState(2,D3DMTSS_COLORARG1, D3DMTA_TEXTURE );
+d3dmDevice-&gt;SetTextureStageState(2,D3DMTSS_COLORARG2, D3DMTA_CURRENT );</PRE>
+
+<H2 class="dtH2">Diffuse Light Maps</H2>
+
+<P>When illuminated by a light source, matte surfaces display diffuse light reflection. The brightness of diffuse light depends on the distance from the light source and the angle between the surface normal and the light source direction vector. The diffuse lighting effects simulated by lighting calculations produce only general effects. </P>
+
+<P>Your application can simulate more complex diffuse lighting with texture light maps. Do this by adding the diffuse light map to the base texture, as shown in the following code example.</P>
+
+<PRE class="code">// This example assumes that d3dmDevice is a valid pointer to an
+// IDirect3DMobileDevice interface.
+// lptexBaseTexture is a valid pointer to a texture.
+// lptexDiffuseLightMap is a valid pointer to a texture that contains 
+// RGB diffuse light map data.
+ 
+// Set the base texture.
+d3dmDevice-&gt;SetTexture(0,lptexBaseTexture );
+ 
+// Set the base texture operation and args.
+d3dmDevice-&gt;SetTextureStageState(0,D3DMTSS_COLOROP,
+       D3DMTOP_MODULATE );
+d3dmDevice-&gt;SetTextureStageState(0,D3DMTSS_COLORARG1, D3DMTA_TEXTURE );
+d3dmDevice-&gt;SetTextureStageState(0,D3DMTSS_COLORARG2, D3DMTA_DIFFUSE );
+ 
+// Set the diffuse light map.
+d3dmDevice-&gt;SetTexture(1,lptexDiffuseLightMap );
+ 
+// Set the blend stage.
+d3dmDevice-&gt;SetTextureStageState(1, D3DMTSS_COLOROP, D3DMTOP_MODULATE );
+d3dmDevice-&gt;SetTextureStageState(1, D3DMTSS_COLORARG1, D3DMTA_TEXTURE );
+d3dmDevice-&gt;SetTextureStageState(1, D3DMTSS_COLORARG2, D3DMTA_CURRENT );</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contextureblending.htm">Texture Blending</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Light%20Mapping%20with%20Textures (wce50conlightmappingwithtextures.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

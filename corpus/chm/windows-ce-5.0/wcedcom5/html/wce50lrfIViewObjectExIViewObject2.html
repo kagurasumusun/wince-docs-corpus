@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IViewObjectEx</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiviewobjectexiviewobject2"></A>IViewObjectEx:IViewObject2</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This interface is an extension derived from the <A HREF="wce50lrfiviewobject2iviewobject.htm">IViewObject2</A> interface to provide support for: 
+
+<UL type="disc">
+	<LI>Enhanced, flicker-free drawing for non-rectangular objects and transparent objects.</li>
+
+	<LI>Hit testing for non-rectangular objects.</li>
+
+	<LI>Control sizing.</li>
+</UL>
+
+<H4 class="dtH4">Flicker free drawing</H4>
+
+<P>Containers can now choose between a variety of drawing algorithms, depending on their sophistication and the situation.</P>
+
+<P>Flicker is created by redrawing the background before letting an object redraw its foreground as in the back-to-front drawing algorithm known as the Painter's Algorithm. There are essentially two ways to avoid flickering: 
+
+<UL type="disc">
+	<LI>Draw into an off-screen bitmap and then copy the resulting image to the screen in one chunk. This technique might require significant additional resources to store the off-screen image, depending on the size of the region to drawn, the resolution, and the number of colors. </li>
+
+	<LI>Draw front to back, instead of back to front, excluding each rectangular area from the clipping region as soon as its has been painted. 
+<P>One benefit of this technique is that each pixel is painted only once. Speed depends essentially on the performance of the clipping support. 
+</li>
+</UL>
+
+<P>Each technique has advantages and disadvantages, depending on the specific situation. There is no single algorithm that is most efficient in all situations. </P>
+
+<P>Depending on the situation and their sophistication, containers can choose to use one or another, or a combination of both. </P>
+
+<P>The <B>IViewObjectEx</B> interface provides methods to support both techniques or a combination of the two. </P>
+
+<P>Simple containers can implement a simplistic back-to-front painting algorithm directly to the screen. The speed is likely to be high but so will flicker. </P>
+
+<P>If flicker is to be reduced to a minimum, painting to an off-screen device context is the solution of choice. </P>
+
+<P>If memory consumption is a problem, containers can use clipping to reduce the use of off-screen bitmaps.</P>
+
+<P>To draw as flicker-free as possible without using an off-screen bitmap, the container will have to paint in two passes. </P>
+
+<P>The first pass is done front to back. During that pass, each object draws regions of itself that are cheap enough to clip out efficiently and that it can entirely obscure. These regions are known as opaque. After each object is done, the container clips out the regions just painted to ensure that subsequent objects will not modify the bits on the screen.</P>
+
+<P>During the second pass, which occurs back to front, each object draws its remaining parts &#0151; irregular, oblique, or text, which are in general difficult to clip out. Such parts are known as transparent. At this point, the container is responsible for clipping out any opaque, already painted regions in front of the object currently drawing. </P>
+
+<P>The less painting during this second pass, the less flicker on the screen.</P>
+
+<P>Clipping during the second pass may be very inefficient because the clipping region needs to be recreated for every object that has something to draw. This might be acceptable if not too many overlapping objects have irregular or transparent parts. </P>
+
+<P>An object can tell its container ahead of time whether it wants to be called during this second pass.</P>
+
+<P>If the container provides an off-screen bitmap to paint into, it can skip the first pass and ask every object to render itself entirely during the second pass. </P>
+
+<P>In certain cases, the container can also decide that flicker is not a problem and use that same technique while painting directly on screen. For example, flicker might be acceptable when painting a form for the first time, but not when repainting. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>Although documented here, two pass drawing is not currently used by any containers.</BLOCKQUOTE>
+
+<H4 class="dtH4">Hit testing for non-rectangular objects</H4>
+
+<P>The <B>IViewObjectEx</B> interface supports hit detection for non-rectangular objects. Using the <A HREF="wce50lrfiviewobjectexqueryhitpoint.htm">QueryHitPoint</A> and <A HREF="wce50lrfiviewobjectexqueryhitrect.htm">QueryHitRect</A> methods, the object can participate in the hit-test logic with the container.</P>
+
+<H4 class="dtH4">Control Sizing</H4>
+
+<P>The <B>IViewObjectEx</B> interface allows controls to provide sizing hints as the user resizes the control. The control can specify a minimum and maximum size and can specify the nearest good size to a size requested by the user.</P>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>Implement this interface on objects that need to support efficient flicker-free drawing, non-rectangular hit testing, or control sizing. This interface is derived from the <B>IViewObject2</B> interface, which in turn is derived from the <A HREF="wce50lrfiviewobjectiunknown.htm">IViewObject</A> interface.</P>
+
+<P>All <B>IViewObjectEx</B> methods described in this document that take or return a position assume that the location is expressed in HIMETRIC units relative to the origin of the object.</P>
+
+<H4 class="dtH4">When to Use</H4>
+
+<P>Containers call the methods of this interface to draw objects in an efficient, flicker-free manner, to test whether points or rectangles are within the object, or to resize controls.</P>
+
+<H4 class="dtH4">Methods</H4>
+
+<P>The following table shows the methods for this interface in the order that the compiler calls the methods. Like all COM interfaces, this interface inherits the methods for the <A HREF="wce50lrfiunknown.htm">IUnknown</A> interface.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>IUnknown method</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiunknownqueryinterface.htm">QueryInterface</A></TD>
+<TD width=74%>Returns pointers to supported interfaces. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiunknownaddref.htm">AddRef</A></TD>
+<TD width=74%>Increments reference count. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiunknownrelease.htm">Release</A></TD>
+<TD width=74%>Decrements reference count. </TD>
+</TR>
+</table></div>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>Method</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectdraw.htm">Draw</A></TD>
+<TD width=74%>Draws a representation of an object onto the specified device context.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectfreeze.htm">Freeze</A></TD>
+<TD width=74%>Freezes an aspect of the object's presentation so it does not change until the <B>IViewObject::Unfreeze</B> method is called. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectgetadvise.htm">GetAdvise</A></TD>
+<TD width=74%>Retrieves the existing advisory connection on the object if there is one and returns the parameters used in the most recent call to the <B>IViewObject::SetAdvise</B> method.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectgetcolorset.htm">GetColorSet</A></TD>
+<TD width=74%>Returns the logical palette that the object uses for drawing in its <B>IViewObject::Draw</B> method with the corresponding parameters.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectsetadvise.htm">SetAdvise</A></TD>
+<TD width=74%>Establishes a connection between the view object and an advise sink so the advise sink can be notified about changes in the object's view.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectunfreeze.htm">Unfreeze</A></TD>
+<TD width=74%>Releases a previously frozen drawing.</TD>
+</TR>
+</table></div>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>IViewObject2 method</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobject2getextent.htm">GetExtent</A></TD>
+<TD width=74%>Returns the size that the specified view object will be drawn on the specified target device. </TD>
+</TR>
+</table></div>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>IViewObjectEx methods</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectexgetnaturalextent.htm">GetNaturalExtent</A></TD>
+<TD width=74%>Provides sizing hints from the container for the object to use as the user resizes it. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectexgetrect.htm">GetRect</A></TD>
+<TD width=74%>Returns a rectangle describing a requested drawing aspect. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectexgetviewstatus.htm">GetViewStatus</A></TD>
+<TD width=74%>Returns information about the opacity of the object and what drawing aspects are supported. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectexqueryhitpoint.htm">QueryHitPoint</A></TD>
+<TD width=74%>Indicates whether a point is within a given aspect of an object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%><A HREF="wce50lrfiviewobjectexqueryhitrect.htm">QueryHitRect</A></TD>
+<TD width=74%>Indicates whether any point in a rectangle is within a given drawing aspect of an object. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Ocidl.h, Ocidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfiviewobject2getextent.htm">IViewObject2</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IViewObjectEx (wce50lrfiviewobjectexiviewobject2.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

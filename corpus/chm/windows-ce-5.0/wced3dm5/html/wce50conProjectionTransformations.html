@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Projection Transformations</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conprojectiontransformations"></A>Projection Transformations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>You can think of the projection transformation as controlling the camera's internals; it is analogous to choosing a lens for the camera. This is the most complicated of the three transformation types.</P>
+
+<H2 class="dtH2">Viewing Frustum</H2>
+
+<P>A viewing frustum is 3-D volume in a scene positioned relative to the viewport's camera. The shape of the volume affects how models are projected from camera space onto the screen. The most common type of projection, a perspective projection, is responsible for making objects near the camera appear bigger than objects in the distance. For perspective viewing, the viewing frustum can be visualized as a pyramid, with the camera positioned at the tip. This pyramid is intersected by a front and back clipping plane. The volume within the pyramid between the front and back clipping planes is the viewing frustum. Objects are visible only when they are in this volume.</P>
+
+<P class="fig"><IMG SRC="dx3d-frustum.gif" ALT="" BORDER=0></P>
+
+<P>If you imagine that you are standing in a dark room and looking through a square window, you are visualizing a viewing frustum. In this analogy, the near clipping plane is the window, and the back clipping plane is whatever finally interrupts your view &#0151; the skyscraper across the street, the mountains in the distance, or nothing at all. You can see everything inside the truncated pyramid that starts at the window and ends with whatever interrupts your view, and you can see nothing else.</P>
+
+<P>The viewing frustum is defined by <I>fov</I> (field of view) and by the distances of the front and back clipping planes, specified in z-coordinates.</P>
+
+<P class="fig"><IMG SRC="dx3d-fovdiag.gif" ALT="" BORDER=0></P>
+
+<P>In this illustration, the variable <I>D</I> is the distance from the camera to the origin of the space that was defined in the last part of the geometry pipeline &#0151; the viewing transformation. This is the space around which you arrange the limits of your viewing frustum.</P>
+
+<H2 class="dtH2">The Projection Transformation</H2>
+
+<P>The projection matrix is typically a scale and perspective projection. The projection transformation converts the viewing frustum into a cuboid shape. Because the near end of the viewing frustum is smaller than the far end, this has the effect of expanding objects that are near to the camera; this is how perspective is applied to the scene.</P>
+
+<P>With the viewing frustum, the distance between the camera required by the projection transformation and the origin of the space defined by the viewing transformation is defined as <I>D</I>. A beginning for a matrix defining the perspective projection might use this <I>D</I> variable like this:</P>
+
+<P class="fig"><IMG SRC="dx3d-projmat1.gif" ALT="" BORDER=0></P>
+
+<P>The viewing matrix puts the camera at the origin of the scene. Because the projection matrix needs to have the camera at (0, 0, -<I>D</I>), it translates the vector by -<I>D</I> in the z-direction, by using the following matrix.</P>
+
+<P class="fig"><IMG SRC="dx3d-projmat2.gif" ALT="" BORDER=0></P>
+
+<P>Multiplying these two matrices gives the following composite matrix.</P>
+
+<P class="fig"><IMG SRC="dx3d-projmat3.gif" ALT="" BORDER=0></P>
+
+<P>The following illustration shows how the perspective transformation converts a viewing frustum into a new coordinate space. Notice that the frustum becomes cuboid and also that the origin moves from the upper-right corner of the scene to the center.</P>
+
+<P class="fig"><IMG SRC="dx3d-cuboid.gif" ALT="" BORDER=0></P>
+
+<P>In the perspective transformation, the limits of the x- and y-directions are -1 and 1. The limits of the z-direction are 0 for the front plane and 1 for the back plane.</P>
+
+<P>This matrix translates and scales objects based on a specified distance from the camera to the near clipping plane, but it does not consider the field of view (<I>fov</I>), and the z-values that it produces for objects in the distance can be nearly identical, making depth comparisons difficult. The following matrix addresses these issues, and it adjusts vertices to account for the aspect ratio of the viewport, making it a good choice for the perspective projection.</P>
+
+<P class="fig"><IMG SRC="dx3d-prjmatx1.gif" ALT="" BORDER=0></P>
+
+<P>In this matrix, <I>Z<SUB>n</SUB></I> is the z-value of the near clipping plane. The variables <I>w</I>, <I>h</I>, and <I>Q</I> have the following meanings. Note that <I>fov<SUB>w</SUB></I> and <I>fov<SUB>h</SUB></I> represent the viewport's horizontal and vertical fields of view, in radians.</P>
+
+<P class="fig"><IMG SRC="dx3d-prjmatx2.gif" ALT="" BORDER=0></P>
+
+<P>For your application, using field-of-view angles to define the x and y scaling coefficients might not be as convenient as using the viewport's horizontal and vertical dimensions (in camera space). As the math works out, the following two formulas for <I>w</I> and <I>h</I> use the viewport's dimensions, and are equivalent to the preceding formulas.</P>
+
+<P class="fig"><IMG SRC="dx3d-prjmatx3.gif" ALT="" BORDER=0></P>
+
+<P>In these formulas, <I>Z<SUB>n</SUB></I> represents the position of the near clipping plane, and the <I>V<SUB>w</SUB></I> and <I>V<SUB>h</SUB></I> variables represent the width and height of the viewport, in camera space. </P>
+
+<P>For a C++ application, these two dimensions correspond directly to the <B>Width</B> and <B>Height</B> members of the <A HREF="wce50lrfd3dmviewport.htm">D3DMVIEWPORT</A> structure.</P>
+
+<P>Whatever formula you decide to use, it is important that you set <I>Z<SUB>n</SUB></I> to as large a value as possible, as z-values extremely close to the camera do not vary by much. This makes depth comparisons using 16-bit z-buffers somewhat complicated. </P>
+
+<P>As with the world and view transformations, you call the <A HREF="wce50lrfidirect3dmobiledevicesettransform.htm">IDirect3DMobileDevice::SetTransform</A> method to set the projection transformation.</P>
+
+<H2 class="dtH2">W-Friendly Projection Matrix</H2>
+
+<P>Microsoft&reg; Direct3D&reg; Mobile can use the W component of a vertex that has been transformed by the world, view, and projection matrices to perform depth-based calculations in depth-buffer or fog effects. Computations such as these require that your projection matrix normalize W to be equivalent to world-space Z. In short, if your projection matrix includes a (3,4) coefficient that is not 1, you must scale all the coefficients by the inverse of the (3,4) coefficient to make a proper matrix. If you do not provide a compliant matrix, fog effects and depth buffering are not applied correctly. The matrix shown above in The Projection Transformation is compliant with w-based calculations.</P>
+
+<P>The following illustration shows a noncompliant projection matrix, when e&lt;&gt;1, and the same matrix scaled so that eye-relative fog will be enabled.</P>
+
+<P class="fig"><IMG SRC="dx3d-eyerlmx.gif" ALT="" BORDER=0></P>
+
+<P>In the preceding matrices, all variables are assumed to be nonzero.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>Direct3D Mobile uses the currently set projection matrix in its w-based depth calculations. As a result, applications must set a compliant projection matrix to receive the desired w-based features, even if they do not use the Direct3D Mobile transformation pipeline.</BLOCKQUOTE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concoordinatetransformationmatrices.htm">Coordinate Transformation Matrices</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Projection%20Transformations (wce50conprojectiontransformations.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

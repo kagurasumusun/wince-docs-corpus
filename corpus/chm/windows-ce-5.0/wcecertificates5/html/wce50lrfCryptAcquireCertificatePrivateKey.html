@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptAcquireCertificatePrivateKey</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptacquirecertificateprivatekey"></A>CryptAcquireCertificatePrivateKey</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function acquires a <A HREF="wce50lrfhcryptprov.htm">HCRYPTPROV</A> cryptographic service provider (CSP) handle including access to its related key container and the <I>dwKeySpec</I> parameter for a user's specified certificate context. This function is used to get access to a user's private key when the user's certificate is available and the handle of a CSP with the user's key container is not available. This function can be used by the owner of a private key and not by any other user.</P>
+
+<P>If a CSP handle and the key container containing a user's private key are available, the <A HREF="wce50lrfcryptgetuserkey.htm">CryptGetUserKey</A> function can be used.</P>
+
+<PRE class="syntax"><B>BOOL</B> <B>WINAPI</B> <B>CryptAcquireCertificatePrivateKey(</B>
+  <B>PCCERT_CONTEXT</B> <I>pCert</I><B>, </B>
+  <B>DWORD</B> <I>dwFlags</I><B>,</B>
+  <B>void* </B><I>pvReserved</I><B>,</B>
+  <B>HCRYPTPROV* </B><I>phCryptProv</I><B>,</B>
+  <B>DWORD* </B><I>pdwKeySpec</I><B>,</B>
+  <B>BOOL* </B><I>pfCallerFreeProv</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pCert </I></DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A> structure containing the specified certificate context. This is the certificate context for which a private key will be acquired.</dd>
+
+<DT><I>dwFlags </I></DT>
+
+<DD>[in] Bitmask of flags. The following table shows values for this parameter.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CRYPT_ACQUIRE_CACHE_FLAG</TD>
+<TD width=53%>An <B>HCRYPTPROV</B> value is returned as the <I>phCryptProv </I>parameter. If an <B>HCRYPTPROV</B> value is already acquired and cached, that <B>HCRYPTPROV</B> value is returned. Otherwise, a new <B>HCRYPTROV</B> value is acquired and cached by using the certificate's CERT_KEY_CONTEXT_PROP_ID.
+<P>In any case, when this flag is set, the <I>pfCallerFreeProv</I> parameter returns FALSE and the calling application must not free the cached <B>HCRYPTPROV</B> value.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CRYPT_ACQUIRE_USE_PROV_INFO_FLAG</TD>
+<TD width=53%>Uses the certificate's property CERT_KEY_PROV_INFO_PROP_ID to determine if caching should be accomplished. For more information on CERT_KEY_PROV_INFO_PROP_ID, see the <A HREF="wce50lrfcertsetcertificatecontextproperty.htm">CertSetCertificateContextProperty</A> function.
+<P>Uses caching, but only if during a previous call the <I>dwFlags</I> parameter of the <A HREF="wce50lrfcryptkeyprovinfo.htm">CRYPT_KEY_PROV_INFO</A> structure was CERT_SET_KEY_CONTEXT_PROP.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CRYPT_ACQUIRE_COMPARE_KEY_FLAG</TD>
+<TD width=53%>The public key in the certificate is compared with the public key returned by the CSP. If the keys do not match, the acquisition operation fails and the last error code is set to NTE_BAD_PUBLIC_KEY. If a cached <B>HCRYPTPROV</B> value is returned, no comparison is made.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pvReserved </I></DT>
+
+<DD>[in] Reserved for future use and must be set to NULL.</dd>
+
+<DT><I>phCryptProv</I> </DT>
+
+<DD>[out] Pointer to the returned <B>HCRYPTPROV</B> value. Depending on the <I>dwFlags</I> value, the <B>HCRYPTPROV </B>value must be freed by the calling application or explicitly freed on the last free action of the certificate context.</dd>
+
+<DT><I>pdwKeySpec </I></DT>
+
+<DD>[out] Pointer to a <B>DWORD</B> value identifying the private key to use from the acquired provider's key container. The value can be AT_KEYEXCHANGE or AT_SIGNATURE.</dd>
+
+<DT><I>pfCallerFreeProv </I></DT>
+
+<DD>[out] Pointer to a BOOL flag. The flag is returned set to FALSE if one of the following conditions is met: 
+
+<UL type="disc">
+	<LI>Public key acquisition or comparison fails.</li>
+
+	<LI>CRYPT_ACQUIRE_CACHE_FLAG is set.</li>
+
+	<LI>CRYPT_ACQUIRE_USE_PROV_INFO_FLAG is set, the certificate context property is set to CERT_KEY_PROV_INFO_PROP_ID with the <B>CRYPT_KEY_PROV_INFO</B> structure, and the <I>dwFlags</I> parameter is set to CERT_SET_KEY_CONTEXT_PROP_ID.</li>
+</UL>
+
+
+<P>If the <I>fCallerFreeProv</I> flag is returned FALSE, the calling application must not free the returned <B>HCRYPTPROV</B> value. The returned <B>HCRYPTPROV</B> value is freed on the last free action of the certificate context.
+
+
+<P>When the <I>fCallerFreeProv</I> flag is set to TRUE, the returned <B>HCRYPTPROV</B> value must be freed by calling the <A HREF="wce50lrfcryptreleasecontext.htm">CryptReleaseContext</A> function.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is nonzero, or TRUE.</P>
+
+<P>If the function fails, the return value is zero, or FALSE.</P>
+
+<P>For extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function. The following table shows one possible error code.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Value</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>NTE_BAD_PUBLIC_KEY</TD>
+<TD width=72%>The public key in the certificate does not match the public key returned by the CSP. This error code is returned if CRYPT_ACQUIRE_COMPARE_KEY_FLAG is set and the public key in the certificate does not match the public key returned by the cryptographic provider.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfhcryptprov.htm">HCRYPTPROV</A> | <A HREF="wce50lrfcertsetcertificatecontextproperty.htm">CertSetCertificateContextProperty</A> | <A HREF="wce50lrfcryptgetuserkey.htm">CryptGetUserKey</A> | <A HREF="wce50lrfcryptreleasecontext.htm">CryptReleaseContext</A> | <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A> | <A HREF="wce50lrfcryptkeyprovinfo.htm">CRYPT_KEY_PROV_INFO</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptAcquireCertificatePrivateKey (wce50lrfcryptacquirecertificateprivatekey.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

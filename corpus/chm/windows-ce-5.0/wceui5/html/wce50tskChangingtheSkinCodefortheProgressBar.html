@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Changing the Skin Code for the Progress Bar</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50tskchangingtheskincodefortheprogressbar"></A>Changing the Skin Code for the Progress Bar</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In <A HREF="wce50howcloningcommctrlmodule.htm">Cloning the Commctrl Module</A>, you made a local copy of the skin code for all common controls for use with your run-time image. The following code shows the changes you can make to the local copy of the progress bar skin code, Progressview.cpp. </P>
+
+<P>These changes cause the progress bar to advance from the right to the left rather than from left to right. The code in Progressview.cpp provides the implementations in your run-time image for the methods in the <A HREF="wce50lrfprogressbarviewt.htm">ProgressBarView_t</A> interface.</P>
+
+<P class="labelproc"><B>To change the progress bar code</B>
+
+<OL type="1">
+	<LI>Select the <B>FileView</B> tab. Expand the <B>Projects</B> node, and navigate to CommctrlView\Source Files. Double-click the Progressview.cpp file in the list of source files. 
+<P>The window for this source file opens.
+</li>
+
+	<LI>The following code provides a schematic view of the code in Progessview.cpp and shows the two sections of the drawing code that you should delete and replace.
+<PRE class="code">void ProgressBarView_t::Draw(  /* ... Parameters ... */ )
+{
+// Variable declarations.
+/* ... */
+
+// Find the device context.
+/* ... */
+
+// Determines and sets the size and parameters of the control.
+/* ... */
+
+  for ( i = 0; i &lt; nBlocks; i++ )
+  {      
+    if ( dwStyle &amp; PBS_VERTICAL )
+    {         
+      // Calculations for a vertical progress bar.
+      /* ... */
+    }
+    else
+    {
+      // Calculations for a horizontal progress bar.
+
+      // ----- Original code for drawing left-to-right -----
+      // Delete:  rc.right = rc.left + dxBlock;
+      // Delete:  // Are we past the end?
+      // Delete:  if (rc.left &gt;= rcClient.right)
+      // Delete:  {
+      // Delete:    break;
+      // Delete:  }
+      // Delete:  
+      // Delete:  if (rc.right &gt;= rcClient.right) 
+      // Delete:  {
+      // Delete:    rc.right = rcClient.right - 1;
+      // Delete:  }
+      // ---------------------------------------------------
+
+
+      // ======== New code for drawing right-to-left =======
+
+      rc.left = rc.right - dxBlock;
+
+      // Check to see if the bar is already starting
+      // after the end of its range.
+      if (rc.right &lt;= rcClient.left)
+      {
+        break;
+      }
+
+      if (rc.left &lt;= rcClient.left) 
+      {
+        rc.left = rcClient.left - 1;
+      }
+      // ===================================================
+
+    }
+        
+    // Make the actual drawing call.
+    /* ... */
+        
+    if (dwStyle &amp; PBS_VERTICAL) 
+    {
+      // Advance a vertical progress bar.
+      /* ... */
+    } 
+    else 
+    {
+      // ----- Original code for drawing left-to-right -----
+      // Delete:
+      // Delete:  rc.left = rc.right + dxSpace;
+      // Delete:
+      // ---------------------------------------------------
+
+
+      // ======== New code for drawing right-to-left =======
+
+        rc.right = rc.left - dxSpace;
+
+      // ===================================================
+      }
+    }
+
+    // Cleanup.
+    /* ... */
+
+  }
+}</PRE>
+</li>
+
+	<LI>From the <B>File</B> menu, choose <B>Save</B>, and then <B>Close</B> to close the File.</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50howhowtocustomizetheappearanceofcommoncontrols.htm">How to Customize the Appearance of Common Controls</A> | <A HREF="wce50lrfprogressbarviewt.htm">ProgressBarView_t</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Changing%20the%20Skin%20Code%20for%20the%20Progress%20Bar (wce50tskchangingtheskincodefortheprogressbar.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing Files on Other Storage Media</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfLoadLibrary">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateProcess">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conaccessingfilesonotherstoragemedia"></A>Accessing Files on Other Storage Media</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A Windows CE&#0150;based device has other areas to store data besides the object store. You can access a file that is stored in ROM just like any other file: by calling the file API. However, you cannot alter a file that is stored in ROM. Instead, ROM-based files are marked with the FILE_ATTRIBUTE_INROM value, which indicates that they are read-only. Windows CE also uses the FILE_ATTRIBUTE_ROMMODULE value to indicate that a file is designated to be executed in ROM, instead of copied to RAM. You cannot use the <A HREF="wce50lrfcreatefile.htm">CreateFile</A> function to open files that are designated with FILE_ATTRIBUTE_ROMMODULE. Instead, use the <A HREF="JavaScript:hhobj_1.Click()">LoadLibrary</A> and <A HREF="JavaScript:hhobj_2.Click()">CreateProcess</A> functions to gain access to the module.</P>
+
+<P>In addition, Windows CE supports PC Cards, such as ATA flash cards, and linear flash cards. These cards can have an installed file system that uses the storage space for files and databases. However, a mounted file system must be used in conjunction with an installed file-system driver, such as FAT. After you install a PC Card, you can copy database objects between the object store and the mounted volume.</P>
+
+<P>Windows CE does not assign a letter label to a storage card in the same manner that a desktop computer assigns a drive letter to a hard disk. Instead, the file driver creates directories in the root directory that represent each partition on each storage card. In Windows CE 2.0 and earlier, these directories were given default names, such as Storage Card or PC Card. In Windows CE 2.10, the FAT file-system driver queries the PC Card driver for a default name. If the PC Card driver does not supply a default name, Windows CE uses Storage Card. You can also tell the difference between a object store directory and a mounted volume directory by the file attributes. All of the directories on a mounted file system have the FILE_ATTRIBUTE_TEMPORARY file attribute flag set.</P>
+
+<P>The following code example shows how to open any Storage Card directories that exist and test them to see if they are located on a storage card.</P>
+
+<PRE class="code">void FindingStorageCards (void)
+{
+  TCHAR szMsg[100];       // String to store the error message
+  HANDLE hSearch;         // Search handle returned by FindFirstFile
+  WIN32_FIND_DATA  fd;    // Data structure describes the file found
+  BOOL bFinished = FALSE; // Flag to indicate whether the loop is done
+  TCHAR *szFname = TEXT("\\Storage Card*");
+                          // Name that matches all storage cards
+
+  // Ensure that Storage Card exists.
+  hSearch = FindFirstFile(szFname, &amp;fd);
+
+  if (hSearch == INVALID_HANDLE_VALUE)
+  {
+    wsprintf(szMsg, TEXT("No storage card found."));
+    return;
+  }
+
+  do {
+    // Test whether the file is really on a storage card, and
+    // not just a directory in the root directory.
+    // It must have both the directory attribute and
+    // the temporary attribute.
+
+    if (  (fd.dwFileAttributes &amp; FILE_ATTRIBUTE_TEMPORARY)
+       &amp;&amp; (fd.dwFileAttributes &amp; FILE_ATTRIBUTE_DIRECTORY) )
+    {
+      wsprintf (szMsg,
+                TEXT("%s is a storage card."), fd.cFileName);
+    }
+    else
+    {
+      wsprintf (szMsg,
+                TEXT("%s is not a storage card."), fd.cFileName);
+    }
+
+    if (!FindNextFile (hSearch, &amp;fd))
+    {
+      bFinished = TRUE;
+      if (GetLastError () != ERROR_NO_MORE_FILES)
+      {
+        wsprintf (szMsg,
+                  TEXT("Error trying to find files matching \"%s\"."),
+                  szFname);
+      }
+    }
+  }
+  while (!bFinished);
+
+  FindClose (hSearch);  // Close the search handle.
+
+} // End of FindingStorageCards example code</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50confilesystemoperations.htm">File System Operations</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Accessing%20Files%20on%20Other%20Storage%20Media (wce50conaccessingfilesonotherstoragemedia.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

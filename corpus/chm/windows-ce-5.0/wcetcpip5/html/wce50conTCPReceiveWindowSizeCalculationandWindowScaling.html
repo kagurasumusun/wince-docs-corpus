@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TCP Receive Window Size Calculation and Window Scaling</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50contcpreceivewindowsizecalculationandwindowscaling"></A>TCP Receive Window Size Calculation and Window Scaling</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The TCP receive window size is the amount of receive data (in bytes) that can be buffered at one time on a connection. The sending host can send only that amount of data before waiting for an acknowledgment and window update from the receiving host. The Windows CE TCP/IP stack was designed to tune itself in most environments, and uses larger default window sizes than earlier versions. Instead of using a hard-coded default receive window size, TCP adjusts to even increments of the maximum segment size (MSS) negotiated during connection setup. Matching the receive window to even increments of the MSS increases the percentage of full-sized TCP segments used during bulk data transmission. </P>
+
+<P>The receive window size defaults to a value calculated as follows: 
+
+<OL type="1">
+	<LI>The first connection request sent to a remote host advertises a receive window size of 16 KB (16,384) in Windows CE 3.0 and later. In Window CE 2.12, the advertised receive window size is 8 KB.</li>
+
+	<LI>Upon establishing the connection, the receive window size is rounded up to an increment of the maximum TCP segment size (MSS) which was negotiated during connection setup.</li>
+
+	<LI>If that is not at least four times the value of MSS, then it is adjusted to four times the value of MSS, with a maximum size of 64 KB, unless a window scaling option (RFC 1323) is in effect.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;In the Common.reg file for Windows CE 3.0 and later, <B>TCPWindowSize</B> was changed to 32 KB for Windows CE operating systems. Because USB operates at high speeds, a larger windows size, such as 32 KB, works better. If you do not set <B>TCPWindowSize</B>, the TCP/IP stack is 16 KB by default.</BLOCKQUOTE>
+</li>
+</OL>
+
+<P>You can set the receive window size to a specific value by setting the <B>TcpWindowSize</B><I> </I>registry entry described in <A HREF="wce50contcpipv4configurableregistrysettings.htm">TCP/IPv4 Configurable Registry Settings</A>. </P>
+
+<P>To improve performance on high-bandwidth, high delay networks, RFC 1323 support has been introduced in Windows CE. This RFC details a method for supporting scalable windows by allowing TCP to negotiate a scaling factor for the window size at connection establishment. This allows for an actual receive window of up to 1 gigabyte (GB). RFC 1323 Section 2.2 provides the following description of window scaling:</P>
+
+<P>2.2 Window Scale Option</P>
+
+<P>The three-byte Window Scale option may be sent in a SYN segment by a TCP. It has two purposes: (1) indicate that the TCP is prepared to do both send and receive window scaling, and (2) communicate a scale factor to be applied to its receive window. Thus, a TCP that is prepared to scale windows should send the option, even if its own scale factor is 1. The scale factor is limited to a power of two and encoded logarithmically, so it may be implemented by binary shift operations.</P>
+
+<P>&nbsp;&nbsp;&nbsp;TCP Window Scale Option (WSopt):</P>
+
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Kind: 3 Length: 3 bytes</P>
+
+<PRE class="code">             +---------+---------+---------+
+             | Kind=3  |Length=3 |shift.cnt|
+             +---------+---------+---------+</PRE>
+
+<P>This option is an offer, not a promise; both sides must send Window Scale options in their SYN segments to enable window scaling in either direction. If window scaling is enabled, then the TCP that sent this option will right-shift its true receive-window values by Shift.cnt bits for transmission in SEG.WND. The value Shift.cnt can be zero (offering to scale, while applying a scale factor of 1 to the receive window).</P>
+
+<P>This option may be sent in an initial &lt;SYN&gt; segment (for example, a segment with the SYN bit on and the ACK bit off). It may also be sent in a &lt;SYN,ACK&gt; segment, but only if a Window Scale option was received in the initial &lt;SYN&gt; segment. A Window Scale option in a segment without a SYN bit should be ignored.</P>
+
+<P>The Window field in a SYN (for example, a &lt;SYN&gt; or &lt;SYN,ACK&gt;) segment itself is never scaled.</P>
+
+<P>When you read network traces of a connection that was established by two computers that support scalable windows, keep in mind that the window sizes advertised in the trace must be scaled by the negotiated scale factor. The scale factor can be observed in the connection establishment (3-way handshake) packets.</P>
+
+<P>Windows CE uses window scaling automatically if the <B>TcpWindowSize</B> registry entry is set to a value greater than 64 KB. Window scaling can be disabled with the <B>Tcp1323Opts</B> registry entry.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contransmissioncontrolprotocoltcp.htm">Transmission Control Protocol (TCP)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TCP%20Receive%20Window%20Size%20Calculation%20and%20Window%20Scaling (wce50contcpreceivewindowsizecalculationandwindowscaling.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

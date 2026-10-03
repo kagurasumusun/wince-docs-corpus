@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Ensuring Communication Integrity</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conensuringcommunicationintegrity"></A>Ensuring Communication Integrity</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>After a security context is established, the application can use the SSPI message support functions to transmit signed messages. Signing a message ensures that the message cannot be tampered with.</P>
+
+<P>If an application wants to generate signed messages, the client must set the ISC_REQ_REPLAY_DETECT flag or the ISC_REQ_SEQUENCE_DETECT flag of the context attribute argument when first calling the <A HREF="wce50lrfinitializesecuritycontext.htm">InitializeSecurityContext</A> function.</P>
+
+<P>Signing messages requires that the client and the server security support providers establish a common session key used to both sign messages on the sender side of the communication, and to verify messages on the receiver side of the communication. Algorithms used in message signatures are known only to the security package.</P>
+
+<P>After an authenticated connection has been established, the client or server can pass the security context and a message to the <A HREF="wce50lrfmakesignature.htm">MakeSignature</A> function to generate a signature. <B>MakeSignature</B> generates a <I>checksum</I> of the message and also provides sequencing data to prevent the message from being modified in transit. A checksum is a calculated value used to test data for the presence of errors that can occur when data is transmitted.</P>
+
+<P>The following code example shows how to implement <B>MakeSignature</B>, and how to append the signature to the message so that the receiver can extract the signature when the message is received.</P>
+
+<PRE class="code">SecBuffer OutSecBuffer[2];
+SecBufferDesc OutBufferDesc;
+
+// Set up the buffer descriptors.
+OutBufferDesc.ulVersion = 0;
+OutBufferDesc.cBuffers = 2;
+OutBufferDesc.pBuffers = &amp;OutSecBuffer[0];
+
+OutSecBuffer[0].cbBuffer = MessageLen;
+OutSecBuffer[0].BufferType = SECBUFFER_DATA | SECBUFFER_READONLY;
+OutSecBuffer[0].pvBuffer = pMessage;
+
+OutSecBuffer[1].cbBuffer = SignatureLen;
+OutSecBuffer[1].BufferType = SECBUFFER_EMPTY;
+OutSecBuffer[1].pvBuffer = (pMessage + MessageLen); 
+
+// Call MakeSignature to get it signed.
+status = (*pSecurityInterface-&gt;MakeSignature) (&amp;hContext,
+                                               0,
+                                               &amp;BufferDesc,
+                                               ulMessageSeqNum);</PRE>
+
+<P>The sender then uses the buffer descriptor, including the signature, to construct a message to send to the receiver. After acquiring the message, the receiver disassembles it to recreate the buffer descriptor. The receiver then calls the <A HREF="wce50lrfverifysignature.htm">VerifySignature</A> function to verify that the message received is correct according to the data in the signature.</P>
+
+<P>The following code example shows how to implement <B>VerifySignature</B>.</P>
+
+<PRE class="code">SecBuffer InSecBuffer[2];
+SecBufferDesc InBufferDesc;
+
+// Set up the buffer descriptors.
+InBufferDesc.ulVersion = 0;
+InBufferDesc.cBuffers = 2;
+InBufferDesc.pBuffers = &amp;InSecBuffer[0];
+
+InSecBuffer[0].cbBuffer = MessageLen;
+InSecBuffer[0].BufferType = SECBUFFER_DATA | SECBUFFER_READONLY;
+InSecBuffer[0].pvBuffer = pMessage;
+
+InSecBuffer[1].cbBuffer = SignatureLen;
+InSecBuffer[1].BufferType = SECBUFFER_TOKEN;
+InSecBuffer[1].pvBuffer = (pMessage + MessageLen); 
+
+// Call VerifySignature to verify the message signature.
+status = (*pSecurityInterface-&gt;VerifySignature) (&amp;hContext,
+                                                 &amp;BufferDesc,
+                                                 ulMessageSeqNum,
+                                                 &amp;ulQualityProtection);</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conprocedureforusingsspi.htm">Using SSPI</A> | <A HREF="wce50conauthenticationservices.htm">Authentication Services</A> | <A HREF="wce50consecuritysupportproviderinterface.htm">Security Support Provider Interface Architecture</A> | <A HREF="wce50consecuritypackages.htm">Security Packages</A> | <A HREF="wce50conauthenticationservicessecurity.htm">Authentication Services Security</A> | <A HREF="wce50conauthenticationservicesregistrysettings.htm">Authentication Services Registry Settings</A> | <A HREF="wce50grfauthenticationservicesreference.htm">Authentication Services Reference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Ensuring%20Communication%20Integrity (wce50conensuringcommunicationintegrity.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

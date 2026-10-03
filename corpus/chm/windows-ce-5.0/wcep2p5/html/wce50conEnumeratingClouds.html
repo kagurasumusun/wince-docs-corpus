@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enumerating Clouds</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conenumeratingclouds"></A>Enumerating Clouds</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>When it enumerates clouds, an application must provide the scope of the search for clouds. After the scope is identified, the application can begin the enumeration process. Peer Name Resolution Protocol (PNRP) uses Winsock functions to resolve peer names. </P>
+
+<P class="labelproc"><B>To enumerate clouds</B>
+
+<OL type="1">
+	<LI>Start the enumeration resolution process by calling the <A HREF="wce50lrfwsalookupservicebeginwindowssockets.htm">WSALookupServiceBegin (Windows Sockets)</A> function.
+<P>For more information about values to pass in <B>WSALookupServiceBegin</B> parameters, see <A HREF="wce50conwsalookupservicebeginparametervaluesforenumeratingclouds.htm">WSALookupServiceBegin Parameter Values for Enumerating Clouds</A>.
+</li>
+
+	<LI>To match the queries specified in the previous call to <B>WSALookupServiceBegin</B>, call the <A HREF="wce50lrfwsalookupservicenextwindowssockets.htm">WSALookupServiceNext (Windows Sockets)</A> function. The results of the <B>WSALookupServiceNext</B> function are determined by settings in the <B>WSAQUERYSET</B> structure passed in the initial <B>WSALookupServiceBegin</B> function call.
+<P>For more information about values to pass in <B>WSALookupServiceBegin</B> parameters, see <A HREF="wce50conwsalookupservicenextparametervaluesforenumeratingclouds.htm">WSALookupServiceNext Parameter Values for Enumerating Clouds</A>.
+</li>
+
+	<LI>To complete the enumeration process, call the <A HREF="wce50lrfwsalookupserviceendwindowssockets.htm">WSALookupServiceEnd (Windows Sockets)</A> function. Pass the handle obtained from the previous call to <B>WSALookupServiceBegin</B>.
+<P>A call to <B>WSALookupServiceEnd</B> terminates the cloud enumeration process.
+</li>
+</OL>
+
+<P>The following code example shows how to enumerate and print the names of available link-local clouds.</P>
+
+<PRE class="code">//------------------------------------------------------------------------
+//Function: PrintLinkLocalClouds
+//Purpose:  Enumerate and print the names of available link-local clouds.
+//Returns:  DWORD
+//------------------------------------------------------------------------
+DWORD PrintLinkLocalClouds()
+{
+  WSAQUERYSETW    qset;
+  BLOB            Blob;
+  PNRPCLOUDINFO   CloudInfo;
+  HANDLE          hLookup = NULL;
+  int             err;
+  DWORD           dwErr = NO_ERROR;
+  DWORD           dwSize;
+  WSAQUERYSETW    *pResults = NULL;
+
+  ZeroMemory(&amp;qset, sizeof(qset));
+  ZeroMemory(&amp;CloudInfo, sizeof(CloudInfo));
+
+  CloudInfo.dwSize = sizeof(PNRPCLOUDINFO);
+  CloudInfo.Cloud.Scope = PNRP_LINK_LOCAL_SCOPE;
+
+  Blob.cbSize = sizeof(PNRPCLOUDINFO);
+  Blob.pBlobData = (LPBYTE)&amp;CloudInfo;
+
+  qset.dwSize = sizeof(WSAQUERYSET);
+  qset.dwNameSpace = NS_PNRPCLOUD;
+  qset.lpServiceClassId = (LPGUID)&amp;SVCID_PNRPCLOUD;
+  qset.lpBlob = &amp;Blob;
+
+  // Start enumeration.
+  err = WSALookupServiceBegin(&amp;qset, LUP_RETURN_NAME, &amp;hLookup);
+  if(err !=0)
+  {
+    return WSAGetLastError();
+  }
+  // Getting results.
+  while(TRUE)
+  {
+    // Get size.
+    ZeroMemory(&amp;qset, sizeof(qset));
+    dwSize = sizeof(qset);
+    pResults = &amp;qset;
+    err = WSALookupServiceNext(hLookup, 0, &amp;dwSize, pResults);
+    if(err != 0)
+    {
+      dwErr = WSAGetLastError();
+    }
+    if(dwErr != NO_ERROR)
+    {
+      if(dwErr == WSA_E_NO_MORE)
+      {
+        // No more entries.
+        dwErr = ERROR_SUCCESS;
+        break;
+      }
+      else if (dwErr == WSAEFAULT)
+      {
+        // This usually means result buffer too small. Allocate space
+        pResults = (WSAQUERYSET *)malloc(dwSize);
+        if(pResults == NULL)
+        {
+          dwErr = ERROR_OUTOFMEMORY;
+          break;
+        }
+        // Get cloud name.
+        err = WSALookupServiceNext(hLookup, 0, &amp;dwSize,pResults);
+        if(err == 0)
+        {
+          wprintf(L"%s\n", pResults-&gt;lpszServiceInstanceName);
+          dwErr = NO_ERROR;
+        }
+        else
+        {
+          dwErr = WSAGetLastError();
+        }
+        free(pResults);
+        if(dwErr != NO_ERROR)
+        {
+          break;
+        }
+      }
+      else
+      {
+        // Some other unexpected error.
+        break;
+      }
+    }
+    else
+    {
+      // Should never happen.
+      dwErr = ERROR_GEN_FAILURE;
+      break;
+    }
+  }
+  // Close the enumeration.
+  WSALookupServiceEnd(hLookup);
+  return dwErr;</PRE>
+
+<P>}</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conpeer-to-peerapplicationdevelopment.htm">Peer-to-Peer Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Enumerating%20Clouds (wce50conenumeratingclouds.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

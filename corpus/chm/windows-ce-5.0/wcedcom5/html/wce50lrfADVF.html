@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ADVF</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conProgrammingElementNotSupported">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conProgrammingElementNotSupported">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfadvf"></A>ADVF</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>These enumeration contains values used by a container object to specify the requested behavior when setting up an advise sink or a caching connection with an object. These values have different meanings, depending on the type of connection in which they are used, and each interface uses its own subset of the flags.</P>
+
+<PRE class="syntax"><B>typedef enum tagADVF { </B>
+<B>  ADVF_NODATA = 1, </B>
+<B>  ADVF_PRIMEFIRST = 2, </B>
+<B>  ADVF_ONLYONCE = 4, </B>
+<B>  ADVFCACHE_NOHANDLER = 8, </B>
+<B>  ADVFCACHE_FORCEBUILTIN = 16, </B>
+<B>  ADVFCACHE_ONSAVE = 32, </B>
+<B>  ADVF_DATAONSTOP = 64 </B>
+<B>} ADVF; </B></PRE>
+
+<H4 class="dtH4">Elements</H4>
+
+<DL>
+<DT>ADVF_NODATA </DT>
+
+<DD>For data advisory connections, <A HREF="wce50lrfidataobjectdadvise.htm">IDataObject::DAdvise</A> or <A HREF="JavaScript:hhobj_1.Click()">IDataAdviseHolder::Advise</A>, this flag requests the data object not to send data when it calls <A HREF="wce50lrfiadvisesinkondatachange.htm">IAdviseSink::OnDataChange</A>. 
+
+<P>The recipient of the change notification can later request the data by calling <B>IDataObject::GetData</B>. 
+
+
+<P>The data object can honor the request by passing TYMED_NULL in the <A HREF="wce50lrfstgmedium124.htm">STGMEDIUM</A> parameter, or it can provide the data anyway. For example, the data object might have multiple advisory connections, not all of which specified ADVF_NODATA, in which case the object might send the same notification to all connections. 
+
+
+<P>Regardless of the container's request, its <A HREF="wce50lrfiadvisesinkiunknown.htm">IAdviseSink</A> implementation must check the <B>STGMEDIUM</B> parameter because it is responsible for releasing the medium if it is not TYMED_NULL. 
+
+
+<P>For cache connections, <A HREF="JavaScript:hhobj_2.Click()">IOleCache::Cache</A>, this flag requests that the cache not be updated by changes made to the running object. Instead, the container will update the cache by explicitly calling <B>IOleCache::SetData</B>. 
+
+
+<P>This situation typically occurs when the iconic aspect of an object is being cached. 
+
+
+<P>ADVF_NODATA is not a valid flag for view advisory connections, <A HREF="wce50lrfiviewobjectsetadvise.htm">IViewObject::SetAdvise</A>, and it returns E_INVALIDARG. 
+</dd>
+
+<DT>ADVF_PRIMEFIRST </DT>
+
+<DD>Requests that the object not wait for the data or view to change before making an initial call to <A HREF="wce50lrfiadvisesinkondatachange.htm">IAdviseSink::OnDataChange</A> for data or view advisory connections or updating the cache for cache connections. 
+
+<P>Used with ADVF_ONLYONCE, this parameter provides an asynchronous <A HREF="wce50lrfidataobjectgetdata.htm">IDataObject::GetData</A> call. 
+</dd>
+
+<DT>ADVF_ONLYONCE </DT>
+
+<DD>Requests that the object make only one change notification or cache update before deleting the connection. 
+
+<P>ADVF_ONLYONCE automatically deletes the advisory connection after sending one data or view notification. The advisory sink receives only one <B>IAdviseSink</B> call. 
+
+
+<P>A nonzero connection identifier is returned if the connection is established, so the caller can use it to delete the connection prior to the first change notification. 
+
+
+<P>For data change notifications, the combination of ADVF_ONLYONCE and ADVF_PRIMEFIRST provides, in effect, an asynchronous <B>IDataObject::GetData</B> call. 
+
+
+<P>When used with caching, ADVF_ONLYONCE updates the cache one time only, on receipt of the first OnDataChange notification. After the update is complete, the advisory connection between the object and the cache is disconnected. 
+
+
+<P>The source object for the advisory connection calls the <B>IAdviseSink::Release</B> method. 
+</dd>
+
+<DT>ADVF_DATAONSTOP </DT>
+
+<DD>For data advisory connections, assures accessibility to data. This flag indicates that when the data object is closing, it should call <B>IAdviseSink::OnDataChange</B>, providing data with the call. 
+
+<P>Typically, this value is used in combination with ADVF_NODATA. Without this value, by the time an <B>OnDataChange</B> call without data reaches the sink, the source might have completed its shutdown and the data might not be accessible. 
+
+
+<P>Sinks that specify this value should accept data provided in <B>OnDataChange</B> if it is being passed, because they may not get another chance to retrieve it. 
+
+
+<P>For cache connections, this flag indicates that the object should update the cache as part of object closure. 
+
+
+<P>ADVF_DATAONSTOP is not a valid flag for view advisory connections. 
+</dd>
+
+<DT>ADVFCACHE_NOHANDLER </DT>
+
+<DD>Synonym for ADVFCACHE_FORCEBUILTIN, which is used more often. </dd>
+
+<DT>ADVFCACHE_FORCEBUILTIN </DT>
+
+<DD>This value is used by DLL object applications and object handlers that perform the drawing of their objects. ADVFCACHE_FORCEBUILTIN instructs OLE to cache presentation data to ensure that there is a presentation in the cache. 
+
+<P>This value is not a valid flag for data or view advisory connections. 
+
+
+<P>For cache connections, this flag caches data that requires only code shipped with OLE (or the underlying operating system) to be present in order to produce it with <B>IDataObject::GetData</B> or <B>IViewObject::Draw</B>. 
+
+
+<P>By specifying this value, the container can ensure that the data can be retrieved even when the object or handler code is not available. 
+</dd>
+
+<DT>ADVFCACHE_ONSAVE </DT>
+
+<DD>For cache connections, this flag updates the cached representation only when the object containing the cache is saved. 
+
+<P>The cache is also updated when the OLE object transitions from the running state back to the loaded state (because a subsequent save operation would require rerunning the object). 
+
+
+<P>This value is not a valid flag for data or view advisory connections. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>For a data or view advisory connection, the container uses the <B>ADVF</B> constants when setting up a connection between an IAdviseSink instance and either an <B>IDataObject</B> or <A HREF="wce50lrfiviewobjectiunknown.htm">IViewObject</A> instance. These connections are set up using the <B>IDataObject::DAdvise</B>, <B>IDataAdviseHolder::Advise</B>, or <B>IViewObject::SetAdvise</B> methods.</P>
+
+<P>For a caching connection, the constants are specified in the IOleCache::Cache method to indicate the container's requests on how the object should update its cache.</P>
+
+<P>These constants are also used in the <B>advf</B> member of the <A HREF="wce50lrfstatdata.htm">STATDATA</A> structure. </P>
+
+<P>This structure is used by <A HREF="wce50lrfienumstatdataiunknown.htm">IEnumSTATDATA</A> to describe the enumerated connections, and the <B>advf</B> member indicates the flags that were specified when the advisory or cache connection was established. </P>
+
+<P>When <B>STATDATA</B> is used for an <A HREF="wce50lrfioleobjectenumadvise.htm">IOleObject::EnumAdvise</A> enumerator, the <B>advf</B> member is indeterminate.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfiadvisesinkiunknown.htm">IAdviseSink</A> | <A HREF="wce50lrfienumstatdataiunknown.htm">IEnumSTATDATA</A> | <A HREF="wce50lrfiviewobjectiunknown.htm">IViewObject</A> | <A HREF="wce50lrfioleobjectenumadvise.htm">IOleObject::EnumAdvise</A> | <A HREF="wce50lrfstgmedium124.htm">STGMEDIUM</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ADVF (wce50lrfadvf.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

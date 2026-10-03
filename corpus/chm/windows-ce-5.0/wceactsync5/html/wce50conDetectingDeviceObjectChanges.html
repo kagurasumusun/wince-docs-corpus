@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Detecting Device Object Changes</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condetectingdeviceobjectchanges"></A>Detecting Device Object Changes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Changes on the Windows CE-based device are handled through the <B>ObjectNotify</B> function. The service manager calls <B>ObjectNotify</B> in the following cases.
+
+<UL type="disc">
+	<LI>When a user connects the Windows CE-based device and there is a changed object.</li>
+
+	<LI>Immediately after connection.</li>
+
+	<LI>After an acknowledgement is received from the desktop that the object has been synchronized successfully.</li>
+
+	<LI>Two seconds after the device provider sets ONF_CALLING_BACK.</li>
+</UL>
+
+<P><B>ObjectNotify</B> checks the flags and the file system identifier information in the <B>OBJNOTIFY</B> structure for a changed object.</P>
+
+<P>The following table shows the values for the <B>OBJNOTIFY::uFlags</B> member.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Member</TH>
+<TH width=73%>Definition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_FILE</TD>
+<TD width=73%><B>OBJNOTIFY::oidObject</B> is a file.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_DIRECTORY</TD>
+<TD width=73%><B>OBJNOTIFY::oidObject</B> is a directory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_RECORD</TD>
+<TD width=73%><B>OBJNOTIFY::oidObject</B> is a record.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_DATABASE</TD>
+<TD width=73%><B>OBJNOTIFY::oidObject</B> is a database.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_CHANGED</TD>
+<TD width=73%>The file system object is changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_DELETED</TD>
+<TD width=73%>The file system object is deleted. Only <B>oidParent</B> in <B>OBJNOTIFY::oidInfo</B> is defined. All other members in <B>OBJNOTIFY::oidInfo</B> are 0.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_CLEAR_CHANGE</TD>
+<TD width=73%>The desktop provider should mark the object as up-to-date. <B>OBJNOTIFY::oidObject</B> is the synchronized object identifier, not the Windows CE object identifier.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_CALL_BACK</TD>
+<TD width=73%>Set by the device provider to ask the service manager to call back.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>ONF_CALLING_BACK</TD>
+<TD width=73%>The service manager sets this flag and calls <B>ObjectNotify</B>.</TD>
+</TR>
+</table></div>
+
+<P>The following code example shows how to implement <B>ObjectNotify</B>.</P>
+
+<PRE class="code">EXTERN_C BOOL ObjectNotify (POBJNOTIFY pNotify)
+{
+   // Check to see if structure size is the same.
+   if (pNotify-&gt;cbStruct != sizeof (OBJNOTIFY))
+       return FALSE;
+
+   // Check ONF_* flags to see if notification is relevant.
+   if (!(pNotify-&gt;uFlags &amp; ONF_DELETED))
+   {
+       // Make sure you are dealing with the records in your database.
+       // The object (a record or a file) must exist.
+   }
+
+   if (pNotify-&gt;uFlags &amp; ONF_CLEAR_CHANGE)
+   {
+       // Check if object changed again during synchronization.
+       // If so, return TRUE. If not, return FALSE.
+   }
+
+   pNotify-&gt;poid = (UINT*)&amp;pNotify-&gt;oidObject;
+
+   // Determine which object identifier to return.
+   // Consider uPartnerBit in your decision.
+
+   // If you store one object per file and/or record, you need only
+   // return the file system object identifier. Otherwise, you need
+   // to read the file system object and determine the list of
+   // object identifiers that have changed.
+
+   return TRUE;
+ }</PRE>
+
+<P>To get information from a database with the <B>oidDataBase</B> object identifier, the service manager calls <B>GetObjTypeInfo</B>. The following code example shows how to implement <B>GetObjTypeInfo</B>.</P>
+
+<PRE class="code">EXTERN_C BOOL GetObjTypeInfo
+(
+POBJTYPEINFO pInfo      // pointer to the OBJTYPEINFO structure
+)
+{
+   CEOIDINFO  oidInfo;
+
+   if (pInfo-&gt;cbStruct != sizeof (OBJTYPEINFO))
+       return FALSE;
+
+   // Clear the structure.
+   memset (&amp;(oidInfo), 0, sizeof(oidInfo));
+
+   // Retrieve information about the object in the object store.
+   CeOidGetInfo (oidDataBase, &amp;oidInfo);
+
+   // Store database information in the OBJTYPEINFO structure.
+   wcsncpy (pInfo-&gt;szName, 
+            oidInfo.infDatabase.szDbaseName,
+            sizeof(pInfo-&gt;szName));
+   pInfo-&gt;cObjects       = oidInfo.infDatabase.wNumRecords;
+   pInfo-&gt;cbAllObj       = oidInfo.infDatabase.dwSize;
+   pInfo-&gt;ftLastModified = oidInfo.infDatabase.ftLastModified;
+
+   return TRUE;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condevelopingthedeviceprovider.htm">Developing the Device Provider</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Detecting%20Device%20Object%20Changes (wce50condetectingdeviceobjectchanges.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

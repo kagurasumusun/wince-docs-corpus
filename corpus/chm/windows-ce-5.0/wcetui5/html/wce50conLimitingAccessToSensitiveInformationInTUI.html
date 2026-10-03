@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Limiting Access to Sensitive Information in the TUI</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriLocalAuthenticationSubsystemLASS">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfVerifyUser">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfVerifyUser">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conlimitingaccesstosensitiveinformationintui"></A>Limiting Access to Sensitive Information in the TUI</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>It can be important to limit access to potentially sensitive information that is available using the TUI application. For example, you might not want someone who walks into your office to push a few buttons and see your Exchange contacts. </P>
+
+<P>One way to limit access is to require the phone user to enter a PIN to access private information. However, this is cumbersome when a user is already sitting next to an unlocked PC.</P>
+
+<P>Therefore, the TUI application includes additional functionality to limit access to potentially private information. The TUI attempts to determine if the user of the phone is authenticated, by seeing if a Windows PC to which the phone is tied is locked or unlocked. </P>
+
+<P>If TUI can determine that the PC is unlocked, it provides access to private information without user intervention. </P>
+
+<P>If the associated PC is locked, or TUI can't determine the status of the PC, or there is no associated PC, TUI forces the phone's user to enter a user-chosen PIN, using the phone keypad, before it displays sensitive information.</P>
+
+<P>TUI uses the Windows CE Local Authentication Subsystem (LASS) to abstract the authentication process. In the default IP phone OS design, the local authentication plugin (LAP) that LASS uses interacts over the network with an application running on a PC. </P>
+
+<P>The Windows CE LAP and the PC application are provided, in sample form, by the PC Authentication Catalog item. For more information about LASS, see <A HREF="JavaScript:hhobj_1.Click()">Local Authentication Subsystem (LASS)</A>. For more information about the sample PC Authentication plug in, see <A HREF="wce50oripcauthentication.htm">PC Authentication</A>.</P>
+
+<P>The complete process works as follows:
+
+<OL type="1">
+	<LI>The user attempts to access sensitive information, like Exchange contacts.</li>
+
+	<LI>TUI calls the <B>IsPCUnlocked </B>function in laputils.cpp (in %_WINCEROOT%\Public\VoIP\OAK\Phone\TUI\Utilities). </li>
+
+	<LI><B>IsPCUnlocked</B> calls the LASS <A HREF="JavaScript:hhobj_2.Click()">VerifyUser</A> function.</li>
+
+	<LI>LASS uses the currently active LAP to determine if the user is authenticated; then the default IP phone OS design sets the sample PC Authentication LAP as the active authentication plugin. 
+<P>This setup is accomplished by the <B>InitializeVoIPLAP</B> function in laputils.cpp. LASS uses the active LAP by calling the LAP's <B>VerifyUser</B> function, which is different from the generic LASS <B>VerifyUser</B> function. 
+
+<P>In this scenario, LASS calls the PC Authentication <A HREF="JavaScript:hhobj_3.Click()">VerifyUser</A> function.
+</li>
+
+	<LI>The PC Authentication LAP connects to the specified PC using the network and uses the application on the PC to determine if the PC is locked.</li>
+
+	<LI>The PC lock or unlock status percolates back up to the TUI, which displays the requested information directly (if the PC is unlocked), or displays a PIN dialog (if the PC is locked or cannot be contacted).
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;In addition to the process described in the preceding steps, there is one place where the TUI calls the LAP code directly and bypasses LASS. This happens in the TieToPCState.cpp file (in %_WINCEROOT%\Public\VoIP\OAK\Phone\TUI\State), in the <B>OnTieClick</B> function. <BR>
+<BR>
+Instead of calling the LASS <B>VerifyUser</B> function, <B>OnTieClick</B> calls the PC Authentication LAP <A HREF="wce50lrfattemptconnection.htm">AttemptConnection</A> function. <B>AttemptConnection</B> verifies authentication like the LAP normally does, but it waits a longer period of time before timing out.</BLOCKQUOTE>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contuisourcecodeorganization.htm">Examining the TUI Implementation</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Limiting%20Access%20to%20Sensitive%20Information%20in%20the%20TUI (wce50conlimitingaccesstosensitiveinformationintui.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

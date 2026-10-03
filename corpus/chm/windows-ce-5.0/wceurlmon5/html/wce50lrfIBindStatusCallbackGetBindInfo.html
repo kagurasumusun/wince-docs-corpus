@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IBindStatusCallback::GetBindInfo</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfibindstatuscallbackgetbindinfo"></A>IBindStatusCallback::GetBindInfo</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method provides information about how the bind operation should be handled when called by an asynchronous moniker.</P>
+
+<PRE class="syntax"><B>HRESULT</B> <B>GetBindInfo(</B>
+  <B>DWORD* </B><I>grfBINDF</I><B>,</B>
+  <B>BINDINFO* </B><I>pbindinfo</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>grfBINDF </I></DT>
+
+<DD>[out] Address of an unsigned integer value that contains a combination of values taken from the <B>BINDF</B> enumeration indicating how the bind process should be handled. </dd>
+
+<DT><I>pbindinfo </I></DT>
+
+<DD>[in, out] Address of the <B>BINDINFO</B> structure, which describes the client application's requirements for binding. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns S_OK if successful or E_INVALIDARG if one or more parameters are invalid.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The moniker calls this method in its implementations of the <B>IMoniker::BindToObject</B> and <B>IMoniker::BindToStorage</B> methods to obtain information about the specific bind operation.</P>
+
+<P>Asynchronous moniker clients should be aware that a moniker might call this method more than once during a bind operation. A proper implementation of <B>IBindStatusCallback::GetBindInfo</B> should prepare for this possibility. If returning data in the <I>pbindinfo</I> parameter, the implementation should allocate the appropriate data (<B>szExtraInfo</B> and/or <B>stgmedData</B>) at the time of each call. In this way, if the callback is never called, data is never allocated; if the callback is called more than once, it will work correctly. The first time this callback is received by the asynchronous moniker client is before the call to <B>IMoniker::BindToStorage</B> or <B>IMoniker::BindToObject</B>.</P>
+
+<P>Even when the value of <I>grfBindInfoF</I> is BINDF_ASYNCHRONOUS, it is possible that the original call to <B>IMoniker::BindToStorage</B> or <B>IMoniker::BindToObject</B> might return synchronously rather than returning the MK_S_ASYNCHRONOUS flag. Clients of asynchronous monikers should always prepare for this possibility. Specifically, to avoid memory leaks, it is important to make sure to release the pointer returned by a call to either method.</P>
+
+<P>One way to deal with this case is to call your own implementation of <B>IBindStatusCallback::OnDataAvailable</B> or <B>IBindStatusCallback::OnObjectAvailable</B> to use the same code path, regardless of whether you bind synchronously or asynchronously.</P>
+
+<P>If the BINDF_PULLDATA value is not set in the <I>grfBindInfoF</I> parameter, Urlmon.dll sets the BINDF_NEEDFILE value. If BINDF_NEEDFILE is set, binding of resources that cannot be cached (such as an HTTPS resource) will fail.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Warning</b>&nbsp;&nbsp;&nbsp;The size of the <B>BINDINFO</B> structure changed with the release of Microsoft Internet Explorer 4.0. Developers must write code that checks the size of the <B>BINDINFO</B> structure that is passed into their implementation of this method before writing to members of the structure. </BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Urlmon.h, Urlmon.idl.<BR>
+<B>Link Library:</B> Urlmon.lib.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IBindStatusCallback::GetBindInfo (wce50lrfibindstatuscallbackgetbindinfo.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

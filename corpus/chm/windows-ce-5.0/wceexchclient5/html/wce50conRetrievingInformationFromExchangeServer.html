@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Retrieving Information from an Exchange Server</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conretrievinginformationfromexchangeserver"></A>Retrieving Information from an Exchange Server</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To retrieve information from an Exchange server, you do the following:
+
+<UL type="disc">
+	<LI>Set up a connection to a server</li>
+
+	<LI>Use the connection to initiate search requests</li>
+
+	<LI>Wait for the requests to complete</li>
+
+	<LI>Retrieve the requested information</li>
+</UL>
+
+<P>The specific steps for data retrieval are as follows:
+
+<OL type="1">
+	<LI>Using the information in the <B>Obtaining a Pointer</B> section of the <B>IExchangeClient</B> topic, create an instance of an object that implements the <A HREF="wce50lrfiexchangeclientiunknown.htm">IExchangeClient</A> interface.</li>
+
+	<LI>Call <A HREF="wce50lrfiexchangeclientinitialize.htm">IExchangeClient::Initialize</A>, passing a reference to an object you create that implements the <A HREF="wce50lrfiexchangeclientrequestcallbackiunknown.htm">IExchangeClientRequestCallback</A> interface. 
+<P>The Exchange client library calls the methods in the <B>IExchangeClientRequestCallback</B> instance that you provide to communicate request-processing status to the application using the library. This information includes the following:
+
+<UL type="disc">
+	<LI>The results of a request</li>
+
+	<LI>When a request completes processing</li>
+
+	<LI>Ongoing status updates as a request is processed</li>
+</UL>
+</li>
+
+	<LI>Provide the URL of the Exchange server to be used by calling <A HREF="wce50lrfiexchangeclientsetserver.htm">IExchangeClient::SetServer</A>.</li>
+
+	<LI>(Conditional) Provide the credentials necessary to log on to the Exchange server by calling <A HREF="wce50lrfiexchangeclientsetcredentials.htm">IExchangeClient::SetCredentials</A>. 
+<P>This step is not necessary if another application used the Windows CE Credential Manager to provide default domain and plaintext credentials. 
+
+<P>For more information about how the Exchange Client library uses credentials, see <A HREF="wce50lrfiexchangeclientsetcredentials.htm">IExchangeClient::SetCredentials</A>. 
+
+<P>For more information about security and the Exchange Client library, see <A HREF="wce50conexchangeclientsecurity.htm">Exchange Client Security</A>.
+</li>
+
+	<LI>Initiate a search by calling an <B>IExchangeClient</B> request method; then save the returned <A HREF="wce50lrfiexchangeclientrequestiunknown.htm">IExchangeClientRequest</A> instance. 
+<P>The <B>IExchangeClient</B> request methods are <A HREF="wce50lrfiexchangeclientrequestcontacts.htm">IExchangeClient::RequestContacts</A>, <A HREF="wce50lrfiexchangeclientrequestgalsearch.htm">IExchangeClient::RequestGALSearch</A>, and <A HREF="wce50lrfiexchangeclientrequestfreebusydata.htm">IExchangeClient::RequestFreeBusyData</A>.
+
+<P>These methods return immediately; the requests are processed asynchronously.
+</li>
+
+	<LI>As the request initiated in the previous step is processed, the Exchange client library calls the <A HREF="wce50lrfiexchangeclientrequestcallbackonrequestprogress.htm">IExchangeClientRequestCallback::OnRequestProgress</A> method on the instance of <B>IExchangeClientRequestCallback</B> you provided in step 2.
+<P>Your code can match the <B>IExchangeClientRequest</B> reference passed in <B>OnRequestProgress</B> to the references returned by the request initiation methods to identify which request the callback refers to, and to see how that request is being processed. 
+
+<P>(If your code only submits a single request at a time, your code can assume that any callback refers to that request.)
+</li>
+
+	<LI>When your <B>OnRequestProgress</B> implementation is called with an <A HREF="wce50lrfexchangeclientrequeststatus.htm">e_ecrsSucceeded</A> value, your request has completed processing and the information returned by the request can be retrieved.</li>
+
+	<LI>Retrieve the returned information by calling <A HREF="wce50lrfiexchangeclientrequestgetdataitemarray.htm">IExchangeClientRequest::GetDataItemArray</A> using the <B>IExchangeClientRequest</B> instance you obtained in step five. 
+<P>This gives you an instance of the <A HREF="wce50lrfiexchangeclientdataitemarrayiunknown.htm">IExchangeClientDataItemArray</A> interface.
+</li>
+
+	<LI>Iterate through the data provided by the <B>IExchangeClientDataItemArray</B> instance you received in the previous step. 
+<P>The <A HREF="wce50lrfiexchangeclientdataitemarraygetitemcount.htm">IExchangeClientDataItemArray::GetItemCount</A> method returns the number of pieces of data generated by the request. 
+
+<P>To retrieve each piece of data, call <A HREF="wce50lrfiexchangeclientdataitemarraygetitemat.htm">IExchangeClientDataItemArray::GetItemAt</A> and use the value of the second parameter, an out parameter of type <A HREF="wce50lrfiunknown.htm">IUnknown</A>. 
+</li>
+
+	<LI>Call <A HREF="JavaScript:hhobj_1.Click()">IUnknown::QueryInterface</A> on the <B>IUnknown</B> instance to obtain a reference to the appropriate data interface, depending on the type of request you made. 
+<P>For example, if you initiated the request using <B>RequestContacts</B>, call <B>QueryInterface,</B> looking for an <A HREF="wce50lrfiexchangeclientcontactinformationiunknown.htm">IExchangeClientContactInformation</A> interface. 
+
+<P>The other two data interfaces are <A HREF="wce50lrfiexchangeclientgalsearchinformationiunknown.htm">IExchangeClientGALSearchInformation</A> and <A HREF="wce50lrfiexchangeclientfreebusyinformationiunknown.htm">IExchangeClientFreeBusyInformation</A>.
+</li>
+
+	<LI>Use the methods of the data interface to obtain the data you originally initiated the request for. 
+<P>For example, if you initiated the request by calling <B>RequestContacts</B>, call <A HREF="wce50lrfiexchangeclientcontactinformationgethomephonenumber.htm">IExchangeClientContactInformation::GetHomePhoneNumber</A> to retrieve the home phone number of a particular contact.
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conexchangeclientapplicationdevelopment.htm">Exchange Client Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Retrieving%20Information%20from%20an%20Exchange%20Server (wce50conretrievinginformationfromexchangeserver.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertGetIssuerCertificateFromStore</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcertgetissuercertificatefromstore"></A>CertGetIssuerCertificateFromStore</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function retrieves the certificate context from the certificate store for the first or next issuer of the specified subject certificate. The new certificate chain verification functions are recommended instead of the use of this function.</P>
+
+<PRE class="syntax"><B>PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(</B>
+  <B>HCERTSTORE </B><I>hCertStore</I><B>,</B>
+  <B>PCCERT_CONTEXT </B><I>pSubjectContext</I><B>,</B>
+  <B>PCCERT_CONTEXT </B><I>pPrevIssuerContext</I><B>,</B>
+  <B>DWORD* </B><I>pdwFlags</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCertStore </I></DT>
+
+<DD>[in] Handle to a certificate store.</dd>
+
+<DT><I>pSubjectContext </I></DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A> structure containing the subject information. This parameter can be obtained from any certificate store or can be created by the calling application using the <A HREF="wce50lrfcertcreatecertificatecontext.htm">CertCreateCertificateContext</A> function.</dd>
+
+<DT><I>pPrevIssuerContext </I></DT>
+
+<DD>[in] Optional. Pointer to a <B>CERT_CONTEXT</B> structure containing the issuer information. An issuer can have multiple certificates, especially when a validity period is about to change. This parameter must be NULL on the call to get the first issuer certificate. To get the next certificate for the issuer, set the <I>pPrevIssuerContext</I> parameter to the <B>CERT_CONTEXT</B> structure returned by the previous call.
+
+<P>A <I>pPrevIssuerContext</I> parameter that is not NULL is always freed by the <B>CertGetIssuerCertificateFromStore</B> function by using the <A HREF="wce50lrfcertfreecertificatecontext.htm">CertFreeCertificateContext</A> function, even for an error.
+</dd>
+
+<DT><I>pdwFlags </I></DT>
+
+<DD>[in, out] On input, flags that enable verification checks on the returned certificate. The flags can be combined using a bitwise <B>OR</B> operation to enable multiple verifications. The following table shows the flags for this parameter.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%>Value</TH>
+<TH width=56%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CERT_STORE_NO_CRL_FLAG</TD>
+<TD width=56%>Indicates no matching CRL was found. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CERT_STORE_NO_ISSUER_FLAG</TD>
+<TD width=56%>Indicates no issuer certificate was found. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CERT_STORE_SIGNATURE_FLAG</TD>
+<TD width=56%>Uses the public key in the issuer's certificate to verify the signature on the subject certificate. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CERT_STORE_TIME_VALIDITY_FLAG</TD>
+<TD width=56%>Gets the current time and verifies that it is within the subject certificate's validity period. </TD>
+</TR>
+</table></div>
+
+
+
+<P>On output, if a verification check of an enabled type succeeds, its flag is set to zero. If it fails, the value of the flag is not changed. 
+
+
+<P>In the case of a verification check failure, a pointer to the issuer's <B>CERT_CONTEXT</B> structure is still returned and the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function is not updated.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is a pointer to a read-only issuer <B>CERT_CONTEXT</B> structure.</P>
+
+<P>If the function fails and the first or next issuer certificate is not found, the return value is NULL.</P>
+
+<P>Only the last returned <B>CERT_CONTEXT</B> structure must be freed by calling the <B>CertFreeCertificateContext</B> function. When the returned <B>CERT_CONTEXT</B> structure from one call to the function is supplied as the <I>pPrevIssuerContext</I> parameter on a subsequent call, the context is freed as part of the action of the function.</P>
+
+<P>For extended error information, call the <B>GetLastError</B> function. The following table shows some possible error codes.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Error value </TH>
+<TH width=53%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CRYPT_E_NOT_FOUND</TD>
+<TD width=53%>No issuer was found for the subject certificate. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CRYPT_E_SELF_SIGNED</TD>
+<TD width=53%>The issuer certificate is the same as the subject certificate. It is a self-signed root certificate. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>E_INVALIDARG</TD>
+<TD width=53%>The handle in the <I>hCertStore</I> parameter is not the same as that of the certificate context pointed to by the <I>pPrevIssuerContext</I> parameter, or an unsupported flag was set in the <I>pdwFlags </I>parameter. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The<B> CertDuplicateCertificateContext</B> function can be called to make a duplicate of the issuer certificate.</P>
+
+<P>The hexadecimal values for the <I>pdwFlags</I> parameter can be combined using a bitwise <B>OR</B> operation to enable multiple verifications. For example, to enable both signature and time validity, the value 0x00000003 is passed in the <I>pdwFlags</I> parameter on input. In this case, if CERT_STORE_SIGNATURE_FLAG verification succeeds but CERT_STORE_TIME_VALIDITY_FLAG verification fails, the <I>pdwFlags</I> parameter returns as 0x00000002 on output.</P>
+
+<P>The desktop operating system supports the CERT_STORE_REVOCATION_FLAG value for the <I>pdwFlags</I> parameter; that Windows CE does not.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcertcreatecertificatecontext.htm">CertCreateCertificateContext</A> | <A HREF="wce50lrfcertfreecertificatecontext.htm">CertFreeCertificateContext</A> | <A HREF="wce50lrfcertduplicatecertificatecontext.htm">CertDuplicateCertificateContext</A> | <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CertGetIssuerCertificateFromStore (wce50lrfcertgetissuercertificatefromstore.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

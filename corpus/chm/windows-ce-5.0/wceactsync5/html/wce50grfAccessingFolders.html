@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing Folders</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50grfaccessingfolders"></A>Accessing Folders</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The service manager requires the <B>HREPLFLD</B> handle to access a folder. This handle contains the conversion filter for the object type and other object-specific information.</P>
+
+<P>The service manager calls <B>IReplStore::GetFolderInfo</B> to obtain the folder handle. The service manager also calls <B>IReplStore::IsFolderChanged</B>, <B>IReplStore::CopyObject</B>, <B>IReplStore::IsValidObject</B>, and <B>IReplStore::FreeObject</B> to manipulate folder and item handles.</P>
+
+<P>Because the service manager saves the <B>HREPLITEM</B> or <B>HREPLFLD</B> data to the service manager's persistent file, you must also implement <B>IReplStore::ObjectToBytes</B> and <B>IReplStore::BytesToObject</B>.</P>
+
+<P>The following code example shows how to implement <B>IReplStore::GetFolderInfo</B>.</P>
+
+<PRE class="code">STDMETHODIMP CStore::GetFolderInfo
+(
+   LPSTR      lpszName,    // name of object type taken from registry
+   HREPLFLD  *phFolder,    // pointer to handle of the new folder
+   IUnknown **ppObjHandler // pointer to pointer to IReplObjHandler interface
+)
+{
+   // Check if phFolder points to a NULL-valued handle.
+   CFolder *pFolder = (CFolder*)*phFolder;
+   BOOL fNew = (pFolder == NULL);
+
+   // Create a new handle for the specific folder.
+   if (fNew)
+      pFolder = new CFolder;
+
+   // When fNew is FALSE reinitialize the class.
+   // When fNew is TRUE  set up the new CFolder class.
+   // ...
+
+   *phFolder     = (HREPLFLD)pFolder;
+   *ppObjHandler =  m_pObjHandler;
+
+   return NOERROR;
+}</PRE>
+
+<P>To determine if any object in a folder has changed, the service manager calls <B>IReplStore::IsFolderChanged</B>. The service manager can also call the following methods to manipulate folder or item handles.
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfireplstorecopyobject.htm">IReplStore::CopyObject</A> copies the data from one handle to another handle that represents the same object.</li>
+
+	<LI><A HREF="wce50lrfireplstoreisvalidobject.htm">IReplStore::IsValidObject</A> verifies the handle still represents a valid object, not a deleted object.</li>
+
+	<LI><A HREF="wce50lrfireplstorefreeobject.htm">IReplStore::FreeObject</A> removes a handle from memory, allowing the desktop provider to free the handle's memory resources.</li>
+</UL>
+
+<P>The following code examples show how to implement these methods.</P>
+
+<PRE class="code">STDMETHODIMP_(BOOL) CStore::CopyObject
+(
+   HREPLOBJ hObjSrc,  // handle to the source      object
+   HREPLOBJ hObjDst   // handle to the destination object
+)
+{
+   CReplObject *pObjSrc = (CReplObject*) hObjSrc;
+   CReplObject *pObjDst = (CReplObject*) hObjDst;
+
+   // Check to see if the source and destination types are the same.
+   if (pObjSrc-&gt;m_uType != pObjDst-&gt;m_uType)
+       return FALSE;
+
+   switch (pObjSrc-&gt;m_uType)
+   {
+   case OT_ITEM:     // if the source object is an item
+      ((CItem*) pObjDst)-&gt;m_uid = ((CItem *)pObjSrc)-&gt;m_uid;
+      ((CItem*) pObjDst)-&gt;m_ftModified =
+      ((CItem*) pObjSrc)-&gt;m_ftModified;
+      break;
+
+   case OT_FOLDER:   // if the source object is a folder
+      break;
+   }
+   return TRUE;
+}
+
+STDMETHODIMP CStore::IsValidObject
+(
+   HREPLFLD hFolder,  // handle of folder where this item belongs
+   HREPLITEM hItem,   // handle of the object; could be NULL
+   UINT uFlags        // Reserved; must be 0.
+)
+{
+   CFolder *pFolder = (CFolder*)hFolder;
+   CItem   *pItem   = (CItem*)  hItem;
+
+   if (pFolder)
+   { // Check whether hFolder is a valid folder handle.
+     if (pFolder-&gt;m_uType != OT_FOLDER)
+         return HRESULT_FROM_WIN32 (ERROR_INVALID_HANDLE);
+   }
+
+   if (pItem)
+   {  // Check whether hItem is a valid item handle.
+      if (pFolder-&gt;m_uType != OT_ITEM)
+          return HRESULT_FROM_WIN32 (ERROR_INVALID_HANDLE);
+
+      // Search for item. If item not found, return.
+      // HRESULT_FROM_WIN32 (ERROR_FILE_NOT_FOUND)
+      // ...
+   }
+
+   return NOERROR;
+}
+
+STDMETHODIMP_(void) CStore::FreeObject
+(
+   HREPLOBJ hObject  // handle of object whose contents need to be freed
+)
+{
+   delete (CReplObject*) hObject;
+}</PRE>
+
+<P>The desktop provider must implement <B>IReplStore::ObjectToBytes</B> to convert an <B>HREPLITEM</B> object or <B>HREPLFLD</B> object into a byte sequence so the service manager can store the data in the service manager's persistent file. The desktop provider must also implement <B>IReplStore::BytesToObject</B> to convert the same byte sequence back to an object.</P>
+
+<P>When a user connects a Windows CE-based device to a desktop, the service manager reads the persistent file and restores all handles that were used in the previous synchronization.</P>
+
+<P>The following code examples show how to implement <B>IReplStore::ObjectToBytes</B> and <B>IReplStore::BytesToObject</B>.</P>
+
+<PRE class="code">STDMETHODIMP_(UINT) CStore::ObjectToBytes
+(
+   HREPLOBJ hObject,  // handle to object
+   LPBYTE   lpb       // The engine calls ObjectToBytes first with lpb
+                      // set to NULL. The provider should return the
+                      // count of bytes needed. The engine then
+                      // allocates that much space and calls the method
+                      // again with lpb pointing to the allocated data.)
+{
+   LPBYTE      lpbStart = lpb;
+   CReplObject *pObject = (CReplObject*)hObject;
+   CFolder     *pFolder = (CFolder*)    pObject;
+   CItem       *pItem   = (CItem*)      pObject;
+
+   if (lpbStart)
+      *lpb = OBJECT_VERSION;
+   lpb++;
+
+   if (lpbStart)
+      *(PUINT)lpb = pObject-&gt;m_uType;
+   lpb += sizeof (pObject-&gt;m_uType);
+
+   switch (pObject-&gt;m_uType)
+   {
+   case OT_FOLDER:
+       break;
+
+   case OT_ITEM:
+       if (lpbStart)
+           *(PUINT)lpb = pItem-&gt;m_uid;
+       lpb += sizeof (pItem-&gt;m_uid);
+
+       if (lpbStart)
+           *(FILETIME*)lpb = pItem-&gt;m_ftModified;
+       lpb += sizeof (pItem-&gt;m_ftModified);
+       break;
+   }
+   return lpb - lpbStart;
+}
+
+STDMETHODIMP_(HREPLOBJ) CStore::BytesToObject
+(
+   LPBYTE  lpb,  // Pointer to buffer where byte array
+                 // should be stored; can be NULL.
+   UINT    cb    // buffer size
+)
+{
+   CReplObject *pObject = NULL;
+   CFolder     *pFolder;
+   CItem       *pItem;
+
+   BYTE bVersion = *lpb++;
+   UINT uType    = *(PUINT)lpb;
+
+   lpb += sizeof (uType);
+
+   if (bVersion != OBJECT_VERSION)
+   {
+       // Convert the data based on bVersion.
+   }
+
+   switch (uType)
+   {
+   case OT_FOLDER:
+        pObject = pFolder = new CFolder;
+        break;
+
+   case OT_ITEM:
+        pObject = pItem = new CItem;
+
+        pItem-&gt;m_uid = *(PUINT)lpb;
+        lpb += sizeof (pItem-&gt;m_uid);
+
+        pItem-&gt;m_ftModified = *(FILETIME*)lpb;
+        lpb += sizeof (pItem-&gt;m_ftModified);
+
+        break;
+   }
+
+   return (HREPLOBJ)pObject;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condevelopingthedesktopprovider.htm">Developing the Desktop Provider</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Accessing%20Folders (wce50grfaccessingfolders.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

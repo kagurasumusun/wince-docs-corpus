@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertAddSerializedElementToStore</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcertaddserializedelementtostore"></A>CertAddSerializedElementToStore</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function adds a serialized certificate element to the store. The serialized element contains the encoded certificate and its extended properties. Extended properties are associated with a certificate and are not part of a certificate as issued by a certificate authority (CA). Extended properties are not available on a certificate when it is used on a non-Microsoft operating system.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CertAddSerializedElementToStore(</B>
+  <B>HCERTSTORE </B><I>hCertStore</I><B>,</B>
+  <B>const BYTE* </B><I>pbElement</I><B>, </B>
+  <B>DWORD </B><I>cbElement</I><B>,</B> 
+  <B>DWORD </B><I>dwAddDisposition</I><B>, </B>
+  <B>DWORD </B><I>dwFlags</I><B>, </B>
+  <B>DWORD </B><I>dwContextTypeFlags</I><B>, </B>
+  <B>DWORD* </B><I>pdwContextType</I><B>, </B>
+  <B>const void** </B><I>ppvContext</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCertStore</I></DT>
+
+<DD>[in] Handle to a certificate store where the created certificate will be stored. If <I>hCertStore</I> is NULL, the function creates a copy of a certificate context with its extended properties, but the certificate is not persisted in any store.</dd>
+
+<DT><I>pbElement</I></DT>
+
+<DD>[in] Pointer to a buffer containing the certificate information to be serialized and added to the certificate store.</dd>
+
+<DT><I>cbElement</I></DT>
+
+<DD>[in] Size, in bytes, of the <I>pbElement</I> buffer.</dd>
+
+<DT><I>dwAddDisposition</I></DT>
+
+<DD>[in] Specifies the action to take if the certificate already exists in the store. The following table shows disposition values that are currently defined.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=51%>Disposition value</TH>
+<TH width=49%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ADD_NEW</TD>
+<TD width=49%>If the certificate is new, it is created and persisted to the store. The operation fails if an identical certificate already exists in the store. The last error code is set to CRYPT_E_EXISTS.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ADD_USE_EXISTING</TD>
+<TD width=49%>If the certificate is new, it is added to the store. If an identical certificate already exists, the existing element is used. If <I>ppvContext</I> is not NULL, the existing context is duplicated. The function only adds properties that do not already exist. The SHA1 and MD5 hash properties are not copied.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ADD_REPLACE_EXISTING</TD>
+<TD width=49%>If an identical certificate already exists in the store, the existing certificate context is deleted before creating and adding the new context.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ADD_ALWAYS</TD>
+<TD width=49%>No check is made to see if an identical certificate already exists. A new element is always created. This can lead to duplicates in the store. To determine if the element already exists in the store, call the <A HREF="wce50lrfcertgetsubjectcertificatefromstore.htm">CertGetSubjectCertificateFromStore</A> function.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ADD_NEWER</TD>
+<TD width=49%>If a matching certificate or a link to a matching certificate exists, the function compares the <B>NotBefore</B> times on the certificates. If the existing certificate has a <B>NotBefore</B> time less than the <B>NotBefore</B> time on the new certificate, the old certificate or link is replaced just as with CERT_STORE_ADD_REPLACE_EXISTING. If the existing certificate has a <B>NotBefore</B> time greater than or equal to the <B>NotBefore</B> time on the certificate to be added, the function fails with the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function returning the CRYPT_E_EXISTS code.
+<P>If a matching certificate or a link to a matching certificate is not found in the store, a new certificate is added to the store.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ADD_NEWER_INHERIT_PROPERTIES</TD>
+<TD width=49%>The action is the same as for CERT_STORE_ADD_NEWER. However, if an older certificate is replaced, the properties of the older certificate are incorporated into the replacement certificate.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES</TD>
+<TD width=49%>If a matching certificate exists in the store, the existing context is deleted before creating and adding the new context. The new added context inherits properties from the existing certificate.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>dwFlags </I></DT>
+
+<DD>[in] Reserved for future use and must be set to zero.</dd>
+
+<DT><I>dwContextTypeFlags </I></DT>
+
+<DD>[in] Specifies the contexts that can be added.
+
+<P>The following table shows context type flags that are currently defined.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=51%>Context type flag </TH>
+<TH width=49%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_ALL_CONTEXT_FLAG</TD>
+<TD width=49%>Adds any context.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=51%>CERT_STORE_CERTIFICATE_CONTEXT_FLAG </TD>
+<TD width=49%>Adds only a certificate context.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pdwContextType </I></DT>
+
+<DD>[out] Optional. Pointer to the context type of the added serialized element. If the value of this parameter is NULL, the calling application does not require the context type.
+
+<P>The CERT_STORE_CERTIFICATE_CONTEXT context type indicates a certificate.
+</dd>
+
+<DT><I>ppvContext </I></DT>
+
+<DD>[out] Optional. Pointer to a pointer to the decoded certificate context. If the value of this parameter is NULL, the calling application does not require the context of the added or existing certificate.
+
+<P>If <I>ppvContext</I> is not NULL, it must be the address of a pointer to a <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A> structure. When the application is finished with the context, the context must be freed by using the <A HREF="wce50lrfcertfreecertificatecontext.htm">CertFreeCertificateContext</A> function for a certificate.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is TRUE.</P>
+
+<P>If the function fails, the return value is FALSE.</P>
+
+<P>For extended error information, call the <B>GetLastError</B> function. The following table shows some possible error codes.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Error value</TH>
+<TH width=60%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>CRYPT_E_EXISTS</TD>
+<TD width=60%>If the <I>dwAddDisposition</I> parameter is set to CERT_STORE_ADD_NEW, the certificate already exists in the store.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>E_INVALIDARG </TD>
+<TD width=60%>An invalid disposition value was specified in the <I>dwAddDisposition</I> parameter.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The Windows CE version of this function does not support CRL and CTL flags. The desktop operating system supports the following flags that Windows CE does not support:</P>
+
+<P>CERT_STORE_CRL_CONTEXT</P>
+
+<P>CERT_STORE_CRL_CONTEXT_FLAG</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcertfreecertificatecontext.htm">CertFreeCertificateContext</A> | <A HREF="wce50lrfcertgetsubjectcertificatefromstore.htm">CertGetSubjectCertificateFromStore</A> | <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CertAddSerializedElementToStore (wce50lrfcertaddserializedelementtostore.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

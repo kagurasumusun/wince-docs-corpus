@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Host Name Resolution Using a DNS Server for IPv4</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhostnameresolutionusingadnsserverforipv4"></A>Host Name Resolution Using a DNS Server for IPv4</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To make host name resolution scaleable and centrally manageable, IP address mappings for fully-qualified domain names (FQDNs) are stored on DNS servers. Windows CE does not support hosting a DNS server running on Windows CE. However, Windows CE queries a DNS server for name resolution if a server exists on the network. </P>
+
+<P>The following process outlines what happens when the DNS resolver on a host sends a DNS query to a DNS server.
+
+<OL type="1">
+	<LI>The DNS resolver formats a DNS Name Query containing the FQDN and sends it to the configured DNS server. The DNS domain name will then be appended to the name to be resolved. If the system has multiple network adapters, multiple DNS domain names can be used and the resolver queries each network adapter. The adapter specific DNS domain name is stored in the Domain value in the <B>HKEY_LOCAL_MACHINE\Comm\&lt;Adapter Name&gt;\Parms\Tcpip</B> registry key.</li>
+
+	<LI>The DNS server checks the FQDN in the DNS Name Query against locally-stored address records. If a record is found, the IP address corresponding to the requested FQDN is sent back to the client.</li>
+
+	<LI>If the FQDN is not found, the DNS server forwards the request to a DNS server that is authoritative for the FQDN.</li>
+
+	<LI>The authoritative DNS server returns the reply, containing the resolved IP address, back to the original DNS server.
+<P>The original DNS server sends the IP address mapping information to the client. 
+</li>
+</OL>
+
+<P>Windows Sockets applications generally use the <B>gethostbyname</B> or <B>getaddrinfo </B>functions to resolve a host name to an IP address. When looking up a name, the resolver performs the following operations by default:
+
+<OL type="1">
+	<LI>Checks the registry for a name that matches the value of the <B>HKEY_LOCAL_MACHINE\Comm\Tcpip\Hosts\host name</B> entry. </li>
+
+	<LI>Checks the name cache, which is stored in memory for Windows CE 3.0 and later, unless <B>HKEY_LOCAL_MACHINE\Comm\Afd\ResolverCheckCacheFirst</B> is equal to zero.
+<P>If a DNS Server is configured and the name matches the definition of a DNS name, the resolver queries the DNS server as outlined above. The resolver tries both the primary DNS Name Server (DNS1) and the secondary DNS Name Server (DNS2).
+
+<P>If the resolver does not find a match and the name matches the definition of a WINS name, the resolver tries the NetBIOS Name Server. The resolver tries both the primary NetBIOS Name Server (WINS1) and the secondary NETBIOS Name Server (WINS2).
+</li>
+
+	<LI>Tries the IP subnet broadcast, if the resolver did not find a match in the earlier steps.</li>
+
+	<LI>Tries the name cache, if the resolver did not find a match in the earlier steps and if the <B>ResolverCheckCacheFirst</B> registry entry is equal to 0.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The resolver determines whether the name that you want to look up matches the definition of a DNS name or the definition of a WINS name. The resolver then queries only the appropriate servers, based on the type of name matched.</BLOCKQUOTE>
+</li>
+</OL>
+
+<P>Some applications use the resolver to resolve an IP address to a host name. The resolver performs the following operations by default:
+
+<OL type="1">
+	<LI>Checks the registry for a matching name entry</li>
+
+	<LI>Queries a Domain Name Server, if one is configured</li>
+
+	<LI>Sends a NetBIOS unicast message to the device, if the resolver did not find a match in the earlier steps
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>For information about host name registration, see <A HREF="wce50connameregistrationforipv4.htm">Name Registration for IPv4</A>.</BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+Windows XP support for host name resolution using a DNS server is slightly different. For more information about host name resolution on Windows XP, see the Windows XP documentation.</BLOCKQUOTE>
+</li>
+</OL>
+
+<P>For information about host name resolution for IPv6, see <A HREF="wce50conhostnameresolutionfordualstackipv4ipv6.htm">Host Name Resolution for Dual Stack (IPv4/IPv6)</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conhostnameresolution.htm">Host Name Resolution for IPv4</A> | <A HREF="wce50contcpipsecuredynamicdns.htm">TCP/IP and Dynamic DNS</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Host%20Name%20Resolution%20Using%20a%20DNS%20Server%20for%20IPv4 (wce50conhostnameresolutionusingadnsserverforipv4.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

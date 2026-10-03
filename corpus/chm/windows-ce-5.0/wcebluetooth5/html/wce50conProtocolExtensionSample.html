@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Protocol Extension Sample</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfDeviceIoControl">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conprotocolextensionsample"></A>Protocol Extension Sample</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Bthlink, Btscosnd, L2capapi, and L2capdev samples illustrate the process of creating a Bluetooth protocol extension for Windows CE. These sample extensions connect to various layers of the Bluetooth stack by putting itself above the HCI layer and exposing an interface for creating baseband connections. </P>
+
+<P>For more information see, <A HREF="wce50howhowtowritebluetoothstackextensionlayer.htm">How to Develop and Load a Bluetooth HCI Stack Extension Layer</A>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>These samples have not been thoroughly tested and are not intended for production use.</BLOCKQUOTE>
+
+<P>For example, BthLink provides the functionality to generate a link key between two devices in the pairing process. The compiled sample generates a Bthlink.dll. This DLL is loaded by Btpair.exe.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>This sample is used by the <A HREF="wce50conqueryingandpairingsample.htm">Querying and Pairing Sample</A>.</BLOCKQUOTE>
+
+<P class="label"><B>Loading the Extension</B></P>
+
+<P>The DLL of this protocol layer is loaded with the standard stream driver loading procedure.</P>
+
+<PRE class="code">HANDLE HDev= RegisterDevice (L"BTL", 1, L"bthlink.dll", NULL);
+HANDLE hFile = CreateFile (
+               L"BTL1:",
+               0, 0, NULL,
+               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
+              );</PRE>
+
+<P class="label"><B>Initializing the Extension</B></P>
+
+<P>The BL_INIT function is called to create an instance of the bthlink object. The instance is created with the bthlink_CreateDriverInstance call.</P>
+
+<P>To register the protocol layer extension, the <A HREF="wce50lrfhciestablishdevicecontext.htm">HCI_EstablishDeviceContext</A> function is called. This function passes the information regarding the new layer down to the next protocol layer. The following example code shows how <B>HCI_EstablishDeviceContext</B> does this.</P>
+
+<PRE class="code">HCI_EstablishDeviceContext (
+    this, BTH_CONTROL_DEVICEONLY,
+    NULL, 0, 0,
+    &amp;hei, &amp;hc, &amp;hci_if, &amp;cHciHeaders,&amp;cHciTrilers,&amp;hHCI)
+);</PRE>
+
+<P>The <B>HEI</B> data structure is used to register the event handlers that will be handled by this new layer. The following example code shows how to use <B>HEI</B> to register the event handlers.</P>
+
+<PRE class="code">hei.hci_ConnectionCompleteEvent = bthlink_CreateConnection_Out;
+hei.hci_DisconnectionCompleeEvent = bthlink_DisconnectionCompleteEvent;
+hei.hci_StackEvent = bthlink_hStackEvent;</PRE>
+
+<P>The <B>HC</B> data structure is used to register the callback functions this new layer supports. The following example code shows how to use the <B>HC</B> structure to register the callback functions.</P>
+
+<PRE class="code">hc.hci_CreateConnection_Out = bthlink_CreateConnection_Out;
+hc.hci_Disconnect_Out = bthlink_Disconnect_Out;
+hc.hci_CallAborted = bthlink_hCallAborted;</PRE>
+
+<P class="label"><B>Creating a Link Key</B></P>
+
+<P>If the extension layer installs successfully, two IOCTL functions are established:
+
+<UL type="disc">
+	<LI>BTHLINK_IOCTL_CONNECT</li>
+
+	<LI>BTHLINK_IOCTL_DISCONNECT</li>
+</UL>
+
+<P>When BHLINK_IOCTL_CONNECT calls <A HREF="JavaScript:hhobj_1.Click()">DeviceIoControl</A>, the connect function establishes the callback function context for <B>HCI_CreateConnection_In</B>. A connection is created by establishing a link key between the two devices.</P>
+
+<P class="label"><B>Destroying the Extension</B></P>
+
+<P>The following example code is used to destroy the extension.</P>
+
+<PRE class="code">DeviceIoControl (
+          hFile, BTHLINK_IOCTL_DISCONNECT,
+          &amp;p, sizeof(p), NULL, 0, NULL, NULL
+         );
+DeregisterDevice (hDev);</PRE>
+
+<P class="label"><B>Sample Location</B></P>
+
+<P>The following table shows the location for the protocol extension samples.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=45%>Location</TH>
+<TH width=55%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>%_WINCEROOT%\Public\Common\Oak\Drivers\Bluetooth\Sample\Bthlink</TD>
+<TD width=55%>HCI extension layer that generates a link key between two devices in the pairing process. 
+<P>The compiled sample generates a Bthlink.dll. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>%_WINCEROOT%\Public\Common\Oak\Drivers\Bluetooth\Sample\Btscosnd</TD>
+<TD width=55%>HCI extension layer that implements an audio driver that sends and recieves Bluetooth SCO audio data. 
+<P>The compiled sample generates a Btscosnd.dll.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>%_WINCEROOT%\Public\Common\Oak\Drivers\Bluetooth\Sample\L2capdev</TD>
+<TD width=55%>L2CAP extension layer that is implemented as a driver in device.exe.
+<P>The compiled sample generates a L2capdev.dll.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>%_WINCEROOT%\Public\Common\Oak\Drivers\Bluetooth\Sample\L2capapi</TD>
+<TD width=55%>User application accessible API that communicates with L2capdev.
+<P>The compiled sample generates the static library L2capapi.dll.</P>
+</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conbluetoothapplicationdevelopment.htm">Bluetooth Application Development</A> | <A HREF="wce50conbluetoothsamples.htm">Bluetooth Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Protocol%20Extension%20Sample (wce50conprotocolextensionsample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

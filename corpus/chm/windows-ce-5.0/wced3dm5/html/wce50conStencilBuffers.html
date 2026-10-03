@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Stencil Buffers</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50constencilbuffers"></A>Stencil Buffers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The stencil buffer enables or disables drawing to the rendering target surface on a pixel-by-pixel basis. At its most fundamental level, it enables applications to mask sections of the rendered image so that they are not displayed. Applications often use stencil buffers for special effects such as dissolves, decaling, and outlining. </P>
+
+<P>Stencil buffer information is embedded in the z-buffer data. Your application can use the <A HREF="wce50lrfidirect3dmobilecheckdeviceformat.htm">IDirect3DMobile::CheckDeviceFormat</A> method to check for hardware stencil support, as shown in the following code example. </P>
+
+<PRE class="code">// Reject devices that cannot perform 8-bit stencil buffering.
+// The following example assumes that pCaps is a valid pointer 
+// to an initialized D3DMCAPS structure. 
+
+if( FAILED( m_pD3DM-&gt;CheckDeviceFormat( pCaps-&gt;AdapterOrdinal,
+                                       pCaps-&gt;DeviceType,  
+                                       Format,  
+                                       0, 
+                                       D3DMRTYPEFLAG_SURFACE,
+                                       D3DMFMT_D24S8 ) ) )
+        return E_FAIL;</PRE>
+
+<P><B>IDirect3DMobile::CheckDeviceFormat</B> allows you to choose a device to create based on the capabilities of that device. In this case, devices that do not support 8-bit stencil buffers are rejected. Note that this is only one possible use for <B>IDirect3DMobile::CheckDeviceFormat</B>.</P>
+
+<P>To determine the stencil buffer limitations of a device, query the <B>StencilCaps</B> member of the <A HREF="wce50lrfd3dmcaps.htm">D3DMCAPS</A> structure for its supported stencil buffer operations.</P>
+
+<H2 class="dtH2">How the Stencil Buffer Works</H2>
+
+<P>Microsoft&reg; Direct3D&reg; Mobile performs a test on the contents of the stencil buffer on a pixel-by-pixel basis. For each pixel in the target surface, it performs a test using the corresponding value in the stencil buffer, a stencil reference value, and a stencil mask value. If the test passes, Direct3D Mobile performs an action. The test is performed using the following steps:
+
+<OL type="1">
+	<LI>Perform a bitwise AND operation of the stencil reference value with the stencil mask. </li>
+
+	<LI>Perform a bitwise AND operation of the stencil buffer value for the current pixel with the stencil mask. </li>
+
+	<LI>Compare the result of step 1 to the result of step 2, using the comparison function. </li>
+</OL>
+
+<P>These steps are shown in the following code example.</P>
+
+<PRE class="code">(StencilRef &amp; StencilMask) CompFunc (StencilBufferValue &amp; StencilMask)</PRE>
+
+<P><I>StencilBufferValue</I> is the contents of the stencil buffer for the current pixel. This code example uses the ampersand (&amp;) symbol to represent the bitwise AND operation. <I>StencilMask</I> represents the value of the stencil mask, and <I>StencilRef</I> represents the stencil reference value. <I>CompFunc</I> is the comparison function.</P>
+
+<P>The current pixel is written to the target surface if the stencil test passes and is ignored otherwise. The default comparison behavior is to write the pixel, no matter how each bitwise operation turns out (D3DMCMP_ALWAYS). You can change this behavior by changing the value of the D3DMRS_STENCILFUNC render state (see <A HREF="wce50lrfd3dmrenderstatetype.htm">D3DMRENDERSTATETYPE</A>), passing a member of the <A HREF="wce50lrfd3dmcmpfunc.htm">D3DMCMPFUNC</A> enumerated type to identify the desired comparison function. </P>
+
+<H2 class="dtH2">Customizing the Stencil Buffer</H2>
+
+<P>Your application can customize the operation of the stencil buffer. It can set the comparison function, the stencil mask, and the stencil reference value. It can also control the action that Direct3D Mobile takes when the stencil test passes or fails.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condirect3dmobileresources.htm">Direct3D Mobile Resources</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Stencil%20Buffers (wce50constencilbuffers.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

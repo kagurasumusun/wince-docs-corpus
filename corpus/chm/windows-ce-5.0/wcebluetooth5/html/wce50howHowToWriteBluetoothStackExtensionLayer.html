@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>How to Develop and Load a Bluetooth HCI Stack Extension Layer</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfRegisterDevice">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateFile">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50howhowtowritebluetoothstackextensionlayer"></A>How to Develop and Load a Bluetooth HCI Stack Extension Layer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Microsoft&reg; Windows&reg; CE provides a flexible stack implementation that enables you to extend the base stack functionality. For example, you can enhance the functionality of the stack to include synchronous connection oriented (SCO) support.</P>
+
+<P>The extension layer described in this section must be installed on top of the HCI layer. The extension layer must be developed as an installable stream device driver that makes use of a common set of APIs to manage the device. All Bluetooth stack layers, from HCI and up, follow the same guidelines for exporting interfaces and connecting to lower-level stacks. The templates for these functions are included in this section.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The term <B><I>ExtensionLayer_</I></B> is a placeholder for the name of the extension layer that you are creating. The term <B><I>driver</I></B> is a placeholder for the installable stream driver that loads the extension layer. For example, the extension layer name can have real stack layer prefixes such as <B>HCI_</B>, <B>L2CAP_</B>, <B>SDP_</B>, or <B>RFCOMM_</B>.</BLOCKQUOTE>
+
+<P>The extension layer described in this section is based on the BthLink sample. This sample extends the HCI layer and provides the functionality to generate a link key between two devices in the pairing process. For more information about BthLink, see <A HREF="wce50conprotocolextensionsample.htm">Protocol Extension Sample</A>. </P>
+
+<P>For more information about the HCI layer, see <A HREF="wce50conhostcontrollerinterface.htm">Host Controller Interface</A>.</P>
+
+<P>To track your progress in the following table, select the check box next to each step.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=5%>&nbsp;</TH>
+<TH width=57%>Step</TH>
+<TH width=38%>Topic</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>1. Implement the required commands that the extension layer must support. </TD>
+<TD width=38%><A HREF="wce50conhcicommands.htm">HCI Commands</A>
+<P><A HREF="wce50condevelopingbluetoothextensionlayer.htm">Implementing Commands, Callbacks, and Events Handlers for an Extension Layer</A></P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>2. Implement the required HCI event handlers and the HCI callback functions.
+<P>For example, the sample BthLink implements:
+
+<UL type="disc">
+	<LI>The <B>HCI_ConnectionCompleteEvent</B> event in the bthlink_ConnectionCompleteEvent handler to notify the HCI layer and the peer device that the connection has been established.</li>
+
+	<LI>The command complete callback function for the <B>HCI_CreateConnection</B> command in the bthlink_CreateConnection_Out function to create a connection between the HCI layer and the peer Bluetooth device.</li>
+</UL>
+</TD>
+<TD width=38%><A HREF="wce50conhcieventindication.htm">HCI Events</A>
+<P><A HREF="wce50conhcicallbacks.htm">HCI Callbacks</A></P>
+
+<P><A HREF="wce50condevelopingbluetoothextensionlayer.htm">Implementing Commands, Callbacks, and Events Handlers for an Extension Layer</A></P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>3. Declare function pointers to the event handler and callback functions created in step 2 and for the commands that the extension layer implements.
+<P>The following code example shows function pointer declarations for bthlink_ConnectionCompleteEvent and bthlink_CreateConnection_Out declared in the BthLink sample.</P>
+
+<PRE class="code">static int  bthlink_ConnectionCompleteEvent(
+  void *pUserContext, 
+  void *pCallContext, 
+  unsigned char status, 
+  unsigned short connection_handle, 
+  BD_ADDR *pba, 
+  unsigned char link_type, 
+  unsigned char encryption_mode);
+
+static int bthlink_CreateConnection_Out(
+  void *pCallContext, 
+  unsigned char status);</PRE>
+</TD>
+<TD width=38%><A HREF="wce50condevelopingbluetoothextensionlayer.htm">Implementing Commands, Callbacks, and Events Handlers for an Extension Layer</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>4. Create a class to implement the Bluetooth stack extension layer.
+<P>The BthLink sample creates a class named bthlink. This class is derived from SVSSynch and SVSRefObj, and is defined in svsutil.hxx to inherit the built-in multi threaded functionality.</P>
+</TD>
+<TD width=38%>Not applicable</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>5. Register the extension layer event handlers and the callback functions with the HCI layer.
+<P>The following code example is an excerpt from the BthLink class constructor that registers bthlink_ConnectionCompleteEvent and bthlink_CreateConnection_Out with the HCI layer.</P>
+
+<PRE class="code">HCI_EVENT_INDICATION hei;
+HCI_CALLBACKS hc;
+hei.hci_ConnectionCompleteEvent = 
+bthlink_ConnectionCompleteEvent;
+hc.hci_CreateConnection_Out = 
+bthlink_CreateConnection_Out;</PRE>
+</TD>
+<TD width=38%>Not applicable</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>6. Establish a connection from the extension layer to the HCI layer by calling the <A HREF="wce50lrfhciestablishdevicecontext.htm">HCI_EstablishDeviceContext</A> function.
+<P>On registration, the extension layer establishes a connection with the HCI layer by supplying a table of events and command completion callbacks. A function table is received for the HCI layer. </P>
+
+<P>BthLink calls <B>HCI_EstablishDeviceContext</B> in the class constructor. The following code example shows how BthLink calls <B>HCI_EstablishDeviceContext</B>.</P>
+
+<PRE class="code">HANDLE hHCI;
+HCI_INTERFACE hci_if;
+HCI_EstablishDeviceContext (this,
+  BTH_CONTROL_DEVICEONLY, NULL, 0, 0, 
+  &amp;hei, &amp;hc, &amp;hci_if, &amp;cHciHeaders, 
+  &amp;cHciTrailers, &amp;hHCI)</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;BthLink passes BTH_CONTROL_DEVICEONLY in the call to <B>HCI_EstablishDeviceContext</B> to route all local device control packets.</BLOCKQUOTE>
+</TD>
+<TD width=38%><A HREF="wce50conestablishingconnectionsthroughhci.htm">Establishing Connections through HCI</A>.
+<P><A HREF="wce50conregisteringde-registeringextensionlayer.htm">Registering and Deregistering the Extension Layer</A></P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>7. Close the existing connection to the HCI layer by calling the <A HREF="wce50lrfhciclosedevicecontext.htm">HCI_CloseDeviceContext</A> function and pass the handle instance created by <B>HCI_EstablishDeviceContext</B>.
+<P>BthLink calls <B>HCI_CloseDeviceContext</B> in the class destructor. The following code example shows how BthLink calls <B>HCI_CloseDeviceContext</B>. </P>
+
+<PRE class="code">HCI_CloseDeviceContext (hHCI);</PRE>
+</TD>
+<TD width=38%><A HREF="wce50conclosingconnectionsthroughhci.htm">Closing Connections through HCI</A>
+<P><A HREF="wce50conregisteringde-registeringextensionlayer.htm">Registering and Deregistering the Extension Layer</A></P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>8. Write functions to initialize, instantiate, deinitialize, and delete the extension layer.
+<P>Implement the following functions:
+
+<UL type="disc">
+	<LI><B><I>Extensionlayer_</I>InitializeOnce</B></li>
+
+	<LI><B><I>Extensionlayer_</I>UninitializeOnce</B></li>
+
+	<LI><B><I>Extensionlayer_</I>CreateDriverInstance</B></li>
+
+	<LI><B><I>Extensionlayer_</I>CloseDriverInstance</B></li>
+</UL>
+</TD>
+<TD width=38%><A HREF="wce50consettingupshuttingdownbluetoothextensionlayer.htm">Setting Up and Shutting Down a Bluetooth Extension Layer</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>9. Create an installable stream device driver for the extension layer so that it can be installed on top of the HCI layer by using the following common functions:
+<UL type="disc">
+	<LI><B><I>driver</I>_Init</B></li>
+
+	<LI><B><I>driver</I>_Deinit</B></li>
+
+	<LI><B><I>driver</I>_Read </B></li>
+
+	<LI><B><I>driver</I>_Write</B></li>
+
+	<LI><B><I>driver</I>_Open</B></li>
+
+	<LI><B><I>driver</I>_Close</B></li>
+
+	<LI><B><I>driver</I>_IOControl</B></li>
+
+	<LI><B><I>driver</I>_Seek</B></li>
+
+	<LI><B><I>driver</I>_PowerUp</B></li>
+
+	<LI><B><I>driver</I>_PowerDown</B></li>
+</UL>
+</TD>
+<TD width=38%><A HREF="wce50concreatinginstallablestreamdriverforbluetoothextensionlayer.htm">Creating an Installable Stream Driver for the Bluetooth Extension Layer</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=5%><INPUT TYPE="Checkbox" Value="ON"></TD>
+<TD width=57%>10. Load the extension layer from the application by using the following functions:
+<UL type="disc">
+	<LI><A HREF="JavaScript:hhobj_1.Click()">RegisterDevice</A></li>
+
+	<LI><A HREF="JavaScript:hhobj_2.Click()">CreateFile</A></li>
+</UL>
+</TD>
+<TD width=38%><A HREF="wce50conloadingbluetoothextensionlayer.htm">Loading a Bluetooth Extension Layer</A></TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oribluetoothosdesign.htm">Bluetooth OS Design Development</A> | <A HREF="wce50conhostcontrollerinterface.htm">Host Controller Interface</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: How%20to%20Develop%20and%20Load%20a%20Bluetooth%20HCI%20Stack%20Extension%20Layer (wce50howhowtowritebluetoothstackextensionlayer.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

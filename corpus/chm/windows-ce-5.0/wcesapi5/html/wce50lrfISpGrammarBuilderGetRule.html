@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpGrammarBuilder::GetRule</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispgrammarbuildergetrule"></A>ISpGrammarBuilder::GetRule</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method gets the initial state of a grammar rule. Either the rule name or identifier has to be provided (the other can either be NULL or zero). If both a grammar rule name and identifier are provided, they must match for the call to succeed. If the grammar rule does not already exist and <I>fCreateIfNotExists</I> is true, then the grammar rule is defined. Otherwise this call will return an error.</P>
+
+<PRE class="syntax"><B>HRESULT GetRule(</B>
+  <B>const WCHAR* </B><I>pszRuleName</I><B>,</B>
+  <B>DWORD </B><I>dwRuleId</I><B>,</B>
+  <B>DWORD </B><I>dwAttributes</I><B>,</B>
+  <B>BOOL </B><I>fCreateIfNotExist</I><B>,</B>
+  <B>SPSTATEHANDLE* </B><I>phInitialState</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszRuleName</I></DT>
+
+<DD>[in] Pointer to a null-terminated string specifying the grammar rule name. If NULL, no search is made for the name. </dd>
+
+<DT><I>dwRuleId</I></DT>
+
+<DD>[in] Grammar rule identifier. If zero, no search is made for the rule identifier. </dd>
+
+<DT><I>dwAttributes</I></DT>
+
+<DD>[in] Grammar rule attributes of type <A HREF="wce50lrfspcfgruleattributes.htm">SPCFGRULEATTRIBUTES</A> for the new rule created. This parameter is ignored if the rule already exists. Values can be combined to allow for multiple attributes. </dd>
+
+<DT><I>fCreateIfNotExist</I></DT>
+
+<DD>[in] Value indicating if the method is to create the grammar rule if one does not already exist. Set this value to TRUE to create the grammar rule, and to FALSE otherwise. </dd>
+
+<DT><I>phInitialState</I></DT>
+
+<DD>[out] Pointer to the initial state of the rule. Can be NULL. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>Value</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>S_OK</TD>
+<TD width=74%>Function completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SPERR_RULE_NOT_FOUND</TD>
+<TD width=74%>No rule matching the specified criteria can be found and a new rule is not created.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SPERR_RULE_NAME_ID_CONFLICT</TD>
+<TD width=74%>One of the name and identifier matches an existing rule but the other does not match the same rule.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>E_INVALIDARG</TD>
+<TD width=74%>At least one parameter is invalid. Also returned when both <I>pszRuleName</I> and <I>dwRuleId</I> are NULL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>E_OUTOFMEMORY</TD>
+<TD width=74%>Exceeded available memory.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code example illustrates the use of <B>GetRule</B>.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+SPSTATEHANDLE hState;
+//======================================================================
+//  Create a rule with name and identifier.
+hr = pGrammarBuilder-&gt;GetRule(L"rule1", 1, SPRAF_Dynamic, TRUE, &amp;hState);
+//Check return value.
+//======================================================================
+//  Create a rule with name only.
+hr = pGrammarBuilder-&gt;GetRule(L"rule", 0, SPRAF_Dynamic, TRUE, &amp;hState);
+//Check return value.
+//======================================================================
+//  Create a rule with identifier only.
+hr = pGrammarBuilder-&gt;GetRule(NULL, 2, SPRAF_Dynamic, TRUE, &amp;hState);
+//Check return value.
+//======================================================================
+//  Get an existing rule by identifier.
+hr = pGrammarBuilder-&gt;GetRule(L"rule1", 1, SPRAF_Dynamic, FALSE, &amp;hState);
+//Check return value.
+hr = pGrammarBuilder-&gt;GetRule(NULL, 1, SPRAF_Dynamic, FALSE, &amp;hState);
+//Check return value.
+//======================================================================
+//  Get an existing rule by name.
+hr = pGrammarBuilder-&gt;GetRule(L"rule1", 0, SPRAF_Dynamic, FALSE, &amp;hState);
+//Check return value.
+//======================================================================
+//  Get rule references to other grammars.
+//  Compose the name of the rule as follows.
+//  Note the double back-slash before the rule name.
+//  OBJECT --&gt; pszRuleName = L"SAPI5OBJECT:MyApp.ClassId\\\\RuleName"
+//  URL --&gt; pszRuleName = L"URL:http://myserver.com\\\\RuleName"
+hr = pBackend-&gt;GetRule(pszRuleName, 0 , SPRAF_Import, TRUE, phTarget) 
+//Check return value.
+// phTarget contains a valid rule handle that can be used to reference the
+rule.</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispgrammarbuilder.htm">ISpGrammarBuilder</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpGrammarBuilder::GetRule (wce50lrfispgrammarbuildergetrule.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

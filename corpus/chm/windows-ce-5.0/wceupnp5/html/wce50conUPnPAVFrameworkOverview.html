@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>UPnP AV Framework Overview</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conupnpavframeworkoverview"></A>UPnP AV Framework Overview</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Windows CE UPnP AV Framework assists developers building UPnP AV devices and control points. It does this by providing a set of C++ classes that define UPnP AV-specific methods and functionality.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The Windows CE UPnP AV Framework, produced by Microsoft, provides functionality that makes assists developers building UPnP AV devices and control points. The UPnP AV DCP is a general specification produced by many companies, working as the UPnP Forum. At the time of writing, the specification was at version 1.01, and this is the version supported by the Windows CE UPnP AV Framework. For an introduction to the general UPnP AV DCP, see <A HREF="wce50conupnpavdcpoverview.htm">UPnP AV DCP Overview</A> and <A HREF="wce50conupnpavdcpdocumentation.htm">UPnP AV DCP Documentation</A>.</BLOCKQUOTE>
+
+<P>Windows CE also provides UPnP device and control point functionality, documented in <A HREF="wce50conusingtheupnpdevicehostapi.htm">Using the UPnP Device Host API</A> and <A HREF="wce50oricontrolpointapi.htm">Using the UPnP Control Point API</A>, respectively. However, the Device Host and Control Point APIs are generic and apply to all possible devices and control points. They provide basic UPnP functionality and rely on custom COM objects provided by developers to provide actual device functionality. </P>
+
+<H4 class="dtH4">Implementing UPnP AV Devices</H4>
+
+<P>To implement a UPnP AV MediaRenderer using solely the generic UPnP functionality, a developer creates a set of COM objects that expose the state variables and actions of the MediaRenderer services (AVTransport, ConnectionManager, and RenderingControl) and then registers these COM objects with the provided Windows CE UPnP Device Host functionality.</P>
+
+<P>In contrast, with the UPnP AV Framework, a developer derives from provided classes for the MediaRenderer services, specifically <A HREF="wce50lrfiavtransportimpl.htm">IAVTransportImpl</A>, <A HREF="wce50lrficonnectionmanagerimpl.htm">IConnectionManagerImpl</A>, and <A HREF="wce50lrfirenderingcontrolimpl.htm">IRenderingControlImpl</A>. In derived classes, the developer provides device-specific functionality in specific methods, like <A HREF="wce50lrficonnectionmanagerprepareforconnection.htm">IConnectionManager::PrepareForConnection</A>.</P>
+
+<P>The UPnP AV Framework uses the generic Device Host API to expose the functionality you provide in the custom C++ classes, but this use is transparent to most developers. The UPnP AV Framework provides COM objects that integrate with the Device Host API and then call the functionality implemented in the derived C++ classes. Developers do not need to modify the provided COM objects. </P>
+
+<P>For more information about using the UPnP AV Framework to implement a UPnP AV device, see <A HREF="wce50condevelopingupnpavframeworkdevices.htm">Developing UPnP AV Framework Devices</A>. For more information about the classes provided with the UPnP AV Framework, see <A HREF="wce50conupnpavclassorganization.htm">UPnP AV Class Organization</A>.</P>
+
+<H4 class="dtH4">Implementing UPnP AV Control Points</H4>
+
+<P>There is a similar relationship with UPnP AV control points: a developer can create UPnP AV control points using solely the UPnP Control Point API, or they can use the UPnP AV Framework to more efficiently develop UPnP AV control points.</P>
+
+<P>Control points that use the UPnP AV Framework use the standard UPnP Control Point API to find UPnP devices on the network. This results in one or more generic <A HREF="wce50lrfiupnpdeviceidispatch.htm">IUPnPDevice</A> pointers, which the control point code uses to create UPnP AV Framework <A HREF="wce50lrfmediarendererdevice.htm">MediaRendererDevice</A> and <A HREF="wce50lrfmediaserverdevice.htm">MediaServerDevice</A> instances. </P>
+
+<P>Control points use the <B>MediaRendererDevice</B> and <B>MediaServerDevice </B>classes to retrieve implementations of the same UPnP AV-specific interfaces implemented by UPnP AV devices. For example, a control point can interact with a MediaServer ContentDirectory service using ContentDirectory-specific methods provided by the <A HREF="wce50lrficontentdirectory.htm">IContentDirectory</A> interface, which it obtains using <A HREF="wce50lrfmediaserverdevicegetcontentdirectory.htm">MediaServerDevice::GetContentDirectory</A>.</P>
+
+<P>For more information about using the UPnP AV Framework to implement a UPnP AV control point, see <A HREF="wce50condevelopingupnpavframeworkcontrolpoints.htm">Developing UPnP AV Framework Control Points</A>. </P>
+
+<H4 class="dtH4">Linking UPnP AV Devices and Control Points</H4>
+
+<P>Devices and control points that use the UPnP AV Framework use the same methods on the same interfaces, but they use them differently. UPnP AV devices implement the methods while UPnP AV control points call them.</P>
+
+<P>For example, a MediaServer device implements <A HREF="wce50lrficontentdirectorysearch.htm">IContentDirectory::Search</A> by searching its internal content database and returning matching items. A control point calls <B>IContentDirectory::Search</B> and uses the returned data.</P>
+
+<P>This linkage can, at least superficially, hide the fact that devices and control points are usually on different computers on the network. </P>
+
+<P>The UPnP AV Framework implements this linkage by providing proxy classes that control points and devices actually call. For example, when a control point calls a method like <B>IContentDirectory::Search</B>, it's actually executing code in a control point proxy class. The proxy class communicates with the specified MediaServer device using standard UPnP network calls.</P>
+
+<P>Similarly, on the device, UPnP AV Framework proxy code calls a device implementation of the <B>IContentDirectory::Search</B> method which then returns the results to the control point over the network.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Although this implementation can make it appear that device and control point are on the same computer, it is important that code that uses the UPnP AV Framework always consider the possibility of network and other communication errors by not assuming that all calls will succeed.</BLOCKQUOTE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oriusingupnpavframework.htm">Using the UPnP AV Framework</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: UPnP%20AV%20Framework%20Overview (wce50conupnpavframeworkoverview.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

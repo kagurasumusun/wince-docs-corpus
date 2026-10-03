@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SnmpExtensionTrap</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSetEvent">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfsnmpextensiontrap"></A>SnmpExtensionTrap</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is called by the Microsoft SNMP service to retrieve information the service needs to generate traps for the SNMP extension agent. The service calls this function only after the extension agent sets the trap event handle to the signaled state during a call to the <A HREF="wce50lrfsnmpextensioninit.htm">SnmpExtensionInit</A> function. The <B>SnmpExtensionTrap</B> function is an element of the SNMP Extension Agent API. </P>
+
+<PRE class="syntax"><B>BOOL SnmpExtensionTrap(</B>
+  <B>AsnObjectIdentifier</B> <I>pEnterpriseOid</I><B>,</B> 
+  <B>AsnInteger32</B><I> pGenericTrapId</I><B>,</B> 
+  <B>AsnInteger32</B><I> pSpecificTrapId</I><B>,</B> 
+  <B>AsnTimeticks</B> <I>pTimeStamp</I><B>,</B> 
+  <B>SnmpVarBindList</B><I> pVarBindList </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pEnterpriseOid </I></DT>
+
+<DD>[out] Pointer to an <A HREF="wce50lrfasnobjectidentifier.htm">AsnObjectIdentifier</A>, structure to receive the object identifier of the enterprise that generated the trap. The SNMP service does not free the memory for this variable. </dd>
+
+<DT><I>pGenericTrapId</I> </DT>
+
+<DD>[out] Pointer to a variable to receive an indication of the generic trap. This parameter can be one of the following values. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=48%>Value</TH>
+<TH width=52%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>SNMP_GENERICTRAP_COLDSTART</TD>
+<TD width=52%>The agent is initializing protocol entities on the managed node. It may alter objects in its view.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>SNMP_GENERICTRAP_WARMSTART</TD>
+<TD width=52%>The agent is re-initializing itself but will not alter objects within its view.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>SNMP_GENERICTRAP_LINKDOWN</TD>
+<TD width=52%>An attached interface has changed from the <B>up</B> state to the <B>down</B> state. The first variable identifies the interface.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>SNMP_GENERICTRAP_LINKUP</TD>
+<TD width=52%>An attached interface has changed from the <B>down</B> state to the <B>up</B> state. The first variable identifies the interface.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>SNMP_GENERICTRAP_AUTHFAILURE</TD>
+<TD width=52%>An SNMP entity has sent an SNMP message, but has falsely claimed to belong to a known community.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>SNMP_GENERICTRAP_EGPNEIGHLOSS</TD>
+<TD width=52%>An EGP peer has changed to the <B>down</B> state. The first variable identifies the IP address of the EGP peer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>SNMP_GENERICTRAP_ENTERSPECIFIC</TD>
+<TD width=52%>Signals an extraordinary event that is identified in the <I>pSpecificTrapId</I> parameter.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pSpecificTrapId </I></DT>
+
+<DD>[out] Pointer to a variable to receive an indication of the specific trap generated. </dd>
+
+<DT><I>pTimeStamp </I></DT>
+
+<DD>[out] Pointer to a variable to receive the time stamp. It is recommended that you initialize this parameter with the value returned by a call to the <A HREF="wce50lrfsnmpsvcgetuptime.htm">SnmpSvcGetUptime</A> function. </dd>
+
+<DT><I>pVarBindList </I></DT>
+
+<DD>[out] Pointer to the variable bindings list. The extension agent must allocate the memory for this parameter. The SNMP service frees the memory with a call to the <B>SnmpVarBindListFree</B> function. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the <B>SnmpExtensionTrap</B> function returns a trap, the return value is TRUE. The SNMP service repeatedly calls the function until it returns a value of FALSE. For additional information, see the following Remarks section. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The SNMP service repeatedly calls the <B>SnmpExtensionTrap</B> function when the <I>phSubagentTrapEvent </I>event handle is set to the signaled state. This handle is passed back during the call to the <A HREF="wce50lrfsnmpextensioninit.htm">SnmpExtensionInit</A> entry point function. The <B>SnmpExtensionTrap</B> function must return TRUE to indicate that the parameters contain valid data for a single trap. The function must return FALSE to indicate that the parameters do not represent valid trap data, and to stop the service's repeated calls.</P>
+
+<P>Note that after the SNMP service sends a trap, it frees the memory associated with the variable binding list. </P>
+
+<P>It is important to note that earlier documentation stated that the extension agent should dynamically allocate memory for the enterprise object identifier because the SNMP service would attempt to release the memory after sending a trap. The service will not release the memory associated with the enterprise object identifier. It is recommended that you return a pointer to a static <A HREF="wce50lrfasnobjectidentifier.htm">AsnObjectIdentifier</A> structure instead.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Snmp.h.<BR>
+<B>Link Library:</B> Snmp.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_1.Click()">SetEvent</A> | <A HREF="wce50lrfsnmputilmemalloc.htm">SnmpUtilMemAlloc</A> | <A HREF="wce50lrfsnmpvarbindlist.htm">SnmpVarBindList</A> | <A HREF="wce50lrfsnmpsvcgetuptime.htm">SnmpSvcGetUptime</A> | <A HREF="wce50lrfsnmpextensioninit.htm">SnmpExtensionInit</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: SnmpExtensionTrap (wce50lrfsnmpextensiontrap.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

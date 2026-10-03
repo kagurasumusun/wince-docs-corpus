@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>File System Driver Creation</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conDeviceManager">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingfsds"></A>File System Driver Creation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A file system driver (FSD) is a dynamic-link library (DLL) that exports file system entry points that map to standard Microsoft&reg; Windows&reg; CE file system functions, such as <A HREF="wce50lrfcreatefile.htm">CreateFile</A> and <A HREF="wce50lrfcreatedirectory.htm">CreateDirectory</A>. When an application calls a file system function, and the function references a file on a volume registered by the FSD, the FSD Manager maps the call to the FSD. The FSD Manager manages all system interactions with installable FSDs.</P>
+
+<P>The operating system (OS) provides a template for functions that you need to develop for a file system. Typically, an FSD exports a full range of functions, but you can also choose to not export an entry point for a particular file system function if you do not want that function to be available. For example, to prevent applications from creating or destroying directories inside volumes belonging to your FSD, do not include <B>CreateDirectory</B> and <A HREF="wce50lrfremovedirectory.htm">RemoveDirectory</A> in your FSD. The FSD Manager automatically supplies stub functions for any functions that you choose not to supply for your file system. These stub functions return ERROR_NOT_SUPPORTED. As a result, if an application tries to create or remove a directory on a volume that belongs to your FSD, the call fails.</P>
+
+<P>In addition to exporting entry points for the file system functions, an FSD must export entry points for the <A HREF="wce50lrffsdmountdisk.htm">FSD_MountDisk</A> and <A HREF="wce50lrffsdunmountdisk.htm">FSD_UnmountDisk</A> functions. The Device Manager calls <B>FSD_MountDisk</B> when a target device for which that FSD has been registered is inserted or removed. The <B>FSD_MountDisk</B> and <B>FSD_UnmountDisk</B> entry points are each passed a <B>DWORD</B> that uniquely identifies the disk being mounted. These <B>DWORD</B> types are passed back to the FSD Manager services that query, read, and write to that disk.</P>
+
+<P>To create an FSD for a hypothetical file system named MyFSD, you must create a DLL named MyFSD.dll. This DLL contains the data type definitions, header files, and functions for MyFSD.</P>
+
+<P>You can define the <B>PVOLUME</B>, <B>PFILE</B>, and <B>PSEARCH</B> data types in MyFSD.dll. Use these types to declare variables and function parameters that hold information about the mounted volume, the file, and the search handle, respectively. These data types are used throughout the FSD functions and by default, are all <B>DWORD</B> types. You can redefine these data types to contain any information that you need. For example, you can redefine them as pointers to customized structures. You must redefine these types before including Fsdmgr.h or the default definitions will be used.</P>
+
+<P>The code that compiles into MyFSD.dll must include Fsdmgr.h. This header file generates the prototypes for all of the functions that you write for your file system. If you want to define the <B>PVOLUME</B>, <B>PFILE</B>, and <B>PSEARCH</B> data types, do so before including Fsdmgr.h. You must also define a constant, FSDAPI, which is the name of your file system.</P>
+
+<P>The following code example shows how to include the header file Fsdmgr.h in MyFSD.dll.</P>
+
+<PRE class="code">// This defines a type that is a pointer to a structure containing
+// two DWORDs.
+typedef struct {
+  DWORD first_field;
+  DWORD second_field;
+} TWODWORDS, *PTWODWORDS;
+
+// In this example, only PSEARCH is redefined.
+// PFILE and PVOLUME will default to being defined as DWORDs.
+// You can define these types to be different types or the
+// same type, based on your FSD needs.
+#define PSEARCH PTWODWORDS
+
+// Now define the name of the file system.
+#define FSDAPI   MyFSD
+#include &lt;fsdmgr.h&gt;</PRE>
+
+<P>The file system name, the prefix for all functions, and the name of the resulting DLL are all defined by the name that you specify for FSDAPI. MyFSD.dll must generate prototypes for all FSD Manager services that your FSD needs.</P>
+
+<P>MyFSD.dll must export entry points for all file system functions that you want to export. For each of these file system functions, the function name must be preceded by the name of your FSD, which is <B>MyFSD_</B> in this example. You must also implement the <B>MyFSD_MountDisk</B> and <B>MyFSD_UnmountDisk</B> functions in MyFSD.dll. These functions are exported using the generic names <B>FSD_MountDisk</B> and <B>FSD_UnmountDisk</B>. FSD Manager uses these functions to identify MyFSD.dll as a legitimate FSD.</P>
+
+<P>The following code example shows how to export functions for MyFSD.dll in a module definition (.def) file. </P>
+
+<PRE class="code">LIBRARY    MyFSD
+DESCRIPTION    'My File System for Windows CE'
+
+EXPORTS
+   MyFSD_MountDisk
+   MyFSD_UnmountDisk
+   FSD_MountDisk=MyFSD_MountDisk
+   FSD_UnmountDisk=MyFSD_UnmountDisk
+   MyFSD_CreateDirectoryW
+   MyFSD_RemoveDirectoryW
+   MyFSD_GetFileAttributesW
+   MyFSD_SetFileAttributesW
+   MyFSD_DeleteFileW
+   MyFSD_MoveFileW
+   MyFSD_DeleteAndRenameFileW
+   MyFSD_GetDiskFreeSpaceW
+   MyFSD_Notify
+   MyFSD_RegisterFileSystemFunction
+   MyFSD_FindFirstFileW
+   MyFSD_FindNextFileW
+   MyFSD_FindClose
+   MyFSD_CreateFileW
+   MyFSD_ReadFile
+   MyFSD_ReadFileWithSeek
+   MyFSD_WriteFile
+   MyFSD_WriteFileWithSeek
+   MyFSD_SetFilePointer
+   MyFSD_GetFileSize
+   MyFSD_GetFileInformationByHandle
+   MyFSD_FlushFileBuffers
+   MyFSD_GetFileTime
+   MyFSD_SetFileTime
+   MyFSD_SetEndOfFile
+   MyFSD_DeviceIOControl
+   MyFSD_CloseFile
+   MyFSD_CloseVolume</PRE>
+
+<P>The MyFSD hypothetical file system implements the full set of functions for working with a file system. You must supply the functions necessary for your file system. However, as previously mentioned, you can choose to not provide a function in your FSD. For any missing functions, FSD Manager automatically provides stub functions that return ERROR_NOT_SUPPORTED.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_1.Click()">Device Manager</A> | <A HREF="wce50grffsdreference.htm">FSD Reference</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: File%20System%20Driver%20Creation (wce50concreatingfsds.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

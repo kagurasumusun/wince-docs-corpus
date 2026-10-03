@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Mapping Hardware to TUI Functionality</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmappingthehardwaretotuifunctionalities"></A>Mapping Hardware to TUI Functionality</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The TUI is architected so that functionality required by specific hardware can be implemented cleanly in one location rather than being strewn throughout the TUI source code. </P>
+
+<P>By continuing to use this division between hardware-independent and hardware-specific code, you might be able to minimize the amount of integration work to be done if the TUI application source code is updated at some future time.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The TUI can be used on target devices that support a widely varying set of hardware buttons. This topic doesn't discuss mapping input hardware to TUI functionality. For more information about integrating input hardware, see <A HREF="wce50contuikeyboardhotkeys.htm">TUI Keyboard Hotkeys</A>.</BLOCKQUOTE>
+
+<P>For example, traditional IP phone hardware meant to be used on an office desk has multiple speakers and microphones: a speaker and microphone in the handset and a speaker and microphone for use as a speaker phone. </P>
+
+<P>IP phone hardware often also supports various indicator lights and LEDs. The interaction with this hardware is specific to the hardware itself.</P>
+
+<P>The TUI manages the current state of the IP phone. Out of the box, this state can be one of the following: 
+
+<UL type="disc">
+	<LI>Idle</li>
+
+	<LI>Handset</li>
+
+	<LI>Speaker phone</li>
+</UL>
+
+<P>The TUI does this management in a hardware-independent manner in the VoipApp.cpp file that resides in %_WINCEROOT%\Public\VoIP\OAK\Phone\TUI\App. </P>
+
+<P>The hardware-independent code in VoIPApp.cpp calls hardware-specific dispatch code in the hardware.cpp file that exists in the same directory. </P>
+
+<P>For example, code in Voipapp.cpp calls the <B>CHardwareSpecificInterface::SetNewAudioMode</B> method to handle switching between different speaker/handset modes. Similar methods handle turning LEDs on and off.</P>
+
+<P>When the TUI detects that, say, the handset has been picked up and the phone is off-hook (using hotkeys) it calls into the hardware-specific code, which then turns specific speakers and microphones on or off.</P>
+
+<P>The provided implementation of these methods in the shipping code is specific to Broadcom BCM91101 hardware. If you use different hardware, reimplement the appropriate methods for your hardware.</P>
+
+<P>When these methods are called by a device running on a CEPC or Emulator, the m_cpHardware member variable, which points to a Broadcom-specific <B>IVoIPPhone</B> implementation, is empty. </P>
+
+<P>(The <B>IVoIPPhone </B>interface is used only to implement methods in the <B>CHardwareSpecificInterface</B> class. You are not required to use this interface when implementing methods for your own hardware.) </P>
+
+<P>The current implementation of the methods in hardware.cpp does nothing when m_cpHardware is empty.</P>
+
+<H2 class="dtH2">Supporting New Hardware</H2>
+
+<P>The existing API supported by hardware.h should be sufficient to support audio state and specific indicator LEDs (for example, one that lights when the phone is in speaker phone mode). </P>
+
+<P>To integrate with new hardware, implement the hardware-specific routines in hardware.cpp. The rest of the TUI application should not need to change.</P>
+
+<P>To support additional hardware &#0151; say, an LED that lights when voicemail is available &#0151; add and implement new functionality in hardware.h and hardware.cpp, and call this functionality from the appropriate VoIPApp.cpp code.</P>
+
+<P>To add additional audio devices (for example, a Bluetooth handset) modify the interaction between the <B>CVoIPApp </B>and <B>CHardwareSpecificInterface</B> classes, and ensure that the overall hook state (whether the phone is on or off hook) is maintained.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concustomizingtuiapplication.htm">Customizing the TUI Application</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Mapping%20Hardware%20to%20TUI%20Functionality (wce50conmappingthehardwaretotuifunctionalities.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

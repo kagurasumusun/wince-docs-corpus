@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IReplStore::ReportStatus</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfireplstorereportstatus"></A>IReplStore::ReportStatus</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This<B> </B>method is called by the ActiveSync manager to get information on the synchronization status.</P>
+
+<PRE class="syntax"><B>HRESULT ReportStatus(</B>
+  <B>HREPLFLD </B><I>hFolder</I><B>,</B>
+  <B>HREPLITEM </B><I>hItem</I><B>,</B>
+  <B>UINT </B><I>uStatus</I><B>,</B>
+  <B>UINT </B><I>uParam</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hFolder</I></DT>
+
+<DD>[in] Handle to the folder this status applies to. This parameter is NULL if status applies to all folders.</dd>
+
+<DT><I>hItem</I></DT>
+
+<DD>[in] Handle to the object this status applies to. This parameter is NULL if status applies to all objects.</dd>
+
+<DT><I>uStatus</I></DT>
+
+<DD>[out] One of the following status codes.</dd>
+
+<DT>RSC_BEGIN_SYNC</DT>
+
+<DD>Synchronization is about to start. <I>uReserved</I> is a combination of the following bit flags.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>Flag</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>BSF_AUTO_SYNC</TD>
+<TD width=70%>Synchronization is started as a result of changes while "autosync on change" is turned on.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>BSF_REMOTE_SYNC</TD>
+<TD width=70%>Consistent with RSC_REMOTE_SYNC, set if synchronization is done remotely.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT>RSC_END_SYNC</DT>
+
+<DD>Synchronization has ended.</dd>
+
+<DT>RSC_BEGIN_CHECK</DT>
+
+<DD>The ActiveSync manager is about to call <B>FindFirstItem</B> and <B>FindNextItem</B>.</dd>
+
+<DT>RSC_END_CHECK</DT>
+
+<DD>The ActiveSync manager has completed all enumeration calls and <B>FindItemClose</B> has been called.</dd>
+
+<DT>RSC_DATE_CHANGED</DT>
+
+<DD>The user has changed the system date. This code is called on every existing object in the store to give the ActiveSync service provider a chance to reset the date-dependent synchronization options. For example, if an ActiveSync service provider wants to synchronize files that are modified in the last two weeks, it can respond to this code to reset the enable bit for each item. When <B>IsItemReplicated</B> is called later, it re-evaluates the items based on the new date.</dd>
+
+<DT>RSC_RELEASE</DT>
+
+<DD>The ActiveSync manager is about to release the <B>IReplStore</B> object. This is called before the final <B>IReplStore::Release</B> call.</dd>
+
+<DT>RSC_REMOTE_SYNC</DT>
+
+<DD>If <I>uParam</I> is TRUE, the ActiveSync manager is about to start remote synchronization. The ActiveSync service provider should not show any UI that requires user interaction from now on until this status code is used again with <I>uParam</I> equal to FALSE.</dd>
+
+<DT>RSC_INTERRUPT</DT>
+
+<DD>ActiveSync manager is about to interrupt the current operation. The following values of <I>uParam</I> are defined only for RSC_INTERRUPT.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Value</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>PSA_RESET_INTERRUPT</TD>
+<TD width=67%>This flag is set if the interrupt state is being cleared &#0151; normal operation is resuming.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>PSA_SYS_SHUTDOWN</TD>
+<TD width=67%>User has shut down the Windows operating system.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT>RSC_BEGIN_SYNC_OBJ</DT>
+
+<DD>Synchronization is about to start on an object type. <I>uReserved</I> is a combination of bit flags. See RSC_BEGIN_SYNC.</dd>
+
+<DT>RSC_END_SYNC_OBJ</DT>
+
+<DD>Synchronization is about to end on an object type.</dd>
+
+<DT>RSC_OBJ_TYPE_ENABLED</DT>
+
+<DD>Synchronization of the specified object is enabled. <I>hFolder</I> is a pointer to a string (object type name).</dd>
+
+<DT>RSC_OBJ_TYPE_DISABLED</DT>
+
+<DD>Synchronization of the specified object is disabled. <I>hFolder</I> is a pointer to a string (object type name).</dd>
+
+<DT>RSC_BEGIN_BATCH_WRITE</DT>
+
+<DD>A series of SetPackets is called on a number of objects. This is the time for ActiveSync service provider to start a transaction.</dd>
+
+<DT>RSC_END_BATCH_WRITE</DT>
+
+<DD>RSC_BEGIN_BATCH_WRITE has ended. This is the time for the ActiveSync service provider to commit the transaction.</dd>
+
+<DT>RSC_CONNECTION_CHG</DT>
+
+<DD>The connection status has changed. <I>uParam</I> is TRUE if a connection has been established; otherwise, it is FALSE.</dd>
+
+<DT>RSC_WRITE_OBJ_FAILED</DT>
+
+<DD>There was a failure while writing to an object on the device. <I>uParam</I> is the HRESULT code.</dd>
+
+<DT>RSC_WRITE_OBJ_SUCCESS</DT>
+
+<DD>Writing of an object succeeded on the device. <I>uParam</I> is a pointer to SDREQUEST, with (<I>lpbData</I>, <I>cbData</I>) representing the volume ID.</dd>
+
+<DT>RSC_DELETE_OBJ_SUCCESS</DT>
+
+<DD>Deletion of an object succeeded on the device. <I>uParam</I> is a pointer to SDREQUEST, with (<I>lpbData</I>, <I>cbData</I>) representing the volume ID.</dd>
+
+<DT>RSC_READ_OBJ_FAILED</DT>
+
+<DD>Failed to read an object from the device. <I>uParam</I> is the HRESULT code.</dd>
+
+<DT>RSC_TIME_CHANGED</DT>
+
+<DD>System time has changed. This is called only once.</dd>
+
+<DT>RSC_BEGIN_BACKUP</DT>
+
+<DD>Backup is about to start.</dd>
+
+<DT>RSC_END_BACKUP</DT>
+
+<DD>Backup has ended.</dd>
+
+<DT>RSC_BEGIN_RESTORE</DT>
+
+<DD>Restore is about to start.</dd>
+
+<DT>RSC_PREPARE_SYNC_FLD</DT>
+
+<DD>Prepare to sync a specific folder whether or not any objects of the type are dirty. <I>hFolder</I> is a pointer to the object name that will be synched.</dd>
+
+<DT>RSC_DELETE_OBJ_FAILED</DT>
+
+<DD>There was a failure while deleting an object on the device. <I>uParam</I> is the HRESULT code.
+
+<P>The status code can be one of the following values.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>RSC_BEGIN_BACKUP</TD>
+<TD width=66%>Backup is about to begin.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>RSC_END_BACKUP</TD>
+<TD width=66%>Backup has ended.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>RSC_BEGIN_RESTORE</TD>
+<TD width=66%>Restore is about to begin.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>RSC_END_RESTORE</TD>
+<TD width=66%>Restore has ended.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>uParam</I></DT>
+
+<DD>Additional information about the status, based on <I>uStatus</I> code.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns NOERROR if the process indicated by <I>uStatus</I> is successful. Returns E_FAIL if the process indicated by <I>uStatus</I> has failed or encountered problems.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The ActiveSync service provider can return NOERROR for all cases if it is not interested.</P>
+
+<P>This is an application programming interface (API) exported by the Store.dll for the synchronization engine.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Cesync.h.<BR>
+<B>Link Library: </B>Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfireplstoreiunknown.htm">IReplStore</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IReplStore::ReportStatus (wce50lrfireplstorereportstatus.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

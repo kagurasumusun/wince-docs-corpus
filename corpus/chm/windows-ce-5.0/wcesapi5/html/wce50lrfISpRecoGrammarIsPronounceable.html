@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoGrammar::IsPronounceable</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecogrammarispronounceable"></A>ISpRecoGrammar::IsPronounceable</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method calls the SR engine to determine if the word has a pronunciation.</P>
+
+<P>See also <A HREF="wce50lrfispsrengineispronounceable.htm">ISpSREngine::IsPronounceable</A> for more information on the SR engine's role.</P>
+
+<P>Typically, there are two scenarios when an application may want to use the <B>IsPronounceable</B>.</P>
+
+<P>If an application is using a number of specialized or uncommon words (for example, legal, medical, or scientific terms), the application may want to verify that the words are contained in either the lexicon (see also <A HREF="wce50lrfisplexicon.htm">ISpLexicon</A>) or the SR engine's dictionary. If the words are not contained in the lexicon or the dictionary (even if they are pronounceable), then the application may want to add them to the lexicon to improve their chances of a successful recognition.</P>
+
+<P>An application may also want to verify that the SR engine will actually recognize the words in a CFG (even though loading the CFG succeeded). If the SR engine retrieves SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE, then the application can update the lexicon pronunciation entry (see <B>ISpLexicon</B>).</P>
+
+<PRE class="syntax"><B>HRESULT IsPronounceable(</B>
+  <B>const WCHAR* </B><I>pszWord</I><B>,</B>
+  <B>SPWORDPRONOUNCEABLE* </B><I>pfPronounceable</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszWord</I> </DT>
+
+<DD>[in] Pointer to the word to test. Length must be less than or equal to <A HREF="wce50lrfspmaxwordlength.htm">SP_MAX_WORD_LENGTH</A>. </dd>
+
+<DT><I>pfPronounceable</I> </DT>
+
+<DD>[out] Pointer to a value indicating if the word SR engine can pronounce the word. Possible values are defined by the SPWORDPRONOUNCEABLE enumeration. See Remarks section. </dd>
+
+<DT>Beth -- move to enumerations.//</DT>
+
+<DD>
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE </TD>
+<TD width=53%>The word is not pronounceable by the SR engine, and is not located in the lexicon and, or the engine's dictionary. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPWP_UNKNOWN_WORD_PRONOUNCEABLE </TD>
+<TD width=53%>The word is pronounceable by the SR engine, but is not located in the lexicon and, or the engine's dictionary. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPWP_KNOWN_WORD_UNPRONOUNCEABLE </TD>
+<TD width=53%>The word is pronounceable by the SR engine, and is located in the lexicon and, or the engine's dictionary. </TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_POINTER </TD>
+<TD width=65%>Either <I>pszWord</I> or <I>pfPronounceable</I> is invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The exact implementation and use for the SR engine's dictionary and pronounceable words can vary between SR engines. For example, an SR engine can attempt to pronounce all words passed using <B>IsPronounceable</B>, even if it is not located in the lexicon or the dictionary, it would rarely or never retrieve SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method. The words used are examples only, as the pronunciation by different SR engines can vary. See Remarks section.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// check if a common word is pronounceable
+hr = cpRecoGrammar-&gt;IsPronounceable(L"hello", &amp;wordPronounceable);
+// Check hr
+// wordPronounceable is probably equal to SPWP_KNOWN_WORD_PRONOUNCEABLE
+// check if an uncommon, or imaginary, word is pronounceable
+hr = cpRecoGrammar-&gt;IsPronounceable(L"snork", &amp;wordPronounceable);
+// Check hr
+// wordPronounceable is probably equal to SPWP_UNKNOWN_WORD_PRONOUNCEABLE
+// check if a non-word, or imaginary, word is unpronounceable
+hr = cpRecoGrammar-&gt;IsPronounceable(L"lpdzsd", &amp;wordPronounceable);
+// Check hr
+// wordPronounceable is probably equal to SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecogrammar.htm">ISpRecoGrammar</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoGrammar::IsPronounceable (wce50lrfisprecogrammarispronounceable.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

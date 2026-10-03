@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptMsgUpdate</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptmsgupdate"></A>CryptMsgUpdate</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function adds contents to a cryptographic message. The use of this function allows messages to be constructed piece by piece through repetitive calls of <B>CryptMsgUpdate</B>. The added message content is either encoded or decoded depending on whether the message was opened with <A HREF="wce50lrfcryptmsgopentoencode.htm">CryptMsgOpenToEncode</A> or <A HREF="wce50lrfcryptmsgopentodecode.htm">CryptMsgOpenToDecode</A>.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CryptMsgUpdate(</B>
+<B>  HCRYPTMSG </B><I>hCryptMsg</I><B>,</B>
+<B>  const BYTE* </B><I>pbData</I><B>,</B>
+<B>  DWORD </B><I>cbData</I><B>,</B>
+<B>  BOOL </B><I>fFinal</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCryptMsg</I></DT>
+
+<DD>[in] Cryptographic message handle of the message to be updated. </dd>
+
+<DT><I>pbData</I></DT>
+
+<DD>[in] Pointer to the buffer holding the data to be encoded or decoded. </dd>
+
+<DT><I>cbData</I></DT>
+
+<DD>[in] Number of bytes of data in the <I>pbData</I> buffer. </dd>
+
+<DT><I>fFinal</I></DT>
+
+<DD>[in] Indicates that the last block of data for encoding or decoding is being processed. Correct usage of this flag is dependent upon whether the message that is being processed has detached data. The inclusion of detached data in a message is indicated by setting <I>dwFlags</I> to CMSG_DETACHED_FLAG in the call to the function that opened the message. 
+
+<P>If CMSG_DETACHED_FLAG was not set and the message was opened using either <B>CryptMsgOpenToDecode</B> or <B>CryptMsgOpenToEncode</B>, <I>fFinal</I> is set to TRUE, and <B>CryptMsgUpdate</B> is only called once.
+
+
+<P>If the CMSG_DETACHED_FLAG flag was set and a message is opened using <B>CryptMsgOpenToEncode</B>, <I>fFinal</I> is set to TRUE only on the last call to <B>CryptMsgUpdate</B>.
+
+
+<P>If the CMSG_DETACHED_FLAG flag was set and a message is opened using <B>CryptMsgOpenToDecode</B>, <I>fFinal</I> is set to TRUE when the header is processed by a single call to <B>CryptMsgUpdate</B>. It is set to FALSE while processing the detached data in subsequent calls to <B>CryptMsgUpdate</B> until the last detached data block is to be processed. On the last call to <B>CryptMsgUpdate</B>, it is set to TRUE.
+
+
+<P>When detached data is decoded, the header and the content of a message are contained in different BLOBs. Each BLOB requires that <I>fFinal</I> be set to TRUE when the last call to the function is made for that BLOB.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is non-zero (TRUE).</P>
+
+<P>If the function fails, the return value is zero (FALSE). For extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>.</P>
+
+<P>Errors encountered in the application defined callback function specified by <I>pStreamInfo</I> in <B>CryptMsgOpenToDecode</B> and <B>CryptMsgOpenToEncode</B> might be propagated to <B>CryptMsgUpdate</B> if streaming is used. If this happens, <A HREF="JavaScript:hhobj_2.Click()">SetLastError</A> is not called by <B>CryptMsgUpdate</B> after the callback returns This preserves any errors encountered under the control of the application. It is the responsibility of the callback function (or one of the APIs that it calls) to call <B>SetLastError</B> if an error occurs while the application is processing the streamed data.</P>
+
+<P>The following table shows the error codes most commonly returned by the <B>GetLastError</B> function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Return Code</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_INVALID_MSG_TYPE</TD>
+<TD width=62%>The message type is invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_MSG_ERROR</TD>
+<TD width=62%>An error was encountered doing a cryptographic operation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_OID_FORMAT</TD>
+<TD width=62%>The object identifier is badly formatted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_UNEXPECTED_ENCODING</TD>
+<TD width=62%>The message is not encoded as expected.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_UNKNOWN_ALGO</TD>
+<TD width=62%>The cryptographic algorithm is unknown.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_INVALIDARG</TD>
+<TD width=62%>One or more arguments are invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_OUTOFMEMORY</TD>
+<TD width=62%>Ran out of memory.</TD>
+</TR>
+</table></div>
+
+<P>Propagated errors might be encountered from any of the following functions:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfcrypthashdata.htm">CryptHashData</A></li>
+
+	<LI><A HREF="wce50lrfcryptgethashparam.htm">CryptGetHashParam</A></li>
+
+	<LI><A HREF="wce50lrfcryptsignhash.htm">CryptSignHash</A></li>
+
+	<LI><A HREF="wce50lrfcryptgetkeyparam.htm">CryptGetKeyParam</A></li>
+
+	<LI><A HREF="wce50lrfcryptencrypt.htm">CryptEncrypt</A></li>
+
+	<LI><A HREF="wce50lrfcryptcreatehash.htm">CryptCreateHash</A></li>
+</UL>
+
+<P>If the function fails, <B>GetLastError</B> returns an ASN.1 encoding/decoding error. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions</B>: Windows CE 2.10 and later.<BR>
+<B>Header</B>: Wincrypt.h.<BR>
+<B>Link Library</B>: Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcryptographyfunctions.htm">Cryptography Functions</A> | <A HREF="wce50lrfcryptmsggetparam.htm">CryptMsgGetParam</A> | <A HREF="wce50lrfcryptmsgopentoencode.htm">CryptMsgOpenToEncode</A> | <A HREF="wce50lrfcryptmsgopentodecode.htm">CryptMsgOpenToDecode</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptMsgUpdate (wce50lrfcryptmsgupdate.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

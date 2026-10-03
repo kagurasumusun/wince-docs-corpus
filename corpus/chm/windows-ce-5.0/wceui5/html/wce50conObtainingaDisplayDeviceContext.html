@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Obtaining a Display Device Context</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateFontIndirect">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conobtainingadisplaydevicecontext"></A>Obtaining a Display Device Context</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To get a handle to a display device context, call the <A HREF="wce50lrfbeginpaint.htm">BeginPaint</A> or <A HREF="wce50lrfgetdc.htm">GetDC</A> function and supply a handle to a window. Windows CE returns a handle to a display device context with default objects, attributes, and graphic modes. Newly created device contexts start with default brush, palette, font, pen, and region objects. You can begin drawing using these defaults, or you can choose a new object, change the attributes of an existing object, or choose a new mode.</P>
+
+<P>You can examine a default object's attributes by calling the <A HREF="wce50lrfgetcurrentobject.htm">GetCurrentObject</A> and <A HREF="wce50lrfgetobject.htm">GetObject</A> functions. The <B>GetCurrentObject</B> function returns a handle identifying the current pen, brush, palette, bitmap, or font, and the <B>GetObject</B> function initializes a structure containing the object attributes.</P>
+
+<P>The following table shows the object-specific creation functions you can call to replace a default object.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=22%>Graphics object</TH>
+<TH width=78%>Creation function</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Bitmap</TD>
+<TD width=78%><A HREF="wce50lrfcreatebitmap.htm">CreateBitmap</A>, <A HREF="wce50lrfcreatecompatiblebitmap.htm">CreateCompatibleBitmap</A>,<B> </B><A HREF="wce50lrfcreatedibsection.htm">CreateDIBSection</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Brush</TD>
+<TD width=78%><A HREF="wce50lrfcreatedibpatternbrushpt.htm">CreateDIBPatternBrushPt</A>, <A HREF="wce50lrfcreatepatternbrush.htm">CreatePatternBrush</A>, <A HREF="wce50lrfcreatesolidbrush.htm">CreateSolidBrush</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Palette</TD>
+<TD width=78%><A HREF="wce50lrfcreatepalette149.htm">CreatePalette</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Font</TD>
+<TD width=78%><A HREF="JavaScript:hhobj_1.Click()">CreateFontIndirect</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>Pen</TD>
+<TD width=78%><A HREF="wce50lrfcreatepen.htm">CreatePen</A>, <A HREF="wce50lrfcreatepenindirect.htm">CreatePenIndirect</A><B> </B></TD>
+</TR>
+</table></div>
+
+<P>Each of these functions returns a handle identifying the new object. After you retrieve a handle, you can call the <A HREF="wce50lrfselectobject.htm">SelectObject</A> function to select the new object into the device context. However, you should save the <B>SelectObject</B> return value because it is the handle to the default object. When you finish using the new object, use <B>SelectObject</B> to restore the default object, and delete the new object with the <A HREF="wce50lrfdeleteobject.htm">DeleteObject</A> function.</P>
+
+<P>When you have finished drawing in the display area, you must release the device context by calling the <A HREF="wce50lrfendpaint.htm">EndPaint</A> or <A HREF="wce50lrfreleasedc.htm">ReleaseDC</A> function. If you called <B>BeginPaint</B> to create the device context, then call <B>EndPaint</B> to release it. If you called <B>GetDC</B> to create the device context, then call <B>ReleaseDC</B> to release it. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Call <B>BeginPaint</B> and <B>EndPaint</B> while processing <A HREF="wce50lrfwmpaint.htm">WM_PAINT</A> messages in your window procedure. Otherwise, call <B>GetDC</B> and <B>ReleaseDC</B> to obtain and release a device context.</BLOCKQUOTE>
+
+<P>The following code example shows how to call <B>GetDC</B> and <B>ReleaseDC</B> to obtain and release a device context and how to call <B>SelectObject</B> to get a new object.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">HDC hDC;                // Handle to a display device context
+HBRUSH hBrush,          // Handle to the new brush object  
+       hOldBrush;       // Handle to the old brush object 
+
+// Retrieve the handle to the display device context.
+if (!(hDC = GetDC (hwnd)))
+  return;
+
+// Create a solid brush and select it into the device context.
+hBrush = CreateSolidBrush (RGB(0, 255, 255));
+hOldBrush = SelectObject (hDC, hBrush);
+
+// Draw a rectangle.
+Rectangle (hDC, 0, 0, 100, 200);
+
+// Select the old brush back into the device context.
+SelectObject (hDC, hOldBrush);
+
+// Delete the new brush object.
+DeleteObject (hBrush);
+
+// Release the device context.
+
+ReleaseDC (hwnd, hDC);</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50congettingahandletoadevicecontext.htm">Getting a Handle to a Device Context</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Obtaining%20a%20Display%20Device%20Context (wce50conobtainingadisplaydevicecontext.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

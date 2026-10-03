@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TSPI_linePickup</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrftspilinepickup"></A>TSPI_linePickup</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function picks up a call alerting at the specified destination address and returns a call handle for the picked-up call. If invoked with NULL for the <I>lpszDestAddress</I> parameter, a group pickup is performed. If required by the device capabilities, the <I>lpszGroupID</I> parameter specifies the group identifier to which the alerting station belongs.</P>
+
+<PRE class="syntax"><B>LONG TSPIAPI TSPI_linePickup(</B>
+  <B>DRV</B>_<B>REQUESTID</B> <I>dwRequestID</I><B>,</B>  
+  <B>HDRVLINE</B> <I>hdLine</I><B>,</B> 
+  <B>DWORD</B> <I>dwAddressID</I><B>,</B> 
+  <B>HTAPICALL</B> <I>htCall</I><B>,</B> 
+  <B>LPHDRVCALL</B> <I>lphdCall</I><B>,</B> 
+  <B>LPCWSTR</B> <I>lpszDestAddress</I><B>,</B>  
+  <B>LPCWSTR</B> <I>lpszGroupID</I> 
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwRequestID </I></DT>
+
+<DD>Identifier of the asynchronous request. </dd>
+
+<DT><I>hdLine</I> </DT>
+
+<DD>Handle to the line on which a call is to be picked up. </dd>
+
+<DT><I>dwAddressID</I> </DT>
+
+<DD>Address on <I>hdLine</I> at which the pickup is to be originated. An address identifier is permanently associated with an address; the identifier remains constant across operating system upgrades. </dd>
+
+<DT><I>htCall</I> </DT>
+
+<DD>TAPI handle to the new call. The service provider must save this and use it in all subsequent calls to the <A HREF="wce50lrflineevent.htm">LINEEVENT</A> procedure reporting events on the call. </dd>
+
+<DT><I>lphdCall</I> </DT>
+
+<DD>Pointer to an <B>HDRVCALL</B> representing the service provider's identifier for the call. The service provider must fill this location with its handle for the call before this procedure returns. This handle is ignored by TAPI if the function results in an error. </dd>
+
+<DT><I>lpszDestAddress</I> </DT>
+
+<DD>Pointer to a null-terminated Unicode string that contains the address whose call is to be picked up. The address is standard link format. </dd>
+
+<DT><I>lpszGroupID</I> </DT>
+
+<DD>Pointer to a null-terminated Unicode string containing the group identifier to which the alerting station belongs. This parameter is required on some switches to pick up calls outside of the current pickup group. 
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;<I>lpszGroupID</I> can be specified by itself with a NULL pointer for <I>lpszDestAddress</I>. Alternatively, <I>lpszGroupID</I> can be specified in addition to <I>lpszDestAddress</I>, if required by the device. It can also be NULL itself. </BLOCKQUOTE>
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns <I>dwRequestID</I>, or an error number if an error occurs. The <I>lResult</I> actual parameter of the corresponding <B>ASYNC_COMPLETION</B> is zero if the function succeeds, or an error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALLINEHANDLE</TD>
+<TD width=50%>The handle to the line is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALADDRESSID</TD>
+<TD width=50%>The address id is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALADDRESS</TD>
+<TD width=50%>The address is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALGROUPID</TD>
+<TD width=50%>The group id is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resource is unavailable.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When a call has been picked up successfully, the service provider notifies TAPI with the <A HREF="wce50lrflinecallstatetspi.htm">LINE_CALLSTATE</A> message about call state changes. The <A HREF="wce50lrflinecallinfo.htm">LINECALLINFO</A> structure supplies information about the call that was picked up. It lists the reason for the call as pickup. This structure is available by calling the <A HREF="wce50lrftspilinegetcallinfo.htm">TSPI_lineGetCallInfo</A><B> </B>function.</P>
+
+<P>The service provider sets LINEADDRCAPFLAGS_PICKUPCALLWAIT to TRUE in the <A HREF="wce50lrflineaddresscaps.htm">LINEADDRESSCAPS</A> structure if <B>TSPI</B>_<B>linePickup</B> can be used to pick up a call for which the user has audibly detected the call-waiting signal, but for which the provider is unable to perform the detection. This gives the user a mechanism to answer a waiting call even though the service provider was unable to detect the call-waiting signal. When <B>TSPI</B>_<B>linePickup</B> is being used to pick up a call-waiting call, both <I>lpszDestAddress</I> and <I>lpszGroupID</I> pointer parameters are NULL. The service provider creates a new call handle for the waiting call and passes that handle to the user in <I>lphdCall</I>. The dwAddressID parameter is most often zero (particularly in single-line residential cases).</P>
+
+<P>Once <B>TSPI</B>_<B>linePickup</B> is used to pick up the second call, the <A HREF="wce50lrftspilineswaphold.htm">TSPI_lineSwapHold</A> function can be used to toggle between them. The <A HREF="wce50lrftspilinedrop.htm">TSPI_lineDrop</A> function can be used to drop one (and toggle to the other), and so forth. If the user wants to drop the current call and pick up the second call, they call <B>TSPI</B>_<B>lineDrop</B> when they get the call-waiting beep, wait for the second call to ring, and then call the <A HREF="wce50lrftspilineanswer.htm">TSPI_lineAnswer</A> function on the new call handle. The service provider sets the LINEADDRFEATURE_PICKUP flag in the <B>dwAddressFeatures</B> member in the <A HREF="wce50lrflineaddressstatus.htm">LINEADDRESSSTATUS</A> structure to indicate when pickup is actually possible.</P>
+
+<P>This function differs from the corresponding TAPI function in that it follows the TSPI model for beginning the lifetime of a call. TAPI and the service provider exchange opaque handles representing the call with one another. In addition, the service provider is permitted to do callbacks for the new call before it returns from this procedure. In any case, the service provider must also treat the handle it returned as "not yet valid" until after the matching <B>ASYNC_COMPLETION</B> function reports success. In other words, it must not issue any <B>LINEEVENT</B> messages for the new call or include it in call counts in messages or status data structures for the line.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Tapicomn.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrflineevent.htm">LINEEVENT</A> | <A HREF="wce50lrftspilineanswer.htm">TSPI_lineAnswer</A> | <A HREF="wce50lrftspilinedrop.htm">TSPI_lineDrop</A> | <A HREF="wce50lrftspilinegetcallinfo.htm">TSPI_lineGetCallInfo</A> | <A HREF="wce50lrftspilinegetcallstatus.htm">TSPI_lineGetCallStatus</A> | <A HREF="wce50lrftspilineswaphold.htm">TSPI_lineSwapHold</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TSPI_linePickup (wce50lrftspilinepickup.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

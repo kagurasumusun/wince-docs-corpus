@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IBindCtx::RegisterObjectParam</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfibindctxregisterobjectparam"></A>IBindCtx::RegisterObjectParam</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method stores an <A HREF="wce50lrfiunknown.htm">IUnknown</A> pointer on the specified object under the specified key in the bind context's string-keyed table of pointers. The method must call the <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> method on the stored pointer. </P>
+
+<P>The <B>IBindCtx::RegisterObjectParam</B> method is supported in DCOM, but it is not supported in COM. </P>
+
+<P>Calling this method in COM returns a value of E_NOTIMPL.</P>
+
+<PRE class="syntax"><B>HRESULT RegisterObjectParam(</B>
+  <B>LPOLESTR</B> <I>pszKey</I><B>,</B>
+  <B>IUnknown* </B><I>punk</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszKey</I> </DT>
+
+<DD>[in] Pointer to a zero-terminated wide character string (two bytes per character) containing the key under which the object is being registered. Key string comparison is case-sensitive. </dd>
+
+<DT><I>punk</I> </DT>
+
+<DD>[in] Pointer to the <B>IUnknown</B> interface on the object that is to be registered. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=22%>Value</TH>
+<TH width=78%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>E_OUTOFMEMORY</TD>
+<TD width=78%>A standard return value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>S_OK</TD>
+<TD width=78%>The pointer was successfully registered under the specified string. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>A bind context maintains a table of interface pointers, each associated with a string key. This enables communication between a moniker implementation and the caller that initiated the binding operation. One party can store an interface pointer under a string known to both parties so that the other party can later retrieve it from the bind context. </P>
+
+<P>Binding operations subsequent to the use of this method can use the <A HREF="wce50lrfibindctxgetobjectparam.htm">IBindCtx::GetObjectParam</A> method to retrieve the stored pointer. </P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P><B>IBindCtx::RegisterObjectParam</B> is useful to those implementing a new moniker class (through an implementation of <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A>) and to moniker clients (those who use monikers to bind to objects).</P>
+
+<P>In implementing a new moniker class, you call this method when an error occurs during moniker binding to inform the caller of the cause of the error. The key that you would obtain with a call to this method depends on the error condition. Following is a list of common moniker binding errors, each describing the keys that would be appropriate: 
+
+<UL type="disc">
+	<LI>MK_E_EXCEEDEDDEADLINE. If a binding operation exceeds its deadline because a given object is not running, you should register the object's moniker using the first unused key from the list: ExceededDeadline, ExceededDeadline1, ExceededDeadline2, and so on. 
+<P>If the caller later finds the moniker in the Running Object Table, the caller can retry the binding operation. 
+</li>
+
+	<LI>MK_E_CONNECTMANUALLY. The ConnectManually key indicates a moniker whose binding requires assistance from the end user. 
+<P>To request that the user manually connect to the object, the caller can retry the binding operation after showing the moniker's display name. Common reasons for this error are that a password is needed or that a floppy needs to be mounted. 
+</li>
+
+	<LI>E_CLASSNOTFOUND. The ClassNotFound key indicates a moniker whose class could not be found. (The server for the object identified by this moniker could not be located.) 
+<P>If this key is used for an OLE compound-document object, the caller can use the <A HREF="wce50lrfimonikerbindtostorage.htm">IMoniker::BindToStorage</A> method to bind to the object and then try to carry out a Treat As... or Convert To... operation to associate the object with a different server. If this is successful, the caller can retry the binding operation. 
+</li>
+</UL>
+
+<P>If you are a moniker client with detailed knowledge of the implementation of the moniker you are using, you can also call this method to pass private information to that implementation. </P>
+
+<P>You can define new strings as keys for storing pointers. By convention, you should use key names that begin with the string form of the CLSID of the moniker class. (See the <A HREF="wce50lrfstringfromclsid.htm">StringFromCLSID</A> function.) </P>
+
+<P>If the <I>pszKey</I> parameter matches the name of an existing key in the bind context's table, the new object replaces the existing object in the table. </P>
+
+<P>When you register an object using this method, the object is not released until one of the following occurs: 
+
+<UL type="disc">
+	<LI>It is replaced in the table by another object with the same key. </li>
+
+	<LI>It is removed from the table by a call to the <A HREF="wce50lrfibindctxrevokeobjectparam.htm">IBindCtx::RevokeObjectParam</A> method. </li>
+
+	<LI>The bind context is released. All registered objects are released when the bind context is released. </li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfstringfromclsid.htm">StringFromCLSID</A> | <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> | <A HREF="wce50lrfiunknown.htm">IUnknown</A> | <A HREF="wce50lrfibindctxgetobjectparam.htm">IBindCtx::GetObjectParam</A> | <A HREF="wce50lrfibindctxrevokeobjectparam.htm">IBindCtx::RevokeObjectParam</A> | <A HREF="wce50lrfibindctxenumobjectparam.htm">IBindCtx::EnumObjectParam</A> | <A HREF="wce50lrfimonikerbindtostorage.htm">IMoniker::BindToStorage</A> | <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IBindCtx::RegisterObjectParam (wce50lrfibindctxregisterobjectparam.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

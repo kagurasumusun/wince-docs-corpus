@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Project for the Screen Rotation Application</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50tskcreatingaprojectforthescreenrotationapplication"></A>Creating a Project for the Screen Rotation Application</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In this procedure, you will create a project in your OS design and add sample application source code to the project. The source files must be added to the project after it is created. This enables you to compile, link, and include the application in your run-time image.</P>
+
+<P>The sample application code in this section uses the <A HREF="wce50lrfchangedisplaysettingsex.htm">ChangeDisplaySettingsEx</A> function. The code also shows how to set the <A HREF="wce50lrfdevmode.htm">DEVMODE</A> structure to query the driver on the rotation angles it supports, get the current rotation angle, and set a new rotation angle. </P>
+
+<P>Each time you run this application on the CEPC, the screen will be rotated clockwise by 90 degrees.</P>
+
+<P class="labelproc"><B>To create a project for the sample application</B>
+
+<OL type="1">
+	<LI>From the <B>File</B> menu, choose <B>New Project or File</B>, and then, on the <B>Projects</B> tab, choose <B>WCE Application</B>. </li>
+
+	<LI>In the <B>Project name</B> box, type a name for the project, <B>ScreenRotationProj</B>. By default, Platform Builder stores the project in a directory immediately subordinate to your OS design directory. For example, %_WINCEROOT%\Public\&lt;<I>OS design name</I>&gt;\&lt;<I>Project Name</I>&gt;. </li>
+
+	<LI>Choose the <B>Workspace Project</B> radio button, and then choose <B>OK</B>.</li>
+
+	<LI>In the <B>New Project Wizard</B>, perform the following steps: 
+<OL type="a">
+	<LI>In step 1 of 3, you would typically enter the appropriate information. For this example, leave these fields blank and choose <B>Next</B>. </li>
+
+	<LI>In step 2 of 3, choose <B>An empty project</B>, and then choose <B>Next</B>. </li>
+
+	<LI>In step 3 of 3, from the <B>Release Type list</B>, choose <B>LOCAL</B>, and then choose <B>Finish</B>. </li>
+</OL>
+</li>
+
+	<LI>When project creation is complete, the project <B>ScreenRotationProj</B> is displayed in the <B>Projects</B> folder on the FileView tab. </li>
+
+	<LI>To add the sample application code to the project you just created, from the <B>File</B> menu, choose <B>New Project or File</B>.</li>
+
+	<LI>In the <B>New Project or File</B> dialog box, select the <B>Files</B> tab. From the list of options, choose <B>C++ Source File</B>, and in the <B>File name</B> box, type rotation.cpp. Ensure that this file will be added to the ScreenRotationProj project by selecting the check box.</li>
+
+	<LI>A window in the IDE opens for rotation.cpp. Cut and paste the following code into the window.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">/**********************************************************************
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+
+Copyright (c) 1999 Microsoft Corporation. All Rights Reserved.
+
+MODULE: 
+  rotation.cpp
+
+ABSTRACT: 
+  This application code demonstrates the how you can set up the DEVMODE structure and use the ChangeDisplaySettingsEx function to rotate the screen. 
+  Each time you run the executable for this code, the screen will rotate clockwise by 90 degrees.
+
+**********************************************************************/
+
+#include &lt;windows.h&gt;
+
+int
+WINAPI
+WinMain(
+   HINSTANCE,
+   HINSTANCE,
+#ifdef UNDER_CE
+   LPWSTR,
+#else
+   LPSTR,
+#endif
+   int
+   )
+{
+   DEVMODE DevMode;
+
+   int RotationAngles;
+   int CurrentAngle;
+   int NewAngle;
+
+   //
+   // Check for rotation support by getting the rotation angles supported.
+   //
+
+   memset (&amp;DevMode, 0, sizeof (DevMode));
+   DevMode.dmSize   = sizeof (DevMode);
+   DevMode.dmFields = DM_DISPLAYQUERYORIENTATION;
+
+   if (DISP_CHANGE_SUCCESSFUL == ChangeDisplaySettingsEx(NULL, &amp;DevMode, NULL, CDS_TEST, NULL))
+   {
+      RotationAngles = DevMode.dmDisplayOrientation;
+      RETAILMSG(1, (L"ChangeDisplaySettingsEx supports these rotation angles %d", RotationAngles));
+   }
+   else
+   {
+      RETAILMSG(1, (L"ChangeDisplaySettingsEx failed to get the supported rotation angles."));
+      RotationAngles = -1;
+   }
+
+   //
+   // Get the current rotation angle.
+   //
+
+   memset(&amp;DevMode, 0, sizeof (DevMode));
+   DevMode.dmSize   = sizeof (DevMode);
+   DevMode.dmFields = DM_DISPLAYORIENTATION;
+
+   if (DISP_CHANGE_SUCCESSFUL == ChangeDisplaySettingsEx(NULL, &amp;DevMode, NULL, CDS_TEST, NULL))
+   {
+      CurrentAngle = DevMode.dmDisplayOrientation;
+      RETAILMSG(1, (L"ChangeDisplaySettingsEx reports the current rotation as %d", CurrentAngle));
+   }
+   else
+   { 
+      RETAILMSG(1, (L"ChangeDisplaySettingsEx failed to get the current rotation angle."));
+      CurrentAngle = -1;
+   }
+
+   //
+   // Rotate to the "next" angle.
+   //
+
+   if (CurrentAngle &gt;= 0 &amp;&amp; RotationAngles &gt;= 0)
+   {
+      NewAngle = CurrentAngle;
+
+      do
+      {
+         NewAngle &lt;&lt;= 1;
+
+         if (NewAngle == DMDO_0)
+         {
+            NewAngle = DMDO_90;
+         }
+
+         if (NewAngle &gt; DMDO_270)
+         {
+            NewAngle = DMDO_0;
+         }
+      } while (!(NewAngle &amp; RotationAngles) &amp;&amp; (NewAngle != DMDO_0));
+
+      memset(&amp;DevMode, 0, sizeof (DevMode));
+      DevMode.dmSize               = sizeof (DevMode);
+      DevMode.dmFields             = DM_DISPLAYORIENTATION;
+      DevMode.dmDisplayOrientation = NewAngle;
+
+      if (DISP_CHANGE_SUCCESSFUL == ChangeDisplaySettingsEx(NULL, &amp;DevMode, NULL, CDS_RESET, NULL))
+      {
+         RETAILMSG(1, (L"ChangeDisplaySettingsEx changed rotation angle to %d", NewAngle));
+      }
+      else
+      {
+         RETAILMSG(1, (L"ChangeDisplaySettingsEx failed to change the rotation angle to %d", NewAngle));
+      }
+   }
+
+   return 0;
+}</PRE>
+</li>
+
+	<LI>Save the file by choosing <B>File - Save</B>, and close the file by choosing <B>File</B> - <B>Close</B>.</li>
+</OL>
+
+<P>You are now done with configuring the sample application for screen rotation.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50howhowtoimplementscreenrotation.htm">How to Implement Screen Rotation</A> | <A HREF="wce50conrotatingthecontentofthescreen.htm">Rotating the Contents of the Screen</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20a%20Project%20for%20the%20Screen%20Rotation%20Application (wce50tskcreatingaprojectforthescreenrotationapplication.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

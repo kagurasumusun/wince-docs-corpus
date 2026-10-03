@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::RelativePathTo</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimonikerrelativepathto"></A>IMoniker::RelativePathTo</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This<B> </B>method constructs a relative moniker between the specified moniker and another.</P>
+
+<PRE class="syntax"><B>HRESULT RelativePathTo( </B>
+  <B>IMoniker* </B><I>pmkOther</I><B>, </B>
+  <B>IMoniker** </B><I>ppmkRelPath</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pmkOther</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> interface on the moniker to which a relative path should be taken.</dd>
+
+<DT><I>ppmkRelPath</I></DT>
+
+<DD>[out] Address of the <B>IMoniker</B>* pointer variable that receives the interface pointer to the relative moniker. 
+
+<P>When successful, the implementation must call the <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> method on the new moniker; it is the caller's responsibility to call the <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> method. 
+
+
+<P>If an error occurs, the implementation sets *<I>ppmkRelPath</I> to NULL. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The method supports the standard return values E_OUTOFMEMORY and E_UNEXPECTED. The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>Value</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>S_OK</TD>
+<TD width=74%>A meaningful relative path has been returned.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>MK_S_HIM</TD>
+<TD width=74%>No common prefix is shared by the two monikers and the moniker returned in <I>ppmkRelPath</I> is <I>pmkOther</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>MK_E_NOTBINDABLE</TD>
+<TD width=74%>This moniker is a relative moniker, such as an item moniker. 
+<P>This moniker must be composed with the moniker of its container before a relative path can be determined.</P>
+</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>A relative moniker is analogous to a relative path (such as ..\Backup). </P>
+
+<P>For example, suppose you have one moniker that represents the path C:\Projects\Secret\Art\Pict1.bmp and another moniker that represents the path C:\Projects\Secret\Docs\Chap1.txt. </P>
+
+<P>Calling <B>IMoniker::RelativePathTo</B> on the first moniker, passing the second one as the <I>pmkOther</I> parameter, would create a relative moniker representing the path ..\docs\chap1.txt. </P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>Moniker clients typically do not need to call <B>IMoniker::RelativePathTo</B>. </P>
+
+<P>This method is primarily called by the default handler for linked objects. </P>
+
+<P>Linked objects contain both an absolute and a relative moniker to identify the link source (this enables link tracking if the user moves a directory tree that contains both the container and source files). </P>
+
+<P>The default handler calls this method to create a relative moniker from the container document to the link source (that is, it calls <B>IMoniker::RelativePathTo</B> on the moniker identifying the container document, passing the moniker identifying the link source as the <I>pmkOther</I> parameter).</P>
+
+<P>If you do call <B>IMoniker::RelativePathTo</B>, call it only on absolute monikers; for example, a file moniker or a composite moniker whose leftmost component is a file moniker, where the file moniker represents an absolute path. Do not call this method on relative monikers.</P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>Your implementation of <B>IMoniker::RelativePathTo</B> should first determine whether <I>pmkOther</I> is a moniker of a class that you recognize and for which you can provide special handling (for example, if it is of the same class as this moniker). </P>
+
+<P>If so, your implementation should determine the relative path. Otherwise, it should pass both monikers in a call to the <A HREF="wce50lrfmonikerrelativepathto.htm">MonikerRelativePathTo</A> function, which correctly handles the generic case.</P>
+
+<P>The first step in determining a relative path is determining the common prefix of this moniker and <I>pmkOther</I>. </P>
+
+<P>The next step is to break this moniker and <I>pmkOther</I> into two parts each, say (P, myTail) and (P, otherTail) respectively, where P is the common prefix. </P>
+
+<P>The correct relative path is then the inverse of myTail composed with otherTail.</P>
+
+<P>Comp( Inv( myTail ), otherTail )</P>
+
+<P>Where <B>Comp()</B> represents the composition operation and <B>Inv()</B> represents the inverse operation. </P>
+
+<P>Note that for certain types of monikers, you cannot use your <A HREF="wce50lrfimonikerinverse.htm">IMoniker::Inverse</A> method to construct the inverse of myTail. </P>
+
+<P>For example, a file moniker returns an anti-moniker as an inverse, while its <B>IMoniker::RelativePathTo</B> method must use one or more file monikers that each represent the path ".." to construct the inverse of myTail. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfmonikerrelativepathto.htm">MonikerRelativePathTo</A> | <A HREF="wce50lrfimonikerinverse.htm">IMoniker::Inverse</A> | <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> | <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMoniker::RelativePathTo (wce50lrfimonikerrelativepathto.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

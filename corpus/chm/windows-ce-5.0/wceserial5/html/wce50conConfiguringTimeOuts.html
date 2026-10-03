@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Configuring Timeouts</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conconfiguringtimeouts"></A>Configuring Timeouts</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>An application must always set communication timeouts using the <A HREF="wce50lrfcommtimeouts.htm">COMMTIMEOUTS</A> structure each time it opens a communication port. </P>
+
+<P>If this structure is not configured, the port uses default timeouts supplied by the driver, or timeouts from a previous communication application. </P>
+
+<P>By assuming specific timeout settings when the settings are actually different, an application can have read/write operations that never complete or complete too often.</P>
+
+<P>When read/write operations time out, the operations complete with no error values returned to the <B>ReadFile</B> and <B>WriteFile</B> functions. </P>
+
+<P>To determine if an operation has timed out, verify that the number of bytes transferred is fewer than the number of bytes requested. </P>
+
+<P>For example, if the <B>ReadFile</B> function returns TRUE, but fewer bytes were read than requested, the operation has timed out.</P>
+
+<P class="labelproc"><B>To configure timeouts for a serial port</B>
+
+<OL type="1">
+	<LI>Initialize the <B>COMMITEMEOUTS</B> structure by calling the <A HREF="wce50lrfgetcommtimeouts.htm">GetCommTimeouts</A> function or by setting the members manually.</li>
+
+	<LI>Specify the maximum number of milliseconds that can elapse between two characters without a timeout occurring with the <B>ReadIntervalTimeout</B> member.</li>
+
+	<LI>Specify the read timeout multiplier with the <B>ReadTotalTimeoutMultiplier</B> member. 
+<P>For each read operation, this number is multiplied by the number of bytes that the read operation expects to receive.
+</li>
+
+	<LI>Specify the read timeout constant with the <B>ReadTotalTimeoutConstant</B> member. 
+<P>This member is the number of milliseconds added to the result of multiplying the total number of bytes to read by <B>ReadTotalTimeoutMultiplier</B>. 
+
+<P>The result is the number of milliseconds that must elapse before a timeout for the read operation occurs.
+</li>
+
+	<LI>Specify the write timeout multiplier with the <B>WriteTotalTimeoutMultiplier</B> member. 
+<P>For each write operation, this number is multiplied by the number of bytes that the write operation expects to receive.
+</li>
+
+	<LI>Specify the write timeout constant with the <B>WriteTotalTimeoutConstant</B> member. 
+<P>This member is the number of milliseconds added to the result of multiplying the total number of bytes to write by <B>WriteTotalTimeoutMultiplier</B>. 
+
+<P>The result is the number of milliseconds that must elapse before a timeout for the write operation occurs.
+</li>
+
+	<LI>Call the <A HREF="wce50lrfsetcommtimeouts.htm">SetCommTimeouts</A> function to activate port timeout settings.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Because there are two timeouts, interval timeout and (total timeout constant + total timeout multiplier * number of bytes), an actual timeout is whichever timeout occurs first.</BLOCKQUOTE>
+</li>
+</OL>
+
+<P>To assist with multitasking, it is common to configure <B>COMMTIMEOUT</B> so <B>ReadFile</B> immediately returns with all characters in the input buffer. To do this, set <B>ReadIntervalTimeout</B> to MAXWORD and set both <B>ReadTotalTimeoutMultiplier</B> and <B>ReadTotalTimeoutConstant</B> to zero.</P>
+
+<P>The following code example shows how to configure timeouts for a serial port.</P>
+
+<PRE class="code">// Retrieve the timeout parameters for all read and write operations
+// on the port. 
+COMMTIMEOUTS CommTimeouts;
+GetCommTimeouts (hPort, &amp;CommTimeouts);
+
+// Change the COMMTIMEOUTS structure settings.
+CommTimeouts.ReadIntervalTimeout = MAXDWORD;  
+CommTimeouts.ReadTotalTimeoutMultiplier = 0;  
+CommTimeouts.ReadTotalTimeoutConstant = 0;    
+CommTimeouts.WriteTotalTimeoutMultiplier = 10;  
+CommTimeouts.WriteTotalTimeoutConstant = 1000;    
+
+// Set the timeout parameters for all read and write operations
+// on the port. 
+if (!SetCommTimeouts (hPort, &amp;CommTimeouts))
+{
+  // Could not set the timeout parameters.
+  MessageBox (hMainWnd, TEXT("Unable to set the timeout parameters"), 
+              TEXT("Error"), MB_OK);
+  dwError = GetLastError ();
+  return FALSE;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conprogrammingserialconnections.htm">Programming Serial Connections</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Configuring%20Timeouts (wce50conconfiguringtimeouts.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

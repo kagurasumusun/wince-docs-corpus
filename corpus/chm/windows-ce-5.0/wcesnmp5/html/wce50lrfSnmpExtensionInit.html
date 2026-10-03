@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SnmpExtensionInit</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateEvent">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateEvent">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfsnmpextensioninit"></A>SnmpExtensionInit</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is called by the Microsoft SNMP service to initialize the SNMP extension agent dynamic-link library (DLL). This function is an element of the SNMP Extension Agent API. </P>
+
+<PRE class="syntax"><B>BOOL SnmpExtensionInit(</B> 
+  <B>DWORD</B> <I>dwUptimeReference</I><B>,</B><I> </I>
+  <B>Handle </B><I>dwUptimeReference</I><B>, </B>
+  <B>AsnObjectIdentifier</B> <I>pFirstSupportedRegion</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwUptimeReference</I> </DT>
+
+<DD>[in] Specifies a time-zero reference for the extension agent. 
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>Extension agents should ignore this parameter. The SNMP extension agent DLL should use the <A HREF="wce50lrfsnmpsvcgetuptime.htm">SnmpSvcGetUptime</A>, function to retrieve the number of centiseconds the SNMP service has been running. For more information, see the following Remarks section. </BLOCKQUOTE>
+</dd>
+
+<DT><I>phSubagentTrapEvent</I></DT>
+
+<DD>[out] Pointer to an event handle the extension agent passes back to the SNMP service. This handle is used to notify the service that the extension agent has one or more traps to send. For additional information about allocating and deallocating the event handle, see the following Remarks section. </dd>
+
+<DT><I>pFirstSupportedRegion</I></DT>
+
+<DD>[out] Pointer to an <A HREF="wce50lrfasnobjectidentifier.htm">AsnObjectIdentifier</A> structure to receive the first MIB subtree that the extension agent supports. For additional information about allocating and deallocating resources for this structure, see the following Remarks section. 
+
+<P>The extension agent can register additional MIB subtrees by implementing the <A HREF="wce50lrfsnmpextensioninitex.htm">SnmpExtensionInitEx</A> entry point function. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is TRUE. </P>
+
+<P>If the function fails, the return value is FALSE</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Extension agents should ignore the <I>dwUptimeReference</I> parameter. Instead, they should call the <B>SnmpSvcGetUptime</B> function to retrieve the number of centiseconds that the Microsoft SNMP service has been running. Because the <I>dwUptimeReference</I> parameter stores the elapsed time as a <B>DWORD</B> value in milliseconds, the time can wrap to zero and reflect an inaccurate time interval. </P>
+
+<P>The extension agent notifies the SNMP service that it needs to send one or more traps by setting the event handle passed back in the <I>phSubagentTrapEvent</I> parameter to the signaled state. After this event has been signaled, the SNMP service repeatedly calls the extension agent's <A HREF="wce50lrfsnmpextensiontrap.htm">SnmpExtensionTrap</A> entry point until the function returns a value of FALSE. This indicates that the extension agent has no more traps to send. If the extension agent does not generate traps, the <I>phSubagentTrapEvent </I>parameter should return a value of NULL. </P>
+
+<P>The SNMP extension agent must allocate and deallocate resources for the trap event handle. When the SNMP service calls the <B>SnmpExtensionInit </B>function, the extension agent must call the <A HREF="JavaScript:hhobj_1.Click()">CreateEvent</A> function to allocate the event handle. The extension agent passes the handle to the SNMP service in the <I>phSubagentTrapEvent </I>parameter. When the SNMP service calls the <A HREF="wce50lrfsnmpextensionclose.htm">SnmpExtensionClose</A> function, the extension agent must deallocate resources for the trap event handle. </P>
+
+<P>The SNMP service makes a copy of the <A HREF="wce50lrfasnobjectidentifier.htm">AsnObjectIdentifier</A> structure the extension agent returns in the <I>pFirstSupportedRegion</I> parameter. The extension agent must allocate and deallocate the resources associated with the original structure. It can do this when the SNMP service calls the <B>SnmpExtensionClose</B> function. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Snmp.h.<BR>
+<B>Link Library:</B> Snmp.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfasnobjectidentifier.htm">AsnObjectIdentifier</A> | <A HREF="JavaScript:hhobj_2.Click()">CreateEvent</A> | <A HREF="wce50lrfsnmpextensioninitex.htm">SnmpExtensionInitEx</A> | <A HREF="wce50lrfsnmpextensiontrap.htm">SnmpExtensionTrap</A> | <A HREF="wce50lrfsnmpsvcgetuptime.htm">SnmpSvcGetUptime</A> | <A HREF="wce50lrfsnmpextensionclose.htm">SnmpExtensionClose</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: SnmpExtensionInit (wce50lrfsnmpextensioninit.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

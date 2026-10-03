@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Connecting to Another Device</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conconnectingtoanotherdevice"></A>Connecting to Another Device</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Networking on Windows CE is slightly different from the desktop implementation, especially when it comes to name resolution.</P>
+
+<P>Windows CE supports only a TCP/IP network stack. </P>
+
+<P>Because IP addresses change in a mobile environment, MSMQ depends heavily on the following capabilities:
+
+<UL type="disc">
+	<LI>The ability to resolve a name to an IP address, such as the Domain Name System (DNS) or Windows Internet Naming Service (WINS).</li>
+
+	<LI>The ability to resolve an IP address to a name by DNS reverse lookup or through NetBIOS node status.</li>
+
+	<LI>The uniqueness of the name of every device, which must be different from the default.</li>
+</UL>
+
+<H2 class="dtH2">Statically Configured Networks</H2>
+
+<P>In statically configured networks, IP addresses are assigned to computers and rarely change. </P>
+
+<P>DNS provides forward or reverse lookup. </P>
+
+<P>Configuration data can be stored in the hosts file on Windows NT or the <B>HKEY_LOCAL_MACHINE\COMM\TCPIP\Hosts</B> registry key on Windows CE.</P>
+
+<P>This is the simplest way to set up MSMQ and does not require MSMQ to provide registration services or take steps to query WINS servers.</P>
+
+<H2 class="dtH2">Dynamically Configured Networks</H2>
+
+<P>Some networks dynamically provide IP addresses for networked computers and server information, such as WINS and DNS. This is usually accomplished using the Dynamic Host Configuration Protocol (DCHP) and presents a challenge to MSMQ.</P>
+
+<P>IP addresses can change. For example, a device has one IP address when connected through dial-up link and another IP address when connected through a network card. These addresses change every time a connection is established. Changing an IP address means that the DNS name servers must be updated. </P>
+
+<H2 class="dtH2">Network Tracking</H2>
+
+<P>MSMQ supports instant reconnection, called Network Tracking, when a network card is inserted or when a dial-up connection established. </P>
+
+<P>With Network Tracking, if a value of the registry entry <B>CETrackNetwork</B> is set to Yes, there is an immediate reattempt to connect to all target computers. </P>
+
+<P>Effective with version 3.0 of Windows CE, the information that controls how MSMQ retries failed connections is stored in the registry. This allows you to control this retry schedule and defer connection attempts until LAN hardware is available. </P>
+
+<P>The following list describes registry entries and their uses.
+
+<UL type="disc">
+	<LI><B>LanRetrySchedule</B>, a <B>DWORD</B> value, controls tracking network interfaces.
+<P>If nonzero, connection attempts are not made until network interfaces exist; that is, a dial-up line must be connected or a network card inserted.
+
+<P>If a scheduled reconnection time arrives for a computer, reconnection attempts are deferred by the number of seconds specified by this key. If the value is not set, the default value is 15.
+
+<P>If the value is set to 0, the presence of a network interface is not checked and the connection attempt is made in accordance with the standard connection schedule.
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This situation is different from Network Tracking, when a reattempt at connection happens immediately after a network card is inserted or a dial-up connection established.</BLOCKQUOTE>
+</li>
+
+	<LI><B>RetrySchedule</B>, a BINARY value that contains an array of little-endian short values and controls the retry schedule.
+<P>If the value is not set, the default value is 300, 300, 600, 600, 900 (seconds).
+
+<P>If the value is set, it must be an array of little-ended short (2 byte) values that make up the retry schedule in seconds. The last number in the schedule is repeated forever.
+</li>
+</UL>
+
+<P>Also, in Windows CE 3.0, the connection logic was changed to accommodate potential changes in IP numbers. When a DNS query fails, MSMQ uses the MQPing User Datagram Protocol (UDP) to check whether destination computer is available before attempting to reconnect. </P>
+
+<P>MQPing can be disabled by specifying the <B>PingTimeout</B> value of the registry to be 0. Otherwise, it is a <B>DWORD</B> (with a default value of 1000), which specifies a timeout on receiving the reply after sending MQPing datagram in milliseconds.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orimsmqapplicationdevelopment.htm">MSMQ Application Development</A> | <A HREF="wce50concreatingqueues.htm">Creating Queues</A> | <A HREF="wce50consendingmessagestoaqueue.htm">Sending Messages to a Queue</A> | <A HREF="wce50conreceivingmessagesfromaqueue.htm">Receiving Messages from a Queue</A> | <A HREF="wce50conmessagequeuingcomsupport.htm">MSMQ COM Support</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Connecting%20to%20Another%20Device (wce50conconnectingtoanotherdevice.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IAMStreamControl Interface</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiamstreamcontrolinterface"></A>IAMStreamControl Interface</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The <B>IAMStreamControl</B> interface is exposed on input and output pins on any filter in a filter graph. This interface exposes methods that allow applications to control individual stream components in a filter graph. You can turn various streams on or off without affecting the rest of the graph. For example, you can turn off an audio stream while a video stream continues, for muting. This interface also assists in frame accuracy when exact start or stop times are important. </P>
+
+<P>Currently, the <A HREF="wce50lrfcbasestreamcontrolcbasestreamcontrol.htm">CBaseStreamControl</A> base class implements <B>IAMStreamControl</B>. <B>CBaseStreamControl</B> enables the user to specify start and stop times in the <A HREF="wce50lrfcbasestreamcontrolstartat.htm">CBaseStreamControl::StartAt</A> and <A HREF="wce50lrfcbasestreamcontrolstopat.htm">CBaseStreamControl::StopAt</A> member functions and provides stream information in the <A HREF="wce50lrfcbasestreamcontrolgetinfo.htm">CBaseStreamControl::GetInfo</A> member function. <B>CBaseStreamControl</B> uses the <A HREF="wce50lrfstreamcontrolstate.htm">StreamControlState</A> enumerated data type to describe the various states a stream is in. A flowing stream is indicated by the STREAM_FLOWING setting; otherwise it is in a discarding state indicated by the STREAM_DISCARDING setting. See <B>StreamControlState</B> for more details on stream states. </P>
+
+<P>If you want to implement this interface on your own your class should typically inherit from <A HREF="wce50lrfcbasestreamcontrolcbasestreamcontrol.htm">CBaseStreamControl</A> to obtain an implementation of the <A HREF="wce50lrfcbasestreamcontrolstartat.htm">CBaseStreamControl::StartAt</A>, <A HREF="wce50lrfcbasestreamcontrolstopat.htm">CBaseStreamControl::StopAt</A>, and <A HREF="wce50lrfcbasestreamcontrolgetinfo.htm">CBaseStreamControl::GetInfo</A> methods. The <B>CBaseStreamControl</B> class also maintains state information and makes decisions about what to do with the sample. Developers implementing their own filters with pins that support <B>IAMStreamControl</B> through the <B>CBaseStreamControl</B> base class must follow certain guidelines outlined in the <B>CBaseStreamControl</B> documentation. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;There must be a clock in the filter graph or the stream control methods might not function as expected. </BLOCKQUOTE>
+
+<P>This interface is not available on the preview pin of capture cards with hardware overlay. Calling <A HREF="JavaScript:hhobj_1.Click()">QueryInterface</A> for this interface will return the error E_NOINTERFACE (0x80004002). </P>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>Implement on input or output pins of filters when you want precise control of the data stream. This interface enables you to turn off portions of the filter graph's streams at specific times without affecting the rest of the graph. Although this interface can be used throughout the graph, the input pins of multiplexer filters are the primary users. </P>
+
+<P>If you are writing a filter that will implement <A HREF="#wce50lrfiamstreamcontrolinterface">IAMStreamControl</A> on one of its pins, you should set the STREAM_DISCARDING state so that the pin discards media samples in a timely fashion, rather than as soon as they are received. This means that if your pin is discarding samples as soon as it determines they are outside the time that the pin is supposed to be on, it will discard samples as fast as possible and the whole file could potentially be pushed into your filter and discarded in mere moments. This causes problems if the pin tries to call <A HREF="wce50lrfiamstreamcontrolstartat.htm">IAMStreamControl::StartAt</A> at a later point in time because the entire file will have already been discarded. To avoid pins from dumping media samples as fast possible, your code should check the media sample's timestamp and wait until the reference clock verifies that the end of the sample's time has actually occurred before discarding. This is known as discarding in a timely fashion (see <A HREF="wce50lrfcbasestreamcontrolcbasestreamcontrol.htm">CBaseStreamControl</A> for an implementation that does this). </P>
+
+<H4 class="dtH4">When to Use</H4>
+
+<P>Use this interface to turn on or off certain portions of the filter graph's streams while other portions continue to process data. For example, your application can tell a video filter's input pin precisely when to start or stop playback, independent of what is happening in the rest of the graph. This assists in frame accuracy when exact start or stop times are important. </P>
+
+<H4 class="dtH4">Methods in Vtable Order</H4>
+
+<P>The following table shows the methods that appear in the Vtable beneath the standard COM methods inherited from <A HREF="JavaScript:hhobj_2.Click()">IUnknown</A>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Method</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfiamstreamcontrolstartat.htm">StartAt</A></TD>
+<TD width=73%>Informs the pin when to start sending streaming data. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfiamstreamcontrolstopat.htm">StopAt</A></TD>
+<TD width=73%>Informs the pin when to suspend processing and supplying data. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfiamstreamcontrolgetinfo.htm">GetInfo</A></TD>
+<TD width=73%>Retrieves information about the current streaming settings. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements. See <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A> for more information. </P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.<BR>
+<B>Header:</B> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IAMStreamControl%20Interface (wce50lrfiamstreamcontrolinterface.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

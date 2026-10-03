@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enumerating Objects with the FindObjects Function</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conenumeratingobjectswiththefindobjectsfunction"></A>Enumerating Objects with the FindObjects Function</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The optional developer-implemented <B>FindObjects</B> device function supports synchronization of database volumes. You can directly enumerate all the objects you want to synchronize and return a list of their object IDs to the ActiveSync manager. If you synchronize more than one volume, you need to return a separate list for each volume.</P>
+
+<P>The following is the prototype for <B>FindObjects</B>.</P>
+
+<PRE class="code">typedef HRESULT (*PFINDOBJECTS)(PFINDOBJINFO);</PRE>
+
+<P>The following is the definition of <B>FINDOBJINFO</B> structure used by the function.</P>
+
+<PRE class="code">#define FO_MORE_VOLUME  ((UINT)0x00000001)
+#define FO_DONE_ONE_VOL ((UINT)0x00000002)
+
+typedef struct tagFindObjInfo
+{
+   UINT        uFlags;       // see FO_ definitions
+   OBJTYPENAME szObjType;    // object type to enumerate
+
+   UINT       *pOid;         // pointer to list of object IDs
+               // Unchanged objects first in list, changed objects follow.
+   UINT        cUnChg;       // # of unchanged object IDs in list
+   UINT        cChg;         // # of   changed object IDs in list
+
+   LPBYTE      lpbVolumeID;  // ID of volume where objects live;
+                             // NULL if objects in RAM.
+   UINT         cbVolumeID;  // volumme size in bytes
+
+   LPVOID      lpvUser;      // anything provider wants in this variable
+} FINDOBJINFO, *PFINDOBJINFO;</PRE>
+
+<P><B>FindObjects</B> is called at least twice after each connection. On the first call, the ActiveSync manager sets <I>uFlags</I> to 0. The provider enumerates all objects it synchronizes and returns a list of object IDs, pointed to by <I>pOid</I>. <I>cUnChg</I> indicates how many object IDs at the start of the list are for unchanged objects. <I>cChg</I> specifies how many object IDs remain in the list, all of which are for changed objects. The <I>cbVolumeID</I> and <I>lpbVolumeID</I> together specify which volume these objects are in.</P>
+
+<P>If there are more objects or more volumes to be returned, the service provider should set FO_MORE_VOLUME in the <I>uFlags</I> before returning.</P>
+
+<P>After this call has returned, the ActiveSync manager saves the list of object IDs and calls <B>FindObjects</B> again, this time with FO_DONE_ONE_VOL set in uFlags. This allows the service provider to release any resources used in the previous call.</P>
+
+<P>The service provider can return more than once using the same volume ID. Multiple returns are required if the service provider cannot allocate enough memory for the full list of object IDs.</P>
+
+<P>A volume ID does not have to be the database volume. Desktop objects can be divided among multiple volumes, including those on a PC or Compact Flash card. When a card is removed, <B>FindObjects</B> does not return its volume ID, so the card is considered inactive. Changes or deletions made to the desktop objects belonging to that volume are not synchronized until the card is reinserted and the volume becomes active again.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condesignguidelinesforactivesyncsynchronizationserviceproviders.htm">Design Guidelines for ActiveSync Synchronization Service Providers</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Enumerating%20Objects%20with%20the%20FindObjects%20Function (wce50conenumeratingobjectswiththefindobjectsfunction.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

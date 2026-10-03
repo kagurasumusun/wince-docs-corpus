@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>C++ COM Code Example: Opening a Queue to Send Messages</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conccomcodeexampleopeningaqueuetosendmessages"></A>C++ COM Code Example: Opening a Queue to Send Messages</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example opens a known public queue (creating a queue if the queue is not found) with send access.</P>
+
+<PRE class="code">// main.cpp
+//
+// sample program for the MSMQ COM usage
+#include "stdafx.h"
+//
+// MSMQ COM sample using smart pointer
+//
+// following sample code creates a private queue named "Q1"
+//
+#include &lt;atlbase.h&gt;
+#include &lt;mqoai.h&gt;
+// mqoa.lib should be included to the projet
+// mqoa.lib is under %_WINCEROOT%\Public\SERVERS\OAK\LIB\X86\RETAIL
+//#import "mqoa.dll" no_namespace   // not supported
+HRESULT OpenAndSendQ1()
+{
+   CComQIPtr&lt;IMSMQQueueInfo, &amp;IID_IMSMQQueueInfo&gt; ipQueueInfo;
+   HRESULT hr = S_OK;
+// hr = ipQueueInfo.CoCreateInstance(CLSID_MSMQQueueInfo);  // this form is not supported
+   hr = CoCreateInstance(
+         CLSID_MSMQQueueInfo,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQQueueInfo,
+         (void**)(&amp;ipQueueInfo.p));
+   if(hr != S_OK)
+      return hr;
+   hr = ipQueueInfo-&gt;put_PathName(L".\\private$\\Q1");
+   if(hr != S_OK)
+      return hr;
+   VARIANT vtFalse;
+   VariantInit(&amp;vtFalse);
+   vtFalse.vt = VT_BOOL;
+   vtFalse.boolVal = FALSE;
+   
+   CComQIPtr&lt;IMSMQQueue, &amp;IID_IMSMQQueue&gt; ipSendQueue;
+   hr = ipQueueInfo-&gt;Open(MQ_SEND_ACCESS, MQ_DENY_NONE, &amp;ipSendQueue);
+   if(hr != S_OK)
+   {
+      printf("queue open error\r\n");
+      return hr;
+   }
+   printf("queue opened\r\n");
+   CComQIPtr&lt;IMSMQMessage, &amp;IID_IMSMQMessage&gt; ipMessage;
+   hr = CoCreateInstance(
+         CLSID_MSMQMessage,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQMessage,
+         (void**)(&amp;ipMessage.p));
+   if(hr != S_OK)
+   {
+      ipSendQueue-&gt;Close();
+      return hr;
+   }
+   // compose message to send
+   VARIANT vtSendText;
+   VariantInit(&amp;vtSendText);
+   vtSendText.bstrVal = SysAllocString(L"sample text");
+   vtSendText.vt = VT_BSTR;
+   if(
+      ((hr=ipMessage-&gt;put_Body(vtSendText)) != S_OK) ||
+      ((hr=ipMessage-&gt;Send(ipSendQueue, NULL)) != S_OK)
+   )
+   {
+      ipSendQueue-&gt;Close();
+      SysFreeString(vtSendText.bstrVal);
+      return -1;
+   }
+   SysFreeString(vtSendText.bstrVal);
+   ipSendQueue-&gt;Close();
+   printf("message sent\r\n");
+   return hr;
+}
+int WINAPI WinMain(   HINSTANCE hInstance,
+               HINSTANCE hPrevInstance,
+               LPTSTR    lpCmdLine,
+               int       nCmdShow)
+{
+   printf("MSMQ COM sample\r\n");
+   HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+   if(hr == S_OK)
+   {
+      OpenAndSendQ1();
+      CoUninitialize();
+   }
+   return 0;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orimessagequeuing.htm">MSMQ Application Development</A> | <A HREF="wce50conmessagequeuingcomsupport.htm">MSMQ COM Support</A> | <A HREF="wce50conusingthecomcomponents.htm">Using the COM Components</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: C++%20COM%20Code%20Example:%20Opening%20a%20Queue%20to%20Send%20Messages (wce50conccomcodeexampleopeningaqueuetosendmessages.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

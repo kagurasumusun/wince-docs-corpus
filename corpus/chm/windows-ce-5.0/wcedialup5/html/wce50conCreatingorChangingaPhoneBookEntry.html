@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating or Changing a Phone-Book Entry</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingorchangingaphonebookentry"></A>Creating or Changing a Phone-Book Entry</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>You can use use the <A HREF="wce50lrfrassetentryproperties.htm">RasSetEntryProperties</A> function to create or change phone-book entries.</P>
+
+<P class="labelproc"><B>To create or change registry phone-book entries</B>
+
+<OL type="1">
+	<LI>Call <A HREF="wce50lrfrasvalidateentryname.htm">RasValidateEntryName</A> to be sure that the name does not exist.</li>
+
+	<LI>If you are editing an existing entry, call <A HREF="wce50lrfrasgetentryproperties.htm">RasGetEntryProperties</A> to retrieve the existing configuration.</li>
+
+	<LI>Call <A HREF="wce50lrfrassetentryproperties.htm">RasSetEntryProperties</A> to set the new configuration. The following glist shows how the parameters should be set:
+<UL type="disc">
+	<LI>The <I>lpszName</I> parameter should point to the null-terminated string containing the entry name in the <I>lpszEntry </I>parameter<I>. </I>If the existing name matches an existing entry, <B>RasSetEntryProperties</B> modifies the entry properties. If the entry does not exist, the function creates a new entry.</li>
+
+	<LI>The <I>lpszEntry </I>parameter should point to a <A HREF="wce50lrfrasentry.htm">RASENTRY</A> structure, which should be filled with data for the connection, including the telephone number, device type, and name.</li>
+
+	<LI>The <I>lpbDeviceInfo</I> and <I>dwDeviceInfoSize</I> parameters can be used to set Telephony API (TAPI) device configuration data.</li>
+</UL>
+</li>
+</OL>
+
+<H2 class="dtH2">Creating a Phone-Book Entry Example</H2>
+
+<P>The following code example shows how to create a phone-book entry.</P>
+
+<PRE class="code">int CreateRasEntry (LPTSTR lpszName)
+{
+  DWORD dwSize,
+        dwError;
+  TCHAR szError[100];
+  RASENTRY RasEntry;
+  RASDIALPARAMS  RasDialParams;
+
+  // Validate the format of a connection entry name.
+  if (dwError = RasValidateEntryName (NULL, lpszName))
+  {
+    wsprintf (szError, TEXT("Unable to validate entry name.")
+              TEXT(" Error %ld"), dwError);  
+
+    return FALSE;
+  }
+
+  // Initialize the RASENTRY structure.
+  memset (&amp;RasEntry, 0, sizeof (RASENTRY));
+
+  dwSize = sizeof (RASENTRY);
+  RasEntry.dwSize = dwSize;
+
+  // Retrieve the entry properties.
+  if (dwError = RasGetEntryProperties (NULL, TEXT(""),      
+                      (LPBYTE)&amp;RasEntry, &amp;dwSize, NULL, NULL))  
+  {
+    wsprintf (szError, TEXT("Unable to read default entry properties.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  // Insert code here to fill the RASENTRY structure.
+  // ...
+  
+  // Create a new phone-book entry.
+  if (dwError = RasSetEntryProperties (NULL, lpszName, 
+                      (LPBYTE)&amp;RasEntry, sizeof (RASENTRY), NULL, 0))
+  {
+    wsprintf (szError, TEXT("Unable to create the phonebook entry.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  // Initialize the RASDIALPARAMS structure.
+  memset (&amp;RasDialParams, 0, sizeof (RASDIALPARAMS));
+  RasDialParams.dwSize = sizeof (RASDIALPARAMS);
+  _tcscpy (RasDialParams.szEntryName, lpszName);
+  
+  // Insert code here to fill up the RASDIALPARAMS structure.
+  // ...
+
+  // Change the connection data.
+  if (dwError = RasSetEntryDialParams (NULL, &amp;RasDialParams, FALSE))
+  {
+    wsprintf (szError, TEXT("Unable to set the connection information.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  return TRUE;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conphonebookoperation.htm">Phone-Book Operation</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20or%20Changing%20a%20Phone-Book%20Entry (wce50concreatingorchangingaphonebookentry.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

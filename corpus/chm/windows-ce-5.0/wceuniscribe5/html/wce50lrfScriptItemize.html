@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ScriptItemize</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfscriptitemize"></A>ScriptItemize</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function breaks a Unicode string into individually shapeable items.</P>
+
+<PRE class="syntax"><B>HRESULT WINAPI ScriptItemize(</B>
+<B>  const WCHAR* </B><I>pwcInChars</I><B>, </B>
+<B>  int </B><I>cInChars</I><B>, </B>
+<B>  int </B><I>cMaxItems</I><B>, </B>
+<B>  const SCRIPT_CONTROL* </B><I>psControl</I><B>, </B>
+<B>  const SCRIPT_STATE* </B><I>psState</I><B>, </B>
+<B>  SCRIPT_ITEM* </B><I>pItems</I><B>, </B>
+<B>  int* </B><I>pcItems</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pwcInChars</I></DT>
+
+<DD>[in] Pointer to a Unicode string to be itemized. </dd>
+
+<DT><I>cInChars</I></DT>
+
+<DD>[in] Number of characters in <I>pwcInChars</I> to be itemized. </dd>
+
+<DT><I>cMaxItems</I></DT>
+
+<DD>[in] Maximum number of <A HREF="wce50lrfscript_item.htm">SCRIPT_ITEM</A> structures to process. </dd>
+
+<DT><I>psControl</I></DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfscript_control.htm">SCRIPT_CONTROL</A> structure containing flags indicating the type of itemization to be performed. Use NULL if this is not needed. </dd>
+
+<DT><I>psState</I></DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfscript_state.htm">SCRIPT_STATE</A> structure indicating the initial bidirectional algorithm state. Use NULL if this is not needed. </dd>
+
+<DT><I>pItems</I></DT>
+
+<DD>[out] Pointer to a buffer to receive the <B>SCRIPT_ITEM</B> structures processed. The buffer pointed to by <I>pItems</I> should be <I>cMaxItems</I> * sizeof(<B>SCRIPT_ITEM</B>) bytes in length. </dd>
+
+<DT><I>pcItems</I></DT>
+
+<DD>[out] Pointer to a variable to receive the number of <B>SCRIPT_ITEM</B> structures processed. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is zero.</P>
+
+<P>If the function fails, it returns a nonzero value. The function returns E_INVALIDARG if <I>pwcInChars</I> is NULL or <I>cInChars</I> is 0 or <I>pItems</I> is NULL or <I>cMaxItems</I> &lt; 2.</P>
+
+<P>The function returns E_OUTOFMEMORY if the output buffer length (<I>cMaxItems</I>) is insufficient. Note that in this case, as in all error cases, no items have been fully processedso no part of the output array contains defined values.</P>
+
+<P>If any other unrecoverable error is encountered, it is returned as an HRESULT. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Items are delimited by either a change of shaping engine or a change of direction.</P>
+
+<P>The client may create multiple runs from each <B>SCRIPT_ITEM</B> returned by <B>ScriptItemize</B>, but should not combine multiple items into a single run. The reason for this is that later the client will call <B>ScriptShape</B> for each run (when measuring or rendering), and must pass the <B>SCRIPT_ANALYSIS</B> structure that <B>ScriptItemize</B> returned. Each <B>SCRIPT_ITEM</B> contains a <B>SCRIPT_ANALYSIS</B> structure.</P>
+
+<P>If <I>psControl</I> and <I>psState</I> are NULL on entry, <B>ScriptItemize</B> breaks the Unicode string purely by character code. If the Parameters are all non-NULL, <B>ScriptItemize</B> performs a full Unicode bidirectional analysis. </P>
+
+<P>The <B>ScriptItemize</B> function always adds a terminal item to the item analysis array (pItems) such that the length of an item at <I>pItem</I> is always available as (in the case of one item): </P>
+
+<P>pItem[1].iCharPos - pItem[0].iCharPos</P>
+
+<P>For this reason, it is invalid to call <B>ScriptItemize</B> with a buffer of less than two <B>SCRIPT_ITEM</B> structures. </P>
+
+<P>To perform a correct Unicode bidirectional analysis, the <B>SCRIPT_STATE</B> structure should be initialized according to the reading order at paragraph start, and <B>ScriptItemize</B> should be passed the whole paragraph. </P>
+
+<P>The bidirectional stack is not large, just 16 bytes. It should be shared between calls. </P>
+
+<P>The <B>fRTL</B> member of <A HREF="wce50lrfscript_analysis.htm">SCRIPT_ANALYSIS</A> (referenced in <B>SCRIPT_ITEM</B>) and the <B>fNumeric</B> member of <B>SCRIPT_PROPERTIES</B> (which is returned by <A HREF="wce50lrfscriptgetproperties.htm">ScriptGetProperties</A>) together provide the same classification as the <B>lpClass</B> member of GCP_RESULTS that is referenced by <I>lpResults</I> in <B>GetCharacterPlacement</B>. </P>
+
+<P>If shaping is disabled (<B>fDisableGlyphShape</B> in SCRIPT_STATE), complex scripts are substituted by SCRIPT_UNDEFINED, causing shaping to be performed with contextual substitution following the one-to-one code point to glyph mapping provided by the fonts cmap table. The rendering direction is still set appropriately. </P>
+
+<P>European digits U+0030 through U+0039 may be rendered as national digits as shown in the following table. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>fDigitSubstitute</TH>
+<TH width=33%>FContextDigits</TH>
+<TH width=34%>Digit shapes displayed for Unicode U+0030 through U+0039 </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>False</TD>
+<TD width=33%>Any</TD>
+<TD width=34%>Western (European / North American) digits </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>True</TD>
+<TD width=33%>False</TD>
+<TD width=34%>As specified in SCRIPT_CONTROL.uDefaultLanguage</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>True</TD>
+<TD width=33%>True</TD>
+<TD width=34%>As prior strong text, defaulting to SCRIPT_CONTROL.uDefaultLanguage. </TD>
+</TR>
+</table></div>
+
+<P>Note that in context digit mode, any digits encountered before the first letters are rendered in SCRIPT_CONTROL.uDefaultLanguage if that script is in the same direction as the output, and in Arabic-Indic, that is, Western, digits if the direction is opposite. For example if SCRIPT_CONTROL.uDefaultLanguage is LANG_ARABIC, initial digits will be in Arabic-Indic in a RTL embedding, but in Western, which is also known as Arabic, in a LTR embedding.</P>
+
+<P>Effect of Unicode control characters on SCRIPT_STATE. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>SCRIPT_STATE flag </TH>
+<TH width=33%>Set by</TH>
+<TH width=34%>Cleared by</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><B>fDigitSubstitute</B></TD>
+<TD width=33%>NADS</TD>
+<TD width=34%>NODS</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><B>fInhibitSymSwap</B></TD>
+<TD width=33%>ISS </TD>
+<TD width=34%>ASS</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><B>fCharShape</B></TD>
+<TD width=33%>AAFS</TD>
+<TD width=34%>IAFS </TD>
+</TR>
+</table></div>
+
+<P>The Unicode control characters are defined in the following table. For more information, see the Unicode Standard.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Unicode control characters </TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>NADS </TD>
+<TD width=50%>Overrides Western digits (NODS) with national digit shapes. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>NODS </TD>
+<TD width=50%>Nominal digit shapes, otherwise known as Western digits. See NADS. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ASS </TD>
+<TD width=50%>Activates swapping of symmetric pairs (for example, parentheses). For these characters, left and right are interpreted as opening and closing. This is the default. See ISS. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ISS</TD>
+<TD width=50%>Inhibits swapping of symmetric pairs. See ASS. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>AAFS </TD>
+<TD width=50%>Activates Arabic form shaping, that is, ligatures or cursive connections, for Arabic presentation forms. See IAFS. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>IAFS</TD>
+<TD width=50%>Inhibits Arabic form shaping, that is ligatures and cursive connections, for Arabic presentation forms. Nominal Arabic characters are not affected. This is the default. See AAFS. </TD>
+</TR>
+</table></div>
+
+<P>SCRIPT_STATE.fArabicNumContext controls the Unicode EN-AN rule. At the beginning of a paragraph it should normally be initialized to TRUE for an Arabic locale, FALSE for any other. The <B>ScriptItemize</B> function will update it as it processes strong text. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> Usp10.h.<BR>
+<B>Link Library:</B> Uspce.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfscriptgetproperties.htm">ScriptGetProperties</A> | <A HREF="wce50lrfscript_analysis.htm">SCRIPT_ANALYSIS</A> | <A HREF="wce50lrfscript_item.htm">SCRIPT_ITEM</A> | <A HREF="wce50lrfscript_control.htm">SCRIPT_CONTROL</A> | <A HREF="wce50lrfscript_state.htm">SCRIPT_STATE</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ScriptItemize (wce50lrfscriptitemize.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

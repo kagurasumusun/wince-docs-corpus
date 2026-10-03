@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Callbacks in DVDSample</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIConnectionPointIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIConnectionPointContainerIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIConnectionPointIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIConnectionPointContainerIUnknown">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concallbacksindvdsample"></A>Callbacks in DVDSample</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Callback functions are used throughout DVDSample to communicate events that take place during DVD-Video playback. </P>
+
+<P>There are two fundamental callback sources in DVDSample: the DVD drive and the DVD-Video API. </P>
+
+<P>Events from the DVD drive deal with the physical state of the drive and, most importantly, whether the drive is ready to begin playback. </P>
+
+<P>Events from the DVD-Video API deal with changes in the authored content such as transitions to new program chains. </P>
+
+<P>DVDSample has two internal classes, <B>CDevMon</B> and <B>CDVDSampleEventSink</B>, that directly handle the drive and API callback sources. Taken together, these two classes account for all of the possible playback events that DVDSample can act upon. </P>
+
+<P>Some of these events are only of interest to the internal operation of DVDSample while others will signal changes that the end user will want to know about. </P>
+
+<P>DVDSample's internal callback interface, <B>IDVDCallback</B>, is used to forward the callback messages of end user interest from the CDvdCore object, which controls all DVD playback functions, to the main <B>CApp</B> application object.</P>
+
+<P>To see the relationship between the callbacks within DVDSample see <A HREF="wce50conarchitecturaloverviewofdvdsample.htm">Architectural Overview of DVDSample</A>.</P>
+
+<P>For information about general callback design for DVD-Video applications see <A HREF="wce50concallbacks.htm">Callbacks</A>.</P>
+
+<H4 class="dtH4">CDevMon</H4>
+
+<P>The <B>CDevMon</B> object constantly monitors the status of the DVD drive to determine whether it is ready to begin, or continue, reading data from the disc. The <B>CDevMon::Notify</B> method is called whenever a change in the drive's readiness state occurs. </P>
+
+<P>The following code example shows the implementation for this method.</P>
+
+<PRE class="code">void CDevMon::Notify(bool bReady)
+{
+  EnterCriticalSection(&amp;m_cs);
+  DWORD msgDvdReady = (bReady ? WM_DVD_DriveReady :
+                                WM_DVD_DriveNotReady);
+  if (m_hWnd)
+    PostMessage((HWND)m_hWnd, msgDvdReady, 0, 0);    
+  LeaveCriticalSection(&amp;m_cs);
+}</PRE>
+
+<P>In the preceding code, <I>m_hWnd</I> is the handle is for the <B>CDvdCore</B> object window, which receives all messages for the monitoring thread. The drive readiness message is posted within a critical section to assure that asynchronous status changes in the DVD drive do not cause drive-readiness messages to be posted out of order. </P>
+
+<H4 class="dtH4">CDVDSampleEventSink</H4>
+
+<P>The <B>CDVDSampleEventSink</B> object contains methods that implement all of the callbacks for the <A HREF="wce50lrfidvdnavdatastatussink.htm">IDVDNavDataStatusSink</A> and <A HREF="wce50lrfidvdnavigatorsink.htm">IDVDNavigatorSink</A> interfaces.</P>
+
+<P>The methods from these DVD-Video API interfaces and the methods from <B>CDVDSampleEventSink</B> initially exist as two separate groups of entities. </P>
+
+<P>The former has all of the associations with the DVD-Video API but none of the implementations, and the latter has all of the implementations but is not connected to the DVD-Video API. </P>
+
+<P>The <B>CDVDSampleEventSink::Connect</B> method binds the two groups together. </P>
+
+<P>The following code example shows half of the implementation for the <B>Connect</B> method.</P>
+
+<PRE class="code">HRESULT CDVDSampleEventSink::Connect()
+{
+  HRESULT hr = S_OK;
+  IConnectionPointContainer *pCPContainer = 0;
+
+  //Setup connection with data object
+  if (m_pDataObject)
+  {
+    hr = m_pDataObject-&gt;QueryInterface(IID_IConnectionPointContainer,
+                                       (LPVOID *)&amp;pCPContainer);
+    ASSERT(SUCCEEDED(hr));
+    if (pCPContainer)
+    {
+      IConnectionPoint *pCP = 0;
+      hr = pCPContainer-&gt;FindConnectionPoint(IID_IDVDNavDataStatusSink,
+                                             &amp;pCP);
+      ASSERT(SUCCEEDED(hr));
+      if (pCP)
+      {
+        hr = pCP-&gt;Advise((IDVDNavDataStatusSink *)this,
+                          &amp;m_dwDataAdvice);
+        ASSERT(SUCCEEDED(hr));
+        pCP-&gt;Release();
+      }
+      pCPContainer-&gt;Release();
+    }
+  }
+
+  if (FAILED(hr))
+  return hr;
+
+  // ...  
+  // ... Similar code for connecting to the navigator object ...
+  // ... 
+
+}</PRE>
+
+<P>In the preceding code <I>m_pDataObject</I> is a pointer to an instance of a <B>DVDData</B> object instantiated earlier through calls to the DVD-Video API. The code shows how the <A HREF="JavaScript:hhobj_1.Click()">IConnectionPoint</A> and <A HREF="JavaScript:hhobj_2.Click()">IConnectionPointContainer</A> interfaces are used to match callback interfaces with implementation methods. </P>
+
+<H4 class="dtH4">IDVDCallback</H4>
+
+<P>The <B>IDVDCallback</B> interface is the conduit for passing information from the monitoring thread to the main application thread. The architectural significance of the technique is discussed in <A HREF="wce50concallbacks.htm">Callbacks</A>. </P>
+
+<P><B>IDVDCallback</B> is an interface to the <B>CDvdCore</B> object. The implementations for its methods are in the <B>CAppState</B> object. </P>
+
+<P>The following code examples show how the interface and implementations are bound together.</P>
+
+<P>The following code shows how the <B>IDVDCallback</B> class is defined with virtual functions.</P>
+
+<PRE class="code">class IDvdCallback
+{
+public:
+  virtual void OnAngleChange(int cAngles, int nAngle) { }
+  virtual void OnAudioStreamChange(int nAudio, LCID lcidAudio) { }
+  virtual void OnChapterChange(int nChapter) { }
+  virtual void OnParentalLevelChange(int nLevel) { }
+  virtual void OnPlaybackStateChange(EDDVDPlaybackState edvdState) { }
+  virtual void OnSubpictureStreamChange(int nSubpicture,
+                                        LCID lcidSubpicture) { }
+  virtual void OnTitleChange(int nTitle) { }
+  virtual void OnProhibitedChange(DVD_UOP_PROHIBITED edvdOperation,
+                                  bool bProhibited) { }
+  virtual void OnDvdDriveReady(bool bReady) { }
+  virtual void OnTimeStart(long lTitleLenFrames,
+                           int nFramesPerSecond) { }
+  virtual void OnTimeEnd() { }
+  virtual void OnTimeChange(DVD_HMSF_TIMECODE time) { }
+  virtual void OnMenu(bool bInMenu) { }
+  virtual void Exit(void) { } // used to notify the app that the
+                              // playback window was closed
+  virtual RECT GetAppWindow(void) { RECT r = {0,0,0,0}; return r; }
+protected:
+    IDvdCallback() {  } // so no one can instantiate this class
+                        // directly.
+};</PRE>
+
+<P>The following code shows how the <B>CAppState</B> class both inherits from the <B>IDvdCallback</B> class and provides implementations for the common methods.</P>
+
+<PRE class="code">class CAppState : public IDvdCallback
+{
+public:
+
+  /* .. */
+
+  // IDvdCallback methods
+  void OnAngleChange(int cAngles, int nAngle);
+  void OnAudioStreamChange(int nAudio, LCID lcidAudio);
+  void OnChapterChange(int nChapter);
+  void OnParentalLevelChange(int nLevel);
+  void OnPlaybackStateChange(EDDVDPlaybackState edvdState);
+  void OnSubpictureStreamChange(int nSubpicture,
+                                LCID lcidSubpicture);
+  void OnTitleChange(int nTitle);
+  void OnProhibitedChange(DVD_UOP_PROHIBITED edvdOperation,
+                          bool bProhibited);
+  void OnDvdDriveReady(bool bReady);
+  void OnTimeStart(long lTitleLenFrames, int nFramesPerSecond);
+  void OnTimeEnd();
+  void OnTimeChange(DVD_HMSF_TIMECODE time);
+  void OnMenu(bool bInMenu);
+  void Exit();
+  RECT GetAppWindow();
+
+  /* .. */
+
+}</PRE>
+
+<P>The following code shows a portion of the constructor for the <B>CDvdCore</B> class.</P>
+
+<PRE class="code">CDvdCore::CDvdCore(HINSTANCE hInstance, IDvdCallback * pIDC) : 
+                   m_pCallback(pIDC),
+                   /* ... */
+{
+  /* ... */
+}</PRE>
+
+<P>The following code from <B>CApp::InitInstance</B> shows how the <B>CAppState</B> object's methods become associated with the m_pCallback member of <B>CDvdCore</B>.</P>
+
+<PRE class="code">m_pDvdCore = new CDvdCore(m_hInstance, (IDvdCallback*)m_pAppState);
+if (!m_pDvdCore)
+  return false;</PRE>
+
+<P>With this final step, the bridge between the monitoring thread and the main application thread is complete.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conarchitecturaloverviewofdvdsample.htm">Architectural Overview of DVDSample</A> | <A HREF="wce50concallbacks.htm">Callbacks</A> | <A HREF="wce50lrfidvdnavdatastatussink.htm">IDVDNavDataStatusSink</A> | <A HREF="wce50lrfidvdnavigatorsink.htm">IDVDNavigatorSink</A> | <A HREF="JavaScript:hhobj_3.Click()">IConnectionPoint</A> | <A HREF="JavaScript:hhobj_4.Click()">IConnectionPointContainer</A> | <A HREF="wce50conexaminingthedvdsamplesampleapplication.htm">Examining the DVDSample Sample Application</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Callbacks%20in%20DVDSample (wce50concallbacksindvdsample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptExportKey</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptexportkey"></A>CryptExportKey</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function exports cryptographic keys from of a cryptographic service provider (CSP) in a secure manner.</P>
+
+<P>The caller passes to the <A HREF="wce50lrfcryptimportkey.htm">CryptImportKey</A> function a handle to the key to be exported and gets a key binary large object (BLOB). This key BLOB can be sent over a nonsecure transport or stored in a nonsecure storage location. The key BLOB is useless until the intended recipient uses the <B>CryptImportKey</B> function, which imports the key into the recipient's CSP.</P>
+
+<PRE class="syntax"><B>BOOL CRYPTFUNC</B> <B>CryptExportKey(</B> 
+  <B>HCRYPTKEY </B><I>hKey</I><B>,</B> 
+  <B>HCRYPTKEY </B><I>hExpKey</I><B>,</B> 
+  <B>DWORD </B><I>dwBlobType</I><B>,</B> 
+  <B>DWORD </B><I>dwFlags</I><B>,</B> 
+  <B>BYTE* </B><I>pbData</I><B>,</B> 
+  <B>DWORD* </B><I>pdwbDataLen</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hKey</I></DT>
+
+<DD>[in] <A HREF="wce50lrfhcryptkey.htm">HCRYPTKEY</A> handle to the key to be exported.</dd>
+
+<DT><I>hExpKey</I></DT>
+
+<DD>[in] Handle to a cryptographic key belonging to the destination user. This key encrypts the key data within the key BLOB. This ensures that only the destination user will be able to use of the key BLOB.
+
+<P>Most often, this will be the key exchange public key of the destination user. However, certain protocols in some CSPs require that a session key belonging to the destination user be used for this purpose. Neither the Microsoft Base Cryptographic Provider nor the Microsoft Enhanced Cryptographic Provider currently support this.
+
+
+<P>If the key BLOB type specified by <I>dwBlobType</I> is PUBLICKEYBLOB, then this parameter is unused and must be set to zero.
+
+
+<P>If the key BLOB type specifies PRIVATEKEYBLOB in <I>dwBlobType</I>, this is typically a handle to a session key that is used to encrypt the key BLOB. Some CSPs allow this parameter to be zero, in which case the application should encrypt the private key BLOB manually to protect it.
+
+
+<P>To determine how Microsoft cryptographic service providers use to this parameter, see the programmer's guide topics under <A HREF="wce50oricryptography.htm">Cryptography</A>.
+</dd>
+
+<DT><I>dwBlobType</I></DT>
+
+<DD>[in] Specifies the type of key BLOB to be exported. The following table shows the possible values for this parameter.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Constant</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SIMPLEBLOB</TD>
+<TD width=64%>Used to transport session keys.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>PLAINTEXTKEYBLOB</TD>
+<TD width=64%>Used to export any key supported by the CSP in use. The key is exported in plaintext.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>PUBLICKEYBLOB </TD>
+<TD width=64%>Used to transport public keys.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>PRIVATEKEYBLOB </TD>
+<TD width=64%>Used to transport public/private key pairs.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>OPAQUEBLOB </TD>
+<TD width=64%>Used to store session keys in a Schannel CSP. OPAQUEBLOBs are non-transferable and must be used within the CSP that generated the BLOB.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SYMMETRICWRAPKEYBLOB</TD>
+<TD width=64%>Used to export and import a symmetric key wrapped with another symmetric key. The actual wrapped key is in the format specified in the IETF SMIME X9.42 standard.</TD>
+</TR>
+</table></div>
+
+
+
+<P>For more information about exchanging cryptographic keys, see the programmer's guide topics under <A HREF="wce50oricryptography.htm">Cryptography</A>.
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Bitmask of flags. </dd>
+
+<DT><I>pbData</I></DT>
+
+<DD>[out] Pointer to a buffer that receives the key BLOB.
+
+<P>This parameter can be NULL when used to acquire the size of the buffer for memory allocation purposes. 
+</dd>
+
+<DT><I>pdwbDataLen</I></DT>
+
+<DD>[in, out] On input, pointer to a <B>DWORD</B> value that specifies the size, in bytes, of the buffer pointed to by the <I>pbData </I>parameter. On output, the <B>DWORD</B> value contains the number of bytes stored in the buffer.
+
+<P>When processing the data returned in the buffer, applications must use the actual size of the data returned. The actual size may be slightly smaller than the size of the buffer specified on input. On input, buffer sizes are usually specified large enough to ensure that the largest possible output data will fit in the buffer. On output, the variable pointed to by this parameter is updated to reflect the actual size of the data copied to the buffer.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function. </P>
+
+<P>The following table shows the common values for the <B>GetLastError</B> function. The error values prefaced by NTE are generated by the particular CSP you are using.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=39%>Value</TH>
+<TH width=61%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>ERROR_INVALID_HANDLE</TD>
+<TD width=61%>One of the parameters specifies an invalid handle. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>ERROR_INVALID_PARAMETER</TD>
+<TD width=61%>One of the parameters contains an invalid value. This is most often an illegal pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>ERROR_MORE_DATA</TD>
+<TD width=61%>If the buffer specified by the <I>pbData </I>parameter is not large enough to hold the returned data, the function sets the ERROR_MORE_DATA code, and stores the required buffer size, in bytes, into the variable pointed to by <I>pdwbDataLen</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>NTE_BAD_FLAGS</TD>
+<TD width=61%>The <I>dwFlags</I> parameter is nonzero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>NTE_BAD_KEY</TD>
+<TD width=61%>One or both of the keys specified by <I>hKey</I> and <I>hExpKey</I> are invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>NTE_BAD_KEY_STATE</TD>
+<TD width=61%>You do not have permission to export the key. That is, when the <I>hKey</I> key was created, the CRYPT_EXPORTABLE flag was not specified.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>NTE_BAD_PUBLIC_KEY</TD>
+<TD width=61%>The key BLOB type specified by <I>dwBlobType</I> is PUBLICKEYBLOB, but <I>hExpKey</I> does not contain a public key handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>NTE_BAD_TYPE</TD>
+<TD width=61%>The <I>dwBlobType</I> parameter specifies an unknown BLOB type.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>NTE_BAD_UID</TD>
+<TD width=61%>The CSP context that was specified when the <I>hKey</I> key was created cannot be found.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>NTE_NO_KEY</TD>
+<TD width=61%>A session key is being exported and the <I>hExpKey</I> parameter does not specify a public key.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example Code</H4>
+
+<PRE class="code">#include &lt;wincrypt.h&gt;
+
+HCRYPTPROV hProv; // Handle to CSP
+HCRYPTKEY hKey; // Handle to session key
+HCRYPTKEY hXchgKey; // Handle to receiver's exchange public key
+BYTE *pbKeyBlob = NULL;
+DWORD dwBlobLen;
+...
+// Determine the size of the key BLOB and allocate memory.
+if(!CryptExportKey(hKey, hXchgKey, SIMPLEBLOB, 0, NULL, &amp;dwBlobLen)) {
+ printf("Error %x computing BLOB length!\n", GetLastError());
+ ...
+}
+if((pbKeyBlob = malloc(dwBlobLen)) == NULL) {
+ printf("Out of memory!\n");
+ ...
+}
+
+// Export the key into a simple key BLOB.
+if(!CryptExportKey(hKey, hXchgKey, SIMPLEBLOB, 0, pbKeyBlob, &amp;dwBlobLen)) {
+ printf("Error %x during CryptExportKey!\n", GetLastError());
+ ...
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.10 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcryptimportkey.htm">CryptImportKey</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptExportKey (wce50lrfcryptexportkey.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

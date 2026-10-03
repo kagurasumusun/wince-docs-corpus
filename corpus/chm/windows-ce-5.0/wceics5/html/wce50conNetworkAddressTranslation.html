@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Network Address Translation</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50connetworkaddresstranslation"></A>Network Address Translation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Network address translation (NAT), an Internet Engineering Task Force (IETF) standard, is an immediate but temporary solution to the problem of 32-bit IPv4 addresses becoming exhausted. NAT allows an Internet Protocol version 4 (IPv4) gateway device to provide devices on a network with access to a public network or the Internet while sharing a single, globally routable IPv4 address provided by an Internet Service Provider (ISP). </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;IPv6 does not require address translation. Typically, an IPv6 gateway device provides IPv6 routing between the internal and external networks. Windows CE supports IPv6 routing for use on gateway devices. IPv6 routing can be used alone or in conjunction with the IPv4 NAT to provide access to the external network to both IPv6 and IPv4 devices on the internal network.</BLOCKQUOTE>
+
+<P>Because the public network only sees the gateway, only one IP address is known for the gateway device. To provide the internal devices with access to the external network, the gateway must translate the destination of packets as the gateway passes the packets from one network to the other. To accomplish this task, ICS performs a function known as port address translation.</P>
+
+<P>NAT maps private addresses to public addresses. The following list shows how NAT accomplishes this mapping:
+
+<UL type="disc">
+	<LI>It modifies the source fields of the packet from the clients private, internal IP address and port to the public, external IP address and port of the NAT device.</li>
+
+	<LI>It receives incoming packets sent from the Internet to the network and compares them to the table of port mappings. It modifies the destination address and destination port in packets sent from the Internet to the network. By modifying the port information in Transmission Control Protocol (TCP) and User Datagram Protocol (UDP) packets, NAT can direct traffic for multiple clients over the dial-up connection. If the NAT doesn't find a corresponding port mapping, the incoming packet is dropped and the connection breaks.</li>
+</UL>
+
+<P>For each outbound session, ICS allocates a dynamic TCP or UDP source port for use during that session. ICS then replaces the source IPv4 address for each packet with the IPv4 address of the external or Internet adapter on the NAT gateway device, and replaces the source TCP or UDP port number of the packet with the dynamic port number. ICS creates a port mapping that correlates the IP address and source port of the originating computer with the dynamic source port number just assigned. </P>
+
+<P>For example, if NAT receives a TCP packet from a source port of 2000 on the client with an IPv4 address of 192.168.0.2, it looks for an existing mapping for the [192.168.0.2, 2000] combination of address and port. If an existing mapping cannot be found, NAT creates a new mapping. Using [157.55.0.1, 3373] as an example, NAT replaces the source address in the packet with 157.55.0.1 and the source port with 3373, updates the checksum, and passes the packet on over the public connection. NAT then modifies subsequent packets from the same client and port by using the established mapping.</P>
+
+<P>As responses return to the gateway device, NAT uses this mapping to restore the originating IPv4 address and originating port number. The device then forwards the resulting packets to the network.</P>
+
+<P>For example, using the same [192.168.0.2,2000] mapping, if NAT receives a TCP packet to a destination port of 3373, it looks for an existing mapping for port 3373. If an existing mapping cannot be found, NAT drops the packet. If it finds a mapping from [192.168.0.2,2000], it replaces the destination address with 192.168.02 and replaces the destination port with 2000. It also updates the checksum, and then passes the packet on to the private connection. </P>
+
+<P>Because NAT translates from one network to another, you can easily configure the IPv4 gateway to map a specific port on the public interface to a specific IPv4 device on a private network. This mapping allows you to configure the network with servers that appear to be located on the gateway device, from the perspective of the external network.</P>
+
+<P>NAT is transparent to both the client and the server application. NAT traversal enables network applications to detect the presence of a local NAT device. NAT traversal in some form will likely continue until IPv6 eliminates the need for NAT. </P>
+
+<P>The following list shows things recommended to do when using NAT.
+
+<UL type="disc">
+	<LI>Internet Gateway Device vendors should implement support for UPnP in their devices to support NAT Traversal. </li>
+
+	<LI>Consumers should use Internet gateway devices that support UPnP and NAT Traversal to ensure the best application behavior. </li>
+
+	<LI>DSL and cable modem service providers should specify, sell, and lease Internet gateway devices that support UPnP for NAT traversal. </li>
+</UL>
+
+<P>NAT supports configuration of port mappings on multiple public interfaces. For more information, see <A HREF="wce50conmultiplepublicinterfacesupport.htm">Multiple Public Interface Support</A>.</P>
+
+<H2 class="dtH2">Benefits Provided by NAT</H2>
+
+<P>The following list shows the benefits of using NAT:
+
+<UL type="disc">
+	<LI>NAT contributes to security. Because hosts outside of the private network observe communication through a shared IP address, NAT provides a layer of obscurity for the private network. For systems that require a greater level of security, you should enable a firewall. For more information, see <A HREF="wce50grfipfirewallreference.htm">IP Firewall Reference</A>.</li>
+
+	<LI>NAT is an IETF-approved solution to the problem of IPv4 name space exhaustion. Internet gateways that use NAT are often used in homes and small offices. They are used because they are inexpensive, easy to manage, and don't require users to install special software.</li>
+</UL>
+
+<H2 class="dtH2">NAT Limitations</H2>
+
+<P>To allow for dynamic NAT traversal, the Internet gateway providing the NAT must support Universal Plug and Play Internet Gateway Device Spec version 9 or later. </P>
+
+<P>While NAT Traversal solves several problems associated with connecting through NAT devices, several issues remain. The following table shows these issues.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Issue</TH>
+<TH width=50%>Comments</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Many chat, multiplayer games, and peer-to-peer applications break.</TD>
+<TD width=50%>Network protocols may make assumptions about the network architecture that are no longer true. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Applications do not have exclusive ownership of their mappings.</TD>
+<TD width=50%>NAT traversal has an open trust model. This means that all applications on the private network have access to all the port mappings on a NAT. Although this allows for a great amount of flexibility of multiple points of administration, applications do not have exclusive ownership of their mappings. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Applications are responsible for conflict resolution.</TD>
+<TD width=50%>If an application tries to map a port that is already mapped to another client, it is up to the application to either find another port or fail gracefully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Internet service providers are encouraged not to deploy NAT within their networks. </TD>
+<TD width=50%>NAT traversal does not solve the problem of an ISP distributing private addresses and using NAT to let clients connect. In this case, the NAT is outside of the Internet Gateway Device and is within the service provider's network. NAT traversal within the home or small business will fail if the NAT on the client's network is behind another NAT. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Static mappings persist indefinitely, even though services only use them on well-known ports for the life of the application.</TD>
+<TD width=50%>Applications are responsible for cleaning up after themselves when they are done with a port mapping.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Problems can occur if a client is behind multiple NATs.</TD>
+<TD width=50%>If a client is behind a NAT that is behind another NAT, problems can occur. Avoid this scenario.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oriinternetconnectionsharingapplicationdevelopment.htm">ICS Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Network%20Address%20Translation (wce50connetworkaddresstranslation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

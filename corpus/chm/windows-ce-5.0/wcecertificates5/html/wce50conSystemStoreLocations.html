@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>System Store Locations</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consystemstorelocations"></A>System Store Locations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A system store is a collection consisting of one or more physical sibling stores. For each system store, there are predefined physical sibling stores. After opening a system store such as MY at CERT_SYSTEM_STORE_CURRENT_USER, the store provider calls <A HREF="wce50lrfcertopenstore.htm">CertOpenStore</A> to open each of the physical stores in the system store collection. For each system store location, the predefined systems stores are: 
+
+<UL type="disc">
+	<LI>MY </li>
+
+	<LI>Root </li>
+
+	<LI>Trust </li>
+
+	<LI>CA </li>
+</UL>
+
+<P>In CERT_SYSTEM_STORE_CURRENT_USER, there is also a predefined UserDS store. A smart card store is planned for this location.</P>
+
+<P>CERT_SYSTEM_STORE_CURRENT_USER system stores are at registry location <B>HKEY_CURRENT_USER\Comm\Security\SystemCertificates</B>.</P>
+
+<P>The predefined physical stores associated with those system stores are as follows. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=25%>System store</TH>
+<TH width=75%>Physical store</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>MY</TD>
+<TD width=75%>.Default</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Root</TD>
+<TD width=75%>.Default <BR>
+.LocalMachine</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Trust</TD>
+<TD width=75%>.Default <BR>
+.LocalMachine</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CA</TD>
+<TD width=75%>.Default <BR>
+.LocalMachine</TD>
+</TR>
+</table></div>
+
+<P>CERT_SYSTEM_LOCAL_MACHINE system stores are at registry location <B>HKEY_LOCAL_MACHINE\Comm\Security\SystemCertificates</B>.</P>
+
+<P>The predefined physical stores are associated with those system stores are as follows.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=25%>System store</TH>
+<TH width=75%>Physical store</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>MY</TD>
+<TD width=75%>.Default</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Root</TD>
+<TD width=75%>.Default</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Trust</TD>
+<TD width=75%>.Default</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CA</TD>
+<TD width=75%>.Default</TD>
+</TR>
+</table></div>
+
+<P>For Windows CE .NET 4.2 and later, the system root store is initialized with the most common public certificate authority in sysroots.p7b file. The following code example shows the default registry value:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Comm\Security\SystemCertificates\Root]
+   "InitFile"="\windows\sysroots.p7b"</PRE>
+
+<H2 class="dtH2">Adding Certificates to System Stores</H2>
+
+<P>For Windows CE .NET 4.2 and later, the addition of PKCS #7 format allows an easier way to add certificates to system stores. Only OEMs can add certificates to system stores using the registry. Application developers cannot use this procedure.</P>
+
+<P class="labelproc"><B>To initialize the system certificate stores with a set of certificates</B>
+
+<OL type="1">
+	<LI>Create a list of authority certificates as a PKCS#7 formatted file. </li>
+
+	<LI>Add the file to the Windows CE-based OS design by editing the project.bib file.</li>
+
+	<LI>Add the registry value to the project.reg file.
+<P>The registry value is <B>InitFile</B> in <B>HKEY_CURRENT_USER\Comm\Security\SystemCertificates\Root</B> registry subkey. The <B>InitFile</B> specifies the local path and the name of the PCKS#7 formatted file.
+
+<P>For example, to initialize the current user root store with the file userroots.p7b, add the following code to the project.reg file:
+
+<PRE class="code">[HKEY_CURRENT_USER\Comm\Security\SystemCertificates\Root]
+   "InitFile"="\windows\userroots.p7b"</PRE>
+
+<P>To initialize the local machine store, with the same file, add the following code to the project.reg file:
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Comm\Security\SystemCertificates\Root]
+   "InitFile"="\windows\userroots.p7b"</PRE>
+
+<P>To initialize other system stores, replace the last path of the subkey with the name of the store. For example, to initialize the local machine CA store with certs.p7b, add the following code to the project.reg file:
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Comm\Security\SystemCertificates\CA]
+   "InitFile"="\windows\certs.p7b"</PRE>
+</li>
+</OL>
+
+<P>On first use of a CryptoAPI to access the system certificate store by an application, the CryptoAPI initializes the store using the specified file in the registry. After initialization, the registry value is deleted so that initialization does not repeat.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conmanagingcertificateswithcertificatestores.htm">Managing Certificates with Certificate Stores</A> | <A HREF="wce50oricryptography.htm">Cryptography</A> | <A HREF="wce50oricertificates.htm">Certificates</A> | <A HREF="wce50oricertificatesosdesigndevelopment.htm">Certificates OS Design Development</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: System%20Store%20Locations (wce50consystemstorelocations.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

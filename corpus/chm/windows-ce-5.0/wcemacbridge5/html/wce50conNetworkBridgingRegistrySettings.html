@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Network Bridging Registry Settings</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfDefaultRegistrySettings">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50connetworkbridgingregistrysettings"></A>Network Bridging Registry Settings</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The registry stores information necessary to configure the system for applications and hardware devices. The registry also contains information that the operating system continually references during operation.</P>
+
+<P>Microsoft&reg; Windows&reg; CE uses the registry to control the miniport drivers that are bound to a network bridge. The registry settings for the network bridge are stored under the <B>HKEY_LOCAL_MACHINE\Comm\Mbridge</B> registry key, which stands for Media Access Control (MAC) layer bridge. The name of the protocol driver for the bridge is MBRIDGE. When optioning, the bridge exports the MBRIDGE1 adapter by reading the adapter name and additional configuration information from the registry. For more information on configuring the registry for a network bridge, see <A HREF="wce50connetworkbridgingsampleregistryconfiguration.htm">Network Bridging Sample Registry Configuration</A>. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The default registry values vary depending on which Catalog items are included in your OS design. For more information, see <A HREF="JavaScript:hhobj_1.Click()">Default Registry Settings</A>.</BLOCKQUOTE>
+
+<P>The following table shows the registry settings for <B>HKEY_LOCAL_MACHINE\Comm\Mbridge</B>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Value : type </TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>Bind</B> : MULTI_SZ</TD>
+<TD width=63%>Specifies the allowable adapter for <B>MBridge</B> to bind to. Default value not set in the registry. This entry is required and must be filled out by the OEM.
+<P>The <B>Bind</B> value is the key enabler that informs the MBRIDGE protocol driver on which adapter it may bind to.</P>
+
+<P>For each network adapter that binds to the MBRIDGE protocol driver, it is recommended that you set the <B>ProtocolsToBindTO </B>registry value under the <B>[HKEY_LOCAL_MACHINE\Comm\&lt;adapter name&gt;\Parms]</B> to "MBRIDGE" to make sure that the adapter is not bound to any other protocol, such as TCPSTK.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The TCP/IP protocol driver currently binds to any adapter that matches its medium type. By using the combination of the <B>ProtocolsToBindTo</B> registry key at the adapter level, and the <B>Bind</B> key at the MBRIDGE level, you can prevent the adapter from binding to multiple protocol drivers.</BLOCKQUOTE>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>DisableSTA</B> : REG_DWORD</TD>
+<TD width=63%>Spanning tree algorithm (STA) is enabled by default if this value is not specified. Enables or disables STA.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>Fanout </B>: REG_DWORD</TD>
+<TD width=63%>Default setting is 32. Specifies the factor that is used to multiply the number of packets allocated to a copy path to determine the number of packets that are allocated to a non-copy path. For example, if the value is set to 32 and there are 100 packets in a copy path, 3200 packets are allocated to the non-copy path.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>Linkage\Route</B> : MULTI_SZ</TD>
+<TD width=63%>Default setting is MBRIDGE1. Specifies the adapter name exported by <B>MBridge</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>MaxBufferMemory</B> : REG_DWORD</TD>
+<TD width=63%>Default setting is 200 Kbytes. Specifies the maximum amount of memory resources used for buffering.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>MaxTableMemory</B> : REG_DWORD</TD>
+<TD width=63%>Default setting is 100 Kbytes. Specifies the maximum amount of memory resources used for forwarding table.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>SafetyMargin</B> : REG_DWORD</TD>
+<TD width=63%>Default setting is 10%. Specifies the percentage of memory that is used as a safety margin.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Restricted Interface</H4>
+
+<P>Network bridging supports the configuration of restricted interfaces through the registry. To configure a restricted interface, set the <B>RestrictedInterface</B> value under <B>HKEY_LOCAL_MACHINE\Comm\&lt;adapter name&gt;\Parms]</B> to 1. Setting this value to 1 causes multicast/broadcast packets that are sent to one of the interfaces in the restricted group not be forwarded to other interfaces in that group. You may choose to enable this option if you are bridging multiple interfaces that have differing bandwidth or Quality of Service (QOS) requirements.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<B>Note</B>&nbsp;&nbsp;&nbsp;Setting the <B>RestrictedInterface</B> value may interfere with communication between hosts on two restricted interfaces. This setting is primarily intended for scenarios in which the restricted interfaces are dedicated primarily to a fixed purpose such as media streaming.</BLOCKQUOTE>
+
+<P>The following code example shows how to set the <B>RestrictedInterface</B> registry value for two different network adapters.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Comm\PCI\RTL81391\Parms\MBRIDGE]
+   "RestrictedInterface"=dword:1
+ 
+[HKEY_LOCAL_MACHINE\Comm\NE20001\Parms\MBRIDGE]
+   "RestrictedInterface"=dword:1</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50connetworkbridgingoverview.htm">Network Bridging OS Design Development</A> | <A HREF="wce50connetworkbridgingsampleregistryconfiguration.htm">Network Bridging Sample Registry Configuration</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Network%20Bridging%20Registry%20Settings (wce50connetworkbridgingregistrysettings.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoGrammar::SetWordSequenceData</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecogrammarsetwordsequencedata"></A>ISpRecoGrammar::SetWordSequenceData</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method sets a word sequence buffer in the SR engine. The command and control grammar can refer to any subsequence of words in this buffer using the &lt;TEXTBUFFER&gt; tag, or the SPRULETRANS_TEXTBUFFER special transition type in <B>ISpGrammarBuilder::AddRuleTransition()</B>.</P>
+
+<P>See also <A HREF="wce50lrfisprecogrammarsettextselection.htm">ISpRecoGrammar::SetTextSelection</A> for information on how to update the text selection information independent of the word sequence data.</P>
+
+<P>See also <A HREF="wce50lrfispsrenginesetwordsequencedata.htm">ISpSREngine::SetWordSequenceData</A> for information on how SAPI passes the word sequence data to the SR engine.</P>
+
+<P>An application that has a text box could allow the user to speak commands into the text box to edit the text. One way to design this functionality would be to create a CFG which supports such commands as "cut the text *", "bold the text *", or "italicize the words *". The grammar would then use a TEXTBUFFER tag in place of the * which would allow the SR engine to recognize the text buffer information. At run time, the application would update the SR engine's view of the text buffer using <B>SetWordSequenceData</B>. So if a user had the text <I>hello</I> <I>world</I> in the text box, the SR engine could recognize "bold the text <I>world</I>". </P>
+
+<PRE class="syntax"><B>HRESULT SetWordSequenceData(</B>
+  <B>const WCHAR* </B><I>pText</I><B>,</B>
+  <B>ULONG </B><I>cchText</I><B>,</B>
+  <B>const SPTEXTSELECTIONINFO* </B><I>pInfo</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pText</I> </DT>
+
+<DD>[in] Pointer to the text to search for possible word sequences. The buffer is double NULL-terminated. The whole buffer can be separated into different groups by '\0'. Any sub-sequence of words in the same group is recognizable, while any sub-sequence of words across different groups is not recognizable. A word can be in simple format or complex format: /disp/lex/pron. It is up to the SR engine to perform word breaking and text normalization for improved performance. For example: If the buffer resembles: "Now play this\0new game\0\0", then "Now play" is recognizable, while "this new game" is not recognizable. </dd>
+
+<DT><I>cchText</I> </DT>
+
+<DD>[in] Number of characters in the text specified by <I>pText</I>. </dd>
+
+<DT><I>pInfo</I> </DT>
+
+<DD>[in, optional] Pointer to an <A HREF="wce50lrfsptextselectioninfo.htm">SPTEXTSELECTIONINFO</A> structure containing selection information. If NULL, then the SR engine will use the entire contents of <I>pText</I>. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value </TH>
+<TH width=65%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%>One or more arguments are invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates how an application could send a text buffer to the SR engine using this method.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// place the contents of text buffer into pwszCoMem and the length of the text
+in cch
+SPTEXTSELECTIONINFO tsi;
+tsi.ulStartActiveOffset = 0;
+tsi.cchActiveChars = cch;
+tsi.ulStartSelection = 0;
+tsi.cchSelection = cch;
+pwszCoMem2 = (WCHAR *)CoTaskMemAlloc(sizeof(WCHAR) * (cch + 2));
+if (SUCCEEDED(hr) &amp;&amp; pwszCoMem2)
+{
+    // SetWordSequenceData requires double NULL terminator.
+    memcpy(pwszCoMem2, pwszCoMem, sizeof(WCHAR) * cch);
+    pwszCoMem2[cch] = L'\0';
+    pwszCoMem2[cch+1] = L'\0';
+    // set the text buffer data
+    hr = cpRecoGrammar-&gt;SetWordSequenceData(pwszCoMem2, cch + 2, &amp;tsi);
+    // Check hr
+    CoTaskMemFree(pwszCoMem2);
+}
+CoTaskMemFree(pwszCoMem);
+// the SR engine is now capable of recognizing the contents of the text buffer </PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecogrammar.htm">ISpRecoGrammar</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoGrammar::SetWordSequenceData (wce50lrfisprecogrammarsetwordsequencedata.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

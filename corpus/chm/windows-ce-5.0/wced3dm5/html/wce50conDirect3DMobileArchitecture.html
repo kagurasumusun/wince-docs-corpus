@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Direct3D Mobile Architecture</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conLocalHooking">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conRemoteHooking">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condirect3dmobilearchitecture"></A>Direct3D Mobile Architecture</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>There are three fundamental aspects to the Microsoft&reg; Direct3D&reg; Mobile design.
+
+<UL type="disc">
+	<LI>Models are described in terms of primitives.</li>
+
+	<LI>The options for drawing primitives can be encapsulated by a state machine known as the rendering pipeline.</li>
+
+	<LI>Output is provided through a frame-based presentation model.</li>
+</UL>
+
+<P>Primitives are points, lines, triangles, and common assemblies of triangles. These are all described in terms of vertices in a Cartesian space. The data for those vertices are loaded into arrays called vertex buffers. Direct3D Mobile provides methods for applications to create vertex buffers, load them with data, and describe that data.</P>
+
+<P>Various options for drawing primitives can be encapsulated by a state machine known as the rendering pipeline. The input to the rendering pipeline is the data describing the primitives. The output from the rendering pipeline is pixel color values in the frame buffer. Direct3D Mobile provides a set of controls and options, called states, for setting up the rendering pipeline. You can set up the rendering pipeline for very simple 2-D operations, very complex 3-D operations, and many possible combinations in between. For more information see <A HREF="wce50condirect3dmobilerenderingpipeline.htm">Direct3D Mobile Rendering Pipeline</A>.</P>
+
+<P>The states available to the application developer are dictated by a combination of both definition of the Direct3D Mobile API and the capabilities of the Direct3D Mobile driver. Direct3D Mobile provides two methods for a driver to report its set of supported capabilities to an application. The lowest-level method is through a standard set of predefined capability bits that map to individual graphics functions. Applications can query these capability bits to determine the level of graphics support in the driver. Building on top of these individual capability bits, Direct3D Mobile also employs a system of device profiles. Each profile is defined to be a specific set of capability bits tailored to the needs of specific categories of embedded devices. Applications that are written to a target profile will run on devices with Direct3D Mobile display drivers supporting that profile. The approach simplifies application development by eliminating the tedium, and possible error, of having to query each individual capability bit. For more information see <A HREF="wce50condevicecapabilities.htm">Direct3D Mobile Device Capabilities</A>.</P>
+
+<P>Direct3D Mobile utilizes a presentation model based on frames. As a result, applications execute with a strong sense of time, which is usually provided in the form of a frame clock. Applications are expected to issue all of the commands necessary for drawing a particular scene and then signal when they are done with the scene.  An application notifies the Direct3D Mobile middleware that it is ready to create a scene by calling the <A HREF="wce50lrfidirect3dmobiledevicebeginscene.htm">IDirect3DMobileDevice::BeginScene</A> method.  While the application is defining the scene, Direct3D Mobile is filling a command buffer that holds the application's drawing commands.  When the application is done defining the scene it calls <A HREF="wce50lrfidirect3dmobiledeviceendscene.htm">IDirect3DMobileDevice::EndScene</A>.  At that point the scene is queued for rendering but it is yet not sent to the driver. The application must explicitly call for the scene to be presented to the display surface by calling the <A HREF="wce50lrfidirect3dmobiledevicepresent.htm">IDirect3DMobileDevice::Present</A> method. This flushes the command buffer to the driver for processing. This arrangement allows for maximum asynchronous operation between the CPU and any supporting graphics hardware.</P>
+
+<H2 class="dtH2">Direct3D Mobile Files</H2>
+
+<P>The Direct3D Mobile middleware is implemented on Windows CE devices by a dynamic-link library (DLL) called D3dm.dll. The following table shows the files included in Direct3D Mobile SDKs.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>File</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>D3dm.lib</TD>
+<TD width=67%>The import library for D3Dm.dll.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>D3dm.h</TD>
+<TD width=67%>Contains the declarations of Direct3D Mobile's COM interfaces and other function prototypes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>D3dmtypes.h</TD>
+<TD width=67%>Contains the declarations for Direct3D Mobile's structures and enumerations.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>D3dmcaps.h</TD>
+<TD width=67%>Contains the declarations for Direct3D Mobile's capability bits and profiles.</TD>
+</TR>
+</table></div>
+
+<P>All Direct3D Mobile header files are dependant on Windows.h. In addition, Direct3D Mobile drivers require the header file D3dmddk.h.</P>
+
+<H2 class="dtH2">Drivers and Processes</H2>
+
+<P>At process creation time the loader will automatically map d3dm.dll into the process address space of any application that linked to d3dm.lib at build time. Once this is complete, the application can begin making Direct3D Mobile calls. </P>
+
+<P>Every Windows CE platform with Direct3D Mobile in its OS design has a single default system driver. The Direct3D Mobile middleware handles the chores of identifying the drivers, setting up communications to the driver selected by the application, and then communicating with that driver. Direct3D Mobile display drivers are implemented as dynamic link libraries. </P>
+
+<P>There are two primary forms of driver communication: local hooking and remote hooking. Direct3D Mobile's default system driver may be either locally or remotely hooked. Direct3D Mobile cannot simultaneously instantiate both a locally and a remotely hooked driver. Additionally, there is also a variety of local hooking provided through <A HREF="wce50lrfidirect3dmobileregistersoftwaredevice.htm">IDirect3DMobile::RegisterSoftwareDevice</A> that an application can use to replace the system driver entry points with its own entry points.</P>
+
+<P>The following topics provide more information about these subjects.
+
+<UL type="disc">
+	<LI><A HREF="wce50condirect3dmobilerenderingpipeline.htm">Direct3D Mobile Rendering Pipeline</A></li>
+
+	<LI><A HREF="wce50condevicecapabilities.htm">Direct3D Mobile Device Capabilities</A></li>
+
+	<LI><A HREF="wce50conscreenoperations.htm">Screen Operations</A></li>
+
+	<LI><A HREF="JavaScript:hhobj_1.Click()">Local Hooking</A></li>
+
+	<LI><A HREF="JavaScript:hhobj_2.Click()">Remote Hooking</A></li>
+
+	<LI><A HREF="wce50conregistersoftwaredevice.htm">Registration of a Software Device</A></li>
+
+	<LI><A HREF="wce50condriverloadorder.htm">Driver Load Order</A></li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oridirect3dmobileapplicationdevelopment.htm">Direct3D Mobile Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Direct3D%20Mobile%20Architecture (wce50condirect3dmobilearchitecture.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

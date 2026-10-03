@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Memory Use and Buffers</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmemoryuseandbuffers"></A>Memory Use and Buffers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Memory is handled through a list of descriptors for the buffers being passed to the functions. Because certain protocols require access to an entire message, the entire message is available. To ensure application integrity, however, you can prohibit a package from modifying an area of a message.</P>
+
+<P>The context functions use the <A HREF="wce50lrfsecbuffer.htm">SecBuffer</A> and <A HREF="wce50lrfsecbufferdesc.htm">SecBufferDesc</A> structures to pass memory buffers. The client creates an array of <B>Sec Buffer</B> structures that reference only the buffers that the application will be passing to the package. The security package may indicate that it looks at only the security portion of a message, and that the SSPI client need not provide the other portions of the message. Performance improves when portions of the message are passed instead of the entire message. </P>
+
+<P><B>SecBufferDesc</B> is a structure that includes a pointer to the array of <B>SecBuffer</B> structures. The following code example shows how the server initializes an array of buffers when it calls the <A HREF="wce50lrfacceptsecuritycontext.htm">AcceptSecurityContext</A> function. The last buffer in this sample code contains the opaque security token received by the client; it also sets the SECBUFFER_READONLY flag.</P>
+
+<PRE class="code">SecBuffer Buffers[3];
+SecBufferDesc BufferDesc;
+
+// Set up the buffer descriptors.
+BufferDesc.ulVersion = SECBUFFER_VERSION;
+BufferDesc.cBuffers = 3;
+BufferDesc.pBuffers = &amp;Buffers[0];
+
+Buffers[0].cbBuffer = sizeof (Protocol_Header);
+Buffers[0].BufferType = SECBUFFER_READONLY | SECBUFFER_DATA;
+Buffers[0].pvBuffer = pHeader;
+
+Buffers[1].cbBuffer = pHeader-&gt;MessageSize;
+Buffers[1].BufferType = SECBUFFER_DATA;
+Buffers[1].pvBuffer = pMessage;
+
+Buffers[2].cbBuffer = pHeader-&gt;TrailerSize;
+Buffers[2].BufferType = SECBUFFER_READONLY | SECBUFFER_TOKEN;
+Buffers[2].pvBuffer = pSecurityTrailer;</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conauthenticationservices.htm">Authentication Services</A> | <A HREF="wce50consecuritysupportproviderinterface.htm">Security Support Provider Interface Architecture</A> | <A HREF="wce50consecuritypackages.htm">Security Packages</A> | <A HREF="wce50conauthenticationservicessecurity.htm">Authentication Services Security</A> | <A HREF="wce50conauthenticationservicesregistrysettings.htm">Authentication Services Registry Settings</A> | <A HREF="wce50grfauthenticationservicesreference.htm">Authentication Services Reference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Memory%20Use%20and%20Buffers (wce50conmemoryuseandbuffers.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

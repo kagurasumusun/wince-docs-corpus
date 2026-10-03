@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Connecting an Image Source to an Image Sink</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conconnectingimagesourcetoimagesink"></A>Connecting an Image Source to an Image Sink</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Imaging API is used to standardize and facilitate the communication between an image source and an image sink. </P>
+
+<P>An image source takes in encoded image data and produces, as output, image data decoded in a format that can be used by an image sink.  </P>
+
+<P>A decoder is the software within the image source that converts the image data from one format to another.  </P>
+
+<P>An image sink is sometimes said to consume the decoded image data produced by the source.</P>
+
+<P>From the perspective of the Imaging API, this communication between source and sink is controlled by the source in the sense that the sink does not pull data from the source. Instead, the source pushes data into the sink.</P>
+
+<P>Use the following sequence to set up Imaging API calls to get your source to push images data into your sink:
+
+<OL type="1">
+	<LI>Create an image source and provide it with image data to decode.</li>
+
+	<LI>Be sure your source obtains a pointer to an <A HREF="wce50lrfiimagesink.htm">IImageSink</A> interface to receive the decoded image data.  
+<P>The sink can be designed to accept several pixel formats, but at a minimum it must accept the default format PixelFormat32bppARGB. For more information, see <A HREF="wce50lrfpixelformatvalues.htm">PixelFormat Values</A>.  
+
+<P>All encoders and <A HREF="wce50lrfibitmapimage.htm">IBitmapImage</A> interfaces can accept the format PixelFormat32bppARGB. 
+</li>
+
+	<LI>Be sure your source calls its decoder's <A HREF="wce50lrfiimagedecoderbegindecode.htm">IImageDecoder::BeginDecode</A> method.  
+<P>This allows the source to take a reference to the sink, but it does not yet allow the source to decode or transfer data. Internally, the source should also initialize all variables and prepare files required for the decode operation. 
+</li>
+
+	<LI>Be sure your source calls its decoder's <A HREF="wce50lrfiimagedecoderdecode.htm">IImageDecoder::Decode</A> method.  
+<P>This causes the source to send data to the sink as necessary.
+</li>
+</OL>
+
+<P>The following steps take place within the call to <B>IImageDecoder::Decode</B>.
+
+<OL type="1">
+	<LI>If your decoder supports property items, it should send those items to the sink, using the following process.
+<OL type="a">
+	<LI>Read all properties from the image.</li>
+
+	<LI>Call <A HREF="wce50lrfiimagesinkgetpropertybuffer.htm">IImageSink::GetPropertyBuffer</A> with the correct size for holding all properties and their data.</li>
+
+	<LI>Call <A HREF="wce50lrfiimagedecodergetallpropertyitems.htm">IImageDecoder::GetAllPropertyItems</A> to fill the property buffer.</li>
+
+	<LI>Call <A HREF="wce50lrfiimagesinkpushpropertyitems.htm">IImageSink::PushPropertyItems</A> with the property buffer to send the property items to the sink.</li>
+
+	<LI>Allow the sink to automatically handle deallocating the buffer on its own.</li>
+</OL>
+</li>
+
+	<LI>Your decoder must prepare an <A HREF="wce50lrfimageinfo2.htm">ImageInfo (Imaging API)</A> structure to describe its preferred parameters for the connection between the source and the sink; then it must call <A HREF="wce50lrfiimagesinkbeginsink.htm">IImageSink::BeginSink</A> to begin negotiating the connection parameters between source and sink.</li>
+
+	<LI>When the call to <B>IImageSink::BeginSink</B> returns to the decoder, the data in the <B>ImageInfo</B> structure is modified to describe the parameter settings the sink can use.</li>
+
+	<LI>Your decoder can begin decoding the image by calling <A HREF="wce50lrfiimagesinkgetpixeldatabuffer.htm">IImageSink::GetPixelDataBuffer</A> and <A HREF="wce50lrfiimagesinkreleasepixeldatabuffer.htm">IImageSink::ReleasePixelDataBuffer</A>, or by calling <A HREF="wce50lrfiimagesinkpushpixeldata.htm">IImageSink::PushPixelData</A>.  The decoder must use either the <A HREF="wce50lrfpixelformat.htm">PixelFormat</A> value returned by the sink from the call to <B>IImageSink::BeginSink</B>, or the value PixelFormat32bppARGB. </li>
+
+	<LI>When finished, your decoder must call <A HREF="wce50lrfiimagesinkendsink.htm">IImageSink::EndSink</A>.</li>
+
+	<LI>The decoder can now return from the call to <B>IImageDecoder::Decode</B>.</li>
+</OL>
+
+<P>The following step takes place in the source.  
+
+<OL type="1">
+	<LI>Finally, your source should call <A HREF="wce50lrfiimagedecoderenddecode.htm">IImageDecoder::EndDecode</A> to complete and clean up the decoding process.</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conimagingapplicationdevelopment.htm">Imaging Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Connecting%20an%20Image%20Source%20to%20an%20Image%20Sink (wce50conconnectingimagesourcetoimagesink.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

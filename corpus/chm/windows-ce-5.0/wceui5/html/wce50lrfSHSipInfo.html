@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SHSipInfo</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfshsipinfo"></A>SHSipInfo</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function queries the shell for information about the input panel and input methods (IM). It can also set system-wide parameters regarding the input panel and IM.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI SHSipInfo(</B>
+<B>  UINT </B><I>uiAction</I><B>,</B>
+<B>  UINT </B><I>uiParam</I><B>,</B>
+<B>  PVOID </B><I>pvParam</I><B>,</B>
+<B>  UINT </B><I>fWinIni</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters </H4>
+
+<DL>
+<DT><I>uiAction</I></DT>
+
+<DD>[in] Unsigned integer containing a system-wide parameter to query or set. For descriptions of the flags that can be set for this parameter, see Remarks.</dd>
+
+<DT><I>uiParam</I></DT>
+
+<DD>[in] Unsigned integer that is set to zero for the SPI_SETSIPINFO, SPI_GETSIPINFO, SPI_SETCURRENTIM, and SPI_GETCURRENTIM actions in <I>uiAction</I>. To improve the response time of <B>SHSipInfo</B>, set <I>uiParam</I> to the <I>lParam</I> of <A HREF="wce50lrfwmsettingchange.htm">WM_SETTINGCHANGE</A>.</dd>
+
+<DT><I>pvParam</I></DT>
+
+<DD>[in, out] Void pointer to a <B>SIPINFO</B> structure when <I>uiAction</I> is SPI_SETSIPINFO or SPI_GETSIPINFO. Pointer to a <B>CLSID</B> structure when <I>uiAction</I> is SPI_SETCURRENTIM or SPI_GETCURRENTIM.</dd>
+
+<DT><I>fWinIni</I></DT>
+
+<DD>[in] Reserved for future use; set to 0.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values </H4>
+
+<P>This function returns TRUE if it is successful and FALSE if it fails. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>.</P>
+
+<H4 class="dtH4">Remarks </H4>
+
+<P>The following flags can be set for <I>uiAction</I>:
+
+<UL type="disc">
+	<LI>SPI_GETSIPINFO
+<P>The <I>pvParam</I> parameter points to a <A HREF="wce50lrfsipinfo.htm">SIPINFO</A> structure. The <B>cbSize</B>, <B>dwImDataSize</B>, and <B>pvImData</B> members of the <B>SIPINFO</B> structure should be filled in with default values before calling <B>SHSipInfo</B>. 
+
+<P>When called, <B>SHSipInfo</B> fills in the <B>SIPINFO</B> structure with the current input panel size, state, and visible desktop rectangle. The <B>dwImDataSize</B> member is usually set to zero and <B>pvImData</B> is usually set to NULL. However, if both <B>dwImDataSize</B> and <B>pvImData</B> are nonzero, <B>SHSipInfo</B> sends these values to the input method (IM). The IM fills the buffer pointed to by <B>pvImData</B> with information specific to that IM. <B>SHSipInfo</B> returns a zero if the IM cannot process the data contained within <B>dwImDataSize</B> or <B>pvImData</B>.
+</li>
+
+	<LI>SPI_SETSIPINFO
+<P>The <I>pvParam</I> parameter points to a <B>SIPINFO</B> structure. The input panel size and state are set to the values specified in the <B>SIPINFO</B> structure. 
+
+<P>First, get the current input panel state by calling <B>SHSipInfo</B> with SPI_GETSIPINFO set. Then, change the desired input panel state values in the <B>SIPINFO</B> structure. Use the resulting <B>SIPINFO</B> structure in a <B>SHSipInfo</B> call using SPI_SETSIPINFO. 
+
+<P>To use SPI_SETSIPINFO, the <B>cbSize</B> member of the <B>SIPINFO</B> structure must be set to the size of the <B>SIPINFO</B> structure. If both <B>dwImDataSize</B> and <B>pvImData</B> are nonzero, <B>SHSipInfo</B> passes the data size and the pointer on to the IM. The <B>SHSipInfo</B> call fails if the IM does not allow the shell to set IM-specific data, or if the IM does not recognize the format of the data passed in by <B>dwImDataSize</B> or <B>pvImData</B>. If the IM supports the data size and format, the IM uses the data to set IM-specific information. The <B>dwImDataSize</B> member is usually set to zero and <B>pvImData</B> is usually set to NULL.
+
+<P>Depending on the Windows CE device, some aspects of the input panel state cannot be set by applications.
+</li>
+
+	<LI>SPI_SETCURRENTIM
+<P>The <I>pvParam</I> parameter points to a <B>CLSID</B> structure that specifies the class identifier (CLSID) of the IM to switch to. If the CLSID is invalid, or the specified IM could not be loaded, the return value is zero and the default IM is loaded.
+</li>
+
+	<LI>SPI_GETCURRENTIM
+<P>The <B>pvParam</B> parameter points to a <B>CLSID</B> structure that receives the CLSID of the current IM.
+</li>
+</UL>
+
+<P>This function is called by an application to determine the size and state of the input panel at startup or in response to a <A HREF="wce50lrfwmactivate.htm">WM_ACTIVATE</A> message. To avoid changing the input panel state too often, use the SPI_SETSIPINFO value sparingly. </P>
+
+<P>When called in response to a WM_SETTINGCHANGE message, setting the input panel or IM with <B>SHSipInfo</B> causes the shell to send out a WM_SETTINGCHANGE message, therefore entering an infinite loop. </P>
+
+<H4 class="dtH4">Requirements </H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.2 and later.<BR>
+<B>Header:</B> Aygshell.h.<BR>
+<B>Link Library:</B> Aygshell.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfaygshellfunctions.htm">AYGShell Functions</A> | <A HREF="wce50lrfsipinfo.htm">SIPINFO</A> | <A HREF="wce50lrfwmsettingchange.htm">WM_SETTINGCHANGE</A> | <A HREF="wce50lrfwmactivate.htm">WM_ACTIVATE</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: SHSipInfo (wce50lrfshsipinfo.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,454 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptMsgGetParam</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptmsggetparam"></A>CryptMsgGetParam</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function acquires a message parameter after a cryptographic message has been encoded or decoded. This function is called after the final <A HREF="wce50lrfcryptmsgupdate.htm">CryptMsgUpdate</A> call.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CryptMsgGetParam(</B>
+<B>  HCRYPTMSG </B><I>hCryptMsg</I><B>,</B>
+<B>  DWORD </B><I>dwParamType</I><B>,</B>
+<B>  DWORD </B><I>dwIndex</I><B>,</B>
+<B>  void* </B><I>pvData</I><B>,</B>
+<B>  DWORD* </B><I>pcbData</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCryptMsg</I></DT>
+
+<DD>[in] Handle of a cryptographic message. </dd>
+
+<DT><I>dwParamType</I></DT>
+
+<DD>[in] Indicates the parameter types of data to be retrieved. The type of data to be retrieved determines the type of structure to use for <I>pvData</I>. 
+
+<P>For an encoded message, only the CMSG_BARE_CONTENT, CMSG_ENCODE_SIGNER, CMSG_CONTENT_PARAM and CMSG_COMPUTED_HASH_PARAM <I>dwParamTypes</I> are valid.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%>Value</TH>
+<TH width=56%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_ATTR_CERT_COUNT_PARAM</TD>
+<TD width=56%><I>pvData</I> data type: pointer to a <B>DWORD</B>
+<P>Returns the count of the attribute certificates in a SIGNED or ENVELOPED message. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_ATTR_CERT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Retrieves an attribute certificate. To get all the attribute certificates, call <B>CryptMsgGetParam</B> varying <I>dwIndex</I> from 0 to the number of attributes minus one. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_BARE_CONTENT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Retrieves the encoded content of an encoded cryptographic message, without the outer layer of the CONTENT_INFO structure. That is, only the encoding of the PKCS #7 defined ContentInfo.content field is returned. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CERT_COUNT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to <B>DWORD</B>
+<P>Returns the number of certificates in a received SIGNED or ENVELOPED message.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CERT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Returns a signer's certificate. To get all of the signer's certificates, call <B>CryptMsgGetParam</B>, varying <I>dwIndex</I> from 0 to the number of available certificates minus one. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_COMPUTED_HASH_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Returns the hash calculated of the data in the message. This type is applicable to both encode and decode. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CONTENT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Returns the whole PKCS #7 message from a message opened to encode. Retrieves the inner content of a message opened to decode. If the message is enveloped, the inner type is data, and <A HREF="wce50lrfcryptmsgcontrol.htm">CryptMsgControl</A> has been called to decrypt the message, the decrypted content is returned. If the inner type is not data, the encoded BLOB that requires further decoding is returned. If the message is not enveloped and the inner content is DATA, the returned data is the octets of the inner content. This type is applicable to both encode and decode.</P>
+
+<P>For decoding, if the type is CMSG_DATA, the content's octets are returned. Otherwise, the encoded inner content is returned.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CRL_COUNT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to DWORD
+<P>Returns the count of CRLs in a received, SIGNED or ENVELOPED message.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CRL_PARAM </TD>
+<TD width=56%>pvData data type: pointer to a BYTE array
+<P>Returns a CRL. To get all the CRLs, call CryptMsgGetParam, varying <I>dwIndex</I> from 0 to the number of available CRLs minus one. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_ENCODED_MESSAGE </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Changes the contents of an already encoded message. The message must first be decoded with a call to <A HREF="wce50lrfcryptmsgopentodecode.htm">CryptMsgOpenToDecode</A>. Then the change to the message is made through a call to <B>CryptMsgControl</B>. The message is then encoded again with a call to <B>CryptMsgGetParam</B>, specifying CMSG_ENCODED_MESSAGE to get a new encoding that reflects the changes made. This can be used, for instance, to add a time-stamp attribute to a message. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_ENCODED_SIGNER </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Returns the encoded CMSG_SIGNER_INFO signer information for a message signer. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_ENCRYPTED_DIGEST </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Returns the encrypted hash of a signature. Typically used for performing time-stamping. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_ENCRYPT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array for a <A HREF="wce50lrfcryptalgorithmidentifier.htm">CRYPT_ALGORITHM_IDENTIFIER</A> structure.
+<P>Returns the encryption algorithm used to encrypted the message. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_ENVELOPE_ALGORITHM_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array for a <B>CRYPT_ALGORITHM_IDENTIFIER</B> structure.
+<P>Returns the encryption algorithm used to encrypt an ENVELOPED message. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_HASH_ALGORITHM_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array for a <B>CRYPT_ALGORITHM_IDENTIFIER</B> structure.
+<P>Returns the hash algorithm used to hash the message when it was created. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_HASH_DATA_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array
+<P>Returns the hash value stored in the message when it was created. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_INNER_CONTENT_TYPE_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a NULL-terminated object identifier (OID) string. 
+<P>An OID is a number that uniquely identifies an object class or attribute. An object identifier is represented as a dotted decimal string, such as 1.2.3.4. Object identifiers are organized into a global hierarchy. National registration authorities issue root object identifiers to individuals or organizations, who manage the hierarchy below their root object identifier.</P>
+
+<P>Returns the inner content type of a received message. This type is not applicable to messages of type DATA. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_RECIPIENT_COUNT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a DWORD
+<P>Returns the number of key transport recipients of an ENVELOPED received message.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CMS_RECIPIENT_COUNT_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to DWORD
+<P>Returns the total count of all message recipients including key agreement and mail list recipients.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_RECIPIENT_INDEX_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a DWORD
+<P>Returns the index of the key transport recipient used to decrypt an ENVELOPED message. This value is available only after a message has been decrypted.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CMS_RECIPIENT_INDEX_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a DWORD
+<P>Returns the index of the key transport, key agreement, or mail list recipient used to decrypt an ENVELOPED message.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CMS_RECIPIENT_ENCRYPTED_KEY_INDEX_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a DWORD
+<P>Returns the index of the encrypted key of a key agreement recipient used to decrypt an ENVELOPED message. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_RECIPIENT_INFO_PARAM</TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a <A HREF="wce50lrfcertinfo.htm">CERT_INFO</A> structure.
+<P>Returns certificate information about a key transport message's recipient. To get certificate information on all key transport message's recipients, repetitively call <B>CryptMsgGetParam</B>, varying <I>dwIndex</I> from 0 to the number of recipients minus one. Only the Issuer, SerialNumber, and PublicKeyAlgorithm members of the <B>CERT_INFO</B> structure returned are available and valid. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CMS_RECIPIENT_INFO_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a <A HREF="wce50lrfcmsg_cms_recipient_info.htm">CMSG_CMS_RECIPIENT_INFO</A> structure.
+<P>Returns information about a key transport, key agreement, or mail list recipient. It is not limited to key transport message recipients. To get information on all of a message's recipients, repetitively call <B>CryptMsgGetParam</B>, varying <I>dwIndex</I> from 0 to the number of recipients minus one. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_SIGNER_AUTH_ATTR_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a CRYPT_ATTRIBUTES structure.
+<P>Returns the authenticated attributes of a message signer. To retrieve the authenticated attributes for a specified signer, call <B>CryptMsgGetParam</B> with <I>dwIndex</I> equal to that signer's index. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_SIGNER_CERT_INFO_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive the <B>CERT_INFO</B> structure.
+<P>Returns information on a message signer needed to identify the signer's certificate. A certificate's Issuer and SerialNumber can be used to uniquely identify a certificate for retrieval. To retrieve information for all the signers, repetitively call <B>CryptMsgGetParam</B> varying <I>dwIndex</I> from 0 to the number of signers minus one. Only the Issuer and SerialNumber fields in the <B>CERT_INFO</B> structure returned contain available, valid data. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_SIGNER_CERT_ID_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a <A HREF="wce50lrfcertid.htm">CERT_ID</A> structure.
+<P>Returns information on a message signer needed to identify the signer's public key. This could be a certificate's Issuer and SerialNumber, a KeyID, or a HashId. To retrieve information for all the signers, call <B>CryptMsgGetParam</B> varying <I>dwIndex</I> from 0 to the number of signers minus one. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_SIGNER_COUNT_PARAM</TD>
+<TD width=56%><I>pvData</I> data type: pointer to a DWORD
+<P>Returns the number of signers of a received SIGNED message. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_SIGNER_HASH_ALGORITHM_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive the <A HREF="wce50lrfcryptalgorithmidentifier.htm">CRYPT_ALGORITHM_IDENTIFIER</A> structure.
+<P>Returns the hash algorithm used by a signer of the message. To get the hash algorithm for a specified signer, call <B>CryptMsgGetParam</B> with <I>dwIndex</I> equal to that signer's index. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_SIGNER_INFO_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a <A HREF="wce50lrfcmsg_signer_info.htm">CMSG_SIGNER_INFO</A> structure.
+<P>Returns information on a message signer. This includes the issuer and serial number of the signer's certificate and authenticated and unauthenticated attributes of the signer's certificate. To retrieve signer information on all of the signers of a message, call <B>CryptMsgGetParam</B> varying <I>dwIndex</I> from 0 to the number of signers minus one. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_CMS_SIGNER_INFO_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a <A HREF="wce50lrfcmsg_cms_signer_info.htm">CMSG_CMS_SIGNER_INFO</A> structure.
+<P>Returns information on a message signer. This includes a signerId and authenticated and unauthenticated attributes. To retrieve signer information on all of the signers of a message, call <B>CryptMsgGetParam</B> varying <I>dwIndex</I> from 0 to the number of signers minus one. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_SIGNER_UNAUTH_ATTR_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a <A HREF="wce50lrfcrypt_attributes.htm">CRYPT_ATTRIBUTES</A> structure.
+<P>Returns a message signer's unauthenticated attributes. To retrieve the unauthenticated attributes for a specified signer, call <B>CryptMsgGetParam</B> with <I>dwIndex</I> equal to that signer's index. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_TYPE_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a DWORD
+<P>Returns the message type of a decoded message of unknown type. The retrieved message type can be compared to supported types to determine whether processing can continued. For supported message types, see the <I>dwMessageType</I> parameter of <A HREF="wce50lrfcryptmsgopentodecode.htm">CryptMsgOpenToDecode</A>. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_UNPROTECTED_ATTR_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a BYTE array to receive a CMSG_ATTR structure.
+<P>Returns the unprotected attributes in an enveloped message. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CMSG_VERSION_PARAM </TD>
+<TD width=56%><I>pvData</I> data type: pointer to a DWORD
+<P>Returns the version of the decoded message. For detailed information, see the table in the Remarks section. </P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>dwIndex</I></DT>
+
+<DD>[in] Index for the parameter being retrieved, where applicable. When a parameter is not being retrieved, this parameter is ignored and is set to zero. </dd>
+
+<DT><I>pvData</I></DT>
+
+<DD>[out] Pointer to a buffer that receives the data retrieved. The form of this data will vary depending on the value of the <I>dwParamType</I> parameter. 
+
+<P>This parameter can be NULL to set the size of this information for memory allocation purposes. 
+
+
+<P>When processing the data returned in this buffer, applications need to use the actual size of the data returned. The actual size can be slightly smaller than the size of the buffer specified on input. (On input, buffer sizes are usually specified large enough to ensure that the largest possible output data will fit in the buffer.) On output, the variable pointed to by this parameter is updated to reflect the actual size of the data copied to the buffer.
+</dd>
+
+<DT><I>pcbData</I></DT>
+
+<DD>[in, out] Pointer to a variable that specifies the size, in bytes, of the buffer pointed to by the <I>pvData</I> parameter. When the function returns, the variable pointed to by the <I>pcbData</I> parameter contains the number of bytes stored in the buffer. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is non-zero (TRUE).</P>
+
+<P>If the function fails, the return value is zero (FALSE). For extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>.</P>
+
+<P>The following table shows the error codes most commonly returned by the <B>GetLastError</B> function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Return code</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_ATTRIBUTES_MISSING </TD>
+<TD width=62%>The message does not contain the requested attributes. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_INVALID_INDEX </TD>
+<TD width=62%>The index value is not valid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_INVALID_MSG_TYPE </TD>
+<TD width=62%>The message type is invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_NOT_DECRYPTED </TD>
+<TD width=62%>The message content has not been decrypted yet. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_OID_FORMAT </TD>
+<TD width=62%>The object identifier is badly formatted. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_E_UNEXPECTED_ENCODING </TD>
+<TD width=62%>The message is not encoded as expected. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_INVALIDARG </TD>
+<TD width=62%>One or more arguments are invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>ERROR_MORE_DATA </TD>
+<TD width=62%>The specified buffer is not large enough to hold the returned data. </TD>
+</TR>
+</table></div>
+
+<P>For <I>dwParamType</I> CMSG_COMPUTED_HASH_PARAM, an error can be propagated from <A HREF="wce50lrfcryptgethashparam.htm">CryptGetHashParam</A>.</P>
+
+<P>If the function fails, <B>GetLastError</B> returns an ASN.1 encoding/decoding error.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The following version numbers are returned by calls to <B>CryptMsgGetParam</B> with <I>dwParamType</I> set to CMSG_VERSION_PARAM are defined:
+
+<UL type="disc">
+	<LI>CMSG_SIGNED_DATA_V1 </li>
+
+	<LI>CMSG_SIGNED_DATA_V3 </li>
+
+	<LI>CMSG_SIGNED_DATA_PKCS_1_5_VERSION </li>
+
+	<LI>CMSG_SIGNED_DATA_CMS_VERSION </li>
+
+	<LI>CMSG_SIGNER_INFO_V1 </li>
+
+	<LI>CMSG_SIGNER_INFO_V3 </li>
+
+	<LI>CMSG_SIGNER_INFO_PKCS_1_5_VERSION </li>
+
+	<LI>CMSG_SIGNER_INFO_CMS_VERSION </li>
+
+	<LI>CMSG_HASHED_DATA_V0 </li>
+
+	<LI>CMSG_HASHED_DATA_V2 </li>
+
+	<LI>CMSG_HASHED_DATA_PKCS_1_5_VERSION </li>
+
+	<LI>CMSG_HASHED_DATA_CMS_VERSION </li>
+
+	<LI>CMSG_ENVELOPED_DATA_V0 </li>
+
+	<LI>CMSG_ENVELOPED_DATA_V2 </li>
+
+	<LI>CMSG_ENVELOPED_DATA_PKCS_1_5_VERSION </li>
+
+	<LI>CMSG_ENVELOPED_DATA_CMS_VERSION </li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcryptographyfunctions.htm">Cryptography Functions</A> | <A HREF="wce50lrfcryptmsgupdate.htm">CryptMsgUpdate</A> | <A HREF="wce50lrfcryptmsgopentodecode.htm">CryptMsgOpenToDecode</A> | <A HREF="wce50lrfcryptmsgopentoencode.htm">CryptMsgOpenToEncode</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptMsgGetParam (wce50lrfcryptmsggetparam.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

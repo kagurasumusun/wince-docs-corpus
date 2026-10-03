@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Viewport Transformation</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conviewporttransformation"></A>Viewport Transformation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Conceptually, a viewport is a 2-D rectangle into which a three-dimensional scene is projected. In Microsoft&reg; Direct3D&reg; Mobile, the rectangle exists as coordinates within a Direct3D Mobile surface that the system uses as a rendering target. The projection transformation converts vertices into the coordinate system used for the viewport. </P>
+
+<P>You use a viewport in Direct3D Mobile to specify the following features in your application:
+
+<UL type="disc">
+	<LI>The screen-space viewport to which the rendering will be confined.</li>
+
+	<LI>The range of depth values on a render-target surface into which a scene will be rendered (usually 0.0 to 1.0).</li>
+</UL>
+
+<P>The viewport transformation is the final transformation from projection space to homogeneous screen space. The viewport transformation scales coordinates to be within the viewport window and Z range, and it inverts the Y axis.</P>
+
+<H2 class="dtH2">Viewport Rectangle</H2>
+
+<P>Unlike other transformations, the viewport transformation is not specified by a matrix.  You define the viewport rectangle by using the <A HREF="wce50lrfd3dmviewport.htm">D3DMVIEWPORT</A> structure. The <B>D3DMVIEWPORT</B> structure is used with the following viewport manipulation methods exposed by the <A HREF="wce50lrfidirect3dmobiledevice.htm">IDirect3DMobileDevice</A> interface:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfidirect3dmobiledevicegetviewport.htm">IDirect3DMobileDevice::GetViewport</A></li>
+
+	<LI><A HREF="wce50lrfidirect3dmobiledevicesetviewport.htm">IDirect3DMobileDevice::SetViewport</A></li>
+</UL>
+
+<P>The <B>D3DMVIEWPORT</B> structure contains four members &#0151; <B>X</B>, <B>Y</B>, <B>Width</B>, and <B>Height</B> &#0151; that define the area of the render-target surface into which a scene will be rendered. These values correspond to the destination rectangle, or viewport rectangle, as shown in the following illustration.</P>
+
+<P class="fig"><IMG SRC="dx3d-destrect.gif" ALT="" BORDER=0></P>
+
+<P>The values you specify for the <B>X</B>, <B>Y</B>, <B>Width</B>, and <B>Height</B> members of the <B>D3DMVIEWPORT</B> structure are screen coordinates relative to the upper-left corner of the render-target surface. The structure defines two additional members (<B>MinZ</B> and <B>MaxZ</B>) that indicate the depth-ranges into which the scene will be rendered.</P>
+
+<P>Direct3D Mobile assumes that the viewport clipping volume ranges from -1.0 to 1.0 in X, and from 1.0 to -1.0 in Y. These were the settings used most often by applications in the past. During the projection transformation, you can adjust for viewport aspect ratio before clipping. For more information, see <A HREF="wce50conprojectiontransformations.htm">Projection Transformations</A>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;</b>&nbsp;&nbsp;The <B>D3DVIEWPORT8</B> structure members <B>MinZ</B> and <B>MaxZ</B> indicate the depth-ranges into which the scene will be rendered and are not used for clipping. Most applications will set these members to 0.0 and 1.0 to enable the system to render to the entire range of depth values in the depth buffer. In some cases, you can achieve special effects by using other depth ranges. For instance, to render a heads-up display in a game, you can set both values to 0.0 to force the system to render objects in a scene in the foreground, or you might set them both to 1.0 to render an object that should always be in the background.</BLOCKQUOTE>
+
+<H2 class="dtH2">Viewport Scaling</H2>
+
+<P>The dimensions used in the <B>X</B>, <B>Y</B>, <B>Width</B>, and <B>Height</B> members of the <A HREF="wce50lrfd3dmviewport.htm">D3DMVIEWPORT</A> structure for a viewport define the location and dimensions of the viewport on the render-target surface. These values are in screen coordinates, relative to the upper-left corner of the surface. </P>
+
+<P>Direct3D Mobile uses the viewport location and dimensions to scale the vertices to fit a rendered scene into the appropriate location on the target surface. Internally, Direct3D Mobile inserts these values into a matrix that is applied to each vertex.</P>
+
+<P class="fig"><IMG SRC="dx3d-vpscale.gif" ALT="" BORDER=0></P>
+
+<P>This matrix simply scales vertices according to the viewport dimensions and desired depth range and translates them to the appropriate location on the render-target surface. The matrix also flips the y-coordinate to reflect a screen origin at the top-left corner with y increasing downward. After this matrix is applied, vertices are still homogeneous &#0151; that is, they still exist as [x,y,z,w] vertices &#0151; and they must be converted to non-homogeneous coordinates before being sent to the rasterizer. This is performed by way of simple division, as discussed in <A HREF="wce50conrasterization.htm">Rasterization</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contransformation.htm">Transformation</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Viewport%20Transformation (wce50conviewporttransformation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Changing the Default Gateway</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conchangingthedefaultgateway"></A>Changing the Default Gateway</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This code is an example of how to change the default gateway to NewGateway. Simply calling <B>GetIpForwardEntry</B>, changing the gateway and then calling <B>SetIpForwardEntry</B> will not change the route, but rather will just add a new one. If for some reason there are multiple default gateways present, this code will delete them. Note that the new gateway must be viable, otherwise TCP/IP will ignore the change.</P>
+
+<PRE class="code">   
+   PMIB_IPFORWARDTABLE pIpForwardTable = NULL;
+   PMIB_IPFORWARDROW pRow = NULL;
+   ULONG dwSize = 0;
+   BOOL bOrder = FALSE;
+   DWORD dwStatus = 0;
+   DWORD NewGateway = 0xDDBBCCAA; // this is in host order Ip Address AA.BB.CC.DD is DDCCBBAA
+
+   // Find out how big our buffer needs to be
+   dwStatus = GetIpForwardTable(pIpForwardTable, &amp;dwSize, bOrder);
+   if (dwStatus == ERROR_INSUFFICIENT_BUFFER) {
+
+      // Allocate the memory for the table
+      if (!(pIpForwardTable = (PMIB_IPFORWARDTABLE)malloc(dwSize))) {
+         OutputMessage(TEXT("Malloc failed, Out of Memory!\r\n"));
+         exit(1);
+      }
+
+      // Now get the table
+      dwStatus = GetIpForwardTable(pIpForwardTable, &amp;dwSize, bOrder);
+   }
+
+   if (dwStatus != ERROR_SUCCESS) {
+      OutputMessage(TEXT("GetIpForwardTable Failed, ERROR %d\r\n"), dwStatus);
+      if (pIpForwardTable) 
+         free(pIpForwardTable);
+      exit(1);
+   }
+   
+   // Search for the row in the table that is wanted. The default gateway has a destination
+   // of 0.0.0.0 - Notice that while the table is looked through, but only one row is copied.
+   // This is so that if there happen to be multiple default gateways, all 
+   // of them can be deleted.
+   for (unsigned long int i=0; i &lt; pIpForwardTable-&gt;dwNumEntries; i++) {
+      if (pIpForwardTable-&gt;table[i].dwForwardDest == 0) {
+         
+         // The default gateway has been found
+         if (!pRow) {
+            // Allocate some memory to store the row in - this is easier than filling
+            // in the row structure and helps ensure that only the
+            // gateway address is changed.
+            pRow = (PMIB_IPFORWARDROW)malloc(sizeof(MIB_IPFORWARDROW));
+            if (!pRow) {
+               OutputMessage(TEXT("Malloc failed, Out of Memory!\r\n"));
+               exit(1);
+            }
+            // Copy the row
+            memcpy(pRow, &amp;(pIpForwardTable-&gt;table[i]), sizeof(MIB_IPFORWARDROW));
+         }
+
+         // Delete the old default gateway entry
+         dwStatus = DeleteIpForwardEntry(&amp;(pIpForwardTable-&gt;table[i]));
+
+         if (dwStatus != ERROR_SUCCESS) {
+            OutputMessage(TEXT("Could not delete old gateway\n"));
+            exit(1);
+         }
+      }
+   }           
+   
+   // Set the nexthop field to our new gateway - all the other properties of the route will
+   // be the same as they were previously.
+   pRow-&gt;dwForwardNextHop = NewGateway;
+
+   // Create a new route entry for the default gateway.
+   dwStatus = CreateIpForwardEntry(pRow);
+
+   if (dwStatus == NO_ERROR)
+      OutputMessage(TEXT("Gateway changed successfully\n"));
+   else if (dwStatus == ERROR_INVALID_PARAMETER)
+      OutputMessage(TEXT("Invalid Parameter\n"));
+   else 
+      DisplayErrorMessage(dwStatus);
+
+   // Free resources
+   if (pIpForwardTable) 
+      free(pIpForwardTable);
+   if (pRow)
+      free(pRow);</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50coniphelpercodesamples.htm">IP Helper Code Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Changing%20the%20Default%20Gateway (wce50conchangingthedefaultgateway.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

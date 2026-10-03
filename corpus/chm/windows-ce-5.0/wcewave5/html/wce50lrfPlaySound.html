@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>PlaySound</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfplaysound"></A>PlaySound</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function plays a sound specified by a file name, resource, or system event.</P>
+
+<PRE class="syntax"><B>BOOL</B> <B>WINAPI</B> <B>PlaySound(</B> 
+  <B>LPCSTR</B> <I>pszSound</I><B>,</B> 
+  <B>HMODULE</B> <I>hmod</I><B>,</B> 
+  <B>DWORD</B> <I>fdwSound </I>
+<B>)</B>;</PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszSound</I></DT>
+
+<DD>Pointer to a null-terminated string that specifies the sound to play. If this parameter is NULL, any currently playing waveform sound is stopped. To stop a non-waveform sound, specify SND_PURGE in the <I>fdwSound</I> parameter.
+
+<P>Three flags in <I>fdwSound</I> (SND_ALIAS, SND_FILENAME, and SND_RESOURCE) determine whether the name is interpreted as an alias for a system event, a file name, or a resource identifier. If none of these flags are specified, <B>PlaySound</B> searches the registry or the WIN.INI file for an association with the specified sound name. If an association is found, the sound event is played. If no association is found in the registry, the name is interpreted as a file name.
+</dd>
+
+<DT><I>hmod</I></DT>
+
+<DD>Handle to the executable file that contains the resource to be loaded. This parameter must be NULL unless SND_RESOURCE is specified in <I>fdwSound</I>.</dd>
+
+<DT><I>fdwSound</I></DT>
+
+<DD>Flags for playing the sound. The following table shows the possible values.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>Value</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_ALIAS</TD>
+<TD width=74%>The <I>pszSound</I> parameter is a system-event alias in the registry or the WIN.INI file. Do not use with either SND_FILENAME or SND_RESOURCE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_ASYNC</TD>
+<TD width=74%>The sound is played asynchronously and <B>PlaySound</B> returns immediately after beginning the sound. To terminate an asynchronously played waveform sound, call <B>PlaySound</B> with <I>pszSound</I> set to NULL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_FILENAME</TD>
+<TD width=74%>The <I>pszSound</I> parameter is a file name.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_LOOP</TD>
+<TD width=74%>The sound plays repeatedly until <B>PlaySound</B> is called again with the <I>pszSound</I> parameter set to NULL. You must also specify the SND_ASYNC flag to indicate an asynchronous sound event.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_MEMORY</TD>
+<TD width=74%>A sound event's file is loaded in RAM. The parameter specified by <I>pszSound</I> must point to an image of a sound in memory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_NODEFAULT</TD>
+<TD width=74%>No default sound event is used. If the sound cannot be found, <B>PlaySound</B> returns silently without playing the default sound.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_NOSTOP</TD>
+<TD width=74%>The specified sound event will yield to another sound event that is already playing. If a sound cannot be played because the resource needed to generate that sound is busy playing another sound, the function immediately returns FALSE without playing the requested sound.
+<P>If this flag is not specified, <B>PlaySound</B> attempts to stop the currently playing sound so that the device can be used to play the new sound.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_NOWAIT</TD>
+<TD width=74%>If the driver is busy, return immediately without playing the sound.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_RESOURCE</TD>
+<TD width=74%>The <I>pszSound</I> parameter is a resource identifier; <I>hmod</I> must identify the instance that contains the resource.  When creating the resource, you must identify it as being of the WAVE type, see <A HREF="wce50conusingplaysoundwitharesourceidentifier.htm">Using PlaySound with a Resource Identifier</A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>SND_SYNC</TD>
+<TD width=74%>Synchronous playback of a sound event. <B>PlaySound</B> returns after the sound event completes.</TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Windows CE does not support the SND_ALIAS_ID and SND_PURGE flags for the <I>fdwSound</I> parameter. The sound specified by <I>pszSound</I> must fit into available physical memory and be playable by an installed waveform-audio device driver. <B>PlaySound</B> searches the file system directories for the sound according to the search order that was specified by the OEM of the target device. If it cannot find the specified sound, <B>PlaySound</B> uses the default system event sound entry instead. If the function can find neither the system default entry nor the default sound, it makes no sound and returns FALSE.</P>
+
+<P>For examples of how to use the <B>PlaySound</B> function, see <A HREF="wce50conusingtheplaysoundfunction.htm">Using the PlaySound Function</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Mmsystem.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfwaveformaudiofunctions.htm">Waveform Audio Functions</A> | <A HREF="wce50lrfsndplaysound.htm">sndPlaySound</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: PlaySound (wce50lrfplaysound.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

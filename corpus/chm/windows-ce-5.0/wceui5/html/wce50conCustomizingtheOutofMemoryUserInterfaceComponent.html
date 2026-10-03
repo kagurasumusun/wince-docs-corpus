@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Customizing the Out of Memory User Interface Component</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfDdsiTouchPanelSetMode">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concustomizingtheoutofmemoryuserinterfacecomponent"></A>Customizing the Out of Memory User Interface Component</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Out of Memory User Interface (Oomui) component controls the appearance of the Graphics, Windowing, and Events Subsystem (GWES) out-of-memory handler and enables a user, or the system itself, to take action to prevent data loss or other problems related to out-of-memory conditions.</P>
+
+<P>By default, Oomui displays a window indicating that the system memory is insufficient for the task being performed. The user is then prompted take action to free some memory, for example, by closing applications or moving some memory currently allocated to the object store so it can be used by the program. </P>
+
+<P>By replacing Oomui with a custom out-of-memory UI component, you can adjust this window to the screen size of your target device. You can also add functionality to this UI component, for example, to cause the system to automatically close noncritical applications and perform other system cleanup tasks in the absence of a user.</P>
+
+<P>To customize the Oomui component, modify and rebuild the code located in %_WINCEROOT%\Public\Common\Oak\Drivers\Oomui. An out-of-memory UI component must implement the following functions, as defined by the Oomui.h header file:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfoomuicreatenotrespondingwindow.htm">OomUI_CreateNotRespondingWindow</A></li>
+
+	<LI><A HREF="wce50lrfoomuicreateoomwindow.htm">OomUI_CreateOomWindow</A></li>
+
+	<LI><A HREF="wce50lrfoomuifshowoomwindow.htm">OomUI_FShowOomWindow</A></li>
+
+	<LI><A HREF="wce50lrfoomuiinitialize.htm">OomUI_Initialize</A></li>
+
+	<LI><A HREF="wce50lrfoomuinotrespondingwndproc.htm">OomUI_NotRespondingWndProc</A></li>
+
+	<LI><A HREF="wce50lrfoomuionshow.htm">OomUI_OnShow</A></li>
+
+	<LI><A HREF="wce50lrfoomuioomwndproc.htm">OomUI_OomWndProc</A></li>
+
+	<LI><A HREF="wce50lrfoomuisetwindowsinfo.htm">OomUI_SetWindowsInfo</A></li>
+</UL>
+
+<P>In addition, the Oomui component uses the following functions:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfoomuicallbackclosewindow.htm">OomUICallback_CloseWindow</A></li>
+
+	<LI><A HREF="wce50lrfoomuicallbackiscritical.htm">OomUICallback_IsCritical</A></li>
+
+	<LI><A HREF="wce50lrfoomuicallbacknonclientpaint.htm">OomUICallback_NonClientPaint</A></li>
+</UL>
+
+<P>The thread that runs the Out of Memory window runs at priority THREAD_PRIORITY_HIGHEST by default. When an out-of-memory condition occurs and the Out of Memory window is displayed, no lower priority threads are allowed to run. Preventing all lower priority threads from running causes all applications to be suspended so that they do not continue to consume memory while the Out of Memory window is displayed. You should avoid making calls that use a large amount of memory and that try to communicate with other threads. These calls may fail or lock up because of the unusual state of the system.</P>
+
+<P>You can set the priority of the thread that runs the Out of Memory window by setting the <B>HKEY_LOCAL_MACHINE\SYSTEM\GWE\ThreadPriorities\Oom</B> registry key to the priority level that you want, for example:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\SYSTEM\GWE\ThreadPriorities]
+    "Oom"=dword:fb</PRE>
+
+<P>When the system is in a state of standard operation and memory is not low, the thread that runs the Out of Memory window is not in a message loop. This means that the Oomui component should not create any windows other than those specifically requested by the system.</P>
+
+<P>Because user input is necessary for interaction with the Out of Memory window, device driver threads running in drivers such as the keyboard and touch screen drivers need to run at a priority of THREAD_PRIORITY_HIGHEST.</P>
+
+<P>When an out-of-memory condition occurs, the operating system (OS) calls the <A HREF="JavaScript:hhobj_1.Click()">DdsiTouchPanelSetMode</A> touch driver function with <I>iIndex</I> equal to TPSM_PRIORITY_HIGH_ID just before the Out of Memory window becomes active. At this time, the touch driver should raise its priority to THREAD_PRIORITY_HIGHEST. When complete, the out-of-memory process calls the <B>DdsiTouchPanelSetMode</B> touch driver function, setting <I>iIndex</I> to TPSM_PRIORITY_NORMAL_ID and <I>lpInput</I> to NULL. The touch driver should then return its priority to THREAD_PRIORITY_NORMAL.</P>
+
+<P>To ensure that <A HREF="wce50lrfbeginpaint.htm">BeginPaint</A> does not fail in low-memory conditions, out-of-memory UI components have cache device contexts (DCs). You can adjust how many DCs to cache by modifying the code in %_WINCEROOT%\Public\Common\Oak\Drivers\Oomui\Oomuil.cpp. By caching DCs, GWES resources can be released before <B>BeginPaint</B> is called.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concustomizingauicomponent.htm">Customizing a UI Component</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Customizing%20the%20Out%20of%20Memory%20User%20Interface%20Component (wce50concustomizingtheoutofmemoryuserinterfacecomponent.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

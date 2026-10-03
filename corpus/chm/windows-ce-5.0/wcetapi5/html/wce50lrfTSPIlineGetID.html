@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TSPI_lineGetID</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrftspilinegetid"></A>TSPI_lineGetID</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function returns a device identifier for the specified device class associated with the selected line, address, or call.</P>
+
+<PRE class="syntax"><B>LONG TSPIAPI TSPI_lineGetID(</B>
+  <B>HDRVLINE</B> <I>hdLine</I><B>,</B>
+  <B>DWORD</B> <I>dwAddressID</I><B>,</B>
+  <B>HDRVCALL</B> <I>hdCall</I><B>,</B>
+  <B>DWORD</B> <I>dwSelect</I><B>,</B>
+  <B>LPVARSTRING</B> <I>lpDeviceID</I><B>,</B>
+  <B>LPCWSTR</B> <I>lpszDeviceClass</I><B>,</B>  
+  <B>HANDLE</B> <I>hTargetProcess</I> 
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hdLine </I></DT>
+
+<DD>Service provider's handle to the line to be queried. </dd>
+
+<DT><I>dwAddressID</I> </DT>
+
+<DD>Address on the given open line device. An address identifier is permanently associated with an address; the identifier remains constant across operating system upgrades. TAPI does not validate this parameter when this function is called. </dd>
+
+<DT><I>hdCall</I> </DT>
+
+<DD>Service provider's handle to the call to be queried. </dd>
+
+<DT><I>dwSelect</I> </DT>
+
+<DD>Value that specifies whether the device identifier requested is associated with the line, address, or a single call. The <I>dwSelect</I> parameter can have only one of the <A HREF="wce50lrflinecallselect.htm">LINECALLSELECT</A> constants. </dd>
+
+<DT><I>lpDeviceID</I> </DT>
+
+<DD>Pointer to the memory location of type <A HREF="wce50lrfvarstring.htm">VARSTRING</A> where the device identifier is returned. Upon successful completion of the request, this location is filled with the device identifier. The format of the returned information depends on the method used by the device class (API) for naming devices. </dd>
+
+<DT><I>lpszDeviceClass</I> </DT>
+
+<DD>Pointer to a null-terminated Unicode string that specifies the device class of the device whose identifier is requested. The device class is dependent on the service provider.</dd>
+
+<DT><I>hTargetProcess</I> </DT>
+
+<DD>Process handle of the application on behalf of which the <B>TSPI_lineGetID</B> function is invoked. If the information returned in the <B>VARSTRING</B> structure includes a handle for use by the application, the service provider should create or duplicate the handle for the process. 
+
+<P>If <I>hTargetProcess</I> is set to INVALID_HANDLE_VALUE, then the application is executing on a remote client system and it is not possible to create a duplicate handle directly. Instead, the <B>VARSTRING</B> structure should contain a UNC name of a network device or other name that the remote client can use to access the device. If this is not possible, then the function should fail. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns zero if the function succeeds, or an error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALLINEHANDLE</TD>
+<TD width=50%>The handle to the line is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALADDRESSID</TD>
+<TD width=50%>The address id is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLHANDLE</TD>
+<TD width=50%>The handle to the call is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NODEVICE</TD>
+<TD width=50%>The device was not found.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resource is unavailable.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The service provider returns LINEERR_INVALLINEHANDLE if <I>dwSelect</I> is LINECALLSELECT_LINE or LINECALLSELECT_ADDRESS, and <I>hdLine</I> is invalid.</P>
+
+<P>The service provider returns LINEERR_INVALCALLHANDLE if <I>dwSelect</I> is LINECALLSELECT_CALL and <I>hdCall</I> is invalid.</P>
+
+<P>The service provider should support the tapi/line device class to allow applications to determine the real line device identifier of an opened line. In that case, the variable data returned is the <I>dwDeviceID</I>. </P>
+
+<P>A vendor that defines a device-specific media type also needs to define the corresponding device-specific (proprietary) API to manage devices of the media type. To avoid collisions on device class names assigned independently by different vendors, a vendor should select a name that uniquely identifies the vendor and then the media type; for example: "Intel/video".</P>
+
+<P>The service provider fills in all the members of the <B>VARSTRING</B> data structure, except for <B>dwTotalSize</B>, which is filled in by TAPI. The service provider must not overwrite the <B>dwTotalSize</B> member.</P>
+
+<P>The service provider does not need to be concerned with handling tapi/line and tapi/phone device classes because TAPI handles these for the service provider. Therefore, code for handling these device classes is optional.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Tapicomn.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrftspilinegetdevconfig.htm">TSPI_lineGetDevConfig</A> | <A HREF="wce50lrftspilinesetdevconfig.htm">TSPI_lineSetDevConfig</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TSPI_lineGetID (wce50lrftspilinegetid.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPv6 Address Autoconfiguration</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conipv6addressautoconfiguration"></A>IPv6 Address Autoconfiguration</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>IPv6 can automatically configure itself without the use of a protocol that configures stateful addresses, such as Dynamic Host Configuration Protocol for IPv6 (DHCPv6). Address autoconfiguration can only be performed on multicast-capable interfaces. By default, an IPv6 host configures a link-local address for each interface. </P>
+
+<P>By using router discovery, a host can determine the addresses of routers, additional addresses, and other parameters. An indication of whether a stateful address configuration protocol should be used is included in the Router Advertisement message. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The IPv6 protocol for Windows CE does not support configuring stateful addresses.</BLOCKQUOTE>
+
+<P>Address autoconfiguration is described in RFC 2462.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>With the exception of link-local addresses, address autoconfiguration is only specified for hosts. Routers must obtain addresses and parameters for configuration through another means (for example, through configuring address manually). </BLOCKQUOTE>
+
+<H2 class="dtH2">Types of Autoconfiguration</H2>
+
+<P>Windows CE .NET 4.1 and later supports the stateless autoconfiguration type. When configuring stateless addresses, based on the receipt of Router Advertisement messages, link-local addresses are configured automatically. These messages include stateless address prefixes and require that hosts not use a protocol that configures stateful addresses. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Standards for configuring stateful addresses for IPv6 are in development. The IPv6 protocol for Windows CE .NET 4.1 and later does not support configuring stateful addresses or the DHCPv6 protocol.</BLOCKQUOTE>
+
+<H2 class="dtH2">Autoconfigured Address States</H2>
+
+<P>Autoconfigured addresses are in one or more of the states shown in the following illustration. The relationship between the states of an autoconfigured address and the preferred and valid lifetimes are also shown.</P>
+
+<P class="fig"><IMG SRC="s13ag_ip6.gif" ALT="" BORDER=0></P>
+
+<P>The following table shows the states and their descriptions.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>State</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Tentative </TD>
+<TD width=70%>The address is in the process of being verified as unique. Verification occurs through duplicate address detection. The Router Advertisement message specifies the period of time that an address can remain in this state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Preferred </TD>
+<TD width=70%>The address has been verified as unique. A node can send and receive unicast traffic to and from a preferred address. The Router Advertisement message specifies the period of time that an address can remain in this state.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Deprecated </TD>
+<TD width=70%>The address is still valid, but using it for new communication is discouraged. Existing communication sessions can continue to use a deprecated address. A node can send and receive unicast traffic to and from a deprecated address.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Valid </TD>
+<TD width=70%>The address can send and receive unicast traffic. This state covers both the preferred and deprecated states. The Router Advertisement message specifies the period of time that an address can remain in this state. The valid lifetime must be greater than or equal to the preferred lifetime.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Invalid </TD>
+<TD width=70%>The address can no longer send unicast traffic to or receive it from a node. An address enters this state after the valid lifetime expires.</TD>
+</TR>
+</table></div>
+
+<H2 class="dtH2">Autoconfiguration Process</H2>
+
+<P>The following list shows the address autoconfiguration process for an IPv6 node:
+
+<OL type="1">
+	<LI>A tentative link-local address is derived, based on the link-local prefix of FE80::/64 and the 64-bit interface identifier. </li>
+
+	<LI>Duplicate address detection is performed to verify the uniqueness of the tentative link-local address. </li>
+
+	<LI>If duplicate address detection fails, you must manually configure the node. 
+<P>- or -
+
+<P>If duplicate address detection succeeds, the tentative address is assumed to be valid and unique. The link-local address is initialized for the interface. The corresponding solicited-node multicast link-layer address is registered with the network adapter. 
+</li>
+</OL>
+
+<P>For an IPv6 host, address autoconfiguration continues as shown in the following list:
+
+<OL type="1">
+	<LI>The host sends a Router Solicitation message. </li>
+
+	<LI>If a Router Advertisement message is received, the routing information is set on the host. </li>
+
+	<LI>For each stateless autoconfiguration address prefix that is included, the following processes occurs: 
+<UL type="disc">
+	<LI>The address prefix and the appropriate 64-bit interface identifier are used to derive a tentative address. </li>
+
+	<LI>Duplicate address detection is used to verify the uniqueness of the tentative address. If the tentative address is in use, the address is not initialized for the interface. If the tentative address is not in use, the address is initialized. This includes setting the valid and preferred lifetimes based on information included in the Router Advertisement message. </li>
+</UL>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conipv6configurationmethods.htm">Methods for Configuring IPv6 Addresses</A> | <A HREF="wce50conipv6rfcsandinternetdrafts.htm">IPv6 RFCs and Internet Drafts</A> | <A HREF="wce50tskmanuallyconfiguringipv6addresses.htm">Manually Configuring IPv6 Addresses</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IPv6%20Address%20Autoconfiguration (wce50conipv6addressautoconfiguration.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

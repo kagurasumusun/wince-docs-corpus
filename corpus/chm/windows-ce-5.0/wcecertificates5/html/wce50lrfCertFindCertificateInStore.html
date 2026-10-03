@@ -1,0 +1,333 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertFindCertificateInStore</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcertfindcertificateinstore"></A>CertFindCertificateInStore</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function finds the first or next certificate context in a certificate store that matches search criteria established by the <I>dwFindType</I> parameter and its associated <I>pvFindPara</I> parameter. This function can be used in a loop to find all of the certificates in a certificate store that match the specified find criteria.</P>
+
+<PRE class="syntax"><B>PCCERT_CONTEXT WINAPI CertFindCertificateInStore(</B>
+  <B>HCERTSTORE </B><I>hCertStore</I><B>, </B>
+  <B>DWORD </B><I>dwCertEncodingType</I><B>,</B><I> </I>
+  <B>DWORD </B><I>dwFindFlags</I><B>,</B><I> </I>
+  <B>DWORD </B><I>dwFindType</I><B>,</B><I> </I>
+  <B>const void* </B><I>pvFindPara</I><B>,</B><I> </I>
+  <B>PCCERT_CONTEXT </B><I>pPrevCertContext</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCertStore</I></DT>
+
+<DD>[in] Handle to the certificate store to be searched.</dd>
+
+<DT><I>dwCertEncodingType</I></DT>
+
+<DD>[in] Specifies the type of encoding used. Currently, only X509_ASN_ENCODING is used; however, additional encoding types may be added in the future.</dd>
+
+<DT><I>dwFindFlags </I></DT>
+
+<DD>[in] Specifies the modifier of search criteria when used with certain <I>dwFindType </I>values. For most <I>dwFindType </I>values, this parameter is not used and should be set to zero. For detailed information, see the Remarks section.</dd>
+
+<DT><I>dwFindType </I></DT>
+
+<DD>[in] Specifies the type of search being made. The search type determines the data type, contents, and the use of <I>pvFindPara</I>. The following table shows each <I>dwFindType</I> value that is currently defined and the corresponding data type for the <I>pvFindPara</I> parameter.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=32%>Value of <I>dwFindType</I></TH>
+<TH width=30%>Value of <I>pvFindPara</I></TH>
+<TH width=38%>Search criteria</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_ANY</TD>
+<TD width=30%>NULL; <I>pvFindPara</I> not used</TD>
+<TD width=38%>No search criteria used. Returns the next certificate in the store.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_CERT_ID</TD>
+<TD width=30%><A HREF="wce50lrfcertid.htm">CERT_ID</A> structure</TD>
+<TD width=38%>Finds the certificate identified by the specified <B>CERT_ID</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_ENHKEY_USAGE</TD>
+<TD width=30%><A HREF="wce50lrfctlusage.htm">CERT_ENHKEY_USAGE</A> structure</TD>
+<TD width=38%>Searches for a certificate in the store having either an enhanced key usage extension or an enhanced key usage property and a usage identifier that matches the <B>pszUsageIdentifier</B> member in the <B>CERT_ENHKEY_USAGE</B> structure.
+<P>A certificate has an enhanced key usage extension if it has a <A HREF="wce50lrfcertextension.htm">CERT_EXTENSION</A><B> </B>structure with the <B>pszObjId </B>member set to szOID_ENHANCED_KEY_USAGE. A certificate has an enhanced key usage property if its CERT_ENHKEY_USAGE_PROP_ID identifier is set.</P>
+
+<P>If <I>pvFindPara</I> is NULL or the <B>cUsageIdentifier</B> member of <B>CERT_ENHKEY_USAGE</B> is zero, any certificate that has either the enhanced key usage extension or the enhanced key usage property meets the selection criteria.</P>
+
+<P>If <I>pvFindPara</I> is NULL or the <B>cUsageIdentifier</B> member of <B>CERT_ENHKEY_USAGE</B> is zero, any certificate having enhanced key usage is a match.</P>
+
+<P>If CERT_FIND_OPTIONAL_ENHKEY_USAGE_FLAG is set in <I>dwFindFlags</I>, certificates without the key usage extension or property are also matches. Setting this flag takes precedence over passing NULL in <I>pvFindPara</I>.</P>
+
+<P>If CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG is set, a match is done only on the key usage extension.</P>
+
+<P>For details on flag modifications to search criteria, see the Remarks section.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_EXISTING</TD>
+<TD width=30%><A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A><B> </B>structure</TD>
+<TD width=38%>Searches for a certificate that is an exact match of the specified certificate context.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_HASH</TD>
+<TD width=30%><A HREF="wce50lrfblobcryptography.htm">CRYPT_HASH_BLOB</A> structure</TD>
+<TD width=38%>Searches for a certificate with a SHA1 hash that matches the hash in the <B>CRYPT_HASH_BLOB</B> structure. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_ISSUER_ATTR</TD>
+<TD width=30%><A HREF="wce50lrfcertrdn.htm">CERT_RDN</A> structure</TD>
+<TD width=38%>Searches for a certificate with specified issuer attributes that match attributes in the <B>CERT_RDN</B> structure. If these values are set, the function compares attributes of the issuer in a certificate with elements of the <A HREF="wce50lrfcertrdnattr.htm">CERT_RDN_ATTR</A> array in this <B>CERT_RDN</B><I> </I>structure. Comparisons iterate through the <B>CERT_RDN_ATTR</B> attributes looking for a match with the certificate's issuer attributes.
+<P>If the <B>pszObjId</B> member of <B>CERT_RDN_ATTR</B> is NULL, the attribute object identifier is ignored.</P>
+
+<P>If the <B>dwValueType</B> member of <B>CERT_RDN_ATTR</B> is CERT_RDN_ANY_TYPE, the value type is ignored.</P>
+
+<P>If the <B>pbData</B> member of the <A HREF="wce50lrfblobcryptography.htm">BLOB</A> structure is NULL, any value is a match.</P>
+
+<P>Currently only an exact, case-sensitive match is supported. For details on Unicode options, see the Remarks section. When these values are set, the search is restricted to certificates whose encoding type matches the <I>dwCertEncodingType </I>value.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_ISSUER_NAME</TD>
+<TD width=30%><A HREF="wce50lrfblobcryptography.htm">CERT_NAME_BLOB</A> structure</TD>
+<TD width=38%>Searches for a certificate with an exact match of the entire issuer name with the name in <B>CERT_NAME_BLOB</B>. The search is restricted to certificates that match the <I>dwCertEncodingType</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_ISSUER_OF</TD>
+<TD width=30%><B>CERT_CONTEXT</B> structure</TD>
+<TD width=38%>Searches for a certificate with an issuer that matches the issuer in <B>CERT_CONTEXT</B>.
+<P>Instead of using <B>CertFindCertificateInStore</B> with this value, use the <A HREF="wce50lrfcertgetcertificatechain.htm">CertGetCertificateChain</A> function.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_ISSUER_STR</TD>
+<TD width=30%>Null-terminated wide (Unicode) string</TD>
+<TD width=38%>Searches for a certificate containing the specified issuer name string. The certificate's issuer member is converted to a name string of the appropriate type using the appropriate form of <A HREF="wce50lrfcertnametostr.htm">CertNameToStr</A> formatted as CERT_SIMPLE_NAME_STR. Then a case-insensitive substring-within-a-string match is performed. When this value is set, the search is restricted to certificates whose encoding type matches <I>dwCertEncodingType.</I> </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_KEY_IDENTIFIER</TD>
+<TD width=30%><B>CRYPT_HASH_BLOB</B> structure</TD>
+<TD width=38%>Searches for a certificate with a CERT_KEY_IDENTIFIER_PROP_ID property matching the key identifier in <B>CRYPT_HASH_BLOB</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_KEY_SPEC</TD>
+<TD width=30%><B>DWORD</B> containing a key specification</TD>
+<TD width=38%>Searches for a certificate having a CERT_KEY_SPEC_PROP_ID property matching the key specification in <I>pvFindPara</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_MD5_HASH</TD>
+<TD width=30%><B>CRYPT_HASH_BLOB</B> structure</TD>
+<TD width=38%>Searches for a certificate with an MD5 hash that matches the hash in <B>CRYPT_HASH_BLOB</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_PROPERTY</TD>
+<TD width=30%><B>DWORD</B> containing a property identifier</TD>
+<TD width=38%>Searches for a certificate with a property that matches the property identifier specified by the <B>DWORD</B> in <I>pvFindPara.</I></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_PUBLIC_KEY</TD>
+<TD width=30%><A HREF="wce50lrfcertpublickeyinfo.htm">CERT_PUBLIC_KEY_INFO</A> structure</TD>
+<TD width=38%>Searches for a certificate with a public key that matches the public key in <B>CERT_PUBLIC_KEY_INFO</B><I>.</I></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_SHA1_HASH</TD>
+<TD width=30%><B>CRYPT_HASH_BLOB</B> structure</TD>
+<TD width=38%>Searches for a certificate with a SHA1 hash that matches the hash in <B>CRYPT_HASH_BLOB</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_SIGNATURE_HASH</TD>
+<TD width=30%><B>CRYPT_HASH_BLOB</B> structure</TD>
+<TD width=38%>Searches for a certificate with a signature hash that matches the signature hash in <B>CRYPT_HASH_BLOB</B><I>.</I></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_SUBJECT_ATTR</TD>
+<TD width=30%><B>CERT_RDN</B> structure</TD>
+<TD width=38%>Searches for a certificate with specified subject attributes that match attributes in the <B>CERT_RDN</B> structure. If RDN values are set, the function compares attributes of the subject in a certificate with elements of the <B>CERT_RDN_ATTR</B> array in this <B>CERT_RDN</B><I> </I>structure. Comparisons iterate through the <B>CERT_RDN_ATTR</B> attributes looking for a match with the certificate's subject attributes.
+<P>If the <B>pszObjId</B> member of <B>CERT_RDN_ATTR</B> is NULL, the attribute object identifier is ignored.</P>
+
+<P>If the <B>dwValueType</B> member of <B>CERT_RDN_ATTR</B> is CERT_RDN_ANY_TYPE, the value type is ignored.</P>
+
+<P>If the <B>pbData</B> member of the <B>CERT_RDN_VALUE_BLOB</B> structure is NULL, any value is a match.</P>
+
+<P>Currently only an exact, case-sensitive match is supported.</P>
+
+<P>For details on Unicode options, see the Remarks section. When these values are set, the search is restricted to certificates whose encoding type matches <I>dwCertEncodingType</I>.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_SUBJECT_CERT</TD>
+<TD width=30%><A HREF="wce50lrfcertinfo.htm">CERT_INFO</A> structure</TD>
+<TD width=38%>Searches for a certificate with both an issuer and a serial number that match the issuer and serial number in the <B>CERT_INFO</B> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_SUBJECT_NAME</TD>
+<TD width=30%><B>CERT_NAME_BLOB</B> structure</TD>
+<TD width=38%>Searches for a certificate with an exact match of the entire subject name with the name in the <B>CERT_NAME_BLOB</B> structure<I>.</I> The search is restricted to certificates that match the value of <I>dwCertEncodingType</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CERT_FIND_SUBJECT_STR</TD>
+<TD width=30%>NULL-terminated wide (Unicode) string</TD>
+<TD width=38%>Searches for a certificate containing the specified subject name string. The certificate's subject member is converted to a name string of the appropriate type using the appropriate form of <B>CertNameToStr</B> formatted as CERT_SIMPLE_NAME_STR. Then a case-insensitive substring-within-a-string match is performed. When this value is set, the search is restricted to certificates whose encoding type matches <I>dwCertEncodingType</I>.</TD>
+</TR>
+</table></div>
+
+
+
+<P>There are alternate forms of the <I>dwFindType</I> value that pass a string in <I>pvFindPara</I>. One form uses a Unicode string, and the other an ASCII string. Values that end in _W or without a suffix use Unicode. Values that end with _A use ASCII strings.
+</dd>
+
+<DT><I>pvFindPara </I></DT>
+
+<DD>[in] Pointer to a data item or structure used with the <I>dwFindType</I> parameter.</dd>
+
+<DT><I>pPrevCertContext </I></DT>
+
+<DD>[in] Pointer to the last <B>CERT_CONTEXT</B> structure returned by this function. This parameter must be NULL on the first call of the function. A <I>pPrevCertContext </I>parameter that is not NULL<I> </I>is always freed by this function, even if the function causes an error.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is a pointer to a read-only <B>CERT_CONTEXT</B> structure.</P>
+
+<P>If the function fails and a certificate that matches the search criteria is not found, the return value is NULL.</P>
+
+<P>A non-NULL <B>CERT_CONTEXT</B> structure that the <B>CertFindCertificateInStore</B> function returns must be freed by the <A HREF="wce50lrfcertfreecertificatecontext.htm">CertFreeCertificateContext</A> function or by being passed as the <I>pPrevCertContext </I>parameter on a subsequent call to the <B>CertFindCertificateInStore</B> function.</P>
+
+<P>For extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function. The following table shows some possible error codes.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=32%>Error value</TH>
+<TH width=68%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>CRYPT_E_NOT_FOUND</TD>
+<TD width=68%>No certificate was found matching the search criteria. This can happen if the store is empty or the end of the store's list is reached.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>E_INVALIDARG</TD>
+<TD width=68%>The handle in the <I>hCertStore</I> parameter is not the same as that in the certificate context pointed to by the <I>pPrevCertContext</I> parameter, or an invalid value was specified in the <I>dwFindType</I> parameter.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <I>dwFindFlags</I> parameter is used to modify the criteria of some search types.</P>
+
+<P>The CERT_UNICODE_IS_RDN_ATTRS_FLAG value for the <I>dwFindFlags</I> parameter is used only with the CERT_FIND_SUBJECT_ATTR and CERT_FIND_ISSUER_ATTR values for <I>dwFindType</I>. CERT_UNICODE_IS_RDN_ATTRS_FLAG must be set if the <B>CERT_RDN_ATTR</B> structure pointed to by <I>pvFindPara</I> was initialized with Unicode strings. Before any comparison is made, the string to be matched is converted by using X509_UNICODE_NAME to provide for Unicode comparisons.</P>
+
+<P>The following <I>dwFindFlags</I> values are used only with the CERT_FIND_ENKEY_USAGE value for <I>dwFindType</I>: 
+
+<UL type="disc">
+	<LI>CERT_FIND_OR_ENHKEY_USAGE_FLAG 
+<P>The search criteria can be altered by setting one or more flags. By default, if the <B>pszUsageIdentifer</B> member of the <B>CERT_ENHKEY_USAGE</B> structure pointed to by e <I>pvFindPara</I> is to be matched, each identifier must be matched to satisfy the search criteria. However, if CERT_FIND_OR_ENHKEY_USAGE_FLAG is set, a match can be made to all identifiers combined by using a bitwise <B>OR</B> operation; thus, matching any one of the identifiers is sufficient.
+</li>
+
+	<LI>CERT_FIND_OPTIONAL_ENHKEY_USAGE_FLAG 
+<P>When this flag is set, in addition to usual matches, any certificate that has neither the enhanced key usage extension nor the enhanced key usage property meets the search criteria.
+</li>
+
+	<LI>CERT_FIND_NO_ENHKEY_USAGE_FLAG 
+<P>When this flag is set, only those certificates that have neither an enhanced key usage nor the enhanced key usage property are matches. This flag setting takes precedence over <I>pvFindPara</I> being NULL.
+</li>
+
+	<LI>CERT_FIND_VALID_ENHKEY_USAGE_FLAG 
+<P>When this flag is set, the function only matches those certificates that are valid for the specified usage. By default, in order to match, a certificate must be valid for all usages.
+
+<P>CERT_FIND_OR_ENHKEY_USAGE_FLAG can also be set if the certificate only needs to be valid for one of the specified usages. Note that the <B>CertGetValidUsages</B> function is called to get the certificate's list of valid usages. Only CERT_FIND_OR_ENHKEY_USAGE_FLAG can also apply when CERT_FIND_VALID_ENHKEY_USAGE_FLAG is set.
+</li>
+
+	<LI>CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG 
+<P>When this flag is set, the matching process involves only the extension usage identifiers. If <I>pvFindPara</I> is NULL or the <B>cUsageIdentifier</B> member of the <B>CERT_ENHKEY_USAGE</B> structure pointed to by <I>pvFindPara</I> is zero, any certificate having an enhanced key usage extension is a match. If CERT_FIND_OPTIONAL_ENHKEY_USAGE_FLAG is also set, any certificate without the enhanced key usage extension is also a match. If CERT_FIND_NO_ENHKEY_USAGE_FLAG is also set, only certificates without the enhanced key usage extension are matches.
+</li>
+
+	<LI>CERT_FIND_EXT_PROP_ENHKEY_USAGE_FLAG 
+<P>When this flag is set, the matching process involves only usage identifiers that are properties. If <I>pvFindPara</I> is NULL or the <B>cUsageIdentifier</B> member is set to zero, any certificate having an enhanced key usage property is a match. If CERT_FIND_OPTIONAL_ENHKEY_USAGE_FLAG is also set, any certificate without the enhanced key usage property is also a match. If CERT_FIND_NO_ENHKEY_USAGE_FLAG is set, only certificates without the enhanced key usage property are matches.
+</li>
+
+	<LI>CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG 
+<P>This flag is used only with CERT_FIND_SUBJECT_ATTR and CERT_FIND_ISSUER-ATTR values of the <I>dwFindType</I> parameter. By default, a case-sensitive, exact match is made. If this flag is set, the match is case-insensitive.
+</li>
+</UL>
+
+<P>The <A HREF="wce50lrfcertduplicatecertificatecontext.htm">CertDuplicateCertificateContext</A> function can be called to make a duplicate of the returned context. The returned context can be added to a different certificate store using the <A HREF="wce50lrfcertaddcertificatecontexttostore.htm">CertAddCertificateContextToStore</A> function,<B> </B>or a link to that certificate context can be added to a noncollection store using the <A HREF="wce50lrfcertaddcertificatelinktostore.htm">CertAddCertificateLinkToStore</A> function.</P>
+
+<P>The desktop operating system supports the flag PKCS_7_ASN_ENCODING, but Windows CE does not and ignores the flag when it is specified.</P>
+
+<P>The desktop operating system supports the CERT_FIND_CTL_USAGE <I>dwFindType</I> flag; Windows CE does not.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcertaddcertificatecontexttostore.htm">CertAddCertificateContextToStore</A> | <A HREF="wce50lrfcertaddcertificatelinktostore.htm">CertAddCertificateLinkToStore</A> | <A HREF="wce50lrfcertduplicatecertificatecontext.htm">CertDuplicateCertificateContext</A> | <A HREF="wce50lrfcertfreecertificatecontext.htm">CertFreeCertificateContext</A> | <A HREF="wce50lrfcertgetcertificatechain.htm">CertGetCertificateChain</A> | <A HREF="wce50lrfcertnametostr.htm">CertNameToStr</A> | <A HREF="wce50lrfcertcontext.htm">CERT_CONTEXT</A> | <A HREF="wce50lrfctlusage.htm">CERT_ENHKEY_USAGE</A> | <A HREF="wce50lrfcertextension.htm">CERT_EXTENSION</A> | <A HREF="wce50lrfcertid.htm">CERT_ID</A> | <A HREF="wce50lrfcertinfo.htm">CERT_INFO</A> | <A HREF="wce50lrfblobcryptography.htm">CERT_NAME_BLOB</A> | <A HREF="wce50lrfcertpublickeyinfo.htm">CERT_PUBLIC_KEY_INFO</A> | <A HREF="wce50lrfcertrdn.htm">CERT_RDN</A> | <A HREF="wce50lrfcertrdnattr.htm">CERT_RDN_ATTR</A> | <A HREF="wce50lrfblobcryptography.htm">CERT_RDN_VALUE_BLOB</A> | <A HREF="wce50lrfblobcryptography.htm">CRYPT_HASH_BLOB</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CertFindCertificateInStore (wce50lrfcertfindcertificateinstore.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

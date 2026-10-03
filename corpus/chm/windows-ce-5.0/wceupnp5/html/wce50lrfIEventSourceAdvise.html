@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IEventSource::Advise</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfieventsourceadvise"></A>IEventSource::Advise</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method is called to provide an <A HREF="wce50lrfieventsink.htm">IEventSink</A> pointer that the service calls to notify subscribers of state variable changes.</P>
+
+<PRE class="syntax"><B>virtual DWORD Advise(</B>
+<B>  IEventSink *</B><I>pSubscriber</I>
+<B>) = 0;</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><B>pSubscriber</B></DT>
+
+<DD>[in] Pointer to an <B>IEventSink</B> pointer that contains the <A HREF="wce50lrfieventsinkonstatechanged.htm">IEventSink::OnStateChange</A> method to be called when state variables change.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Custom implementations can return appropriate error codes. If the method succeeds, it should return SUCCESS_AV. Otherwise, it should return an error code defined in WinError.h or UPnP.h, or one of the UPnP AV-specific return values specified in <A HREF="wce50oriupnpaverror.htm">UPnPAVError</A>. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Control points and other applications call this method to provide an <B>IEventSink</B> implementation that contains the code to be executed when a state variable changes.</P>
+
+<P>Services implement this method by storing the passed <B>IEventSink </B>implementation and then sending initial state variable values by calling <B>OnStateChange</B>.</P>
+
+<P>The implementation of this method provided by the Windows CE UPnP AV Framework uses UPnP event subscriptions and UPnP event notifications to connect control points and device services. Calls to <B>Advise </B>in a control point are handled by a control point proxy that uses UPnP eventing to notify the service of a subscription. The provided device proxy receives the UPnP event subscription and in turn calls the service's <B>Advise</B> implementation.</P>
+
+<P>Therefore, the <B>IEventSink</B> implementation that a control point passes is not the same as the <B>IEventSink</B> implementation that the service receives. Instead, custom code interacts with proxy classes that communicate with each other.</P>
+
+<P>Although multiple control points can subscribe to events from a single service, and pass multiple <B>IEventSink</B> implementations, the UPnP AV Framework device proxy hides the multiple client <B>IEventSink </B>implementations and passes a single <B>IEventSink </B>pointer to the service's <B>Advise </B>implementation. When the service calls <B>OnStateChanged</B> on the single reference, the UPnP AV Framework translates this call into event notifications for all subscribed control points.</P>
+
+<P>In most cases, the <B>Advise </B>implementation should store the passed <B>IEventSink</B> pointer and then immediately call <B>OnStateChanged</B> some number of times to notify the subscriber of the current state of all variables. This meets the UPnP requirement that a new subscription result in the eventing of the current state. (The exception to this rule is in a class that derives from <A HREF="wce50lrficonnectionmanagerimpl.htm">IConnectionManagerImpl</A>. In this case, because <B>IConnectionManagerImpl</B> handles all eventing, the derived class should simply save the pointer and should not send any initial events.)</P>
+
+<P>For an example implementation of <B>Advise </B>in a device, see the AV Renderer sample. For example control point calls to <B>Advise</B>, see the AV Control Point Sample. Both examples are explained in more detail in <A HREF="wce50oriupnpsamples.htm">UPnP Samples</A>.</P>
+
+<P>For more information about state variables defined for each service, see <A HREF="wce50conupnpavdcpdocumentation.htm">UPnP AV DCP Documentation</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions: </B>Windows CE 5.0 and later.<BR>
+<B>Header: </B>Av_upnp.h.<BR>
+<B>Link Library: </B>Av_upnp.lib.<BR>
+<B>C++ Namespace:</B> av_upnp.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfieventsource.htm">IEventSource</A> | <A HREF="wce50coneventinginupnpavframework.htm">Eventing in the UPnP AV Framework</A> | <A HREF="wce50lrficonnectionmanagerimpl.htm">IConnectionManagerImpl</A> | <A HREF="wce50lrfieventsink.htm">IEventSink</A> | <A HREF="wce50lrfieventsinkonstatechanged.htm">IEventSink::OnStateChange</A> | <A HREF="wce50oriupnpaverror.htm">UPnPAVError</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IEventSource::Advise (wce50lrfieventsourceadvise.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

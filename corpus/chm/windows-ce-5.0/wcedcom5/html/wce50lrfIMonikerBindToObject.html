@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::BindToObject</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimonikerbindtoobject"></A>IMoniker::BindToObject</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method binds to the object named by the moniker.</P>
+
+<PRE class="syntax"><B>HRESULT BindToObject( </B>
+  <B>IBindCtx* </B><I>pbc</I><B>, </B>
+  <B>IMoniker* </B><I>pmkToLeft</I><B>, </B>
+  <B>REFIID </B><I>riidResult</I><B>, </B>
+  <B>void** </B><I>ppvResult</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfibindctxiunknown.htm">IBindCtx</A> interface on the bind context object, which is used in this binding operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment.</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.</dd>
+
+<DT><I>riidResult</I></DT>
+
+<DD>[in] Reference to the identifier of the interface the client wants to use to communicate with the object that the moniker identifies.</dd>
+
+<DT><I>ppvResult</I></DT>
+
+<DD>[out] Address of the pointer variable that receives the interface pointer requested in <I>riid</I>. 
+
+<P>Upon successful return, *<I>ppvResult</I> contains the requested interface pointer to the object the moniker identifies. When successful, the implementation must call the <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> method on the moniker. 
+
+
+<P>It is the caller's responsibility to release the object with a call to the <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> method. 
+
+
+<P>If an error occurs, *<I>ppvResult</I> should be NULL.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The method supports the standard return values, E_UNEXPECTED and E_OUTOFMEMORY. The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Value</TH>
+<TH width=60%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>S_OK</TD>
+<TD width=60%>The binding operation was successful.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>MK_E_NOOBJECT</TD>
+<TD width=60%>The object identified by this moniker, or some object identified by the composite moniker of which this moniker is a part, could not be found.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>MK_E_EXCEEDEDDEADLINE</TD>
+<TD width=60%>The binding operation could not be completed within the time limit specified by the bind context's <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>MK_E_CONNECTMANUALLY</TD>
+<TD width=60%>The binding operation requires assistance from the end user. 
+<P>The most common reasons for returning this value are that a password is needed or that a floppy needs to be mounted. </P>
+
+<P>When this value is returned, retrieve the moniker that caused the error with a call to the <A HREF="wce50lrfibindctxgetobjectparam.htm">IBindCtx::GetObjectParam</A> method with the key "ConnectManually". </P>
+
+<P>You can then call the <A HREF="wce50lrfimonikergetdisplayname.htm">IMoniker::GetDisplayName</A> method to get the display name, display a dialog box that communicates the desired information, such as instructions to mount a floppy or a request for a password, and then retry the binding operation.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>MK_E_INTERMEDIATEINTERFACENOTSUPPORTED</TD>
+<TD width=60%>An intermediate object was found, but it did not support an interface required to complete the binding operation. 
+<P>For example, an item moniker returns this value if its container does not support the <A HREF="wce50lrfioleitemcontaineriunknown.htm">IOleItemContainer</A> interface.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>STG_E_ACCESSDENIED</TD>
+<TD width=60%>Unable to access the storage object.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wce50lrfioleitemcontainergetobject.htm">IOleItemContainer::GetObject</A> errors</TD>
+<TD width=60%>If the moniker used to bind to an object contains an item moniker, errors associated with this method can be returned.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>IMoniker::BindToObject</B> implements the primary function of a moniker, which is to locate the object identified by the moniker and return a pointer to one of its interfaces. </P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>If you are using a moniker as a persistent connection between two objects, you activate the connection by calling <B>IMoniker::BindToObject</B>. </P>
+
+<P>You typically call <B>IMoniker::BindToObject</B> during the following process:
+
+<OL type="1">
+	<LI>Create a bind context object with a call to the <A HREF="wce50lrfcreatebindctx.htm">CreateBindCtx</A> function.</li>
+
+	<LI>Call <B>IMoniker::BindToObject</B> using the moniker, retrieving a pointer to a desired interface on the identified object. </li>
+
+	<LI>Release the bind context.</li>
+
+	<LI>Through the acquired interface pointer, perform the desired operations on the object. </li>
+
+	<LI>When finished with the object, release the object's interface pointer. </li>
+</OL>
+
+<P>The following code example shows how to complete these steps.</P>
+
+<PRE class="code">// pMnk is an IMoniker * that points to a previously acquired moniker 
+// ICellRange is a custom interface designed for an object that is a 
+//            range of spreadsheet cells 
+ICellRange *pCellRange; 
+IBindCtx *pbc; 
+ 
+CreateBindCtx( 0, &amp;pbc ); 
+pMnk-&gt;BindToObject( pbc, NULL, IID_ICellRange, &amp;pCellRange ); 
+pbc-&gt;Release(); 
+// pCellRange now points to the object; safe to use pCellRange 
+pCellRange-&gt;Release(); </PRE>
+
+<P>You can also use the <A HREF="wce50lrfbindmoniker.htm">BindMoniker</A> function when you only intend one binding operation and do not need to retain the bind context object. This helper function encapsulates the creation of the bind context, calling <B>IMoniker::BindToObject</B>, and releasing the bind context.</P>
+
+<P>COM containers that support links to objects use monikers to locate and get access to the linked object, but typically do not call <B>IMoniker::BindToObject</B> directly. </P>
+
+<P>Instead, when a user activates a link in a container, the link container usually calls the <A HREF="wce50lrfioleobjectdoverb.htm">IOleObject::DoVerb</A> method, using the link handler's implementation, which calls <B>IMoniker::BindToObject</B> on the moniker stored in the linked object (if it cannot handle the verb). </P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>What your implementation does depends on whether you expect your moniker to have a prefix, that is, whether you expect the <I>pmkToLeft</I> parameter to be NULL or not. </P>
+
+<P>For example, an item moniker, which identifies an object within a container, expects that <I>pmkToLeft</I> identifies the container. An item moniker consequently uses <I>pmkToLeft</I> to request services from that container. </P>
+
+<P>If you expect your moniker to have a prefix, you should use the <I>pmkToLeft</I> parameter (for instance, calling <B>IMoniker::BindToObject</B> on it) to request services from the object it identifies. </P>
+
+<P>If you expect your moniker to have no prefix, your <B>IMoniker::BindToObject</B> implementation should first check the Running Object Table (ROT) to see if the object is already running. </P>
+
+<P>To acquire a pointer to the ROT, your implementation should call the <A HREF="wce50lrfibindctxgetrunningobjecttable.htm">IBindCtx::GetRunningObjectTable</A> method on the <I>pbc</I> parameter. </P>
+
+<P>You can then call the <A HREF="wce50lrfirunningobjecttablegetobject.htm">IRunningObjectTable::GetObject</A> method to see if the current moniker has been registered in the ROT. If so, you can immediately call the <A HREF="wce50lrfiunknownqueryinterface.htm">IUnknown::QueryInterface</A> method to get a pointer to the interface requested by the caller. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfbindmoniker.htm">BindMoniker</A> | <A HREF="wce50lrfcreatebindctx.htm">CreateBindCtx</A> | <A HREF="wce50lrfimonikergetdisplayname.htm">IMoniker::GetDisplayName</A> | <A HREF="wce50lrfioleobjectdoverb.htm">IOleObject::DoVerb</A> | <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> | <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> | <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMoniker::BindToObject (wce50lrfimonikerbindtoobject.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IObexDevice::Put</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiobexdeviceput"></A>IObexDevice::Put</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method issues a <B>Put</B> command for an object that is passed to the server.</P>
+
+<PRE class="syntax"><B>HRESULT Put(</B>
+  <B>IHeaderCollection* </B><I>pHeaders</I><B>,</B> 
+  <B>IStream** </B><I>ppStream</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pHeaders</I></DT>
+
+<DD>[in] Pointer to the headers collection that describes the object.</dd>
+
+<DT><I>ppStream</I></DT>
+
+<DD>[out] Unique. Destination pointer to the <A HREF="wce50lrfistreamiunknown.htm">IStream</A> interface, which is used to write the data.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The appropriate HResult is returned.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To verify the <B>Put</B> operation has completed, run <A HREF="wce50lrfistreamcommit.htm">IStream::Commit</A> before you close the operation. This practice is particularly useful when deleting a file. A return of S_OK indicates the operation has completed successfully. </P>
+
+<P>The following code example shows how to delete a file after the put operation has completed. This example assumes the existence of an IObexDevice object that is named pObexDevice and is correctly initialized. It also assumes that an IHeaderCollection object, named pHeaderCollection, is initialized. </P>
+
+<PRE class="code">//
+// A PUT operation that has BODY is assumed by the 
+// server to be a delete  (per IrOBEX 1.2 spec section 3.3.3.6).
+// This example demonstrates how to use the WinCE OBEX client 
+// implementation to delete a file.
+
+//
+//  ---The construction/connection code of IObex/IObexDevice has been
+//  omitted for brevity.
+//
+
+IStream *pStream = NULL;
+if(FAILED(pHeaderCollection-&gt;AddName(L"MyFile.txt")) 
+   goto Error;
+if(FAILED(pObexDevice-&gt;Put(pHeaderCollection, &amp;pStream)) {
+   goto Error;
+
+// NOTE: If Commit fails, the delete operation was either 
+// rejected by the server or the connection was lost. 
+// In either case, the file deletion failed.
+
+if(FAILED(pStream-&gt;Commit(0))  
+   goto Error;
+
+//Success return.
+hRet = S_OK;
+goto Done;
+
+Error:
+    //Display Error and go to cleanup code.
+    hRet = E_FAIL;
+Done:
+    //Clean up.</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Obex.h, Obex.idl.<BR>
+<B>Link Library:</B> Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conclientsupport.htm">Client Support</A> | <A HREF="wce50lrfiobexdeviceiunknown.htm">IObexDevice</A> | <A HREF="wce50lrfistreamiunknown.htm">IStream</A> | <A HREF="wce50grfobexinterfaces.htm">OBEX Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IObexDevice::Put (wce50lrfiobexdeviceput.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

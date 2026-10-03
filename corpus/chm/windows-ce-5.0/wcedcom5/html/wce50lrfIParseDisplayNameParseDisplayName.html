@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IParseDisplayName::ParseDisplayName</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiparsedisplaynameparsedisplayname"></A>IParseDisplayName::ParseDisplayName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method parses the display name to extract a component of the string that it can convert into a moniker, using the maximum number of characters from the left side of the string.</P>
+
+<PRE class="syntax"><B>HRESULT ParseDisplayName(</B>
+  <B>IBindCtx* </B><I>pbc</I><B>,</B>
+  <B>LPOLESTR </B><I>pszDisplayName</I><B>, </B>
+  <B>ULONG* </B><I>pchEaten</I><B>,</B>
+  <B>IMoniker** </B><I>ppmkOut</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the bind context to be used in this binding operation.</dd>
+
+<DT><I>pszDisplayName</I></DT>
+
+<DD>[in] Pointer to a zero-terminated string containing the display name to be parsed. For Microsoft Win32&reg; applications, the LPOLESTR type indicates a wide character string (two bytes per character); otherwise, the string has one byte per character.</dd>
+
+<DT><I>pchEaten</I></DT>
+
+<DD>[out] Pointer to the number of characters in the display name that correspond to the <I>ppmkOut</I> moniker.</dd>
+
+<DT><I>ppmkOut</I></DT>
+
+<DD>[out] Address of <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A>* pointer variable that receives the interface pointer to the resulting moniker. 
+
+<P>If an error occurs, the implementation sets *<I>ppmkOut</I> to NULL. 
+
+
+<P>If *<I>ppmkOut</I> is non-NULL, the implementation must <CODE>call <code class="ce">(*ppmkOut)-&gt;IUnknown::AddRef</code>;</CODE> so it is the caller's responsibility to call <code class="ce">(*ppmkOut)-&gt;IUnknown::Release</code>. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This method supports the standard return values E_OUTOFMEMORY and E_UNEXPECTED, as well as the following:
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The parse operation was successful.</dd>
+
+<DT>MK_E_SYNTAX</DT>
+
+<DD>Syntax error in the display name. 
+
+<P>Parsing failed because <I>szDisplayName</I> could only be partially resolved into a moniker. In this case, *<I>pchEaten</I> has the number of characters that were successfully parsed into a moniker prefix. 
+
+
+<P>The parameter <I>ppmkOut</I> should be NULL.
+</dd>
+
+<DT>MK_E_NOOBJECT</DT>
+
+<DD>The display name does not identify a component in this namespace.</dd>
+
+<DT>E_INVALIDARG</DT>
+
+<DD>One or more parameters are invalid.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>In general, the maximum prefix of <I>szDisplayName</I> that is syntactically valid and that represents an object should be consumed by this method and converted to a moniker.</P>
+
+<P>Typically, this method is called by <A HREF="wce50lrfmkparsedisplayname.htm">MkParseDisplayName</A>. In the initial step of the parsing operation, the <B>MkParseDisplayName</B> function can retrieve the <B>IParseDisplayName</B> interface directly from an instance of a class identified with either the @ProgID or ProgID notation. Subsequent parsing steps can query for the interface on an intermediate object.</P>
+
+<P>The main loop of <B>MkParseDisplayName</B> finds the next moniker piece by calling the equivalent method in the <B>IMoniker</B> interface, that is, <A HREF="wce50lrfimonikerparsedisplayname.htm">IMoniker::ParseDisplayName</A>, on the moniker that it currently holds. In this call to <B>IMoniker::ParseDisplayName</B>, the <B>MkParseDisplayName</B> function passes NULL in the <I>pmkToLeft</I> parameter. </P>
+
+<P>If the moniker currently held by <B>MkParseDisplayName</B> is a generic composite, the call to <B>IMoniker::ParseDisplayName</B> is forwarded by that composite onto its last piece, passing the prefix of the composite to the left of the piece in <I>pmkToLeft</I>.</P>
+
+<P>Some moniker classes will be able to handle this parsing internally to themselves because they are designed to designate only certain kinds of objects. Others will need to bind to the object that they designate to accomplish the parsing process. </P>
+
+<P>As is usual, these objects should not be released by <B>IMoniker::ParseDisplayName</B> but instead should be transferred to the bind context through <B>IBindCtx::RegisterObjectBound</B> or <B>IBindCtx::GetRunningObjectTable</B> followed by <A HREF="wce50lrfirunningobjecttableregister.htm">IRunningObjectTable::Register</A> for release at a later time.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Oleidl.h, Oleidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfmkparsedisplayname.htm">MkParseDisplayName</A> | <A HREF="wce50lrfimonikerparsedisplayname.htm">IMoniker::ParseDisplayName</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IParseDisplayName::ParseDisplayName (wce50lrfiparsedisplaynameparsedisplayname.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

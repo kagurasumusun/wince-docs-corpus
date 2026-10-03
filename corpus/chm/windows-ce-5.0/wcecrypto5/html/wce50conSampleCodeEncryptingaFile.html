@@ -1,0 +1,300 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample Code: Encrypting a File</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consamplecodeencryptingafile"></A>Sample Code: Encrypting a File</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example shows how to read data from a text file named Test2.txt, encode it using the RC2 block cipher, and write out the encoded data to a file named Test.xxx. A random session key is generated to perform the encryption and is stored to the output file along with the encoded data. This session key is encoded with the user's key exchange public key by the <A HREF="wce50lrfcryptexportkey.htm">CryptExportKey</A> function.</P>
+
+<PRE class="code">#include &lt;windows.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;wincrypt.h&gt;
+
+#define BLOCK_SIZE            1000
+#define BUFFER_SIZE           1008
+
+BOOL EncryptFile (LPTSTR, LPTSTR, LPTSTR);
+
+/***********************************************************************
+
+  WinMain
+
+***********************************************************************/
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, 
+                    LPTSTR lpCmdLine, int nCmdShow)            
+{
+  LPTSTR lpszSource  = TEXT("test2.txt");
+  LPTSTR lpszDestination = TEXT("test.xxx");
+  LPTSTR lpszPassword  = TEXT("password");
+  
+  if (!EncryptFile (lpszSource, lpszDestination, lpszPassword)) 
+  {
+    wprintf (TEXT("Error encrypting file!\n"));
+    return 1;
+  }
+
+  return 0;
+}
+
+/***********************************************************************
+
+  EncryptFile
+
+***********************************************************************/
+BOOL EncryptFile (LPTSTR lpszSource, LPTSTR lpszDestination, 
+                  LPTSTR lpszPassword)
+{
+  FILE *hSrcFile = NULL, 
+       *hDestFile = NULL;
+
+  HCRYPTPROV hProv = 0;
+  HCRYPTHASH hHash = 0;
+  HCRYPTKEY hKey = 0, 
+            hXchgKey = 0;
+
+  PBYTE pbBuffer = NULL, 
+        pbKeyBlob = NULL;
+
+  BOOL bEOF = 0, 
+       bReturn = FALSE;
+
+  DWORD dwCount, 
+        dwKeyBlobLen;
+
+  // Open the source file.
+  if ((hSrcFile = _wfopen (lpszSource, TEXT("rb"))) == NULL) 
+  {
+    wprintf (TEXT("Error opening Plaintext file!\n"));
+    goto exit;
+  }
+
+  // Open the destination file.
+
+  if ((hDestFile = _wfopen (lpszDestination, TEXT("wb"))) == NULL) 
+  {
+    wprintf (TEXT("Error opening Ciphertext file!\n"));
+    goto exit;
+  }
+ 
+  // Get the handle to the default provider.
+  if (!CryptAcquireContext (&amp;hProv, NULL, NULL, PROV_RSA_FULL, 0)) 
+  {
+      DWORD ret = GetLastError();
+      if (ret !=  NTE_BAD_KEYSET)
+      {
+           wprintf (TEXT("Error 0x%x during CryptAcquireContext!\n"),ret);
+           goto exit;
+      }
+      else
+      {
+          if (!CryptAcquireContext (&amp;hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)) 
+          {
+              wprintf (TEXT("Error 0x%x during CryptAcquireContext!\n"), 
+                  GetLastError());
+              goto exit;
+          }
+      }
+  }
+ 
+  if (lpszPassword == NULL) 
+  {
+    // Encrypt the file with a random session key.
+    // Create a random session key.
+    if (!CryptGenKey (hProv, CALG_RC2, CRYPT_EXPORTABLE, &amp;hKey)) 
+    {
+      wprintf (TEXT("Error %x during CryptGenKey!\n"), 
+               GetLastError ());
+      goto exit;
+    }
+ 
+    // Get the handle to the key exchange public key.
+    if (!CryptGetUserKey (hProv, AT_KEYEXCHANGE, &amp;hXchgKey)) 
+    {
+        DWORD ret = GetLastError();
+        if (ret != NTE_NO_KEY)
+        {
+            wprintf (TEXT("Error 0x%x during CryptGetUserKey!\n"), ret);
+            goto exit;
+        }
+        // Create the key.
+        if (!CryptGenKey(hProv,AT_KEYEXCHANGE,NULL,&amp;hXchgKey))
+        {
+            ret = GetLastError();
+            wprintf (TEXT("Error 0x%x during CryptGenKey For KeyXchange!\n"), ret);
+            goto exit;
+        }
+    }
+ 
+    // Determine the size of the key BLOB and allocate memory.
+    if (!CryptExportKey (hKey, hXchgKey, SIMPLEBLOB, 0, NULL, 
+                         &amp;dwKeyBlobLen)) 
+    {
+      wprintf (TEXT("Error %x computing blob length!\n"), 
+               GetLastError ());
+      goto exit;
+    }
+ 
+    if ((pbKeyBlob = (PBYTE)malloc(dwKeyBlobLen))==NULL) 
+    {
+      wprintf (TEXT("Out of memory!\n"));
+      goto exit;
+    }
+
+    // Export the session key into a simple key BLOB.
+    if (!CryptExportKey (hKey, hXchgKey, SIMPLEBLOB, 0, pbKeyBlob, 
+                         &amp;dwKeyBlobLen)) 
+    {
+      wprintf (TEXT("Error %x during CryptExportKey!\n"), 
+               GetLastError ());
+      goto exit;
+    }
+ 
+    // Write the size of key BLOB to the destination file.
+    fwrite (&amp;dwKeyBlobLen, sizeof (DWORD), 1, hDestFile);
+ 
+    if (ferror (hDestFile)) 
+    {
+      wprintf (TEXT("Error writing header!\n"));
+      goto exit;
+    }
+
+    // Write the key BLOB to the destination file.
+    fwrite (pbKeyBlob, 1, dwKeyBlobLen, hDestFile);
+ 
+    if (ferror (hDestFile)) 
+    {
+      wprintf (TEXT("Error writing header!\n"));
+      goto exit;
+    }
+  } 
+  else 
+  {
+    // Encrypt the file with a session key derived from a password.
+    // Create a hash object.
+    if (!CryptCreateHash (hProv, CALG_MD5, 0, 0, &amp;hHash)) 
+    {
+      wprintf (TEXT("Error %x during CryptCreateHash!\n"), 
+               GetLastError ());
+      goto exit;
+    }
+
+    // Hash in the password data.
+    if (!CryptHashData (hHash, (PBYTE)lpszPassword, 
+                        wcslen (lpszPassword), 0)) 
+    {
+      wprintf (TEXT("Error %x during CryptHashData!\n"), 
+               GetLastError ());
+      goto exit;
+    }
+
+    // Derive a session key from the hash object.
+    if (!CryptDeriveKey (hProv, CALG_RC2, hHash, 0, &amp;hKey)) 
+    {
+      wprintf (TEXT("Error %x during CryptDeriveKey!\n"), 
+               GetLastError ());
+      goto exit;
+    }
+  }
+
+  // Allocate memory.
+  // XXX: Changed: if ((pbBuffer=(PBYTE)malloc(dwKeyBlobLen))==NULL) 
+  // C_ASSERT(BUFFER_SIZE &gt; BLOCK_SIZE):
+  if ((pbBuffer=(PBYTE)malloc(BUFFER_SIZE))==NULL) 
+  {
+    wprintf (TEXT("Out of memory!\n"));
+    goto exit;
+  }
+ 
+  // Encrypt the source file and write to the destination file.
+  do 
+  {
+    // Read up to BLOCK_SIZE bytes from the source file.
+    dwCount = fread (pbBuffer, 1, BLOCK_SIZE, hSrcFile);
+
+    if (ferror (hSrcFile)) 
+    {
+      wprintf (TEXT("Error reading Plaintext!\n"));
+      goto exit;
+    }
+    bEOF = feof (hSrcFile);
+
+    // Encrypt the data.
+    if (!CryptEncrypt (hKey, 0, bEOF, 0, pbBuffer, &amp;dwCount, 
+                       BUFFER_SIZE)) 
+    {
+      wprintf (TEXT("bytes required:%d\n"), dwCount);
+      wprintf (TEXT("Error %x during CryptEncrypt!\n"), 
+               GetLastError ());
+      goto exit;
+    }
+
+    // Write the data to the destination file.
+    fwrite (pbBuffer, 1, dwCount, hDestFile);
+    if (ferror (hDestFile)) 
+    {
+      wprintf (TEXT("Error writing Ciphertext!\n"));
+      goto exit;
+    }
+
+  } while (!bEOF);
+ 
+  bReturn = TRUE;
+  wprintf (TEXT("OK\n"));
+
+exit:
+   // Close the files.
+  if (hSrcFile) fclose (hSrcFile);
+  if (hDestFile) fclose (hDestFile);
+
+  // Free memory.
+  if (pbKeyBlob) free (pbKeyBlob);
+  if (pbBuffer) free (pbBuffer);
+
+  // Destroy the session key.
+  if (hKey) CryptDestroyKey (hKey);
+
+  // Release the key exchange key handle.
+  if (hXchgKey) CryptDestroyKey (hXchgKey);
+
+  // Destroy the hash object.
+  if (hHash) CryptDestroyHash (hHash);
+
+  // Release the provider handle.
+  if (hProv) CryptReleaseContext (hProv, 0);
+  return bReturn;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oricryptography.htm">Cryptography</A> | <A HREF="wce50conmicrosoftcryptographicsystem.htm">Microsoft Cryptographic System</A> | <A HREF="wce50oricertificates.htm">Certificates</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Sample%20Code:%20Encrypting%20a%20File (wce50consamplecodeencryptingafile.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

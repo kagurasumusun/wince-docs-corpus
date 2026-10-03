@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Response Object Implementation</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conresponseobjectimplementation"></A>Response Object Implementation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The <B>Response</B> object returns the values that the server processed to the client browser in response to an HTTP request. The following table lists the levels of support for the <B>Response</B> object.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Response method or property</TH>
+<TH width=60%>Windows CE implementation</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Buffer</B></TD>
+<TD width=60%>(Property) Fully supported (see <B>Notes</B>).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>CacheControl</B></TD>
+<TD width=60%>Not supported. Use <B>AddHeader</B> with name ="Cache-control".</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Charset</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Cookies</B></TD>
+<TD width=60%>See <A HREF="wce50concollectionobjects.htm">Collection Objects</A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>ContentType</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Expires</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>ExpiresAbsolute</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>IsClientConnected</B></TD>
+<TD width=60%>Not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>PICS</B></TD>
+<TD width=60%>Not supported. Use <B>AddHeader</B> with name = "PICS".</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Status</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>AddHeader</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>AppendToLog</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>BinaryWrite</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Clear</B></TD>
+<TD width=60%>Fully supported (see <B>Note</B>).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>End</B></TD>
+<TD width=60%>Fully supported (see <B>Note</B>).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Flush</B></TD>
+<TD width=60%>Fully supported (see <B>Note</B>).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Redirect</B></TD>
+<TD width=60%>Fully supported (see <B>Note</B>).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>Write</B></TD>
+<TD width=60%>Fully supported.</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The <B>Buffer</B> property indicates whether to buffer page output. When page output is buffered, the server does not send a response to the client browser until all of the server scripts on the current page have been processed or until the <B>Flush</B> or <B>End</B> method has been called.</BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+If the current .asp file has buffering set to TRUE and does not call the <B>Flush</B> method, the server honors keep-alive requests that are made by the client browser. Avoiding the call to the <B>Flush</B> method saves time because the server does not have to create a new connection for each client browser request.</BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+If buffering is turned off, calls to the <B>Clear</B>, <B>End</B>, <B>Flush</B>, or <B>Redirect</B> method fail, just as they do with IIS. When buffering is off, response headers must be added at the very top of the ASP page, before any text is sent to the client browser.</BLOCKQUOTE>
+
+<P>Windows CE does not support some of the advanced header-management functions that are available on IIS, such as <B>CacheControl</B>. To set one of these values, call the <B>Response.AddHeader</B> method with the name and value, as shown in the following code example.</P>
+
+<PRE class="code">&lt;% Response.CacheControl = "private" %&gt;</PRE>
+
+<P>For example, the preceding example can be implemented with the following call.</P>
+
+<PRE class="code">&lt;% Response.AddHeader("Cache-control","private") %&gt;</PRE>
+
+<P>If an advanced header-management function such as <B>Response.CacheControl</B> is called repeatedly on IIS-based ASP, only the value that was set in the last call to the method is sent to the client browser. On Windows CE&#0150;based ASP, calls to the <B>Response.AddHeader</B> method append data to the end of the headers and do not overwrite any of the existing headers of the same name.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concollectionobjects.htm">Collection Objects</A> | <A HREF="wce50conserverobjects.htm">Server Objects</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Response%20Object%20Implementation (wce50conresponseobjectimplementation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Modifying a Directory Entry</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmodifyingadirectoryentry"></A>Modifying a Directory Entry</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>You can use the LDAP API to add and delete directory entries and to compare and modify values within existing entries. Any of these operations can be done either synchronously or asynchronously. LDAP version 3.0 supports extensions to the add, delete, and modify operations that allow you to perform these operations using controls. </P>
+
+<P>To make a change to a directory, you need to first create an <A HREF="wce50lrfldapmod.htm">LDAPMod</A> structure and then assign the appropriate values to each member of the structure. For multiple changes, or to add an entry, you need to create a separate <B>LDAPMod</B> structure for each attribute or change. When you call the modification function, you will pass these structures as an array.</P>
+
+<P>The following code example shows how to create <B>LDAPMod</B> structures for a new entry with four initial attributes and then constructs an array of these structures to pass to <A HREF="wce50lrfldapadd.htm">ldap_add</A> (the asynchronous add function).</P>
+
+<PRE class="code">#include &lt;winldap.h&gt;
+LDAPMod Name;
+ULONG CallValue;
+
+//Specify a distinguished name for the entry:
+char *entry_dn = "cn = Kate Wheeler, ou = IST, ou = PNS, o = USSA, c = US"
+
+//Note that you can specify multiple values for the cn attribute
+char *cn_values[] = { "Kathleen Wheeler" "Kate Wheeler", NULL };
+
+//attributes are Name, USSNum, and Team
+Name.mod_op = LDAP_MOD_ADD;
+Name.mod_type = "cn";
+Name.mod_values = cn_values;. 
+LDAPMod USSNum;
+char *cis_values[] = { "PN8WKS121284", NULL };
+USSNum.mod_op = LDAP_MOD_ADD;
+USSNum.mod_type = "cis";
+USSNum.mod_values = cis_values;. 
+LDAPMod Team;
+char *ou_values[] = { "IST", NULL };
+Team.mod_op = LDAP_MOD_ADD;
+Team.mod_type = "ou";
+Team.mod_values = ou_values;
+LDAPMod Division;
+char *ou_values[] = { "PNS", NULL };
+Division.mod_op = LDAP_MOD_ADD;
+Division.mod_type = "ou";
+Division.mod_values = ou_values;
+
+//now build the array of attributes. 
+LDAPMod *NewEntry[5];
+NewEntry[0] = &amp;Name;
+NewEntry[1] = &amp;USSNum;
+NewEntry[2] = &amp;Team;
+NewEntry[3] = &amp;Division;
+NewEntry[4] = NULL;
+
+//add the entry
+CallValue = ldap_add( ld, entry_dn, NewEntry);
+
+//can pass CallValue to ldap_result to check on the 
+//status of the asynchronous operation. </PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingtheldapapi.htm">Using the LDAP API</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Modifying%20a%20Directory%20Entry (wce50conmodifyingadirectoryentry.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

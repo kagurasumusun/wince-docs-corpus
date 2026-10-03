@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Kerberos Security Support Provider</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conkerberossecuritysupportprovider"></A>Kerberos Security Support Provider</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Kerberos protocol defines how clients interact with a network authentication service. Clients obtain tickets from the Kerberos Key Distribution Center (KDC), and they present these tickets to servers when connections are established. Kerberos tickets represent the client's network credentials. </P>
+
+<P>The Kerberos authentication protocol provides a mechanism for mutual authentication between entities before a secure network connection is established. In the protocol model, every client/server connection begins with authentication. Client and server, in turn, step through a sequence of actions designed to verify to the party on each end of the connection that the party on the other end is genuine. If authentication is successful, session setup completes and establishes a client/server session with enhanced security.</P>
+
+<P>The sequence of actions involves the following elements:
+
+<UL type="disc">
+	<LI>Key Distribution Center (KDC)</li>
+
+	<LI>Session keys</li>
+
+	<LI>Tickets</li>
+</UL>
+
+<H2 class="dtH2">Key Distribution Center (KDC)</H2>
+
+<P>To implement Kerberos, you must have a KDC, which is a central authority performing dual roles: (1) authentication service to clients within its domain, and (2) ticket granting service to clients requesting connections to services or computers within its domain. </P>
+
+<P>The following procedures show the two ways to specify the Kerberos KDC in your domain:
+
+<UL type="disc">
+	<LI>Specify the NetBIOS or DNS KDC name.
+<PRE class="code">[HKEY_LOCAL_MACHINE\Comm\SecurityProviders\Kerberos]
+[HKEY_LOCAL_MACHINE\Comm\SecurityProviders\Kerberos\NTDomains]
+[HKEY_LOCAL_MACHINE\Comm\SecurityProviders\Kerberos\NTDomains\YOURDOMAIN]
+    "KdcNames"="YOURKDCNAME"</PRE>
+</li>
+
+	<LI>Specify the IP address of the KDC
+<PRE class="code">[HKEY_LOCAL_MACHINE\Comm\SecurityProviders\Kerberos\NTDomains\YOURDOMAIN.CORP.MICROSOFT.COM]
+    "KdcNames"="123.45.6.78"</PRE>
+</li>
+</UL>
+
+<H2 class="dtH2">Session Keys</H2>
+
+<P>To help secure a connection with a server, the client begins by sending a request to the KDC, not to the server that the client wants to reach. The KDC creates and sends to the client a unique session key for the client and a server to use to authenticate each other. The KDC has access to both the client's master key and the server's master key. The KDC uses the server's master key to encrypt the server's copy of the session key, and uses the client's master key to encrypt the client's copy of the session key. </P>
+
+<H2 class="dtH2">Tickets</H2>
+
+<P>Instead of sending the encrypted session keys to both principals, the KDC sends both the client's and the server's copies of the session key to the client. The client's copy of the session key is encrypted with the client's master key and therefore cannot be decrypted by any other entity. The server's copy of the session key is embedded, along with authorization data about the client, in a data structure called a ticket. The ticket is entirely encrypted with the server's master key and therefore cannot be read or changed by the client or any other entity that lacks access to the server's master key.</P>
+
+<P>When the client receives the KDC's response, it extracts the ticket and its own copy of the session key, putting both aside in a cache. To establish a more protected session with the server, the client sends the server a message consisting of the ticket, still encrypted with the server's master key, and an authenticator message encrypted with the session key. The authenticator message contains the client's name and a timestamp in universal coordinated time. Together, the ticket and authenticator message are the client's credentials to the server.</P>
+
+<P>When the server receives credentials from a client, it decrypts the ticket with its master key, extracts the session key, and then uses the session key to decrypt the client's authenticator message. If the server message is able to validate the client's message, the server knows that the client's credentials were issued by the KDC, a trusted authority. For mutual authentication, the server responds by using the session key to encrypt the timestamp from the client's authenticator message. This encrypted message is then sent to and decrypted by the client. If the returned message matches the timestamp in the original authenticator message, the server is authenticated.</P>
+
+<P>The following steps show a brief outline of the process for client application authentication.
+
+<OL type="1">
+	<LI>Call the <A HREF="wce50lrfacquirecredentialshandle.htm">AcquireCredentialsHandle</A> function using the <A HREF="wce50lrfsecwinntauthidentity.htm">SEC_WINNT_AUTH_IDENTITY</A> structure to specify the credentials. If the user saved a default NT domain name and password on the CE device, the application can use the cached credentials by passing NULL instead of the <B>SEC_WINNT_AUTH_IDENTITY</B> structure. If the Kerberos SSP cannot find the cached credentials, the function returns SEC_E_NO_CREDENTIALS.
+<P>The following code example shows how to make a connection.
+
+<PRE class="code">SEC_WINNT_AUTH_IDENTITY AdditionalCredentials;
+SECURITY_STATUS status;
+CredHandle hCredential;
+TimeStamp tsExpiry;
+BOOL bSupplyCredentials;
+
+// If there are additional credentials stored in lpszUserName, 
+// lpszDomainName, and lpszPassword, fill them in here.
+AdditionalCredentials.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
+if (lpszUserName != NULL) 
+{
+  AdditionalCredentials.User = lpszUserName;
+  AdditionalCredentials.UserLength = wcslen (lpszUserName);
+}
+
+if (lpszDomainName != NULL) 
+{
+  AdditionalCredentials.User = lpszDomainName;
+  AdditionalCredentials.UserLength = wcslen (lpszDomainName);
+}
+
+if (lpszPassword != NULL) 
+{
+  AdditionalCredentials.User = lpszPassword;
+  AdditionalCredentials.UserLength = wcslen (lpszPassword);
+}
+
+status = AcquireCredentialsHandle (
+              NULL,                   // No principal name
+              TEXT("Kerberos"),           // Package name
+              SECPKG_CRED_OUTBOUND,   // Credential use flag
+              NULL,                   // No logon identifier
+              bSupplyCredentials ?  &amp;AdditionalCredentials : NULL,
+                                      // Package-specific data     
+              NULL,                   // No GetKey function
+              NULL,                   // No GetKey function argument
+              &amp;hCredential,           // Receives the new credential
+              &amp;tsExpiry);             // Receives the expiration 
+                                      // time of the credential</PRE>
+</li>
+
+	<LI>Call the <A HREF="wce50lrfinitializesecuritycontext.htm">InitializeSecurityContext</A> function to set up the security context. 
+<P>In Kerberos, the <I>pszTargetName </I>parameter of the <B>InitializeSecurityContext</B> function call specifies the account name of the server that you are authenticating to. If the client wants to access a service, the <I>pszTargetName </I>parameter specifies the account name under whose security context the service is running.
+
+<P>The function returns SEC_E_OK or SEC_I_CONTINUE_NEEDED on success or an error code on failure. If the function is successful, the application passes the token buffer to the server. The token buffer is stored in the <B>pvBuffer</B> member of the <A HREF="wce50lrfsecbuffer.htm">SecBuffer</A> structure. 
+</li>
+
+	<LI>Call the <B>InitializeSecurityContext</B> function again. Kerberos SSP may require one or two calls to <B>InitializeSecurityContext</B>; the return value from the function call indicates if a second call is necessary. 
+<P>If the function returns SEC_E_OK, the application transmits the output security buffer and the buffer length to the server, as it did after the first call. If the function fails, an error value returns. 
+
+<P>The following security context flags are used in Kerberos.
+
+<UL type="disc">
+	<LI>ALLOCATE_MEMORY</li>
+
+	<LI>CONFIDENTIALITY</li>
+
+	<LI>CONNECTION</li>
+
+	<LI>DATAGRAM</li>
+
+	<LI>DELEGATE</li>
+
+	<LI>EXTENDED ERROR</li>
+
+	<LI>INTEGRITY</li>
+
+	<LI>MUTUAL_AUTH</li>
+
+	<LI>REPLAY_DETECT</li>
+
+	<LI>SEQUENCE_DETECT</li>
+
+	<LI>STREAM</li>
+
+	<LI>USE_DCE_STYLE</li>
+
+	<LI>USE_SESSION_KEY</li>
+</UL>
+
+<P>For more information about using the context flags, see <A HREF="wce50concontextrequirements.htm">Context Requirements</A>.
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conauthenticationservices.htm">Authentication Services</A> | <A HREF="wce50consecuritysupportproviderinterface.htm">Security Support Provider Interface Architecture</A> | <A HREF="wce50consecuritypackages.htm">Security Packages</A> | <A HREF="wce50conauthenticationservicessecurity.htm">Authentication Services Security</A> | <A HREF="wce50conauthenticationservicesregistrysettings.htm">Authentication Services Registry Settings</A> | <A HREF="wce50grfauthenticationservicesreference.htm">Authentication Services Reference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Kerberos%20Security%20Support%20Provider (wce50conkerberossecuritysupportprovider.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

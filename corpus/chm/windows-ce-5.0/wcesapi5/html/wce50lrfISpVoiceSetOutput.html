@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpVoice::SetOutput</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispvoicesetoutput"></A>ISpVoice::SetOutput</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method sets the current output object. The object can either be a stream, audio device, or an object token for an output audio device. If <I>pUnkOutput</I> is NULL then the default audio device will be used.</P>
+
+<PRE class="syntax"><B>HRESULT SetOutput(</B>
+<B>  IUnknown* </B><I>pUnkOutput</I><B>,</B>
+<B>  BOOL </B><I>fAllowFormatChanges</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pUnkOutput</I></DT>
+
+<DD>[in] Pointer to <B>IUnknown</B> for the output object. This object must implement <B>ISpStreamFormat</B> (a stream or audio device) or <B>ISpObjectToken</B>. If a token is provided, this method creates the object described by the token and uses it. If <I>pUnkOutput</I> is NULL, the default audio out device will be used. </dd>
+
+<DT><I>fAllowFormatChanges</I></DT>
+
+<DD>[in] Pointer to a value specifying if the voice is allowed to change the format of the audio output object to match that of the engine, or a wav stream being spoken. Set this value to TRUE if using the default audio device and the output format is of no consequence. Set the value to FALSE to indicate that the voice will use the SAPI format converter to translate between the data being rendered and the format of the output object. If <I>pUnkOutput</I> is an <B>ISpStreamFormat</B> object, then <I>fAllowFormatChanges</I> is ignored. In this case, the voice instance will render the output audio data in the format of the specified stream to the application. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Value</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>S_OK </TD>
+<TD width=71%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>E_INVALIDARG </TD>
+<TD width=71%>One or more arguments are invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>SPERR_UNINITIALIZED </TD>
+<TD width=71%><I>pUnkOutput</I> is an uninitialized <B>ISpStream</B> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>E_OUTOFMEMORY </TD>
+<TD width=71%>Exceeded available memory. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following is an example of how to enumerate all the available audio output devices registered under <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\AudioOutput</B>.</P>
+
+<PRE class="code">HRESULT                  hr = S_OK;
+CComPtr        cpAudioOutToken;
+CComPtr        cpEnum;
+CComPtr        cpVoice;
+ULONG          ulCount = 0;
+// Create the SAPI voice
+if(SUCCEEDED(hr))
+    hr = cpVoice.CoCreateInstance( CLSID_SpVoice ); 
+//Enumerate the available audio output devices 
+if(SUCCEEDED(hr))
+    hr = SpEnumTokens( SPCAT_AUDIOOUT, NULL, NULL, &amp;cpEnum );
+//Get the number of audio output devices
+if(SUCCEEDED(hr))
+    hr = cpEnum-&gt;GetCount( &amp;ulCount );
+// Obtain a list of available audio output tokens, set the output to the token, and call Speak
+while ( SUCCEEDED(hr) &amp;&amp; ulCount-- )
+{
+    if(SUCCEEDED(hr))
+        hr = cpEnum-&gt;Next( 1, &amp;cpAudioOutToken, NULL );
+    if(SUCCEEDED(hr))
+        hr = cpVoice-&gt;SetOutput( cpAudioOutToken, TRUE );
+    if(SUCCEEDED(hr))
+        hr = cpVoice-&gt;Speak( L"How are you?", SPF_DEFAULT, NULL ); 
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispvoice.htm">ISpVoice</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpVoice::SetOutput (wce50lrfispvoicesetoutput.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

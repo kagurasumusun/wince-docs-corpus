@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DebugActiveProcess</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCloseHandle">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCloseHandle">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfdebugactiveprocess"></A>DebugActiveProcess</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function allows a debugger to attach to an active process and then debug it.</P>
+
+<PRE class="syntax"><B>BOOL DebugActiveProcess( </B>
+  <B>DWORD</B> <I>dwProcessId </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwProcessId</I></DT>
+
+<DD>[in] Identifier for the process to be debugged. 
+
+<P>The debugger gets debugging access to the process in the same way it would if it created the process with the DEBUG_ONLY_THIS_PROCESS flag. 
+
+
+<P>For more information, see Remarks.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Nonzero indicates success. Zero indicates failure. </P>
+
+<P>To get extended error information, call <A HREF="wce50lrfgetlasterror.htm">GetLastError</A>.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>After a successful return from <B>DebugActiveProcess</B>, when the debugger is waiting for debug events using the <A HREF="wce50lrfwaitfordebugevent.htm">WaitForDebugEvent</A> function, the system sends a CREATE_PROCESS_DEBUG_EVENT debugging event that identifies the primary thread handle that is currently part of the process. </P>
+
+<P>The system sends an individual CREATE_THREAD_DEBUG_EVENT debugging event for each secondary thread handle that is currently part of the process. </P>
+
+<P>These handles have permission, or access rights, to receive and set thread contexts using the <A HREF="wce50lrfgetthreadcontext.htm">GetThreadContext</A> and <A HREF="wce50lrfsetthreadcontext.htm">SetThreadContext</A> functions.</P>
+
+<P>For both the CREATE_PROCESS_DEBUG_EVENT and CREATE_THREAD_DEBUG_EVENT debugging events, the <B>lpStartAddress</B> member of the <A HREF="wce50lrfcreateprocessdebuginfo.htm">CREATE_PROCESS_DEBUG_INFO</A> structure is NULL.</P>
+
+<P>Close these thread handles using the <A HREF="JavaScript:hhobj_1.Click()">CloseHandle</A> function.</P>
+
+<P>No initial debug breakpoint is set when <B>DebugActiveProcess</B> attaches.</P>
+
+<P>Microsoft Windows CE 2.0 and later provide built in support for just-in-time (JIT) debugging. Keep the following in mind about JIT debugging:
+
+<UL type="disc">
+	<LI>You can register a JIT debugger by placing the name of your debugger in the string registry value <B>JITDebugger</B> at <B>HKEY_LOCAL_MACHINE\Debug</B>. </li>
+
+	<LI>To enable JIT debugging, you must perform a warm boot on the Windows CE target platform after the <B>JITDebugger</B> value is added to the registry. </li>
+
+	<LI>When your debugger is invoked by JIT debugging, the identifier of the process being debugged is passed on the command line. </li>
+</UL>
+
+<P>The Windows CE JIT debugger is a second-chance exception handler. The debugger must have appropriate access to the target process; it must be able to open the process for PROCESS_ALL_ACCESS access. 
+
+<UL type="disc">
+	<LI>On Windows CE, the debugger has appropriate access if the process identifier is valid. After the system checks the process identifier and determines that a valid debugging attachment is being made, the function returns TRUE. The debugger is then expected to wait for debugging events by using the WaitForDebugEventwce50lrfWaitForDebugEvent function. The system suspends all threads in the process and sends the debugger events representing the current state of the process. </li>
+
+	<LI>For each DLL loaded into the address space of the target process, the system sends a LOAD_DLL_DEBUG_EVENT debugging event. The system arranges for the first thread in the process to execute a breakpoint instruction after it resumes. Continuing this thread causes it to return to whatever it was doing before the debugger was attached. After these tasks are completed, the system resumes all threads in the process. </li>
+
+	<LI>When the first thread in the process resumes, it executes a breakpoint instruction that causes an EXCEPTION_DEBUG_EVENT debugging event to be sent to the debugger. </li>
+
+	<LI>All future debugging events are sent to the debugger by using the normal mechanism and rules. </li>
+</UL>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>To use JIT debugging, you must set the following registry value.</BLOCKQUOTE>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\Debug]
+"JITDebugger": REG_SZ</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Winbase.h.<BR>
+<B>Link Library:</B> Coredll.lib, Nk.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_2.Click()">CloseHandle</A> | <A HREF="wce50lrfcreateprocess.htm">CreateProcess</A> | <A HREF="wce50lrfgetthreadcontext.htm">GetThreadContext</A> | <A HREF="wce50lrfsetthreadcontext.htm">SetThreadContext</A> | <A HREF="wce50lrfwaitfordebugevent.htm">WaitForDebugEvent</A> | <A HREF="wce50lrfcreateprocessdebuginfo.htm">CREATE_PROCESS_DEBUG_INFO</A> | <A HREF="wce50lrfcreatethreaddebuginfo.htm">CREATE_THREAD_DEBUG_INFO</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: DebugActiveProcess (wce50lrfdebugactiveprocess.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

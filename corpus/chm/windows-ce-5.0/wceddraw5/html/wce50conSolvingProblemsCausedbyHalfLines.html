@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Solving Problems Caused by Half-Lines</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consolvingproblemscausedbyhalflines"></A>Solving Problems Caused by Half-Lines</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Some video decoders output a half line of meaningless data at the beginning of the even field. If this extra line is written to the frame buffer, the resulting image will appear garbled. In some cases, the video-port hardware is capable of sensing and discarding this data before writing it to the frame buffer. </P>
+
+<P>You can determine if a video port is capable of discarding this data when retrieving connection information with the <A HREF="wce50lrfiddvideoportcontainergetvideoportconnectinfo.htm">IDDVideoPortContainer::GetVideoPortConnectInfo</A> method. </P>
+
+<P>If the video port cannot discard half-lines, the DDVPCONNECT_HALFLINE flag will be specified in the <B>dwFlags</B> member of the associated <A HREF="wce50lrfddvideoportconnect.htm">DDVIDEOPORTCONNECT</A> structure for each supported connection.</P>
+
+<P>If the video port is unable to discard half-lines, you have two options: you can discard one of the fields, or you can work around the hardware's limitations by making some adjustments in how you create the video-port object and display images with the target overlay surface.</P>
+
+<P>Here is how to work around the problem. </P>
+
+<P>When creating the video-port object by calling the <A HREF="wce50lrfiddvideoportcontainercreatevideoport.htm">IDDVideoPortContainer::CreateVideoPort</A> method, include the DDVPCONNECT_INVERTPOLARITY flag in the <B>dwFlags</B> member of the associated <B>DDVIDEOPORTCONNECT</B> structure. This causes the video port to invert the polarity of the fields in the video stream, treating even fields like odd fields and vice versa. </P>
+
+<P>Once reversed, the half-line preceding even fields will be written to the frame buffer as the first scan line of each frame. </P>
+
+<P>To remove the unwanted data, adjust the source rectangle of the overlay surface used to display the image down one pixel by calling the <A HREF="wce50lrfidirectdrawvideoportstartvideo.htm">IDirectDrawVideoPort::StartVideo</A> method with the necessary coordinates. </P>
+
+<P>This technique requires that you allocate one extra line in the surface containing the even field.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Solving%20Problems%20Caused%20by%20Half-Lines (wce50consolvingproblemscausedbyhalflines.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

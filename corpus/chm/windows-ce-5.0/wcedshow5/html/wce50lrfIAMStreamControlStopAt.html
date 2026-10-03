@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IAMStreamControl::StopAt</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiamstreamcontrolstopat"></A>IAMStreamControl::StopAt</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method informs the pin when to suspend processing and supplying data. </P>
+
+<PRE class="syntax"><B>HRESULT StopAt(</B>
+  <B>const REFERENCE_TIME* </B><I>ptStop</I><B>,</B>
+  <B>BOOL </B><I>bSendExtra</I><B>,</B>
+  <B>DWORD </B><I>dwCookie</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>ptStop </I></DT>
+
+<DD>[in] Time at which to stop streaming as specified in the <B>REFERENCE_TIME</B> structure. If you specify NULL for <I>ptStop</I>, it will stop immediately (no notification); if MAX_TIME, cancels stop. </dd>
+
+<DT><I>bSendExtra </I></DT>
+
+<DD>[in] Indicates whether to send an extra sample after scheduled <I>ptStop</I> time. </dd>
+
+<DT><I>dwCookie </I></DT>
+
+<DD>[in] Specifies a particular value to send with the notification when the stop occurs (used only if <I>ptStart</I> if not NULL or MAX_TIME). </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns an <B>HRESULT</B> value that depends on the implementation of the interface.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This method is exposed by pins that support the stopping of streams. It sets the <A HREF="wce50lrfstreamcontrolstate.htm">StreamControlState</A> enumeration type to STREAM_DISCARDING. </P>
+
+<P>In video capture, you would typically call <B>StopAt</B> on both the output pin of a capture filter and the input pin of a multiplexer, and pay attention only to the notification from the multiplexer. This ensures that the capture filter does not needlessly capture extra frames, while guaranteeing that the multiplexer has, in fact, saved the last frame to a file. </P>
+
+<P>In addition, you should specify TRUE for the <I>bSendExtra</I> parameter on the capture pin, and specify FALSE to the multiplexer pin. If an extra frame is not sent, the multiplexer will wait for the stop time indefinitely and not realize it already has received all the capture information. The multiplexer will discard the extra sample sent by the capture pin, so it will not get written to the file. Do not set <I>bSendExtra</I> to TRUE unless you also use <A HREF="wce50lrfiamstreamcontrolinterface.htm">IAMStreamControl</A> on another downstream pin too, like in the preceding case. </P>
+
+<P>If you call <B>StopAt</B> with a time that is in the middle of a packet, the filter will deliver the whole packet before going into a discarding state. Also, if start and stop are scheduled for a single point in time, the effect is as if the start occurred an infinitesimal time before the stop. You can use this effect to capture a single frame (see <A HREF="wce50lrfcbasestreamcontrolcbasestreamcontrol.htm">CBaseStreamControl</A> for an implementation example).</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements. See <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A> for more information. </P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.<BR>
+<B>Header:</B> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IAMStreamControl::StopAt (wce50lrfiamstreamcontrolstopat.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

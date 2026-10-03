@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Register to Receive Events</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conregistertoreceiveevents"></A>Register to Receive Events</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code examples show how to register to receive events and listen for incoming calls. The operations in the <A HREF="wce50coninitializethecommunicationsservice.htm">Initialize RTC</A> example must be performed before using these codes.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>This code has not been thoroughly tested, does not contain error checking, and is not intended for production use.</BLOCKQUOTE>
+
+<PRE class="code">//
+// Code 1: Set the event filter.
+//
+HRESULT hr = S_OK;
+long lEventMask;
+
+// Set the event mask to receive all event types.
+lEventMask = RTCEF_ALL;
+
+hr = pIRTCClient-&gt;put_EventFilter(lEventMask);
+
+// if (hr != S_OK) process error here. 
+
+//
+// Code 2: Register the event interface. 
+//
+// Note: This method is in the CRTCOutgoing class, which
+// implements the IRTCEventNotification interface.
+HRESULT 
+CRTCOutgoingDlg::StateSinkEvent(LONG lEventMask)
+{
+    HRESULT hr = S_OK;
+    DWORD dwEventCookie;
+    IUnknown *pUnknown = NULL;
+    IConnectionPointContainer *pCPC = NULL;
+    IConnectionPoint *pCP = NULL;
+
+    hr = QueryInterface( IID_IUnknown,  
+                         reinterpret_cast&lt;void**&gt; (&amp;pUnknown) );
+
+    // if (hr != S_OK) process error here.
+
+    // Get the connection point container interface pointer. 
+    hr = pIRTCClient-&gt;QueryInterface( IID_IConnectionPointContainer, 
+                                   reinterpret_cast&lt;void**&gt; (&amp;pCPC) );
+
+    // if (hr != S_OK) process error here.
+
+    // Get the RTC event notification interface 
+    // from the connection point container. 
+    hr = pCPC-&gt;FindConnectionPoint( IID_IRTCEventNotification, &amp;pCP );
+
+    // if (hr != S_OK) process error here.
+
+    // Call the Advise method to give RTC the IUnknown pointer 
+    // for the event.
+    hr = pCP-&gt;Advise( pUnknown, &amp;dwEventCookie ); 
+
+    // if (hr != S_OK) process error here. 
+
+    pCP-&gt;Release();
+    pCPC-&gt;Release();
+    pUnknown-&gt;Release();
+    return hr;
+}
+//
+// Code 3: Listen for calls.
+//
+// Listen on dynamic and well-known static ports. 
+hr = pIRTCClient-&gt;put_ListenForIncomingSessions( RTCLM_BOTH ); 
+
+// if (hr != S_OK) process error here.</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conrealtimecommunicationsclientapiexamples.htm">Fundamental RTC Code Examples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Register%20to%20Receive%20Events (wce50conregistertoreceiveevents.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

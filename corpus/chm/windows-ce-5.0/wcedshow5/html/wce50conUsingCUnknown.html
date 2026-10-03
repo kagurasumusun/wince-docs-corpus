@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using CUnknown</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conusingcunknown"></A>Using CUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>DirectShow implements <B>IUnknown</B> in a base class called <A HREF="wce50lrfcunknownclass.htm">CUnknown</A>. You can use <B>CUnknown</B> to derive other classes, overriding only the methods that change across components. Most of the other base classes in DirectShow derive from <B>CUnknown</B>, so your component can inherit directly from <B>CUnknown</B> or from another base class.</P>
+
+<H2 class="dtH2">INonDelegatingUnknown</H2>
+
+<P><B>CUnknown</B> implements <B>INonDelegatingUnknown</B>. It manages reference counts internally, and in most situations your derived class can inherit the two reference-counting methods with no change. Be aware that <B>CUnknown</B> deletes itself when the reference count drops to zero. On the other hand, you must override <A HREF="wce50lrfcunknownnondelegatingqueryinterface.htm">NonDelegatingQueryInterface</A>, because the method in the base class returns E_NOINTERFACE if it receives any IID other than IID_IUnknown. In your derived class, test for the IIDs of interfaces that you support, as shown in the following example.</P>
+
+<PRE class="code">STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv)
+{
+    if (riid == IID_ISomeInterface)
+    {
+        return GetInterface((ISomeInterface*)this, ppv);
+    }
+    // default
+    return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+}</PRE>
+
+<P>The utility function <A HREF="wce50lrfgetinterface77.htm">GetInterface</A> sets the pointer, increments the reference count in a thread-safe way, and returns S_OK. In the default case, call the base class method and return the result. If you derive from another base class, call its <B>NonDelegatingQueryInterface</B> method instead. This enables you to support all the interfaces that the parent class supports.</P>
+
+<H2 class="dtH2">IUnknown</H2>
+
+<P>As mentioned earlier, the delegating version of <A HREF="JavaScript:hhobj_1.Click()">IUnknown</A> is the same for every component, because it does nothing more than invoke the correct instance of the nondelegating version. For convenience, the header file Combase.h contains a macro, <A HREF="wce50lrfdeclareiunknown.htm">DECLARE_IUNKNOWN</A>, which declares the three delegating methods as inline methods. It expands to the following code.</P>
+
+<PRE class="code">STDMETHODIMP QueryInterface(REFIID riid, void **ppv) {      
+    return GetOwner()-&gt;QueryInterface(riid,ppv);            
+};                                                          
+STDMETHODIMP_(ULONG) AddRef() {                             
+    return GetOwner()-&gt;AddRef();                            
+};                                                          
+STDMETHODIMP_(ULONG) Release() {                            
+    return GetOwner()-&gt;Release();                           
+};</PRE>
+
+<P>The utility function <A HREF="wce50lrfcunknowngetowner.htm">GetOwner</A> retrieves a pointer to the <B>IUnknown</B> interface of the component that owns this component. For an aggregated component, the owner is the outer component. Otherwise, the component owns itself. Include the DECLARE_IUNKNOWN macro in the public section of your class definition.</P>
+
+<H2 class="dtH2">Class Constructor</H2>
+
+<P>Your class constructor should invoke the constructor method for the parent class, in addition to anything it does that is specific to your class. The following example is a typical constructor method.</P>
+
+<PRE class="code">CMyComponent(TCHAR *tszName, LPUNKNOWN pUnk, HRESULT *phr) 
+    : CUnknown(tszName, pUnk)
+{ 
+    /* Other initializations */ 
+};</PRE>
+
+<P>The method takes the following parameters, which it passes directly to the <A HREF="wce50lrfcunknowncunknown.htm">CUnknown</A> constructor method.
+
+<UL type="disc">
+	<LI><I>tszName</I> specifies a name for the component. </li>
+
+	<LI><I>pUnk</I> is a pointer to the aggregating <A HREF="JavaScript:hhobj_2.Click()">IUnknown</A>. </li>
+
+	<LI><I>pHr</I> is a pointer to an HRESULT value, indicating the success or failure of the method. </li>
+</UL>
+
+<H2 class="dtH2">Summary</H2>
+
+<P>The following example shows a derived class that supports <A HREF="JavaScript:hhobj_3.Click()">IUnknown</A> and a hypothetical interface named <B><I>ISomeInterface</I></B>.</P>
+
+<PRE class="code">class CMyComponent : public CUnknown, public ISomeInterface
+{
+public:
+
+    DECLARE_IUNKNOWN;
+
+    STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv)
+    {
+        if( riid == IID_ISomeInterface )
+        {
+            return GetInterface((ISomeInterface*)this, ppv);
+        }
+        return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+    }
+
+    CMyComponent(TCHAR *tszName, LPUNKNOWN pUnk, HRESULT *phr) 
+        : CUnknown(tszName, pUnk)
+    { 
+        /* Other initializations */ 
+    };
+
+    // More declarations will be added later.
+};</PRE>
+
+<P>This example illustrates the following points.
+
+<UL type="disc">
+	<LI>The <A HREF="wce50lrfcunknownclass.htm">CUnknown</A> class implements the <B>IUnknown</B> interface. The new component inherits from <B>CUnknown</B> and from any interfaces that the component supports. The component could derive instead from another base class that inherits from <B>CUnknown</B>. </li>
+
+	<LI>The DECLARE_IUNKNOWN macro declares the delegating <B>IUnknown</B> methods as inline methods. </li>
+
+	<LI>The <B>CUnknown</B> class provides the implementation for <A HREF="wce50lrfinondelegatingunknowninterface.htm">INonDelegatingUnknown</A>. </li>
+
+	<LI>To support an interface other than <B>IUnknown</B>, the derived class must override the <B>INonDelegatingQueryInterface</B> method and test for the IID of the new interface. </li>
+
+	<LI>The class constructor invokes the constructor method for <B>CUnknown</B>. </li>
+</UL>
+
+<P>The next step in writing a filter is to enable an application to create new instances of the component. This requires an understanding of DLLs and their relation to class factories and class constructor methods. For more information, see <A HREF="wce50concreatingadllindirectshow.htm">Creating a DLL in DirectShow</A>.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Using%20CUnknown (wce50conusingcunknown.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpSREngineSite::Read</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispsrenginesiteread"></A>ISpSREngineSite::Read</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method reads audio data from the audio input stream. The SR engine calls it while the engine is processing an <A HREF="wce50lrfispsrenginerecognizestream.htm">ISpSREngine::RecognizeStream</A> call. It can be called on any thread. </P>
+
+<P>In the call to this method, the engine requests a certain amount of data to read and supplies a buffer of the appropriate size. SAPI reads the requested amount of data from the audio input. If the amount of data that is requested is not available immediately, SAPI blocks the call until the requested amount is available.</P>
+
+<P>If this method returns with a failure code or if the amount read is less than the amount requested, the stream has ended. The <B>ISpSREngine::RecognizeStream</B> method should return after it has finished processing all data. If <B>ISpSREngineSite::Read</B> returns a failure code, the engine should not return it as the return value of the <B>ISpSREngine::RecognizeStream</B> method. This failure code can occur for typical conditions indicating that the audio has finished.</P>
+
+<PRE class="syntax"><B>HRESULT Read(</B>
+<B>  void* </B><I>pv</I><B>,</B>
+<B>  ULONG </B><I>cb</I><B>,</B>
+<B>  ULONG* </B><I>pcbRead</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pv</I></DT>
+
+<DD>[in] Pointer to the buffer to receive audio input stream data. </dd>
+
+<DT><I>cb</I></DT>
+
+<DD>[in] Number of bytes of data to read from the audio input stream. </dd>
+
+<DT><I>pcbRead</I></DT>
+
+<DD>[out] Pointer to the actual number of bytes read from the audio input stream.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When the SR engine calls this method, SAPI calls <A HREF="wce50lrfispaudiogetbufferinfo.htm">ISpAudio::GetBufferInfo</A> and passes the return code back to the SR engine. If an error code is returned and the error is recoverable, SAPI automatically detects that an audio error occurred and attempts to reactivate the audio device. The SR engine will then receive a new call at <A HREF="wce50lrfispsrenginerecognizestream.htm">ISpSREngine::RecognizeStream</A> that will enable it to continue recognizing with minimal audio data loss.</P>
+
+<P>When using a real-time audio device as input, it is important for an SR engine to call <B>ISpSREngineSite::Read</B> as often as it can to avoid an audio buffer overflow. For an example, see <A HREF="wce50lrfispmmsysaudioread.htm">ISpMMSysAudio::Read</A>.</P>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>S_OK </TD>
+<TD width=53%>Function completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPERR_AUDIO_BUFFER_OVERFLOW</TD>
+<TD width=53%>Internal SAPI audio buffer has filled, and the device has been closed. See Remarks section. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPERR_AUDIO_BUFFER_UNDERFLOW </TD>
+<TD width=53%>Audio object has not received audio data from the device quickly enough, and the device has been closed. See Remarks section. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPERR_AUDIO_STOPPED </TD>
+<TD width=53%>Audio device state has been set to stop. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPERR_STREAM_NOT_ACTIVE</TD>
+<TD width=53%>Method called when engine is not inside <B>RecognizeStream</B> call. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>E_OUTOFMEMORY </TD>
+<TD width=53%>Exceeded available memory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>E_POINTER </TD>
+<TD width=53%>At least one of <I>pcbRead</I> and <I>pv</I> parameters is invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>FAILED(hr) </TD>
+<TD width=53%>Other appropriate error message.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapiddk.h, Sapiddk.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispsrenginesite.htm">ISpSREngineSite</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpSREngineSite::Read (wce50lrfispsrenginesiteread.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

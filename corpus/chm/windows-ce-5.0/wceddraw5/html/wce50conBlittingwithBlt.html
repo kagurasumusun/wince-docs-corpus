@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Blitting with Blt</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conblittingwithblt"></A>Blitting with Blt</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>When using the <A HREF="wce50lrfidirectdrawsurface5blt.htm">IDirectDrawSurface5::Blt</A> method, you supply a valid rectangle in the source surface (or NULL to specify the entire surface), and a rectangle in the destination surface to which the source image will be copied (again, NULL means the rectangle covers the entire surface). </P>
+
+<P>If a clipper is attached to the destination surface, the bounds of the destination rectangle can fall outside the surface and clipping will be performed. </P>
+
+<P>If there is no clipper, the destination rectangle must fall entirely within the surface or else the method will fail with DDERR_INVALIDRECT. (For more information on clipping, see <A HREF="wce50conworkingwithdirectdrawclippers.htm">Working with DirectDraw Clippers</A>.)</P>
+
+<H4 class="dtH4">Scaling</H4>
+
+<P>The <B>Blt</B> method automatically rescales the source image to fit the destination rectangle. If resizing is not your intention, for best performance you should make sure that your source and destination rectangles are exactly the same size, or else use <A HREF="wce50lrfidirectdrawsurface5bltfast.htm">IDirectDrawSurface5::BltFast</A>. (See <A HREF="wce50conblittingwithbltfast.htm">Blitting with BltFast</A>.)</P>
+
+<P>Hardware acceleration for scaling depends on the DDFXCAPS_BLT* flags in the <B>dwFXCaps</B> member of the <A HREF="wce50lrfddcaps.htm">DDCAPS</A> structure for the device. </P>
+
+<P>If, for example, a device has the DDFXCAPS_BLTSTRETCHXN capability but not DDFXCAPS_BLTSTRETCHX, it can assist when the x-axis of the source rectangle is being multiplied by a whole number but not when non-integral (arbitrary) scaling is being done.</P>
+
+<P>Devices might also support arithmetic scaling, which is scaling by interpolation rather than simple multiplication or deletion of pixels. </P>
+
+<P>For instance, if an axis was being increased by one-third, the pixels would be recolored to provide a closer approximation to the original image than would be produced by the doubling of every third pixel on that axis.</P>
+
+<P>Applications cannot control the type of scaling done by the driver, except by setting the DDBLTFX_ARITHSTRETCHY flag in the <B>dwDDFX</B> member of the <A HREF="wce50lrfddbltfx.htm">DDBLTFX</A> structure passed to <B>Blt</B>. This flag requests that arithmetic stretching be done on the y-axis. </P>
+
+<P>Arithmetic stretching on the x-axis and arithmetic shrinking are not currently supported in the DirectDraw API, but a driver may perform them by default.</P>
+
+<H4 class="dtH4">Other Effects</H4>
+
+<P>If you do not require any special effects other than scaling when using <B>Blt</B>, you can pass NULL as the <I>lpDDBltFx </I>parameter. Otherwise you can choose among a variety of effects specified in a <A HREF="wce50lrfddbltfx.htm">DDBLTFX</A> structure. </P>
+
+<P>Among these, <A HREF="wce50concolorfills.htm">color fills</A> and mirroring are supported by the HEL, so they are always available. </P>
+
+<P>Most other effects depend on hardware support. </P>
+
+<P>For a complete view of the effects capabilities of the HEL, run the DDraw Caps utility supplied with the DirectX Programmer's Reference and select HEL FX Caps from the HEL menu. </P>
+
+<P>For an explanation of the various flags, see <A HREF="wce50lrfddcaps.htm">DDCAPS</A>. </P>
+
+<P>You can also check HEL capabilities within your own application by using the <A HREF="wce50lrfidirectdraw4getcaps.htm">IDirectDraw4::GetCaps</A> method.</P>
+
+<P>When you specify an effect that requires a value in one of the members of the <B>DDBLTFX</B> structure passed to the <A HREF="wce50lrfidirectdrawsurface5blt.htm">IDirectDrawSurface5::Blt</A> method, you must also include the appropriate flags in the <I>dwFlags</I> parameter to show which members of the structure are valid.</P>
+
+<P>Some effects require only the setting of a flag in the <B>dwFlags</B> member of <B>DDBLTFX</B>. One of these is DDBLTFX_NOTEARING. You can use this flag when you are blitting animated images directly to the front buffer, so that the blit is timed to coincide with the screen refresh and the possibility of tearing is minimized. </P>
+
+<P>Mirroring and rotation are also set by using flags.</P>
+
+<P>Blitting effects include the standard raster operations (ROPs) used by GDI functions such as <B>BitBlt</B>. The only ROPs supported by the HEL are SRCCOPY (the default), BLACKNESS, and WHITENESS. </P>
+
+<P>Hardware support for other ROPs can be examined in the <B>DDCAPS</B> structure for the driver. If you want to use any of the standard ROPS with the <B>Blt</B> method, you flag them in the <B>dwROP</B> member of the <B>DDBLTFX</B> structure.</P>
+
+<P>The <B>dwDDROP</B> member of the <B>DDBLTFX</B> structure is for specifying ROPs specific to DirectDraw. However, no such ROPs are currently defined.</P>
+
+<P><B>Alpha and Z Values</B></P>
+
+<P>To perform blits that use and preserve alpha channel information, use the <A HREF="wce50lrfidirectdrawsurface5alphablt.htm">IDirectDrawSurface5::AlphaBlt</A> method. This method is currently unique to Windows CE, and fully supports alpha channel information during blit operations.</P>
+
+<P>For an explanation of the use of alpha channels, see <A HREF="wce50conalphablitting.htm">Alpha Blitting</A>.</P>
+
+<P><B>Blt Example</B></P>
+
+<P>The following example, in which it is assumed that <I>lpDDS</I> is a valid <A HREF="wce50lrfidirectdrawsurface5.htm">IDirectDrawSurface5</A> pointer, creates a symmetrical image within the surface by mirroring a rectangle from left to right.</P>
+
+<PRE class="code">RECT     rcSource, rcDest;
+DDBLTFX  ddbltfx;  
+ 
+ZeroMemory(&amp;ddbltfx, sizeof(ddbltfx));
+ddbltfx.dwSize = sizeof(ddbltfx);
+ddbltfx.dwDDFX = DDBLTFX_MIRRORLEFTRIGHT;
+ 
+rcSource.top = 0; rcSource.left = 0;
+rcSource.bottom = 100; rcSource.right = 200; 
+rcDest.top = 0; rcDest.left = 201;
+rcDest.bottom = 100; rcDest.right = 401;
+ 
+HRESULT hr = lpDDS-&gt;Blt(&amp;rcDest,
+                        lpDDS,
+                        &amp;rcSource,
+                        DDBLT_WAIT | DDBLT_DDFX,
+                        &amp;ddbltfx);</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Blitting%20with%20Blt (wce50conblittingwithblt.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

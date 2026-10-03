@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoTreatAsClass</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcotreatasclass"></A>CoTreatAsClass</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function establishes or removes an emulation, in which objects of one class are treated as objects of a different class.</P>
+
+<PRE class="syntax"><B>STDAPI CoTreatAsClass(</B>
+<B> </B> <B>REFCLSID </B><I>clsidOld</I><B>,</B>
+<B> </B> <B>REFCLSID </B><I>clsidNew</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>clsidOld</I></DT>
+
+<DD>[in] CLSID of the object to be emulated.</dd>
+
+<DT><I>clsidNew</I></DT>
+
+<DD>[in] CLSID of the object that should emulate the original object. This replaces any existing emulation for <I>clsidOld</I>. Can be CLSID_NULL, in which case any existing emulation for <I>clsidOld</I> is removed.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function supports the standard return value E_INVALIDARG, as well as the following:
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The emulation was successfully established or removed.</dd>
+
+<DT>REGDB_E_CLASSNOTREG</DT>
+
+<DD>The <I>clsidOld</I> parameter is not properly registered in the registration database.</dd>
+
+<DT>REGDB_E_READREGDB</DT>
+
+<DD>Error reading from registration database.</dd>
+
+<DT>REGDB_E_WRITEREGDB</DT>
+
+<DD>Error writing to registration database.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This function sets the <B>TreatAs</B> entry in the registry for the specified object, allowing the object to be emulated by another application. Emulation allows an application to open and edit an object of a different format, while retaining the original format of the object. </P>
+
+<P>After this entry is set, whenever any function like <B>CoGetClassObject</B> specifies the object's original CLSID (<I>clsidOld</I>), it is transparently forwarded to the new CLSID (<I>clsidNew</I>), thus launching the application associated with the <B>TreatAs</B> CLSID. </P>
+
+<P>When the object is saved, it can be saved in its native format, which may result in loss of edits not supported by the original format. </P>
+
+<P>You would call <B>CoTreatAsClass</B> in two situations if your application supports emulation:
+
+<UL type="disc">
+	<LI>In response to an end-user request (through a conversion dialog box) that a specified object be treated as an object of a different class (an object created under one application be run under another application, while retaining the original format information).</li>
+
+	<LI>In a setup program, to register that one class of objects be treated as objects of a different class.</li>
+</UL>
+
+<P>An example of the first case is that an end user might want to edit a spreadsheet created by one application using a different application that can read and write the spreadsheet format of the original application. </P>
+
+<P>For an application that supports emulation, <B>CoTreatAsClass</B> can be called to implement a Treat As option in a conversion dialog box.</P>
+
+<P>An example of the use of <B>CoTreatAsClass</B> in a setup program would be in an updated version of an application. </P>
+
+<P>When the application is updated, the objects created with the earlier version can be activated and treated as objects of the new version, while retaining the previous format information. This would allow you to give the user the option to convert when they save, or to save it in the previous format, possibly losing format information not available in the older version.</P>
+
+<P>One result of setting an emulation is that when you enumerate verbs, as in the <A HREF="wce50lrfioleobjectenumverbs.htm">IOleObject::EnumVerbs</A> method implementation in the default handler, this would enumerate the verbs from <I>clsidNew</I> instead of <I>clsidOld</I>.</P>
+
+<P>To ensure that existing emulation information is removed when you install an application, your setup programs should call <B>CoTreatAsClass</B>, setting the <I>clsidNew</I> parameter to CLSID_NULL to remove any existing emulation for the classes they install.</P>
+
+<P>If there is no CLSID assigned to the <B>AutoTreatAs</B> key in the registry, setting <I>clsidNew</I> and <I>clsidOld</I> to the same value removes the <B>TreatAs</B> entry, so there is no emulation. If there is a CLSID assigned to the <B>AutoTreatAs</B> key, that CLSID is assigned to the TreatAs key.</P>
+
+<P>The <B>CoTreatAsClass</B> function does not validate whether an appropriate registry entry for <I>clsidNew</I> currently exists.</P>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A> | <A HREF="wce50lrfcogettreatasclass.htm">CoGetTreatAsClass</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoTreatAsClass (wce50lrfcotreatasclass.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

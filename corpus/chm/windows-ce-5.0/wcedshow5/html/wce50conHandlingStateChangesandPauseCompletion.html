@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling State Changes and Pause Completion</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhandlingstatechangesandpausecompletion"></A>Handling State Changes and Pause Completion</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A renderer filter behaves the same as any other filter in the filter graph when its state is changed, with the following exception. After being paused, the renderer will have some data queued, ready to be rendered when subsequently run. When the video renderer is stopped, it holds on to this queued data. </P>
+
+<P>This is an exception to the DirectShow rule that no resources should be held by filters while the filter graph is stopped. </P>
+
+<P>The reason for this exception is that by holding resources, the renderer will always have an image with which to repaint the window if it receives a WM_PAINT message. It also has an image to satisfy methods, such as <A HREF="wce50lrfcbasecontrolvideogetstaticimage.htm">CBaseControlVideo::GetStaticImage</A>, that request a copy of the current image. </P>
+
+<P>Another effect of holding resources is that holding on to the image stops the allocator from being decommitted, which in turn makes the next state change occur much faster because the image buffers are already allocated. </P>
+
+<P>A video renderer should render and release samples only while running. While paused, the filter might render them (for example, when drawing a static poster image in a window), but should not release them. </P>
+
+<P>Audio renderers will do no rendering while paused (although they can perform other activities, such as preparing the wave device, for example).</P>
+
+<P>The time at which the samples should be rendered is obtained by combining the stream time in the sample with the reference time passed as a parameter to the <A HREF="wce50lrfimediacontrolrun.htm">IMediaControl::Run</A> method. </P>
+
+<P>Renderers should reject samples with start times less than or equal to end times. </P>
+
+<P>When an application pauses a filter graph, the filter graph does not return from its <A HREF="wce50lrfimediacontrolpause.htm">IMediaControl::Pause</A> method until there is data queued at the renderers. To ensure this, when a renderer is paused, it should return S_FALSE if there is no data waiting to be rendered. If it has data queued, then it can return S_OK. </P>
+
+<P>The filter graph manager checks all return values when pausing a filter graph, to ensure that the renderers have data queued. If one or more filters are not ready, the filter graph manager polls the filters in the graph by calling <A HREF="wce50lrfcbasefiltergetstate.htm">GetState</A>. The <B>GetState</B> method takes a time-out parameter.</P>
+
+<P>A filter (typically a renderer) that is still waiting for data to arrive before completing the state change returns <A HREF="wce50lrferrorandsuccesscodes.htm">VFW_S_STATE_INTERMEDIATE</A> if the <B>GetState</B> method expires. When data arrives at the renderer, <B>GetState</B> should be returned immediately with S_OK. </P>
+
+<P>In both the intermediate and completed state, the reported filter state will be <B>State_Paused</B>. Only the return value indicates whether the filter is ready or not. If, while a renderer is waiting for data to arrive, its source filter sends an end-of-stream notification, that should also complete the state change. </P>
+
+<P>After all filters have data waiting to be rendered, the filter graph will complete its pause state change. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Handling%20State%20Changes%20and%20Pause%20Completion (wce50conhandlingstatechangesandpausecompletion.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IViewObjectEx::GetNaturalExtent</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiviewobjectexgetnaturalextent"></A>IViewObjectEx::GetNaturalExtent</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method provides sizing hints from the container for the object to use as the user resizes it.</P>
+
+<PRE class="syntax"><B>HRESULT GetNaturalExtent(</B>
+  <B>DWORD</B> <I>dwAspect</I><B>,</B>
+  <B>LONG</B> <I>lindex</I><B>,</B>
+  <B>DVTARGETDEVICE* </B><I>ptd</I><B>,</B>
+  <B>HDC</B> <I>hicTargetDev</I><B>,</B>
+  <B>DVEXTENTINFO* </B><I>pExtentInfo</I><B>,</B>
+  <B>LPSIZEL</B> <I>pSizel</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwAspect </I></DT>
+
+<DD>[in] Requested drawing aspect. It can be any of the values from the <A HREF="wce50lrfdvaspect.htm">DVASPECT</A> enumeration. </dd>
+
+<DT><I>lindex </I></DT>
+
+<DD>[in] Portion of the object that is of interest for the draw operation. Its interpretation varies depending on the value in the <I>dwAspect</I> parameter. See the <B>DVASPECT</B> enumeration for more information. </dd>
+
+<DT><I>ptd </I></DT>
+
+<DD>[in] Pointer to the target device structure that describes the device for which the object is to be rendered. 
+
+<P>If NULL, the view should be rendered for the default target device (typically the display). 
+
+
+<P>A value other than NULL is interpreted in conjunction with the <I>hicTargetDev</I> and <I>hdcDraw </I>parameters. 
+
+
+<P>For example, if <I>hdcDraw</I> specifies a printer as the device context, the <I>ptd</I> parameter points to a structure describing that printer device. The data can actually be printed if <I>hicTargetDev</I> is a valid value or it can be displayed in print preview mode if <I>hicTargetDev</I> is NULL. 
+</dd>
+
+<DT><I>hicTargetDev </I></DT>
+
+<DD>[in] Information context for the target device indicated by the <I>ptd</I> parameter from which the object can extract device metrics and test the device's capabilities. If <I>ptd</I> is NULL, the object should ignore the value in the <I>hicTargetDev</I> parameter. </dd>
+
+<DT><I>pExtentInfo </I></DT>
+
+<DD>[in] Pointer to <A HREF="wce50lrfdvextentinfo.htm">DVEXTENTINFO</A> structure that specifies the sizing data. </dd>
+
+<DT><I>pSizel </I></DT>
+
+<DD>[out] Pointer to sizing data returned by the object. 
+
+<P>The returned sizing data is set to -1 for any dimension that was not adjusted. 
+
+
+<P>That is, if cx is &#0150;1, the width was not adjusted; if cy is &#0150;1, the height was not adjusted. 
+
+
+<P>If E_FAIL is returned indicating no size was adjusted, <I>pSizel </I>may be NULL. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Value</TH>
+<TH width=84%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>S_OK</TD>
+<TD width=84%>The sizing hints were successfully returned.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>E_FAIL</TD>
+<TD width=84%>This method is not implemented for the specified <I>dwAspect</I>, or the size was not adjusted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>E_NOTIMPL</TD>
+<TD width=84%>This method is not implemented.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>There are two general approaches to sizing a control. </P>
+
+<P>The first approach gives the control responsibility for sizing itself; the second approach gives the container responsibility for sizing the control. The first approach is called autosizing. </P>
+
+<P>There are two alternatives involved in the second approach: content sizing and integral sizing.</P>
+
+<P>The <B>IViewObjectEx::GetNaturalExtent</B> method supports both content and integral sizing. </P>
+
+<P>In content sizing, the container passes the <B>DVEXTENTINFO</B> structure to the object into which the object returns a suggested size. </P>
+
+<P>In integral sizing, the container passes a preferred size to the object in <B>DVEXTENTINFO</B> and the object actually adjusts its height. Integral sizing is used when the user rubberbands a new size in design mode.</P>
+
+<P>Autosizing typically occurs with objects such as the Label control, which resizes if the autosize property was enabled and the associated text changed. Autosizing is handled differently depending on the state of the object.</P>
+
+<P>If the object is inactive, the following occurs:
+
+<OL type="1">
+	<LI>The object calls the <A HREF="wce50lrfioleclientsiterequestnewobjectlayout.htm">IOleClientSite::RequestNewObjectLayout</A> method.</li>
+
+	<LI>The container calls the <A HREF="wce50lrfioleobjectgetextent.htm">IOleObject::GetExtent</A> method and retrieves the new extents.</li>
+
+	<LI>The container calls the <A HREF="wce50lrfioleobjectsetextent.htm">IOleObject::SetExtent</A> method and adjusts the new extents.</li>
+</OL>
+
+<P>If the object is active, the following occurs: 
+
+<OL type="1">
+	<LI>The object calls the <B>IOleInPlaceSite::OnPosRectChange</B> method to specify that it requires resizing. </li>
+
+	<LI>The container calls the <B>IOleInPlaceObject::SetObjectRects</B> method and specifies the new size. </li>
+</OL>
+
+<P>The following table shows the possible values for the <I>dwAspect </I>parameter. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Value</TH>
+<TH width=69%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>DVASPECT_CONTENT</TD>
+<TD width=69%>Provide a representation of the control so it can be displayed as an embedded object inside of a container. 
+<P>This value is typically specified for compound document objects. </P>
+
+<P>The presentation can be provided for the screen or printer.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>DVASPECT_DOCPRINT</TD>
+<TD width=69%>Provide a representation of the control on the screen as though it were printed to a printer using the <B>Print</B> command from the <B>File</B> menu. 
+<P>The described data can represent a sequence of pages.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>DVASPECT_ICON</TD>
+<TD width=69%>Provide an iconic representation of the control.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>DVASPECT_THUMBNAIL</TD>
+<TD width=69%>Provide a thumbnail representation of an object so it can be displayed in a browsing tool. 
+<P>The thumbnail is approximately a 120 by 120 pixel, 16-color (recommended) device-independent bitmap potentially wrapped in a metafile.</P>
+</TD>
+</TR>
+</table></div>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Ocidl.h, Ocidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfioleclientsiterequestnewobjectlayout.htm">IOleClientSite::RequestNewObjectLayout</A> | <A HREF="wce50lrfioleobjectgetextent.htm">IOleObject::GetExtent</A> | <A HREF="wce50lrfioleobjectsetextent.htm">IOleObject::SetExtent</A> | <A HREF="wce50lrfdvaspect.htm">DVASPECT</A> | <A HREF="wce50lrfdvextentinfo.htm">DVEXTENTINFO</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IViewObjectEx::GetNaturalExtent (wce50lrfiviewobjectexgetnaturalextent.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

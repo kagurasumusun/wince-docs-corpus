@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Read/Write Example</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conreadwriteexample"></A>Read/Write Example</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example shows how to append one file to the end of another file. In the example, =<A HREF="wce50lrfcreatefile.htm">CreateFile</A> opens two text (.txt) files: One.txt for reading and Two.txt for writing. Then, the <A HREF="wce50lrfreadfile.htm">ReadFile</A> and <A HREF="wce50lrfwritefile.htm">WriteFile</A> functions append the contents of One.txt to the end of Two.txt by reading and writing 4-KB blocks.</P>
+
+<PRE class="code">void AppendExample (void)
+{
+  HANDLE hFile, hAppend;
+  DWORD dwBytesRead, dwBytesWritten, dwPos;
+  char buff[4096];
+  TCHAR szMsg[1000];
+
+  // Open the existing file.
+
+  hFile = CreateFile (TEXT("\\ONE.TXT"),      // Open One.txt
+                      GENERIC_READ,           // Open for reading
+                      0,                      // Do not share
+                      NULL,                   // No security
+                      OPEN_EXISTING,          // Existing file only
+                      FILE_ATTRIBUTE_NORMAL,  // Normal file
+                      NULL);                  // No template file
+
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
+    // Your error-handling code goes here.
+    wsprintf (szMsg, TEXT("Could not open ONE.TXT"));
+    return;
+  }
+
+  // Open the existing file, or, if the file does not exist,
+  // create a new file.
+
+  hAppend = CreateFile (TEXT("\\TWO.TXT"),      // Open Two.txt.
+                        GENERIC_WRITE,          // Open for writing
+                        0,                      // Do not share
+                        NULL,                   // No security
+                        OPEN_ALWAYS,            // Open or create
+                        FILE_ATTRIBUTE_NORMAL,  // Normal file
+                        NULL);                  // No template file
+
+  if (hAppend == INVALID_HANDLE_VALUE)
+  {
+    wsprintf (szMsg, TEXT("Could not open TWO.TXT"));
+    CloseHandle (hFile);            // Close the first file.
+    return;
+  }
+
+  // Append the first file to the end of the second file.
+
+  dwPos = SetFilePointer (hAppend, 0, NULL, FILE_END);
+  do
+  {
+    if (ReadFile (hFile, buff, 4096, &amp;dwBytesRead, NULL))
+    {
+      WriteFile (hAppend, buff, dwBytesRead,
+                 &amp;dwBytesWritten, NULL);
+    }
+  }
+  while (dwBytesRead == 4096);
+
+  // Close both files.
+
+  CloseHandle (hFile);
+  CloseHandle (hAppend);
+
+  return;
+} // End of AppendExample code</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50confilesystemoperations.htm">File System Operations</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Read%2FWrite%20Example (wce50conreadwriteexample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IUnknown Basics</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownAddRef">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownRelease">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_5" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIClassFactoryCreateInstance">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50coniunknownbasics"></A>IUnknown Basics</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The methods in <B>IUnknown</B> enable an application to manage the component's reference count and query for interfaces on the component.  For this to work properly with aggregated COM components, the <B>IUnknown</B> interface must be delegated to the outer component in the aggregation. </P>
+
+<H2 class="dtH2">Reference Count</H2>
+
+<P>The reference count is an internal variable, incremented in the <A HREF="JavaScript:hhobj_1.Click()">IUnknown::AddRef</A> method and decremented in the <A HREF="JavaScript:hhobj_2.Click()">IUnknown::Release</A> method. The base classes manage the reference count and synchronize access to the reference count among multiple threads. </P>
+
+<H2 class="dtH2">Interface Queries</H2>
+
+<P>Querying for an interface is also straightforward. The caller passes two parameters: an interface identifier (IID), and the address of a pointer. If the component supports the requested interface, it sets the pointer to the interface, increments its own reference count, and returns S_OK. Otherwise, it sets the pointer to NULL and returns E_NOINTERFACE. The following example shows the general outline of the <A HREF="JavaScript:hhobj_3.Click()">IUnknown::QueryInterface</A> method. Component aggregation, described in the next section, introduces some additional complexity.</P>
+
+<PRE class="code">if (IID == IID_IUnknown)
+    set pointer to (IUnknown *)this
+    AddRef
+    return S_OK
+
+else if (IID == IID_ISomeInterface)
+    set pointer to (ISomeInterface *)this
+    AddRef
+    return S_OK
+
+else if ... 
+
+else
+    set pointer to NULL
+    return E_NOINTERFACE</PRE>
+
+<P>The only difference between the <B>QueryInterface</B> method of one component and the <B>QueryInterface</B> method of another is the list of IIDs that each component tests. For every interface that the component supports, the component must test for the IID of that interface.</P>
+
+<H2 class="dtH2">Aggregation and Delegation</H2>
+
+<P>Component aggregation must be transparent to the caller. Therefore, the aggregate must expose a single <A HREF="JavaScript:hhobj_4.Click()">IUnknown</A> interface, with the aggregated component deferring to the outer component's implementation. Otherwise, the caller would see two different <B>IUnknown</B> interfaces in the same aggregate. If the component is not aggregated, it uses its own implementation. </P>
+
+<P>To support this behavior, the component must add a level of indirection. A <I>delegating IUnknown</I> delegates the work to the appropriate place: to the outer component, if there is one, or to the component's internal version. A <I>nondelegating IUnknown</I> does the work, as described in the previous section.</P>
+
+<P>The delegating version is public and keeps the name <B>IUnknown</B>. The nondelegating version is renamed <A HREF="wce50lrfinondelegatingunknowninterface.htm">INonDelegatingUnknown</A>. This name is not part of the COM specification, because it is not a public interface. </P>
+
+<P>When the client creates an instance of the component, it calls the <A HREF="JavaScript:hhobj_5.Click()">IClassFactory::CreateInstance</A> method. One parameter is a pointer to the aggregating component's <B>IUnknown</B> interface, or is NULL if the new instance is not aggregated. In its constructor method, the component uses this parameter to store a member variable that indicates which <B>IUnknown</B> interface to use, as shown in the following example.</P>
+
+<PRE class="code">CMyComponent::CMyComponent(IUnknown *pOuterUnknown)
+{
+    if (pOuterUnknown == NULL)
+        m_pUnknown = (IUnknown *)(INonDelegatingUnknown *)this;
+    else
+        m_pUnknown = pOuterUnknown;
+
+    [ ... more constructor code ... ]
+}</PRE>
+
+<P>Each method in the delegating <B>IUnknown</B> calls its nondelegating counterpart, as shown in the following example.</P>
+
+<PRE class="code">HRESULT QueryInterface(REFIID iid, void **ppv) 
+{
+    return m_pUnknown-&gt;QueryInterface(iid, ppv);
+}</PRE>
+
+<P>By the nature of delegation, the delegating methods look identical in every component. Only the nondelegating versions change.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IUnknown%20Basics (wce50coniunknownbasics.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

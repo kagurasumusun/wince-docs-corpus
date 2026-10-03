@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Command Bands Control</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingacommandbandscontrol"></A>Creating a Command Bands Control</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The command bands control is a special kind of rebar control. It has a fixed band at the top that contains a toolbar with a <B>Close</B> (<B>X</B>) button and, optionally, a <B>Help</B> (<B>?</B>) button and an <B>OK</B> button in the right corner. By default, each band in the command bands control contains a command bar. You can override this default behavior, however, if you want a band to contain some other type of child window. </P>
+
+<P>The following screen shot shows a Windows CE command band.</P>
+
+<P class="fig"><IMG SRC="comband.gif" ALT="" BORDER=0></P>
+
+<P class="labelproc"><B>To create a command bands control</B>
+
+<OL type="1">
+	<LI>Initialize an <B>INITCOMMONCONTROLSEX</B> structure and set the <B>dwICC</B> member to ICC_BAR_CLASSES | ICC_COOL_CLASSES.</li>
+
+	<LI>Register the command bands control class and command bar class by calling the <B>InitCommonControlsEx</B> function and passing in the <B>INITCOMMONCONTROLSEX</B> structure.</li>
+
+	<LI>Create the image list to use for the band images.</li>
+
+	<LI>Create the command bands control by calling the <B>CommandBands_Create</B> function and passing the handle to the image list handle in the <I>himl</I> parameter.</li>
+
+	<LI>Initialize an array of <B>REBARBANDINFO</B> structures, one for each band in the command bands control.</li>
+
+	<LI>Add the bands by calling the <B>CommandBands_AddBands</B> function, and pass the array of <B>REBARBANDINFO</B> structures in the <I>prbbi</I> parameter.</li>
+
+	<LI>Add controls to the command bars in the bands by calling the appropriate command bar functions for the controls that you want to add.</li>
+
+	<LI>Call the <B>CommandBands_AddAdornments</B> function to add the <B>OK</B> and <B>Help</B> buttons. When you call <B>CommandBands_AddAdornments</B>, the <B>Close</B> button is added by default.</li>
+</OL>
+
+<P>The following code example shows how to register and create a command bands control.</P>
+
+<PRE class="code">HWND WINAPI CreateCmdband (HWND hwnd)
+{
+  HWND hwndCBar = NULL,     // The handle to the command bar control
+  HWND hwndCBand = NULL;    // The handle to the command bands control
+  REBARBANDINFO rbi[3];     // REBARBANDINFO structures for command bands
+  HIMAGELIST hImageList = NULL; 
+                            // Handle to the image list for command bands
+  INITCOMMONCONTROLSEX iccex; 
+                            // INITCOMMONCONTROLSEX structure
+  
+  iccex.dwSize = sizeof (INITCOMMONCONTROLSEX);
+  iccex.dwICC = ICC_BAR_CLASSES | ICC_COOL_CLASSES;
+
+  // Register toolbar and rebar control classes from DLL for the common 
+  // control.
+  InitCommonControlsEx (&amp;iccex);
+
+  // Create the image list for the command bands.
+  if (!(hImageList = ImageList_LoadImage (
+                  hInst, 
+                  MAKEINTRESOURCE (IDB_BANDIMAGE), 
+                  16, 
+                  3,            
+                  CLR_DEFAULT, 
+                  IMAGE_BITMAP, 
+                  LR_DEFAULTCOLOR)))
+    goto error;
+
+  // Create the command bands control.
+  if (!(hwndCBand = CommandBands_Create (
+                  hInst, 
+                  hwnd, 
+                  ID_BAND,         
+                  RBS_VARHEIGHT | RBS_BANDBORDERS | RBS_AUTOSIZE, 
+                  hImageList)))
+    goto error;
+
+  // REBARBANDINFO for the menu band.
+  rbi[0].cbSize = sizeof (REBARBANDINFO);
+  rbi[0].fMask = RBBIM_STYLE | RBBIM_ID | RBBIM_SIZE;
+  rbi[0].fStyle = RBBS_CHILDEDGE | RBBS_NOGRIPPER;
+  rbi[0].wID = ID_BAND_MENUBAR;
+  rbi[0].cx = 150;
+  
+  // REBARBANDINFO for the main toolbar band.
+  rbi[1].cbSize = sizeof (REBARBANDINFO);
+  rbi[1].fMask = RBBIM_TEXT | RBBIM_ID | RBBIM_IMAGE | RBBIM_STYLE;
+  rbi[1].fStyle = RBBS_BREAK | RBBS_GRIPPERALWAYS;
+  rbi[1].lpText = TEXT("Toolbar");
+  rbi[1].wID = ID_BAND_TOOLBAR;
+  rbi[1].iImage = 0;
+
+  // REBARBANDINFO for the font toolbar band.
+  rbi[2].cbSize = sizeof (REBARBANDINFO);
+  rbi[2].fMask = RBBIM_TEXT | RBBIM_ID | RBBIM_IMAGE | RBBIM_STYLE;
+  rbi[2].fStyle = RBBS_GRIPPERALWAYS;
+  rbi[2].lpText = TEXT("Font");
+  rbi[2].wID = ID_BAND_FONT_TOOLBAR;
+  rbi[2].iImage = 1;
+
+  // Adds bands to the command bands control. 
+  if (!CommandBands_AddBands (hwndCBand, hInst, 3, rbi))
+    goto error;
+
+  // Insert a menu bar into the menu command band. 
+  if (hwndCBar = CommandBands_GetCommandBar (hwndCBand, 0))
+    CommandBar_InsertMenubar (hwndCBar, hInst, IDM_MAIN_MENU, 0);
+
+  // Add the buttons to the main toolbar band. 
+  if (hwndCBar = CommandBands_GetCommandBar (hwndCBand, 1))
+  {
+    CommandBar_AddBitmap (hwndCBar, hInst, IDB_TOOLBAR, 11, 0, 0);
+    CommandBar_AddButtons (
+                  hwndCBar, 
+                  sizeof (tbButtons) / sizeof (TBBUTTON),
+                  tbButtons);
+  }
+  
+  // Add the buttons to the font toolbar band.
+  if (hwndCBar = CommandBands_GetCommandBar (hwndCBand, 2))
+  {
+    CommandBar_AddBitmap (hwndCBar, hInst, IDB_TOOLBAR, 11, 0, 0);
+    CommandBar_AddButtons (
+                  hwndCBar, 
+                  sizeof (tbFontButtons) / sizeof (TBBUTTON),
+                  tbFontButtons);
+  }
+
+  // Add the Help and Close buttons to the command bands.
+  CommandBands_AddAdornments (hwndCBand, hInst, CMDBAR_HELP, NULL);
+
+  return hwndCBand;
+
+error:
+  if (hImageList)
+  {
+    ImageList_Destroy (hImageList);
+  }
+  if (hwndCBand)
+  {
+    DestroyWindow (hwndCBand);
+  }
+  return NULL;
+}</PRE>
+
+<P>After you create a command bands control, you might want to add controls to the band or resize the band. Windows CE supports several functions for manipulating command bands.</P>
+
+<P>The following table shows how to manipulate a command bands control.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=61%>To</TH>
+<TH width=39%>Call</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Add a band that contains the <B>Close</B> (<B>X</B>) button, the <B>Help</B> (<B>?</B>) button, and the <B>OK</B> button.</TD>
+<TD width=39%><B>CommandBands_AddAdornments</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Add one or more bands to the control. By default, each band has a command bar as its child window.</TD>
+<TD width=39%><B>CommandBands_AddBands</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Create a command bands control.</TD>
+<TD width=39%><B>CommandBands_Create</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Retrieve a command bar from a band in a command bands control. Pass the zero-based index of the band that contains the command bar that you want to retrieve.</TD>
+<TD width=39%><B>CommandBands_GetCommandBar</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Return the height of the command bands control.</TD>
+<TD width=39%><B>CommandBands_Height</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Retrieve the parent rectangle of the control.</TD>
+<TD width=39%><B>GetClientRect</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Determine whether a command bands control is visible.</TD>
+<TD width=39%><B>CommandBands_IsVisible</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Retrieve data about the bands in a command bands control so that you can save the data in the registry to restore the command bands control to a previous state.</TD>
+<TD width=39%><B>CommandBands_GetRestoreInformation</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>Show or hide the command bands control.</TD>
+<TD width=39%><B>CommandBands_Show</B></TD>
+</TR>
+</table></div>
+
+<P>Because a command band is both a rebar control and a toolbar control, you also can manipulate the command band by using rebar messages and toolbar messages.</P>
+
+<P>Command bands controls support the custom draw service, which makes it easy to customize the appearance of a command bands control.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conworkingwithcommoncontrols.htm">Working with Common Controls</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20a%20Command%20Bands%20Control (wce50concreatingacommandbandscontrol.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

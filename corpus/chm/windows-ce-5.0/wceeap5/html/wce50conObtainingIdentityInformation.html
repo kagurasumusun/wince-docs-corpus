@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Obtaining Identity Information</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conobtainingidentityinformation"></A>Obtaining Identity Information</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To obtain initial identifying information for the user who is requesting authentication, you may use a function interface when implementing the authentication protocol. In order to obtain this information, the following functions must be used.
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfraseapgetidentity.htm">RasEapGetIdentity</A></li>
+
+	<LI><A HREF="wce50lrfraseapfreememory.htm">RasEapFreeMemory</A></li>
+</UL>
+
+<P>These functions may be implemented in the same DLL as the authentication protocol, or in a separate DLL. Also, the DLL that implements the identity functions may support more than one authentication protocol. The path to the DLL for these functions is stored in the <B>RAS_EAP_VALUENAME_IDENTITY</B> registry value, under the key for the authentication protocol. For more information about creating this registry value, see <A HREF="wce50coneapinstallation.htm">EAP Installation</A>.</P>
+
+<P>The <B>RasEapGetIdentity</B> function typically displays a UI to obtain identity information for the user. However, if the <I>dwFlags</I> parameter contains the RAS_EAP_FLAG_NON_INTERACTIVE flag, <B>RasEapGetIdentity</B> should not display a UI.</P>
+
+<P>If <B>RasEapGetIdentity</B> does display a UI, the UI must support WMCOMMAND messages where the value of <B>LOWORD</B> (<I>wParam</I>) is equal to IDCANCEL.</P>
+
+<P>The Remote Access Service (RAS) calls <B>RasEapGetIdentity</B> if the <B>RAS_EAP_VALUENAME_INVOKE_NAMEDLG</B> that is in the registry for this EAP is set to 0. If <B>RAS_EAP_VALUENAME_INVOKE_NAMEDLG</B> is not present, or is present and is set to one, RAS displays the standard user name dialog box. </P>
+
+<P>In addition to <B>RAS_EAP_VALUENAME_INVOKE_NAMEDLG</B>, a related value may be created in the registry: <B>RAS_EAP_VALUENAME_INBOKE_PWWDLG</B>. If this value is present and is set to 0, RAS will not display the standard password dialog. This value is useful when implementing a biometric method such as a fingerprint scan to authenticate the user. If both the <B>RAS_EAP_VALUENAME_INVOKE_NAMEDLG</B> and <B>RAS_EAP_VALUENAME_INVOKE_PWDDLG</B> values are 0, an identity UI could be used to obtain both the identity and biometric information. However, if only <B>RAS_EAP_VALUENAME_INVOKE_PWDDLG</B> is 0, RAS will not call <B>RasEapGetIdentity</B>. In this case, you could use the interactive UI to obtain the biometric information. For more information on these registry values, see <A HREF="wce50coneapregistrysettings.htm">EAP Registry Settings</A>.</P>
+
+<P>The information obtained by <B>RasEapGetIdentity</B> is passed to the authentication protocol during the call to <A HREF="wce50lrfraseapbegin.htm">RasEapBegin</A>. The <B>pszIdentity</B> and <B>pUserData</B> members of the <A HREF="wce50lrfpppeapinput.htm">PPP_EAP_INPUT</A> structure point to the information. To save this information in the registry on the client computer, the authentication protocol should return the information in the <I>pEapOutput</I> parameter of <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A>.</P>
+
+<P>After the call to <B>RasEapBegin</B>, RAS calls <B>RasEapFreeMemory</B> to free the memory occupied by this data. Therefore, the authentication protocol should copy the information into a private memory buffer during the call to <B>RasEapBegin</B>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conextensibleauthenticationprotocol.htm">EAP Application Development</A> | <A HREF="wce50lrfraseapgetidentity.htm">RasEapGetIdentity</A> | <A HREF="wce50lrfraseapfreememory.htm">RasEapFreeMemory</A> | <A HREF="wce50coneapinstallation.htm">EAP Installation</A> | <A HREF="wce50coneapregistrysettings.htm">EAP Registry Settings</A> | <A HREF="wce50lrfraseapbegin.htm">RasEapBegin</A> | <A HREF="wce50lrfpppeapinput.htm">PPP_EAP_INPUT</A> | <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Obtaining%20Identity%20Information (wce50conobtainingidentityinformation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

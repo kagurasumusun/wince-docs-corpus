@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>UPnP AV Framework Class Organization</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conupnpavclassorganization"></A>UPnP AV Framework Class Organization</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Windows CE UPnP AV Framework is implemented in a number of C++ classes. Developers using the UPnP AV Framework only work directly with a subset of these classes, but it is helpful to understand both the general naming convention for all classes and the high-level purpose of the classes that developers do not use directly.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Only classes that are regularly used by developers are documented in detail. The other classes are listed here only for overview purposes.</BLOCKQUOTE>
+
+<P>The following table shows classes in the UPnP AV Framework.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%>Class</TH>
+<TH width=56%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="wce50lrfiavtransport.htm">IAVTransport</A>
+<P><A HREF="wce50lrficonnectionmanager.htm">IConnectionManager</A></P>
+
+<P><A HREF="wce50lrficontentdirectory.htm">IContentDirectory</A></P>
+
+<P><A HREF="wce50lrfirenderingcontrol.htm">IRenderingControl</A></P>
+</TD>
+<TD width=56%>Pure virtual classes at the root of the class hierarchy used for customization. These classes define methods for actions in the corresponding service.
+<P>Control points call these methods to access functionality. Devices implement these methods to provide functionality.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="wce50lrfiavtransportimpl.htm">IAVTransportImpl</A>
+<P><A HREF="wce50lrficonnectionmanagerimpl.htm">IConnectionManagerImpl</A></P>
+
+<P><A HREF="wce50lrficontentdirectoryimpl.htm">IContentDirectoryImpl</A></P>
+
+<P><A HREF="wce50lrfirenderingcontrolimpl.htm">IRenderingControlImpl</A></P>
+</TD>
+<TD width=56%>Abstract base classes that inherit from the pure virtual classes at the top of the hierarchy, such as <B>IAVTransport</B>. These classes provide default implementations of these services.
+<P>Developers derive from these classes and provide method overrides that implement their device's functionality.</P>
+
+<P>With the exception of <B>IConnectionManagerImpl</B>, the only content in each class are do-nothing method overrides for methods that correspond to optional actions.</P>
+
+<P><B>IConnectionManagerImpl</B> contains connection and protocol management code. Although it provides the majority of the necessary functionality, it still requires implementations of <A HREF="wce50lrficonnectionmanagerimplcreateconnection.htm">IConnectionManagerImpl::CreateConnection</A> and <A HREF="wce50lrficonnectionmanagerimplendconnection.htm">IConnectionManagerImpl::EndConnection</A> to enable custom connection preparation and termination code, and calls to <A HREF="wce50lrficonnectionmanagerimpladdsinkprotocol.htm">IConnectionManagerImpl::AddSinkProtocol</A> and <A HREF="wce50lrficonnectionmanagerimpladdsourceprotocol.htm">IConnectionManagerImpl::AddSourceProtocol</A> to define the protocols supported by the instance.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="wce50lrfmediarendererdevice.htm">MediaRendererDevice</A>
+<P><A HREF="wce50lrfmediaserverdevice.htm">MediaServerDevice</A></P>
+</TD>
+<TD width=56%>Classes that can be instantiated by control points. These classes in turn provide the UPnP AV Framework control point proxy classes that control points use to communicate with UPnP AV devices.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="wce50lrfieventsink.htm">IEventSink</A>
+<P><A HREF="wce50lrfieventsource.htm">IEventSource</A></P>
+
+<P><A HREF="wce50lrfivirtualservice.htm">IVirtualService</A></P>
+</TD>
+<TD width=56%>Pure virtual classes that provide state variable methods and virtual service support. <B>IEventSink</B> and <B>IEventSource</B> provide state variable support. <B>IVirtualService</B> provides virtual service support for use by theAVTransport and RenderingControl services.
+<P>The pure virtual classes at the top of the hierarchy, like <B>IAVTransport</B>, inherit from <B>IEventSource</B> and, for <B>IAVTransport</B> and <B>IRenderingControl</B>, from <B>IVirtualService</B>.</P>
+
+<P>Control points implement <B>IEventSink</B> to receive event notifications.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="wce50lrfparserupnpav.htm">parser</A>
+<P><A HREF="wce50lrfobjectupnpav.htm">object</A> (structure)</P>
+</TD>
+<TD width=56%>Utility classes that provide object-oriented access to information returned by a ContentDirectory instance. 
+<P>Control points use these classes to interact with ContentDirectory data.</P>
+
+<P>These classes are defined in a subset of the av_upnp namespace: av_upnp::DIDL_Lite.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><A HREF="wce50oriwstringclassupnpav.htm">wstring</A></TD>
+<TD width=56%>Provides an object-oriented representation of a string.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><B>AVTransportService</B>
+<P><B>AVTransportServiceImpl</B></P>
+
+<P><B>ConnectionManagerService</B></P>
+
+<P><B>ConnectionManagerServiceImpl</B></P>
+
+<P><B>ContentDirectoryService</B></P>
+
+<P><B>ContentDirectoryServiceImpl</B></P>
+
+<P><B>RenderingControlService</B></P>
+
+<P><B>RenderingControlServiceImpl</B></P>
+</TD>
+<TD width=56%>Internal utility classes that implement the COM objects required for integration with the general purpose UPnP Device Host API.
+<P>Devices that use the UPnP AV Framework create instances of these classes but do not modify or change the classes.</P>
+
+<P>For general information about how custom device implementations use classes such as <B>AVTransportService</B> and <B>ConnectionManagerService</B>, see <A HREF="wce50conregisteringupnpavframeworkimplementations.htm">Registering Device Implementations</A>.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%><B>UPnPErrorReporting</B>
+<P><B>IEventSinkSupport</B></P>
+
+<P><B>ModeratedEventSupport</B></P>
+
+<P><B>VirtualServiceSupport</B></P>
+</TD>
+<TD width=56%>Utility classes used for internal processing. 
+<P>Custom device implementations and control points do not usually use or modify these classes.</P>
+</TD>
+</TR>
+</table></div>
+
+<P>All of the classes in the above table are defined in the av_upnp C++ namespace. This namespace is usually aliased so it can be referred to in code as the av namespace. For more information about namespaces in the UPnP AV Framework, see <A HREF="wce50connamespacesinupnpavframework.htm">C++ Namespaces in the UPnP AV Framework</A>. (The <B>parser</B> class and <B>object</B> structure are defined in a subset of the av_upnp namespace: av_upnp::DIDL_Lite.)</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oriusingupnpavframework.htm">Using the UPnP AV Framework</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: UPnP%20AV%20Framework%20Class%20Organization (wce50conupnpavclassorganization.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

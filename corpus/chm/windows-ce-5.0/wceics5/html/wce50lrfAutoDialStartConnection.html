@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AutoDialStartConnection</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfautodialstartconnection"></A>AutoDialStartConnection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function initiates an Auto dial connection. </P>
+
+<PRE class="syntax"><B>DWORD AutoDialStartConnection(</B>
+<B>  TCHAR* </B><I>szUseDialEntry</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>szUseDialEntry</I></DT>
+
+<DD>[in] Pointer to the name of the phonebook entry to use when making the connection. If this is NULL, then the connection is made by using the default connection that is configured in the registry.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If no error occurs, this function returns a value of ERROR_SUCCESS.</P>
+
+<P>The following table shows the return values if an error occurs.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Error value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_DIAL_ALREADY_IN_PROGRESS</TD>
+<TD width=50%>Another thread has either already initiated an Auto dial connection or is in the process of establishing a connection.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_RASAUTO_CANNOT_INITIALIZE</TD>
+<TD width=50%>The registry key is not present or no RAS entry name is specified in the registry.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This function determines the number to dial by using the <B>szUseDialEntry</B> parameter. If that parameter is null, this function loads the default auto dial connectoid from the <B>RasEntryName1</B> value from the registry. This function then ensures specific conditions are met so that a connection can be made. Because it accesses global settings, and because only one connection is supported at a time, this function is designed to be run by one thread at a time.</P>
+
+<P>The following list shows the conditions that must be met before this function attempts to create a connection: 
+
+<UL type="disc">
+	<LI>The required registry key is valid.</li>
+
+	<LI>Auto dial has been enabled.</li>
+
+	<LI>This function has not failed three consecutive times within the time span that is equal to the <B>FailRetryWaitMS</B> value in the registry. </li>
+</UL>
+
+<P>If these condition are met, this function calls <A HREF="wce50lrfrasdial.htm">RasDial</A>, using the specified or default RAS connectoid. If the default connectoid is used and the first connection attempt fails, an attempt is made on the second connectoid, that is specified in the <B>RasEntryName2</B> registry value. These are repeated the number of times that is equal to the <B>RedialAttempts</B> value in the registry before failing. If this fails, the RAS error code is returned to the function that called <B>AutoDialStartConnection</B>. If this succeeds, Auto dial updates its global settings and starts a timer thread.</P>
+
+<P>The connection created with auto dial is closed if no activity has occurred within the time span that is equal to the <B>IdleTimeoutMS</B> value in the registry.</P>
+
+<P>If these conditions are not met, this function returns an error to the calling function.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Autodial.h.<BR>
+<B>Link Library:</B> Autodial.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grficsfunctions.htm">ICS Functions</A> | <A HREF="wce50conautodialregistrysettings.htm">Auto Dial Registry Settings</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: AutoDialStartConnection (wce50lrfautodialstartconnection.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

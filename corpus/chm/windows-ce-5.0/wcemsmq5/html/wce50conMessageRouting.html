@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Message Routing</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmessagerouting"></A>Message Routing</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The HTTP endpoint for MSMQ on a Windows CE device can be mapped to another device on your network as the ultimate destination for your message. </P>
+
+<P>For example, your exposed Windows CE gateway or DMZ device can receive messages on behalf of some internal private devices that are not exposed directly to the public network. </P>
+
+<P>Each queue on the edge device can be mapped to either a local queue or a queue on another device that is reachable from the edge device. Additionally, individual queues can be mapped to different machines.</P>
+
+<H2 class="dtH2">Message Routing Registry Settings</H2>
+
+<P>Message Queuing provides a set of routing registries that enable messages to be routed in a variety of ways in response to network conditions. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The router registries must be set before the MSMQ service starts.</BLOCKQUOTE>
+
+<P>You can use the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSMQ\SimpleClient</B> registry key to set the message route. The following subkeys specify the message routes:
+
+<UL type="disc">
+	<LI><B>RouteTo</B></li>
+
+	<LI><B>RouteFrom</B></li>
+
+	<LI><B>RouteLocal</B></li>
+</UL>
+
+<P>Use the <B>RouteTo</B> and <B>RouteFrom</B> pair when the source and destination MSMQ hosts are not exposed directly to each other in the network. You can specify a router that connects to both source and destination hosts to send messages across.</P>
+
+<P>For example, to allow abc123.com to send messages to xyz.com and they are not exposed directly to each other in the network, you can set the <B>RouteTo</B> subkey of abc123.com to use def456.com as the router. </P>
+
+<P>The following registry key allows the application to deliver all messages whose original destination is xyz.com to the new destination def456.com.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSMQ\SimpleClient\RouteTo]
+    "DIRECT=OS:xyz.com\*"="DIRECT=OS:def456.com\routingqueue"</PRE>
+
+<P>The new host, def456.com, creates routingqueue as needed, so you do not have to create this queue. The original host value, as in DIRECT=OS:xyz.com\*, allows you to specify the host name (xyz.com) but not the queue name. </P>
+
+<P>Only the host name part, xyz.com, is used for the routing. Therefore, all queues going to the xyz.com will be routed to def456.com.</P>
+
+<P>The delivery of messages to xyz.com totally depends on the routing ability of the MSMQ message router (def345.com) once those messages are sent to the router. </P>
+
+<P>MSMQ in Windows CE has a routing capability, so messages can be routed to their original destination if def456.com is exposed to abc123.com. Windows CE 3.0 and earlier and the desktop version of MSMQ do not support this message routing. </P>
+
+<P>If the router does not have a routing capability, the messages will simply be discarded.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Messages being routed by <B>RouteTo</B> and <B>RouteFrom</B> still maintain their original destination queue name.</BLOCKQUOTE>
+
+<P>This registry key is useful when the MSMQ sender cannot directly reach the destination host device, such as a device behind a firewall or when connected to another network protocol. In this case, you can set the firewall or the edge device as the router.</P>
+
+<P>The <B>RouteFrom</B> subkey is used to handle special cases. Sometimes you may want to forward messages only from a known MSMQ host for security purposes. You set the <B>RouteFrom</B> subkey in your edge device. This way you can specify the source devices that you allow the edge device to route messages for.</P>
+
+<P>For example, to allow ghi.com to route messages from abc123.com to the final destination xyz.com, you set the <B>RouteFrom</B> subkey of ghi.com to following registry key.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSMQ\SimpleClient\RouteFrom]
+    "f10436ce-8e8c-a581-1a84-e10f0ce265bf"="DIRECT=OS:xyz.com\routingqueue"</PRE>
+
+<P>Note that the GUID of the sender (abc123.com) is f10436ce-8e8c-a581-1a84-e10f0ce265bf.</P>
+
+<P>SRMP routing uses the <B>RouteLocal</B> subkey for message routing. This is not related to either the <B>RouteTo</B> or <B>RouteFrom</B> subkeys.</P>
+
+<P>For example, if abc123.com sends a message to the DIRECT=HTTP://def456.com/msmq/private$/Q1 and you want forward the message to another destination without notifying the sender, you can set the abc123.com registry to the following value.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSMQ\SimpleClient\RouteLocal]
+    "URI1"="DIRECT=HTTP://def456.com/msmq/private$/Q1"</PRE>
+
+<P>Then you can set the def456.com registry to the following value.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSMQ\SimpleClient\RouteLocal]
+    "URI1"="DIRECT=HTTP://xyz.com/msmq/private$/account"</PRE>
+
+<P>When abc123.com sends an SRMP message to "HTTP://def456.com/msmq/private$/Q1", this is sent to the def456.com with a tag "URI1". </P>
+
+<P>When def456.com receives this SRMP message, def456.com checks its local registry for matching "URI1". </P>
+
+<P>If the def456.com finds a registry key, "DIRECT=HTTP://xyz.com/msmq/private$/account" in this case, it forwards that message to the specified queue. </P>
+
+<P>The <B>RouteLocal</B> subkey applies only when sending messages through SRMP. The routing destination in the destination-side registry can be any valid queue name.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Using <B>RouteLocal</B> changes the final destination queue name in the message.</BLOCKQUOTE>
+
+<P>The following sample code shows how to set the <B>RouteTo</B> subkey.</P>
+
+<PRE class="code">WCHAR* pSource = L"DIRECT=OS:cemsmq-wxp\\*";
+WCHAR* pDestination = L"DIRECT=OS:CEPCKS32976X\\routingqueue";
+WCHAR* pRegKey = L"SOFTWARE\\Microsoft\\MSMQ\\SimpleClient\\RouteTo"
+HKEY hKey = NULL;
+DWORD dwDisp = 0;
+if(ERROR_SUCCESS == RegCreateKeyEx(
+                         HKEY_LOCAL_MACHINE,
+                         pRegKey,
+                         0,
+                         NULL,
+                         REG_OPTION_NON_VOLATILE,
+                         KEY_WRITE,
+                         NULL,
+                         &amp;hKey,
+                         &amp;dwDisp))
+{
+   if(dwDisp == REG_OPENED_EXISTING_KEY)
+      printf("MSMQ: registry key exist (overwriting)");
+
+   ULONG hr = RegSetValueEx(
+                 hKey,
+                 pSource,
+                 0,
+                 REG_SZ,
+                 (BYTE *)pDestination,
+                 sizeof(WCHAR)*(wcslen(pDestination)+1));
+   RegCloseKey(hKey);
+   if(hr!=ERROR_SUCCESS)
+      printf("error 0x%0X", hr);
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orimessagequeuing.htm">MSMQ Application Development</A> | <A HREF="wce50consummaryofmsmqfunctionsonwindowsce.htm">Summary of MSMQ Functions on Windows CE</A> | <A HREF="wce50conadministration.htm">Administration</A> | <A HREF="wce50conmessagequeuingcomsupport.htm">MSMQ COM Support</A> | <A HREF="wce50coninternetmessaging.htm">Internet Messaging</A> | <A HREF="wce50conhttptransport.htm">HTTP Transport</A> | <A HREF="wce50consoapreliablemessagingprotocol.htm">SOAP Reliable Messaging Protocol</A> | <A HREF="wce50conmessageconversion.htm">Message Conversion</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Message%20Routing (wce50conmessagerouting.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

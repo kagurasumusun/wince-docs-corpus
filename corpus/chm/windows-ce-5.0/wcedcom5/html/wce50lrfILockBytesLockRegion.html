@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ILockBytes::LockRegion</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfilockbyteslockregion"></A>ILockBytes::LockRegion</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method restricts access to a specified range of bytes in the array.</P>
+
+<PRE class="syntax"><B>HRESULT LockRegion( </B>
+  <B>ULARGE_INTEGER </B><I>libOffset</I><B>, </B>
+  <B>ULARGE_INTEGER </B><I>cb</I><B>, </B>
+  <B>DWORD </B><I>dwLockType </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>libOffset</I></DT>
+
+<DD>[in] Byte offset for the beginning of the range.</dd>
+
+<DT><I>cb</I></DT>
+
+<DD>[in] Length, in bytes, of the range to be restricted.</dd>
+
+<DT><I>dwLockType</I></DT>
+
+<DD>[in] Type of restrictions being requested on accessing the range. This parameter uses one of the values from the <B>LOCKTYPE</B> enumeration.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Value</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>S_OK</TD>
+<TD width=67%>The specified range of bytes was locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>STG_E_INVALIDFUNCTION</TD>
+<TD width=67%>Locking is not supported at all or the specific type of lock requested is not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>STG_E_ACCESSDENIED</TD>
+<TD width=67%>Access denied because the caller has insufficient permission, or another caller has the file open and locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>STG_E_LOCKVIOLATION</TD>
+<TD width=67%>Access denied because another caller has the file open and locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>STG_E_INVALIDHANDLE</TD>
+<TD width=67%>An underlying file has been prematurely closed, or the correct floppy disk has been replaced by an invalid one.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>ILockBytes::LockRegion</B> restricts access to the specified range of bytes. Once a region is locked, attempts by others to gain access to the restricted range must fail with the STG_E_ACCESSDENIED error.</P>
+
+<P>The byte range can extend past the current end of the byte array. </P>
+
+<P>Locking beyond the end of an array is useful as a method of communication between different instances of the byte array object without changing data that is actually part of the byte array. </P>
+
+<P>For example, an implementation of the <B>ILockBytes</B> interface for compound files could rely on locking past the current end of the array as a means of access control, using specific locked regions to indicate permissions currently granted.</P>
+
+<P>The <I>dwLockType</I> parameter specifies one of three types of locking, using values from the <B>LOCKTYPE</B> enumeration. </P>
+
+<P>The lock types are as follows: 
+
+<UL type="disc">
+	<LI>Locking to exclude other writers</li>
+
+	<LI>Locking to exclude other readers or writers</li>
+
+	<LI>Locking that allows only one requestor to obtain a lock on the given range. </li>
+</UL>
+
+<P>This third type of locking is usually an alias for one of the other two lock types, and permits an Implementer to add other behavior as well. A given byte array might support either of the first two types, or both.</P>
+
+<P>To determine the lock types supported by a particular <A HREF="wce50lrfilockbytesiunknown.htm">ILockBytes</A> implementation, examine the <I>grfLocksSupported</I> member of the <A HREF="wce50lrfstatstg.htm">STATSTG</A> structure returned by a call to the <A HREF="wce50lrfilockbytesstat.htm">ILockBytes::Stat</A> method. </P>
+
+<P>Any region locked with <B>ILockBytes::LockRegion</B> must later be explicitly unlocked by calling the <A HREF="wce50lrfilockbytesunlockregion.htm">ILockBytes::UnlockRegion</A><B> </B>method<B> </B>with exactly the same values for the <I>libOffset</I>, <I>cb</I>, and <I>dwLockTyp</I>e parameters. </P>
+
+<P>The region must be unlocked before the stream is released. </P>
+
+<P>Two adjacent regions cannot be locked separately and then unlocked with a single unlock call.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>Because the type of locking supported is optional and can vary in different implementations of <A HREF="wce50lrfilockbytesiunknown.htm">ILockBytes</A>, you must provide code to deal with the STG_E_INVALIDFUNCTION error.</P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>Support for this method depends on how the storage object built on top of the <A HREF="wce50lrfilockbytesiunknown.htm">ILockBytes</A> implementation is used. </P>
+
+<P>If you know that only one storage object at any given time can be opened on the storage device that underlies the byte array, then your <B>ILockBytes</B> implementation does not need to support locking. </P>
+
+<P>However, if multiple simultaneous openings of a storage object are possible, then region locking is needed to coordinate them.</P>
+
+<P>A <B>LockRegion</B> implementation can choose to support all, some, or none of the lock types. For unsupported lock types, the implementation should return STG_E_INVALIDFUNCTION.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ILockBytes::LockRegion (wce50lrfilockbyteslockregion.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

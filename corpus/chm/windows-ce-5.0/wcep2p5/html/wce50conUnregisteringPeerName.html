@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Unregistering a Peer Name</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conunregisteringpeername"></A>Unregistering a Peer Name</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>PNRP uses the <A HREF="wce50lrfwsasetservicewindowssockets.htm">WSASetService</A> function to register peer names. To unregister a peer name configure <B>WSAQUERYSET</B> and call <B>WSASetService</B> by passing RNRSERVICE_DELETE in the <I>essOperation </I>parameter.</P>
+
+<P>The following list identifies important information about unregistering a peer name.
+
+<UL type="disc">
+	<LI>Only an application that registers a peer name can unregister it. </li>
+
+	<LI>A peer name is unregistered automatically if <A HREF="wce50lrfwsacleanup.htm">WSACleanup</A> is called. </li>
+
+	<LI>PNRP always removes the entire service name registration. It does not allow removal of individual addresses. </li>
+</UL>
+
+<P class="labelproc"><B>To unregister a peer name</B>
+
+<OL type="1">
+	<LI>Configure a <A HREF="wce50lrfwsaquerysetwindowssockets.htm">WSAQUERYSET (Windows Sockets)</A> structure. 
+<P>The following table shows the values to set.
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Value</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>dwSize </B></TD>
+<TD width=63%>Specifies the size the <B>WSAQUERYSET</B> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>dwNameSpace </B></TD>
+<TD width=63%>Must be either NS_PNRPNAME or NS_ALL. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpServiceClassID </B></TD>
+<TD width=63%>Must be SVCID_PNRPNAME. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpszServiceInstanceName </B></TD>
+<TD width=63%>Points to the peer name that is being registered.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpszContext </B></TD>
+<TD width=63%>Must be a valid cloud name, an empty string, or NULL. If this value is NULL or an empty string, the default cloud, <code class="ce">"Global_",</code> is used. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpBlob </B></TD>
+<TD width=63%>Points to a <A HREF="wce50lrfpnrpinfo.htm">PNRPINFO</A> structure. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpcsaBuffer </B></TD>
+<TD width=63%>Point to the address list. </TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;All <B>WSAQUERYSET</B> members that are not specified in the preceding table are reserved and must be set to NULL or zero (0) depending on the data type of the member.</BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+PNRP uses the <A HREF="wce50lrfblobwindowssockets.htm">BLOB (Windows Sockets)</A> structure to pass data to the <B>WSAQUERYSET</B> structure during calls to several functions. For use with PNRP, <B>BLOB</B> points to either a <B>PNRPINFO </B>structure or a <A HREF="wce50lrfpnrpcloudinfo.htm">PNRPCLOUDINFO</A> structure.</BLOCKQUOTE>
+</li>
+
+	<LI>Call the <B>WSASetService</B> function. The following table shows the parameter values to pass.<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Parameter</TH>
+<TH width=63%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><I>essOperation </I></TD>
+<TD width=63%>Must have a value of RNRSERVICE_DELETE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><I>dwFlags </I></TD>
+<TD width=63%>Must be zero (0). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><I>lpqsRegInfo </I></TD>
+<TD width=63%>Must point to <B>WSAQUERYSET</B> that is configured to register a peer name.</TD>
+</TR>
+</table></div>
+</li>
+</OL>
+
+<P>The following code example shows how to unregister a peer name by configuring the <A HREF="wce50lrfwsaquerysetwindowssockets.htm">WSAQUERYSET (Windows Sockets)</A> structure and calling the <A HREF="wce50lrfwsasetservicewindowssockets.htm">WSASetService (Windows Sockets)</A> function. </P>
+
+<PRE class="code">//------------------------------------------------------------------------
+// Function: PnrpUnregister
+// Purpose:  Unregister the given name from a PNRP cloud
+// Arguments:
+//  pwzIdentity : identity string originally used to register the name
+//  pwzName     : name to unregister from PNRP
+//  pwzCloud    : name of the cloud to unregister from, NULL = global cloud
+// Returns:  HRESULT
+//------------------------------------------------------------------------
+HRESULT PnrpUnregister(PWSTR pwzIdentity, PWSTR pwzName, PWSTR pwzCloud)
+{
+  HRESULT         hr = S_OK;
+  PNRPINFO        pnrpInfo = {0};
+  BLOB            blPnrpData = {0};
+  WSAQUERYSET     querySet = {0};
+  INT             iRet;
+  // Build the WSAQUERYSET required to unregister.
+  pnrpInfo.dwSize = sizeof(pnrpInfo);
+  pnrpInfo.dwLifetime = 60 * 60 * 8; // 8 hours
+  pnrpInfo.lpwszIdentity = pwzIdentity;
+
+  blPnrpData.cbSize = sizeof(pnrpInfo);
+  blPnrpData.pBlobData = (BYTE*)&amp;pnrpInfo;
+
+  querySet.dwSize = sizeof(querySet);
+  querySet.dwNameSpace = NS_PNRPNAME;
+  querySet.lpServiceClassId = (LPGUID)&amp;SVCID_PNRPNAME;
+  querySet.lpszServiceInstanceName = pwzName;
+  querySet.lpszContext = pwzCloud;
+  querySet.lpBlob = &amp;blPnrpData;
+
+  // Unregister the name with PNRP.
+  iRet = WSASetService(&amp;querySet, RNRSERVICE_DELETE, 0);
+  if (iRet != 0)
+  {
+    hr = HRESULT_FROM_WIN32(WSAGetLastError());
+  }
+  return hr;</PRE>
+
+<P>}</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conpeer-to-peerapplicationdevelopment.htm">Peer-to-Peer Application Development</A> | <A HREF="wce50conregisteringunregisteringpeername.htm">Registering a Peer Name</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Unregistering%20a%20Peer%20Name (wce50conunregisteringpeername.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

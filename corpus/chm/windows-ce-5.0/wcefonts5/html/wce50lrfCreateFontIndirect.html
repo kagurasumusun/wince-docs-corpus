@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateFontIndirect</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSelectObject">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfDeleteObject">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfDeleteObject">
+</OBJECT>
+<OBJECT ID="hhobj_5" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSelectObject">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcreatefontindirect"></A>CreateFontIndirect</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates a logical font that has the characteristics specified in the specified structure. An application can subsequently select the font as the current font for any device context (DC). </P>
+
+<PRE class="syntax"><B>HFONT</B> <B>CreateFontIndirect(</B>
+  <B>const</B> <B>LOGFONT* </B><I>lplf</I>
+<B>);</B> </PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>lplf</I></DT>
+
+<DD>[in] Long pointer to a <A HREF="wce50lrflogfont.htm">LOGFONT</A> structure that defines the characteristics of the logical font.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>A handle to a logical font indicates success. NULL indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>CreateFontIndirect</B> function creates a logical font with the characteristics specified in the <B>LOGFONT</B> structure. When you select this font by using the <A HREF="JavaScript:hhobj_2.Click()">SelectObject</A> function, the font mapper for the graphics device interface (GDI) attempts to match the logical font with an existing physical font. If the font mapper fails to find an exact match, the font mapper provides an alternative that has characteristics that match as many of the requested characteristics as possible. </P>
+
+<P>When you no longer need the font, call the <A HREF="JavaScript:hhobj_3.Click()">DeleteObject</A> function to delete the font. </P>
+
+<P>Windows CE 2.0 and later support systems that use either TrueType or raster fonts, but not both. The OEM chooses the font type, raster or TrueType, at system design time, and an application cannot change the font type.</P>
+
+<P>Windows CE 1.0 and 1.01 support only raster fonts. </P>
+
+<H4 class="dtH4">Example code</H4>
+
+<P>The following code sample shows how to use the <B>CreateFontIndirect</B> function with the characteristics specified in the <B>LOGFONT</B> structure. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">/**********************************************************************
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+
+Copyright (c) 2003 Microsoft Corporation. All Rights Reserved.
+
+MODULE: 
+  cleartype_sample.cpp
+
+ABSTRACT: 
+  This application code draws ClearType fonts with different settings.
+**********************************************************************/
+
+#include &lt;windows.h&gt;
+#include &lt;tchar.h&gt;
+
+int WINAPI WinMain
+(
+    HINSTANCE hInstance,
+    HINSTANCE hInstPrev,
+#ifdef  UNDER_CE
+    LPWSTR    pszCmdLine,
+#else
+    LPSTR     pszCmdLine,
+#endif
+    int       nCmdShow
+)
+{
+// This retrieves the device context (DC) for the primary display driver. This is not associated with a window.
+// This is only used for simplicity of the example.
+HDC hdc = GetDC(NULL);
+int nSmooth, nOldSmooth;
+// A rectangle to hold the text.
+RECT rc = { 10, 10, 100, 100};
+LOGFONT lf;
+HFONT hFontNew, hFontOld;
+int nTextHeight;
+
+// Clear out the lf structure to use when creating the font.
+memset(&amp;lf, 0, sizeof(LOGFONT));
+
+// Retrieve the old Cleartype gamma.
+SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0, &amp;nOldSmooth, FALSE);
+
+// Draw text with the default system font. First calculate the size of the rectangle to use.
+DrawText(hdc, TEXT("This is the default system font."), -1, &amp;rc, DT_CALCRECT | DT_LEFT | DT_TOP);
+DrawText(hdc, TEXT("This is the default system font."), -1, &amp;rc, DT_LEFT | DT_TOP);
+
+// Draw a Cleartype font with a font smoothing of 1000.
+nSmooth = 1000;
+SystemParametersInfo(SPI_SETFONTSMOOTHINGCONTRAST, 0, &amp;nSmooth, FALSE);
+nTextHeight = rc.bottom - rc.top;
+rc.top += nTextHeight;
+rc.bottom += nTextHeight;
+lf.lfQuality = CLEARTYPE_QUALITY;
+hFontNew = CreateFontIndirect(&amp;lf);
+hFontOld = (HFONT) SelectObject(hdc, hFontNew);
+DrawText(hdc, TEXT("This is a ClearType font w/ 1000 font smoothing."), -1, &amp;rc, DT_CALCRECT | DT_LEFT | DT_TOP);
+DrawText(hdc, TEXT("This is a ClearType font w/ 1000 font smoothing."), -1, &amp;rc, DT_LEFT | DT_TOP);
+SelectObject(hdc, hFontOld);
+DeleteObject(hFontNew);
+
+// Sleep 20 seconds to let the user see the text.
+Sleep(20000);
+
+SystemParametersInfo(SPI_SETFONTSMOOTHINGCONTRAST, 0, &amp;nOldSmooth, FALSE);
+
+DeleteDC(hdc);
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Windows.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_4.Click()">DeleteObject</A> | <A HREF="JavaScript:hhobj_5.Click()">SelectObject</A> | <A HREF="wce50lrflogfont.htm">LOGFONT</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CreateFontIndirect (wce50lrfcreatefontindirect.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

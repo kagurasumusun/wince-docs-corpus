@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Make Added Interfaces Available Through NonDelegatingQueryInterface</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIPersistStreamIPersist">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmakeaddedinterfacesavailablethroughnondelegatingqueryinterface"></A>Make Added Interfaces Available Through NonDelegatingQueryInterface</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Only filters which add interfaces that are not in the base classes, such as those required for creating property pages, need to implement the <A HREF="JavaScript:hhobj_1.Click()">IUnknown</A> member functions (called <A HREF="wce50lrfinondelegatingunknowninterface.htm">INonDelegatingUnknown</A> in the base classes). </P>
+
+<P>The base classes provide default implementations of the <B>IUnknown</B> methods. <B>IUnknown</B> methods in any COM-based code retrieve interfaces from an object, and increment and decrement the reference counts of those interfaces. For example, the <A HREF="JavaScript:hhobj_2.Click()">IUnknown::QueryInterface</A> method retrieves interfaces from an object. </P>
+
+<P>DirectShow defines a special <B>IUnknown</B> class called <B>INonDelegatingUnknown</B>, whose methods do the same thing as <B>IUnknown</B>. (The reason for the name change is so that objects can be aggregated.) </P>
+
+<P>The <A HREF="wce50lrfcunknownnondelegatingqueryinterface.htm">NonDelegatingQueryInterface</A> method is called whenever some object or application wants to query a pin or filter for any interfaces it implements. </P>
+
+<P>If your filter implements any interface outside those listed in the base class implementation, override the <B>NonDelegatingQueryInterface</B> method to return a pointer to the implemented interface. </P>
+
+<P>For example, the following code example overrides the member function to distribute references to the <B>ISpecifyPropertyPages</B> and <A HREF="JavaScript:hhobj_3.Click()">IPersistStream</A> interfaces. </P>
+
+<PRE class="code">// Reveal our persistent stream, property pages, and IGargle interfaces.
+STDMETHODIMP CGargle::NonDelegatingQueryInterface(REFIID riid, void **ppv) {
+
+    if (riid == IID_IGargle) {
+        return GetInterface((IGargle *) this, ppv);
+    } else if (riid == IID_ISpecifyPropertyPages) {
+        return GetInterface((ISpecifyPropertyPages *) this, ppv);
+    } else if (riid == IID_IPersistStream) {
+        AddRef();     // add a reference count to ourselves
+        *ppv = (void *)(IPersistStream *)this;
+        return NOERROR;
+
+    } else {
+        return CTransInPlaceFilter::NonDelegatingQueryInterface(riid, ppv);
+    }
+} // NonDelegatingQueryInterface</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This sample calls the <A HREF="wce50lrfctransinplacefilterclass.htm">CTransInPlaceFilter</A> implementation of the member function to finish up. </BLOCKQUOTE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conwriteatransformfilter.htm">Write a Transform Filter</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Make%20Added%20Interfaces%20Available%20Through%20NonDelegatingQueryInterface (wce50conmakeaddedinterfacesavailablethroughnondelegatingqueryinterface.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

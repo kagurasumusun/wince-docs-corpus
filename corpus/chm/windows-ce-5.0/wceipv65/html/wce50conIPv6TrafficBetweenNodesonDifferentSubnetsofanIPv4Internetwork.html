@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPv6 Traffic Between Nodes on Different Subnets of an IPv4 Internetwork</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conipv6trafficbetweennodesondifferentsubnetsofanipv4internetwork"></A>IPv6 Traffic Between Nodes on Different Subnets of an IPv4 Internetwork</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>IPv6 traffic that is carried as the payload of an IPv4 packet (treating the IPv4 infrastructure as an IPv6 link-layer) is still IPv6 traffic. You can test IPv6 functionality for your applications without the deployment of IPv6 routers. </P>
+
+<P>The following table shows the methods that the IPv6 protocol for Windows CE provides for communicating between IPv6 nodes on different subnets of an IPv4 internetwork.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=39%>Communication method</TH>
+<TH width=61%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>Intrasite Automatic Tunnel Addressing Protocol (ISATAP) addresses </TD>
+<TD width=61%>ISATAP is an address assignment and tunneling mechanism that can be used for communication between IPv6 and IPv4 nodes on an IPv4 network. ISATAP tunneling is described in the Internet draft draft-ietf-ngtrans-isatap-00.txt. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>6to4</TD>
+<TD width=61%>6to4 allows communication between separate IPv6-enabled 6to4 sites. 6to4 hosts using the IPv6 protocol can also use 6to4 addresses and 6to4 tunneling to communicate across an IPv4 intranet or the Internet. 
+<P>For more information, see <A HREF="wce50conipv6trafficbetweennodesindifferentsitesacrosstheinternet6to4.htm">IPv6 Traffic Between Nodes in Different Sites Across the Internet (6to4)</A>.</P>
+</TD>
+</TR>
+</table></div>
+
+<P>Applications that use the addresses associated with these methods are using the same Windows Sockets functions as if global IPv6 addresses and an IPv6 infrastructure were being used. </P>
+
+<H2 class="dtH2">Using Intrasite Automatic Tunnel Addressing Protocol (ISATAP) Addresses</H2>
+
+<P>ISATAP addresses use the locally administered interface ID ::0:5EFE:w.x.y.z where: 
+
+<UL type="disc">
+	<LI>The 0:5EFE portion is formed from the combination of the Organizational Unit Identifier (OUI) assigned to the Internet Assigned Numbers Authority (IANA) (00-00-5E), and a type that indicates an embedded IPv4 address (FE). </li>
+
+	<LI>The w.x.y.z portion is any unicast IPv4 address, which includes both public and private addresses. </li>
+</UL>
+
+<P>The ISATAP interface ID can be combined with any 64-bit prefix that is valid for IPv6 unicast addresses. This includes the link-local address prefix (FE80::/64), and global prefixes.</P>
+
+<P>Like 6to4 addresses, ISATAP addresses contain an embedded IPv4 address. When ISATAP-addressed IPv6 traffic is sent across an IPv4 network, this IPv4 address is used to determine either the source or destination IPv4 addresses within the IPv4 header.</P>
+
+<P>By default, the IPv6 protocol for Windows CE automatically configures the ISATAP address of FE80::5EFE:w.x.y.z on the Automatic Tunneling Pseudo-Interface for each IPv4 address that is assigned to the node. This link-local ISATAP address allows two hosts to communicate over an IPv4 network by using each other's ISATAP addresses.</P>
+
+<H2 class="dtH2">An Example of ISATAP Process</H2>
+
+<P>In this example, Host A is configured with the IPv4 address of 10.40.1.29 and Host B is configured with the IPv4 address of 192.168.41.30. 
+
+<OL type="1">
+	<LI>When the IPv6 protocol for Windows CE is started, Host A is automatically configured with the ISATAP address of FE80::5EFE:10.40.1.29 and Host B is automatically configured with the ISATAP address of FE80::5EFE:192.168.41.30. </li>
+
+	<LI>Host A sends IPv6 traffic to Host B by using Host B's ISATAP address. The following table shows the source and destination addresses for the IPv4 and IPv6 headers. <div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=42%>Field</TH>
+<TH width=58%>Value</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>Source address in IPv6 header</TD>
+<TD width=58%>FE80::5EFE:10.40.1.29 </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>Destination address in IPv6 header</TD>
+<TD width=58%>FE80::5EFE:192.168.41.30 </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>Source address in IPv4 header</TD>
+<TD width=58%>10.40.1.29 </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>Destination address in IPv4 header </TD>
+<TD width=58%>192.168.41.30 </TD>
+</TR>
+</table></div>
+</li>
+
+	<LI>To test connectivity, use the <B>ping</B> command with the -6 parameter. 
+<P>For example, Host A would use the following command to ping Host B by using its link-local ISATAP address: <B>ping &#0150;6 FE80::5EFE:192.168.41.30%2</B>.
+
+<P>The %<I>ScopeID</I> portion of the command is used to specify the interface index of the interface from which traffic is sent. In this case, %2 specifies interface 2, which is the interface ID assigned to the Automatic Tunneling Pseudo-Interface on Host A.
+</li>
+</OL>
+
+<H2 class="dtH2">Configuring ISATAP for IPv6 Hosts on Other Sites</H2>
+
+<P>The use of link-local ISATAP addresses allows IPv6/IPv4 hosts on an IPv4 intranet to communicate with each other, but not with other IPv6 hosts outside of the site. The following table shows the additional configuration required to communicate outside of the site.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Configuration Requirement</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>A host must receive a router advertisement from the site border router that contains a global address prefix. </TD>
+<TD width=64%>The site border router, most often a 6to4 router, is the router between the intranet and the Internet or test Internet (6bone). Upon receiving the router advertisement, additional ISATAP addresses that are based on the global prefix are automatically added. 
+<P>For example, if the site is connected to the 6bone and Host A receives the global prefix of 3000::/64 in a router advertisement, the ISATAP address of 3000::5EFE:10.40.1.29 is automatically configured. </P>
+
+<P>Without a global address prefix and 6bone connection, a site can use a 6to4-based global address prefix and the IPv4 Internet to connect to other 6to4 sites, 6to4 hosts, and the 6bone. For example, if the site is using the 6to4 address prefix of 2002:836B:1:5::/64 (based on the public address of 131.107.0.1 and an SLA ID of 5), the ISATAP address of 2002:836B:1:5:0:5EFE:10.40.1.29 is automatically configured.</P>
+
+<P>There is currently no mechanism for propagating the router advertisement from the site border router to ISATAP hosts across an IPv4 network. You must manually configure a global ISATAP address in the router. For information about how to manually configure the router, see the documentation for the router. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>A host must have a default route, pointing to an ISATAP address that corresponds to the intranet interface of the site border router. </TD>
+<TD width=64%>For example, if the intranet interface of the site border router is configured with the IPv4 address of 172.16.0.1, Host A must be configured with a default route (::/0) that uses the ISATAP address of FE80::5EFE:172.16.0.1 as the next-hop address. As a result, all IPv6 traffic that matches this default route as the closest matching route is encapsulated and forwarded to the site border router. The site border router then forwards the traffic. If the site border router is a 6to4 router, it encapsulates the IPv6 traffic and forwards it on the Internet. You must manually configure a global ISATAP address in the site router. For information about how to manually configure the router, see the documentation for the router. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conipv6configurations.htm">IPv6 Implementations</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IPv6%20Traffic%20Between%20Nodes%20on%20Different%20Subnets%20of%20an%20IPv4%20Internetwork (wce50conipv6trafficbetweennodesondifferentsubnetsofanipv4internetwork.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

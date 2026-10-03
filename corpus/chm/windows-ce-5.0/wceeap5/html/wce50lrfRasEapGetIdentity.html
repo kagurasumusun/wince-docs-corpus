@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>RasEapGetIdentity</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfraseapgetidentity"></A>RasEapGetIdentity</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is called by RAS to obtain identity information for the user requesting authentication.</P>
+
+<PRE class="syntax"><B>DWORD</B> <B>RasEapGetIdentity(</B>
+  <B>DWORD</B> <I>dwEapTypeId</I><B>, </B>
+  <B>HWND</B>  <I>hwndParent</I><B>, </B>
+  <B>DWORD</B> <I>dwFlags</I><B>, </B>
+  <B>const WCHAR* </B><I>pwszPhonebook</I><B>, </B>
+  <B>const WCHAR* </B><I>pwszEntry</I><B>, </B>
+  <B>BYTE* </B><I>pConnectionDataIn</I><B>,</B> 
+  <B>DWORD</B>  <I>dwSizeOfConnectionDataIn</I><B>, </B>
+  <B>BYTE* </B><I>pUserDataIn</I><B>, </B>
+  <B>DWORD</B>  <I>dwSizeOfUserDataIn</I><B>, </B>
+  <B>BYTE** </B><I>ppUserDataOut</I><B>, </B>
+  <B>DWORD* </B><I>pdwSizeOfUserDataOut</I><B>, </B>
+  <B>WCHAR** </B><I>ppwszIdentity</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwEapTypeId</I></DT>
+
+<DD>[in] Authentication protocol for which to invoke the identity user interface (UI). </dd>
+
+<DT><I>hwndParent </I></DT>
+
+<DD>[in] Handle to the parent window for the UI dialog. If the <I>dwFlags</I> parameter contains the RAS_EAP_FLAG_NON_INTERACTIVE flag, then <I>hwndParent</I> is NULL.</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Specifies zero or more of the following flags that qualify the authentication process.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=45%>Flag</TH>
+<TH width=55%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>RAS_EAP_FLAG_ROUTER</TD>
+<TD width=55%>Specifies that the computer that is dialing in is a router. The absence of this flag indicates that the computer dialing in is a RAS client. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>RAS_EAP_FLAG_NON_INTERACTIVE</TD>
+<TD width=55%>Specifies that the authentication protocol should not bring up a UI. If the authentication protocol is unable to determine the identity from the data supplied, it should return an error. If this flag is specified, the <I>hwndParent</I> parameter will be NULL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>RAS_EAP_FLAG_LOGON</TD>
+<TD width=55%>Specifies that the user data is obtained when logging onto the local system, that is from Winlogon.exe.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>RAS_EAP_FLAG_PREVIEW</TD>
+<TD width=55%>Specifies that the user should be prompted for identity information before dialing.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>RAS_EAP_FLAG_FIRST_LINK</TD>
+<TD width=55%>Indicates that this connection is the first link in a multilink connection. </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pwszPhonebook</I></DT>
+
+<DD>[in] Pointer to a Unicode string that specifies the full path of the phone-book (PBK) file. If this parameter is NULL, the function uses the system phone book.</dd>
+
+<DT><I>pwszEntry</I></DT>
+
+<DD>[in] Pointer to a Unicode string that specifies an existing entry name.</dd>
+
+<DT><I>pConnectionDataIn</I></DT>
+
+<DD>[in] Pointer to the connection-specific data currently stored in the phone-book entry. </dd>
+
+<DT><I>dwSizeOfConnectionDataIn</I></DT>
+
+<DD>[in] Specifies the size of the connection-specific data currently stored in the phone-book entry. </dd>
+
+<DT><I>pUserDataIn</I></DT>
+
+<DD>[in] Pointer to the user-specific data currently stored for this user in the registry. </dd>
+
+<DT><I>dwSizeOfUserDataIn</I></DT>
+
+<DD>[in] Specifies the size of the user-specific data currently stored for this user in the registry. </dd>
+
+<DT><I>ppUserDataOut</I></DT>
+
+<DD>[out] Pointer to a pointer that, on successful return, points to the identity data for the user. This data will be passed to the authentication protocol in the <B>pUserData</B> member of the <A HREF="wce50lrfpppeapinput.htm">PPP_EAP_INPUT</A> structure during the call to the <A HREF="wce50lrfraseapbegin.htm">RasEapBegin</A> function
+
+<P>The authentication protocol should allocate the memory buffer for the identity data. RAS will free this memory by calling the <A HREF="wce50lrfraseapfreememory.htm">RasEapFreeMemory</A> function.
+</dd>
+
+<DT><I>pdwSizeOfUserDataOut</I></DT>
+
+<DD>[out] Pointer to a <B>DWORD</B> variable that receives the size of the data pointed to by the <I>ppUserDataOut</I> parameter.</dd>
+
+<DT><I>ppwszIdentity</I></DT>
+
+<DD>[out] Pointer to a pointer that, on successful return, points to a Unicode string that identifies the user requesting authentication. This string will be passed to the authentication protocol in the <B>pszIdentity</B> member of <B>PPP_EAP_INPUT</B> during the call to <B>RasEapBegin</B>.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function call succeeds, the return value is NO_ERROR.</P>
+
+<P>If the function is unable to allocate memory for the user data, it will return ERROR_NOT_ENOUGH_MEMORY.</P>
+
+<P>If the function is called with the RAS_EAP_FLAG_NON_INTERACTIVE flag, but must invoke a user interface to determine the user's identity, the function should return ERROR_INTERACTIVE_MODE.</P>
+
+<P>If the function call fails in some other way, it returns an appropriate error code from Winerror.h, Raserror.h, or Mprerror.h.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The dynamic-link library (DLL) that implements the <B>RasEapGetIdentity</B> and <B>RasEapFreeMemory</B> functions may support more than one authentication protocol. The <I>dwEapTypeId</I> parameter specifies for which protocol to invoke the identity user interface.</P>
+
+<P>The authentication protocol receives the data returned from <B>RasEapGetIdentity</B> in the <B>pUserData</B> member of the <B>PPP_EAP_INPUT</B> structure during the call to <B>RasEapBegin</B>. To store the data for this user in the registry, the authentication protocol should set the <B>pUserData</B> member of the <B>PPP_EAP_OUTPUT</B> structure to point to the data, and the <B>fSaveUserData</B> member of <B>PPP_EAP_OUTPUT</B> to TRUE. </P>
+
+<P>This function is called by the <B>RasGetEapUserIdentity</B> function.</P>
+
+<P>If <B>RasEapGetIdentity</B> displays a user interface, the user interface must support WMCOMMAND messages where LOWORD (<I>wParam</I>) equals IDCANCEL.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Raseapif.h.<BR>
+<B>Link Library:</B> This function is called by the EAP module, not by the application. Therefore, no link library is exposed. For more information, see <A HREF="wce50coneapimplementationdetails.htm">EAP Implementation Details</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conobtainingidentityinformation.htm">Obtaining Identity Information</A> | <A HREF="wce50lrfraseapfreememory.htm">RasEapFreeMemory</A> | <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A> | <A HREF="wce50lrfpppeapinput.htm">PPP_EAP_INPUT</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: RasEapGetIdentity (wce50lrfraseapgetidentity.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

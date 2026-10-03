@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpGrammarBuilder</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispgrammarbuilder"></A>ISpGrammarBuilder</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This interface exposes the back end of the SAPI context-free grammar (CFG) compiler. These methods can be used to programmatically construct grammars (for example, implement a grammar compiler).</P>
+
+<H4 class="dtH4">When To Implement</H4>
+
+<P>Applications should use this interface to change dynamically loaded grammars (see <A HREF="wce50lrfisprecogrammar.htm">ISpRecoGrammar</A>) and to change previously compiled binary grammars (see <A HREF="wce50lrfispgramcompbackend.htm">ISpGramCompBackend</A>).</P>
+
+<H4 class="dtH4">Methods</H4>
+
+<P>The following table shows the methods for the <B>ISpGrammarBuilder</B> interface.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Method</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuilderaddresource.htm">AddResource</A></TD>
+<TD width=50%>Adds a resource (name and string value) to the grammar rule specified in <I>hRuleState</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuilderaddruletransition.htm">AddRuleTransition</A></TD>
+<TD width=50%>Adds a rule (reference) transition from one grammar rule to another.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuilderaddwordtransition.htm">AddWordTransition</A></TD>
+<TD width=50%>Adds a word or a sequence of words to the grammar.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuilderclearrule.htm">ClearRule</A></TD>
+<TD width=50%>Removes all grammar rule information except for the rule's initial state handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuildercommit.htm">Commit</A></TD>
+<TD width=50%>Performs consistency checks of the grammar structure, creates the serialized format and either saves it to the stream provided by <B>SetSaveObjects</B>, or reloads it into the SR engine.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuildercreatenewstate.htm">CreateNewState</A></TD>
+<TD width=50%>Creates a new state in the same grammar rule as <I>hState</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuildergetrule.htm">GetRule</A></TD>
+<TD width=50%>Gets a grammar rule's initial state information (and defines the rule if requested).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><A HREF="wce50lrfispgrammarbuilderresetgrammar.htm">ResetGrammar</A></TD>
+<TD width=50%>Clears all grammar rules (undefines them) and resets the grammar language. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code example illustrates an implementation of the <B>ISpGrammarBuilder</B> interface.</P>
+
+<PRE class="code">// HRESULT checking code omitted.
+SPSTATEHANDLE hStateTravel;
+hr = pGrammarBuilder-&gt;GetRule(L"Travel",
+  0, 
+  SPRAF_TopLevel | SPRAF_Active,
+  TRUE,
+  &amp;hStateTravel);
+
+// Approach 1: List all possible phrases.
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, NULL, 
+  L"fly to Seattle",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, NULL, 
+  L"fly to New York",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, NULL, 
+  L"fly to Washington DC",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, NULL,
+  L"drive to Washington DC",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, NULL,
+  L"drive to New York",
+  L" ", SPWT_LEXICAL, 1, NULL);
+// This is the most intuitive approach, and it does not
+// sacrifice efficiency because the grammar builder will 
+// merge shared subphrases when possible.
+
+// Approach 2: Construct the directed-graph using intermediate states.
+SPSTATEHANDLE hStateTravel1;
+hr = pGrammarBuilder-&gt;CreateNewState(hStateTravel, &amp;hStateTravel1);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, hStateTravel1,
+  L"fly to",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, hStateTravel1,
+  L"drive to",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel, hStateTravel1,
+  L"take train to",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel1, NULL,
+  L"Seattle",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel1, NULL, 
+  L"New York",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateTravel1, NULL,
+  L"Washington DC",
+  L" ", SPWT_LEXICAL, 1, NULL);
+// This approach gives you more control of the grammar layout, and can be
+// easier to implement when you have some combinations.
+
+// Approach 3: Using subrules.
+SPSTATEHANDLE hStateMethod;
+SPSTATEHANDLE hStateDest;
+hr = pGrammarBuilder-&gt;GetRule(L"Method", 0, 0, TRUE, &amp;hStateMethod);
+hr = pGrammarBuilder-&gt;GetRule(L"Dest", 0, SPRAF_Dynamic, TRUE, &amp;hStateDest);
+// Dynamic rules can be modified after commit and reload.
+
+SPSTATEHANDLE hStateTravel2;
+hr = pGrammarBuilder-&gt;CreateNewState(hStateTravel, &amp;hStateTravel2);
+hr = pGrammarBuilder-&gt;AddRuleTransition(hStateTravel, hStateTravel2,
+  hStateMethod, 1, NULL);
+hr = pGrammarBuilder-&gt;AddRuleTransition(hStateTravel2, NULL,
+  hStateDest, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateMethod, NULL,
+  L"fly to",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateMethod, NULL,
+  L"drive to",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateMethod, NULL,
+  L"take train to",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateDest, NULL,
+  L"Seattle",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateDest, NULL, 
+  L"New York",
+  L" ", SPWT_LEXICAL, 1, NULL);
+hr = pGrammarBuilder-&gt;AddWordTransition(hStateDest, NULL,
+  L"Washington DC",
+  L" ", SPWT_LEXICAL, 1, NULL);
+// This approach lets you structure the grammars and is useful
+// when building large grammars.
+
+// Must commit before using the grammar.
+hr = pGrammarBuilder-&gt;Commit(0);</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpGrammarBuilder (wce50lrfispgrammarbuilder.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

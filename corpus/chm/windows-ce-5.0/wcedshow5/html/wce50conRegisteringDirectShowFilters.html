@@ -1,0 +1,332 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registering DirectShow Filters</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoCreateInstance">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfDllRegisterServer">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conregisteringdirectshowfilters"></A>Registering DirectShow Filters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This topic describes how to make a DirectShow filter self-registering. It addresses the following subjects:
+
+<UL type="disc">
+	<LI><A HREF="#wce50conregisteringdirectshowfiltersanchor1">Layout of the Registry Keys</A></li>
+
+	<LI><A HREF="#wce50conregisteringdirectshowfiltersanchor2">Registering a Filter</A></li>
+
+	<LI><A HREF="#wce50conregisteringdirectshowfiltersanchor3">Unregistering a Filter</A></li>
+</UL>
+
+<P>This topic does not describe how to create a DLL. For information about creating DLLs, see <A HREF="wce50concreatingadllindirectshow.htm">Creating a DLL in DirectShow</A>.</P>
+
+<H2 class="dtH2"><A NAME="wce50conregisteringdirectshowfiltersanchor1"></A>Layout of the Registry Keys</H2>
+
+<P>The DLL that contains the filter is registered as the filter's COM server. When an application calls <A HREF="JavaScript:hhobj_1.Click()">CoCreateInstance</A> to create the filter, the Microsoft Windows COM library uses this registry entry to locate the DLL. </P>
+
+<P>The registry entry for the DLL is as follows. See %_WINCEROOT%\Public\DirectX\Oak\Files\DirectX.reg for further examples.</P>
+
+<P>DirectShow filter DLLs are registered by their class ID values. The complete registry entry for a DirectShow filter DLL begins with the <B>HKEY_CLASSES_ROOT\CLSID\</B><I>&lt;Filter CLSID&gt;</I> key. The following table shows the values for this key.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value : type</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>@</B> : REG_SZ</TD>
+<TD width=50%>No default setting. The value of the <I>&lt;Filter CLSID&gt;</I> subkey is the friendly name of the filter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>Merit</B> : REG_DWORD</TD>
+<TD width=50%>Filter merit value. Filters with higher merit values are enumerated first.</TD>
+</TR>
+</table></div>
+
+<P>The registry key for the filter DLL's file is <B>HKEY_CLASSES_ROOT\CLSID\</B><I>&lt;Filter CLSID&gt;</I><B>\InprocServer32</B>. The following table shows the values for this key.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value : type</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>@</B> : REG_SZ</TD>
+<TD width=50%>No default setting. This is the file name of the filter DLL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>ThreadingModel </B>: REG_SZ</TD>
+<TD width=50%>You must set this value to "Both".</TD>
+</TR>
+</table></div>
+
+<P>Each filter pin is registered with its own registry key. The registry key for a pin is <B>HKEY_CLASSES_ROOT\CLSID\</B><I>&lt;Filter CLSID&gt;</I><B>\Pins\</B><I>&lt;Pin Name&gt;</I>. Many filters just use a single input pin named "Input" and a single output pin named "Output". The following table shows the possible values for a filter pin subkey.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value : type</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>Direction</B> : REG_DWORD</TD>
+<TD width=50%>No default setting. Set this value to 0 for input pins and 1 for output pins.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>IsRendered</B> : REG_DWORD</TD>
+<TD width=50%>No default setting. Set this value to 0 if the pin renders its data and set to 1 if it does not.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>AllowedZero</B> : REG_DWORD</TD>
+<TD width=50%>No default setting. Set this value to 0 if the filter requires this pin to be connected and set to 1 if it does not.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>AllowedMany</B> : REG_DWORD</TD>
+<TD width=50%>No default setting. Set this value to 0 if the filter can only have a single pin of this type and set to 1 if it can have many pins of this type.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>ConnectsToPin</B> : REG_SZ</TD>
+<TD width=50%>No default setting. Set this value to the name of the pin that this pin connects to. </TD>
+</TR>
+</table></div>
+
+<P>To register a media type and subtype that a pin supports, create the registry key <B>HKEY_CLASSES_ROOT\CLSID\</B><I>&lt;Filter CLSID&gt;</I><B>\Pins\</B><I>&lt;Pin Name&gt;</I><B>\Types\{</B><I>&lt;Major type GUID&gt;</I><B>}\{</B><I>&lt;Subtype GUID&gt;</I><B>}</B>. Use a subtype GUID of 00000000-0000-0000-0000-000000000000 (GUID_NULL) to indicate that the pin can be queried to accept connections with any subtype within the major type. A pin can have multiple entries for the <B>Types</B> subkey and a filter can have multiple pins.</P>
+
+<P>The graph builder tries to assemble the correct filters to play back a specified source media during the intelligent connect process in the <A HREF="wce50lrfigraphbuilderrenderfile.htm">IGraphBuilder::RenderFile</A> method. For more information, see <A HREF="wce50congraphbuildingwithintelligentconnect.htm">Graph Building with Intelligent Connect</A>. The graph builder enumerates the filter CLSIDs listed under the <B>HKEY_CLASSES_ROOT\Filter\</B><I>&lt;Filter CLSID&gt;</I> registry key to find candidates for the filter graph. The following table shows the allowable values for this key.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value : type</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>@</B> : REG_SZ</TD>
+<TD width=50%>No default setting. The value of the <I>&lt;Filter CLSID&gt;</I> subkey is the friendly name of the filter.</TD>
+</TR>
+</table></div>
+
+<P>The <B>HKEY_CLASSES_ROOT\CLSID\</B><I>&lt;Filter CLSID&gt;</I> registry key and subkeys are required to expose your filter to DirectShow and therefore make it available to applications through COM interfaces. The <B>HKEY_CLASSES_ROOT\Filter\</B><I>&lt;Filter CLSID&gt;</I> is only required if you want to make your filter to be discoverable by the intelligent connect process.</P>
+
+<P>The following example shows a filter graph registry entry from DirectX.reg.</P>
+
+<PRE class="code">; DV Video Codec
+
+[HKEY_CLASSES_ROOT\Filter\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}]
+@="DV Video Decoder"
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}]
+@="DV Video Decoder"
+"Merit"=dword:00600000
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\InprocServer32]
+@="quartz.DLL"
+"ThreadingModel"="Both"
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins]
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Input]
+"Direction"=dword:00000000
+"IsRendered"=dword:00000000
+"AllowedZero"=dword:00000000
+"AllowedMany"=dword:00000000
+"ConnectsToPin"="Output"
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Input\Types]
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Input\Types\{73646976-0000-0010-8000-00AA00389B71}]
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Input\Types\{73646976-0000-0010-8000-00AA00389B71}\]
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Input\Types\{73646976-0000-0010-8000-00AA00389B71}\{00000000-0000-0000-0000-000000000000}]
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Output]
+"Direction"=dword:00000001
+"IsRendered"=dword:00000000
+"AllowedZero"=dword:00000000
+"AllowedMany"=dword:00000000
+"ConnectsToPin"="Input"
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Output\Types]
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Output\Types\{73646976-0000-0010-8000-00AA00389B71}]
+
+[HKEY_CLASSES_ROOT\CLSID\{B1B77C00-C3E4-11cf-AF79-00AA00B67A42}\Pins\Output\Types\{73646976-0000-0010-8000-00AA00389B71}\{00000000-0000-0000-0000-000000000000}]</PRE>
+
+<H2 class="dtH2"><A NAME="wce50conregisteringdirectshowfiltersanchor2"></A>Registering a Filter</H2>
+
+<P>One can either register filters statically at run-time image creation time by adding appropriate entries to the Platform.reg file or dynamically as follows. Note that if the registry on the device in not in non-volatile RAM and one is registering filters dynamically, that regsrv32.exe must be explicitly called every time the registry information is lost or the filters will not be found by <A HREF="wce50lrfigraphbuilderrenderfile.htm">RenderFile</A> and COM.</P>
+
+<P class="labelproc"><B>To register a filter</B>
+
+<OL type="1">
+	<LI>Declare filter information. </li>
+
+	<LI>In the factory template for the filter, include a pointer to the filter information. </li>
+
+	<LI>Implement the <A HREF="JavaScript:hhobj_2.Click()">DllRegisterServer</A> function. </li>
+</OL>
+
+<P>The sections that follow describe these steps in detail.</P>
+
+<H4 class="dtH4">Declare Filter Information</H4>
+
+<P>The first step is to declare the filter information. DirectShow defines a set of structures for describing filters, pins, and media types.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Structure</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>AMOVIESETUP_FILTER</TD>
+<TD width=65%>Describes a filter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>AMOVIESETUP_PIN</TD>
+<TD width=65%>Describes a pin.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>AMOVIESETUP_MEDIATYPE</TD>
+<TD width=65%>Describes a media type.</TD>
+</TR>
+</table></div>
+
+<P>These structures are nested. The AMOVIESETUP_FILTER structure has a pointer to an array of AMOVIESETUP_PIN structures, and each AMOVIESETUP_PIN structure has a pointer to an array of AMOVIESETUP_MEDIATYPE structures.</P>
+
+<P>The structures provide enough information for the <A HREF="wce50lrfifiltermapperinterface.htm">IFilterMapper</A> interface to locate a filter. They are not a complete description of a filter. For example, if the filter creates multiple instances of the same pin, declare one AMOVIESETUP_PIN structure for that pin. Also, a filter is not required to support every combination of media types that it registers. </P>
+
+<P>Declare these structures as global variables within your DLL. The following example shows a filter with one output pin.</P>
+
+<PRE class="code">static const WCHAR g_wszName[] = L"Some Filter";
+
+AMOVIESETUP_MEDIATYPE sudMediaTypes[] = {
+    { &amp;MEDIATYPE_Video, &amp;MEDIASUBTYPE_RGB24 },
+    { &amp;MEDIATYPE_Video, &amp;MEDIASUBTYPE_RGB32 },
+};
+
+AMOVIESETUP_PIN sudOutputPin = {
+    L"Output",      // Pin string name.
+    FALSE,          // Is this pin rendered?
+    TRUE,           // Is it an output pin?
+    FALSE,          // Can the filter create zero instances?
+    FALSE,          // Does the filter create multiple instances?
+    &amp;GUID_NULL,     // Connects to filter.
+    NULL,           // Connects to pin.
+    2,              // Number of media types.
+    sudMediaTypes   // Pointer to media types.
+};
+
+AMOVIESETUP_FILTER sudFilterReg = {
+    &amp;CLSID_SomeFilter,      // Filter CLSID.
+    g_wszName,              // Filter name.
+    MERIT_NORMAL,           // Merit.
+    1,                      // Number of pin types.
+    &amp;sudPins                // Pointer to pin information.
+};</PRE>
+
+<P>The filter name is declared as a static global variable, because it will be used again elsewhere.</P>
+
+<P>Your filter must also override the base class <B>GetSetupData</B> method to return the setup data structure as shown.</P>
+
+<PRE class="code">LPAMOVIESETUP_FILTER CSomeFilter::GetSetupData() 
+{
+    return (LPAMOVIESETUP_FILTER) &amp; sudFilterReg;
+}</PRE>
+
+<H4 class="dtH4">Declare the Factory Template</H4>
+
+<P>The next step is to declare the factory template for your filter. A factory template is a C++ class that contains information for the class factory. In your DLL, declare a global array of factory templates, one for each filter or COM component in your DLL. The array must be named <I>g_Templates</I>. For more information about factory templates, see <A HREF="wce50concreatingadllindirectshow.htm">Creating a DLL in DirectShow</A>.</P>
+
+<P>The <B>m_pAMovieSetup_Filter</B> member of the factory template is a pointer to the <B>AMOVIESETUP_FILTER</B> structure described previously. The following example shows a factory template, using the structure given in the previous example.</P>
+
+<PRE class="code">CFactoryTemplate g_Templates[] =
+{
+    {
+        g_wszName,                      // Name.
+        &amp;CLSID_SomeFilter,              // CLSID.
+        CSomeFilter::CreateInstance,    // Creation function.
+        NULL,
+        &amp;sudFilterReg                   // Pointer to filter information.
+    }
+};
+int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);</PRE>
+
+<H4 class="dtH4">Implement DllRegisterServer</H4>
+
+<P>The final step is to implement the <B>DllRegisterServer</B> function. The DLL that contains the component must export this function. The function will be called by a set-up application, or when the user runs the Regsvr32.exe tool.</P>
+
+<P>The following example shows a minimal implementation of <B>DllRegisterServer</B>.</P>
+
+<PRE class="code">STDAPI DllRegisterServer(void)
+{
+    return AMovieDLLRegisterServer(TRUE);
+}</PRE>
+
+<P>The DirectShow function <A HREF="wce50lrfamoviedllregisterserver.htm">AMovieDLLRegisterServer</A> creates registry entries for every component declared in the <I>g_Templates</I> array.</P>
+
+<P>Filter categories introduced with <B>AMovieDLLRegisterServer2</B> are not currently supported on Windows CE.</P>
+
+<H2 class="dtH2"><A NAME="wce50conregisteringdirectshowfiltersanchor3"></A>Unregistering a Filter</H2>
+
+<P>To unregister a filter, implement the <B>DllUnregisterServer</B> function. Within this function, call the DirectShow function <A HREF="wce50lrfamoviedllunregisterserver.htm">AMovieDLLUnregisterServer</A>. </P>
+
+<P>The following example shows how to unregister a filter.</P>
+
+<PRE class="code">STDAPI DllUnregisterServer()
+{
+    return AMovieDLLUnRegisterServer();
+}</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Registering%20DirectShow%20Filters (wce50conregisteringdirectshowfilters.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

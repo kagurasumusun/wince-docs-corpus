@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Control Distributors</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concontroldistributors"></A>Control Distributors</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A control distributor is a PID that is used to control the data flow in the filter graph; for example, starting or stopping playback of a media stream. The standard control distributors supplied with DirectShow directly implement their distribution. </P>
+
+<P>These distributors make the following assumptions: 
+
+<UL type="disc">
+	<LI>Applications that connect filters directly without informing the filter graph manager will get unexpected results if they also use the distributors of the filter graph manager. 
+<P>For example, a deadlock might occur if an application calls a filter's <A HREF="wce50lrfimediafilterrun.htm">IBaseFilter::Run</A> method directly, because the filter graph manager contains a distributor that implements <A HREF="wce50lrfimediacontrolrun.htm">IMediaControl::Run</A> and passes calls on to each filter's <B>IBaseFilter::Run</B> method. 
+</li>
+
+	<LI>Properties that can be aggregated directly can be read and written to through the control interface, even when exposed by multiple filters. For example, duration can be reported as the longest of all individual durations, with all streams treated as running in parallel. </li>
+
+	<LI>Where a property is exposed by several different filters, applications will either use the filter graph manager to set and get the property or will communicate with the individual filters, but will not mix the two methods. 
+<P>An application that communicates with two audio renderers to reset the volume and then queries the <A HREF="wce50lrfibasicaudiointerface.htm">IBasicAudio</A> implementation of the filter graph manager for the volume, will get undefined results. 
+
+<P>(In practice, it will probably retrieve the <B>Volume</B> property of the first audio renderer with no attempt to combine this with the other stream.) 
+
+<P>If the application sets the property through the interface of the filter graph manager, the same value will be set to all the individual filters that expose it. 
+</li>
+
+	<LI>The filter graph manager will expose the <A HREF="wce50lrfimediacontrolinterface.htm">IMediaControl</A> interface (through a non-replaceable distributor) as the main application method for starting and stopping graphs. This is a slightly higher-level, more simplified interface than <A HREF="wce50lrfimediafilterinterface.htm">IMediaFilter</A> and is suitable for Automation clients and applications. 
+<P>The <B>IMediaFilter</B> implementation on the filter graph manager should not be called by applications. <B>IMediaControl</B> is implemented by calling the <B>IMediaFilter</B> interface implemented by the filter graph manager and by individual filters. Individual filters expose <B>IMediaFilter</B> through the <A HREF="wce50lrfibasefilterinterface.htm">IBaseFilter</A> interface, which inherits it. 
+</li>
+</UL>
+
+<P>PIDs must keep track of the filters in the filter graph. This is done by implementing the <A HREF="wce50lrfidistributornotifyinterface.htm">IDistributorNotify</A> interface on the distributor. <B>IDistributorNotify</B> has the same <A HREF="wce50lrfidistributornotifyrun.htm">Run</A>, <A HREF="wce50lrfidistributornotifypause.htm">Pause</A>, and <A HREF="wce50lrfidistributornotifystop.htm">Stop</A> methods as <B>IMediaFilter</B>, all of which are called before the calling the filter. It also has a <A HREF="wce50lrfidistributornotifynotifygraphchange.htm">IDistributorNotify::NotifyGraphChange</A> method, which notifies the distributor when any filters are added or removed from the filter graph, or connections change. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Control%20Distributors (wce50concontroldistributors.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

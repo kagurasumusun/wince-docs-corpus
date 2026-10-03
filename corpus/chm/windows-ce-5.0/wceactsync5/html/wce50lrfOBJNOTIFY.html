@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>OBJNOTIFY</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfobjnotify"></A>OBJNOTIFY</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure is used to notify the Microsoft ActiveSync&reg; service provider that an object in the Windows CE file system has changed or been deleted.</P>
+
+<PRE class="syntax"><B>typedef struct tagObjNotify {</B>
+  <B>UINT</B> <I>cbStruct</I><B>;</B>
+  <B>OBJTYPENAME</B> <I>szObjType</I> <I>[MAX_OBJTYPE_NAME]</I><B>;</B>
+  <B>UINT</B> <I>uFlags</I><B>;</B>
+  <B>UINT</B> <I>uPartnerBit</I><B>;</B>
+  <B>CEOID</B> <I>oidObject</I><B>;</B>
+  <B>CEOIDINFO</B> <I>oidInfo</I><B>;</B>
+  <B>UINT</B> <I>cOidChg</I><B>;</B>
+  <B>UINT</B> <I>cOidDel</I><B>;</B>
+  <B>UINT* </B><I>poid</I><B>;</B>
+<B>} OBJNOTIFY</B>, <B>*POBJNOTIFY;</B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>cbStruct</B></DT>
+
+<DD>[in] Size of the structure, in bytes.</dd>
+
+<DT><B>szObjType</B></DT>
+
+<DD>[in] Null-terminated string that contains the name of the object type.</dd>
+
+<DT><B>uFlags</B></DT>
+
+<DD>[in] Unsigned integer that contains one of the following values.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Value</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_FILE</TD>
+<TD width=67%>The object is a file.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_DIRECTORY</TD>
+<TD width=67%>The object is a directory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_DATABASE</TD>
+<TD width=67%>The object is a database.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_RECORD</TD>
+<TD width=67%>The object is a record.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_CHANGED</TD>
+<TD width=67%>Set if the file system object is changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_DELETED</TD>
+<TD width=67%>Set if the file system object is deleted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_CLEAR_CHANGE</TD>
+<TD width=67%>Client should clear the change bit for the object whose object identifier is pointed at by <I>poid</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_CALL_BACK</TD>
+<TD width=67%>[out] Client asks server to call ObjectNotify two seconds later.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ONF_CALLING_BACK</TD>
+<TD width=67%>Set if this call is a result of ONF_CALL_BACK being set earlier.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>uPartnerBit</B></DT>
+
+<DD>[in] Specifies either 1 if the desktop currently connected is partner #1 or 2 if the desktop is partner #2.</dd>
+
+<DT><B>oidObject</B></DT>
+
+<DD>[in] Object identifier of the file system object, representing a file, a database, or a database record.</dd>
+
+<DT><B>oidInfo</B></DT>
+
+<DD>[in] Stores information about the object if the object has not been deleted.</dd>
+
+<DT><B>cOidChg</B></DT>
+
+<DD>[out] When ONF_CHANGED is set, this is the number of OIDs that should be replicated. Set to 0 if no object should be replicated because of this change.
+
+<P>When both ONF_CHANGED and ONF_DELETED are not set, this is the number of OIDs in the first part of the list for objects that are changed.
+</dd>
+
+<DT><B>cOidDel</B></DT>
+
+<DD>[out] When ONF_DELETED is set, this is the number of deleted OIDs that should be replicated. Set to 0 if no object should be replicated because of this delete.
+
+<P>When both ONF_CHANGED and ONF_DELETED are not set, this is the number of object identifiers in the later part of the list for objects that are not changed.
+</dd>
+
+<DT><B>poid</B></DT>
+
+<DD>[out] Pointer to an array of object identifiers that should be marked as needed for replication. The first <I>cOidChg</I> elements are for the changed objects, the last <I>cOidDel</I> elements are for the deleted objects. Memory pointed to by this pointer is owned by the ActiveSync service provider. It will not be freed by replication.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This structure is passed to the <B>ObjectNotify</B> function to inform the provider that an event that changes or deletes an object in the Windows CE file system has occurred. The provider should return, by means of this structure, how many replication objects have changed or been deleted because of this change or deletion to a file system object.</P>
+
+<P>When ONF_CHANGED is set, <I>cOidChg</I> is the number of object identifiers in the list that should be synchronized (<I>cOidDel </I>is not used).</P>
+
+<P>When ONF_DELETED is set, <I>cOidDel</I> is the number of deleted object identifiers in the list that should be synchronized (<I>cOidChg</I> is not used).</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Earlier versions of Windows CE assigned OIDs to objects in other file systems, such as the FAT file system. These OIDs were guaranteed to be unique within a volume, but not across multiple volumes. Effective with version 3.0, only objects in the object store have valid, unique OIDs and the object store is the only volume that can return an object identifier.</BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Cesync.h.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: OBJNOTIFY (wce50lrfobjnotify.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

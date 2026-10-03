@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Defining ActiveSync Objects</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condefiningactivesyncobjects"></A>Defining ActiveSync Objects</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>ActiveSync service providers are almost always written to synchronize objects, rather than whole files, because it is virtually impossible to rationally synchronize two versions of the same file when both have changed.</P>
+
+<P>Consider a file containing contact information. During synchronization, if the version on the Windows CE-based device has a new time stamp, but the version on the desktop does not, you can reasonably assume the Windows CE-based device version is the one that changed.</P>
+
+<P>But if both files have new time stamps, how do you decide what the differences between the files mean? If one file has an entry missing from the other, is it because the entry was added to the first file &#0151; or deleted from the second?</P>
+
+<P>It is to remove this ambiguity that the objects themselves, rather than the files or databases containing them, are synchronized.</P>
+
+<P>An object is any data item. You have complete freedom in defining what an object comprises. With respect to contact information, for example, you could define the set of data for a business or personal contact as an object. Or you could define the individual elements of the contact information &#0151; date, name, location &#0151; as objects.</P>
+
+<P>Both approaches have strengths and weaknesses. The "holistic" approach &#0151; defining the data set as an object, rather than each element &#0151; works best for most developers. Although synchronization takes slightly longer, the code required is simpler, because only a single "object" &#0151; rather than multiple objects that contain the same content as the single object &#0151; has to be enumerated. The ambiguity that occurs when one piece of information changes on the desktop, while another piece of information changes on the Windows CE-based device, is unlikely when only a single user has access to the desktop and Windows CE-based device, which is the usual situation.</P>
+
+<P>An object type is a name for a particular group of objects contained in a folder. For example, Contacts is an object type naming all contacts in a Microsoft Outlook folder.</P>
+
+<P>Before writing a service provider, you need to make the following decisions about objects and object types.
+
+<UL type="disc">
+	<LI>Which data do you want to synchronize?</li>
+
+	<LI>What names will you give the objects and object types?
+<P>These names are user-defined and can be anything you want. The object-type name is used in both the registry and the code you write. The display or "user-friendly" name for the object type can also be stored in the registry for use in the ActiveSync Status window.
+</li>
+
+	<LI>Where are the data objects stored?
+<P>The store is a database that holds the data, or objects, to be synchronized. The store is usually the Windows CE data store, but it can be a flat file, a relational database, or have a custom format of your own design.
+</li>
+
+	<LI>How will an object identifier (OID) be assigned to each object?
+<P>The OID is a 32-bit value. It can be an integer, a text string, or byte sequence, but it must satisfy four criteria.
+
+<UL type="disc">
+	<LI>It must be unique among all objects of the same type.</li>
+
+	<LI>It cannot change once it is assigned.</li>
+
+	<LI>It cannot be reused for any other object of the same type if the original object is deleted.</li>
+
+	<LI>It must be ordered, so you can determine which of the two objects was created first.</li>
+</UL>
+
+<P>Globally unique identifiers (GUIDs) satisfy these criteria. Other types of identifiers are possible.
+</li>
+
+	<LI>How will the object indicate that a change has occurred since the last synchronization?
+<P>A change is usually shown by a time stamp or version number.
+
+<P>An OID cannot be used as a change signifier. Once assigned, it never changes.
+</li>
+
+	<LI>How will your application interact with the object?
+<P>The application must be able to enumerate (locate) all current objects of a given type, including those scheduled for deletion. It must be able to serialize an object (convert it into a byte stream) for transmission between the desktop computer and the Windows CE&#0150;based device, and convert the byte stream back into an object. It must supply a user interface if the user is expected to enter data values or select synchronization options.
+</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concreatingtheactivesyncserviceprovider.htm">Creating the ActiveSync Service Provider</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Defining%20ActiveSync%20Objects (wce50condefiningactivesyncobjects.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Receiving Notifications by Using WSANSPIoctl</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conreceivingnotificationsbyusingwsanspioctl"></A>Receiving Notifications by Using WSANSPIoctl</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>PNRP uses the <A HREF="wce50lrfwsanspioctl.htm">WSANSPIoctl</A> function to receive notifications about changes to the following:
+
+<UL type="disc">
+	<LI>A network cloud list </li>
+
+	<LI>Availability of results of a name resolution request </li>
+</UL>
+
+<P>The first call to <A HREF="wce50lrfwsalookupservicebeginwindowssockets.htm">WSALookupServiceBegin</A> defines the type of information that a client is notified about. A client can be notified with a Windows message, a completion routine, a handle to a WSAEVENT object, or a port. For more information about options and setting the <I>lpCompletion</I> parameter, see WSANSPIoctl.</P>
+
+<P>The <A HREF="wce50lrfwsalookupservicenextwindowssockets.htm">WSALookupServiceNext</A> function blocks even if <B>WSANSPIoctl</B> is called. Before calling <B>WSALookupServiceNext</B>, an application must wait until it receives a notification&#0151;if blocking is an issue. To continue receiving notifications after a call to <B>WSALookupServiceNext</B>, an application must call <B>WSANSPIoctl</B> again.</P>
+
+<P>The following table shows <B>WSANSPIoctl</B> parameter values for with a description of the purpose for each.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=25%>Parameter</TH>
+<TH width=75%>Value</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>hLookup </I></TD>
+<TD width=75%>Specifies the handle that <B>WSALookupServiceBegin</B> returns. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>dwControlCode </I></TD>
+<TD width=75%>Must be SIO_NSP_NOTIFY_CHANGE. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>lpvInBuffer </I></TD>
+<TD width=75%>Must be NULL. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>cbInBuffer </I></TD>
+<TD width=75%>Must be zero (0). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>lpvOutBuffer </I></TD>
+<TD width=75%>Must be NULL. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>cbOutBuffer </I></TD>
+<TD width=75%>Must be zero (0). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>lpcbBytesReturned </I></TD>
+<TD width=75%>Must be NULL. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%><I>lpCompletion </I></TD>
+<TD width=75%>Specifies either NULL or a pointer to a WSACOMPLETION structure. </TD>
+</TR>
+</table></div>
+
+<P>After a notification is received, call <B>WSALookupServiceNext</B> one time to obtain the results. To end a search, call <A HREF="wce50lrfwsalookupserviceendwindowssockets.htm">WSALookupServiceEnd</A>.</P>
+
+<H2 class="dtH2">Resolution Notifications</H2>
+
+<P>A client can be notified any time that a name resolution entry is added. The client then calls <B>WSALookupServiceNext</B> to obtain the resolution data. If the client does not use this technique, a call to <B>WSALookupServiceNext</B> can be blocked until the specified timeout occurs.</P>
+
+<H2 class="dtH2">Cloud List Notifications</H2>
+
+<P>A client can be notified any time there is a change to a set of clouds.</P>
+
+<P>The <B>WSALookupServiceNext</B> function returns WSA_E_NO_MORE as a set delimiter. The client application must enumerate existing clouds until this message is returned, and then use a notification scheme to retrieve subsequent changes as they occur. A client application can also call <B>WSALookupServiceNext</B>, but the call is blocked until a change occurs.</P>
+
+<P>The <B>WSALookupServiceNext</B> function returns a cloud in a <A HREF="wce50lrfwsaquerysetwindowssockets.htm">WSAQUERYSET</A> structure. The following table shows the possible flags returned in the <I>dwOutputFlags</I> member.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Flag</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>RESULT_IS_ADDED</TD>
+<TD width=71%>The cloud that is returned is added.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>RESULT_IS_CHANGED</TD>
+<TD width=71%>The cloud that is returned is changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>RESULT_IS_DELETED</TD>
+<TD width=71%>The cloud that is returned is deleted and is not valid.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conpeer-to-peerapplicationdevelopment.htm">Peer-to-Peer Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Receiving%20Notifications%20by%20Using%20WSANSPIoctl (wce50conreceivingnotificationsbyusingwsanspioctl.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

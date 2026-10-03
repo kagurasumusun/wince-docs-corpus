@@ -1,0 +1,392 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptGetKeyParam</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptgetkeyparam"></A>CryptGetKeyParam</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function lets applications retrieve data that governs the operations of a key. In the Microsoft cryptographic service providers (CSPs), the base symmetric keying material is not obtainable by this or any other function.</P>
+
+<PRE class="syntax"><B>BOOL CRYPTFUNC CryptGetKeyParam( </B>
+  <B>HCRYPTKEY</B> <I>hKey</I><B>,</B>
+  <B>DWORD</B> <I>dwParam</I><B>,</B> 
+  <B>BYTE* </B><I>pbData</I><B>,</B> 
+  <B>DWORD* </B><I>pdwDataLen</I><B>,</B> 
+  <B>DWORD</B> <I>dwFlags</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hKey</I></DT>
+
+<DD>[in] <A HREF="wce50lrfhcryptkey.htm">HCRYPTKEY</A> handle to the key to query.</dd>
+
+<DT><I>dwParam</I></DT>
+
+<DD>[in] Specifies the key parameter type.
+
+<P>The following table shows the available key types. 
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Key type</TH>
+<TH width=27%>Description</TH>
+<TH width=40%><I>pbData</I> content</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_IV</TD>
+<TD width=27%>Initialization vector</TD>
+<TD width=40%>BYTE array indicating the current initialization vector. This array contains block_length/8 elements. For example, if the block length is sixty-four bits, the initialization vector consists of eight bytes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_SALT</TD>
+<TD width=27%>Salt value</TD>
+<TD width=40%>BYTE array indicating the current salt value. The size of the salt value varies depending on the CSP and algorithm being used. Salt values do not apply to public/private key pairs.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_PADDING</TD>
+<TD width=27%>Padding mode</TD>
+<TD width=40%><B>DWORD</B> value indicating the padding method used by the cipher. The padding method currently defined is PKCS5_PADDING &#0151; PKCS 5 (sec 6.2).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_MODE</TD>
+<TD width=27%>Cipher mode</TD>
+<TD width=40%><B>DWORD</B> value indicating the mode of the cipher. For a list of valid cipher modes, refer to the table in the Remarks section.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_MODE_BITS</TD>
+<TD width=27%>Number of bits to feed back</TD>
+<TD width=40%><B>DWORD</B> value indicating the number of bits that are processed per cycle when the OFB or CFB cipher modes are used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_PERMISSIONS</TD>
+<TD width=27%>Key permissions</TD>
+<TD width=40%><B>DWORD</B> value with zero or more bit permission flags set. For a description of each of these flags, refer to the permission flag table at the end of this Remarks section.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_ALGID</TD>
+<TD width=27%>Key algorithm</TD>
+<TD width=40%><B>ALG_ID</B> value indicating the algorithm specified when the key was created. Note that when key specifications AT_KEYEXCHANGE and AT_SIGNATURE are specified for the ALG_ID, the algorithm identifiers that are used to generate the key depend on the provider used. As a result, the values returned from <B>CryptGetKeyParam</B> for these key specifications when the KP_ALGID value is specified depend on the provider used. To determine the algorithm identifier that the different providers use for the key specifications AT_KEYEXCHANGE and AT_SIGNATURE, see <A HREF="wce50lrfalgid.htm">ALG_ID</A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_BLOCKLEN</TD>
+<TD width=27%>Session key or public/private key pair specified by <I>hKey</I></TD>
+<TD width=40%><B>DWORD</B> value indicating the block length. For stream ciphers, this value is always zero.
+<P>If session key is specified by <I>hKey</I>, the <I>pbData</I> contains the key cipher's block length, in bits.</P>
+
+<P>If a public/private key pair is specified by <I>hKey</I>, <I>pbData</I> contains a BLOB with the key pair's encryption granularity, in bits.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_KEYLEN</TD>
+<TD width=27%><B>DWORD</B> value, in bits, used to get the actual length of the key</TD>
+<TD width=40%>This value can be used to get the length of any key type. Microsoft CSPs return a key length of 64 bits for CALG_DES, 128 bits for CALG_3DES_112, and 192 bits for CALG_3DES. These lengths are different from the lengths returned when enumerating algorithms with the <I>dwParam</I> value of <A HREF="wce50lrfcryptgetprovparam.htm">CryptGetProvParam</A> set to PP_ENUMALGS. The length returned by this call is the actual size of the key including the parity bits included in the key. 
+<P>Microsoft CSPs that support the ALG_ID CALG_CYLINK_MEK return 64 bits for that algorithm. CALG_CYLINK_MEK is a 40-bit key but has parity and zeroed key bits to make the key length 64 bits.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_SALT_EX</TD>
+<TD width=27%>Salt value</TD>
+<TD width=40%>The CRYPT_DATA_BLOB that specifies the variable size salt value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_P</TD>
+<TD width=27%><I>hKey</I> specifies a DSS key</TD>
+<TD width=40%>Prime modulus P from the DSS key BLOB. The length of the data is returned in the <I>pdwDataLen</I> parameter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_G</TD>
+<TD width=27%><I>hKey</I> specifies a DSS key</TD>
+<TD width=40%>Prime Q from the DSS key BLOB. The length of the data is returned in the <I>pdwDataLen</I> parameter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_Q</TD>
+<TD width=27%><I>hKey</I> specifies a DSS key</TD>
+<TD width=40%>Generator G from the key BLOB. The length of the data is returned in the <I>pdwDataLen</I> parameter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_EFFECTIVE_KEYLEN</TD>
+<TD width=27%>hKey specifies block cipher session key</TD>
+<TD width=40%><B>DWORD</B> value equal to the effective key length.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_CERTIFICATE</TD>
+<TD width=27%>Certificate</TD>
+<TD width=40%>A buffer containing the DER-encoded X.509 certificate. The public key in the certificate must match the corresponding signature or exchange key.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_KEYEXCHANGE_PIN</TD>
+<TD width=27%>Password to unlock a smart card </TD>
+<TD width=40%>A null-terminated ASCII string that sets the password used to enable the private key for the key exchange. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>KP_SIGNATURE_PIN</TD>
+<TD width=27%>Password to unlock a smart card </TD>
+<TD width=40%>A null-terminated ASCII string that sets the password used to enable the signature private key. </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pbData</I></DT>
+
+<DD>[out] Pointer to a buffer that receives the parameter data. The function returns the specified data in this buffer. The form of this data varies depending on the parameter number.
+
+<P>This parameter can be NULL to set the size of this buffer for memory allocation purposes. 
+</dd>
+
+<DT><I>pdwDataLen</I></DT>
+
+<DD>[in, out] On input, pointer to a <B>DWORD</B> value specifying the size, in bytes, of the buffer pointed to by the <I>pbData </I>parameter. On output, the function returns the <B>DWORD</B> value containing the number of bytes stored in the buffer.
+
+<P>When processing the data returned in the buffer, applications must use the actual size of the data returned. The actual size may be slightly smaller than the size of the buffer specified on input. On input, buffer sizes are usually specified large enough to ensure that the largest possible output data will fit in the buffer. On output, the variable pointed to by this parameter is updated to reflect the actual size of the data copied to the buffer.
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Reserved for future use and must be set to zero.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function. </P>
+
+<P>The following table shows the common values for the <B>GetLastError</B> function. The error values prefaced by NTE are generated by the particular CSP you are using.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Value</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>ERROR_INVALID_HANDLE</TD>
+<TD width=62%>One of the parameters specifies an invalid handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>ERROR_INVALID_PARAMETER</TD>
+<TD width=62%>One of the parameters contains an invalid value. This is most often an illegal pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>ERROR_MORE_DATA</TD>
+<TD width=62%>If the buffer specified by the <I>pbData </I>parameter is not large enough to hold the returned data, the function sets the ERROR_MORE_DATA code, and stores the required buffer size, in bytes, into the variable pointed to by <I>pdwDataLen</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_FLAGS</TD>
+<TD width=62%>The <I>dwFlags</I> parameter is nonzero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_KEY or NTE_NO_KEY</TD>
+<TD width=62%>The key specified by the <I>hKey</I> parameter is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_TYPE</TD>
+<TD width=62%>The <I>dwParam</I> parameter specifies an unknown parameter number.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_UID</TD>
+<TD width=62%>The CSP context that was specified when the key was created cannot be found.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The following table shows the common values for the KP_MODE parameter. These cipher modes are discussed in the topics under <A HREF="wce50oricryptography.htm">Cryptography</A>. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Cipher mode</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_MODE_ECB</TD>
+<TD width=62%>Electronic codebook</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_MODE_CBC</TD>
+<TD width=62%>Cipher block chaining</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_MODE_OFB</TD>
+<TD width=62%>Output feedback mode</TD>
+</TR>
+</table></div>
+
+<P>The following table shows the flags in the bit field when the KP_PERMISSIONS parameter is read. The Microsoft Base Cryptographic Provider ignores these permission flags. However, custom CSPs can use these flags to restrict operations on keys.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Permission flag</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_ENCRYPT</TD>
+<TD width=62%>Allows encryption.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_DECRYPT</TD>
+<TD width=62%>Allows decryption.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_EXPORT</TD>
+<TD width=62%>Allows exporting of the key.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_READ</TD>
+<TD width=62%>Allows reading of the parameters.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_WRITE</TD>
+<TD width=62%>Allows setting of the parameters.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_MAC</TD>
+<TD width=62%>Allows using MACs with the key.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_EXPORT_KEY</TD>
+<TD width=62%>Allows using the key for exporting keys.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_IMPORT_KEY</TD>
+<TD width=62%>Allows using the key for importing keys. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example Code</H4>
+
+<PRE class="code">#include &lt;wincrypt.h&gt;
+
+HCRYPTPROV hProv = 0;
+HCRYPTKEY hKey = 0;
+DWORD dwMode;
+BYTE pbData[16];
+DWORD dwCount;
+DWORD i;
+
+// Get a handle to user default provider using CryptAcquireContext.
+// For sample code, see <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A>.
+...
+...
+
+// Create a random block cipher session key.
+if(!CryptGenKey(hProv, CALG_RC2, CRYPT_EXPORTABLE, &amp;hKey)) {
+ printf("Error %x during CryptGenKey!\n", GetLastError());
+ goto done;
+}
+
+// Read the cipher mode.
+dwCount = sizeof(DWORD);
+if(!CryptGetKeyParam(hKey, KP_MODE, &amp;dwMode, &amp;dwCount, 0)) {
+ printf("Error %x during CryptGetKeyParam!\n", GetLastError());
+ goto done;
+}
+assert(dwCount==sizeof(BYTE));
+
+// Print out the cipher mode.
+printf("Default cipher mode: %d\n", dwMode);
+
+// Read the initialization vector.
+dwCount = 16;
+if(!CryptGetKeyParam(hKey, KP_IV, pbData, &amp;dwCount, 0)) {
+ printf("Error %x during CryptGetKeyParam!\n", GetLastError());
+ goto done;
+}
+// Print out the initialization vector.
+printf("Default IV:");
+for(i=0;i&lt;dwCount;i++) printf("%2.2x ",pbData[i]);
+printf("\n");
+
+done:
+
+// Destroy the session key.
+if(hKey != 0) CryptDestroyKey(hKey);
+
+// Free the provider handle.
+if(hProv != 0) CryptReleaseContext(hProv, 0);</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.10 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcryptsetkeyparam.htm">CryptSetKeyParam</A> | <A HREF="wce50lrfalgid.htm">ALG_ID</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptGetKeyParam (wce50lrfcryptgetkeyparam.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

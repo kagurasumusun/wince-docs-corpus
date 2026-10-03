@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateMutex</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCloseHandle">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcreatemutex"></A>CreateMutex</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates a named or unnamed mutex object. </P>
+
+<PRE class="syntax"><B>HANDLE CreateMutex( </B>
+  <B>LPSECURITY_ATTRIBUTES</B> <I>lpMutexAttributes</I><B>, </B>
+  <B>BOOL</B> <I>bInitialOwner</I><B>, </B>
+  <B>LPCTSTR</B> <I>lpName </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>lpMutexAttributes</I></DT>
+
+<DD>[in] Ignored. Must be NULL. </dd>
+
+<DT><I>bInitialOwner</I></DT>
+
+<DD>[in] Boolean that specifies the initial owner of the mutex object. If this value is TRUE and the caller created the mutex, the calling thread obtains ownership of the mutex object. Otherwise, the calling thread does not obtain ownership of the mutex. To determine if the caller created the mutex, see the Return Values section.</dd>
+
+<DT><I>lpName</I></DT>
+
+<DD>[in] Long pointer to a null-terminated string specifying the name of the mutex object. The name is limited to MAX_PATH characters and can contain any character except the backslash path-separator character (\). Name comparison is case sensitive. 
+
+<P>If <I>lpName</I> matches the name of an existing named mutex object, the <I>bInitialOwner</I> parameter is ignored because it has already been set by the creation process. 
+
+
+<P>If <I>lpName</I> is NULL, the mutex object is created without a name. 
+
+
+<P>If <I>lpName</I> matches the name of an existing event, semaphore, or file-mapping object, the function fails and the <A HREF="wce50lrfgetlasterror.htm">GetLastError</A> function returns ERROR_INVALID_HANDLE. This occurs because these objects share the same name space. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>A handle to the mutex object indicates success. If the named mutex object existed before the function call, the function returns a handle to the existing object and <B>GetLastError</B> returns ERROR_ALREADY_EXISTS. Otherwise, the caller created the mutex. NULL indicates failure. To get extended error information, call <B>GetLastError</B>. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The handle returned by <B>CreateMutex</B> has MUTEX_ALL_ACCESS access to the new mutex object and can be used in any function that requires a handle to a mutex object. </P>
+
+<P>Any thread of the calling process can specify the mutex-object handle in a call to one of the wait functions. The single-object wait functions return when the state of the specified object is signaled. The multiple-object wait functions can be instructed to return either when any one or when all of the specified objects are signaled. When a wait function returns, the waiting thread is released to continue its execution. </P>
+
+<P>The state of a mutex object is signaled when no thread owns it. The creating thread can use the <I>bInitialOwner</I> flag to request immediate ownership of the mutex. Otherwise, a thread must use one of the wait functions to request ownership. When the mutex's state is signaled, one waiting thread is granted ownership, the mutex's state changes to nonsignaled, and the wait function returns. Only one thread can own a mutex at any given time. The owning thread uses the <A HREF="wce50lrfreleasemutex.htm">ReleaseMutex</A> function to release its ownership. </P>
+
+<P>The thread that owns a mutex can specify the same mutex in repeated wait function calls without blocking its execution. Typically, the thread would not wait repeatedly for the same mutex, but this mechanism prevents a thread from deadlocking itself while waiting for a mutex that it already owns. However, to release its ownership, the thread must call <B>ReleaseMutex</B> once for each time that the mutex satisfied a wait. </P>
+
+<P>Two or more processes can call <B>CreateMutex</B> to create the same named mutex. The first process actually creates the mutex, and subsequent processes open a handle to the existing mutex. This enables multiple processes to get handles of the same mutex, while relieving you of the responsibility of ensuring that the creating process is started first. When using this technique, set the <I>bInitialOwner</I> flag to FALSE; otherwise, it can be difficult to be certain which process has initial ownership. </P>
+
+<P>Multiple processes can have handles of the same mutex object, enabling use of the object for interprocess synchronization. To provide object sharing, a process can specify the name of a mutex object in a call to the <B>CreateMutex</B> function.</P>
+
+<P>Use the <B>CloseHandle</B> function to close the handle. The system closes the handle automatically when the process terminates. The mutex object is destroyed when its last handle has been closed. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.01 and later.<BR>
+<B>Header:</B> Winbase.h.<BR>
+<B>Link Library:</B> Coredll.lib, Nk.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_1.Click()">CloseHandle</A> | <A HREF="wce50lrfcreateprocess.htm">CreateProcess</A> | <A HREF="wce50lrfreleasemutex.htm">ReleaseMutex</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CreateMutex (wce50lrfcreatemutex.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

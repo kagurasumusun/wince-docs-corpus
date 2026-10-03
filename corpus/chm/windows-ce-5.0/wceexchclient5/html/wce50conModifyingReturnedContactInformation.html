@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Modifying Returned Contact Information</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmodifyingreturnedcontactinformation"></A>Modifying Returned Contact Information</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The <A HREF="wce50lrfiexchangeclientrequestcontacts.htm">IExchangeClient::RequestContacts</A> method initiates a search that results in the creation of a set of <A HREF="wce50lrfiexchangeclientcontactinformationiunknown.htm">IExchangeClientContactInformation</A> instances.</P>
+
+<P>By default, the Exchange Client library queries for the same set of contact information that is represented by each <B>IExchangeClientContactInformation</B> instance. This information contains the display name, email address, home address, and so on.</P>
+
+<P>You can modify the Exchange Client code to query for and return additional fields.</P>
+
+<P>To add new fields, do the following:
+
+<UL type="disc">
+	<LI>Update the code that retrieves information from the Exchange server so it retrieves the new fields. 
+<P>Specific instructions for this task are outlined in the following steps 1-3.
+</li>
+
+	<LI>Update the <B>IExchangeClientContactInformation</B> interface and implementation to return the new fields. 
+<P>Specific instructions for this task are outlined in the following steps 4-5.
+</li>
+</UL>
+
+<P>To add new fields, complete the following: 
+
+<OL type="1">
+	<LI>In settings.cpp, located in %_WINCEROOT%\Public\VoIP\OAK\Phone\OWAExchangeClient\Engine, make the following changes:
+<UL type="disc">
+	<LI>Modify the c_wszContactsBodyStartFmt variable so the select statement contains the Exchange contact schema names for the additional fields you want to return.</li>
+
+	<LI>Add new c_SettingContacts* variables for each additional field, matching the structure of the already existing variables. 
+<P>Each variable maps the Exchange Client field name (for example, ContactsDispName) to the Exchange contact schema name (for example, fileas).
+</li>
+
+	<LI>Add each new c_SettingContacts* variable to the g_OWAClientSettings variable, matching the structure of the existing entries in this variable.</li>
+</UL>
+</li>
+
+	<LI>In the corresponding header file setting.h, located in %_WINCEROOT%\Public\VoIP\OAK\Phone\OWAExchangeClient\Engine, make the following changes:
+<UL type="disc">
+	<LI>Add a CONTACTS_PARSE_* constant for each variable you added in step 1, incrementing the index for each field.</li>
+
+	<LI>Modify NUM_CONTACTS_PROPERTIES to contain the number of fields you retrieve from the Exchange server.</li>
+
+	<LI>Add a forward declaration for each c_SettingContact* variable you added in step 1.</li>
+</UL>
+</li>
+
+	<LI>Open ContactsFormatHandler.cpp, located in %_WINCEROOT%\Public\VoIP\OAK\Phone\OWAExchangeClient\Contacts, and add a new two-line snippet for each field in the CContactsFormatHandler::BuildParseTable method.</li>
+
+	<LI>Modify the <B>IExchangeClientContactInformation</B> interface to contain methods to return the new fields by doing the following:
+<OL type="a">
+	<LI>Open IExchangeClient.idl, located in %_WINCEROOT%\Public\VoIP\OAK\Phone\OWAExchangeClient\Guid. </li>
+
+	<LI>Locate the interface declaration for <B>IExchangeClientContactInformation</B> interface and add a method for each new field, matching the structure of the existing methods.</li>
+</OL>
+</li>
+
+	<LI>Modify the <B>IExchangeClientContactInformation</B> implementation to return the new fields by doing the following:
+<OL type="a">
+	<LI>Open ContactsInformation.cpp, located in %_WINCEROOT%\Public\VoIP\OAK\Phone\OWAExchangeClient\Contacts.</li>
+
+	<LI>Add a new method implementation for each new field, following the structure of the existing Get* methods and using the CONTACTS_PARSE_* constant you defined in step 2.</li>
+</OL>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conexchangeclientapplicationdevelopment.htm">Exchange Client Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Modifying%20Returned%20Contact%20Information (wce50conmodifyingreturnedcontactinformation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

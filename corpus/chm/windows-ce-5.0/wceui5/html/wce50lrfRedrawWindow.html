@@ -1,0 +1,220 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>RedrawWindow</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfredrawwindow"></A>RedrawWindow</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function updates the specified rectangle or region in the client area of a window.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI RedrawWindow(</B>
+  <B>HWND </B><I>hwnd</I><B>,</B>
+  <B>CONST RECT* </B><I>lprcUpdate</I><B>,</B>
+  <B>HRGN </B><I>hrgnUpdate</I><B>,</B>
+  <B>UINT </B><I>flags</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hwnd</I></DT>
+
+<DD>[in] Handle to the window that you want to redraw. 
+
+<P>If this parameter is NULL, <B>RedrawWindow</B> updates the desktop window.
+</dd>
+
+<DT><I>lprcUpdate</I></DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfrect.htm">RECT</A> structure that contains the coordinates, in device units, of the update rectangle. 
+
+<P><B>RedrawWindow</B> ignores this parameter if the <I>hrgnUpdate</I> parameter identifies a region.
+</dd>
+
+<DT><I>hrgnUpdate</I></DT>
+
+<DD>[in] Handle to the update region. 
+
+<P>If both the <I>hrgnUpdate</I> and <I>lprcUpdate</I> parameters are NULL, <B>RedrawWindow</B> adds the entire client area to the update region.
+</dd>
+
+<DT><I>flags</I></DT>
+
+<DD>[in] <B>DWORD</B> that specifies one or more redraw options. 
+
+<P>You can use this parameter to invalidate or validate a window, control when repainting occurs, and control the windows that <B>RedrawWindow</B> affects. 
+
+
+<P>The following table shows the values that invalidate the window.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Value</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_ERASE</TD>
+<TD width=72%>Causes the window to receive a <A HREF="wce50lrfwmerasebkgnd.htm">WM_ERASEBKGND</A> message when the window is repainted. 
+<P>Specify this value in combination with the RDW_INVALIDATE value; otherwise, RDW_ERASE has no effect.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_INTERNALPAINT</TD>
+<TD width=72%>Causes the OS to post a <A HREF="wce50lrfwmpaint.htm">WM_PAINT</A> message to the window regardless of whether a portion of the window is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_INVALIDATE</TD>
+<TD width=72%>Invalidates the rectangle or region that you specify in <I>lprcUpdate</I> or <I>hrgnUpdate</I>. 
+<P>You can set only one of these parameters to a non-NULL value. </P>
+
+<P>If both are NULL, RDW_INVALIDATE invalidates the entire window.</P>
+</TD>
+</TR>
+</table></div>
+
+
+
+<P>The following table shows the values that validate the window.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Value</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_NOERASE</TD>
+<TD width=72%>Suppresses any pending WM_ERASEBKGND messages.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_VALIDATE</TD>
+<TD width=72%>Validates the rectangle or region that you specify in <I>lprcUpdate</I> or <I>hrgnUpdate</I>. 
+<P>You can set only one of these parameters to a non-NULL value. </P>
+
+<P>If both are NULL, RDW_VALIDATE validates the entire window. </P>
+
+<P>This value does not affect internal WM_PAINT messages.</P>
+</TD>
+</TR>
+</table></div>
+
+
+
+<P>The following table shows the values that control when repainting occurs. <B>RedrawWindow</B> does not repaint unless you specify one of these values.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Value</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_ERASENOW</TD>
+<TD width=72%>Causes the affected windows, which you specify by setting the RDW_ALLCHILDREN and RDW_NOCHILDREN values, to receive WM_ERASEBKGND messages before <B>RedrawWindow</B> returns, if necessary. 
+<P>The affected windows receive WM_PAINT messages at the ordinary time.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_UPDATENOW</TD>
+<TD width=72%>Causes the affected windows, which you specify by setting the RDW_ALLCHILDREN and RDW_NOCHILDREN values, to receive WM_ERASEBKGND and WM_PAINT messages before the <B>RedrawWindow</B> returns, if necessary.</TD>
+</TR>
+</table></div>
+
+
+
+<P>By default, the set of windows that <B>RedrawWindow</B> affects depends on whether the windows have the WS_CLIPCHILDREN style. 
+
+
+<P><B>RedrawWindow</B> does not affect child windows that do not have the WS_CLIPCHILDREN style.
+
+
+<P><B>RedrawWindow</B> recursively validates or invalidates non-WS_CLIPCHILDREN windows until <B>RedrawWindow</B> encounters a WS_CLIPCHILDREN window. 
+
+
+<P>The following table shows the values that control the windows that <B>RedrawWindow</B> affects.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Value</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_ALLCHILDREN</TD>
+<TD width=72%>Includes child windows, if any, in the repainting operation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>RDW_NOCHILDREN</TD>
+<TD width=72%>Excludes child windows, if any, from the repainting operation.</TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>A nonzero value indicates success. Zero indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Windows.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfwmerasebkgnd.htm">WM_ERASEBKGND</A> | <A HREF="wce50lrfwmpaint.htm">WM_PAINT</A> | <A HREF="wce50lrfrect.htm">RECT</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: RedrawWindow (wce50lrfredrawwindow.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

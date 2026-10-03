@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Virtual COM Port Sample</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50convirtualcomportsample"></A>Virtual COM Port Sample</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Sca sample application illustrates the use of the Windows CE&#0150;based Bluetooth stack over the Virtual COM Port interface.</P>
+
+<P>The compiled sample generates an Sca.exe application that can be started as server or client. When started as server, it creates a server COM port and waits for connections. When started as client, it creates a client COM port and initiates a connection. Once a connection is established, users can exchange text messages or files.</P>
+
+<P>For more information, see <A HREF="wce50concomportemulationfacility.htm">Creating a Connection to a Remote Device Using a Virtual COM Port</A>.</P>
+
+<P>To view supported command line options, use <CODE>SCA /?</CODE></P>
+
+<P class="label"><B>Usage</B></P>
+
+<PRE class="syntax">sca server &lt;<I>rfcomm_chnl</I>&gt; &lt;<I>com_port</I>&gt;
+sca client &lt;<I>server_bt_addr</I>&gt; &lt;<I>rfcomm_chnl</I>&gt; &lt;<I>com_port</I>&gt;</PRE>
+
+<P>The following table describes the parameters needed when using the SCA sample application.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Parameters</TH>
+<TH width=76%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>server_bt_addr</I></TD>
+<TD width=76%>Bluetooth address of the server.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>rfcomm_chnl</I></TD>
+<TD width=76%>RFCOMM channel (between 1 and 31).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>com_port</I></TD>
+<TD width=76%>COM port to be assigned to Bluetooth.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Explanation</B></P>
+
+<P>When the client or server starts, it creates a COM port to associate with the Bluetooth stack in the following manner.</P>
+
+<PRE class="code">HANDLE h = RegisterDevice (L"COM", index, L"btd.dll", (DWORD)&amp;pp);</PRE>
+
+<P>For the client, the Bluetooth server address (<I>pp</I>) is passed into the <B>pp.device</B> member in the <A HREF="wce50lrfportemuportparams.htm">PORTEMUPortParams</A> structure.</P>
+
+<P>For the server, the <B>pp.flocal</B> member must be set to TRUE.</P>
+
+<P>If the COM port is created successfully, the port can be opened for communication using standard APIs in the following manner.</P>
+
+<PRE class="code">HANDLE hCommPort = CreateFile (
+                   szComPort,
+                   GENERIC_READ | GENERIC_WRITE,
+                   0, NULL, OPEN_EXISTING, 0, NULL
+                  );</PRE>
+
+<P>A <B>WriteThread</B> and <B>ReadThread</B> are created to manage the data over the COM port in the following manner.</P>
+
+<PRE class="code">CloseHandle (CreateThread(NULL, 0, ReadThread, (LPVOID)hCommPort, 0, NULL));
+WriteThread ((LPVOID)hCommPort);</PRE>
+
+<P>The <B>WriteThread</B> sends data, entered by the user, over the virtual COM port, while the <B>ReadThread</B>, on the listening device, displays the received data on the screen.</P>
+
+<P class="label"><B>Sample Location</B></P>
+
+<P>%_WINCEROOT%\Public\Common\Sdk\Samples\Bluetooth\Sca</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>This sample application has not been thoroughly tested and is not intended for production use.</BLOCKQUOTE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conbluetoothapplicationdevelopment.htm">Bluetooth Application Development</A> | <A HREF="wce50conbluetoothsamples.htm">Bluetooth Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Virtual%20COM%20Port%20Sample (wce50convirtualcomportsample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

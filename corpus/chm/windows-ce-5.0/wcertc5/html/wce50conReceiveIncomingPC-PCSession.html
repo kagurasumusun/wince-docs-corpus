@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Receive an Incoming PC-PC Session</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conreceiveincomingpc-pcsession"></A>Receive an Incoming PC-PC Session</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Version 1.2 of the RTC Client API allows applications to initiate outgoing and incoming PC-PC sessions when either party is situated behind a NAT. </P>
+
+<P>The new <A HREF="wce50lrfirtcclientportmanagementiunknown.htm">IRTCClientPortManagement</A> interface specifies the port and IP address on which the RTC Client API should listen for incoming sessions. </P>
+
+<P>The application is responsible for opening the port on the NAT before setting the listen address and port using the RTC Client API. </P>
+
+<P>To following steps occur when an incoming session is received:
+
+<OL type="1">
+	<LI>The client application calls <A HREF="wce50lrfirtcclientportmanagementstartlistenaddressandport.htm">IRTCClientPortManagement::StartListenAddressAndPort</A> and specifies the internal port (I1) on the client machine where the RTC Client API should listen. </li>
+
+	<LI>The client application opens an external port (E1) on the NAT for the incoming session. The RTC Client API is not involved in this step; the application is responsible for opening this port and maintaining the port for the duration of the session, using APIs provided by the NAT. 
+<P>The client application should maintain a reference count for each port mapping. Each reference to a mapping should not be released until the RTC Client API calls <A HREF="wce50lrfirtcclientportmanagementstoplistenaddressandport.htm">IRTCClientPortManagement::StopListenAddressAndPort</A>. 
+</li>
+
+	<LI>For sessions that are using peer-to-peer UDP transport, the client application communicates the port on the NAT to the remote client application using an out-of-band mechanism. For sessions that use TLS or TCP signaling through the SIP server, the port on the NAT is not communicated out-of-band. </li>
+
+	<LI>Incoming SIP traffic arrives on the E1 port on the NAT and is mapped by the RTC Client API to port I1 on the client machine. </li>
+
+	<LI>The RTC Client API notifies the application that incoming traffic has been received using the <A HREF="wce50lrfirtcsessionstatechangeeventidispatch.htm">IRTCSessionStateChangeEvent</A> interface. </li>
+
+	<LI>To accept an incoming session, the application supplies a pointer to the <A HREF="wce50lrfirtcportmanageriunknown.htm">IRTCPortManager</A> implementation it implements by calling <A HREF="wce50lrfirtcsessionportmanagementsetportmanager.htm">IRTCSessionPortManagement::SetPortManager</A>. </li>
+
+	<LI>The RTC Client API calls <A HREF="wce50lrfirtcportmanagergetmapping.htm">IRTCPortManager::GetMapping</A> to determine the IP address and port mapping for the outgoing SIP traffic.</li>
+</OL>
+
+<P>If another session is created on the client machine, the RTC Client API also calls <B>GetMapping</B>. Depending on the application's implementation of this method, this call can return a new IP address and port mapping for the session, or it can return the same mapping as the first session.</P>
+
+<P>Each session receives a reference to the port mapping and is responsible for maintaining the mapping table. </P>
+
+<P>Once the session is disconnected, the application is responsible for releasing the reference to the IP address and port mapping. </P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50connataddressmapping.htm">NAT Address Mapping</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Receive%20an%20Incoming%20PC-PC%20Session (wce50conreceiveincomingpc-pcsession.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

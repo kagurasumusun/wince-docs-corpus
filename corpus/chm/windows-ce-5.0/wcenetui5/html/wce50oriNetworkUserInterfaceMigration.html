@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Network User Interface Migration</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfAcquireCredentialsHandle">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50grfCredentialManagerFunctions">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50grfCredRead">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50grfCredWrite">
+</OBJECT>
+<OBJECT ID="hhobj_5" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conCredentialManagerMigration">
+</OBJECT>
+<OBJECT ID="hhobj_6" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriMigratingFromEarlierVersionOfWindowsCE">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50orinetworkuserinterfacemigration"></A>Network User Interface Migration</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In Windows CE 5.0, Network UI and the security support providers (SSPs) use the new credential manager infrastructure. These changes may impact OS developers that have their own customized Network UI. </P>
+
+<P>The following table shows how the differences in functionality between previous versions of Windows CE and Windows CE 5.0.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Previous functionality</TH>
+<TH width=50%>New functionality</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>If a user selected <B>Save Password</B>, Network UI called <B>CeCredWrite</B> to cache user and domain information, and Network UI set the password to NULL. </TD>
+<TD width=50%>If a user selects <B>Save Password</B>, Network UI calls <B>CredWrite</B> to cache user information, domain, and password.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SSP attempted to cache the credential that was passed into it by using <A HREF="JavaScript:hhobj_1.Click()">AcquireCredentialsHandle</A>. If Network UI previously called <B>CeCredWrite</B>,<B> </B>then the credential would be cached. </TD>
+<TD width=50%>SSP reads cached credentials by using Credential Manager. It does not attempt to cache the credential. 
+<P>Credential caching is handled by the caller of the SSP, which is Network UI in this case. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>All communication between Network UI and SSP is through registry settings.</TD>
+<TD width=50%>Network UI communicates directly with Credential Manager to cache credentials and provide the password.
+<P>SSP communicates directly with Credential Manager to retrive cached credentials, if any. </P>
+</TD>
+</TR>
+</table></div>
+
+<P>Credential Manager OS developers that have their own version of Network UI should make the following changes:
+
+<UL type="disc">
+	<LI>Update Network UI code to use Credential Manager APIs. For more information, see <A HREF="JavaScript:hhobj_2.Click()">Credential Manager Functions</A>.</li>
+
+	<LI>To display cached credentials, which minimizes user input, use <A HREF="JavaScript:hhobj_3.Click()">CredRead</A> instead of <B>CeCredRead</B>. </li>
+
+	<LI>To save a user-provided password, call <A HREF="JavaScript:hhobj_4.Click()">CredWrite</A> instead of <B>CeCredWrite</B>. </li>
+</UL>
+
+<P>For other potential migration issues associated with Credential Manager, see <A HREF="JavaScript:hhobj_5.Click()">Credential Manager Migration</A>.</P>
+
+<P>New functions were also added to Windows CE 5.0 that allow you to programmatically close a username and password dialog box. The following table shows these new functions.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Function</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfgetnewpasswordex.htm">GetNewPasswordEx</A></TD>
+<TD width=71%>This function is similar to <B>GetNewPassword</B>, but also returns a handle to a window that can be used to dismiss the dialog box programmatically through <B>CloseUsernamePasswordDialog</B>. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfgetusernamepasswordex.htm">GetUsernamePasswordEx</A></TD>
+<TD width=71%>Similar to <B>GetUsernamePassword</B>, but also returns a handle to a window that can be used to dismiss the dialog box programmatically by using <B>CloseUsernamePasswordDialog</B>. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcloseusernamepassworddialog.htm">CloseUsernamePasswordDialog</A></TD>
+<TD width=71%>Allows you to programmatically close a username and password dialog box. </TD>
+</TR>
+</table></div>
+
+<P>For general migration information, see <A HREF="JavaScript:hhobj_6.Click()">Migrating from an Earlier Version of Windows CE</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orinetworkuserinterface.htm">Network User Interface</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Network%20User%20Interface%20Migration (wce50orinetworkuserinterfacemigration.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

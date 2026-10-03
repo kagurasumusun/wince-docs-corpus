@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CeOpenDatabaseInSession (EDB)</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfceopendatabaseinsessionedb"></A>CeOpenDatabaseInSession (EDB)</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is used to open an existing database that is in a mounted volume The volume must be mounted by using the <A HREF="wce50lrfcemountdbvolexedb.htm">CeMountDBVol (EDB)</A> function.</P>
+
+<P>This function does not work with CEDB databases. For more information about CEDB, see <A HREF="wce50oricedbreference.htm">CEDB Reference</A>.</P>
+
+<PRE class="syntax"><B>HANDLE CeOpenDatabaseInSession(</B>
+  <B>HANDLE</B> <I>hSession</I>,
+  <B>PCEGUID</B> <I>pGuid</I>, 
+  <B>PCEOID</B> <I>poid</I>,
+  <B>LPWSTR</B> <I>lpwszName</I>, 
+  <B>CESORTORDERSPEC*</B> <I>pSort</I>, 
+  <B>DWORD</B> <I>dwFlags</I>,
+  <B>CENOTIFYREQUEST*</B> <I>pRequest</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hSession </I></DT>
+
+<DD>[in] A handle to the session. This handle must be returned from either the <A HREF="wce50lrfcecreatesessionedb.htm">CeCreateSession (EDB)</A> or the <A HREF="wce50lrfcegetdatabasesessionedb.htm">CeGetDatabaseSession (EDB)</A> function. This parameter can be NULL, in which case all changes made to the opened database are atomic (also called auto-commit); that is, each change is committed to the database and then written to file once a flush occurs. If this parameter is not NULL, then the value specified in the <I>pGuid</I> parameter must match the CEGUID of the volume from which this session handle was created; otherwise this function fails.</dd>
+
+<DT><I>pGuid </I></DT>
+
+<DD>[in] A pointer to the CEGUID of a mounted database volume. If <I>pGuid</I> is a valid GUID, then the volume specified by <I>pGuid</I> is used. If <I>pGuid</I> points to a CEGUID created with <B>EDB_CREATE_INVALIDGUID</B>, then <I>poid</I> is ignored and all mounted database volumes are searched for the first database whose name matches <I>lpwszName</I>. </dd>
+
+<DT><I>poid </I></DT>
+
+<DD>[in/out] A pointer to the OID of the database to be opened. To open a database by name, set the value pointed to by <I>poid</I> to 0, set <I>lpwszName</I> to the database name, and set <I>pGuid </I>to the database volume.</dd>
+
+<DT><I>lpwszName </I></DT>
+
+<DD>[in] A pointer to the null-terminated string that contains the name of the database to be opened. This is used along with <I>pGuid</I> to specify the database if the value pointed to by <I>poid</I> is 0. When a database is opened by name, then <I>poid</I> will contain (on return) the OID of the opened database. If the value pointed to by <I>poid</I> is nonzero, <I>lpwszName</I> is ignored.</dd>
+
+<DT><I>pSort </I></DT>
+
+<DD>[in] A pointer to the active sort order for the database. All subsequent calls to the <A HREF="wce50lrfceseekdatabaseexedb.htm">CeSeekDatabaseEx (EDB)</A> function assume this sort order. If this parameter is NULL, then no sort order is chosen. If the sort pointer does not point to one of the sort structures used in the creation of the database, then the property IDs<I> </I>and the flags must match the values used for one of the database sort orders.</dd>
+
+<DT><I>dwFlags </I></DT>
+
+<DD>[in] An action flag that is one of the following values:
+
+<UL type="disc">
+	<LI>CEDB_AUTOINCREMENT
+<P>With this flag set, the current seek position is automatically incremented with each call to the <A HREF="wce50lrfcereadrecordpropsexedb.htm">CeReadRecordPropsEx (EDB)</A> function.
+</li>
+
+	<LI>0 (zero)
+<P>With this value, the current position is not incremented with each call to the <B>CeReadRecordPropsEx</B> function.
+</li>
+</UL>
+</dd>
+
+<DT><I>pRequest </I></DT>
+
+<DD>[in] A pointer to a <A HREF="wce50lrfcenotifyrequest.htm">CENOTIFYREQUEST</A> structure that requests that notifications be sent to an identified window. This parameter can be NULL if an application does not need to receive notifications.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>A handle to the open database indicates success. INVALID_HANDLE_VALUE indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>. The following table lists possible values returned by <B>GetLastError</B>:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Return Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_INVALID_PARAMETER</TD>
+<TD width=50%>Indicates that one or more parameters are invalid. See "Remarks" later in this topic for more information.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_INVALID_HANDLE</TD>
+<TD width=50%>Indicates that <I>hSession</I> is equal to INVALID_HANDLE_VALUE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_NOT_FOUND</TD>
+<TD width=50%>Indicates that the volume specified by <I>pGuid</I> does not exist.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_FILE_NOT_FOUND</TD>
+<TD width=50%>Indicates that the database specified by either <I>poid</I> or <I>lpwszName</I> cannot be found or does not exist.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_NOT_ENOUGH_MEMORY</TD>
+<TD width=50%>Indicates that no memory was available to allocate the database handle.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The ERROR_INVALID_PARAMETER may be returned in the following situations:
+
+<UL type="disc">
+	<LI><I>hSession</I> is not NULL, and the volume GUID that the session was created with does not match the GUID specified by the <I>pGuid</I> parameter.</li>
+
+	<LI><I>pGuid</I> is NULL.</li>
+
+	<LI><I>pGuid</I> contains a GUID created with the <B>EDB_CREATE_INVALIDGUID </B>function and <I>lpwszName</I> is NULL.</li>
+
+	<LI><I>pGuid</I> is not an invalid GUID and <I>poid</I> is NULL.</li>
+
+	<LI><I>pGuid</I> is not an invalid GUID, <I>*poid</I> is equal to 0, and <I>lpwszName</I> is NULL.</li>
+
+	<LI><I>pSort</I> is not null and an existing sort order on the database cannot be found that matches the same set of property IDs and flags specified in <I>pSort</I>.</li>
+
+	<LI><I>dwFlags</I> does not contain a valid flag.</li>
+
+	<LI><I>pRequest</I> is not NULL. The following situations can cause this error:
+<UL type="disc">
+	<LI><I>pRequest-&gt;</I><B>dwSize</B> is not equal to the size of CENOTIFYREQUEST.</li>
+
+	<LI><I>pRequest-&gt;</I><B>hwnd</B> is not a valid window handle.</li>
+</UL>
+</li>
+</UL>
+
+<P>The handle returned from this function is a free-threaded handle and can be used on multiple threads at the same time. It must be closed by calling the <A HREF="wce50lrfclosehandle.htm">CloseHandle</A> function.</P>
+
+<P>The following list highlights the differences between this function and the CEDB equivalent function:
+
+<UL type="disc">
+	<LI>In EDB, if CEDB_AUTOINCREMENT is specified when the database is opened, the seek pointer is positioned on the first row. If CEDB_AUTOINCREMENT is not specified, then the seek pointer is not positioned on a row and the user must call the <B>CeSeekDatabaseEx</B> function. This differs from CEDB, where the seek pointer is always positioned on the first row regardless of whether CEDB_AUTOINCREMENT is specified.</li>
+
+	<LI>EDB does not support a system volume and so calling this with <I>pGuid</I> set to CREATE_SYSTEMGUID fails, returning ERROR_NOT_FOUND.</li>
+
+	<LI>If <I>pSort</I> is NULL, EDB does not use a sort order, but CEDB chooses a default sort order.</li>
+
+	<LI>EDB allows multiple sort orders on the same property. Two sort orders on the same property are differentiated by their flags. As a consequence, sort orders cannot be uniquely identified by property IDs alone, and the <A HREF="#wce50lrfceopendatabaseinsessionedb">CeOpenDatabaseInSession (EDB)</A> function fails if the sort order does not contain the same flags that were used when the sort order was created.</li>
+
+	<LI><B>EDB_CREATE_INVALIDGUID</B> is used to enumerate EDB volumes only, while <B>CREATE_INVALIDGUID</B> is used to enumerate CEDB volumes only.</li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> Windbase.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcemountdbvolexedb.htm">CeMountDBVol (EDB)</A> | <A HREF="wce50lrfcecreatesessionedb.htm">CeCreateSession (EDB)</A> | <A HREF="wce50lrfcegetdatabasesessionedb.htm">CeGetDatabaseSession (EDB)</A> | <A HREF="wce50lrfceseekdatabaseexedb.htm">CeSeekDatabaseEx (EDB)</A> | <A HREF="wce50lrfcereadrecordpropsexedb.htm">CeReadRecordPropsEx (EDB)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CeOpenDatabaseInSession%20(EDB) (wce50lrfceopendatabaseinsessionedb.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

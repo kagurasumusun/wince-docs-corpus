@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Basic Lighting Formula</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conbasiclightingformula"></A>Basic Lighting Formulas</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The output of the lighting stage is the diffuse and possibly the specular colors of the vertex in ARGB format. The D3DMRS_LIGHTING render state (see <A HREF="wce50lrfd3dmrenderstatetype.htm">D3DMRENDERSTATETYPE</A>) controls whether the lighting computations are performed.</P>
+
+<P>If the lighting computations are not enabled, the vertices color values are computed as follows:
+
+<UL type="disc">
+	<LI>D3DMRS_COLORVERTEX is ignored.</li>
+
+	<LI>If the diffuse vertex color is present then it is passed on through the rendering pipeline, otherwise the diffuse color is the default diffuse color value 0xFFFFFFFF (white) is used.</li>
+
+	<LI>If the specular vertex color is already present then it is passed on through the rendering pipeline, otherwise the specular color is the default specular color 0 (black) is used. </li>
+</UL>
+
+<P>If the lighting computations are enabled, then the vertex colors are computed and then clamped (0.0 to 1.0) and scaled (0 to 255) before being passed to the rasterizer.</P>
+
+<P>If vertex normals are not specified, all of the dot products involving the vertex normal are set to 0 and the lighting computation is still performed.</P>
+
+<H2 class="dtH2">Diffuse Lighting</H2>
+
+<P>The diffuse color, D, is computed using the following equation:</P>
+
+<PRE class="code">D<SUB>RGB</SUB> = V<SUB>a</SUB> * L<SUB>a</SUB> + sum( V<SUB>d</SUB> X (N<SUP>.</SUP>Ld<SUB>i</SUB>) * Atten<SUB>i</SUB>Lc<SUB>i</SUB> + Va * Lca<SUB>i</SUB>)</PRE>
+
+<P>where X denotes the vector cross product. The value of V<SUB>a</SUB> is determined by the conditions shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Value</TH>
+<TH width=84%>Condition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>a</SUB> = V<SUB>cd</SUB></PRE>
+</TD>
+<TD width=84%>Used if color vertex is enabled and the ambient material source is D3DMMCS_COLOR1 and the diffuse vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>a</SUB> = V<SUB>cs</SUB> </PRE>
+</TD>
+<TD width=84%>Used if color vertex is enabled and the ambient material source is D3DMMCS_COLOR2 and the specular vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>a</SUB> = M<SUB>a</SUB></PRE>
+</TD>
+<TD width=84%>Used otherwise.</TD>
+</TR>
+</table></div>
+
+<P>The value of V<SUB>d</SUB> is determined by the conditions shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Value</TH>
+<TH width=84%>Condition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>d</SUB> = V<SUB>cd</SUB></PRE>
+</TD>
+<TD width=84%>Used if color vertex is enabled and the diffuse material source is D3DMMCS_COLOR1 and the diffuse vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>d</SUB> = V<SUB>cs</SUB> </PRE>
+</TD>
+<TD width=84%>Used if color vertex is enabled and the diffuse material source is D3DMMCS_COLOR2 and the specular vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>d</SUB> = M<SUB>a</SUB></PRE>
+</TD>
+<TD width=84%>Used otherwise.</TD>
+</TR>
+</table></div>
+
+<P>The value of Atten<SUB>i</SUB>Lc<SUB>i</SUB> is evaluated based on the conditions shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Condition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>
+<PRE class="code">Atten<SUB>i</SUB> = 1</PRE>
+</TD>
+<TD width=50%>Used if the light is a directional light.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>
+<PRE class="code">Atten<SUB>i</SUB> = 0</PRE>
+</TD>
+<TD width=50%>Used if the distance between the light and the vertex exceeds the light's range.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>
+<PRE class="code">Atten<SUB>i</SUB> = 1/(L<SUB>Attoi </SUB>+ L<SUB>Atti1i</SUB> * Ld<SUB>i </SUB>+ L<SUB>Atti2i</SUB> * Ld<SUB>i</SUB><SUP>2</SUP>)</PRE>
+</TD>
+<TD width=50%>Used otherwise.</TD>
+</TR>
+</table></div>
+
+<P>The alpha component of the diffuse color, D<SUB>alpha</SUB>, is computed based on the conditions shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=23%>Equation</TH>
+<TH width=77%>Condition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>
+<PRE class="code">D<SUB>alpha</SUB> = V<SUB>cd alpha</SUB></PRE>
+</TD>
+<TD width=77%>Used if color vertex is enabled and the diffuse material source is D3DMMCS_COLOR1 and the diffuse vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>
+<PRE class="code">D<SUB>alpha</SUB> = V<SUB>cs alpha</SUB></PRE>
+</TD>
+<TD width=77%>Used if color vertex is enabled and the diffuse material source is D3DMMCS_COLOR2 and the specular vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>
+<PRE class="code">D<SUB>alpha</SUB> = Md<SUB>alpha</SUB></PRE>
+</TD>
+<TD width=77%>Used otherwise.</TD>
+</TR>
+</table></div>
+
+<H2 class="dtH2">Specular Lighting</H2>
+
+<P>The specular color, S, is set to (0,0,0,0) if the D3DMRS_SPECULARENABLE render state is set to FALSE, otherwise S is computed as follows:</P>
+
+<P>If (<CODE>N</CODE><SUP>.</SUP><CODE>Ld<SUB>i</SUB></CODE>) &lt;= 0, then S = 0 because specular highlights do not extend beyond 180 degrees and if the light points away from the normal, there will be no highlight.</P>
+
+<P>Otherwise:</P>
+
+<PRE class="code">S<SUB>RGB</SUB> = Vs * sum((N<SUP>.</SUP>h<SUB>i</SUB>)<SUP>Mp</SUP> * L<SUB>CSi</SUB> * Atten<SUB>i</SUB>)</PRE>
+
+<P>The value of V<SUB>s</SUB> is determined by the conditions shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Value</TH>
+<TH width=84%>Condition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>s</SUB> = V<SUB>cd</SUB></PRE>
+</TD>
+<TD width=84%>Used if color vertex is enabled and the specular material source is D3DMMCS_COLOR1 and the diffuse vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>s</SUB> = V<SUB>cs</SUB></PRE>
+</TD>
+<TD width=84%>Used if color vertex is enabled and the specular material source is D3DMMCS_COLOR2 and the specular vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>
+<PRE class="code">V<SUB>s</SUB> = M<SUB>s</SUB></PRE>
+</TD>
+<TD width=84%>Used otherwise.</TD>
+</TR>
+</table></div>
+
+<P>The value of Atten<SUB>i</SUB> is determined in the same was as for diffuse lighting.</P>
+
+<P>The vector, h<SUB>i</SUB> is the halfway vector between the normal and the direction to the light. The computation of the halfway vector depends on the D3DMRS_LOCALVIEWER render state. If the render state is set to TRUE, then the halfway vector is computed as camera relative. If the render state is set to FALSE, the halfway vector is computed orthogonally (viewer is at infinity.) Applications that use orthogonal projection should set this render state to FALSE, which is the default value. The following table shows how h<SUB>i</SUB> is computed based on the render state setting for D3DMRS_LOCALVIEWER.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>D3DMRS_LOCALVIEWER Setting</TH>
+<TH width=50%>Computation</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>TRUE</TD>
+<TD width=50%>
+<PRE class="code">h<SUB>i </SUB>= norm(norm(V<SUB>pe</SUB>) + Ld<SUB>i</SUB>)</PRE>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>FALSE</TD>
+<TD width=50%>
+<PRE class="code">h<SUB>i</SUB> = norm((0,0,-1) + Ld<SUB>i</SUB>)</PRE>
+</TD>
+</TR>
+</table></div>
+
+<P>The alpha component of the specular color, S<SUB>alpha</SUB>, is computed based on the conditions shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Equation</TH>
+<TH width=76%>Condition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>
+<PRE class="code">S<SUB>alpha</SUB> = V<SUB>cd alpha</SUB></PRE>
+</TD>
+<TD width=76%>Used if color vertex is enabled and the specular material source is D3DMMCS_COLOR1 and the diffuse vertex color is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>
+<PRE class="code">S<SUB>alpha</SUB>=V<SUB>cs alpha</SUB> </PRE>
+</TD>
+<TD width=76%>Used if color vertex is enabled and the specular material source is D3DMMCS_COLOR2 and the specular vertex color is present. Also used if D3DMRS_SPECULARENABLE is FALSE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>
+<PRE class="code">S<SUB>Alpha</SUB>=Ms<SUB>alpha</SUB></PRE>
+</TD>
+<TD width=76%>Used otherwise.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conlighting.htm">Lighting</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Basic%20Lighting%20Formula (wce50conbasiclightingformula.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

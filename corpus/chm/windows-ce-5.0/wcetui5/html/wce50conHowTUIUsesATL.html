@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>How TUI Uses ATL</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSendMessage">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhowtuiusesatl"></A>How TUI Uses ATL</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The TUI user interface implementation relies heavily on ATL window classes. All user interface objects, which are documented in <A HREF="wce50contuiuiobjectmodeloverview.htm">TUI UI Object Model</A>, are Win32 windows and use ATL to implement their window procedures and other expected Win32 window functionality.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The TUI Win32 window hierarchy is different from the TUI object hierarchy. For more information about the relationship between these hierarchies, see <A HREF="wce50contuiobjectwindowhierarchies.htm">TUI Object and Window Hierarchies</A>.</BLOCKQUOTE>
+
+<P>As an example, this topic explains the Desktop window, which is the top-most window in the TUI window hierarchy. The organization and files for other windows follow the same structure. </P>
+
+<P>All files mentioned in the following list are in directories beneath %_WINCEROOT%\Public\VoIP\Oak\Phone\TUI. The provided ATL macros and other definitions exist in %_WINCEROOT%\Others\ATL\Include\atlwin.h. For general information about ATL, see the documentation at this <A HREF="http://go.microsoft.com/fwlink/?linkid=28105">Microsoft Web site</A>.</P>
+
+<P>Conceptually, an ATL window consists of two pieces:
+
+<UL type="disc">
+	<LI>The C++ wrapper class
+<P>Clients use this class to interact with the window. 
+
+<P>The class inherits from the ATL <B>CWindow</B> class and is generally small, consisting primarily of C++ methods that in turn call <A HREF="JavaScript:hhobj_1.Click()">SendMessage</A> to interact with the actual window implementation (explained in the next bullet). 
+
+<P>Clients could interact with the window implementation by calling <B>SendMessage</B> directly, but the C++ wrapper class provides type safety. It does this by accepting only parameters of the correct type, and then casting these parameters to the appropriate <B>SendMessage</B> WPARAM and LPARAM types. 
+
+<P>Using the wrapper class methods produces more readable code because calling code contains calls to well-named methods instead of verbose <B>SendMessage</B> calls. 
+
+<P>In the TUI, all C++ wrapper classes are defined in Inc\VoIPControls.hxx. This file contains the TUI <B>CVoIPDesktop</B> class, among others. 
+</li>
+
+	<LI>The window implementation
+<P>All Win32 windows have a window procedure that handles all window messages posted to the window. 
+
+<P>Code that uses the ATL window classes can implement their window procedures by defining C++ methods as well as a macro that maps message codes to methods. All window procedure code is provided by ATL and does not exist in the window implementation.
+
+<P>An ATL window implementation consists of a C++ class that inherits from the ATL <B>CWindowImpl</B> class. The <B>CWindowImpl</B> class (and its parents) provides common window functionality, including the window procedure.
+
+<P>The class a developer implements contains a BEGIN_MSG_MAP macro, which precedes lines like the following:
+
+<PRE class="code">MESSAGE_HANDLER(WM_CREATE, OnCreate)</PRE>
+
+<P>This line maps all WM_CREATE messages to the class's <B>OnCreate</B> method. When the window receives a WM_CREATE message, provided ATL code calls the <B>OnCreate</B> method.
+
+<P>After the message map, the remainder of the class consists of methods referenced in the message map.
+
+<P>In the TUI, the window implementation classes reside in the Controls directory. For example, the Desktop.h file contains the class definition for the desktop window implementation, and Desktop.cpp contains method implementations.
+
+<P>TUI window implementation classes inherit from <B>CVoIPWindowImpl</B>, which in turn inherits from the ATL <B>CWindowImpl</B> class. <B>CVoIPWindowImpl</B> provides general TUI window functionality and is defined in Controls\VoIPWindowImpl.h.
+</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conunderstandingtuisourcecode.htm">Understanding TUI Source Code</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: How%20TUI%20Uses%20ATL (wce50conhowtuiusesatl.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Parent and Child Object Lifetimes</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownAddRef">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownRelease">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conparentandchildobjectlifetimes"></A>Parent and Child Object Lifetimes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>All objects you will use in DirectDraw programming &#0151; the DirectDraw object, surfaces, palettes, clippers, and such &#0151; only exist in memory for as long as another object, such as an application, needs them. </P>
+
+<P>The time that passes from the moment when an object is created and placed in memory to when it is released and subsequently removed from memory is known as the object's lifetime. </P>
+
+<P>The Component Object Model (COM) followed by all DirectX technologies dictate that an object must keep track of how many other objects require its services. </P>
+
+<P>This number, known as a reference count, determines the object's lifetime. COM also dictates that an object expose the <A HREF="JavaScript:hhobj_1.Click()">IUnknown::AddRef</A> and <A HREF="JavaScript:hhobj_2.Click()">IUnknown::Release</A> methods to enable applications to explicitly manage its reference count; make sure you use these methods in accordance to COM rules.</P>
+
+<P>You are not the only one who is using the <B>IUnknown</B> methods to manage reference counts for objects &#0151; DirectDraw objects use them internally, too. </P>
+
+<P>When you use the <A HREF="wce50lrfidirectdraw4.htm">IDirectDraw4</A> interface (in contrast to <B>IDirectDraw2</B> or <B>IDirectDraw</B>) to create a child object like a surface, the child uses the <B>IUnknown::AddRef</B> method of the parent DirectDraw object to increment the parent's reference count. </P>
+
+<P>When your application no longer needs an object, call the <B>Release</B> method to decrement its reference count. When the count reaches zero, the object is removed from memory. </P>
+
+<P>When a child object's reference count reaches zero, it calls the parent's <B>IUnknown::Release</B> method to indicate that there is one less object who will be needing the parent's services. </P>
+
+<P>Implicitly allocated objects, such as the back-buffer surfaces in a flipping chain that you create with a single <A HREF="wce50lrfidirectdraw4createsurface.htm">IDirectDraw4::CreateSurface</A> call, are automatically deallocated when their parent DirectDrawSurface object is released. </P>
+
+<P>Also, you can only release a DirectDraw object from the thread that created the application window. For single-threaded applications, this restriction obviously does not apply, as there is only one thread. </P>
+
+<P>If your application created a primary flipping chain of two surfaces (created by a single <B>CreateSurface</B> call) that used an attached DirectDrawClipper object, the code to release these objects safely might look like.</P>
+
+<PRE class="code">// For this example, the g_lpDDraw, g_lpDDSurface, and
+// g_lpDDClip are valid pointers to objects.
+void ReleaseDDrawObjects(void)
+{
+    // If the DirectDraw object pointer is valid,
+    // it should be safe to release it and the objects it owns.
+    if(g_lpDDraw)
+    {
+        // Release the DirectDraw object. (This call would not
+        // be safe if the children were created through IDirectDraw2 
+        // or IDirectDraw. See the following note for
+        // more information)
+        g_lpDDraw-&gt;Release(), g_lpDDraw = NULL;
+ 
+        // Now, release the clipper that is attached to the surfaces.
+        if(g_lpDDClip)
+            g_lpDDClip-&gt;Release(), g_lpDDClip = NULL;
+ 
+        // Now, release the primary flipping chain. Note
+        // that this is only valid because the flipping 
+        // chain surfaces were created with a single 
+        // CreateSurface call. If they were explicitly
+        // created and attached, then they must also be
+        // explicitly released.
+        if(g_lpDDSurface)
+            g_lpDDSurface-&gt;Release(), g_lpDDSurface = NULL;
+    }
+}</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Earlier versions of the DirectDraw interface (<B>IDirectDraw2</B> and <B>IDirectDraw</B>, to be exact) behave differently than the most recent interface. </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+When using these early interfaces, DirectDraw automatically releases all child objects when the parent itself is released. As a result, if you use these older interfaces, the order in which you release objects is critical. </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+In this case, you should release the children of a DirectDraw object before releasing the DirectDraw object itself (or not release them at all, counting on the parent to do cleanup for you). </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+Because the DirectDraw object releases the child objects, if you release the parent before the children, you are very likely to incur a memory fault for attempting to dereference a pointer that was invalidated when the parent object released its children. </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+Some older applications relied on the automatic release of child objects and neglected to properly release some objects when no longer needed. </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+At the time, this practice did not cause any negative side effects, however doing so when using the <A HREF="wce50lrfidirectdraw4.htm">IDirectDraw4</A> interface might result in memory leaks. </BLOCKQUOTE>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Parent%20and%20Child%20Object%20Lifetimes (wce50conparentandchildobjectlifetimes.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

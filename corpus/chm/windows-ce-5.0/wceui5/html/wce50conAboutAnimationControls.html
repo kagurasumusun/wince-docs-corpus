@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>About Animation Controls</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conaboutanimationcontrols"></A>About Animation Controls</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A common use for an animation control is to indicate system activity during a lengthy operation. </P>
+
+<P>An animation control can display an AVI clip originating from either an uncompressed AVI file or from an AVI file that was compressed using run-length (BI_RLE8) encoding. You can add the AVI clip to your application as an AVI resource, or the clip can accompany your application as a separate AVI file. </P>
+
+<P>The AVI file, or resource, must not have a sound channel. The capabilities of the animation control are very limited and are subject to change.</P>
+
+<P>Animation controls always uses a WIN 32 timer to synchronize playback. Applications must make sure that they do not block.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Windows CE does not support a separate thread for the AVI playback. As a result, an application that uses animation controls must ensure that it will not block the user interface, otherwise the animation will not occur.</BLOCKQUOTE>
+
+<H4 class="dtH4">Creating an Animation Control</H4>
+
+<P>An animation control belongs to the ANIMATE_CLASS window class. </P>
+
+<P>You create an animation control by using the <A HREF="wce50lrfcreatewindow.htm">CreateWindow</A> function or the <A HREF="wce50lrfanimate_create.htm">Animate_Create</A> macro. The macro positions the animation control in the upper-left corner of the parent window and, if the ACS_CENTER style is not specified, sets the width and height of the control based on the dimensions of a frame in the AVI clip. </P>
+
+<P>If ACS_CENTER is specified, <A HREF="wce50lrfanimate_create.htm">Animate_Create</A> sets the width and height of the control to zero. You can use the <A HREF="wce50lrfsetwindowpos.htm">SetWindowPos</A> function to set the position and size of the control. </P>
+
+<P>If you create an animation control within a dialog box or from a dialog box resource, the control is automatically destroyed when the user closes the dialog box. If you create an animation control within a window, you must explicitly destroy the control. </P>
+
+<H4 class="dtH4">Animation Control Messages</H4>
+
+<P>An application sends messages to an animation control to open, play, stop, and close the corresponding AVI clip. Each message has one or more macros that you can use instead of sending the message explicitly. </P>
+
+<P>After creating an animation control, an application sends the <A HREF="wce50lrfacm_open.htm">ACM_OPEN (Shell and User Interface)</A> message to open an AVI clip and load it into memory. The message specifies either the path of an AVI file or the name of an AVI resource. The system loads the AVI resource from the application that created the animation control. </P>
+
+<P>If the animation control has the ACS_AUTOPLAY style, the control begins playing the AVI clip immediately after the AVI file or AVI resource is opened. Otherwise, an application can use the <A HREF="wce50lrfacm_play.htm">ACM_PLAY</A> message to start the AVI clip. </P>
+
+<P>An application can stop the clip at any time by sending the <A HREF="wce50lrfacm_stop.htm">ACM_STOP</A> message. The last frame played remains displayed when the control finishes playing the AVI clip or when <B>ACM_STOP</B> is sent. </P>
+
+<P>An animation control can send two notification messages, <A HREF="wce50lrfacn_start.htm">ACN_START</A> and <B>ACN_STOP</B>, to its parent window. Most applications do not handle either notification. </P>
+
+<P>To close the AVI file or AVI resource and remove it from memory, an application can use the <A HREF="wce50lrfanimate_close.htm">Animate_Close</A> macro, which sends <B>ACM_OPEN </B>with the file name or resource name set to NULL. </P>
+
+<H4 class="dtH4">Default Message Processing</H4>
+
+<P>This section describes the window messages handled by the window procedure for the ANIMATE_CLASS window class. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>Window Message</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>WM_CLOSE</TD>
+<TD width=70%>Frees the AVI file or AVI resource associated with the animation control. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>WM_DESTROY</TD>
+<TD width=70%>Frees the AVI file or AVI resource, frees an internal data structure, and then calls the <A HREF="wce50lrfdefwindowproc.htm">DefWindowProc</A> function. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>WM_ERASEBKGND</TD>
+<TD width=70%>Erases the window background using the current background color for static controls. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>WM_PAINT</TD>
+<TD width=70%>Draws an AVI frame in the animation control. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>WM_SIZE</TD>
+<TD width=70%>Checks if the control has the ACS_CENTER style. If the control does not, it calls <B>DefWindowProc</B>. Otherwise, it centers the animation in the control, invalidates the control, and then calls <B>DefWindowProc</B>. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfanimationcontrolstyles.htm">Animation Controls Styles</A> | <A HREF="wce50conanimationcontrols.htm">Animation Controls</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: About%20Animation%20Controls (wce50conaboutanimationcontrols.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

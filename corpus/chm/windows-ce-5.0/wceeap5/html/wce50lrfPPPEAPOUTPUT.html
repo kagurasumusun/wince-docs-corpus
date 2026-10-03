@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>PPP_EAP_OUTPUT</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfpppeapoutput"></A>PPP_EAP_OUTPUT</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure is used by the authentication protocol to communicate requests and status information to RAS on return from calls to the <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A> function.</P>
+
+<PRE class="syntax"><B>typedef struct _PPP_EAP_OUTPUT {</B>
+  <B>DWORD </B><I>dwSizeInBytes</I><B>;</B>
+  <B>PPP_EAP_ACTION </B><I>Action</I><B>;</B>
+  <B>DWORD </B><I>dwAuthResultCode</I><B>;</B>
+  <B>RAS_AUTH_ATTRIBUTE* </B><I>pUserAttributes</I><B>;</B>
+  <B>BOOL </B><I>fInvokeInteractiveUI</I><B>;</B>
+  <B>PBYTE </B><I>pUIContextData</I><B>;</B>
+  <B>DWORD </B><I>dwSizeOfUIContextData</I><B>;</B>
+  <B>BOOL </B><I>fSaveConnectionData</I><B>;</B>
+  <B>PBYTE </B><I>pConnectionData</I><B>;</B>
+  <B>DWORD </B><I>dwSizeOfConnectionData</I><B>;</B>
+  <B>BOOL </B><I>fSaveUserData</I><B>;</B>
+  <B>PBYTE </B><I>pUserData</I><B>;</B>
+  <B>DWORD </B><I>dwSizeOfUserData</I><B>;</B>
+<B>} PPP_EAP_OUTPUT, *PPPP_EAP_OUTPUT; </B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>dwSizeInBytes</B></DT>
+
+<DD>Size of this <B>PPP_EAP_OUTPUT</B> structure.</dd>
+
+<DT><B>Action</B></DT>
+
+<DD>Specifies a <A HREF="wce50lrfpppeapaction.htm">PPP_EAP_ACTION</A> value. RAS carries out this action on behalf of the authentication protocol.</dd>
+
+<DT><B>dwAuthResultCode</B></DT>
+
+<DD>Specifies whether authentication was successful. Any nonzero value for <B>dwAuthResultCode</B> indicates failure. The failure code must come from Winerror.h, Raserror.h or Mprerror.h. This member is valid only if the <B>Action</B> member has a value of EAPACTION_Done or EAPACTION_SendAndDone. </dd>
+
+<DT><B>pUserAttributes</B></DT>
+
+<DD>Pointer to an optional array of <A HREF="wce50lrfrasauthattribute.htm">RAS_AUTH_ATTRIBUTE</A> structures. The array is terminated by a structure with an <B>raaType</B> member that has a value of <B>raatMinimum</B>.
+
+<P>This member should be set on the authenticator side when the <B>Action</B> member is EAPACTION_Authenticate, or when <B>Action</B> is EAPACTION_Done or EAPACTION_SendAndDone. and the <B>dwAuthResultCode</B> member is zero. 
+
+
+<P>When <B>Action</B> is EAPACTION_Authenticate, the array may contain additional attributes necessary to authenticate the user; for example, the user-password. If the authentication protocol passes in only the user name, RAS does not invoke the authentication provider to authenticate the user, Instead, RAS just passes back the current attributes for the user.
+
+
+<P>When <B>Action</B> is EAPACTION_Done or EAPACTION_SendAndDone, and <B>dwAuthResultCode</B> is zero, the array may contain additional attributes to assign to the user. These attributes overwrite any attributes of the same type returned by the authentication provider.
+
+
+<P>The authentication protocol frees this memory in its <A HREF="wce50lrfraseapend.htm">RasEapEnd</A> function.
+</dd>
+
+<DT><B>fInvokeInteractiveUI</B></DT>
+
+<DD>Specifies whether RAS should invoke the authentication protocol's interactive user interface (UI). If the authentication protocol sets this member to TRUE, RAS invokes the interactive UI, by calling the <A HREF="wce50lrfraseapinvokeinteractiveui.htm">RasEapInvokeInteractiveUI</A> function provided by the authentication protocol.</dd>
+
+<DT><B>pUIContextData</B></DT>
+
+<DD>Pointer to context data that RAS should pass in the call to <B>RasEapInvokeInteractiveUI</B>. The authentication protocol should free this memory in its implementation of <B>RasEapEnd</B>.</dd>
+
+<DT><B>dwSizeOfUIContextData</B></DT>
+
+<DD>Specifies the size of the context data that RAS should pass in the call to <B>RasEapInvokeInteractiveUI</B>.</dd>
+
+<DT><B>fSaveConnectionData</B></DT>
+
+<DD>Specifies whether RAS should save the information pointed to by the <B>pConnectionData</B> member. If <B>fSaveConnectionData</B> is TRUE, RAS will save the data in the phone book. Only valid for the process that is being authenticated.</dd>
+
+<DT><B>pConnectionData</B></DT>
+
+<DD>Identifies data specific to the connection; that is, data not specific to any particular user. If the <B>fSaveConnectionData</B> member is TRUE, RAS saves the connection data in the phone book. The authentication protocol should free the memory occupied by this data during the call to <B>RasEapEnd</B>.</dd>
+
+<DT><B>dwSizeOfConnectionData</B></DT>
+
+<DD>Specifies the size, in bytes, of the data pointed to by the <B>pConnectionData</B> member.</dd>
+
+<DT><B>fSaveUserData</B></DT>
+
+<DD>Specifies whether RAS should save the user data pointed to by the <B>pUserData</B> member. If this parameter is TRUE, RAS saves the user-specific data in the registry under HKEY_CURRENT_USER.</dd>
+
+<DT><B>pUserData</B></DT>
+
+<DD>Pointer to user data that RAS should save in the registry. RAS saves this data in the registry under HKEY_CURRENT_USER. The authentication protocol should free this memory during the call to <B>RasEapEnd</B>.</dd>
+
+<DT><B>dwSizeOfUserData</B></DT>
+
+<DD>Specifies the size in bytes of the data pointed to by the <B>pUserData</B> member.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Use the <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A> function to pass the <B>PPP_EAP_OUTPUT</B> structure between the authentication protocol and RAS </P>
+
+<P>The authentication protocol may use the <B>PPP_EAP_OUTPUT</B> structure to return the Microsoft Point to Point Encryption (MPPE) session key. The authentication protocol should place the session key in the value field of a subattribute contained within the value field of an attribute of type raatVendorSpecific (see <A HREF="wce50lrfrasauthattributetype.htm">RAS_AUTH_ATTRIBUTE_TYPE</A>). The subattribute should have a Vendor-ID of 311 (Microsoft) and a Vendor-Type of 12 (MS-CHAP-MPPE-Keys). The authentication protocol should set the <B>pUserAttributes</B> member to point to the raatVendorSpecific attribute, and set the <B>Action</B> member to EAPACTION_Done or EAPACTION_SendAndDone.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Raseapif.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfrasauthattribute.htm">RAS_AUTH_ATTRIBUTE</A> | <A HREF="wce50lrfpppeapaction.htm">PPP_EAP_ACTION</A> | <A HREF="wce50lrfraseapinvokeinteractiveui.htm">RasEapInvokeInteractiveUI</A> | <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: PPP_EAP_OUTPUT (wce50lrfpppeapoutput.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

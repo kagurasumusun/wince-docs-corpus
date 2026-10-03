@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Processing Data with DMOs</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conprocessingdatawithdmos"></A>Processing Data with DMOs</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<H4 class="dtH4">Step 1. Query the DMO</H4>
+
+<P>First, query the DMO for the number of streams it supports and the preferred media types for each stream. To retrieve the number of input streams and output streams, call the <A HREF="wce50lrfimediaobjectgetstreamcount.htm">IMediaObject::GetStreamCount</A> method.</P>
+
+<P>For each stream, the DMO ranks its preferred media types in order of preference and assigns each type an index, starting from zero. </P>
+
+<P>To retrieve a preferred media type for a particular stream, call the <A HREF="wce50lrfimediaobjectgetinputtype.htm">IMediaObject::GetInputType</A> or <A HREF="wce50lrfimediaobjectgetoutputtype.htm">IMediaObject::GetOutputType</A> method. Specify a stream number and a media-type index. </P>
+
+<P>To enumerate all media types on a stream, use a loop that increments the media-type index until the method returns DMO_E_NO_MORE_ITEMS, as shown in the following pseudocode.</P>
+
+<PRE class="code">DWORD cInputs, cOutputs, type = 0
+DMO_MEDIA_TYPE mt
+
+pDMO-&gt;GetStreamCount(&amp;cInputs, &amp;cOutputs)
+ 
+for (DWORD i = 0; i &lt; cInputs; i++)
+{
+    while (pDMO-&gt;GetInputType(i, type, &amp;mt) != DMO_E_NO_MORE_ITEMS)
+    {
+        if ( this media type is one you want )
+            break
+        MoFreeMediaType(&amp;mt)
+        type++
+    }
+}</PRE>
+
+<P>The <B>GetInputType</B> and <B>GetOutputType</B> methods return a <A HREF="wce50lrfdmomediatype.htm">DMO_MEDIA_TYPE</A> structure with the media type. The following structure members are relevant:
+
+<UL type="disc">
+	<LI><B>majortype</B>. A globally unique identifier (GUID) that specifies the <I>major type</I> of the stream. The major type is the general classification, such as video or audio. For a list of major types, see <A HREF="wce50lrfmediatypes.htm">Media Types</A>. </li>
+
+	<LI><B>subtype</B>. A GUID that specifies the <I>subtype</I> of the stream. The subtype further classifies the type. For example, MEDIASUBTYPE_RGB24 specifies 24-bit RGB video. For a list of subtypes, see <A HREF="wce50lrfmediatypes.htm">Media Types</A>. </li>
+
+	<LI><B>pbFormat</B>. Pointer to a structure that describes the format in detail. The format structure specifies information such as the width and height of a video image or the sample rate of an audio sample. 
+<P>Different media types use different format structures. Most video data uses the <A HREF="wce50lrfvideoinfoheader.htm">VIDEOINFOHEADER</A> structure. Audio data uses the <A HREF="wce50lrfwaveformatex91.htm">WAVEFORMATEX</A> structure. 
+</li>
+
+	<LI><B>formattype</B>. Specifies the format structure contained in <B>pbFormat</B>. </li>
+</UL>
+
+<P>The media type might have a NULL format structure, indicated by a value of GUID_NULL for the <B>formattype</B> member. A NULL format indicates that the DMO can accept a range of formats within the specified media type. </P>
+
+<P>For example, a stream that requires PCM audio might accept a range of sample rates. Therefore, it returns MEDIATYPE_Audio for the major type, MEDIASUBTYPE_PCMAudio for the subtype, and a NULL format.</P>
+
+<P>The application must call the <A HREF="wce50lrfmofreemediatype.htm">MoFreeMediaType</A> function to free the <B>pbFormat</B> member.</P>
+
+<H4 class="dtH4">Step 2. Set Media Types</H4>
+
+<P>After finding the DMO's preferred media types, set the media type for each stream by calling the <A HREF="wce50lrfimediaobjectsetinputtype.htm">IMediaObject::SetInputType</A> and <A HREF="wce50lrfimediaobjectsetoutputtype.htm">IMediaObject::SetOutputType</A> methods.</P>
+
+<P>Not every combination of media types reported by the DMO is guaranteed to be valid. For example, the output type might need to match the input type. </P>
+
+<P>You can test a media type by calling <B>SetInputType</B> or <B>SetOutputType</B> with the DMO_SET_TYPEF_TEST_ONLY flag. For a decoder, you would generally set the input type and then choose an output type. For an encoder, you would set the output type and then choose an input type.</P>
+
+<P>Because the settings on one stream can affect another stream, you might need to clear a media type that you set previously. To do this, call <B>SetInputType</B> or <B>SetOutputType</B> with the DMO_SET_TYPEF_CLEAR flag.</P>
+
+<H4 class="dtH4">Step 3. Allocate Buffers</H4>
+
+<P>After you set the media types, query the DMO for each stream's buffer requirements. These can change depending on the media type. For each stream, call the <A HREF="wce50lrfimediaobjectgetinputsizeinfo.htm">IMediaObject::GetInputSizeInfo</A> or <A HREF="wce50lrfimediaobjectgetoutputsizeinfo.htm">IMediaObject::GetOutputSizeInfo</A> method. These methods return three values:
+
+<UL type="disc">
+	<LI>Minimum buffer size, in bytes. </li>
+
+	<LI>Alignment requirements, if any. A buffer is <I>aligned</I> if the start address is a multiple of some specified integer. </li>
+
+	<LI>For input buffers, the maximum amount of data that the DMO will hold for a lookahead. Some DMOs need to hold multiple input buffers to process the data; the lookahead value specifies this requirement. </li>
+</UL>
+
+<P>You must allocate sufficient buffers to handle these requirements.</P>
+
+<P>In addition to the size requirements, an input stream might require that each buffer contain only whole samples, contain exactly one sample, or use a fixed sample size. To determine these requirements, call the <A HREF="wce50lrfimediaobjectgetinputstreaminfo.htm">IMediaObject::GetInputStreamInfo</A> method.</P>
+
+<H4 class="dtH4">Step 4. Process Input</H4>
+
+<P>At this point, you can deliver input buffers to the DMO.</P>
+
+<P>For each input stream, fill one or more input buffers with media data. You can write data directly into a buffer or use an output buffer from another DMO. Call the <A HREF="wce50lrfimediaobjectprocessinput.htm">IMediaObject::ProcessInput</A> method to deliver each buffer. </P>
+
+<P>Typically, the DMO holds a reference count on the buffer. It releases the buffer when it has generated all of the output that it can or when the application flushes the DMO. Do not reuse the buffer until the DMO releases it.</P>
+
+<P>To determine whether an input stream can accept more data, call the <A HREF="wce50lrfimediaobjectgetinputstatus.htm">IMediaObject::GetInputStatus</A> method. If the stream can accept more data, the method returns the DMO_INPUT_STATUSF_ACCEPT_DATA flag.</P>
+
+<H4 class="dtH4">Step 5. Process Output</H4>
+
+<P>Whereas the <B>ProcessInput</B> method delivers one input buffer at a time, <A HREF="wce50lrfimediaobjectprocessoutput.htm">IMediaObject::ProcessOutput</A> generates output for all output streams at once. </P>
+
+<P>The application passes an array of <A HREF="wce50lrfdmooutputdatabuffer.htm">DMO_OUTPUT_DATA_BUFFER</A> structures, with one structure for every output stream. The structure contains a pointer to an output buffer (allocated by the application) and various fields that are filled by the DMO.</P>
+
+<P>In <B>ProcessOutput</B>, the DMO generates as much data as possible, given the size of the output buffers. If it fills an output buffer before it processes all of the data, it sets the DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE flag in the structure's <B>dwStatus</B> member. When the method returns, check each structure for this flag. If the flag is present, call <B>ProcessOutput</B> again.</P>
+
+<P>After streaming begins, the DMO can always accept input, produce output, or both. Therefore, either <B>GetInputStatus</B> returns the DMO_INPUT_STATUSF_ACCEPT_DATA flag or <B>ProcessOutput</B> returns the DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE flag. The application keeps data flowing by testing for these flags and calling <B>ProcessInput</B> or <B>ProcessOutput</B>.</P>
+
+<H4 class="dtH4">Step 6: Signal a Discontinuity</H4>
+
+<P>When you have delivered all available input data to a particular input stream, call the <A HREF="wce50lrfimediaobjectdiscontinuity.htm">IMediaObject::Discontinuity</A> method. The DMO does not accept further input to that stream until you process any remaining output.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingdirectxmediaobjects.htm">Using DirectX Media Objects</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Processing%20Data%20with%20DMOs (wce50conprocessingdatawithdmos.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

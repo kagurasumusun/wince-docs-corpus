@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enumerating Objects</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conenumeratingobjects172"></A>Enumerating Objects</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Enumeration is the process of accessing every object in a directory or folder to determine whether the object has changed and whether changed objects meet the selection criteria.
+
+<OL type="1">
+	<LI>The service manager calls <B>IReplStore::IsFolderChanged</B>.</li>
+
+	<LI>If <B>IReplStore::IsFolderChanged</B> returns TRUE, the service manager calls <B>IReplStore::FindFirstItem</B>.</li>
+
+	<LI>If additional objects exist, <B>IReplStore::FindFirstItem</B> sets <I>*pfExist</I> to TRUE.</li>
+
+	<LI>The service manager calls <B>IReplStore::FindNextItem </B>repeatedly until <I>*pfExist</I> is FALSE, which indicates there are no more objects to be enumerated.</li>
+
+	<LI>The service manager calls <B>IReplStore::FindItemClose</B> to free any resources that were used during enumeration.</li>
+</OL>
+
+<P>The following code example shows how to implement <B>IReplStore::FindFirstItem</B>.</P>
+
+<PRE class="code">STDMETHODIMP CStore::FindFirstItem
+(
+   HREPLFLD hFolder,   // Handle to a folder
+   HREPLITEM *phItem,   // Output pointer to the handle of the first
+                 // item in the folder
+   BOOL *pfExist      // Output pointer to a Boolean value that is set
+                 // to TRUE if there is an object in the folder
+)
+{
+   CFolder *pFolder = (CFolder*)hFolder;
+
+   // Find the first item.
+   // pItem in the following code points to the first item.
+   // ...
+   // Implementation retrieves the unique identifier from the first item.
+   // pItem-&gt;m_uid        = retrieved_unique_ID;
+
+   // Implementation retrieves whatever it uses to verify the first item
+   // has changed; for example, a time stamp.
+   // pItem-&gt;m_ftModified = retrieved_time_stamp;
+
+   *phItem = (HREPLITEM)pItem;
+
+   if (pfExist)
+      *pfExist = TRUE;
+
+   return NOERROR;
+}</PRE>
+
+<P>During enumeration, you can select just those objects you want to synchronize by having the desktop provider return to the service manager only those that meet your criteria. For example, you might want to synchronize only appointments that fall within the next three days. The service manager accesses the selection criteria &#0151; which are stored with the folder handle &#0151; by calling <B>IReplStore::IsItemReplicated</B>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Important</b>&nbsp;&nbsp;&nbsp;Any object not returned by the enumeration appears as a deleted desktop object. The service manager assumes the object has been deleted and deletes the corresponding device object. To avoid deleting objects that do not meet the selection criteria, be sure the desktop provider's enumeration returns every object in the store whether or not the object meets the selection criteria.</BLOCKQUOTE>
+
+<P>You can reselect as conditions change. For example, you might want to synchronize appointments falling within the next three days, every day. In order to determine the date range to select for, the service manager calls <B>IReplStore::ReportStatus</B> with RSC_DATE_CHANGED to initiate the synchronization process.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condevelopingthedesktopprovider.htm">Developing the Desktop Provider</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Enumerating%20Objects (wce50conenumeratingobjects172.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

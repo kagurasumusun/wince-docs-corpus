@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Querying for Depth Buffer Support</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conqueryingfordepthbuffersupport"></A>Querying for Depth Buffer Support</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>As with any feature, the driver that your application uses might not support all types of depth buffering. Always check the driver's capabilities. Although most drivers support z-based depth buffering, not all will support w-based depth buffering. Drivers do not fail if you attempt to enable an unsupported scheme. They fall back on another depth buffering method instead, or sometimes disable depth buffering altogether, which can result in scenes rendered with extreme depth-sorting artifacts.</P>
+
+<P>You can check for general support for depth buffers by querying Microsoft&reg; Direct3D&reg; Mobile for the display device that your application will use before you create a Direct3D Mobile device. If the Direct3DMobile object reports that it supports depth buffering, any hardware devices you create from this Direct3DMobile object will support z-buffering.</P>
+
+<P>To query for depth buffering support, you can use the <A HREF="wce50lrfidirect3dmobilecheckdeviceformat.htm">IDirect3DMobile::CheckDeviceFormat</A> method, as shown in the following code example.</P>
+
+<PRE class="code">// The following example assumes that pCaps is a valid pointer to an 
+// initialized D3DMCAPS structure.
+    if( FAILED( m_pD3DM-&gt;CheckDeviceFormat( pCaps-&gt;AdapterOrdinal, 
+                                            pCaps-&gt;DeviceType, Format, 
+                                            0, 
+                                            D3DMRTYPEFLAG_DEPTHSTENCIL,
+                                            D3DMFMT_D16 ) ) )
+        return E_FAIL;</PRE>
+
+<P><B>CheckDeviceFormat</B> allows you to choose a device to create based on the capabilities of that device. In this case, devices that do not support 16-bit depth buffers are rejected.</P>
+
+<P>In addition, you can use <A HREF="wce50lrfidirect3dmobilecheckdepthstencilmatch.htm">IDirect3DMobile::CheckDepthStencilMatch</A> to determine whether a supported depth-stencil format is compatible with the render target format in the display mode, particularly if a depth format must be equal to the render target format.</P>
+
+<P>Using <B>CheckDepthStencilMatch</B> to determine depth-stencil compatibility with a render target is shown in the following code example.</P>
+
+<PRE class="code">// Reject devices that cannot create a render target of RTFormat while
+// the back buffer is of RTFormat and the depth-stencil buffer is
+// at least 8 bits of stencil.
+if( FAILED( m_pD3DM-&gt;CheckDepthStencilMatch( pCaps-&gt;AdapterOrdinal,
+                                             pCaps-&gt;DeviceType, 
+                                             AdapterFormat, 
+                                             RTFormat, 
+                                             D3DMFMT_D24S8 ) ) )
+        return E_FAIL;</PRE>
+
+<P>Once you know that the driver supports depth buffers, you can verify w-buffer support. Although depth buffers are supported for all software rasterizers, w-buffers are supported only by the reference driver, which is not suited for use by real-world applications. Regardless of the type of device your application uses, verify support for w-buffers before you attempt to enable w-based depth buffering.</P>
+
+<P class="labelproc"><B>To determine support for w-buffers</B>
+
+<OL type="1">
+	<LI>After creating your device, call the <A HREF="wce50lrfidirect3dmobiledevicegetdevicecaps.htm">IDirect3DMobileDevice::GetDeviceCaps</A> method, passing an initialized <A HREF="wce50lrfd3dmcaps.htm">D3DMCAPS</A> structure.</li>
+
+	<LI>After the call, the <B>LineCaps</B> member contains information about the driver's support for rendering primitives.</li>
+
+	<LI>If the <B>RasterCaps</B> member of this structure contains the D3DMPRASTERCAPS_WBUFFER flag (see <A HREF="wce50lrfd3dmprastercapsvalues.htm">D3DMPRASTERCAPS Values</A>), then the driver supports w-based depth buffering for that primitive type.</li>
+</OL>
+
+<P>For general information about depth buffering, see <A HREF="wce50condepthbuffers.htm">Depth Buffers</A>. </P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condepthbuffers.htm">Depth Buffers</A> | <A HREF="wce50condevicetypes.htm">Device Types</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Querying%20for%20Depth%20Buffer%20Support (wce50conqueryingfordepthbuffersupport.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

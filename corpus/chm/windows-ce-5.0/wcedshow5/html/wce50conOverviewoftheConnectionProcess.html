@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Overview of the Filter Connection Process</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conoverviewoftheconnectionprocess"></A>Overview of the Filter Connection Process</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Before two filters can be connected, they must each be added to the filter graph. When building a filter graph using Intelligent Connect (such as within a call to <A HREF="wce50lrfimediacontrolrenderfile.htm">IMediaControl::RenderFile</A>), the filter graph manager adds filters to the graph based on the media type in the file it has been given to render. The Graph Builder objects build specific types of graphs by selecting a predetermined arrangement of filters. An application can also build a graph manually by instructing the filter graph manager to add specific filters. In any of these scenarios, the filter is added to the graph by the <A HREF="wce50lrfifiltergraphaddfilter.htm">IFilterGraph::AddFilter</A> method, and the filter is notified that it has joined the graph by a call to the <A HREF="wce50lrfibasefilterjoinfiltergraph.htm">IBaseFilter::JoinFilterGraph</A> method. The added filter can then be connected to the filters upstream and/or downstream from it. To initiate the connection process, the filter graph manager requests the filters to enumerate their pins and then, for each connection required, requests that an output pin connect to an input pin by calling the output pin's <A HREF="wce50lrfipinconnect.htm">IPin::Connect</A> method. All the details of the connection are then negotiated by the two pins within the scope of <B>Connect</B>. </P>
+
+<P>To say that two filters are "connected" means that they have agreed on the media type of the data that will pass between them, and the size and location of the shared data buffers. The connection type is closely related to the transport type. There are different types of transport depending on whether the data is being "pushed" or "pulled" and whether the data buffers are located in main memory or on a hardware device. </P>
+
+<P>The connection/transport type discussed here is an <B>IMemInputPin</B> connection, in which the buffers are allocated from main memory and the data is "pushed" into the buffer from the upstream pin. The base classes handle much of this connection mechanism. However, it is important to understand the connection process when writing a filter so that you can identify what to override and what is expected of your filter. Before two connected filters are prepared to pass media between them, the following connection and negotiation processes must occur in this order.
+
+<OL type="1">
+	<LI>The initial pin connection occurs. </li>
+
+	<LI>The output pin of one filter retrieves interfaces from the connected input pin. </li>
+
+	<LI>Both pins negotiate for a common media type. </li>
+
+	<LI>Both pins negotiate for an appropriate transport to pass the media. </li>
+</OL>
+
+<P>In the first step, the filter graph manager informs the output pin of the upstream filter to connect to a specified input pin of the downstream filter. This results in an exchange of <A HREF="wce50lrfipininterface.htm">IPin</A> interface pointers. Filters should never connect to other filters by themselves. The filter graph manager must always be the agent that initiates a connection, because deadlocks can occur otherwise. A filter or an application can instruct the filter graph manager to connect two pins (through the <A HREF="wce50lrfigraphbuilderconnect.htm">IGraphBuilder::Connect</A> or <A HREF="wce50lrfifiltergraphconnectdirect.htm">IFilterGraph::ConnectDirect</A> method), or the filter graph manager can determine to connect filters when rendering a filter by using the <A HREF="wce50lrfigraphbuilderrender.htm">IGraphBuilder::Render</A> or <A HREF="wce50lrfigraphbuilderrenderfile.htm">IGraphBuilder::RenderFile</A> method. </P>
+
+<P>In the second step, the output pin may request the <A HREF="wce50lrfimeminputpininterface.htm">IMemInputPin</A> interface from the connected input pin. This is in preparation for the fourth step, where the output pin will use <B>IMemInputPin</B> to retrieve a memory allocator from the input pin. If the output pin already has a memory allocator (or some other transport in the case of hardware filters), it can skip this step or can request some other interface in a proprietary design. </P>
+
+<P>In the third step, media types are tried until one is found that is acceptable to both pins or the pins run out of types to try (in which case the connection fails). First, the output pin asks the connected input pin to propose its list of media types. If none of these are acceptable to the output pin, the output pin proposes its own types. </P>
+
+<P>In the fourth step, the output pin asks the connected input pin for an interface to a memory allocator object. In the base classes, these objects are implemented by <B>CBaseAllocator</B> and <B>CMemAllocator</B>. These objects create the media samples and their associated data buffers that each pin will access to transfer the multimedia data. If the output pin does not accept the input pin's allocator (for reasons discussed below), it can propose its own allocator. In either case it must notify the input pin of the selection. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Overview%20of%20the%20Filter%20Connection%20Process (wce50conoverviewoftheconnectionprocess.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

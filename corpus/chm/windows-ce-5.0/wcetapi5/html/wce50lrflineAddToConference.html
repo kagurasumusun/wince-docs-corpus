@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineAddToConference</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrflineaddtoconference"></A>lineAddToConference</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function adds the call specified by the <I>hConsultCall</I> parameter to the conference call specified by the <I>hConfCall</I> parameter. </P>
+
+<PRE class="syntax"><B>LONG WINAPI lineAddToConference(</B>
+  <B>HCALL </B><I>hConfCall</I><B>,</B>
+  <B>HCALL </B><I>hConsultCall</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hConfCall</I> </DT>
+
+<DD>Handle to the conference call. The application must be an owner of this call. Any monitoring (media, tones, digits) on a conference call applies only to the <I>hConfCall</I>, not to the individual participating calls. Call state of <I>hConfCall</I> must be onHoldPendingConference or onHold. </dd>
+
+<DT><I>hConsultCall</I> </DT>
+
+<DD>Handle to the call to be added to the conference call. The application must be an owner of this call. This call cannot be a parent of another conference or a participant in any conference. Depending on the device capabilities indicated in <A HREF="wce50lrflineaddresscaps.htm">LINEADDRESSCAPS</A>, the <I>hConsultCall</I> may not necessarily have been established using the <A HREF="wce50lrflinesetupconference.htm">lineSetupConference</A> or <A HREF="wce50lrflineprepareaddtoconference.htm">linePrepareAddToConference</A> functions. The call state of <I>hConsultCall</I> must be connected, onHold, proceeding, or ringback. Many PBXs allow calls to be added to conferences before they are actually answered. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns a positive request identifier if the function is completed asynchronously, or a negative error number if an error occurs. The <I>dwParam2</I> parameter of the corresponding <A HREF="wce50lrflinereply.htm">LINE_REPLY</A> message is zero if the function succeeds, or it is a negative error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_CONFERENCEFULL</TD>
+<TD width=50%>The line cannot be added to the conference because the conference is full.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOTOWNER</TD>
+<TD width=50%>The application is not the owner of the call.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCONFCALLHANDLE</TD>
+<TD width=50%>The conference call handle is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLHANDLE</TD>
+<TD width=50%>The specified call handle for the added call is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLSTATE</TD>
+<TD width=50%>The call state is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resource is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_UNINITIALIZED</TD>
+<TD width=50%>The parameter is uninitialized.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>If LINEERR_INVALCALLHANDLE is returned, the specified call handle for the added call is invalid; <I>hConsultCall</I> is a parent of another conference or already a participant in a conference; <I>hConsultCall</I> cannot be added for other reasons (such as, it must have been established using <A HREF="wce50lrflinesetupconference.htm">lineSetupConference</A> or <A HREF="wce50lrflineprepareaddtoconference.htm">linePrepareAddToConference</A>); or <I>hConsultCall</I> and <I>hConfCall</I> are calls on different open lines. </P>
+
+<P>The call handle of the added party remains valid after adding the call to a conference. Its state typically changes to conferenced while the state of the conference call typically becomes connected. Using the <A HREF="wce50lrflinegetconfrelatedcalls.htm">lineGetConfRelatedCalls</A> function, you can obtain a list of call handles that are part of the same conference call as the specified call. The specified call is either a conference call or a participant call in a conference call. New handles are generated for those calls for which the application does not already have handles, and the application is granted monitor privilege to those calls. The handle to an individual participating call can be used later to remove that party from the conference call using <A HREF="wce50lrflineremovefromconference.htm">lineRemoveFromConference</A>. </P>
+
+<P>If <B>lineGetConfRelatedCalls</B> is called immediately after <B>lineAddToConference</B>, it may not return a complete list of related calls because TAPI waits to receive a <A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> message indicating that the call has entered LINECALLSTATE_CONFERENCED before it considers the call to actually be part of the conference (that is, the conferenced state is confirmed by the service provider). After the application has received the LINE_CALLSTATE message, <B>lineGetConfRelatedCalls</B> returns complete information. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;All calls that are part of a conference must exist on the same open line. </BLOCKQUOTE>
+
+<P>The call states of the calls participating in a conference are not independent. For example, when dropping a conference call, all participating calls can automatically become idle. An application should consult the line's device capabilities to determine what form of conference removal is available. The application should track the LINE_CALLSTATE messages to determine what happened to the calls involved. </P>
+
+<P>The conference call is established either by <B>lineSetupConference</B> or the <A HREF="wce50lrflinecompletetransfer.htm">lineCompleteTransfer</A> function. The call added to a conference is typically established using <B>lineSetupConference</B> or <B>linePrepareAddToConference</B>. Some switches can allow adding arbitrary calls to the conference, and such a call can have been set up using the <A HREF="wce50lrflinemakecall.htm">lineMakeCall</A> function and be on (hard) hold. The application can examine the <B>dwAddrCapFlags</B> member of the <B>LINEADDRESSCAPS</B> structure to determine the permitted operations. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This function is for TAPI version 2.0 and later.</BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Tapi.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrflinecompletetransfer.htm">lineCompleteTransfer</A> | <A HREF="wce50lrflinegetconfrelatedcalls.htm">lineGetConfRelatedCalls</A> | <A HREF="wce50lrflinemakecall.htm">lineMakeCall</A> | <A HREF="wce50lrflineprepareaddtoconference.htm">linePrepareAddToConference</A> | <A HREF="wce50lrflineremovefromconference.htm">lineRemoveFromConference</A> | <A HREF="wce50lrflinesetupconference.htm">lineSetupConference</A> | <A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: lineAddToConference (wce50lrflineaddtoconference.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

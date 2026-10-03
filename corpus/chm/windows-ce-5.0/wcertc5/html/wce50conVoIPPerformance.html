@@ -1,0 +1,73 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Voice Performance</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfWAVEHDR">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50convoipperformance"></A>Voice Performance</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Properly handling samples in the audio driver is key to achieving good sound quality and performance with audio sessions managed by RTC. These sessions can be a core part of a Voice over IP (VoIP) architecture. </P>
+
+<P>The following best practices are useful to consider when optimizing voice performance:
+
+<UL type="disc">
+	<LI>A driver's audio capture characteristics have a greater influence on overall VoIP quality than a driver's audio rendering characteristics. These characteristics can have an effect on performance that is more important than, and even independent of, your device's raw processing power.</li>
+
+	<LI>The smallest captured sound sample used in the an RTC Client API system is about 20 milliseconds (ms) long. The actual sample size depends upon the audio codec being used. It is set in the sample's <A HREF="JavaScript:hhobj_1.Click()">WAVEHDR</A> structure. </li>
+
+	<LI>Your audio driver should send an interrupt as soon as each sample is complete and the <B>WAVEHDR</B> structure is filled. This interrupt causes the captured audio data to be sent immediately to the encoder and then on to the receiving device. 
+<P>Some audio hardware generates an interrupt for variable length captures. If your hardware does not support this, simulate this behavior in your device driver. 
+</li>
+
+	<LI>If your driver does not send an interrupt at the end of every sample, the samples accumulate in the DMA buffer until it is full. When the DMA buffer is full, the audio hardware creates an interrupt and sends all samples over the network in one large stream. 
+<P>This can lead to audio that is received and rendered in bursts because, depending on the specific hardware configuration, the DMA buffer can hold as much as 200 ms worth of audio data.
+</li>
+
+	<LI>The overall latency for a VoIP receiving device is the sum of the times spent capturing the audio data, encoding it, sending it over the network, decoding it, and rendering it. </li>
+
+	<LI>If the audio capture time is the sum of many samples filling the DMA buffer, the total end-to-end time of the process can exceed the acceptable latency limit for a phone call, which is about 200 ms. 
+<P>You can achieve low-latency audio capture by indicating the completion of small <B>WAVEHDR</B> structures as soon as each one is filled.
+</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingrtcclientapi.htm">Using the RTC Client API</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Voice%20Performance (wce50convoipperformance.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

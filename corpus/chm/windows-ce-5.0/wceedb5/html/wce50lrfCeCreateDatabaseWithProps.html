@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CeCreateDatabaseWithProps (EDB)</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcecreatedatabasewithprops"></A>CeCreateDatabaseWithProps (EDB)</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates a new database in a mounted volume.</P>
+
+<P>This function does not work with CEDB databases. For more information about CEDB, see <A HREF="wce50oricedbreference.htm">CEDB Reference</A>.</P>
+
+<PRE class="syntax"><B>CEOID CeCreateDatabaseWithProps(</B>
+  <B>PCEGUID</B> <I>pGuid</I>,
+  <B>CEDBASEINFO</B>* <I>pInfo</I>,
+  <B>DWORD</B> <I>cProps</I>,
+  <B>CEPROPSPEC*</B> <I>prgProps</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pGuid</I></DT>
+
+<DD>[in] The CEGUID of the mounted volume in which to create the database. You can mount a volume by calling the <A HREF="wce50lrfcemountdbvolexedb.htm">CeMountDBVolEx (EDB)</A> function.</dd>
+
+<DT><I>pInfo</I></DT>
+
+<DD>[in] A pointer to the <A HREF="wce50lrfcedbaseinfoexedb.htm">CEDBASEINFOEX (EDB)</A> structure that specifies the name, type, sort orders, and other characteristics of the database.</dd>
+
+<DT><I>cProps</I></DT>
+
+<DD>[in] The number of elements in the <I>prgProps</I> array.</dd>
+
+<DT><I>prgProps</I></DT>
+
+<DD>[in] An array of <A HREF="wce50lrfcepropspecedb.htm">CEPROPSPEC (EDB)</A> structures. This array specifies the set of properties to create in the new database. In EDB, you must define properties before you can write them.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The OID of the new database indicates success. NULL indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>. The following table lists possible values returned by <B>GetLastError</B>:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Return Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_INVALID_PARAMETER</TD>
+<TD width=50%>Indicates that one or more parameters are not valid. See "Remarks" later in this topic for more information.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_DUP_NAME</TD>
+<TD width=50%>Indicates that a database already exists with the specified name.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_NOT_SUPPORTED</TD>
+<TD width=50%>Indicates that the specified <B>CEDBASEINFOEX</B> structure contains either CEDB_VALIDMODTIME or CEDB_SYSTEMDB. Neither of these values is supported by EDB. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_ALREADY_EXISTS</TD>
+<TD width=50%>Indicates that the <I>prgProps</I> parameter contains a property for which the specified propid or name already exists.<BR>
+Also occurs if you try to add more than one <B>AUTO_<I>xxx</I> </B>property to a database.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_NOT_FOUND</TD>
+<TD width=50%>Indicates that the volume specified by <I>pGuid</I> does not exist.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_DISK_FULL</TD>
+<TD width=50%>Indicates that there is not enough disk space to create the database.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_BAD_LENGTH</TD>
+<TD width=50%>Indicates that the specified database name is greater than 128 characters.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_ACCESS_DENIED</TD>
+<TD width=50%>Indicates an attempt to create a database with two primary key sort orders.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The ERROR_INVALID_PARAMETER may be returned in the following situations:
+
+<UL type="disc">
+	<LI>If <I>pGuid</I> is NULL.</li>
+
+	<LI>If <I>pInfo</I> is NULL.</li>
+
+	<LI>If <I>pInfo</I>-&gt;<B>wVersion</B> is not equal to CEDBASEINFO_VERSION.</li>
+
+	<LI>If <I>pInfo</I>-&gt;<B>dwFlags</B> does not have the CEDB_VALIDNAME flag. EDB requires that a name be supplied when creating a database.</li>
+
+	<LI>If <I>pInfo</I>-&gt;<B>szDbaseName</B> is empty or contains all spaces.</li>
+
+	<LI>If <I>pInfo</I>-&gt;<B>dwFlags</B> has the CEDB_VALIDSORTSPEC flag, and <BR>
+<I>pInfo</I>-&gt;<B>wNumSortOrder</B> is greater than CE_MAXSORTORDER (16).</li>
+
+	<LI>If there are sort orders specified, and any of the elements in <I>pInfo</I>-&gt;<B>rgSortSpecs</B> are not valid. The following members of a <A HREF="wce50lrfsortorderspecexedb.htm">SORTORDERSPECEX (EDB)</A> structure must be valid:
+<UL type="disc">
+	<LI>The <B>wVersion</B> member must be set to CESORTORDERSPEC_VERSION. </li>
+
+	<LI>The <B>wNumProps</B> member cannot be greater than CE_MAXSORTPROP (16).</li>
+
+	<LI>The property IDs in the <B>rgPropID</B> member must all have valid CEDB data types from the <B>CEVT_<I>xxx</I></B> enumeration.</li>
+
+	<LI>The property cannot be a <B>CEVT_STREAM</B> data type (you cannot create sort orders on streams).</li>
+</UL>
+</li>
+
+	<LI>If <I>cProps</I> is not 0 and <I>prgProps</I> is NULL.</li>
+
+	<LI>If the <A HREF="wce50lrfceadddatabasepropsedb.htm">CeAddDatabaseProps (EDB)</A> function, which is called by this function, returns any errors.</li>
+</UL>
+
+<P>If sort orders are specified in <I>pInfo</I>, this function automatically creates those sort orders. Any properties included in those sort orders are automatically added to the property set supported by the database. You can add other properties that you want to store in the database by using <A HREF="wce50lrfceadddatabasepropsedb.htm">CeAddDatabaseProps (EDB)</A>. Because sort orders increase the system resources needed to perform each insert and delete operation, you should keep the number of sort orders to a minimum. You can use the <A HREF="wce50lrfcesetdatabaseinfoedb.htm">CeSetDatabaseInfo (EDB)</A> function to change the sort order.</P>
+
+<P>The following list highlights the differences between this function and the CEDB equivalent function:
+
+<UL type="disc">
+	<LI>The OID returned by this function is not recognized by the Microsoft&reg; Windows&reg; CE operating system (OS) as an object-store OID. You can only use this OID in other EDB API functions.</li>
+
+	<LI>Because a property must exist in an EDB database before it can be written to (or must be created during the first write), this function allows the user to define the properties when creating a database. The properties can be changed at a later time by using the <B>CeAddDatabaseProps</B> and <B>CeRemoveDatabaseProps</B> functions.</li>
+
+	<LI>In EDB, if you do not specify a sort order for the database, no sort order is created by default.</li>
+
+	<LI>There is no system volume in EDB.</li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> Windbase.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcemountdbvolexedb.htm">CeMountDBVolEx (EDB)</A> | <A HREF="wce50lrfceadddatabasepropsedb.htm">CeAddDatabaseProps (EDB)</A> | <A HREF="wce50lrfceremovedatabasepropsedb.htm">CeRemoveDatabaseProps (EDB)</A> | <A HREF="wce50lrfcesetdatabaseinfoedb.htm">CeSetDatabaseInfo (EDB)</A> | <A HREF="wce50lrfcedbaseinfoexedb.htm">CEDBASEINFOEX (EDB)</A> | <A HREF="wce50lrfcepropspecedb.htm">CEPROPSPEC (EDB)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CeCreateDatabaseWithProps%20(EDB) (wce50lrfcecreatedatabasewithprops.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

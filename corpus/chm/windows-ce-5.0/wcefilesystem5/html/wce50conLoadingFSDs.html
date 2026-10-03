@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>File System Driver Loading</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conloadingfsds"></A>File System Driver Loading</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>FSDs are loaded automatically when storage hardware that is registered for an FSD is inserted into a target device. </P>
+
+<P>When a PC Card, such as a storage card, is inserted into a target device, the card's device driver reads the PC Card driver registry entry, which defines the name of the FSD to use for the card. For this discussion, the FSD is named MyFSD. When a user inserts a PC Card, a notification is sent to the Storage Manager. The Storage Manager mounts the appropriate partition driver and then loads the corresponding file system for the partition. While loading the file system, the Storage Manager checks in MyFSD for the <A HREF="wce50lrffsdmountdisk.htm">FSD_MountDisk</A> entry point, which is the generic exported entry point for <B>MyFSD_MountDisk</B>. If it is found, the Device Manager loads Fsdmgr.dll. The Device Manager then calls Fsdmgr.dll, passing in information about MyFSD.</P>
+
+<P>The FSD Manager calls the <B>MyFSD_MountDisk</B> function that MyFSD.dll exports. The following table shows the two methods for loading an FSD.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=17%>File system</TH>
+<TH width=83%>Method</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>Automatically loaded file systems</TD>
+<TD width=83%>The <B>HKEY_LOCAL_MACHINE\System\StorageManager\AutoLoad</B> registry key specifies these file systems. They do not necessarily need any block driver under them. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=17%>Block driver based file systems</TD>
+<TD width=83%>If the block driver registry key contains the <B>IClass</B> registry subkey, which means that the Storage Manager manages it, then the Storage Manager loads the specified partition driver. 
+<P>For an example of the <B>IClass</B> registry subkey, see the <B>ATADISK</B> and <B>ATAPI</B> registry keys. Using the specified partition driver, the Storage Manager enumerates partitions and loads file systems. For more information on the Storage Manager, see <A HREF="wce50constoragemanager.htm">Storage Manager</A>.</P>
+</TD>
+</TR>
+</table></div>
+
+<P>Because there are two methods of loading a file system, the actual file system is loaded multiple times with the help of the Storage Manager, and you can only call <A HREF="wce50lrffsdmgrregistervolume.htm">FSDMGR_RegisterVolume</A> once per instance of an FSD.</P>
+
+<P>The FSD Manager displays all volumes as directories in the built-in file system and makes them accessible to applications using the file system functions. Similarly, when the FSD's <B>MyFSD_UnmountDisk</B> entry point is called, it deregisters the volumes on the target device. The following illustration shows how an FSD is loaded.</P>
+
+<P class="fig"><IMG SRC="loadfsd.gif" ALT="" BORDER=0></P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conaddinganinstallablefilesystem.htm">Installable File System</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: File%20System%20Driver%20Loading (wce50conloadingfsds.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

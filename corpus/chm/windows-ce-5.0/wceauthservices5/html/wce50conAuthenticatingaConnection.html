@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Authenticating a Connection</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conauthenticatingaconnection"></A>Authenticating a Connection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In a typical client/server application protocol, the server waits for the client to connect and request service. Upon connection, the server must be able to authenticate the client and the client must be able to authenticate the server. The protocol used to establish an authentic connection requires the exchange of one or more security tokens between the client and server SSP. The tokens, which include protocol-specific data, are sent as messages between the client and the server. The client and the server continue to exchange messages until either the authentication is successfully established or an error occurs.</P>
+
+<H2 class="dtH2">Client Security Context Initialization</H2>
+
+<P>To begin the authentication process, the client calls the <A HREF="wce50lrfacquirecredentialshandle.htm">AcquireCredentialsHandle</A> function with the SECPKG_CRED_INBOUND flag to obtain an outbound credentials handle. Then, the client calls the <A HREF="wce50lrfinitializesecuritycontext.htm">InitializeSecurityContext</A> function to obtain a security token to send a connection request message to the server.</P>
+
+<P>The client uses the security token data received in the output buffer descriptor to generate a message to send to the server. The construction of the message, in terms of placement of various buffers, is decided by the application protocol and is adhered to by both client and server. For more information about buffers, see <A HREF="wce50conmemoryuseandbuffers.htm">Memory Use and Buffers</A>.</P>
+
+<P>The client examines the return status of <B>InitializeSecurityContext</B> to determine if authentication is complete. The return status SEC_I_CONTINUE_NEEDED indicates that the security protocol requires additional authentication messages.</P>
+
+<H2 class="dtH2">Server Security Context Initialization</H2>
+
+<P>In a similar process, the server must also call the <B>AcquireCredentialsHandle</B> function with the SECPKG_CRED_OUTBOUND flag to obtain a handle to its credentials. </P>
+
+<P>When the server receives a connection request from the client, it calls the <A HREF="wce50lrfacceptsecuritycontext.htm">AcceptSecurityContext</A> function, passing the data that it received from the client as input. Rather than copying the data to an alternate buffer, the server initializes the security buffer descriptors to refer to specific sections of the data.</P>
+
+<P>Next, the server checks the return status and output buffer descriptor to ensure that no errors exist. If errors do exist, the server rejects the connection request; if errors do not exist, the server checks the output buffer for data. If data is present in the buffer, the server bundles the data according to the application protocol, and then places the data into a response message to the client.</P>
+
+<P>If the return status is SEC_I_CONTINUE_NEEDED or SEC_I_COMPLETE_AND_CONTINUE, another message exchange with the client is required. Otherwise, authentication is complete. If authentication must continue, the server waits for the client to respond with another message. Place a time-out on this waiting period in case the client does not respond with a message. A time-out will avoid the possibility of hanging this and, subsequently, all server threads.</P>
+
+<P>For sample code example, see <A HREF="wce50consspisampleapplication.htm">SSPI Sample Application</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conprocedureforusingsspi.htm">Using SSPI</A> | <A HREF="wce50conauthenticationservices.htm">Authentication Services</A> | <A HREF="wce50consecuritysupportproviderinterface.htm">Security Support Provider Interface Architecture</A> | <A HREF="wce50consecuritypackages.htm">Security Packages</A> | <A HREF="wce50conauthenticationservicessecurity.htm">Authentication Services Security</A> | <A HREF="wce50conauthenticationservicesregistrysettings.htm">Authentication Services Registry Settings</A> | <A HREF="wce50grfauthenticationservicesreference.htm">Authentication Services Reference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Authenticating%20a%20Connection (wce50conauthenticatingaconnection.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

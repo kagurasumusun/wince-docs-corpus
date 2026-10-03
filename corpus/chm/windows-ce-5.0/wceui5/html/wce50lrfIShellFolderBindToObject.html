@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IShellFolder::BindToObject</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfishellfolderbindtoobject"></A>IShellFolder::BindToObject</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method retrieves an <A HREF="wce50lrfishellfolder.htm">IShellFolder</A> object for a subfolder. </P>
+
+<PRE class="syntax"><B>HRESULT BindToObject(</B>
+<B>  LPCITEMIDLIST </B><I>pidl</I><B>,</B>
+<B>  LPBC </B><I>pbc</I><B>,</B>
+<B>  REFIID </B><I>riid</I><B>,</B>
+<B>  VOID** </B><I>ppvOut</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pidl</I></DT>
+
+<DD>[in] Pointer to an <A HREF="wce50lrfitemidlist.htm">ITEMIDLIST</A> structure (PIDL) that identifies the subfolder.</dd>
+
+<DT><I>pbc</I></DT>
+
+<DD>[in] Optional address of an <B>IBindCtx</B> interface on a bind context object to be used during this operation. If this parameter is not used, set it to NULL. Because support for <I>pbc</I> is optional for folder object implementations, some folders may not support the use of bind contexts. </dd>
+
+<DT><I>riid</I></DT>
+
+<DD>[in] Identifier of the interface to return. </dd>
+
+<DT><I>ppvOut</I></DT>
+
+<DD>[out] Address that receives the interface pointer. If an error occurs, a NULL pointer is returned in this address. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns NOERROR if successful, or an error value otherwise.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <I>pidl</I> parameter can refer to an object at any level below the parent folder in the namespace hierarchy. The <I>pidl</I> can thus be either a multi-level pointer to an item identifier list (PIDL), relative to the parent folder. The structure will contain one or more <A HREF="wce50lrfshitemid.htm">SHITEMID</A> structures, followed by a terminating NULL.</P>
+
+<P>Applications use <B>IShellFolder::BindToObject</B> to obtain a directly exposed interface from the shell folder object of a subitem. Usually the calling application passes IID_IShellFolder as the interface identifier to retrieve the <B>IShellFolder</B> interface. However, sometimes the calling application needs to obtain some other directly exposed interface, such as <B>IRemoteComputer</B>. A shell namespace extension can implement this function by creating the shell folder object for the specified subitem and then calling <A HREF="JavaScript:hhobj_1.Click()">IUnknown::QueryInterface</A> to convert it into the desired interface pointer, which is returned to the calling application.</P>
+
+<P>This call is also useful if a particular interface is not implemented. For example, if the shell folder object of the subitem does not support the <B>IRemoteComputer</B> interface, the implementation can return E_NOINTERFACE immediately instead of needlessly creating the shell folder object for the subitem and then finding that <B>IRemoteComputer</B> was not supported after all. </P>
+
+<P>This optimization is useful if creating a shell folder object is an expensive operation. In other words, the following two code fragments are equivalent. </P>
+
+<PRE class="code">/* This is the more efficient way */
+   HRESULT hres = psf-&gt;BindToObject(pidl, pbc, riid, ppvOut);
+
+/* This is the equivalent slower way */
+   IShellFolder *psfOut;
+   HRESULT hres = psf-&gt;BindToObject(pidl,
+                                    pbc,
+                                    IID_IShellFolder,
+                                    (LPVOID)&amp;psfOut);
+
+   if (SUCCEEDED(hres)) 
+   {
+      hres = psfOut-&gt;QueryInterface(riid, ppvOut);
+      psfOut-&gt;Release();
+   } 
+   
+   else 
+   {
+      *ppvOut = NULL;
+   }</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.2 and later.<BR>
+<B>Header:</B> Shobjidl.h, Shobjidl.idl.<BR>
+<B>Link Library:</B> Implementation dependent.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfishellfolder.htm">IShellFolder</A> | <A HREF="wce50lrfitemidlist.htm">ITEMIDLIST</A> | <A HREF="wce50lrfshitemid.htm">SHITEMID</A> | <A HREF="wce50lrfshgetdesktopfolder.htm">SHGetDesktopFolder</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IShellFolder::BindToObject (wce50lrfishellfolderbindtoobject.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

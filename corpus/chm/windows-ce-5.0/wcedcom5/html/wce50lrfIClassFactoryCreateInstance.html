@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IClassFactory::CreateInstance</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrficlassfactorycreateinstance"></A>IClassFactory::CreateInstance</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method creates an uninitialized object of a specified class identifier (CLSID).</P>
+
+<PRE class="syntax"><B>HRESULT CreateInstance( </B>
+  <B>IUnknown* </B><I>pUnkOuter</I><B>,</B><I> </I>
+  <B>REFIID</B> <I>riid</I><B>,</B> 
+  <B>void** </B><I>ppvObject</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pUnkOuter</I></DT>
+
+<DD>[in] If the object is being created as part of an aggregate, pointer to the controlling <A HREF="wce50lrfiunknown.htm">IUnknown</A> interface of the aggregate. Otherwise, <I>pUnkOuter</I> must be NULL. </dd>
+
+<DT><I>riid</I></DT>
+
+<DD>[in] Reference to the identifier of the interface to be used to communicate with the newly created object. 
+
+<P>If <I>pUnkOuter</I> is NULL, this parameter is frequently the IID of the initializing interface.
+
+
+<P>If <I>pUnkOuter</I> is non-NULL, <I>riid</I> must be <B>IID_IUnknown</B> (defined in the header as the IID for <B>IUnknown</B>).
+</dd>
+
+<DT><I>ppvObject</I></DT>
+
+<DD>[out] Pointer to a pointer variable that receives the interface pointer requested in <I>riid</I>. 
+
+<P>Upon successful return, *<I>ppvObject</I> contains the requested interface pointer. 
+
+
+<P>If the object does not support the interface specified in <I>riid</I>, the implementation must set *<I>ppvObject</I> to NULL.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This method supports the standard return values E_UNEXPECTED, E_OUTOFMEMORY, and E_INVALIDARG. The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_OK</TD>
+<TD width=66%>The specified object was created.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>CLASS_E_NOAGGREGATION</TD>
+<TD width=66%>The <I>pUnkOuter</I> parameter was non-NULL and the object does not support aggregation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>E_NOINTERFACE</TD>
+<TD width=66%>The object that <I>ppvObject</I> points to does not support the interface identified by <I>riid</I>.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <A HREF="wce50lrficlassfactoryiunknown.htm">IClassFactory</A> interface is always on a class object. The <B>CreateInstance</B> method creates an uninitialized object of the class identified with the specified CLSID. When an object is created in this way, the CLSID must be registered in the system registry with the <A HREF="wce50lrfcoregisterclassobject.htm">CoRegisterClassObject</A> function.</P>
+
+<P>The <I>pUnkOuter</I> parameter indicates whether the object is being created as part of an aggregate. Object definitions are not required to support aggregation &#0151; they must be specifically designed and implemented to support it. </P>
+
+<P>The <I>riid</I> parameter specifies the interface identifier (IID) of the interface through which you will communicate with the new object. </P>
+
+<P>If <I>pUnkOuter</I> is non-NULL (that indicates aggregation), the value of the <I>riid</I> parameter must be <B>IID_IUnknown</B>. </P>
+
+<P>If the object is not part of an aggregate, <I>riid</I> often specifies the interface though which the object will be initialized. </P>
+
+<P>For OLE embeddings, the initialization interface is <A HREF="wce50lrfipersiststorageipersist.htm">IPersistStorage</A>, but in other situations, other interfaces are used. </P>
+
+<P>To initialize the object, there must be a subsequent call to an appropriate method in the initializing interface. </P>
+
+<P>Common initialization functions include <A HREF="wce50lrfipersiststorageinitnew.htm">IPersistStorage::InitNew</A> (for new, blank embeddable components), <A HREF="wce50lrfipersiststorageload.htm">IPersistStorage::Load</A> (for reloaded embeddable components).</P>
+
+<P>In general, if an application supports only one class of objects, and the class object is registered for single use, only one object can be created. </P>
+
+<P>The application must not create other objects, and a request to do so should return an error from <B>IClassFactory::CreateInstance</B>. </P>
+
+<P>The same is true for applications that support multiple classes, each with a class object registered for single use; a <B>CreateInstance</B> for one class followed by a <B>CreateInstance</B> for any of the classes should return an error.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Ocidl.h, Ocidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrficlassfactoryiunknown.htm">IClassFactory</A> | <A HREF="wce50lrfiunknown.htm">IUnknown</A> | <A HREF="wce50lrfipersiststorageipersist.htm">IPersistStorage</A> | <A HREF="wce50lrfipersiststorageinitnew.htm">IPersistStorage::InitNew</A> | <A HREF="wce50lrfipersiststorageload.htm">IPersistStorage::Load</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IClassFactory::CreateInstance (wce50lrficlassfactorycreateinstance.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

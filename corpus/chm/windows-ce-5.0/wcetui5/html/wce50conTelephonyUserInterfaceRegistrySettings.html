@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TUI Registry Settings</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfDsGetDcName">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50contelephonyuserinterfaceregistrysettings"></A>TUI Registry Settings</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The TUI application uses the registry to store both configuration data used in phone operation and to persist most recently used settings.</P>
+
+<P>The TUI uses the VAIL configuration data store for phone provisioning. VAIL provisioning registry settings are described in more detail in <A HREF="wce50convailregistrysettings.htm">VAIL Registry Settings</A>.</P>
+
+<P>The <B>HKEY_LOCAL_MACHINE\Software\Microsoft\TUI</B> registry key contains TUI configuration and saved settings. The following table shows the named values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Value : type</TH>
+<TH width=69%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>ActiveDirectory </B>: REG_SZ</TD>
+<TD width=69%>If the value is not present in the registry, no value is assumed.
+<P>The machine name of the Active Directory server used by the TUI application to retrieve provisioning settings.</P>
+
+<P>If the AutoConfigType registry entry is 0 (corresponding to the e_actLdapServer value), the TUI queries the specified Active Directory server and retrieves all values that are set to be automatically synchronized in the bitfield value in the AutoConfigSettings registry setting. </P>
+
+<P>The TUI ultimately retrieves the settings by calling the <A HREF="wce50lrfivoipconfigurationdatastoreupdatesettingsfromserver.htm">IVoIPConfigurationDataStore::UpdateSettingsFromServer</A> function.</P>
+
+<P>If the value is empty, the TUI uses the Active Directory server name returned by <A HREF="JavaScript:hhobj_1.Click()">DsGetDcName</A>. This function returns the Active Directory server that corresponds to the current user's domain. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>AutoConfigSettings </B>: REG_DWORD</TD>
+<TD width=69%>If the value is not present in the registry, <A HREF="wce50lrfconfig_data_.htm">CONFIG_DATA_ALL</A> is assumed. This setting synchronizes all CONFIG_DATA_ values.
+<P>This value is a bit field that determines which of the CONFIG_DATA_ settings are automatically synchronized from an XML file or LDAP-compliant server (for example, an Active Directory server). </P>
+
+<P>A user can use the Settings screen in the phone UI to override the settings that are synchronized automatically. </P>
+
+<P>Any setting that has been manually overridden is not synchronized during future automatic updates. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>AutoConfigType </B>: REG_DWORD</TD>
+<TD width=69%>Default setting is 0 (LDAP server).
+<P>If the value is not present in the registry, TUI creates the value with the default setting of 0.</P>
+
+<P>The phone can be provisioned in three modes:
+
+<UL type="disc">
+	<LI>0 - LDAP server. All setting specified by the AutoConfigSettings registry entry are retrieved from the LDAP server specified by the ActiveDirectory registry entry.</li>
+
+	<LI>1 - XML File. All settings specified by the AutoConfigSettings registry entry are retrieved from an XML file. 
+<P>The XML file is specified by the XMLDataFileName registry entry (and is phone.xml by default). The Windows directory on the device is searched first, followed by the Release directory.
+</li>
+
+	<LI>2 - Manual. The user enters all settings. No settings are retrieved from an LDAP server or XML file.</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>AutodialEnabled </B>: REG_DWORD</TD>
+<TD width=69%>If the value is not present in the registry, TRUE is assumed. This setting turns on autodial functionality.
+<P>If this setting is TRUE, the TUI attempts to dial phone numbers when the complete phone number is entered. For example, with the default dial plans, the TUI dials a seven-digit number that does not start with the a '1', with a '011', or with an area code.</P>
+
+<P>If this setting is FALSE, the TUI never automatically dials a call. The phone user must manually connect the call after dialing the phone number using the <B>Dial</B> soft button or the corresponding hard button, if one exists.</P>
+
+<P>For more information about dial plans, see <A HREF="wce50conmodifyingtuidialplans.htm">Modifying TUI Dial Plans</A>.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>ContactFilterType </B>: REG_DWORD</TD>
+<TD width=69%>Default setting is 0 (first name).
+<P>If the value is not present in the registry, TUI creates the value with the default setting of 0.</P>
+
+<P>The filtering type used most recently when viewing contact information. There are three possibilities:
+
+<UL type="disc">
+	<LI>0 - first name</li>
+
+	<LI>1 - last name</li>
+
+	<LI>2 - predictive</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>DoNotDisturb </B>: REG_DWORD</TD>
+<TD width=69%>If the value is not present in the registry, FALSE is assumed, turning off do not disturb mode.
+<P>If this value is TRUE, all incoming calls are rejected. If your SIP server is configured appropriately, all rejected calls can be sent to a voicemail server.</P>
+
+<P>If this value is FALSE, calls are accepted and processed by the phone.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>GalFilterType </B>: REG_DWORD</TD>
+<TD width=69%>Default setting is 1 (first name).
+<P>If the value is not present in the registry, TUI creates the value with the default setting of 1.</P>
+
+<P>The filtering type used most recently when viewing global address list information. There are three possibilities:
+
+<UL type="disc">
+	<LI>0 - alias</li>
+
+	<LI>1 - first name</li>
+
+	<LI>2 - last name</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>HandsetVolume </B>: REG_DWORD</TD>
+<TD width=69%>Default setting is 5 (medium volume).
+<P>If the value is not present in the registry, TUI creates the value with the default setting of 5.</P>
+
+<P>The most recent volume setting for the handset speaker and handset microphone. Changes to this setting are applied when the phone uses the handset speaker and microphone. </P>
+
+<P>The volume setting ranges from 0 to 10.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>MicrophoneVolume </B>: REG_DWORD</TD>
+<TD width=69%>Default setting is 5 (medium volume). 
+<P>If the value is not present in the registry, TUI creates the value with the default setting of 5.</P>
+
+<P>The most recent input setting for the speakerphone microphone. Changes to this setting are applied when the phone uses the microphone. The volume setting ranges 0 to 10.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>MRUForwardingNumbers </B>: REG_SZ</TD>
+<TD width=69%>If the value is not present in the registry, no value is assumed.
+<P>This entry stores the numbers that have most recently been used as call forwarding numbers. Numbers are separated by a semicolon, like this:</P>
+
+<P>"sip:12345@microsoft.com;sip:23456@microsoft.com"</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>RingerVolume </B>: REG_DWORD</TD>
+<TD width=69%>Default setting is 5 (medium volume). 
+<P>If the value is not present in the registry, TUI creates the value with the default setting of 5.</P>
+
+<P>The most recent volume setting for the phone ringer. Changes to this setting are applied when the phone uses the ringer. </P>
+
+<P>The volume setting ranges from 0 to 10.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>SpeakerVolume </B>: REG_DWORD</TD>
+<TD width=69%>Default setting is 5 (medium volume). 
+<P>If the value is not present in the registry, TUI creates the value with the default setting of 5.</P>
+
+<P>The most recent volume setting for the external (non-handset) speaker. Changes to this setting are applied when the phone uses the external speaker. </P>
+
+<P>The volume setting ranges from 0 to 10.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>TiedToPCBOOL </B>: REG_DWORD</TD>
+<TD width=69%>If the value is not present in the registry, FALSE is assumed, indicating that the phone is not tied to a PC.
+<P>If TRUE, the TUI checks with the PC specified in the TiedToPCName registry entry to determine if the phone should be locked or unlocked when accessing secure screens.</P>
+
+<P>For more information about the Catalog item that provides this functionality, see <A HREF="wce50oripcauthentication.htm">PC Authentication</A>.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>TiedToPCName </B>: REG_SZ</TD>
+<TD width=69%>If the value is not present in the registry, no value is assumed.
+<P>If the TiedToPCBool registry entry is TRUE, the PC specified in this entry is queried for lock status when a user accesses secure screens.</P>
+
+<P>For more information about the Catalog item that provides this functionality, see <A HREF="wce50oripcauthentication.htm">PC Authentication</A>.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>XMLDataFileName </B>: REG_SZ</TD>
+<TD width=69%>If the value is not present in the registry, phone.xml is assumed.
+<P>If the AutoConfigType is set to XML file, the XML file specified by this registry entry is used by the TUI (through the VAIL provisioning APIs) for provisioning when network provisioning is cancelled or cannot be accomplished because of network or server issues. </P>
+
+<P>If this value does not contain a path, the VAIL tries to locate the file in the Windows directory on the device, and then tries the Release directory (for debugger-enabled run-time images).</P>
+</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oritelephonyuserinterface.htm">Telephony User Interface (TUI)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TUI%20Registry%20Settings (wce50contelephonyuserinterfaceregistrysettings.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

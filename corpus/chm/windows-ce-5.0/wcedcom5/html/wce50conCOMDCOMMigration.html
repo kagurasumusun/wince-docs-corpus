@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>COM and DCOM Migration</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriMigratingFromEarlierVersionOfWindowsCE">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoInitializeEx">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoUninitialize">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concomdcommigration"></A>COM and DCOM Migration</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This topic contains information about migrating this functionality from earlier versions of Windows CE. </P>
+
+<P>For general migration information, see <A HREF="JavaScript:hhobj_1.Click()">Migrating from an Earlier Version of Windows CE</A>.</P>
+
+<H4 class="dtH4">Migrating from Windows CE 2.12 and Windows CE 3.0</H4>
+
+<P>With the introduction of DCOM in Windows CE .NET 4.0, compliance with COM rules is required because DCOM supports multiple apartment models and DCOM objects have a strong affinity for the apartments they occupy. In addition, the DCOM code base was consolidated with the small in-proc only COM code base. </P>
+
+<P>For example, the following COM rules are now enforced:
+
+<UL type="disc">
+	<LI>The requirement to initialize apartments before using COM.</li>
+
+	<LI>Regarding reference counting for <A HREF="JavaScript:hhobj_2.Click()">CoInitializeEx</A> and <A HREF="JavaScript:hhobj_3.Click()">CoUninitialize</A>: Calls to <B>CoInitializeEx</B> must be paired with an equal number of calls to <B>CoUninitialize</B>. Prior to Windows&nbsp;CE&nbsp;.NET 4.0, <B>CoInitializeEx</B> was an empty function and paired calls were not required.</li>
+
+	<LI>Rules on apartment declarations for COM objects. The previous COM implementation only supported multithreaded apartments but still allowed loading of objects declared as single-threaded.</li>
+</UL>
+
+<P>As a result of these changes, Windows CE .NET 4.0 and later are not backwards compatible with older applications that do not comply with these requirements. To partially rectify this problem without requiring changing code or adding registry entries, the following changes were made in Windows CE .NET 4.0:
+
+<UL type="disc">
+	<LI>For executable (.exe) files linked using tools prior to version 4.0, if an apartment was not initialized before using COM functionality, the apartment is automatically initialized to multithreaded when a COM API function is called. 
+<P>This causes a memory leak when the thread terminates, but it enables the application to run. This approach does not work with .dll files.
+</li>
+
+	<LI>To enable older .dll files hosted in newer executables, you can use the registry to identify executables that should be automatically initialized. 
+<P>To do this, add a new <B>DWORD</B> entry to the <B>HKEY_LOCAL_MACHINE\Software\Microsoft\OLE\LegacyApps</B> key. The new entry should have the same name as the executable and a value of 1. 
+
+<P>This step is only necessary for executables that load .dll files. 
+</li>
+
+	<LI>Any declaration of apartment requirements in the registry is ignored for .dll files that were linked using tools prior to version 4.0. Instead, the apartment requirement is automatically set to free-threaded.</li>
+
+	<LI>The DEFAULT apartment type on Windows CE .NET is free-threaded, in contrast to Windows, where it is single-threaded. This apartment type is used if one is not declared in the registry.</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oricomponentservicescomanddcom.htm">Component Services (COM and DCOM)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: COM%20and%20DCOM%20Migration (wce50concomdcommigration.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

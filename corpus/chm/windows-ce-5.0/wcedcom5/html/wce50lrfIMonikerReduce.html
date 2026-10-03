@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::Reduce</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimonikerreduce"></A>IMoniker::Reduce</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This<B> </B>method reduces the moniker to the simplest form.</P>
+
+<PRE class="syntax"><B>HRESULT Reduce( </B>
+  <B>IBindCtx* </B><I>pbc</I><B>, </B>
+  <B>DWORD </B><I>dwReduceHowFar</I><B>, </B>
+<B>  IMoniker**</B> <I>ppmkToLeft</I><B>,</B>
+  <B>IMoniker** </B><I>ppmkReduced</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfibindctxiunknown.htm">IBindCtx</A> interface on the bind context to be used in this binding operation. 
+
+<P>The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. 
+
+
+<P>For more information, see <B>IBindCtx</B>.
+</dd>
+
+<DT><I>dwReduceHowFar</I></DT>
+
+<DD>[in] Value that specifies how far this moniker should be reduced. This parameter must be one of the values from the <A HREF="wce50lrfmkrreduce.htm">MKRREDUCE</A> enumeration. </dd>
+
+<DT><I>ppmkToLeft</I></DT>
+
+<DD>[in, out] On entry, address of <B>IMoniker</B>* pointer variable that contains the interface pointer to moniker to the left of this moniker. 
+
+<P>This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker; moniker clients can usually pass NULL.
+
+
+<P>On return, *<I>ppmkToLeft</I> is usually set to NULL, that indicates no change in the original moniker to the left. 
+
+
+<P>In rare situations, *<I>ppmkToLeft</I> indicates a moniker, that indicates that the previous moniker to the left should be disregarded and the moniker returned through *<I>ppmkToLeft</I> is the replacement. 
+
+
+<P>In such a situation, the implementation must call the <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> method on the old moniker to the left of this moniker and must call the <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> method on the new returned moniker; the caller must release it later. 
+
+
+<P>If an error occurs, the implementation can either leave the interface pointer unchanged or set it to NULL.
+</dd>
+
+<DT><I>ppmkReduced</I></DT>
+
+<DD>[out] Address of <B>IMoniker</B>* pointer variable that receives the interface pointer to the reduced form of this moniker, which can be NULL if an error occurs or if this moniker is reduced to nothing. 
+
+<P>If this moniker cannot be reduced, *<I>ppmkReduced</I> is simply set to this moniker and the return value is MK_S_REDUCED_TO_SELF. 
+
+
+<P>If *<I>ppmkReduced</I> is non-NULL, the implementation must call <B>IUnknown::AddRef</B> on the new moniker; it is the caller's responsibility to call <B>IUnknown::Release</B>. (This is true even if *<I>ppmkReduced</I> is set to this moniker.)
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The method supports the standard return values E_UNEXPECTED and E_OUTOFMEMORY. </P>
+
+<P>The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_OK</TD>
+<TD width=66%>This moniker was reduced.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>MK_S_REDUCED_TO_SELF</TD>
+<TD width=66%>This moniker could not be reduced any further, so <I>ppmkReduced</I> indicates this moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>MK_E_EXCEEDEDDEADLINE</TD>
+<TD width=66%>The operation could not be completed within the time limit specified by the bind context's <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> structure.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>IMoniker::Reduce</B> is intended for the following uses:
+
+<UL type="disc">
+	<LI>It enables the construction of user-defined macros or aliases as new kinds of moniker classes. When reduced, the moniker to which the macro evaluates is returned.</li>
+
+	<LI>It enables the construction of a kind of moniker that tracks data as it moves about. When reduced, the moniker of the data in its current location is returned.</li>
+
+	<LI>On file systems that support an identifier-based method of accessing files that is independent of file names; a file moniker could be reduced to a moniker that contains one of these identifiers.</li>
+</UL>
+
+<P>The intent of the <B>MKRREDUCE</B> flags passed in the <I>dwReduceHowFar</I> parameter is to provide the ability to programmatically reduce a moniker to a form whose display name is recognizable to the user. </P>
+
+<P>For example, paths in the file system, bookmarks in word-processing documents, and range names in spreadsheets are all recognizable to users. In contrast, a macro or an alias encapsulated in a moniker are not recognizable to users.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>The scenarios described above are not currently implemented by the system-supplied moniker classes. </P>
+
+<P>You should call <B>IMoniker::Reduce</B> before comparing two monikers using the <A HREF="wce50lrfimonikerisequal.htm">IMoniker::IsEqual</A> method, because a reduced moniker is in its most specific form. <B>IMoniker::IsEqual</B> may return S_FALSE on two monikers before they are reduced and return S_OK after they are reduced. </P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>If the current moniker can be reduced, your implementation must not reduce the moniker in-place. </P>
+
+<P>Instead, it must return a new moniker that represents the reduced state of the current one. This way, the caller still has the option of using the non-reduced moniker (for example, enumerating its components). </P>
+
+<P>Your implementation should reduce the moniker <I>at least</I> as far as is requested.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfimonikerisequal.htm">IMoniker::IsEqual</A> | <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> | <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> | <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMoniker::Reduce (wce50lrfimonikerreduce.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

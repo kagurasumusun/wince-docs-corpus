@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AVI Main Header</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conavimainheader"></A>AVI Main Header</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This and following sections describe the chunks contained in the LIST 'hdrl' and LIST 'movi' chunks. The 'idx1' chunk is not described in this document. </P>
+
+<P>For more information on the 'idx1' chunk and indexes in AVI files, see version 1.02 of the <I>OpenDML AVI File Format Extensions,</I> published by the OpenDML AVI M-JPEG File Format Subcommittee, February 28, 1996. </P>
+
+<P>The file begins with the main header. In the AVI file, this header is identified by the 'avih' FOURCC (four-character code). The header contains global information for the entire AVI file, such as the number of streams within the file and the width and height of the AVI sequence. </P>
+
+<P>The AVI main header structure is defined as follows.</P>
+
+<PRE class="syntax"><B>typedef struct {</B>
+<B>    DWORD </B><I>dwMicroSecPerFrame</I><B>;</B>
+<B>    DWORD </B><I>dwMaxBytesPerSec</I><B>;</B>
+<B>    DWORD </B><I>dwReserved1</I><B>;</B>
+<B>    DWORD </B><I>dwFlags</I><B>;</B>
+<B>    DWORD </B><I>dwTotalFrames</I><B>;</B>
+<B>    DWORD </B><I>dwInitialFrames</I><B>;</B>
+<B>    DWORD </B><I>dwStreams</I><B>;</B>
+<B>    DWORD </B><I>dwSuggestedBufferSize</I><B>;</B>
+<B>    DWORD </B><I>dwWidth</I><B>;</B>
+<B>    DWORD </B><I>dwHeight</I><B>;</B>
+<B>    DWORD </B><I>dwReserved</I><B>[4];</B>
+<B>} MainAVIHeader;</B></PRE>
+
+<DL>
+<DT><B>dwMicroSecPerFrame </B></DT>
+
+<DD>Specifies the number of microseconds between frames. This value indicates the overall timing for the file. </dd>
+
+<DT><B>dwMaxBytesPerSec</B><I> </I></DT>
+
+<DD>Specifies the approximate maximum data rate of the file. This value indicates the number of bytes per second the system must handle to present an AVI sequence as specified by the other parameters contained in the main header and stream header chunks. </dd>
+
+<DT><B>dwReserved1</B><I> </I></DT>
+
+<DD>Reserved. Set this to zero. </dd>
+
+<DT><B>dwFlags</B><I> </I></DT>
+
+<DD>Contains any flags for the file. The following flags are defined. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Flag</TH>
+<TH width=69%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>AVIF_HASINDEX</TD>
+<TD width=69%>Indicates the AVI file has an 'idx1' chunk containing an index at the end of the file. For good performance, all AVI files should contain an index.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>AVIF_MUSTUSEINDEX</TD>
+<TD width=69%>Indicates that the index, rather than the physical ordering of the chunks in the file, should be used to determine the order of presentation of the data. 
+<P>For example, you could use this to create a list of frames for editing.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>AVIF_ISINTERLEAVED</TD>
+<TD width=69%>Indicates the AVI file is interleaved.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>AVIF_WASCAPTUREFILE</TD>
+<TD width=69%>Indicates the AVI file is a specially allocated file used for capturing real-time video. Applications should warn the user before writing over a file with this flag set because the user probably defragmented this file.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>AVIF_COPYRIGHTED</TD>
+<TD width=69%>Indicates the AVI file contains copyrighted data and software. When this flag is used, software should not permit the data to be duplicated.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>dwTotalFrames</B><I> </I></DT>
+
+<DD>Specifies the total number of frames of data in the file. </dd>
+
+<DT><B>dwInitialFrames</B><I> </I></DT>
+
+<DD>Specifies the initial frame for interleaved files. Noninterleaved files should specify zero. If you are creating interleaved files, specify the number of frames in the file prior to the initial frame of the AVI sequence in this member. 
+
+<P>For more information about the contents of this member, see "Special Information for Interleaved Files" in <I>Video for Windows Programmer's Guide</I>. 
+</dd>
+
+<DT><B>dwStreams</B><I> </I></DT>
+
+<DD>Specifies the number of streams in the file. For example, a file with audio and video has two streams. </dd>
+
+<DT><B>dwSuggestedBufferSize</B><I> </I></DT>
+
+<DD>Specifies the suggested buffer size for reading the file. Generally, this size should be large enough to contain the largest chunk in the file. 
+
+<P>If set to zero, or if it is too small, the playback software will have to reallocate memory during playback, which will reduce performance. 
+
+
+<P>For an interleaved file, the buffer size should be large enough to read an entire record, and not just a chunk. 
+</dd>
+
+<DT><B>dwWidth</B><I> </I></DT>
+
+<DD>Specifies the width of the AVI file in pixels. </dd>
+
+<DT><B>dwHeight</B><I> </I></DT>
+
+<DD>Specifies the height of the AVI file in pixels. </dd>
+
+<DT><B>dwReserved[4]</B> </DT>
+
+<DD>Reserved. Set this array to zero. </dd>
+</DL>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: AVI%20Main%20Header (wce50conavimainheader.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

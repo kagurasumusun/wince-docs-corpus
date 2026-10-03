@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Retrieving Counter Names and Explanations</TITLE>
+<!--Filename: remote_performance_monitor.rtf--><SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Manager&nbsp;Help</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_pbdatavis_retrieving_counter_names_and_explanations"></A>Retrieving Counter Names and Explanations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A performance data structure does not directly provide object type names, counter names, object explanations, and counter explanations. Instead, a performance data structure contains indexes that you can use to locate the names and explanations for each object and counter.</P>
+
+<P>The <I>ObjectNameTitleIndex</I> and <I>ObjectHelpTitleIndex</I> members of the <A HREF="_pbdatavis_perf_object_type.htm">PERF_OBJECT_TYPE</A> structure contain the indexes to the object name and explanation, respectively. The <I>CounterNameTitleIndex</I> and <I>CounterHelpTitleIndex</I> members of the <A HREF="_pbdatavis_perf_counter_definition.htm">PERF_COUNTER_DEFINITION</A> structure contain the indexes to the counter name and explanation, respectively.</P>
+
+<P>To see the name and explanation for a counter, read the Counter and Help values in the HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\<I>langid</I> registry key. Replace the <I>langid</I> placeholder with the ASCII representation of the 3-digit hexadecimal language identifier. For example, the <I>langid</I> for U.S. English is 009.</P>
+
+<P>The values under this registry key store the data associated with a counter as a MULTI_SZ string. The MULTI_SZ data type consists of a list of Unicode strings, each terminated with a UNICODE_NULL constant. An additional UNICODE_NULL constant follows the last string.</P>
+
+<P>The strings are listed in pairs. The first string of each pair is the Unicode string of the index, and the second string is the actual name of the index. The Counter data uses only even-numbered indexes, while the Help data has odd-numbered indexes.</P>
+
+<P>To retrieve a name or explanation for an object type or counter, given its index, an application should perform the following steps:</P>
+
+<P class="labelproc"><B>To retrieve counter names and explanations in an application</B>
+
+<OL type="1">
+	<LI>If the system is a remote system, call the <B>RegConnectRegistry</B> function.</li>
+
+	<LI>Use the <B>RegOpenKeyEx</B> function to open the registry key containing a name and explanation for a counter.</li>
+
+	<LI>Use the <B>RegQueryValueEx</B> function to specify the name of the value to query.</li>
+
+	<LI>Convert the returned index into Unicode or ASCII format, to match the format of your application.</li>
+
+	<LI>Search the MULTI_SZ data for the returned index.</li>
+
+	<LI>Retrieve the string associated with the matching index. The string contains the name and explanation for the counter.
+<BLOCKQUOTE class="dtBlock">
+<B>Note</B>&nbsp;&nbsp;&nbsp;To look up several counters, it is recommended that you build a table of values for faster and easier retrieval of data.</BLOCKQUOTE>
+</li>
+</OL>
+
+</BODY>
+</HTML>

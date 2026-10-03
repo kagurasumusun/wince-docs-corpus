@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMediaControl::GetState</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimediacontrolgetstate"></A>IMediaControl::GetState</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method retrieves the state of the filter graph. </P>
+
+<PRE class="syntax"><B>HRESULT GetState(</B>
+  <B>LONG </B><I>msTimeout</I><B>,</B>
+  <B>OAFilterState* </B><I>pfs</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>msTimeout </I></DT>
+
+<DD>[in] Duration of the time-out, in milliseconds. </dd>
+
+<DT><I>pfs </I></DT>
+
+<DD>[out] Holds the returned state of the filter graph. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns <A HREF="wce50lrferrorandsuccesscodes.htm">VFW_S_STATE_INTERMEDIATE</A> if the state transition is not complete, or S_OK if it completed successfully. It can also return VFW_S_CANT_CUE if the state is paused, but the source filter does not push data during the paused state (only pushes during the run state). An example of this is a live video capture filter. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Not all state transitions are synchronous. For example, even though the <A HREF="wce50lrfimediacontrolpause.htm">IMediaControl::Pause</A> method returns immediately, the filter graph typically does not complete the transition into paused mode until data is ready at the renderer. This method will not return S_OK until the state transition has been completed. </P>
+
+<P>If you specify a nonzero time-out, the method waits up to that number of milliseconds for the filter graph to leave the intermediate state. If the time-out expires before the state transition is complete, the return code will be <A HREF="wce50lrferrorandsuccesscodes.htm">VFW_S_STATE_INTERMEDIATE</A>, and the returned state will be the state into which the graph is transitioning (either the <B>State_Stopped</B>, <B>State_Paused</B>, or <B>State_Running</B> member of the <A HREF="wce50lrffilterstate.htm">FILTER_STATE</A> enumeration). </P>
+
+<P>This method will return an error if there is a call on another thread to change the state while this method is blocked. </P>
+
+<P>Avoid specifying a time-out of INFINITE. Threads cannot process messages while waiting in <B>GetState</B>. If you call <B>GetState</B> from the thread that processes Windows&reg; messages, specify only small wait times on the call in order to remain responsive to user input. This is most important when streaming data from a source such as the Internet, because state transitions can take significantly more time to complete. </P>
+
+<P>If you want to pause a filter graph completely before stopping it, call <A HREF="wce50lrfimediacontrolpause.htm">IMediaControl::Pause</A>, and then <A HREF="wce50lrfimediacontrolstopwhenready.htm">IMediaControl::StopWhenReady</A> (instead of calling <B>GetState</B> with an INFINITE time-out, and then <A HREF="wce50lrfimediacontrolstop.htm">IMediaControl::Stop</A>). </P>
+
+<P>Although <I>pfs</I> is declared as a pointer to an OAFilterState value in <B>IMediaControl::GetState</B>, DirectShow implements it as a pointer to a <A HREF="wce50lrffilterstate.htm">FILTER_STATE</A> value in <A HREF="wce50lrfcbasefiltergetstate.htm">CBaseFilter::GetState</A> and its derivatives. Because both OAFilterState and <B>FILTER_STATE</B> resolve to <B>LONG</B> values, this does not cause an error. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements. See <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A> for more information.</P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfimediacontrolinterface.htm">IMediaControl Interface</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMediaControl::GetState (wce50lrfimediacontrolgetstate.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoResult::ScaleAudio</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecoresultscaleaudio"></A>ISpRecoResult::ScaleAudio</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method converts an existing audio stream into a different audio format. Use the <A HREF="wce50lrfispphrasediscard.htm">ISpPhrase::Discard</A> method to completely discard audio data associated with a result object.</P>
+
+<P>The application can also set the default retained audio format for the <A HREF="wce50lrfisprecoresult.htm">ISpRecoResult</A> object by calling <A HREF="wce50lrfisprecocontextsetaudiooptions.htm">ISpRecoContext::SetAudioOptions</A>. Calling <B>SetAudioOptions</B> will only apply to all subsequent recognitions, not the current ISpRecoResult object.</P>
+
+<PRE class="syntax"><B>HRESULT ScaleAudio(</B>
+  <B>const GUID* </B><I>pAudioFormatId</I><B>,</B>
+  <B>const WAVEFORMATEX* </B><I>pWaveFormatEx</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pAudioFormatId</I> </DT>
+
+<DD>[in] Pointer to the data format identifier. Typically, this value is SPDFID_WaveFormatEx. </dd>
+
+<DT><I>pWaveFormatEx</I> </DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfwaveformatex353.htm">WAVEFORMATEX</A> structure containing the audio format to which to convert. This value must be NULL if <I>pAudioFormatId</I> is not specified as SPDFID_WaveForamtEx. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%>Either <I>pAudioFormatId</I> or <I>pWaveFormatEx</I> is invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_NO_AUDIO_DATA </TD>
+<TD width=65%>Audio stream is unavailable. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_UNSUPPORTED_FORMAT </TD>
+<TD width=65%>The engine format is non-waveformatex and the retained format the same format. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_OUTOFMEMORY </TD>
+<TD width=65%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When performing a scaling with a compressed format it is possible to introduce small rounding errors, because the content of the audio is not used to perform the conversion.</P>
+
+<P>Performing scaling between some compressed formats, and some other compressed formats is not supported by the SAPI format converter (See the Remarks section for <A HREF="wce50lrfispstreamformatconverter.htm">ISpStreamFormatConverter</A>).</P>
+
+<P>A related enumeration is <A HREF="wce50lrfspstreamformat.htm">SPSTREAMFORMAT</A>, which defines SAPI-supported stream formats. A related class is <B>CSpStreamFormat</B>, which manages SAPI-supported stream formats and <A HREF="wce50lrfwaveformatex353.htm">WAVEFORMATEX</A> structures.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use this method to scale the audio to a low quality format before serialization to the disk (to save space).</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// ... obtain a recognition result object from the recognizer...
+// create a format helper with a very low quality format 
+CSpStreamFormat ScaleFormat(SPSF_8kHz8BitMono, &amp;hr);
+// Check hr
+hr = cpRecoResult-&gt;ScaleAudio(&amp;(ScaleFormat.FormatId()),
+ScaleFormat.WaveFormatExPtr());
+// Check hr
+// get a result serialization pointer
+SPSERIALIZEDRESULT* pSerializedResult;
+// serialize the result
+hr = cpRecoResult-&gt;Serialize(&amp;pSerializedResult);
+// Check hr
+// ... write pSerializedResult to the disk</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecoresult.htm">ISpRecoResult</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoResult::ScaleAudio (wce50lrfisprecoresultscaleaudio.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

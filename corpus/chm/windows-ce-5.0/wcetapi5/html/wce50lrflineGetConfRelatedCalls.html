@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineGetConfRelatedCalls</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrflinegetconfrelatedcalls"></A>lineGetConfRelatedCalls</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function returns a list of call handles that are part of the same conference call as the specified call. The specified call is either a conference call or a participant call in a conference call. New handles are generated for those calls for which the application does not already have handles, and the application is granted monitor privilege to those calls. </P>
+
+<PRE class="syntax"><B>LONG WINAPI lineGetConfRelatedCalls(</B>
+  <B>HCALL </B><I>hCall</I><B>,</B>
+  <B>LPLINECALLLIST </B><I>lpCallList</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCall</I> </DT>
+
+<DD>Handle to a call. This is either a conference call or a participant call in a conference call. For a conference parent call, the call state of <I>hCall</I> can be any state. For a conference participant call, it must be in the conferenced state. </dd>
+
+<DT><I>lpCallList</I> </DT>
+
+<DD>Pointer to a variably sized data structure of type <A HREF="wce50lrflinecalllist.htm">LINECALLLIST</A>. Upon successful completion of the request, call handles to all calls in the conference call are returned in this structure. The first call in the list is the conference call, the other calls are the participant calls. The application is granted monitor privilege to those calls for which it does not already have handles; the privileges to calls in the list for which the application already has handles is unchanged. Prior to calling <B>lineGetConfRelatedCalls</B>, the application should set the <B>dwTotalSize</B> member of this structure to indicate the amount of memory available to TAPI for returning information. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns zero if the request succeeds or a negative error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLHANDLE</TD>
+<TD width=50%>The handle to the call is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOCONFERENCE</TD>
+<TD width=50%>The specified call is not a conference call handle or a participant call.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resources are unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALPOINTER</TD>
+<TD width=50%>The pointer is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_STRUCTURETOOSMALL</TD>
+<TD width=50%>The structure is too small.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_UNINITIALIZED</TD>
+<TD width=50%>A parameter is uninitialized.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The specified call can either be a conference call handle or a handle to a participant call. For example, a consultation call that has not yet been added to a conference call is not part of a conference. The first entry in the list that is returned is the conference call handle, the other handles are all the participant calls. The specified call is always one of the calls returned in the list. Calls in the list to which the application does not already have a call handle are assigned monitor privilege; privileges to calls for which the application already has handles are unchanged. The application can use the <A HREF="wce50lrflinesetcallprivilege.htm">lineSetCallPrivilege</A> function to change the privilege of the call. </P>
+
+<P>If <B>lineGetConfRelatedCalls</B> is called immediately after a call is added to a conference using the <A HREF="wce50lrflinecompletetransfer.htm">lineCompleteTransfer</A> function, <B>lineGetConfRelatedCalls</B> may not return a complete list of related calls because TAPI waits to receive a <A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> message indicating that the call has entered LINECALLSTATE_CONFERENCED before it considers the call to actually be part of the conference (that is, the conferenced state is confirmed by the service provider). After the application has received the LINE_CALLSTATE message, <B>lineGetConfRelatedCalls</B> returns complete information. </P>
+
+<P>The application can invoke the <A HREF="wce50lrflinegetcallinfo.htm">lineGetCallInfo</A> and <A HREF="wce50lrflinegetcallstatus.htm">lineGetCallStatus</A> functions for each call in the list to determine the call's information and status, respectively. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This function is for TAPI version 2.0 and later.</BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Tapi.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> | <A HREF="wce50lrflinecompletetransfer.htm">lineCompleteTransfer</A> | <A HREF="wce50lrflinegetcallinfo.htm">lineGetCallInfo</A> | <A HREF="wce50lrflinegetcallstatus.htm">lineGetCallStatus</A> | <A HREF="wce50lrflinesetcallprivilege.htm">lineSetCallPrivilege</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: lineGetConfRelatedCalls (wce50lrflinegetconfrelatedcalls.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

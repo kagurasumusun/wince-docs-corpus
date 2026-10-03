@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>VirtualProtect</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfvirtualprotect"></A>VirtualProtect</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function changes the access protection on a region of committed pages in the virtual address space of the calling process. </P>
+
+<PRE class="syntax"><B>BOOL</B> <B>VirtualProtect( </B>
+  <B>LPVOID</B> <I>lpAddress</I><B>, </B>
+  <B>DWORD</B> <I>dwSize</I><B>, </B>
+  <B>DWORD</B> <I>flNewProtect</I><B>, </B>
+  <B>PDWORD</B> <I>lpflOldProtect </I>
+<B>);</B> </PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>lpAddress</I></DT>
+
+<DD>[in] Pointer to the base address of the region of pages whose access protection attributes are to be changed. 
+
+<P>All pages in the specified region must be allocated in a single call to the <A HREF="wce50lrfvirtualalloc.htm">VirtualAlloc</A> function. 
+
+
+<P>The pages cannot span adjacent regions that were allocated by separate calls to <B>VirtualAlloc</B>.
+</dd>
+
+<DT><I>dwSize</I></DT>
+
+<DD>[in] Specifies the size, in bytes, of the region whose access protection attributes are to be changed. 
+
+<P>The region of affected pages includes all pages containing one or more bytes in the range from the <I>lpAddress</I> parameter to <I>lpAddress</I>+<I>dwSize</I>. This means that a 2-byte range straddling a page boundary causes the protection attributes of both pages to be changed. 
+</dd>
+
+<DT><I>flNewProtect</I></DT>
+
+<DD>[in] Specifies the new access protection. 
+
+<P>You can specify any one of the following flags, along with the PAGE_GUARD and PAGE_NOCACHE protection modifier flags, as necessary. 
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Value</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>PAGE_READONLY</TD>
+<TD width=71%>Enables read access to the committed region of pages. 
+<P>An attempt to write to the committed region results in an access violation. </P>
+
+<P>If the system differentiates between read-only access and execute access, an attempt to execute code in the committed region results in an access violation.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>PAGE_EXECUTE</TD>
+<TD width=71%>Enables execute access to the committed region of pages. 
+<P>An attempt to read or write to the committed region results in an access violation.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>PAGE_EXECUTE_READ</TD>
+<TD width=71%>Enables execute and read access to the committed region of pages. 
+<P>An attempt to write to the committed region results in an access violation.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>PAGE_GUARD</TD>
+<TD width=71%>Pages in the region become guard pages. 
+<P>An attempt to access a guard page causes the system to raise a STATUS_GUARD_PAGE exception and turn off the guard page status. Guard pages thus act as a one-shot access alarm.</P>
+
+<P>The PAGE_GUARD flag is a page protection modifier. An application uses it with one of the other page protection flags, with one exception: it cannot be used with PAGE_NOACCESS. </P>
+
+<P>When an access attempt leads the system to turn off guard page status, the underlying page protection takes over.</P>
+
+<P>If a guard page exception occurs during a system service, the service typically returns a failure status indicator.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>PAGE_NOACCESS</TD>
+<TD width=71%>Disables all access to the committed region of pages. 
+<P>An attempt to read from, write to, or execute in the committed region results in an access violation exception, called a general protection (GP) fault.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>PAGE_NOCACHE</TD>
+<TD width=71%>Allows no caching of the committed regions of pages. 
+<P>The hardware attributes for the physical memory should be specified as no cache. This is not recommended for general use. It is useful for device drivers; for example, mapping a video frame buffer with no caching. </P>
+
+<P>This flag is a page protection modifier and is valid when used with a page protection other than PAGE_NOACCESS.</P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>lpflOldProtect</I></DT>
+
+<DD>[out] Long pointer to a variable that the function sets to the previous access protection value of the first page in the specified region of pages. 
+
+<P>If this parameter is NULL or does not point to a valid variable, the function fails. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Nonzero indicates success. </P>
+
+<P>Zero indicates failure. </P>
+
+<P>To get extended error information, call <A HREF="wce50lrfgetlasterror.htm">GetLastError</A>.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The following code example shows how to use the <B>VirtualProtect</B> function to change the characteristics of pages in virtual memory that were allocated with READ_WRITE access to READ_ONLY.</P>
+
+<PRE class="code">DWORD dwOldProtect;
+DWORD dwSize = (2 * PAGE_SIZE);  //To change a set of two pages, 
+//whose size was defined earlier as PAGE_SIZE
+
+if (!VirtualProtect (lpPage,    // Beginning of the set of pages to change
+                     dwSize,    // Length, in bytes, of the set of pages 
+                                //to change
+                     PAGE_READONLY, // What to change it to
+                     &amp;dwOldProtect  // Place to store the old setting
+                     ))
+{// Your error-handling code goes here. 
+} </PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Winbase.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcesetmemoryattributes.htm">CeSetMemoryAttributes</A> | <A HREF="wce50lrfvirtualalloc.htm">VirtualAlloc</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: VirtualProtect (wce50lrfvirtualprotect.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

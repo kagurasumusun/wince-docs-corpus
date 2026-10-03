@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TFAT Programming Considerations</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfrename">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfcreatedir">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50contfatprogrammingconsiderations"></A>TFAT Programming Considerations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The interfaces exposed by TFAT are equivalent to those associated with FATFS. To ensure transaction safety, you should understand the FAT file system and take note of the enhancements provided by TFAT.</P>
+
+<P>When the file attribute FILE_FLAG_WRITE_THROUGH is set to true for any file, each <A HREF="wce50lrfwritefile.htm">WriteFile</A> function call is committed to the disk in an individual transaction. The committing of data implies that all data written has been written to both the volume and the FAT tables. If this attribute is not set, the data written by the <B>WriteFile</B> function is committed until a <A HREF="wce50lrfclosehandle.htm">CloseHandle</A> or <A HREF="wce50lrfflushfilebuffers.htm">FlushFileBuffers</A> function is called.</P>
+
+<P>Other operations such as <A HREF="JavaScript:hhobj_1.Click()">rename</A>, <A HREF="JavaScript:hhobj_2.Click()">createdir</A>, and <A HREF="wce50lrfremovedirectory.htm">RemoveDirectory</A> are all transaction-safe and committed when a <B>CloseHandle</B>, <B>FlushFileBuffers</B>, or <B>WriteFile</B> function is called.</P>
+
+<P>Memory mapped files are automatically created with the <B>CreateFile</B> function setting the FILE_FLAG_WRITE_THROUGH value to true. As with any form of FAT, all databases and memory mapped files must commit every <B>WriteFile</B> operation to the FAT atomically and must have the FILE_FLAG_WRITE_THROUGH value set to true.</P>
+
+<P>Any write operations performed in the root directory of a FAT12 or FAT16 volume are not transaction-safe. The operations on the sub-directories of FAT12 and FAT16 volumes and all FAT32 volumes are transaction-safe.</P>
+
+<P>TFAT requires that a FAT volume have exactly two FAT tables. TFAT can still read and write FAT volumes that do not meet this requirement, but the operations are no longer transaction-safe.</P>
+
+<P>The action of committing requires that the FAT table is copied. Write operations are slower if the FILE_FLAG_WRITE_THROUGH attribute opens the file streams. This operation adds the time necessary to copy the FAT to the operation that is used to commit the data. All file streams are opened by default with this flag. If you use TFAT to improve performance, Microsoft recommends that you disable this operation by clearing the 0x20 bit in the FATFS Flags registry setting.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contransactionsafefatfilesystem.htm">Transaction-Safe FAT File System</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TFAT%20Programming%20Considerations (wce50contfatprogrammingconsiderations.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>linePickup</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrflinepickup"></A>linePickup</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function picks up a call alerting at the specified destination address and returns a call handle for the picked-up call. If invoked with NULL for the <I>lpszDestAddress</I> parameter, a group pickup is performed. If required by the device, the <I>lpszGroupID</I> parameter specifies the group identifier to which the alerting station belongs. </P>
+
+<PRE class="syntax"><B>LONG WINAPI linePickup(</B>
+  <B>HLINE </B><I>hLine</I><B>,</B>
+  <B>DWORD </B><I>dwAddressID</I><B>,</B>
+  <B>LPHCALL </B><I>lphCall</I><B>,</B>
+  <B>LPCSTR </B><I>lpszDestAddress</I><B>,</B>
+  <B>LPCSTR </B><I>lpszGroupID</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hLine</I> </DT>
+
+<DD>Handle to the open line device on which a call is to be picked up. </dd>
+
+<DT><I>dwAddressID</I> </DT>
+
+<DD>Address on <I>hLine</I> at which the pickup is to be originated. An address identifier is permanently associated with an address; the identifier remains constant across operating system upgrades. </dd>
+
+<DT><I>lphCall</I> </DT>
+
+<DD>Pointer to a memory location where the handle to the picked up call is returned. The application is the initial sole owner of the call. </dd>
+
+<DT><I>lpszDestAddress</I> </DT>
+
+<DD>Pointer to a null-terminated character buffer that contains the address whose call is to be picked up. The address is in standard dialable address format. </dd>
+
+<DT><I>lpszGroupID</I> </DT>
+
+<DD>Pointer to a null-terminated character buffer containing the group identifier to which the alerting station belongs. This parameter is required on some switches to pick up calls outside of the current pickup group. 
+
+<P>The <I>lpszGroupID</I> parameter can be specified by itself with a NULL pointer for <I>lpszDestAddress</I>. Alternatively, <I>lpszGroupID</I> can be specified in addition to <I>lpszDestAddress</I>, if required by the device. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns a positive request identifier if the function is completed asynchronously, or a negative error number if an error occurs. The <I>dwParam2</I> parameter of the corresponding <A HREF="wce50lrflinereply.htm">LINE_REPLY</A> message is zero if the function succeeds or it is a negative error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALADDRESS</TD>
+<TD width=50%>The address is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALADDRESSID</TD>
+<TD width=50%>The address identifier is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALGROUPID</TD>
+<TD width=50%>The group identifier is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALLINEHANDLE</TD>
+<TD width=50%>The handle to the open line device is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resources are unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALPOINTER</TD>
+<TD width=50%>The pointer is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_UNINITIALIZED</TD>
+<TD width=50%>A parameter is uninitialized.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When a call has been picked up successfully, the application is notified by the <A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> message about call state changes. The <A HREF="wce50lrflinecallinfo.htm">LINECALLINFO</A> structure supplies information about the call that was picked up. It lists the reason for the call as pickup. This structure is available using the <A HREF="wce50lrflinegetcallinfo.htm">lineGetCallInfo</A> function. </P>
+
+<P>If LINEADDRCAPFLAGS_PICKUPCALLWAIT is TRUE, <B>linePickup</B> can be used to pick up a call for which the user has audibly detected the call-waiting signal but for which the provider is unable to perform the detection. This gives the user a mechanism to answer a waiting call even though the service provider was unable to detect the call-waiting signal. Both <I>lpszDestAddress</I> and <I>lpszGroupID</I> pointer parameters must be NULL to pick up a call-waiting call. The <B>linePickup</B> function creates a new call handle for the waiting call and passes that handle to the user. The <I>dwAddressID</I> parameter is most often zero (particularly in single-line residential cases). </P>
+
+<P>After <B>linePickup</B> has been used to pick up the second call, the <A HREF="wce50lrflineswaphold.htm">lineSwapHold</A> function can be used to toggle between them. The <A HREF="wce50lrflinedrop.htm">lineDrop</A> function can be used to drop one (and toggle to the other), and so forth. If the user wants to drop the current call and pick up the second call, they should call <B>lineDrop</B> when they get the call-waiting beep, wait for the second call to ring, and then call the <A HREF="wce50lrflineanswer.htm">lineAnswer</A> function on the new call handle. The LINEADDRFEATURE_PICKUP flag in the <B>dwAddressFeatures</B> member in LINEADDRESSSTATUS indicates when pickup is actually possible. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This function is for TAPI version 2.0 and later.</BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Tapi.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> | <A HREF="wce50lrflinereply.htm">LINE_REPLY</A> | <A HREF="wce50lrflineanswer.htm">lineAnswer</A> | <A HREF="wce50lrflinecallinfo.htm">LINECALLINFO</A> | <A HREF="wce50lrflinedrop.htm">lineDrop</A> | <A HREF="wce50lrflinegetcallinfo.htm">lineGetCallInfo</A> | <A HREF="wce50lrflineswaphold.htm">lineSwapHold</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: linePickup (wce50lrflinepickup.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

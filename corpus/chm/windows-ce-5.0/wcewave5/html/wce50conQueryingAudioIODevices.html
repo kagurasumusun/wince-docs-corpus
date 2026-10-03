@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Querying Audio I/O Devices</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conqueryingaudioiodevices"></A>Querying Audio I/O Devices</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following table shows the functions that retrieve the number of audio devices on a Windows CE&#0150;based device.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Function</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfwaveingetnumdevs.htm">waveInGetNumDevs</A></TD>
+<TD width=71%>Retrieves the number of waveform audio input devices that are present in a system.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfwaveoutgetnumdevs.htm">waveOutGetNumDevs</A></TD>
+<TD width=71%>Retrieves the number of waveform audio output devices that are present in a system.</TD>
+</TR>
+</table></div>
+
+<P>After you determine how many audio devices are present in a system, you can query the capabilities of each device. The following table shows the functions and structures that retrieve this information.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Function</TH>
+<TH width=44%>Description</TH>
+<TH width=27%>Returned structure</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfwaveingetdevcaps.htm">waveInGetDevCaps</A></TD>
+<TD width=44%>Retrieves the capabilities of a specified waveform audio input device.</TD>
+<TD width=27%><A HREF="wce50lrfwaveincaps.htm">WAVEINCAPS</A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfwaveoutgetdevcaps.htm">waveOutGetDevCaps</A></TD>
+<TD width=44%>Retrieves the capabilities of a specified waveform audio output device.</TD>
+<TD width=27%><A HREF="wce50lrfwaveoutcaps.htm">WAVEOUTCAPS</A></TD>
+</TR>
+</table></div>
+
+<P>The <B>waveInGetDevCaps</B> and <B>waveOutGetDevCaps</B> functions fill the <B>dwFormats</B> member of the <B>WAVEINCAPS</B> and <B>WAVEOUTCAPS</B> structures with flags that describe the standard supported sound formats for a specified audio I/O device. Waveform audio I/O devices also support nonstandard capabilities. You also can use the <A HREF="wce50lrfwaveinopen.htm">waveInOpen</A> or the <A HREF="wce50lrfwaveoutopen.htm">waveOutOpen</A> function to determine if a waveform audio I/O device supports a specified format.</P>
+
+<P class="labelproc"><B>To determine if a waveform audio I/O device supports a standard or a nonstandard format</B>
+
+<OL type="1">
+	<LI>Specify the format that you want to query in the <A HREF="wce50lrfwaveformatex91.htm">WAVEFORMATEX</A> structure.</li>
+
+	<LI>Pass this structure into <B>waveInOpen</B> or <B>waveOutOpen</B> by using the <I>pwfx</I> parameter.</li>
+
+	<LI>Call <B>waveInOpen</B> or <B>waveOutOpen</B> with the WAVE_FORMAT_QUERY flag set.
+<P>This call does not open the device. Instead, the function returns a message that declares whether or not the audio device supports the specified format.
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Although the <B>WAVEFORMATEX</B> structure supersedes the <B>PCMWAVEFORMAT</B> and <B>WAVEFORMAT</B> structures, Windows CE maintains both of these structures for backward compatibility.</BLOCKQUOTE>
+</li>
+</OL>
+
+<P>The following code example shows how to use the <B>waveOutOpen</B> function with the WAVE_FORMAT_QUERY flag to determine if a waveform audio device supports a specified format.</P>
+
+<PRE class="code">MMRESULT IsFormatSupported (LPWAVEFORMATEX pwfx, UINT uDeviceID) 
+{ 
+    return waveOutOpen (NULL,               // ptr can be NULL for query
+                        uDeviceID,          // The device identifier 
+                        pwfx,               // Defines the requested 
+                                            // format.
+                        NULL,               // No callback 
+                        NULL,               // No instance data 
+                        WAVE_FORMAT_QUERY); // Query only, do not open.
+}</PRE>
+
+<P>The preceding example determines if the specified waveform audio output device supports a specified waveform audio format. It returns the MMSYSERROR_NOERROR return value if the device supports the format, the WAVERROR_BADFORMAT return value if the device does not support the format, and one of the other MMSYSERROR return values for other errors.</P>
+
+<P>This technique for determining nonstandard format support also applies to waveform audio input devices. The only difference is that the function will use <B>waveInOpen</B> instead of <B>waveOutOpen</B> to query for format support.</P>
+
+<P>To determine if any waveform audio I/O devices on a system support a particular waveform audio data format, use the technique that is illustrated in the previous example. However, you must specify the WAVE_MAPPER constant in the <I>uDeviceID</I> parameter.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conqueryingandopeningwaveformaudioiodevices.htm">Querying and Opening Waveform Audio I/O Devices</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Querying%20Audio%20I%2FO%20Devices (wce50conqueryingaudioiodevices.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

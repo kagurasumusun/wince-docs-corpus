@@ -1,0 +1,420 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CBasePin Class</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcbasepinclass"></A>CBasePin Class</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P class="fig"><IMG SRC="filter02.gif" ALT="" BORDER=0></P>
+
+<P>This is an abstract base class from which all pins are derived. </P>
+
+<P><B>CBasePin</B> supports the <A HREF="wce50lrfipininterface.htm">IPin</A> interface. If your pin does not supply or use the <A HREF="wce50lrfimeminputpininterface.htm">IMemInputPin</A> interface, derive from this; otherwise, derive from the <A HREF="wce50lrfcbaseinputpinclass.htm">CBaseInputPin</A> class or the <A HREF="wce50lrfcbaseoutputpinclass.htm">CBaseOutputPin</A> class. </P>
+
+<P>The connection process is crucial to the success of creating filter graphs. The filter graph finds two filters (and subsequently two pins) to connect. </P>
+
+<P>It calls the <A HREF="wce50lrfipinconnect.htm">IPin::Connect</A> method on the output pin (and it can call <A HREF="wce50lrfipinconnect.htm">Connect</A> on the input pin at the same time). The output pin then calls the virtual pin member function <A HREF="wce50lrfcbasepincheckconnect.htm">CBasePin::CheckConnect</A>. </P>
+
+<P>Derived classes should override this member function to use <A HREF="JavaScript:hhobj_1.Click()">QueryInterface</A> to return any interfaces required. </P>
+
+<P>The base class implementation of <A HREF="wce50lrfcbasepincheckconnect.htm">CheckConnect</A> queries the <A HREF="wce50lrfimeminputpininterface.htm">IMemInputPin</A> interface to establish the default transport protocol. </P>
+
+<P>After calling <A HREF="wce50lrfcbasepincheckconnect.htm">CheckConnect</A>, the output pin calls <A HREF="wce50lrfcbasepinagreemediatype.htm">CBasePin::AgreeMediaType</A>; this is a worker member function not intended for overriding in derived classes. This gets the input pin's enumerator and calls <A HREF="wce50lrfcbasepintrymediatypes.htm">CBasePin::TryMediaTypes</A> with it. </P>
+
+<P><A HREF="wce50lrfcbasepintrymediatypes.htm">TryMediaTypes</A> is another base pin worker member function that is not intended for derivation. It cycles through each media type provided by an enumerator to determine if a connection can be made with that type. </P>
+
+<P>If that process fails, <A HREF="wce50lrfcbasepinagreemediatype.htm">AgreeMediaType</A> retrieves the output pin's media type enumerator and calls <A HREF="wce50lrfcbasepingetmediatype.htm">CBasePin::GetMediaType</A>, which cycles through the media types to agree on a connection type. If there is agreement, a media type with the input and output pins becomes the type used in the connection. </P>
+
+<P>If no media type can be agreed on, the connection between the pins cannot be made. The base pin calls <A HREF="wce50lrfcbasepinsetmediatype.htm">CBasePin::SetMediaType</A> to broadcast the format. The <B>m_mt</B> base pin variable is set during this process. </P>
+
+<P>The <A HREF="wce50lrfipininterface.htm">IPin</A> interface provides a method called <A HREF="wce50lrfcbasepinqueryaccept.htm">QueryAccept</A>. This method allows a connected filter to query whether the pin will accept a specified media type. </P>
+
+<P>The method is asynchronous so that a filter can call it at any time&#0151;even when another filter is calling it. For this reason, its implementation in any override of the base class should not lock the filter. </P>
+
+<P>The base class implementation of <A HREF="wce50lrfipinqueryaccept.htm">IPin::QueryAccept</A> calls the overridden <A HREF="wce50lrfcbasepincheckmediatype.htm">CBasePin::CheckMediaType</A> member function on the derived pin class. </P>
+
+<P>All member functions in this class that return <B>HRESULT</B> and accept a pointer as a parameter return E_POINTER when passed a null pointer. </P>
+
+<H4 class="dtH4">Protected Data Members</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Member</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_bRunTimeError </B></TD>
+<TD width=71%>Run-time error generated. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_Connected </B></TD>
+<TD width=71%>Pin that this pin is connected to. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_dir</B></TD>
+<TD width=71%>Direction of this pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_dRate</B></TD>
+<TD width=71%>Rate from the <A HREF="wce50lrfcbasepinnewsegment.htm">CBasePin::NewSegment</A> call. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_mt</B></TD>
+<TD width=71%>Media type that this pin is using. 
+<P>This is established during the connection process. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_pFilter</B></TD>
+<TD width=71%>Filter that created the pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_pLock </B></TD>
+<TD width=71%>Object used for locking. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_pQSink </B></TD>
+<TD width=71%>Target for quality messages. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_pName </B></TD>
+<TD width=71%>Name of the pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_tStart </B></TD>
+<TD width=71%>Start time from the <A HREF="wce50lrfcbasepinnewsegment.htm">CBasePin::NewSegment</A> call. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_tStop </B></TD>
+<TD width=71%>Stop time from the <A HREF="wce50lrfcbasepinnewsegment.htm">CBasePin::NewSegment</A> call. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><B>m_TypeVersion</B></TD>
+<TD width=71%>Current media type version (see <A HREF="wce50lrfcbasepingetmediatypeversion.htm">CBasePin::GetMediaTypeVersion</A>). </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Member Functions</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Member function</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinattemptconnection.htm">AttemptConnection</A></TD>
+<TD width=71%>Attempts to make a connection to another pin using a specified media type. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepincbasepin.htm">CBasePin</A></TD>
+<TD width=71%>Constructs a <B>CBasePin</B> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepincurrentrate.htm">CurrentRate</A></TD>
+<TD width=71%>Returns the segment rate set by the <A HREF="wce50lrfcbasepinnewsegment.htm">CBasePin::NewSegment</A> member function. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepincurrentstarttime.htm">CurrentStartTime</A></TD>
+<TD width=71%>Returns the segment start time set by the <A HREF="wce50lrfcbasepinnewsegment.htm">CBasePin::NewSegment</A> member function. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepincurrentstoptime.htm">CurrentStopTime</A></TD>
+<TD width=71%>Returns the segment stop time set by the <A HREF="wce50lrfcbasepinnewsegment.htm">CBasePin::NewSegment</A> member function. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepindisplaypininfo.htm">DisplayPinInfo</A></TD>
+<TD width=71%>Displays pin information on the debugging monitor. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepindisplaytypeinfo.htm">DisplayTypeInfo</A></TD>
+<TD width=71%>Displays media type information on the debugging monitor. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepingetconnected.htm">GetConnected</A></TD>
+<TD width=71%>Returns the pin that is connected to this pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinincrementtypeversion.htm">IncrementTypeVersion</A></TD>
+<TD width=71%>Adds 1 to the current media type version. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinisconnected.htm">IsConnected</A></TD>
+<TD width=71%>Determines whether the pin is connected. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinisstopped.htm">IsStopped</A></TD>
+<TD width=71%>Determines whether the filter owning this pin is in the State_Stopped state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinname.htm">Name</A></TD>
+<TD width=71%>Returns the <B>m_pName</B> name of the pin. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Overrideable Member Functions</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Member function</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinactive.htm">Active</A></TD>
+<TD width=71%>Switches the pin to the active (running) mode. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinagreemediatype.htm">AgreeMediaType</A></TD>
+<TD width=71%>Agrees on the media type to be used by the pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinbreakconnect.htm">BreakConnect</A></TD>
+<TD width=71%>Adds custom code when the connection quits. 
+<P>This is also called when a stage in the connection process fails, so this member function should also clean up partial connection states. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepincheckconnect.htm">CheckConnect</A></TD>
+<TD width=71%>Adds custom code when the connection is being made. 
+<P>This is called at the start of the connection process. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepincheckmediatype.htm">CheckMediaType</A></TD>
+<TD width=71%>Checks if the pin can support a specific media type. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepincompleteconnect.htm">CompleteConnect</A></TD>
+<TD width=71%>Completes the connection. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepingetmediatype.htm">GetMediaType</A></TD>
+<TD width=71%>Returns the media type used by the pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepingetmediatypeversion.htm">GetMediaTypeVersion</A></TD>
+<TD width=71%>Returns the version of the pins that were created dynamically. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepininactive.htm">Inactive</A></TD>
+<TD width=71%>Switches the pin to the inactive (stopped) mode. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepinsetmediatype.htm">SetMediaType</A></TD>
+<TD width=71%>Sets the <B>m_mt</B> data member to the established media type. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><A HREF="wce50lrfcbasepintrymediatypes.htm">TryMediaTypes</A></TD>
+<TD width=71%>Tries to find an acceptable media type for a connection from the list returned by a media type enumerator. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Implemented IPin Methods</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Method</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinconnect.htm">Connect</A></TD>
+<TD width=67%>Initiates a connection to another pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinconnectedto.htm">ConnectedTo</A></TD>
+<TD width=67%>Returns a pointer to the connecting pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinconnectionmediatype.htm">ConnectionMediaType</A></TD>
+<TD width=67%>Returns the media type of this pin's connection. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepindisconnect.htm">Disconnect</A></TD>
+<TD width=67%>Breaks a connection. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinendofstream.htm">EndOfStream</A></TD>
+<TD width=67%>Informs the input pin that no additional data is expected until a new run command is issued. 
+<P>(By default, returns S_FALSE.)</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinenummediatypes.htm">EnumMediaTypes</A></TD>
+<TD width=67%>Returns an enumerator for this pin's preferred media types. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinnewsegment.htm">NewSegment</A></TD>
+<TD width=67%>Specifies that samples following this call are grouped as a segment with a given start time, stop time, and rate. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinqueryaccept.htm">QueryAccept</A></TD>
+<TD width=67%>Determines whether this pin accepts the media type. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinquerydirection.htm">QueryDirection</A></TD>
+<TD width=67%>Retrieves the pin direction of the pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinqueryid.htm">QueryId</A></TD>
+<TD width=67%>Retrieves an identifier for the pin. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinqueryinternalconnections.htm">QueryInternalConnections</A></TD>
+<TD width=67%>Returns an array of the pins that this pin connects to internally. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinquerypininfo.htm">QueryPinInfo</A></TD>
+<TD width=67%>Retrieves information about the pin (name, owning filter, or direction). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinreceiveconnection.htm">ReceiveConnection</A></TD>
+<TD width=67%>Called by a connecting pin to make a connection to this pin. 
+<P>Usually this does not need to be overridden, because the default implementation calls <A HREF="wce50lrfcbasepincheckconnect.htm">CBasePin::CheckConnect</A>, <A HREF="wce50lrfcbasepincheckmediatype.htm">CBasePin::CheckMediaType</A>, and <A HREF="wce50lrfcbasepinbreakconnect.htm">CBasePin::BreakConnect</A>. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%><A HREF="wce50lrfcbasepinrun.htm">Run</A></TD>
+<TD width=67%>Notifies the pin that the filter has changed state from paused to running. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Implemented IQualityControl Methods</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=21%>Method</TH>
+<TH width=79%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%><A HREF="wce50lrfcbasepinnotify.htm">Notify</A></TD>
+<TD width=79%>Notifies the recipient that a quality change is requested. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%><A HREF="wce50lrfcbasepinsetsink.htm">SetSink</A></TD>
+<TD width=79%>Sets the <A HREF="wce50lrfiqualitycontrolinterface.htm">IQualityControl</A> object that will receive quality messages. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Implemented INonDelegatingUnknown Methods</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Method</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wce50lrfcbasepinnondelegatingaddref.htm">NonDelegatingAddRef</A></TD>
+<TD width=62%>Increments the owning filter's reference count. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wce50lrfcbasepinnondelegatingqueryinterface.htm">NonDelegatingQueryInterface</A></TD>
+<TD width=62%>Retrieves <B>CBasePin</B> interfaces. 
+<P>To pass out pointers to interfaces added by the derived pin class, override this member function. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><A HREF="wce50lrfcbasepinnondelegatingrelease.htm">NonDelegatingRelease</A></TD>
+<TD width=62%>Decrements the owning filter's reference count. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements. </P>
+
+<P>For more information, see <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A>.</P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.<BR>
+<B>Header:</B> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CBasePin%20Class (wce50lrfcbasepinclass.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

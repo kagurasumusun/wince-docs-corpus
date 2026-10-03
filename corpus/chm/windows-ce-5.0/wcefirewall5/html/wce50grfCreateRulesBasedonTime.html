@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating Rules Based on Time</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50grfcreaterulesbasedontime"></A>Creating Rules Based on Time</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following table shows an example of how to create rules based on time. In this case, outbound traffic from the specified host is allowed between 9:00 PM and 8:00 AM. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>dwFlags</TH>
+<TH width=26%>wHourStart</TH>
+<TH width=34%>wHourEnd</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>FWF_BLOCK | FWF_OUTBOUND</TD>
+<TD width=26%>&nbsp;</TD>
+<TD width=34%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>FWF_ALLOW | FWF_OUTBOUND</TD>
+<TD width=26%>21</TD>
+<TD width=34%>8</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Registry entries for the rule</H4>
+
+<P>The following registry example shows the registry entries for this rule.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\COMM\Firewall\Rules\BlockOutbound]
+    "Mask"=dword:0            ;
+    "Flags"=dword:11          ; FWF_BLOCK | FWF_OUTBOUND
+    "PrivateHost"=hex:02,00          ; AF_INET
+
+[HKEY_LOCAL_MACHINE\COMM\Firewall\Rules\AllowOutbound9p8a]
+    "Mask"=dword:80        ; FWM_TIME_OF_DAY
+    "Flags"=dword:12          ; FWF_ALLOW | FWF_OUTBOUND
+    "PrivateHost"=hex:02,00          ; AF_INET
+    "HourStart"=dword:15        ; 9 PM
+    "HourEnd"=dword:8          ; 8 AM</PRE>
+
+<H4 class="dtH4">Code example to create the rule</H4>
+
+<P>The following code example shows this rule.</P>
+
+<PRE class="code">    FW_RULE BlockOutbound;
+
+    // The following fields must always be set.
+    BlockOutbound.dwSize = sizeof(FW_RULE);
+    BlockOutbound.dwFlags = FWF_BLOCK | FWF_OUTBOUND;
+    BlockOutbound.dwMask = 0;
+    BlockOutbound.PrivateHost.Family = AF_INET;
+    BlockOutbound.wszDescription = L"Block outbound traffic";
+
+    // Create a persistent rule.
+    FirewallCreateRule(&amp;BlockOutbound, TRUE); 
+
+    FW_RULE AllowOutbound9p8a;
+    // The following fields must always be set.
+    AllowOutbound9p8a.dwSize = sizeof(FW_RULE);
+    AllowOutbound9p8a.dwFlags = FWF_ALLOW | FWF_OUTBOUND;
+    AllowOutbound9p8a.dwMask = FWM_TIME_OF_DAY;
+    AllowOutbound9p8a.PrivateHost.Family = AF_INET;
+    AllowOutbound9p8a.wszDescription = L"Allow outbound traffic from the specified host between the 9 PM and 8 AM";
+
+    // Time of day.
+    AllowOutbound9p8a.wHourStart = 21;
+    AllowOutbound9p8a.wHourEnd = 8;
+
+    // Create a persistent rule.
+    FirewallCreateRule(&amp;AllowOutbound9p8a, TRUE); </PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50origeneralfirewallruleexamples.htm">General Firewall Rule Examples</A> | <A HREF="wce50condefaultipfirewallrules.htm">Default IP Firewall Rules</A> | <A HREF="wce50lrffwrule.htm">FW_RULE</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20Rules%20Based%20on%20Time (wce50grfcreaterulesbasedontime.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

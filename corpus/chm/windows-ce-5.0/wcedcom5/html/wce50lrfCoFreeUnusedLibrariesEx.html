@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoFreeUnusedLibrariesEx</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcofreeunusedlibrariesex"></A>CoFreeUnusedLibrariesEx</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Unloads any DLLs that are no longer in use and whose unload delay has expired.</P>
+
+<PRE class="syntax"><B>void CoFreeUnusedLibrariesEx(
+  DWORD </B><I>dwUnloadDelay</I><B>,
+  DWORD </B><I>dwReserved</I><B>
+);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwUnloadDelay</I></DT>
+
+<DD>[in] The delay in milliseconds between the time that the DLL has stated it can be unloaded until it becomes a candidate to unload. Setting <I>dwUnloadDelay</I>=INFINITE uses the system default delay (10 minutes). Setting <I>dwUnloadDelay</I>=0 forces the unloading of any DLLs without any delay.</dd>
+
+<DT><I>dwReserved</I></DT>
+
+<DD>[in] Reserved for future use; must be zero.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>None.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>COM supplies functions to reclaim memory held by DLLs containing components. The most commonly used function is <A HREF="wce50lrfcofreeunusedlibraries.htm">CoFreeUnusedLibraries</A>. <B>CoFreeUnusedLibraries</B> does not immediately release DLLs that have no active object. There is a 10-minute delay for multithreaded apartments (MTAs) and neutral apartments (NAs). For single-threaded apartments (STAs), there is no delay.</P>
+
+<P>The 10-minute delay for <B>CoFreeUnusedLibraries</B> is to avoid multithread race conditions caused by unloading a component DLL. This default delay may be too long for many applications.</P>
+
+<P>COM maintains a list of active DLLs that have had components loaded for the apartments that can be hosted on the thread where this function is called. When <B>CoFreeUnusedLibrariesEx</B> is called, each DLL on that list has its <A HREF="wce50lrfdllcanunloadnow.htm">DllCanUnloadNow</A> function called. If the <B>DllCanUnloadNow</B> function returns S_FALSE (or is not exported), this DLL is not ready to be unloaded. If <B>DllCanUnloadNow</B> returns S_OK, this DLL is moved off the active list to a "candidate-for-unloading" list.</P>
+
+<P>Adding the DLL to the candidate-for-unloading list time-stamps the DLL <I>dwUnloadDelay</I> milliseconds from when this move occurs. When <B>CoFreeUnusedLibrariesEx</B> (or <B>CoFreeUnusedLibraries</B>) is called again, at least <I>dwUnloadDelay</I> milliseconds from the call that moved the DLL to the candidate-for-unloading list, the DLL is actually freed from memory. If COM uses the component DLL while the DLL is on the candidate-for-unloading list, it is moved back to the active list.</P>
+
+<P>Using a <I>dwUnloadDelay</I> of 0 may lead to unexpected consequences. The component DLL may need some time for cleanup after it returns from the <B>DllCanUnloadNow</B> function. For example, if the DLL had its own worker threads, using a value of 0 would most likely lead to a problem because the code executing on these threads would be unmapped, caused by the unloading of the DLL before the worker threads have a chance to exit. Also, using too brief of a <I>dwUnloadDelay</I> time can lead to performance issues because there is a lot more overhead in reloading a DLL than letting it page out.</P>
+
+<P>The behavior above is triggered by the DLL supplying components with threading models set to Free, Neutral, or Both. For a threading model set to Apartment (or if no threading model is specified), <I>dwUnloadDelay</I> is treated as 0 because these components are tied to the single thread hosting the apartment.</P>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 4.2 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcofreeunusedlibraries.htm">CoFreeUnusedLibraries</A> | <A HREF="wce50lrfcoloadlibrary.htm">CoLoadLibrary</A> | <A HREF="wce50lrfdllcanunloadnow.htm">DllCanUnloadNow</A>  </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoFreeUnusedLibrariesEx (wce50lrfcofreeunusedlibrariesex.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

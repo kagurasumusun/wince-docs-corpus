@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoAddRefServerProcess</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcoaddrefserverprocess"></A>CoAddRefServerProcess</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function increments a global per-process reference count.</P>
+
+<PRE class="syntax"><B>ULONG CoAddRefServerProcess(void);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<P>None.</P>
+
+<H4 class="dtH4">Return Values</H4>
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The CLSID was retrieved successfully.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Servers can call <B>CoAddRefServerProcess</B> to increment a global per-process reference count. </P>
+
+<P>This function is particularly helpful to servers that are implemented with multiple threads, either multi-apartmented or free-threaded. Servers of these types must coordinate the decision to shut down with activation requests across multiple threads. </P>
+
+<P>Calling <B>CoAddRefServerProcess</B> increments a global per-process reference count, and calling <A HREF="wce50lrfcoreleaseserverprocess.htm">CoReleaseServerProcess</A> decrements that count.</P>
+
+<P>When that count reaches zero, OLE automatically calls <A HREF="wce50lrfcosuspendclassobjects.htm">CoSuspendClassObjects</A>, which prevents new activation requests from coming in. This permits the server to deregister its class objects from its various threads without worry that another activation request may come in. </P>
+
+<P>New activation requests result in launching a new instance of the local server process.</P>
+
+<P>The simplest way for a local server application to make use of these API functions is to call <B>CoAddRefServerProcess</B> in the constructor for each of its instance objects, and in each of its <A HREF="wce50lrficlassfactorylockserver.htm">IClassFactory::LockServer</A> methods when the <I>fLock</I> parameter is TRUE. </P>
+
+<P>The server application should also call <B>CoReleaseServerProcess</B> in the destruction of each of its instance objects, and in each of its <B>IClassFactory::LockServer</B> methods when the <I>fLock</I> parameter is FALSE. </P>
+
+<P>Finally, the server application should pay attention to the return code from <B>CoReleaseServerProcess</B> and if it returns 0, the server application should initiate its cleanup, which, for a server with multiple threads, typically means that it should signal its various threads to exit their message loops and call <A HREF="wce50lrfcorevokeclassobject.htm">CoRevokeClassObject</A> and <A HREF="wce50lrfcouninitialize.htm">CoUninitialize</A>. </P>
+
+<P>If these functions are used at all, they must be called in both the object instances and the <B>LockServer</B> method; otherwise, the server application may be shut down prematurely. In-process servers typically should not call <B>CoAddRefServerProcess</B> or <B>CoReleaseServerProcess</B>.</P>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoAddRefServerProcess (wce50lrfcoaddrefserverprocess.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

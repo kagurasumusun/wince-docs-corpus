@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CeWriteRecordProps (CEDB)</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCeWriteRecordPropsRAPI">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcewriterecordprops"></A>CeWriteRecordProps (CEDB)</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function writes a set of properties to a single record, creating the record if necessary.</P>
+
+<P>This function does not work with EDB databases. For more information on EDB, see <A HREF="wce50grfedbreference.htm">EDB Reference</A>.</P>
+
+<P>A RAPI version of this function exists called <A HREF="JavaScript:hhobj_1.Click()">CeWriteRecordProps (RAPI)</A>. </P>
+
+<PRE class="syntax"><B>CEOID</B> <B>CeWriteRecordProps(</B>
+  <B>HANDLE</B> <I>hDbase</I><B>, </B>
+  <B>CEOID</B> <I>oidRecord</I><B>, </B>
+  <B>WORD</B> <I>cPropID</I><B>, </B>
+  <B>CEPROPVAL* </B><I>rgPropVal</I>
+<B>);</B> </PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hDbase </I></DT>
+
+<DD>[in] Handle to an open database. The database must have been opened by a previous call to the <A HREF="wce50lrfceopendatabase.htm">CeOpenDatabase (CEDB)</A> function. </dd>
+
+<DT><I>oidRecord </I></DT>
+
+<DD>[in] Object identifier of the record to which the specified properties are to be written. If this parameter is zero, a new record is created and filled in with the specified properties. </dd>
+
+<DT><I>cPropID </I></DT>
+
+<DD>[in] Number of properties in the array specified by the <I>rgPropVal</I> parameter. The <I>cPropID</I> parameter must not be zero. </dd>
+
+<DT><I>rgPropVal </I></DT>
+
+<DD>[in] Pointer to an array of <A HREF="wce50lrfcepropval.htm">CEPROPVAL</A> structures that specify the property values to be written to the specified record. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The object identifier of the record to which the properties were written indicates success. Zero indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_2.Click()">GetLastError</A>. The following table shows possible return values for <B>GetLastError</B>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>ERROR_DISK_FULL</TD>
+<TD width=65%>Indicates that theres was not enough space in the object store to write the properties.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>ERROR_INVALID_PARAMETER</TD>
+<TD width=65%>Indicates that a parameter was invalid.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>CeWriteRecordProps</B> function writes all the requested properties into the specified record. <B>CeWriteRecordProps</B> leaves the seek pointer on the record that is written to. However, the position of that record in the sort order may change if its sort properties are modified. Therefore, using <B>CeWriteRecordProps</B> in conjunction with <B>CeSeekDatabaseEx</B> may result in unexpected seek behavior. </P>
+
+<P>To delete a property, set the CEDB_PROPDELETE flag in the appropriate property value. This allows multiple deletes and changes in a single call, which is much more efficient than multiple calls. </P>
+
+<P>No memory is freed by the caller. Pointers in the <B>CEPROPVAL</B> structures can be anywhere in the caller's address space &#0151; they can be marshaled, as in the array returned by <A HREF="wce50lrfcereadrecordprops.htm">CeReadRecordProps (CEDB)</A>, or they can be independently allocated. </P>
+
+<P>For Windows CE 2.10 and later, on a mounted database volume, all write operations are cached. The database subsystem periodically requests a cache flush after a series of operations. If memory is low, the cache is flushed to permanent storage. Unlike a file system that can choose to flush only part of the cache, on a database, all blocks are flushed.</P>
+
+<P>If this API is called by a replication synchronization client thread, the sync flags will determine its behavior. If the client has set the REPL_SYNC_ALLOWOVERWRITE flag, the call will proceed normally. If the REPL_SYNC_ALLOWOVERWRITE flag is not set, the call may fail with ERROR_ACCESS_DENIED, to block the synchronization client from overwriting changes it has not yet read. See the <A HREF="wce50lrfreplopensync.htm">ReplOpenSync</A> and <A HREF="wce50lrfreplchangesyncsettings.htm">ReplChangeSyncSettings</A> APIs for more details.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.01 and later.<BR>
+<B>Header:</B> Windbase.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfceopendatabaseex2.htm">CeOpenDatabaseEx2 (CEDB)</A> | <A HREF="wce50lrfcereadrecordpropsex.htm">CeReadRecordPropsEx (CEDB)</A> | <A HREF="wce50lrfcepropval.htm">CEPROPVAL</A> | <A HREF="wce50lrfreplopensync.htm">ReplOpenSync</A> | <A HREF="wce50lrfreplchangesyncsettings.htm">ReplChangeSyncSettings</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CeWriteRecordProps%20(CEDB) (wce50lrfcewriterecordprops.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

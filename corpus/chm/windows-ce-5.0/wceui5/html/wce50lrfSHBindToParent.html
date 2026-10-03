@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SHBindToParent</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfshbindtoparent"></A>SHBindToParent</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function takes the fully qualified pointer to an item identifier list (PIDL) of a namespace object and returns a specified interface pointer on the parent object.</P>
+
+<PRE class="syntax"><B>HRESULT SHBindToParent(</B>
+<B>  LPCITEMIDLIST </B><I>pidl</I><B>, </B>
+<B>  REFIID </B><I>riid</I><B>, </B>
+<B>  VOID** </B><I>ppv</I><B>, </B>
+<B>  LPCITEMIDLIST* </B><I>ppidlLast</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pidl</I></DT>
+
+<DD>[in] PIDL of the item. </dd>
+
+<DT><I>riid</I></DT>
+
+<DD>[in] Interface identifier for one of the interfaces exposed by the item's parent object. </dd>
+
+<DT><I>ppv</I></DT>
+
+<DD>[out] Pointer to the interface specified by <I>riid</I>. You must release the object when you are finished. </dd>
+
+<DT><I>ppidlLast</I></DT>
+
+<DD>[out] PIDL of the item relative to the parent folder. This PIDL can be used with many of the methods supported by the parent folder's interfaces. If you set <I>ppidlLast</I> to NULL, the PIDL is not returned. The calling application is responsible for freeing this pointer with the shell's <B>IMalloc</B> interface (see <A HREF="wce50lrfshgetmalloc.htm">SHGetMalloc</A>). </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns S_OK if successful, an OLE-defined error value otherwise.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The following code example shows how to use <B>SHBindToParent</B> to retrieve the display name from an item's PIDL. The <A HREF="wce50lrfstrrettobuf.htm">StrRetToBuf</A> function is used to convert the <A HREF="wce50lrfstrret.htm">STRRET</A> structure returned by <A HREF="wce50lrfishellfoldergetdisplaynameof.htm">IShellFolder::GetDisplayNameOf</A><B> </B>into a string.</P>
+
+<PRE class="code">IMalloc * pShellMalloc = NULL;    // A pointer to the shell's IMalloc interface
+IShellFolder *psfParent;          // A pointer to the parent folder object's IShellFolder interface.
+LPITEMIDLIST pidlItem = NULL;     // The item's PIDL.
+LPITEMIDLIST pidlRelative = NULL; // The item's PIDL relative to the parent folder.
+STRRET str;                       // The display name's STRRET structure.
+TCHAR szDisplayName[MAX_PATH];    // The display name's string.
+
+HRESULT hres = SHGetMalloc(&amp;pShellMalloc);
+if (FAILED(hres))
+{
+    return hres;
+}
+hres = SHBindToParent(pidlItem,
+                      IID_IShellFolder,
+                      &amp;psfParent,
+                      &amp;pidlRelative);
+
+if(SUCCEEDED(hres))
+{
+    psfParent-&gt;GetDisplayNameOf(pidlRelative, SHGDN_NORMAL, &amp;str);
+    psfParent-&gt;Release();
+    StrRetToBuf(&amp;str, pidlItem, szDisplayName, ARRAYSIZE(szDisplayName));
+}
+// Clean up allocated memory 
+if (pidlRelative)
+{
+    pShellMalloc-&gt;Free(pidlRelative);
+}
+
+pShellMalloc-&gt;Release();</PRE>
+
+<H4 class="dtH4">Requirements </H4>
+
+<P><B>OS Versions: </B>Windows CE .NET 4.2 and later.<BR>
+<B>Header:</B> Shlobj.h.<BR>
+<B>Link Library:</B> Ceshell.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfstandardshellfunctions.htm">Standard Shell Functions</A> | <A HREF="wce50lrfishellfoldergetdisplaynameof.htm">IShellFolder::GetDisplayNameOf</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: SHBindToParent (wce50lrfshbindtoparent.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

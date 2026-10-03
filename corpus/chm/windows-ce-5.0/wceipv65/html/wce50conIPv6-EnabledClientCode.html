@@ -1,0 +1,248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPv6-Enabled Client Code</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conipv6-enabledclientcode"></A>IPv6-Enabled Client Code</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code is the IP independent Client.c file. This is an IPv6-enabled version of the SimpleClient.c file found in <A HREF="wce50conipv4-onlyclientcode.htm">IPv4-only Client Code</A>.</P>
+
+<PRE class="code">#include &lt;winsock2.h&gt;
+#include &lt;ws2tcpip.h&gt;
+#include &lt;windows.h&gt;
+#include &lt;tchar.h&gt;
+
+char pBuf[] = "WinCE Echo Test Packet";
+
+#define DEFAULT_FAMILY      AF_UNSPEC
+#define DEFAULT_SOCKTYPE   SOCK_STREAM
+#define DEFAULT_PORT      "1234"
+#define BUFFER_SIZE         23            // length of "WinCE Echo Test Packet"
+
+#define TIMEOUT_SECS      2
+#define TIMEOUT_USECS      0
+
+#define RAS_SIZE 128
+
+void
+Print(
+   TCHAR *pFormat, 
+   ...)
+{
+   va_list ArgList;
+   TCHAR   Buffer[256];
+
+   va_start (ArgList, pFormat);
+
+   (void)wvsprintf (Buffer, pFormat, ArgList);
+
+#ifndef UNDER_CE
+   _putts(Buffer);
+#else
+   OutputDebugString(Buffer);
+#endif
+
+   va_end(ArgList);
+}
+
+int _tmain (int argc, TCHAR* argv[])
+{
+   SOCKET sock = INVALID_SOCKET;
+   int nFamily = DEFAULT_FAMILY;
+   int nSockType = DEFAULT_SOCKTYPE;
+   char szRemoteName[64];
+   char *szPort = DEFAULT_PORT;
+   SOCKADDR_STORAGE ssRemoteAddr;
+   int cbXfer, cbTotalRecvd, cbRemoteAddrSize;
+   WSADATA wsaData;
+   ADDRINFO Hints, *AddrInfo = NULL, *AI;
+   char szRemoteAddrString[RAS_SIZE];
+   fd_set fdReadSet;
+   TIMEVAL timeout = {TIMEOUT_SECS, TIMEOUT_USECS};
+   char pRecvBuf[BUFFER_SIZE];
+
+   if(WSAStartup(MAKEWORD(2,2), &amp;wsaData))
+   {
+      // WSAStartup failed
+      return 1;
+   }
+
+   if(argc &lt; 2)
+   {
+      Print(TEXT("Server name/address parameter required.  Ex: clnt 123.45.67.89"));
+      goto Cleanup;
+   }
+   else
+   {
+      // we use the first argument as the server name/address
+#if defined UNICODE
+      wcstombs(szRemoteName, argv[1], sizeof(szRemoteName));
+#else
+      strncpy(szRemoteName, argv[1], sizeof(szRemoteName));
+#endif
+
+      Print(TEXT("Communicating with server - %hs\r\n"), szRemoteName);
+   }
+
+   //
+   // Resolve the server name/address
+   //
+
+   memset(&amp;Hints, 0, sizeof(Hints));
+   Hints.ai_family = nFamily;
+   Hints.ai_socktype = nSockType;
+
+   if(getaddrinfo(szRemoteName, szPort, &amp;Hints, &amp;AddrInfo))
+   {
+      Print(TEXT("ERROR: Couldn't get resolve the server name/address!"));
+      goto Cleanup;
+   }
+
+   //
+   // Attempt to connect to each address until we find one that succeeds
+   //
+
+   for(AI = AddrInfo; AI != NULL; AI = AI-&gt;ai_next) 
+   {
+      if((AI-&gt;ai_family == PF_INET) || (AI-&gt;ai_family == PF_INET6)) // only want PF_INET or PF_INET6
+      {
+         sock = socket(AI-&gt;ai_family, AI-&gt;ai_socktype, AI-&gt;ai_protocol);
+         if (sock != INVALID_SOCKET)
+         {
+            if (AI-&gt;ai_socktype == SOCK_STREAM)
+            {
+               if(connect(sock, AI-&gt;ai_addr, AI-&gt;ai_addrlen) == SOCKET_ERROR)
+               {
+                  // Connect failed, let's close this socket and try again on the next address in the list
+                  closesocket(sock);
+                  continue;
+               }
+            }
+
+            // connect() succeeded or we're a UDP socket
+            break;
+         }
+      }
+   }
+   
+   if (AI == NULL) 
+   {
+      Print(TEXT("ERROR: Unable to connect to any of the server's addresses!\r\n"));
+      goto Cleanup;
+   }
+
+   //
+   // Send data to the server
+   //
+
+   cbXfer = 0;
+   cbXfer = sendto(sock, pBuf, sizeof(pBuf), 0, AI-&gt;ai_addr, AI-&gt;ai_addrlen);
+
+   if(cbXfer != sizeof(pBuf))
+   {
+      Print(TEXT("ERROR: Couldn't send the data! error = %d\r\n"), WSAGetLastError());
+      goto Cleanup;
+   }
+
+   if (getnameinfo(AI-&gt;ai_addr, AI-&gt;ai_addrlen,
+      szRemoteAddrString, sizeof(szRemoteAddrString), NULL, 0, NI_NUMERICHOST) != 0)
+      strcpy(szRemoteAddrString, "");
+   
+   Print(TEXT("SUCCESS - Sent %d bytes to address %hs\r\n"), cbXfer, szRemoteAddrString);
+
+   //
+   // Receive the echo'd data back from the server
+   //
+
+   FD_ZERO(&amp;fdReadSet);
+   FD_SET(sock, &amp;fdReadSet);
+
+   if(select(0, &amp;fdReadSet, NULL, NULL, &amp;timeout) != 1)
+   {
+      Print(TEXT("ERROR: Server hasn't responded in %d milliseconds\r\n"), 
+         ((timeout.tv_sec * 1000) + (timeout.tv_sec / 1000)));
+      goto Cleanup;
+   }
+
+   cbTotalRecvd = 0;
+   do
+   {
+      cbRemoteAddrSize = sizeof(ssRemoteAddr);
+      cbXfer = recvfrom(sock, pRecvBuf + cbTotalRecvd, sizeof(pRecvBuf) - cbTotalRecvd, 0, 
+         (SOCKADDR *)&amp;ssRemoteAddr, &amp;cbRemoteAddrSize);
+      cbTotalRecvd += cbXfer;
+   } while(cbXfer &gt; 0 &amp;&amp; cbTotalRecvd &lt; sizeof(pRecvBuf));
+
+   if(cbXfer == SOCKET_ERROR)
+   {
+      Print(TEXT("ERROR: Couldn't receive the data! Error = %d\r\n"), WSAGetLastError());
+      goto Cleanup;
+   }
+   else if(cbTotalRecvd != sizeof(pRecvBuf))
+   {
+      Print(TEXT("ERROR: Server didn't send back all the expected data!\r\n"));
+      goto Cleanup;
+   }
+
+   if(nSockType == SOCK_STREAM)
+   {
+      memset(&amp;ssRemoteAddr, 0, sizeof(ssRemoteAddr));
+      cbRemoteAddrSize = sizeof(ssRemoteAddr);
+      getpeername(sock, (SOCKADDR *)&amp;ssRemoteAddr, &amp;cbRemoteAddrSize);
+   }
+
+   if (getnameinfo((SOCKADDR *)&amp;ssRemoteAddr, cbRemoteAddrSize,
+      szRemoteAddrString, sizeof(szRemoteAddrString), NULL, 0, NI_NUMERICHOST) != 0)
+      strcpy(szRemoteAddrString, "");
+
+   Print(TEXT("SUCCESS - Received %d bytes back from address %hs\r\n"), cbTotalRecvd, szRemoteAddrString);
+
+Cleanup:
+
+   if(sock != INVALID_SOCKET)
+   {
+      shutdown(sock, SD_BOTH);
+      closesocket(sock);
+   }
+
+   if(AddrInfo)
+      freeaddrinfo(AddrInfo);
+
+   WSACleanup();
+
+   return 0;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oriipagnosticversionsourcecodeexamples.htm">IP Independent Source Code Examples</A> | <A HREF="wce50conipv4-onlyclientcode.htm">IPv4-only Client Code</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IPv6-Enabled%20Client%20Code (wce50conipv6-enabledclientcode.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

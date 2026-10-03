@@ -1,0 +1,371 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptAcquireContext</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptacquirecontext"></A>CryptAcquireContext</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function acquires a handle to a specific key container within a particular cryptographic service provider (CSP). This handle can be used to make calls to the selected CSP.</P>
+
+<PRE class="syntax"><B>BOOLEAN CRYPTFUNC CryptAcquireContext(</B>
+  <B>HCRYPTPROV* </B><I>phProv</I><B>,</B>
+  <B>LPCTSTR </B><I>pszContainer</I><B>, </B>
+  <B>LPCTSTR </B><I>pszProvider</I><B>, </B>
+  <B>DWORD </B><I>dwProvType</I><B>, </B>
+  <B>DWORD </B><I>dwFlags</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>phProv</I></DT>
+
+<DD>[out] Pointer to a handle to a CSP.</dd>
+
+<DT><I>pszContainer</I></DT>
+
+<DD>[in] Pointer to a null-terminated string that identifies the key container to the CSP. This name is independent of the method used to store the keys. Some CSPs store their key containers internally in the hardware, some use the system registry, and others use the file system. 
+
+<P>When <I>dwFlags </I>is set to CRYPT_VERIFYCONTEXT, <I>pszContainer</I> must be set to NULL. If this parameter is NULL, a default key container name is used.
+
+
+<P>Application developers should be carefull when using the default key container. When multiple applications use the same container, one application can change or destroy the keys that another application needs.
+
+
+<P>An application can obtain the name of the acquired key container at a later time by reading the PP_CONTAINER CSP parameter with the <A HREF="wce50lrfcryptgetprovparam.htm">CryptGetProvParam</A> function.
+</dd>
+
+<DT><I>pszProvider</I></DT>
+
+<DD>[in] Pointer to a null-terminated string that specifies the name of the CSP to be used.
+
+<P>If this parameter is NULL, the user default provider is used. For more information about connecting to CSPs, see the programmer's guide topics under <A HREF="wce50oricryptography.htm">Cryptography</A>. 
+
+
+<P>An application can obtain the name of the acquired CSP at a later time by reading the PP_NAME CSP parameter with the <B>CryptGetProvParam</B> function.
+</dd>
+
+<DT><I>dwProvType</I></DT>
+
+<DD>[in] Specifies the type of provider to acquire. The following provider types are predefined:
+
+<UL type="disc">
+	<LI>PROV_RSA_FULL</li>
+
+	<LI>PROV_RSA_SIG</li>
+
+	<LI>PROV_DSS</li>
+
+	<LI>PROV_DSS_DH</li>
+
+	<LI>PROV_FORTEZZA</li>
+
+	<LI>PROV_MS_EXCHANGE</li>
+
+	<LI>PROV_RSA_SCHANNEL</li>
+
+	<LI>PROV_SSL</li>
+
+	<LI>PROV_EC_ECDSA_SIG</li>
+
+	<LI>PROV_EC_ECNRA_SIG</li>
+
+	<LI>PROV_EC_ECDSA_FULL</li>
+
+	<LI>PROV_EC_ECNRA_FULL</li>
+
+	<LI>PROV_SPYRUS_LYNKS</li>
+
+	<LI>PROV_RNG</li>
+
+	<LI>PROV_INTEL_SEC</li>
+</UL>
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Bitmask of flags. This parameter is usually set to zero. The following table shows flags that can be set.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Flag</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_VERIFYCONTEXT</TD>
+<TD width=62%>If this flag is set, the application has no access to the private keys and the <I>pszContainer </I>parameter must be set to NULL.
+<P>This option is intended for applications that do not use private keys.</P>
+
+<P>When <B>CryptAcquireContext</B> is called, many CSPs require input from the owning user before granting access to the private keys in the key container. For example, the private keys may be encrypted, requiring a password from the user before they can be used. However, if the CRYPT_VERIFYCONTEXT flag is specified, access to the private keys is not required and the user interface can be bypassed.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_NEWKEYSET</TD>
+<TD width=62%>If this flag is set, a new key container is created with the name specified by <I>pszContainer</I>. If <I>pszContainer</I> is NULL, a key container with the default name is created. See CRYPT_MACHINE_KEYSET for information on combining flags.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_MACHINE_KEYSET</TD>
+<TD width=62%>By default, keys are stored for the current user. The CRYPT_MACHINE_KEYSET flag can be set and combined with all of the other flags to indicate that the keys are persisted for the computer and not for any particular user. Combined with the CRYPT_NEWKEYSET flag, the CRYPT_MACHINE_KEYSET flag can access keys for a service.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_DELETEKEYSET</TD>
+<TD width=62%>If this flag is set, then the key container specified by <I>pszContainer</I> is deleted. If <I>pszContainer</I> is NULL, then the key container with the default name is deleted. All key pairs in the key container are also destroyed.
+<P>When the CRYPT_DELETEKEYSET flag is set, the value returned in <I>phProv</I> is undefined; therefore, a call to the <A HREF="wce50lrfcryptreleasecontext.htm">CryptReleaseContext</A> function is not required.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CRYPT_SILENT</TD>
+<TD width=62%>The application requests that the CSP not display any user interface (UI) for this context. If the CSP must display the UI to operate, the call fails with the NTE_SILENT_CONTEXT error. In addition, if a call is made to <A HREF="wce50lrfcryptgenkey.htm">CryptGenKey</A> with the CRYPT_USER_PROTECTED flag and a context acquired with the CRYPT_SILENT flag, the call fails and the CSP sets NTE_SILENT_CONTEXT. 
+<P>CRYPT_SILENT is intended for CSP applications that cannot display a UI. </P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function. </P>
+
+<P>The following table shows common values for the <B>GetLastError</B> function. The error values prefaced by NTE are generated by the particular CSP you are using.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=41%>Value</TH>
+<TH width=59%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_BUSY</TD>
+<TD width=59%>Some CSPs set this error if the CRYPT_DELETEKEYSET flag value is set and another thread or process is using this key container. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_INVALID_PARAMETER</TD>
+<TD width=59%>One of the parameters contains an invalid value. This is most often an illegal pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_NOT_ENOUGH_MEMORY</TD>
+<TD width=59%>The operating system ran out of memory during the operation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_FLAGS</TD>
+<TD width=59%>The <I>dwFlags</I> parameter contains an invalid value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_KEYSET</TD>
+<TD width=59%>The key container could not be opened. A common cause of this error is that the key container does not exist. To create a key container, call <B>CryptAcquireContext</B> using the CRYPT_NEWKEYSET flag. This error code can also indicate that the access to an existing key container is denied.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_KEYSET_PARAM</TD>
+<TD width=59%>The <I>pszContainer</I> or <I>pszProvider</I> parameter is set to an invalid value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_PROV_TYPE</TD>
+<TD width=59%>The value of the <I>dwProvType</I> parameter is out of range. All provider types must be from 1 to 999, inclusive.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_SIGNATURE</TD>
+<TD width=59%>The provider DLL signature could not be verified. Either the DLL or the digital signature has been tampered with.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_EXISTS</TD>
+<TD width=59%>The <I>dwFlags</I> parameter is CRYPT_NEWKEYSET, but the key container already exists.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_FAIL</TD>
+<TD width=59%>The function failed in some unexpected way.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_KEYSET_ENTRY_BAD</TD>
+<TD width=59%>The <I>pszContainer</I> key container was found but is corrupt. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_KEYSET_NOT_DEF</TD>
+<TD width=59%>The key container specified by <I>pszContainer </I>does not exist.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_NO_MEMORY</TD>
+<TD width=59%>The CSP ran out of memory during the operation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_PROV_DLL_NOT_FOUND</TD>
+<TD width=59%>The provider DLL file does not exist or is not on the current path.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_PROV_TYPE_ENTRY_BAD</TD>
+<TD width=59%>The provider type specified by <I>dwProvType</I> is corrupt. This error may relate to either the user default CSP list or the machine default CSP list. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_PROV_TYPE_NO_MATCH</TD>
+<TD width=59%>The provider type specified by <I>dwProvType</I> does not match the provider type found. Note that this error can only occur when <I>pszProvider</I> specifies an actual CSP name.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_PROV_TYPE_NOT_DEF</TD>
+<TD width=59%>No entry exists for the provider type specified by <I>dwProvType</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_PROVIDER_DLL_FAIL</TD>
+<TD width=59%>The provider DLL file could not be loaded, and may not exist. If it exists, then the file is not a valid DLL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_SIGNATURE_FILE_BAD</TD>
+<TD width=59%>An error occurred while loading the DLL file image, prior to verifying its signature.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example Code</H4>
+
+<P>The following example shows a call to acquire a cryptographic context and to access public and private key pairs in a key container. If the requested key container does not exist, it is created. </P>
+
+<PRE class="code">//--------------------------------------------------------------------
+// Declare and initialize variables.
+
+HCRYPTPROV hCryptProv = NULL;        // Handle for a cryptographic
+                                     // provider context.
+LPCSTR UserName = "MyKeyContainer";  // Name of the key container
+                                     // to be used.
+//--------------------------------------------------------------------
+// Attempt to acquire a context and a key
+// container. The context will use the default CSP
+// for the RSA_FULL provider type. DwFlags is set to 0
+// to attempt to open an existing key container.
+
+if(CryptAcquireContext(
+   &amp;hCryptProv,               // Handle to the CSP.
+   UserName,                  // Container name.
+   NULL,                      // Use the default provider.
+   PROV_RSA_FULL,             // Provider type.
+   0))                        // Flag values.
+{
+    printf("A crypto context with the %s key container \n", UserName);
+    printf("has been acquired.\n\n");
+}
+else
+{ 
+//--------------------------------------------------------------------
+// An error occurred in acquiring the context. This could mean
+// that the key container requested does not exist. In this case,
+// the function can be called again to attempt to create a new key 
+// container. Error codes are defined in winerror.h.
+ if (GetLastError() == NTE_BAD_KEYSET)
+ {
+   if(CryptAcquireContext(
+      &amp;hCryptProv, 
+      UserName, 
+      NULL, 
+      PROV_RSA_FULL, 
+      CRYPT_NEWKEYSET)) 
+    {
+      printf("A new key container has been created.\n");
+    }
+    else
+    {
+      printf("Could not create a new key container.\n");
+      exit(1);
+    }
+  else
+  {
+      printf("A cryptographic service handle could not be acquired.\n");
+      exit(1);
+   }
+  
+} // End of else.
+//--------------------------------------------------------------------
+// A cryptographic context and a key container are available. Perform
+// any functions that require a Cryptographic provider handle.
+
+//--------------------------------------------------------------------
+// When the handle is no longer needed, it must be freed.
+
+if (CryptReleaseContext(hCryptProv,0))
+{
+  printf("The handle has been freed.\n");
+}
+else
+{
+  printf("The handle could not be freed.\n");
+}</PRE>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>CryptAcquireContext</B> performs two operations. First, it attempts to find a CSP with the characteristics described in the <I>dwProvType</I> and <I>pszProvider</I> parameters. Then, if the CSP is found, the function attempts to find a key container within the CSP matching the name specified by the <I>pszContainer</I> parameter. To acquire the context and the key container or a private key associated with the public key of a certificate, use the <A HREF="wce50lrfcryptacquirecertificateprivatekey.htm">CryptAcquireCertificatePrivateKey</A> function.</P>
+
+<P>With the appropriate <I>dwFlags</I> setting, this function can also create and destroy key containers and can provide access to a CSP with a temporary key container if access to a private key is not required.</P>
+
+<P>Windows CE does not support the ANSI version of this function.</P>
+
+<P>When key containers are created, most CSPs do not automatically create any public/private key pairs. These keys must be created as a separate step with the <B>CryptGenKey</B> function.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.10 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oricryptography.htm">Cryptography</A> | <A HREF="wce50lrfcryptgenkey.htm">CryptGenKey</A> | <A HREF="wce50lrfcryptgetprovparam.htm">CryptGetProvParam</A> | <A HREF="wce50lrfcryptreleasecontext.htm">CryptReleaseContext</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptAcquireContext (wce50lrfcryptacquirecontext.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

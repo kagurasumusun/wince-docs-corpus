@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AVI Stream Headers</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfBITMAPINFO">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conavistreamheaders"></A>AVI Stream Headers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The main header is followed by one or more 'strl' chunks. (A 'strl' chunk is required for each data stream.) These chunks contain information about the streams in the file. </P>
+
+<P>Each 'strl' chunk must contain a stream header and stream format chunk. 
+
+<UL type="disc">
+	<LI>Stream header chunks are identified by the FOURCC (four-character code) 'strh'.</li>
+
+	<LI>Stream format chunks are identified by the FOURCC 'strf'. </li>
+</UL>
+
+<P>In addition to the stream header and stream format chunks, the 'strl' chunk might also contain a stream-header data chunk and a stream name chunk. 
+
+<UL type="disc">
+	<LI>Stream-header data chunks are identified by the FOURCC 'strd'. </li>
+
+	<LI>Stream name chunks are identified by the FOURCC 'strn'. </li>
+</UL>
+
+<P>The stream header structure contains header information for a single stream of a file. </P>
+
+<PRE class="syntax"><B>typedef struct {</B>
+<B>  FOURCC </B><I>fccType</I><B>;</B>
+<B>  FOURCC </B><I>fccHandler</I><B>;</B>
+<B>  DWORD </B><I>dwFlags</I><B>;</B>
+<B>  DWORD </B><I>dwPriority</I><B>;</B>
+<B>  DWORD </B><I>dwInitialFrames</I><B>;</B>
+<B>  DWORD </B><I>dwScale</I><B>;</B>
+<B>  DWORD </B><I>dwRate</I><B>;</B>
+<B>  DWORD </B><I>dwStart</I><B>;</B>
+<B>  DWORD </B><I>dwLength</I><B>;</B>
+<B>  DWORD </B><I>dwSuggestedBufferSize</I><B>;</B>
+<B>  DWORD </B><I>dwQuality</I><B>;</B>
+<B>  DWORD </B><I>dwSampleSize</I><B>;</B>
+<B>  RECT </B><I>rcFrame</I><B>;</B>
+<B>} AVIStreamHeader;</B></PRE>
+
+<P>The stream header specifies the type of data the stream contains, such as audio or video, by means of a FOURCC. 
+
+<DL>
+<DT><B>fccType</B></DT>
+
+<DD>Contains a FOURCC that specifies the type of the data contained in the stream. 
+
+<P>The following standard AVI values for video and audio are defined. 
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=9%>Value</TH>
+<TH width=91%>Definition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>'vids'</TD>
+<TD width=91%>Indicates the stream contains video data. The stream format chunk contains a <B>BITMAPINFO</B> structure that can include palette information.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>'auds'</TD>
+<TD width=91%>Indicates the stream contains audio data. The stream format chunk contains a <B>WAVEFORMATEX</B> or <B>PCMWAVEFORMAT</B> structure, see the Remarks section below.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>'txts'</TD>
+<TD width=91%>Indicates the stream contains text data.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>fccHandler</B><I> </I></DT>
+
+<DD>Optionally, contains a FOURCC that identifies a specific data handler. The data handler is the preferred handler for the stream. For audio and video streams, this specifies the installable compressor or decompressor. </dd>
+
+<DT><B>dwFlags</B><I> </I></DT>
+
+<DD>Contains flags for the data stream. The bits in the high-order word of these flags are specific to the type of data contained in the stream. 
+
+<P>The following standard flags are defined. 
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Flag</TH>
+<TH width=63%>Definition</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>AVISF_DISABLED</TD>
+<TD width=63%>Indicates this stream should not be enabled by default.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>AVISF_VIDEO_PALCHANGES</TD>
+<TD width=63%>Indicates this video stream contains palette changes. 
+<P>This flag warns the playback software that it will need to animate the palette.</P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>dwPriority</B><I> </I></DT>
+
+<DD>Specifies priority of a stream type. For example, in a file with multiple audio streams, the one with the highest priority might be the default stream. </dd>
+
+<DT><B>dwInitialFrames</B><I> </I></DT>
+
+<DD>Specifies how far audio data is skewed ahead of the video frames in interleaved files. Typically, this is about 0.75 seconds. 
+
+<P>If you are creating interleaved files, specify the number of frames in the file prior to the initial frame of the AVI sequence in this member. 
+
+
+<P>For more information about the contents of this member, see "Special Information for Interleaved Files" in <I>Video for Windows Programmer's Guide</I>. 
+</dd>
+
+<DT><B>dwScale</B><I> </I></DT>
+
+<DD>Used with <B>dwRate</B> to specify the time scale that this stream will use. Dividing <B>dwRate</B> by <B>dwScale</B> gives the number of samples per second. 
+
+<P>For video streams, this rate should be the frame rate. 
+
+
+<P>For audio streams, this rate should correspond to the time needed for <B>nBlockAlign</B> bytes of audio, which for PCM audio simply reduces to the sample rate. 
+</dd>
+
+<DT><B>dwRate</B><I> </I></DT>
+
+<DD>See <B>dwScale</B>. </dd>
+
+<DT><B>dwStart</B><I> </I></DT>
+
+<DD>Specifies the starting time of the AVI file. The units are defined by the <B>dwRate</B> and <B>dwScale</B> members in the main file header. Usually, this is zero, but it can specify a delay time for a stream that does not start concurrently with the file. </dd>
+
+<DT><B>dwLength</B><I> </I></DT>
+
+<DD>Specifies the length of this stream. The units are defined by the <B>dwRate</B> and <B>dwScale</B> members of the stream's header. </dd>
+
+<DT><B>dwSuggestedBufferSize</B><I> </I></DT>
+
+<DD>Specifies how large a buffer should be used to read this stream. Typically, this contains a value corresponding to the largest chunk present in the stream. 
+
+<P>Using the correct buffer size makes playback more efficient. 
+
+
+<P>Use zero if you do not know the correct buffer size. 
+</dd>
+
+<DT><B>dwQuality</B><I> </I></DT>
+
+<DD>Specifies an indicator of the quality of the data in the stream. 
+
+<P>Quality is represented as a number between 0 and 10,000. For compressed data, this typically represents the value of the quality parameter passed to the compression software. 
+
+
+<P>If set to &#0150;1, drivers use the default quality value. 
+</dd>
+
+<DT><B>dwSampleSize</B><I> </I></DT>
+
+<DD>Specifies the size of a single sample of data. 
+
+<P>This is set to zero if the samples can vary in size. 
+
+
+<P>If this number is nonzero, multiple samples of data can be grouped into a single chunk within the file. 
+
+
+<P>If it is zero, each sample of data (such as a video frame) must be in a separate chunk. 
+
+
+<P>For video streams, this number is typically zero, although it can be nonzero if all video frames are the same size. 
+
+
+<P>For audio streams, this number should be the same as the <B>nBlockAlign</B> member of the <A HREF="wce50lrfwaveformatex91.htm">WAVEFORMATEX</A> structure describing the audio. 
+</dd>
+
+<DT><B>rcFrame</B><I> </I></DT>
+
+<DD>Specifies the destination rectangle for a text or video stream within the movie rectangle specified by the <B>dwWidth</B> and <B>dwHeight</B> members of the <A HREF="wce50conavimainheader.htm">AVI main header</A> structure. 
+
+<P>The <B>rcFrame</B> member is typically used in support of multiple video streams. Set this rectangle to the coordinates corresponding to the movie rectangle to update the whole movie rectangle. 
+
+
+<P>Units for this member are pixels. The upper left corner of the destination rectangle is relative to the upper left corner of the movie rectangle. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The last eight members describe the playback characteristics of the stream. These factors include the following:
+
+<UL type="disc">
+	<LI>Playback rate (<B>dwScale</B> and <B>dwRate</B>)</li>
+
+	<LI>Starting time of the sequence (<B>dwStart</B>)</li>
+
+	<LI>Length of the sequence (<B>dwLength</B>)</li>
+
+	<LI>Size of the playback buffer (<B>dwSuggestedBuffer</B>)</li>
+
+	<LI>Indicator of the data quality (<B>dwQuality</B>)</li>
+
+	<LI>Sample size (<B>dwSampleSize</B>)</li>
+</UL>
+
+<P>Some members in the stream header structure are also present in the main header structure. The data in the main header applies to the whole file, while the data in the stream header structure applies only to a stream. </P>
+
+<P>A stream format ('strf') chunk must follow a stream header ('strh') chunk. The stream format chunk describes the format of the data in the stream. </P>
+
+<P>For video streams, the information in this chunk is a <A HREF="JavaScript:hhobj_1.Click()">BITMAPINFO</A> structure (including palette information if appropriate). </P>
+
+<P>For audio streams, the information in this chunk is a <A HREF="wce50lrfwaveformatex91.htm"> WAVEFORMATEX</A> structure.  It can also be a <B>PCMWAVEFORMAT</B> or <B>WAVEFORMAT </B>structure, but both of those structures are deprecated in favor of <B>WAVEFORMATEX</B>. </P>
+
+<P>The 'strl' chunk might also contain an additional stream-header data ('strd') chunk. If used, this chunk follows the stream format chunk. </P>
+
+<P>The format and content of this chunk are defined by installable compression or decompression drivers. Typically, drivers use this information for setup. </P>
+
+<P>Applications that read and write RIFF files do not need to decode this information. They transfer this data to and from a driver as a memory block. </P>
+
+<P>The optional 'strn' stream name chunk provides a zero-terminated text string describing the stream. (The AVI file functions can use this chunk to let applications identify the streams they want to access by their names.) </P>
+
+<P>An AVI player associates the stream headers in the LIST 'hdrl' chunk with the stream data in the LIST 'movi' chunk by using the order of the 'strl' chunks. The first 'strl' chunk applies to stream 0, the second applies to stream 1, and so forth. </P>
+
+<P>For example, if the first 'strl' chunk describes the wave audio data, the wave audio data is contained in stream 0. Similarly, if the second 'strl' chunk describes video data, then the video data is contained in stream 1. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: AVI%20Stream%20Headers (wce50conavistreamheaders.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

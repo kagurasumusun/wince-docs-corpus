@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Generating Notifications</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfLocalFree">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50congeneratingnotifications"></A>Generating Notifications</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To generate notifications, Windows CE facilitates communication between the base notification engine and your notification UI. When an event occurs, the base notification engine creates a <A HREF="wce50lrfnotifypacket.htm">NotifyPacket</A> structure in RAM containing notification parameters in the <B>sPacket</B> member. It then passes a handle to this structure to your notification UI through the <A HREF="wce50lrfcenotifypublicnewpacket.htm">CeNotifyPublic_NewPacket</A> function. Your notification UI is then responsible for handling the notification.</P>
+
+<P class="labelproc"><B>To handle a notification with your notification UI</B>
+
+<OL type="1">
+	<LI>Examine the <B>NotifyPacket</B> structure. 
+<P>This step requires your notification UI to lock the notification database with the <A HREF="wce50lrfcenotifyprivatelock.htm">CeNotifyPrivate_Lock</A> function.
+</li>
+
+	<LI>Obtain a pointer to the structure by calling the <A HREF="wce50lrfcenotifyprivatetranslateoid.htm">CeNotifyPrivate_TranslateOID</A> function. 
+<P>If this function returns NULL, the notification has been handled and the request to dismiss the UI has already been dispatched. 
+</li>
+
+	<LI>Present the requested UI functionality. 
+<P>For example, launch a dialog box, play a sound, or launch the appropriate application if no UI is required for the notification.
+</li>
+
+	<LI>Unlock the notification database by calling the <A HREF="wce50lrfcenotifyprivateunlock.htm">CeNotifyPrivate_Unlock</A> function. 
+<P>If your notification UI creates a dialog box, set GWL_USERDATA to M_WORD to correctly dispatch dialog box messages. The notification subsystem uses the value defined by M_WORD to clearly identify its windows and message-related processing.
+</li>
+</OL>
+
+<P>For a sample implementation of this procedure, see the <A HREF="wce50lrfcenotifypublicnewpacket.htm">CeNotifyPublic_NewPacket</A> function in %_WINCEROOT%\Public\Common\Oak\Notify\Notifext.cxx.</P>
+
+<P>You should not maintain or use the <B>NotifyPacket</B> structure while the notification database is unlocked. Use a notification handle instead, and translate it to a <B>NotifyPacket</B> structure when locking the database. While the notification database is locked, the base notification engine is not functional. Consequently, do not lock the database for extended periods of time.</P>
+
+<P>If a user issues a request to postpone a notification, your notification UI can reschedule the notification with the <A HREF="wce50lrfcenotifyprivatereschedule.htm">CeNotifyPrivate_Reschedule</A> function. Once a notification is handled, your notification UI should call the <A HREF="wce50lrfcenotifyprivatedeletenotification.htm">CeNotifyPrivate_DeleteNotification</A> function, which causes the base notification engine to delete the database record and remove the <B>NotifyPacket</B> structure from the list of active notifications. <B>CeNotifyPrivate_DeleteNotification</B> will not free the structure itself, but will return it to the notification UI through the <A HREF="wce50lrfcenotifypublicdisposeofpacket.htm">CeNotifyPublic_DisposeOfPacket</A> function. The notification UI should then dismiss any UI functionality that is associated with the notification and free the pointer to the <B>NotifyPacket</B> structure with the <A HREF="JavaScript:hhobj_1.Click()">LocalFree</A> function.</P>
+
+<P>For an example of how to clear notification responses, see the <B>CeNotifyPublic_DisposeOfPacket</B> function in %_WINCEROOT%\Public\Common\Oak\Notify\Notifext.cxx.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conimplementingnotifications.htm">Implementing Notifications</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Generating%20Notifications (wce50congeneratingnotifications.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Comparing Store Identifiers</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concomparingstoreidentifiers"></A>Comparing Store Identifiers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>After a store is initialized, the provider must compare store identifiers and handle mismapped store identifiers by prompting the user to either combine the two sets of objects or replace the device objects with objects from the desktop.</P>
+
+<P class="labelproc"><B>When a user connects a Windows CE-based device to a desktop</B>
+
+<OL type="1">
+	<LI>The desktop service manager calls <B>IReplStore::GetStoreInfo</B> to retrieve the device store's identifier.</li>
+
+	<LI>This number is stored in the service manager's persistent file.</li>
+
+	<LI>The service manager reads the identifier for the store to be synchronized and passes this identifier to <B>IReplStore::CompareStoreIDs</B>.</li>
+
+	<LI>The desktop provider determines whether this store identifier matches the store identifier loaded from the service manager's persistent file, which identifies the store used in the previous synchronization.</li>
+</OL>
+
+<P>If the identifiers do not match, the service manager reestablishes the mapping between the desktop and device objects by prompting the user to either combine the two sets of objects or replace the device objects with objects from the desktop.</P>
+
+<P>The combine/replace process is required when the user performs any of the following actions.
+
+<UL type="disc">
+	<LI>Synchronizes a Windows CE-based device with existing data for the first time.</li>
+
+	<LI>Deletes a device profile without also deleting the accompanying profile information on the Windows CE-based device, and then reconnects the Windows CE-based device to create a new partnership.</li>
+
+	<LI>Chooses a desktop store that is different from the one that was used in the last synchronization. The service manager detects the new selection by comparing store identifiers.</li>
+
+	<LI>Restores the device data from a backup file.</li>
+
+	<LI>Performs a replace operation on one computer, and then synchronizes the Windows CE-based device with a second computer.</li>
+</UL>
+
+<P>If the user chooses to combine the data, all objects on both the Windows CE-based device and the desktop are marked as changed. If the user chooses to replace the data, all device objects are marked as deleted and all desktop objects are marked as changed. Synchronization occurs immediately after the choice is made.</P>
+
+<P>Combining data usually creates duplicate objects in the desktop store. The service manager calls <B>IReplStore::RemoveDuplicates</B> to find and remove the duplicates after the first successful synchronization. Once duplicated objects are removed, the desktop provider returns control to the service manager to enumerate the store. The service manager determines which desktop objects are deleted and informs the Windows CE-based device to remove the corresponding device objects.</P>
+
+<P>Besides supplying identification information, <B>IReplStore::GetStoreInfo</B> can do other things, such as changing the size of an object store or the time interval between enumerations. The <B>STOREINFO</B> structure is passed through <B>IReplStore::GetStoreInfo</B>, and is used to change store information in the following manner.
+
+<UL type="disc">
+	<LI>To receive an identifier for a variable-sized store, set <B>STOREINFO::cbMaxStoreId</B> to 0. This call should prompt the desktop provider to set the requested size for the store identifier in <B>STOREINFO::cbStoreId</B> and return E_OUTOFMEMORY. In response, the service manager allocates the required memory and passes a pointer to the store identifier in <B>STOREINFO::lpbStoreId</B>. The desktop provider can then use this pointer to save the store identifier.</li>
+
+	<LI>If you choose to write a desktop provider that does not support real-time notification of changes, you should enable automatic enumeration by setting <B>STOREINFO::uTimerRes</B>.
+<UL type="disc">
+	<LI>To automatically enumerate the store at a specified interval, set <B>STOREINFO::uTimerRes</B> to the non-zero interval, in microseconds. The interval should be at least several times as long as it takes to perform an enumeration. Otherwise, the service manager will be enumerating "continuously."</li>
+
+	<LI>If <B>STOREINFO::uTimerRes</B> is set to 0, the service manager begins enumeration immediately before synchronization, or when the user activates the ActiveSync status window.</li>
+</UL>
+</li>
+</UL>
+
+<P>The following code example shows how to implement the <B>STOREINFO</B> structure and the <B>IReplStore::CompareStoreIDs</B> and <B>IReplStore::GetStoreInfo</B> methods.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">STDMETHODIMP_(int) CStore::CompareStoreIDs
+(
+   LPBYTE  lpbID1,  // points to first  store identifier
+   UINT    cbID1,   // size of   first  store identifier
+   LPBYTE  lpbID2,  // points to second store identifier
+   UINT    cbID2    // size of   second store identifier
+)
+{
+   // if first identifier is smaller than second identifier
+   if (cbID1 &lt; cbID2)
+      return -1;
+
+   // if first identifier is larger  than second identifier
+   if (cbID1 &gt; cbID2)
+      return  1;
+
+   return memcmp (lpbID1, lpbID2, cbID1);
+}
+
+STDMETHODIMP CStore::GetStoreInfo
+(
+   PSTOREINFO pInfo  // pointers to the STOREINFO structure
+)
+{
+   if (pInfo-&gt;cbStruct != sizeof (STOREINFO))
+      return E_INVALIDARG;
+
+   pInfo-&gt;uFlags = SCF_SINGLE_THREAD | SCF_SIMULATE_RTS;
+
+   // ProgId of store.      Change to match company and product.
+   lstrcpyn (pInfo-&gt;szProgId,
+             "MyCompany.WinCE.DeskSamp",
+             sizeof(pInfo-&gt;szProgId));
+
+   // Description of store. Change to fit requirements.
+   lstrcpyn (pInfo-&gt;szStoreDesc, 
+             "Files",
+             sizeof(pInfo-&gt;szStoreDesc));
+
+   // Let replication scan the store every 5 seconds.
+   pInfo-&gt;uTimerRes = 5000;
+
+   // Choose a unique identifier for the store. In this example,
+   // because the differences in the stores are inconsequential,
+   // set the size of the store identifier to any value.
+   pInfo-&gt;cbStoreId = 10;
+
+   // Compare the size of the the store identifier with the maximum
+   // size of the store identifier.
+   if (pInfo-&gt;cbStoreId &gt; pInfo-&gt;cbMaxStoreId)
+       return E_OUTOFMEMORY;
+
+   // Check if pointer to store identifier is NULL.
+   if (pInfo-&gt;lpbStoreId == NULL)
+       return E_POINTER;
+
+   memset (pInfo-&gt;lpbStoreId, 0, 10);
+   return NOERROR;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condevelopingthedesktopprovider.htm">Developing the Desktop Provider</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Comparing%20Store%20Identifiers (wce50concomparingstoreidentifiers.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

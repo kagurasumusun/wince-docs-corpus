@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MSMQQueue.EnableNotification</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfmsmqqueueenablenotification"></A>MSMQQueue.EnableNotification</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method starts event notification for asynchronously reading messages in the queue. When this method is called, applications can asynchronously peek at messages or retrieve them from the queue in a user-defined event handler.</P>
+
+<PRE class="syntax"><B>HRESULT EnableNotification( </B>
+  <B>MSMQEvent* </B><I>Event</I><B>,</B>
+  <B>VARIANT* </B><I>Cursor</I><B>,</B> 
+  <B>VARIANT* </B><I>ReceiveTimeout</I> 
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>Event </I></DT>
+
+<DD>References an <B>MSMQEvent</B> object. </dd>
+
+<DT><I>Cursor </I></DT>
+
+<DD>Optional. Specifies the action of the cursor. 
+
+<P>The following table describes the <I>Cursor</I> values.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Flag</TH>
+<TH width=76%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>MQMSG_FIRST </TD>
+<TD width=76%>Default. Notification starts when a message is in the queue. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>MQMSG_CURRENT </TD>
+<TD width=76%>Notification starts when a message is at the current location of the cursor. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>MQMSG_NEXT </TD>
+<TD width=76%>The cursor is moved, then notification starts when a message is at the new cursor location. </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>ReceiveTimeout </I></DT>
+
+<DD>Optional. Specifies how long, in milliseconds, Message Queuing waits for a message to arrive. 
+
+<P>This parameter can be set to infinite (-1), 0, or a specific amount of time. 
+
+
+<P>The default setting is infinite. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table describes the common return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Value</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>S-OK</TD>
+<TD width=73%>Success</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_INVALIDARG</TD>
+<TD width=73%>One or more arguments are invalid</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_NOTIMPL</TD>
+<TD width=73%>The function contains no implementation</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_OUTOFMEMORY</TD>
+<TD width=73%>Out of memory</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When <B>MSMQQueue.EnableNotification</B> is called, events are triggered when a message is found at the position specified by <I>Cursor</I>. When the default setting is used, events are triggered when a message is in the queue.</P>
+
+<P><B>MSMQQueue.EnableNotification</B> fires a single <B>MSMQEvent.Arrived</B> event when it finds a message. To read more messages, <B>MSMQQueue.EnableNotification</B> must be explicitly called again from within the event handler.</P>
+
+<P class="label"><B>The Arrived event</B></P>
+
+<P>The Arrived event is triggered on the <B>MSMQEvent</B> object passed in <B>Event</B>. The MSMQEvent_Arrived event handler (typically implemented by the user) is passed a reference to the queue where the message arrived.</P>
+
+<P>When an <B>Arrived</B> event is triggered, there is no guarantee that the message that triggered the event will be available when the application tries to use the message. All queues are dynamic, and other clients might remove the arrived message before it can be used. </P>
+
+<P>It is up to the application to determine if the message is there before attempting to peek at the message or retrieve it. If the queue is not being shared, it is safe to assume that the message is still there.</P>
+
+<P class="label"><B>Setting the ReceiveTimeout parameter to zero</B></P>
+
+<P>Invoking <B>EnableNotification</B> with <B>ReceiveTimeout</B> set to infinite (-1) blocks processing until a message is in the queue. </P>
+
+<P>If <B>ReceiveTimeout</B> is set to 0, an <B>Arrived</B> event is fired if a message is in the queue, or an <B>ArrivedError</B> event is fired immediately returning an MQ_ERROR_IO_TIMEOUT error.</P>
+
+<P class="label"><B>Receive errors</B></P>
+
+<P>Receive errors, such as time-out errors, trigger an <B>MSMQEvent.ArrivedError</B> event on the associated <B>MSMQEvent</B> object.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Mqoai.h.<BR>
+<B>Link Library:</B> Mqoa.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfmsmqevent.htm">MSMQEvent</A> | <A HREF="wce50lrfmsmqqueue.htm">MSMQQueue</A> | <A HREF="wce50lrfmsmqqueuepeek.htm">MSMQQueue.Peek</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: MSMQQueue.EnableNotification (wce50lrfmsmqqueueenablenotification.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

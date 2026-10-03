@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Configuring FATFS Cache Parameters for the File Server</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conFATFileSystemRegistrySettings">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conFATFileSystem">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50tskconfiguringfatfscacheparametersforthesmbserver"></A>Configuring FATFS Cache Parameters for the File Server</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>You can use the registry to configure the cache parameters for the FAT file system (FATFS) for a File Server. The cache parameters for FATFS are stored in the <B>CacheSize</B> value of type DWORD under the [HKEY_LOCAL_MACHINE\System\StorageManager\FATFS] registry key. The <B>CacheSize</B> value specifies the size of the disk cache in terms of the number of sectors. </P>
+
+<P>The value for <B>CacheSize</B> must be a power of 2 and must be at least 16 sectors. </P>
+
+<P>For example, to calculate the ideal <B>CacheSize</B> value for a 120GB USB Hard Drive, you can perform the following calculation:</P>
+
+<P>CacheSize = (TotalSectors/SectorsPerCluster*FatVersion/8+(BytesPerSector-1))/BytesPerSector</P>
+
+<P>The following list shows a breakdown of each formula value and lists possible values:
+
+<UL type="disc">
+	<LI>FatVersion = 12, 16 or 32. For a 120GB disk, this value will be 32.</li>
+
+	<LI>BytesPerSector = 512.</li>
+
+	<LI>ClusterSize = 32K. This value is chosen at disk format time.
+<P>Most drives using FAT32 have the following breakdown of the ClusterSize value:
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Partition Size</TH>
+<TH width=65%>Cluster Size</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>1GB-8GB</TD>
+<TD width=65%>4KB </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>8GB-16GB</TD>
+<TD width=65%>8KB </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>16GB-32GB </TD>
+<TD width=65%>16KB </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>32GB</TD>
+<TD width=65%>32KB</TD>
+</TR>
+</table></div>
+</li>
+
+	<LI>TotalSectors = TotalBytes/BytesPerSector = 120*1000*1000*1000/512 = 234375000
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;</B>&nbsp;&nbsp;Manufactures of hard drives use 1000 instead of 1024 to calculate the disk size in gigabytes. </BLOCKQUOTE>
+</li>
+
+	<LI>SectorsPerCluster = ClusterSize/BytesPerSector = 32768/512 = 64</li>
+</UL>
+
+<P>Therefore, the <B>CacheSize</B> value for a 120GB disk using the above formula would be:</P>
+
+<PRE class="code">CacheSize = (234375000/64*32/8+511)/512=28612 sectors</PRE>
+
+<P>The preceding result implies that to ensure optimal performance with a 120 GB hard drive, you need to set the following registry value to signal to the FAT file system to create a 14MB cache in memory for file system operations:</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\System\StorageManager\FATFS]
+  "Flags"=dword:00000004
+  "CacheSize"=dword:6FC4</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50confileserveroverview.htm">File Server OS Design Development</A> | <A HREF="JavaScript:hhobj_1.Click()">FAT File System Registry Settings</A> | <A HREF="JavaScript:hhobj_2.Click()">FAT File System</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Configuring%20FATFS%20Cache%20Parameters%20for%20the%20File%20Server (wce50tskconfiguringfatfscacheparametersforthesmbserver.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

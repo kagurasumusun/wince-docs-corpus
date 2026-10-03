@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Terminating a Connection</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conterminatingaconnection"></A>Terminating a Connection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>When a RAS application starts a connection operation, the <A HREF="wce50lrfrasdial.htm">RasDial</A> function receives a <A HREF="wce50lrfrasconn.htm">RASCONN</A> connection handle to identify the connection. If the returned handle is not NULL, the client must eventually call the <A HREF="wce50lrfrashangup.htm">RasHangUp</A> function to end the connection. If an error occurs during the connection operation, the client must call the <B>RasHangUp</B> function even though the connection was never established.</P>
+
+<P>A client application might require a connection to end even though it does not have the handle returned by <B>RasDial</B>. For example, the application that called <B>RasDial</B> might have exited when the connection was successfully established. In this case, the disconnecting application can use <A HREF="wce50lrfrasenumconnections.htm">RasEnumConnections</A> to get all the current connections. For each connection, <B>RasEnumConnections</B> returns a <A HREF="wce50lrfrasconn.htm">RASCONN</A> structure containing the <B>RASCONN</B> connection handle and the phone-book entry name or phone number specified when the connection operation was started. This data can be used to display a list of connections from which a user can select the connection to end.</P>
+
+<P>If the application exits after calling <B>RasHangUp</B>, there may not be enough time for the modem to reset. To provide the modem time to reset, pause for a few seconds while the application exits.</P>
+
+<P>Before an application terminates one or more connections, it is useful to enumerate the existing connections and hang up. The <B>RasEnumConnections</B> retrieves the current connections. </P>
+
+<P class="labelproc"><B>To terminate a connection</B>
+
+<OL type="1">
+	<LI>Call <B>RasEnumConnections</B> to find all RAS connections.</li>
+
+	<LI>Call <B>RasHangUp</B> to terminate the connection.</li>
+</OL>
+
+<H2 class="dtH2">Terminating a Connection Example</H2>
+
+<P>The following code example shows how to terminate a connection.</P>
+
+<PRE class="code">DWORD CloseRasConnections ()
+{
+  int index;                 // An integer index
+  TCHAR szError[100];        // Buffer for error codes 
+  DWORD dwError,             // Error code from a function call 
+        dwRasConnSize,       // Size of RasConn in bytes
+        dwNumConnections;    // Number of connections found 
+  RASCONN RasConn[20];       // Buffer for connection state data 
+                             // Assume the maximum number of entries is 
+                             // 20. 
+
+  // Assume no more than 20 connections.
+  RasConn[0].dwSize = sizeof (RASCONN);
+  dwRasConnSize = 20 * sizeof (RASCONN);
+
+  // Find all connections.
+  if (dwError = RasEnumConnections (RasConn, &amp;dwRasConnSize, 
+                                    &amp;dwNumConnections))
+  {
+    wsprintf (szError, TEXT("RasEnumConnections Error: %ld"), dwError);
+    return dwError;
+  }
+
+  // If there are no connections, return zero.
+  if (!dwNumConnections)
+  {
+    wsprintf (szError, TEXT("No open RAS connections"));
+    return 0;
+  }
+
+  // Terminate all of the remote access connections.
+  for (index = 0; index &lt; (int)dwNumConnections; ++index)
+  {
+    if (dwError = RasHangUp (RasConn[index].hrasconn))
+    {
+      wsprintf (szError, TEXT("RasHangUp Error: %ld"), dwError);
+      return dwError;
+    }
+  }
+
+  return 0;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consampleapplication.htm">Sample Application</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Terminating%20a%20Connection (wce50conterminatingaconnection.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

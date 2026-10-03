@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Dead Gateway Detection</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condeadgatewaydetection"></A>Dead Gateway Detection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Dead gateway detection is used to allow TCP to detect failure of the default gateway and to make an adjustment to the IP routing table to use another default gateway. The Microsoft TCP/IP stack uses the TRIGGERED RESELECTION method described in RFC 816, with some slight modifications based upon customer experiences and feedback.</P>
+
+<P>For TCP to perform dead gateway detection, you must change the value for the following registry entry to 1 (True): </P>
+
+<P><B>HKEY_LOCAL_MACHINE\Comm\Tcpip\Parms\enabledeadgwdetect</B></P>
+
+<P>With dead gateway detection enabled, TCP may ask IP to change to a backup gateway if a number of connections are experiencing difficulty. Backup gateways can be defined by using the Route utility or the IP Helper API.</P>
+
+<P>When any TCP connection that is routed through the default gateway has attempted to send a TCP packet to the destination a number of times equal to one-half of the registry value <B>TcpMaxDataRetransmissions</B>, without receiving a response, the algorithm changes the Route Cache Entry (RCE) for that one remote IP address to use the next default gateway in the list. When 25 percent of the TCP connections have moved to the next default gateway, the algorithm advises IP to change the computer's default gateway to the one that the connections are now using.</P>
+
+<P>For example, assume that there are currently TCP connections to 11 different IP addresses that are being routed through the default gateway. Now assume that the default gateway fails, that there is a second default gateway configured, and that the value for <I>TcpMaxDataRetransmissions </I>is at the default of 5.</P>
+
+<P>When the first TCP connection tries to send data, it will not receive any acknowledgments. After the third retransmission, the RCE for that remote IP address will be switched to use the next default gateway in the list. At this point, any TCP connections to that one remote IP address will have switched over, but the remaining connections will still try to use the original default gateway.</P>
+
+<P>When the second TCP connection tries to send data, the same thing will happen. Now, two of the 11 RCEs will point to the new gateway.</P>
+
+<P>When the third TCP connection tries to send data, after the third retransmission, three of 11 RCEs will have been switched to the second default gateway. Because, at this point, over 25 percent of the RCEs have been moved, the default gateway for the whole computer will be moved to the new one.</P>
+
+<P>This new default gateway remains the primary one for the computer until it experiences problems (causing the dead gateway algorithm to try the next one in the list again) or until the computer is restarted.</P>
+
+<P>When the search reaches the last default gateway, it returns to the beginning of the list.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contransmissioncontrolprotocoltcp.htm">Transmission Control Protocol (TCP)</A> | <A HREF="wce50coninternetprotocolhelperapis.htm">Internet Protocol Helper APIs</A> | <A HREF="wce50conwinsock22.htm">Winsock 2.2</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Dead%20Gateway%20Detection (wce50condeadgatewaydetection.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

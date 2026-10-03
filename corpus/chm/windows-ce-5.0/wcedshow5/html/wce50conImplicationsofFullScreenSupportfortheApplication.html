@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Implications of Full-Screen Support for the Application</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conimplicationsoffullscreensupportfortheapplication"></A>Implications of Full-Screen Support for the Application</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Although the interface exposed to applications is relatively simple, the underlying implementation can be more complex. </P>
+
+<P>The full-screen renderer has some special properties that application developers should be aware of. In particular, the renderer changes display modes only when activated (either paused or running). </P>
+
+<P>Therefore, if the filter graph is stopped when switching to full-screen mode, no change might be obvious until the filter graph is started again. When the filter graph is subsequently run, the display mode will change and the full-screen rendering will start. </P>
+
+<P>If a window is being stretched full-screen (that is, no full-screen renderer is being used), the change will be viewable when the full-screen mode is set, regardless of state. </P>
+
+<P>If full-screen playback is being supported directly by a filter in the filter graph, it might elect to copy the behavior of the full-screen renderer and switch to full-screen only when activated. </P>
+
+<P>The filter supporting full-screen playback might have to do this, because the resources they require to play full-screen might not be available until then. Therefore, an application should avoid setting full-screen mode when stopped. </P>
+
+<P>This makes sense in a user interface context as well, because if full-screen mode is set when the filter graph is stopped, users are unlikely to be able to start the graph running without switching out of full-screen mode (that is, tabbing back to the original application). </P>
+
+<P>All renderers that implement <A HREF="wce50lrfivideowindowinterface.htm">IVideoWindow</A> send event codes to the filter graph manager when their windows are activated or deactivated. </P>
+
+<P>When in full-screen mode, the PID watches for these event codes. When it sees a window that it made full-screen being deactivated, it switches out of full-screen mode and sends an <A HREF="wce50lrfeventnotificationcodes.htm">EC_FULLSCREEN_LOST</A> notification to the application event queue. </P>
+
+<P>This is the only interference caused by the PID; all other user interface is left open to the application as described in the remainder of this topic. </P>
+
+<P>An important aspect of full-screen playback is that when in full-screen mode, no window can be displayed on top of the full-screen window. </P>
+
+<P>In fact, when the full-screen renderer switches display modes, it disables all GDI output for other applications, so displaying a window on top of a full-screen window is impossible. Any user interaction with the computer must be done through hot keys. </P>
+
+<P>Whatever mechanism the PID ultimately uses to implement full-screen playback, it always ensures that the message drain property is set on the window executing the playback. (The message drain specifies a window that will be forwarded all Windows&reg; messages sent to the renderer.) </P>
+
+<P>So, even if the full-screen renderer is used, as long as a message drain has previously been set on the filter graph manager's <B>IVideoWindow</B> interface, all messages will be passed on to that renderer. </P>
+
+<P>Because the message drain is set on the appropriate window, an application can rely on receiving all mouse and keyboard messages when in full-screen mode, regardless of which filter is implementing it. </P>
+
+<P>An application can use this fact to implement hot-key support for seeking, for example. However, properties can be set only when not in full-screen mode, so if the only time an application is required to catch messages is when it is in full-screen mode, it must set the message drain before setting full-screen on. </P>
+
+<P>Likewise, the message drain can be reset only after setting full-screen mode off. </P>
+
+<P>One other application consideration is that, when in full-screen mode, any source and destination rectangles set through <A HREF="wce50lrfibasicvideointerface.htm">IBasicVideo</A> will not be adhered to. </P>
+
+<P>The PID resets these rectangles when switching to full-screen mode. It does this because not all filters implementing full-screen support can guarantee to support <B>IBasicVideo</B> as well. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Implications%20of%20Full-Screen%20Support%20for%20the%20Application (wce50conimplicationsoffullscreensupportfortheapplication.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

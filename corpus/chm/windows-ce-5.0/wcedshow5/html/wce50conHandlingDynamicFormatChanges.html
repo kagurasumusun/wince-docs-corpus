@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling Dynamic Format Changes</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhandlingdynamicformatchanges"></A>Handling Dynamic Format Changes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Video renderers in DirectShow accept only video formats that can be drawn efficiently. For example, the window-based run-time renderer will accept only the RGB format that matches the current display device mode (for example, RGB565 when the display is set to 65,536 colors). </P>
+
+<P>As a last resort, it also accepts 8-bit palletized formats, because most display cards can draw this format efficiently. </P>
+
+<P>When the renderer has DirectDraw loaded, it might later ask the source filter to switch to something that can be written onto a DirectDraw surface and drawn directly through display hardware. </P>
+
+<P>In some cases, the renderer's upstream filter might try to change the video format while the video is playing. This often occurs when a video stream has a palette change. It is most often the video decompressor that initiates a dynamic format change. </P>
+
+<P>An upstream filter attempting to change formats dynamically should always call the <A HREF="wce50lrfipinqueryaccept.htm">IPin::QueryAccept</A> method on the renderer input pin (for filters based on <A HREF="wce50lrfctransformfilterclass.htm">CTransformFilter</A>, this is implemented in <A HREF="wce50lrfctransformfiltercheckinputtype.htm">CTransformFilter::CheckInputType</A>). </P>
+
+<P>The formats a renderer will allow an upstream filter to change dynamically are undefined. However, at a very minimum, it should allow the upstream filter to change palettes. </P>
+
+<P>When an upstream filter changes media types, it will attach the format to the first sample delivered in that new type. </P>
+
+<P>If the renderer holds many samples in a queue waiting to be rendered, it should delay changing the format until the sample with the type change is actually about to be rendered. </P>
+
+<P>When a video renderer detects a palette change in the stream it should send the <A HREF="wce50lrfecpalettechanged.htm">EC_PALETTE_CHANGED</A> notification to the filter graph manager. The DirectShow video renderers detect whether a palette has really changed in dynamic format or not. </P>
+
+<P>The video renderers do this not only to filter out the number of <B>EC_PALETTE_CHANGED</B> notifications sent but also to reduce the amount of palette creation, installation, and deletion required. </P>
+
+<P>Finally, the video renderer might also detect that the size of the video has changed, in which case, it should send the <A HREF="wce50lrfecvideosizechanged.htm">EC_VIDEO_SIZE_CHANGED</A> notification. An application might use this notification to negotiate space in a compound document. The actual video dimensions are available through the <A HREF="wce50lrfibasicvideointerface.htm">IBasicVideo</A> control interface. </P>
+
+<P>The DirectShow renderers detect whether the video has actually changed size prior to sending these events. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Handling%20Dynamic%20Format%20Changes (wce50conhandlingdynamicformatchanges.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

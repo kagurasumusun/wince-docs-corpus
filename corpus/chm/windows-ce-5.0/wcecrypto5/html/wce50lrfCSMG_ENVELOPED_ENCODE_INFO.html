@@ -1,0 +1,220 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CMSG_ENVELOPED_ENCODE_INFO</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcsmg_enveloped_encode_info"></A>CMSG_ENVELOPED_ENCODE_INFO</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure contains information needed to encode an enveloped message. It is passed to <A HREF="wce50lrfcryptmsgopentoencode.htm">CryptMsgOpenToEncode</A> if <I>dwMsgType</I> is CMSG_ENVELOPED.</P>
+
+<PRE class="syntax"><B>typedef struct _CMSG_ENVELOPED_ENCODE_INFO {</B>
+<B>  DWORD </B><I>cbSize</I><B>;</B>
+<B>  HCRYPTPROV </B><I>hCryptProv</I><B>;</B>
+<B>  CRYPT_ALGORITHM_IDENTIFIER </B><I>ContentEncryptionAlgorithm</I><B>;</B>
+<B>  void* </B><I>pvEncryptionAuxInfo</I><B>;</B>
+<B>  DWORD </B><I>cRecipients</I><B>;</B>
+<B>  PCERT_INFO* </B><I>rgpRecipients</I><B>;</B>
+<B>  PCMSG_RECIPIENT_ENCODE_INFO </B><I>rgCmsRecipients</I><B>;</B>
+<B>  DWORD </B><I>cCertEncoded</I><B>;</B>
+<B>  PCERT_BLOB </B><I>rgCertEncoded</I><B>;</B>
+<B>  DWORD </B><I>cCrlEncoded</I><B>;</B>
+<B>  PCRL_BLOB </B><I>rgCrlEncoded</I><B>;</B>
+<B>  DWORD </B><I>cAttrCertEncoded</I><B>;</B>
+<B>  PCERT_BLOB </B><I>rgAttrCertEncoded</I><B>;</B>
+<B>  DWORD </B><I>cUnprotectedAttr</I><B>;</B>
+<B>  PCRYPT_ATTRIBUTE </B><I>rgUnprotectedAttr</I><B>;</B>
+<B>} CMSG_ENVELOPED_ENCODE_INFO, *PCMSG_ENVELOPED_ENCODE_INFO;</B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>cbSize</B></DT>
+
+<DD>Size of this structure in bytes. </dd>
+
+<DT><B>hCryptProv</B></DT>
+
+<DD>Specifies a handle to the cryptographic service provider (CSP) used to do content encryption, recipient key encryption, and export. The <B>hCryptProv</B>'s private keys are not used. 
+
+<P>Unless there is a strong reason for passing in a specific cryptographic provider in hCryptProv, pass zero to use the default RSA or DSS provider.
+</dd>
+
+<DT><B>ContentEncryptionAlgorithm</B></DT>
+
+<DD><A HREF="wce50lrfcryptalgorithmidentifier.htm">CRYPT_ALGORITHM_IDENTIFIER</A> structure contains the signature algorithm type and any associated additional parameters in encoded form. 
+
+<P>The <B>pszObjId</B> member of the structure specifies the algorithm used to encrypt the message contents.
+
+
+<P>The following encryption algorithms require an encoded eight byte initialization vector (IV) in the <B>Parameters</B> member of structure. For details, see <A HREF="wce50lrfcryptsetkeyparam.htm">CryptSetKeyParam</A>.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=21%>Value</TH>
+<TH width=79%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>CALG_DES </TD>
+<TD width=79%>szOID_OIWSEC_desCBC </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>CALG_3DES </TD>
+<TD width=79%>szOID_RSA_DES_EDE3_CBC</TD>
+</TR>
+</table></div>
+
+
+
+<P>If the <B>cbData</B> member of the <B>Parameters</B> member is zero, an ASN.1 encoded OCTET STRING containing the IV is generated using <A HREF="wce50lrfcryptgenrandom.htm">CryptGenRandom</A>.
+
+
+<P>The szOID_RSA_RC2CBC (CALG_RC2) algorithm requires the pbData member of Parameters to be an encoded CRYPT_RC2_CBC_PARAMETERS structure. If the <B>cbData</B> member of the <B>Parameters</B> member is zero, an ASN.1 encoded CRYPT_RC2_CBC_PARAMETERS is generated with a default value of 40 for the <B>dwVersion</B> member. This sets the default key length to 40 bits. This default key length can be overridden with <B>pvEncryptionAuxInfo</B> pointing to a CMSG_RC2_AUX_INFO structure containing the desired key length.
+
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;On decryption, if an IV exists, <B>CryptSetKeyParam</B> is called with the IV before decryption begins.</BLOCKQUOTE>
+</dd>
+
+<DT><B>pvEncryptionAuxInfo</B></DT>
+
+<DD>Pointer to a structure depending on the encryption algorithm. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>RC2</TD>
+<TD width=53%>CMSG_RC2_AUX_INFO </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>RC4</TD>
+<TD width=53%>CMSG_RC4_AUX_INFO </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SP3 or compatible </TD>
+<TD width=53%>CMSG_SP3_COMPATIBLE_AUX_INFO </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>All other encryption algorithms </TD>
+<TD width=53%>NULL </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>cRecipients</B></DT>
+
+<DD>Number of elements in the <B>rgpRecipients</B> or <B>rgCmsRecipients</B> array.</dd>
+
+<DT><B>rgpRecipients</B></DT>
+
+<DD>Array of pointers to <A HREF="wce50lrfcertinfo.htm">CERT_INFO</A> structures, each containing a recipient's certificate <B>Issuer</B>, <B>SerialNumber</B>, and <B>SubjectPublicKeyInfo</B>. This array can only be used for recipients identified by their Issuer and serial number. If <B>rgpRecipients</B> is not NULL, <B>rgCmsRecipients</B> must be NULL. </dd>
+
+<DT><B>rgCmsRecipients</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. Array of pointers to CMSG_RECIPIENT_ENCODE_INFO structures containing recipient information. If <B>rgCmsRecipients</B> is not NULL, <B>rgpRecipients</B> must be NULL. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+
+<DT><B>cCertEncoded</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. <B>DWORD</B> indicating the number of encoded certificates in the <B>rgCertEncoded</B> array. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+
+<DT><B>rgCertEncoded</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. Array of <B>CERT_BLOB</B> structures. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+
+<DT><B>cCrlEncoded</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. <B>DWORD</B> indicating the number of encoded CRLs in the <B>rgCRLEncoded</B> array. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+
+<DT><B>rgCrlEncoded</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. Array of <B>CRL_BLOB</B> structures. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+
+<DT><B>cAttrCertEncoded</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. <B>DWORD</B> indicating the number of encoded certificate attributes in the <B>rgAttrCertEncoded</B> array. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+
+<DT><B>rgAttrCertEncoded</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 or later. Array of <A HREF="wce50lrfcryptattribute.htm">CRYPT_ATTRIBUTE</A> structures. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this member. </dd>
+
+<DT><B>cUnprotectedAttr</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. <B>DWORD</B> indicating the number of unprotected attributes in the <B>rgUnprotectedAttr</B> array. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+
+<DT><B>rgUnprotectedAttr</B></DT>
+
+<DD>This member can optionally be defined with Windows 2000 and later. Array of <B>CRYPT_ATTRIBUTE</B> structures. CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference this field. </dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>CMSG_ENVELOPED_ENCODE_INFO_HAS_CMS_FIELDS must be defined to reference the following structure members:</P>
+
+<P><B>rgCmsRecipients</B></P>
+
+<P><B>cCertEncoded</B></P>
+
+<P><B>rgCertEncoded</B></P>
+
+<P><B>cCrlEncoded</B></P>
+
+<P><B>rgCrlEncoded</B></P>
+
+<P><B>cAttrCertEncoded</B></P>
+
+<P><B>rgAttrCertEncoded</B></P>
+
+<P><B>cUnprotectedAttr</B></P>
+
+<P><B>rgUnprotectedAttr</B></P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions</B>: Windows CE .NET 4.0 and later.<BR>
+<B>Header</B>: Wincrypt.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcryptographystructures.htm">Cryptography Structures</A> | <A HREF="wce50lrfcertinfo.htm">CERT_INFO</A> | <A HREF="wce50lrfcryptalgorithmidentifier.htm">CRYPT_ALGORITHM_IDENTIFIER</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CMSG_ENVELOPED_ENCODE_INFO (wce50lrfcsmg_enveloped_encode_info.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

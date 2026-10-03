@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::Close</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conProgrammingElementNotSupported">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conProgrammingElementNotSupported">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conProgrammingElementNotSupported">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfioleobjectclose"></A>IOleObject::Close</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method changes an embedded object from the running to the loaded state. It also disconnects a linked object from its link source.</P>
+
+<PRE class="syntax"><B>HRESULT Close( </B>
+  <B>DWORD </B><I>dwSaveOption</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwSaveOption</I></DT>
+
+<DD>[in] Specifies whether the object is to be saved as part of the transition to the loaded state. 
+
+<P>Valid values are taken from the enumeration <A HREF="JavaScript:hhobj_1.Click()">OLECLOSE</A>.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the object closed successfully, the return value is S_OK.</P>
+
+<P>If the user was prompted to save but chose the <B>Cancel</B> button from the prompt message box, the return value is OLE_E_PROMPTSAVECANCELLED.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The OLE 2 user model recommends that object applications do not prompt users before saving linked or embedded objects, including those activated in place. </P>
+
+<P>This policy represents a change from the OLE 1 user model, in which object applications always prompt the user to decide whether to save changes.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Notes to Callers</H4>
+
+<P>A container application calls <B>Close</B> when it wants to move the object from a running to a loaded state. Following such a call, the object appears in its container but is not open for editing. Calling <B>Close</B> on an object that is loaded but not running has no effect. Closing a linked object simply means disconnecting it.</P>
+
+<H4 class="dtH4">Notes to Implementers</H4>
+
+<P>Upon receiving a call to <B>Close</B>, a running object should do the following:
+
+<UL type="disc">
+	<LI>If the object has been changed since it was last opened for editing, it should request to be saved, or not, according to instructions specified in <I>dwSaveOption</I>. If the option is to save the object, it should call its container's <A HREF="wce50lrfioleclientsitesaveobject.htm">IOleClientSite::SaveObject</A> interface.</li>
+
+	<LI>If the object has <A HREF="wce50lrfidataobjectdadvise.htm">IDataObject::DAdvise</A> connections with ADVF_DATAONSTOP flags, it should send an <B>OnDataChange</B> notification.</li>
+
+	<LI>If the object owns the Clipboard, it should empty it by calling <A HREF="JavaScript:hhobj_2.Click()">OleFlushClipboard</A>.</li>
+
+	<LI>If the object is visible, notify its container by calling <A HREF="wce50lrfioleclientsiteonshowwindow.htm">IOleClientSite::OnShowWindow</A> with the <I>fshow</I> parameter set to FALSE.</li>
+
+	<LI>Send <A HREF="JavaScript:hhobj_3.Click()">IAdvise::OnClose</A> notifications to appropriate advise sinks.</li>
+
+	<LI>Forcibly cut off all remote clients by calling <A HREF="wce50lrfcodisconnectobject.htm">CoDisconnectObject</A>.</li>
+</UL>
+
+<P>If the object application is a local server (an EXE rather than a DLL), closing the object should also shut down the object application unless the latter is supporting other running objects or has another reason to remain in the running state. Such reasons might include the following:
+
+<UL type="disc">
+	<LI>The presence of <A HREF="wce50lrficlassfactorylockserver.htm">IClassFactory::LockServer</A> locks</li>
+
+	<LI>User control of the application</li>
+
+	<LI>The existence of other open documents requiring access to the application</li>
+</UL>
+
+<P>Calling <B>Close</B> on a linked object disconnects it from, but does not shut down, its source application. </P>
+
+<P>A source application that is visible to the user when the object is closed remains visible and running after the disconnection and does not send an <B>OnClose</B> notification to the link container.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Oleidl.h, Oleidl.idl.<BR>
+<B>Link Library:</B> Oleaut32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfioleobjectiunknown.htm">IOleObject</A> | <A HREF="wce50lrfcodisconnectobject.htm">CoDisconnectObject</A> | <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A> | <A HREF="wce50lrficlassfactorylockserver.htm">IClassFactory::LockServer</A> | <A HREF="wce50lrfidataobjectdadvise.htm">IDataObject::DAdvise</A> | <A HREF="wce50lrfioleclientsiteonshowwindow.htm">IOleClientSite::OnShowWindow</A> | <A HREF="wce50lrfioleclientsitesaveobject.htm">IOleClientSite::SaveObject</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IOleObject::Close (wce50lrfioleobjectclose.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

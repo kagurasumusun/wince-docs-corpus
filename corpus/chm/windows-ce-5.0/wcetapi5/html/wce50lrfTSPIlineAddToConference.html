@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TSPI_lineAddToConference</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrftspilineaddtoconference"></A>TSPI_lineAddToConference</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function adds the call specified by the <I>hdConsultCall</I> parameter to the conference call specified by the <I>hdConfCall </I>parameter.</P>
+
+<PRE class="syntax"><B>LONG TSPIAPI TSPI_lineAddToConference(</B>
+  <B>DRV_REQUESTID</B> <I>dwRequestID</I><B>,</B> 
+  <B>HDRVCALL</B> <I>hdConfCall</I><B>,</B> 
+  <B>HDRVCALL</B> <I>hdConsultCall </I>
+<B>)</B>;</PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwRequestID</I> </DT>
+
+<DD>Identifier of the asynchronous request. </dd>
+
+<DT><I>hdConfCall</I> </DT>
+
+<DD>Handle to the conference call. The call state of <I>hdConfCall</I> can be onHoldPendingConference or onHold. </dd>
+
+<DT><I>hdConsultCall</I> </DT>
+
+<DD>Handle to the call to be added to the conference call. This call cannot be either a parent of another conference or a participant in any conference. Depending on the device capabilities indicated in LINEADDRESSCAPS, the <I>hdConsultCall </I>parameter may not necessarily have been established using the <A HREF="wce50lrftspilinesetupconference.htm">TSPI_lineSetupConference</A> function or the <A HREF="wce50lrftspilineprepareaddtoconference.htm">TSPI_linePrepareAddToConference</A> function. The call state of <I>hdConsultCall</I> can be connected, onHold, proceeding, or ringback. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns <I>dwRequestID </I>or an error number if an error occurs. The <I>lResult</I> actual parameter of the corresponding <B>ASYNC_COMPLETION</B> is zero if the function succeeds or an error number if an error occurs. The following table shows the return values for this function. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLHANDLE</TD>
+<TD width=50%>The handle for this call is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLSTATE</TD>
+<TD width=50%>The call state is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_CONFERENCEFULL</TD>
+<TD width=50%>The conference is full.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resource is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The service provider returns LINEERR_INVALCALLHANDLE if <I>hdConsultCall</I> is a parent of another conference or already a participant in a conference, or <I>hdConsultCall</I> cannot be added for other reasons, such as it must have been established using <B>TSPI_lineSetupConference</B> or <B>TSPI_linePrepareAddToConference</B>.</P>
+
+<P>The call handle of the added party remains valid after adding the call to a conference; typically, its state changes to Conferenced while the state of the conference call becomes Connected. The handle to an individual participating call can be used later to remove that party from the conference call using the <A HREF="wce50lrftspilineremovefromconference.htm">TSPI_lineRemoveFromConference</A><B> </B>function.</P>
+
+<P>The call states of the calls participating in a conference are not independent. For example, when dropping a conference call, all participating calls can automatically become idle. TAPI can consult the line's device capabilities to determine what form of conference removal is available. TAPI or its client applications should track the LINE_CALLSTATE messages to determine what happened to the calls involved.</P>
+
+<P>The conference call is established either through <B>TSPI_lineSetupConference</B> or the <A HREF="wce50lrftspilinecompletetransfer.htm">TSPI_lineCompleteTransfer</A><B> </B>function. Typically, the call added to a conference is established using <B>TSPI_lineSetupConference </B>or <B>TSPI_linePrepareAddToConference</B>. Some switches may allow adding of an arbitrary call to conference, and such a call may have been set up using the <A HREF="wce50lrftspilinemakecall.htm">TSPI_lineMakeCall</A> function and be on (hard) hold. All calls that are part of a conference must exist on the same open line.</P>
+
+<P>Any monitoring (media, tones, digits) on a conference call applies only to the <I>hdConfCall</I> parameter, not to the individual participating calls.</P>
+
+<P>This function has no restrictions based on privilege as in the corresponding function at the TAPI level. There is no explicit requirement for the service provider to track the relationships between the "parent" conference call and its participants, because there is no TSPI correspondence to the TAPI function. Many service providers may find it necessary to track these relationships internally to implement the other conference call management functions.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Tapicomn.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrftspilineprepareaddtoconference.htm">TSPI_linePrepareAddToConference</A> | <A HREF="wce50lrftspilineremovefromconference.htm">TSPI_lineRemoveFromConference</A> | <A HREF="wce50lrftspilinesetupconference.htm">TSPI_lineSetupConference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TSPI_lineAddToConference (wce50lrftspilineaddtoconference.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

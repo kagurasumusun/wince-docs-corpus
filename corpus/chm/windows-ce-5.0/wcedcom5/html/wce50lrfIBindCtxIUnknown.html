@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IBindCtx</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfibindctxiunknown"></A>IBindCtx:IUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This interface provides access to a bind context, which is an object that stores information about a particular moniker binding operation. </P>
+
+<P>You pass a bind context as a parameter when calling many methods of the <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> interface and in certain functions related to monikers. </P>
+
+<P>A bind context includes the following information: 
+
+<UL type="disc">
+	<LI>A <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> structure containing a set of parameters that do not change during the binding operation. When a composite moniker is bound, each component uses the same bind context, so it acts as a mechanism for passing the same parameters to each component of a composite moniker. </li>
+
+	<LI>A set of pointers to objects that the binding operation has activated. The bind context holds pointers to these bound objects, keeping them loaded and thus eliminating redundant activations if the objects are needed again during subsequent binding operations. </li>
+
+	<LI>A pointer to the Running Object Table on the machine of the process that started the bind operation. 
+<P>Moniker implementations that need to access the Running Object Table should use the <A HREF="wce50lrfibindctxgetrunningobjecttable.htm">IBindCtx::GetRunningObjectTable</A> method rather than using the <A HREF="wce50lrfgetrunningobjecttable.htm">GetRunningObjectTable</A> function. This allows future enhancements to the system's <B>IBindCtx</B> implementation to modify binding behavior. 
+</li>
+
+	<LI>A table of interface pointers, each associated with a string key. This capability enables moniker implementations to store interface pointers under a well-known string so that they can later be retrieved from the bind context. 
+<P>For example, OLE defines several string keys ("ExceededDeadline", "ConnectManually", and so on) that can be used to store a pointer to the object that caused an error during a binding operation. 
+</li>
+</UL>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>You do not need to implement this interface. The system provides an <B>IBindCtx</B> implementation, accessible though a call to the <A HREF="wce50lrfcreatebindctx.htm">CreateBindCtx</A> function, that is suitable for all situations. </P>
+
+<H4 class="dtH4">When to Use</H4>
+
+<P>Anyone writing a new moniker class by implementing the <B>IMoniker</B> interface must call <B>IBindCtx</B> methods in the implementation of several <B>IMoniker</B> methods. </P>
+
+<P>Moniker providers (servers that hand out monikers to identify their objects) may also need to call <B>IBindCtx</B> methods from their implementations of the <A HREF="wce50lrfioleitemcontaineriunknown.htm">IOleItemContainer</A> or <A HREF="wce50lrfiparsedisplaynameiunknown.htm">IParseDisplayName</A> interface.</P>
+
+<P>Moniker clients (objects that use monikers to acquire interface pointers to other objects) typically do not call many <B>IBindCtx</B> methods. Instead, they simply pass a bind context as a parameter in a call to an <B>IMoniker</B> method. </P>
+
+<P>To acquire an interface pointer and activate the indicated object (called binding to an object), moniker clients typically do the following: 
+
+<OL type="1">
+	<LI>Call the <B>CreateBindCtx</B> function to create a bind context and get a pointer to the <B>IBindCtx</B> interface on the bind context object. </li>
+
+	<LI>If desired, although this is rarely necessary, the moniker client can call the <A HREF="wce50lrfibindctxsetbindoptions.htm">IBindCtx::SetBindOptions</A> method to specify the bind options. </li>
+
+	<LI>Pass the bind context as a parameter to the desired <B>IMoniker</B> method (usually <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A>). </li>
+
+	<LI>Call the <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> method on the bind context to release it. </li>
+</OL>
+
+<P>Although applications that act as link containers (container applications that allow their documents to contain linked objects) are moniker clients, they rarely call <B>IMoniker</B> methods directly. </P>
+
+<P>Generally, they manipulate linked objects through the system implementation (in the default handler) of the <A HREF="wce50lrfiolelinkiunknown.htm">IOleLink</A> interface. This implementation calls the appropriate <B>IMoniker</B> methods as needed and, in doing so, passes pointers to <B>IBindCtx</B> interfaces on the proper bind context objects.</P>
+
+<H4 class="dtH4">Methods</H4>
+
+<P>The following table shows the methods for this interface in the order that the compiler calls the methods. Like all COM interfaces, this interface inherits the methods for the <A HREF="wce50lrfiunknown.htm">IUnknown</A> interface.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>IUnknown method</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfiunknownqueryinterface.htm">QueryInterface</A></TD>
+<TD width=64%>Returns pointers to supported interfaces. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfiunknownaddref.htm">AddRef</A></TD>
+<TD width=64%>Increments the reference count. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfiunknownrelease.htm">Release</A></TD>
+<TD width=64%>Decrements the reference count. </TD>
+</TR>
+</table></div>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>IBindCtx method</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxregisterobjectbound.htm">RegisterObjectBound</A></TD>
+<TD width=70%>Registers an object with the bind context. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxrevokeobjectbound.htm">RevokeObjectBound</A></TD>
+<TD width=70%>Revokes an object's registration. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxreleaseboundobjects.htm">ReleaseBoundObjects</A></TD>
+<TD width=70%>Releases all registered objects. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxsetbindoptions.htm">SetBindOptions</A></TD>
+<TD width=70%>Sets the binding options. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxgetbindoptions.htm">GetBindOptions</A></TD>
+<TD width=70%>Retrieves the binding options. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxgetrunningobjecttable.htm">GetRunningObjectTable</A></TD>
+<TD width=70%>Retrieves a pointer to the Running Object Table. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxregisterobjectparam.htm">RegisterObjectParam</A></TD>
+<TD width=70%>Associates an object with a string key. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxgetobjectparam.htm">GetObjectParam</A></TD>
+<TD width=70%>Returns the object associated with a given string key. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxenumobjectparam.htm">EnumObjectParam</A></TD>
+<TD width=70%>Enumerates all the string keys in the table. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfibindctxrevokeobjectparam.htm">RevokeObjectParam</A></TD>
+<TD width=70%>Revokes association between an object and a string key. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcreatebindctx.htm">CreateBindCtx</A> | <A HREF="wce50lrfgetrunningobjecttable.htm">GetRunningObjectTable</A> | <A HREF="wce50lrfibindctxenumobjectparam.htm">IBindCtx::EnumObjectParam</A> | <A HREF="wce50lrfibindctxgetbindoptions.htm">IBindCtx::GetBindOptions</A> | <A HREF="wce50lrfibindctxgetobjectparam.htm">IBindCtx::GetObjectParam</A> | <A HREF="wce50lrfibindctxgetrunningobjecttable.htm">IBindCtx::GetRunningObjectTable</A> | <A HREF="wce50lrfibindctxregisterobjectbound.htm">IBindCtx::RegisterObjectBound</A> | <A HREF="wce50lrfibindctxreleaseboundobjects.htm">IBindCtx::ReleaseBoundObjects</A> | <A HREF="wce50lrfibindctxregisterobjectparam.htm">IBindCtx::RegisterObjectParam</A> | <A HREF="wce50lrfibindctxrevokeobjectbound.htm">IBindCtx::RevokeObjectBound</A> | <A HREF="wce50lrfibindctxrevokeobjectparam.htm">IBindCtx::RevokeObjectParam</A> | <A HREF="wce50lrfibindctxsetbindoptions.htm">IBindCtx::SetBindOptions</A> | <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> | <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A> | <A HREF="wce50lrfiparsedisplaynameiunknown.htm">IParseDisplayName</A> | <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> | <A HREF="wce50lrfiunknownqueryinterface.htm">IUnknown::QueryInterface</A> | <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> | <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IBindCtx (wce50lrfibindctxiunknown.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

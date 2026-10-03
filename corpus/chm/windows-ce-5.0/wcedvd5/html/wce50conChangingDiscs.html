@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Changing Discs</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conchangingdiscs"></A>Changing Discs</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A general purpose DVD player application should be able to stop playing the current disc and allow the user to begin playing a new one. </P>
+
+<P>To handle this scenario your application could continually destroy and recreate all the different DVD-Video API objects and interfaces to reset the internal information for the interfaces, but this is not necessary. Each interface has methods that you can call to reset their internal data.</P>
+
+<P>To allow the user to change a disc, your player application should verify that the navigation manager is in the stopped state by calling <A HREF="wce50lrfidvduseroperationstop.htm">IDVDUserOperation::Stop</A> before the application unbinds the current disc. This assures that the navigation manager has valid data to manipulate.</P>
+
+<P>Your application should call <A HREF="wce50lrfidvdromunbind.htm">IDVDROM::Unbind</A> to release the memory allocated for the old disc and then call <A HREF="wce50lrfidvdrombind.htm">IDVDROM::Bind</A> to set the path for the new disc.  After the path is set, call <A HREF="wce50lrfidvdnavigationmanagersetvolume.htm">IDVDNavigationManager::SetVolume</A>.  This connects the navigation manager to its new data source.  The navigation manager authenticates the disc during this process.</P>
+
+<P>After <B>IDVDNavigationManager::SetVolume</B> returns, call <A HREF="wce50lrfidvdvideovolumeinitdata.htm">IDVDVideoVolume::InitData</A> to load the navigation data from the disc.  This provides the <A HREF="wce50lrfidvdvideovolume.htm">IDVDVideoVolume</A> interface with new pointers to all the VMGI and VTSI information on the disc.</P>
+
+<P>Whenever you want to provide the navigation manager with a new disc or data source, stop the player and then call <B>IDVDNavigationManager::SetVolume </B>followed by <B>IDVDVideoVolume::InitData</B> for the new disc.</P>
+
+<P>The following list summarizes the steps:
+
+<OL type="1">
+	<LI>Call <B>IDVDUserOperation::Stop</B> to stop the navigation manager.</li>
+
+	<LI>Call <B>IDVDROM::Unbind</B> to release the old disc.</li>
+
+	<LI>Call <B>IDVDROM::Bind</B> to set the path for the new disc. </li>
+
+	<LI>Call <B>IDVDNavigationManager::SetVolume</B> to connect the navigation manager to its new data source and authenticate the disc.</li>
+
+	<LI>Call <B>IDVDVideoVolume::InitData</B> to load the navigation data from the new disc.</li>
+</OL>
+
+<P>The following code demonstrates how you can successively bind and unbind a disc.  You must provide your own implementation for the function <B>CheckHRESULT</B> to maintain the security and stability of your application.</P>
+
+<PRE class="code">HRESULT ExampleFunction(void)
+{
+  HRESULT hr;
+
+  CComPtr&lt;IDVDNavigationManager&gt; piDVDNavigationManager;
+  hr = piDVDNavigationManager.CoCreateInstance(
+                                CLSID_DVDNavigationManager);
+  CheckHRESULT(hr);
+
+  CComPtr&lt;IDVDROM&gt; piDVDROM;
+  hr = piDVDROM.CoCreateInstance(CLSID_DVDData);
+  CheckHRESULT(hr);
+
+  CComPtr&lt;IDVDVideoVolume&gt; pidDVDVideoVolume;
+  hr = piDVDROM.QueryInterface(&amp;pidDVDVideoVolume);
+  CheckHRESULT(hr);
+
+  for(int i = 0; i &lt; 10; i++)
+  {
+    hr = piDVDROM-&gt;Bind(TEXT("\\CDROM Drive"));
+    CheckHRESULT(hr);
+
+    hr = piDVDNavigationManager-&gt;SetVolume(pidDVDVideoVolume);
+    CheckHRESULT(hr);
+
+    hr = pidDVDVideoVolume-&gt;InitData(piDVDROM);
+    CheckHRESULT(hr);
+
+    // play the disc here
+
+    // stop playback here
+
+    hr = piDVDROM-&gt;Unbind();
+    CheckHRESULT(hr);
+  }
+  return S_OK;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingthedvdvideoapi.htm">Using the DVD-Video API</A> | <A HREF="wce50condvdvideoapiobjects94.htm">DVD-Video API Objects</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Changing%20Discs (wce50conchangingdiscs.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

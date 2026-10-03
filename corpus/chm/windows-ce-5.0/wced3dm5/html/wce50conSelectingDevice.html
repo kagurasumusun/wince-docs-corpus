@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Selecting a Device</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conselectingdevice"></A>Selecting a Device</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Applications can query hardware to detect the supported Microsoft&reg; Direct3D&reg; Mobile device types. This section contains information on the primary tasks involved in enumerating display adapters and selecting Direct3D Mobile devices. </P>
+
+<P>An application must perform a series of tasks to select an appropriate Direct3D Mobile device. Note that the following steps are intended for a full-screen application. In most cases, a windowed application can skip most of these steps.
+
+<OL type="1">
+	<LI>If required, the application checks for the presence of hardware acceleration in each enumerated display mode by calling <A HREF="wce50lrfidirect3dmobilecheckdevicetype.htm">IDirect3DMobile::CheckDeviceType</A>, as shown in the following code example. Note that this is only one of the possible uses for <B>CheckDeviceType</B>; for details, see <A HREF="wce50condetermininghardwaresupport.htm">Determining Hardware Support</A>.
+<PRE class="code">D3DMPRESENT_PARAMETERS Params;
+// Initialize values for D3DMPRESENT_PARAMETERS members. 
+
+Params.BackBufferFormat = D3DMFMT_X1R5G5B5; 
+
+if(FAILED(m_pD3DM-&gt;CheckDeviceType(Device.m_uAdapter, 
+                                   Device.m_DevType, 
+                                   Params.BackBufferFormat,
+                                   Params.BackBufferFormat, 
+                                   FALSE))) 
+  return E_FAIL;</PRE>
+</li>
+
+	<LI>The application checks for the desired level of functionality for the device on this adapter by calling the <A HREF="wce50lrfidirect3dmobilegetdevicecaps.htm">IDirect3DMobile::GetDeviceCaps</A> method. This method filters out those devices that do not support the required functionality. The device capability returned by <B>GetDeviceCaps</B> is guaranteed to be constant for a device across all display modes verified by <B>CheckDeviceType</B>.</li>
+
+	<LI>Devices can always render to surfaces of the format of an enumerated display mode that is supported by the device. If the application is required to render to a surface of a different format, it can call <A HREF="wce50lrfidirect3dmobilecheckdeviceformat.htm">IDirect3DMobile::CheckDeviceFormat</A>. If the device can render to the format, then it is guaranteed that all capabilities returned by <B>GetDeviceCaps</B> are applicable.</li>
+
+	<LI>Lastly, the application can determine if multisampling techniques are supported for a render format by using the <A HREF="wce50lrfidirect3dmobilecheckdevicemultisampletype.htm">IDirect3DMobile::CheckDeviceMultiSampleType</A> method.</li>
+</OL>
+
+<P>After completing the above steps, the application should have a list of display modes in which it can operate. The final step is to verify that enough device-accessible memory is available to accommodate the required number of buffers. This test is necessary because the memory consumption for the mode and multisample combination is impossible to predict without verifying it. Moreover, some display adapter architectures might not have a constant amount of device-accessible memory. This means that an application should be able to report out-of-video-memory failures when going into full-screen mode. Typically, an application should remove full-screen mode from the list of modes it offers to a user, or it should attempt to consume less memory by reducing the number of back buffers or using a less expensive multisampling technique.</P>
+
+<P>A windowed application performs a similar set of tasks.
+
+<OL type="1">
+	<LI>It determines the desktop rectangle covered by the client area of the window.</li>
+
+	<LI>It enumerates adapters, looking for the adapter whose monitor covers the client area. If the client area is owned by more than one adapter, then the application can choose to drive each adapter independently, or to drive a single adapter and have Direct3D transfer pixels from one device to another at presentation. The application can also disregard the above two steps and use the D3DMADAPTER_DEFAULT adapter. Note that this might result in slower operation when the window is placed on a secondary monitor.</li>
+
+	<LI>The application should call <B>CheckDeviceType</B> to determine if the device can support rendering to a back buffer of the specified format while in desktop mode. <A HREF="wce50lrfidirect3dmobilegetadapterdisplaymode.htm">IDirect3DMobile::GetAdapterDisplayMode</A> can be used to determine the desktop display format, as shown in the following code example.
+<PRE class="code">D3DMPRESENT_PARAMETERS Params;
+// Initialize values for D3DMPRESENT_PARAMETERS members. 
+
+// Use the current display mode.
+D3DMDISPLAYMODE mode;
+
+if(FAILED(m_pD3DM-&gt;GetAdapterDisplayMode(Device.m_uAdapter , &amp;mode)))
+        return E_FAIL;
+
+Params.BackBufferFormat = mode.Format;
+
+if(FAILED(m_pD3DM-&gt;CheckDeviceType(Device.m_uAdapter,
+                                   Device.m_DevType,
+                                   Params.BackBufferFormat,
+                                   Params.BackBufferFormat,
+                                   FALSE)))
+       return E_FAIL;</PRE>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingdevices.htm">Using Devices</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Selecting%20a%20Device (wce50conselectingdevice.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

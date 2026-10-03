@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Querying Service Capability on Remote Bluetooth Devices</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conqueryingservicecapabilityonremotebluetoothdevices"></A>Querying Service Capability on Remote Bluetooth Devices</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>An application can query for services on a remote Bluetooth device by using the following standard Winsock programming elements:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfwsaquerysetbluetooth.htm">WSAQUERYSET</A> structure </li>
+
+	<LI><A HREF="wce50lrfwsalookupservicebeginbluetooth.htm">WSALookupServiceBegin</A> function</li>
+
+	<LI><A HREF="wce50lrfwsalookupservicenextbluetooth.htm">WSALookupServiceNext</A> function</li>
+
+	<LI><A HREF="wce50lrfwsalookupserviceendbluetooth.htm">WSALookupServiceEnd</A> function</li>
+</UL>
+
+<P>Before you query service capability on remote Bluetooth devices, you must have the following information: 
+
+<UL type="disc">
+	<LI>You must have the address of the a remote Bluetooth device to query, as a <B>BT_ADDR</B> type, as defined in Ws2bth.h:
+<PRE class="code">typedef ULONGLONG bt_addr, *pbt_addr, BT_ADDR, *PBT_ADDR;</PRE>
+</li>
+</UL>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This procedure does not include error handling for code clarity.</BLOCKQUOTE>
+
+<P>The Ssa sample that ships with Windows CE, contains source code for querying Bluetooth services by using Winsock. For more information about this sample, see <A HREF="wce50conwinsockinterfacesample.htm">Winsock Interface Sample</A>.</P>
+
+<P class="labelproc"><B>To perform a service query on a remote Bluetooth device</B>
+
+<OL type="1">
+	<LI>To prepare the caller application by providing Winsock-related data such as version and implementation details. This data can be retrieved by calling the <A HREF="wce50lrfwsastartup.htm">WSAStartup</A> function as the following example shows.
+<PRE class="code">WSADATA wsd;
+WSAStartup (MAKEWORD(1,0), &amp;wsd);</PRE>
+</li>
+
+	<LI>Specify the search parameters by configuring the <B>WSAQUERYSET</B> structure. 
+<P>The following code example shows the values in this structure.
+
+<PRE class="code">WSAQUERYSET wsaq;
+memset (&amp;wsaq, 0, sizeof(wsaq));
+wsaq.dwSize      = sizeof(wsaq);
+wsaq.dwNameSpace = NS_BTH;
+wsaq.lpBlob      = &amp;blob;
+wsaq.lpcsaBuffer = &amp;csai;</PRE>
+
+<P>Restrict the search to Bluetooth queries by setting the <B>dwNameSpace</B> member to NS_BTH. For information about how to set the other members, see <A HREF="wce50conconfiguringwsaquerysetforservicediscovery.htm">Configuring WSAQUERYSET for Service Discovery</A>.
+</li>
+
+	<LI>To initiate the search process, call the <B>WSALookupServiceBegin</B> function. Specify the search criteria by passing the <B>WSAQUERYSET</B> variable, created in step 1, in the <I>pQuerySet</I> parameter. The following code example show how to call <B>WSALookupServiceBegin</B>.
+<PRE class="code">int iRet = WSALookupServiceBegin (&amp;wsaq, 0, &amp;hLookup);</PRE>
+
+<P>Pass zero (0) in the <I>dwFlags</I> parameter to perform a service query on the remote device. <B>WSALookupServiceBegin</B> returns a handle in the <I>hLookup</I> parameter.
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Passing LUP_CONTAINERS in the <I>dwFlags</I> parameter, sets up <B>WSALookupServiceBegin</B> to perform a device inquiry. For more information about creating device queries, see <A HREF="wce50condiscoveringbluetoothdevices.htm">Discovering Bluetooth Devices Using Winsock</A>.</BLOCKQUOTE>
+</li>
+
+	<LI>To retrieve data about the services found on the remote device, call the <B>WSALookupServiceNext</B> function by using the handle returned by <B>WSALookupServiceBegin </B>as shown in the following code example. 
+<PRE class="code">CHAR buf[5000];
+LPWSAQUERYSET pwsaResults = (LPWSAQUERYSET) buf;
+DWORD dwSize  = sizeof(buf);
+memset(pwsaResults,0,sizeof(WSAQUERYSET));
+pwsaResults-&gt;dwSize      = sizeof(WSAQUERYSET);
+pwsaResults-&gt;dwNameSpace = NS_BTH;
+pwsaResults-&gt;lpBlob      = NULL;
+iRet = WSALookupServiceNext (hLookup, 0, &amp;dwSize, pwsaResults);</PRE>
+
+<P><B>WSALookupServiceNext</B> returns a pointer to <B>WSAQUERYSET</B> that references the service data in the <B>lpBlob</B> member. This member points to a <A HREF="wce50lrfblobwindowssockets.htm">BLOB</A> structure, which contains the binary data that is returned by <B>WSALookupServiceNext</B> all at once. Windows CE provides COM interfaces that you can use to parse service data. For more information about how to use these interfaces to parse the binary data, see <A HREF="wce50conparsingsdprecordusingcominterfaces.htm">Parsing an SDP Record Using COM Interfaces</A>.
+</li>
+
+	<LI>To terminate the service discovery process, call the <B>WSALookupServiceEnd</B> function. This function releases the lookup handle created by <B>WSALookupServiceBegin</B>.
+<P>The following code example shows how to call <B>WSALookupServiceEnd</B>.
+
+<PRE class="code">WSALookupServiceEnd(hLookup);</PRE>
+</li>
+
+	<LI>To terminate the use of Winsock services, call the <A HREF="wce50lrfwsacleanup.htm">WSACleanup</A> function. There must be a call to <B>WSACleanup</B> for every successful call to <B>WSAStartup</B> made by an application.</li>
+</OL>
+
+<P>The following code example shows a function, PerformServiceSearch that queries a remote Bluetooth device for the supported services. The remote device is specified by passing a pointer to the address of the device stored in the in a <B>BT_ADDR</B> type, as defined in Ws2bth.h:</P>
+
+<PRE class="code">typedef ULONGLONG bt_addr, *pbt_addr, BT_ADDR, *PBT_ADDR;
+//------------------------------------------------------------------------
+// Function: PerformServiceSearch
+// Purpose: Performs a service search and returns the RFCOMM channel for 
+//          the specified Bluetooth remote device.
+// Arguments: BT_ADDR *pb
+// Returns: int
+//------------------------------------------------------------------------
+static int PerformServiceSearch (BT_ADDR *pb) 
+{
+  CoInitializeEx (0, COINIT_MULTITHREADED);
+  int iResult = 0;
+  BTHNS_RESTRICTIONBLOB RBlob;
+  memset (&amp;RBlob, 0, sizeof(RBlob));
+  RBlob.type = SDP_SERVICE_SEARCH_ATTRIBUTE_REQUEST;
+  RBlob.numRange = 1;
+  RBlob.pRange[0].minAttribute = SDP_ATTRIB_PROTOCOL_DESCRIPTOR_LIST;
+  RBlob.pRange[0].maxAttribute = SDP_ATTRIB_PROTOCOL_DESCRIPTOR_LIST;
+  RBlob.uuids[0].uuidType = SDP_ST_UUID16;
+  RBlob.uuids[0].u.uuid16 = SerialPortServiceClassID_UUID16;
+  BLOB blob;
+  blob.cbSize = sizeof(RBlob);
+  blob.pBlobData = (BYTE *)&amp;RBlob;
+  SOCKADDR_BTH sa;
+  memset (&amp;sa, 0, sizeof(sa));
+  *(BT_ADDR *)(&amp;sa.btAddr) = *pb;
+  sa.addressFamily = AF_BT;
+  CSADDR_INFO csai;
+  memset (&amp;csai, 0, sizeof(csai));
+  csai.RemoteAddr.lpSockaddr = (sockaddr *)&amp;sa;
+  csai.RemoteAddr.iSockaddrLength = sizeof(sa);
+  WSAQUERYSET wsaq;
+  memset (&amp;wsaq, 0, sizeof(wsaq));
+  wsaq.dwSize      = sizeof(wsaq);
+  wsaq.dwNameSpace = NS_BTH;
+  wsaq.lpBlob      = &amp;blob;
+  wsaq.lpcsaBuffer = &amp;csai;
+  HANDLE hLookup;
+  int iRet = WSALookupServiceBegin (&amp;wsaq, 0, &amp;hLookup);
+  if (ERROR_SUCCESS == iRet) 
+{
+    CHAR buf[5000];
+    LPWSAQUERYSET pwsaResults = (LPWSAQUERYSET) buf;
+    DWORD dwSize  = sizeof(buf);
+    memset(pwsaResults,0,sizeof(WSAQUERYSET));
+    pwsaResults-&gt;dwSize      = sizeof(WSAQUERYSET);
+    pwsaResults-&gt;dwNameSpace = NS_BTH;
+    pwsaResults-&gt;lpBlob      = NULL;
+    iRet = WSALookupServiceNext (hLookup, 0, &amp;dwSize, pwsaResults);
+    if (iRet == ERROR_SUCCESS) // Success - got the stream
+    {
+      //Parse the SDP result set by using the FindRFCOMMChannel function.
+      if (ERROR_SUCCESS == FindRFCOMMChannel (pwsaResults-&gt;lpBlob-&gt;pBlobData, pwsaResults-&gt;lpBlob-&gt;cbSize, &amp;cChannel))
+      iResult = cChannel;
+    }
+    WSALookupServiceEnd(hLookup);
+  }
+  CoUninitialize ();
+  return iResult;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conbluetoothapplicationdevelopment.htm">Bluetooth Application Development</A> | <A HREF="wce50conbluetoothsamples.htm">Bluetooth Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Querying%20Service%20Capability%20on%20Remote%20Bluetooth%20Devices (wce50conqueryingservicecapabilityonremotebluetoothdevices.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

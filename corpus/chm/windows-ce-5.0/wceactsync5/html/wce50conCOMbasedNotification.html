@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>COM-Based Notification</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoInitialize">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoCreateInstance">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoUninitialize">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concombasednotification"></A>COM-based Notification</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In COM-based notification, two COM interfaces are used to register an application in the desktop registry.
+
+<UL type="disc">
+	<LI><B>IDccMan</B> is part of the ActiveSync connection manager.</li>
+
+	<LI><B>IDccManSink</B> is part of the application and must be implemented by the developer. Each application can have its own <B>IDccManSink</B> interface. This interface will enable an application to detect whether a connection or disconnection with a Windows CE-based device has occurred.</li>
+</UL>
+
+<P>Although COM-based notification is more complex than registry-based notification, it gives some control of the connection manager and the ability to register and deregister for connection notification. The application can also perform actions that would not be possible by simply executing a standard command line.</P>
+
+<H2 class="dtH2">COM-based Notification Procedures</H2>
+
+<P>The notification process follows the basic steps for connection and disconnection of the Windows CE&#0150;based device.</P>
+
+<P class="labelproc"><B>To register an application</B>
+
+<OL type="1">
+	<LI>Initialize the COM library and register the application for the appropriate event.</li>
+
+	<LI>Connect or disconnect the Windows CE-based device.</li>
+
+	<LI>Perform the application processing.</li>
+</OL>
+
+<P class="labelproc"><B>To receive notification upon connection of the Windows CE&#0150;based device to a desktop computer</B>
+
+<OL type="1">
+	<LI>Initialize the COM library and register with the connection manager.
+<UL type="disc">
+	<LI>Call <A HREF="JavaScript:hhobj_1.Click()">CoInitialize</A> to initialize the Component Object library.</li>
+
+	<LI>Call <A HREF="JavaScript:hhobj_2.Click()">CoCreateInstance</A> with the DccMan class identifier (CLSID_DccMan) and <B>IDccMan</B> interface identifier (IID_IDccMan), and receive a pointer to the <B>IDccMan</B> interface.</li>
+
+	<LI>Call <B>IDccMan::Advise</B>, which supplies the connection manager with a pointer to the <B>IDccManSink</B> interface you implemented and registers the application with the connection manager.
+<P>The connection manager calls <B>IDccManSink::OnLogInactive</B>, notifying the application that there is no connection between the desktop computer and the Windows CE-based device.
+</li>
+</UL>
+</li>
+
+	<LI>Establish the connection between the desktop computer and the Windows CE-based device.
+<UL type="disc">
+	<LI>The connection manager calls <B>IDccManSink::OnLogListen</B>.</li>
+
+	<LI>The connection manager waits for the remote connection services for both the desktop computer and the Windows CE-based device to respond. The connection manager will not proceed until they are both running.
+<P>For Windows 95 systems, the connection manager calls <B>IDccManSink::OnLogAnswered</B> when the connection manager has detected the communications interface.
+</li>
+
+	<LI>The connection manager calls <B>IDccManSink::OnLogActive</B> when the connection is established between the Windows CE-based device and connection manager.</li>
+
+	<LI>The connection manager calls <B>IDccManSink::OnLogIpAddr</B>, providing the Internet Protocol (IP) address that it obtained for the communications socket.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;When <B>IDccManSink::OnLogIpAddr</B> notification occurs, the connection is completely established.</BLOCKQUOTE>
+</li>
+</UL>
+</li>
+
+	<LI>Perform your processing in the application.
+<P>This can include processing on the desktop computer, remote processing on the Windows CE-based device by using the remote application programming interface (RAPI), or calling <B>IDccMan</B> methods. However, the application should wait to use <B>CeRapiInit</B> to initialize RAPI<B> </B>until the <B>IDccManSink::OnLogActive</B> notification is received. This ensures that a connection is established between the desktop computer and the Windows CE-based device.
+</li>
+</OL>
+
+<P class="labelproc"><B>To receive notification upon disconnection of the Windows CE&#0150;based device from the desktop computer</B>
+
+<OL type="1">
+	<LI>Initialize the COM library and register the application.</li>
+
+	<LI>Disconnect the Windows CE-based device from the desktop computer.</li>
+
+	<LI>ActiveSync notifies the application when the desktop computer and Windows CE-based device are disconnected by calling <B>IDccManSink::OnLogDisconnection</B>.</li>
+
+	<LI>Perform your processing in the application.
+<P>Because there is no connection to the Windows CE-based device, this processing can take place only on the desktop computer.
+</li>
+</OL>
+
+<P class="labelproc"><B>To receive notification when reestablishing a remote connection</B></P>
+
+<P>The Connection Notification Client source code uses the <B>IDccMan</B> interface and implements the <B>IDccManSink</B> interface.</P>
+
+<P>If a connection was established, but was then disconnected by the desktop computer or the Windows CE-based device, the <B>IDccManSink::OnLogActive</B> notification occurs when the connection is reestablished.</P>
+
+<P>When an application calls the <B>IDccMan::ShowCommSettings</B> function and the <B>OK</B> button is clicked in the <B>Communications Properties</B> dialog box, the following notification sequence occurs.
+
+<OL type="1">
+	<LI><B>IDccManSink::OnLogListen</B></li>
+
+	<LI><B>IDccManSink::OnLogDisconnection</B></li>
+
+	<LI><B>IDccManSink::OnLogInactive</B></li>
+
+	<LI><B>IDccManSink::OnLogListen</B></li>
+</OL>
+
+<P>If the <B>Cancel</B> button is clicked instead, no notification is sent and a Listen state is maintained.</P>
+
+<P class="labelproc"><B>To unregister an application from connection notification</B></P>
+
+<P>COM-based notification allows an application to unregister itself. This is useful when an application needs to run only once.
+
+<OL type="1">
+	<LI>Call <B>IDccMan::Unadvise</B>, which releases the memory associated with the <B>IDccManSink</B> interface.</li>
+
+	<LI>Call <B>IDccMan::Release</B>, which releases the <B>IDccMan</B> object.</li>
+
+	<LI>Call <A HREF="JavaScript:hhobj_3.Click()">CoUninitialize</A> to perform OLE cleanup.</li>
+</OL>
+
+<P>Note that a call to <B>CoUninitialize</B> is required for each successful call to <B>CoInitialize</B>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conhandlingconnectionnotification.htm">Handling Connection Notification</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: COM-Based%20Notification (wce50concombasednotification.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

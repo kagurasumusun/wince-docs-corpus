@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TFAT Implementation</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50contfatimplementation"></A>TFAT Implementation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The original FAT file system enabled file modification operations to be interrupted before completion. These interruptions resulted in possible data loss and file system corruption. TFAT stabilizes the file system and can handle such interruptions.</P>
+
+<P>TFAT uses two copies of the FAT table to ensure that modifications are not committed until all elements in a transaction have completed successfully. If a transaction fails to complete properly, the disk is set in a consistent state as it was before the transaction began. All transactions in progress will take place synchronously, and operate on the FAT1 table. Upon successful completion of the transaction, the FAT1 table is copied to FAT0. </P>
+
+<P>To modify existing files, TFAT allocates a new cluster for the modified bits and reroutes the FAT chain for a file to include the new cluster. This is to ensure that if the transaction fails to complete successfully, the original copy of the file is left untouched.</P>
+
+<P>To provide transaction-safety mechanisms for data stored on a disk, TFAT maintains two file allocation tables. The following table shows the two file allocation tables.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=23%>Table name</TH>
+<TH width=77%>Table type</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>FAT0</TD>
+<TD width=77%>This is the primary table on TFAT. This table is used to maintain the last known good FAT.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>FAT1</TD>
+<TD width=77%>This is the active table on TFAT. All write operations occur on this table.</TD>
+</TR>
+</table></div>
+
+<P>The following sequence of steps summarizes the TFAT file modification process:
+
+<OL type="1">
+	<LI>An application calls the standard Win32 API.</li>
+
+	<LI>The write operation triggers TFAT to write a new sector to the disk using block drivers, preserving all of the old data.</li>
+
+	<LI>File and directory streams as well as used and unused cluster information are updated in the FAT1 table.</li>
+
+	<LI>TFAT invalidates the boot sector by marking the number of file allocation tables to zero.</li>
+
+	<LI>The FAT1 table is copied to FAT0. </li>
+
+	<LI>The boot sector is restored and the file allocation table uses FAT0 as its main table.</li>
+</OL>
+
+<P>With this approach, you can maintain a backup of the most recent good version of the FAT, in case power is lost during either the sector writing process or the FAT updating process.</P>
+
+<P>The TFAT file system is best suited for non-removable media such as NAND and NOR flash memory. Removable media can also use TFAT, but there are potential issues when attempting to use a TFAT removable card on a Microsoft&reg; Windows&reg; desktop OS. Because there is no implementation of TFAT on Windows desktop operating systems, Windows handles the removable media as a FAT file system. If the card is removed during a critical operation, the Windows desktop OS may not correctly recognize the volume. If a directory is created on the removable media using a Windows desktop OS and then used with TFAT in Microsoft Windows CE, operations on files inside that directory may not be transaction-safe. In addition, TFAT directories cannot be deleted using a Windows desktop OS.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contransactionsafefatfilesystem.htm">Transaction-Safe FAT File System</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TFAT%20Implementation (wce50contfatimplementation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

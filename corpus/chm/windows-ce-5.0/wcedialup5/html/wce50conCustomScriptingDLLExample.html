@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Custom-Scripting DLL Example</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concustomscriptingdllexample"></A>Custom-Scripting DLL Example</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example provides a skeleton for a custom-scripting DLL.</P>
+
+<PRE class="code">#include "windows.h"
+#include "ras.h"
+#include "raserror.h"
+#include "rasscript.h"
+
+DWORD 
+RasCustomScriptExecute(
+   HANDLE hPort,
+   LPCWSTR lpszPhonebook,
+   LPCWSTR lpszEntryName,
+   PFNRASGETBUFFER pfnRasGetBuffer,
+   PFNRASFREEBUFFER pfnRasFreeBuffer,
+   PFNRASSENDBUFFER pfnRasSendBuffer,
+   PFNRASRECEIVEBUFFER pfnRasReceiveBuffer,
+   PFNRASRETRIEVEBUFFER pfnRasRetrieveBuffer,
+   HWND hWnd,
+   RASDIALPARAMS *pRasDialParams,
+   RASCUSTOMSCRIPTEXTENSIONS *pRasCustomScriptExtensions
+//
+// Skeletal function for a RAS custom script
+//
+)
+{
+   DWORD dwResult = ERROR_SUCCESS;
+   PBYTE pRecvBuffer = NULL,
+         pSendBuffer = NULL;
+   DWORD cbRecvBuffer,
+         cbSendBuffer,
+         dwBytesRead,
+         dwTimeoutCount;
+   HANDLE   hEvent = NULL;
+
+   DEBUGMSG(1, (TEXT("+RasCustomScriptExecute entryname=%s\n"), lpszEntryName));
+
+   do
+   {
+      //
+      // Allocate receive packet buffer
+      //
+      cbRecvBuffer = 1500;
+      dwResult = pfnRasGetBuffer(&amp;pRecvBuffer, &amp;cbRecvBuffer);
+      if (dwResult != ERROR_SUCCESS)
+      {
+         DEBUGMSG(1, (TEXT("RasCustomScriptExecute pfnRasGetBuffer FAILED\n")));
+         break;
+      }
+
+      //
+      // Allocate send packet buffer
+      //
+      cbSendBuffer = 1500;
+      dwResult = pfnRasGetBuffer(&amp;pSendBuffer, &amp;cbSendBuffer);
+      if (dwResult != ERROR_SUCCESS)
+      {
+         DEBUGMSG(1, (TEXT("RasCustomScriptExecute pfnRasGetBuffer FAILED\n")));
+         break;
+      }
+
+      //
+      // Create an event on which to receive
+      //
+      hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+      if (hEvent == NULL)
+      {
+         DEBUGMSG(1, (TEXT("RasCustomScriptExecute CreateEvent FAILED\n")));
+         dwResult = GetLastError();
+         break;
+      }
+
+      //
+      // Hook the event to hPort so that it is signalled when packets are received
+      //
+      dwResult =  pfnRasReceiveBuffer(hPort, pRecvBuffer, &amp;dwBytesRead, 1000, hEvent);
+      if (dwResult != ERROR_SUCCESS)
+      {
+         DEBUGMSG(1, (TEXT("RasCustomScriptExecute pfnRasReceiveBuffer FAILED\n")));
+         break;
+      }
+
+      //
+      // Send/receive packets to/from the server as necessary to the custom protocol
+      // prior to the PPP LCP negotiations.
+      //
+
+      dwTimeoutCount = 0;
+      while (!bDone)
+      {
+         //
+         // Build a send packet in pSendBuffer
+         //
+
+         mySendPacketSize = MyBuildSendPacket(pSendBuffer);
+
+         //
+         // Send the packet
+         //
+         dwResult = pfnRasSendBuffer(hPort, pSendBuffer, mySendPacketSize);
+         if (dwResult != ERROR_SUCCESS)
+         {
+            DEBUGMSG(1, (TEXT("RasCustomScriptExecute pfnRasSendBuffer FAILED\n")));
+            break;
+         }
+
+         //
+         // Wait for the server to send a response
+         //
+
+         dwResult = WaitForSingleObject(hEvent, TIMEOUT_MILLISECONDS);
+         
+         if (dwResult == WAIT_OBJECT_0)
+         {
+            //
+            // Retrieve the received packet
+            //
+            dwResult = pfnRasRetrieveBuffer(hPort, pRecvBuffer, &amp;dwBytesRead);
+            if (dwResult != ERROR_SUCCESS)
+            {
+               DEBUGMSG(1, (TEXT("RasCustomScriptExecute pfnRasRetrieveBuffer FAILED %d\n"), dwResult));
+               break;
+            }
+
+            //
+            // Process the received packet
+            //
+            bDone = MyProcessReceivePacket(pRecvBuffer, dwBytesRead);
+            dwTimeoutCount = 0;
+         }
+         else if (dwResult == WAIT_TIMEOUT)
+         {
+            //
+            // Keep resending trying to elicit a response from the server, until
+            // some maximum number of tries is reached.
+            //
+            dwTimeoutCount++;
+            if (dwTimeoutCount &gt; MAX_TIMEOUTS)
+            {
+               DEBUGMSG(1, (TEXT("RasCustomScriptExecute server not responding\n")));
+               break;
+            }
+         }
+         else
+         {
+            DEBUGMSG(1, (TEXT("RasCustomScriptExecute WaitForSingleObject FAILED\n")));
+            break;
+         }
+      }
+   }
+
+   if (hEvent)
+      CloseHandle(hEvent);
+   if (pSendBuffer)
+      pfnRasFreeBuffer(pSendBuffer);
+   if (pRecvBuffer)
+      pfnRasFreeBuffer(pRecvBuffer);
+
+
+   DEBUGMSG(1, (TEXT("-RasCustomScriptExecute result=%d\n"), dwResult));
+
+   return dwResult;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conrascustomscripting.htm">RAS Custom Scripting</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Custom-Scripting%20DLL%20Example (wce50concustomscriptingdllexample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IDispatch::GetIDsOfNames</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfidispatchgetidsofnames"></A>IDispatch::GetIDsOfNames</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method maps a single member name and an optional set of parameter names to a corresponding set of integer dispatch identifiers (DISPIDs), which can then be used on subsequent calls to <A HREF="wce50lrfidispatchinvoke.htm">Invoke</A>.</P>
+
+<PRE class="syntax"><B>HRESULT GetIDsOfNames( </B>
+  <B>REFIID</B> <I>riid</I><B>, </B>
+  <B>OLECHAR FAR* FAR* </B><I>rgszNames</I><B>, </B>
+  <B>unsigned int</B> <I>cNames</I><B>, </B>
+  <B>LCID</B> <I>lcid</I><B>, </B>
+  <B>DISPID FAR* </B><I>rgDispId </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>riid</I></DT>
+
+<DD>[in] Reserved for future use; set to IID_NULL.</dd>
+
+<DT><I>rgszNames</I></DT>
+
+<DD>[in] Passed-in array of names to be mapped.</dd>
+
+<DT><I>cNames</I></DT>
+
+<DD>[in] Count of the names to be mapped.</dd>
+
+<DT><I>lcid</I></DT>
+
+<DD>[in] Locale context in which to interpret the names.</dd>
+
+<DT><I>rgDispId</I></DT>
+
+<DD>[out] Caller-allocated array, each element of which contains an identifier that corresponds to one of the names passed in the <I>rgszNames</I> array. The first element represents the member name. The subsequent elements represent each of the member's parameters.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_OK</TD>
+<TD width=66%>Success.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>E_OUTOFMEMORY</TD>
+<TD width=66%>Out of memory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>DISP_E_UNKNOWNNAME</TD>
+<TD width=66%>One or more of the names were not known. The returned array of DISPIDs contains DISPID_UNKNOWN for each entry that corresponds to an unknown name.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>DISP_E_UNKNOWNLCID</TD>
+<TD width=66%>The locale identifier (LCID) was not recognized.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>An <A HREF="wce50lrfidispatch.htm">IDispatch</A> implementation can associate any positive integer identifier value with a given name. Zero is reserved for the default, or <B>Value</B> property; &#0150;1 is reserved to indicate an unknown name; and other negative values are defined for other purposes. </P>
+
+<P>For example, if <B>GetIDsOfNames</B> is called, and the implementation does not recognize one or more of the names, it returns DISP_E_UNKNOWNNAME, and the <I>rgDispId</I> array contains DISPID_UNKNOWN for the entries that correspond to the unknown names.</P>
+
+<P>The member and parameter DISPIDs must remain constant for the lifetime of the object. This allows a client to obtain the DISPIDs once, and cache them for later use.</P>
+
+<P>When <B>GetIDsOfNames</B> is called with more than one name, the first name (<I>rgszNames</I>[0]) corresponds to the member name, and subsequent names correspond to the names of the member's parameters.</P>
+
+<P>The same name may map to different DISPIDs, depending on context. For example, a name may have a DISPID when it is used as a member name with a particular interface, a different identifier as a member of a different interface, and different mapping for each time it appears as a parameter.</P>
+
+<P>The <B>IDispatch</B> interface binds to names at run time. To bind at compile time instead, an <B>IDispatch</B> client can map names to DISPIDs by using the <A HREF="wce50lrfitypelib.htm">ITypeLib</A>, <A HREF="wce50lrfitypelib2itypelib.htm">ITypeLib2</A>, <A HREF="wce50lrfitypeinfo.htm">ITypeInfo</A>, <A HREF="wce50lrfitypeinfo2.htm">ITypeInfo2</A>, and <A HREF="wce50lrfitypecomp.htm">ITypeComp</A> interfaces. This allows a client to bind to members at compile time and avoid calling <B>GetIDsOfNames</B> at run time. </P>
+
+<P>The implementation of <B>GetIDsOfNames</B> is case insensitive. Users that need case-sensitive name mapping should use type information interfaces to map names to DISPIDs, rather than call <B>GetIDsOfNames</B>.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code from the Lines sample file Lines.cpp implements the <B>GetIDsOfNames</B> member function for the <B>CLine</B> class. The ActiveX or OLE object uses the standard implementation, <A HREF="wce50lrfdispgetidsofnames.htm">DispGetIDsOfNames</A>.</P>
+
+<PRE class="code">STDMETHODIMP 
+CLine::GetIDsOfNames(
+REFIID riid,
+OLECHAR FAR* FAR* rgszNames,
+UINT cNames,
+LCID lcid,
+DISPID FAR* rgDispId)
+{
+return DispGetIDsOfNames(m_ptinfo, rgszNames, cNames, rgDispId);
+}</PRE>
+
+<P>The following code might appear in an ActiveX client that calls <B>GetIDsOfNames</B> to get the DISPID of the <B>CLine Color</B> property.</P>
+
+<PRE class="code">HRESULT hresult;
+IDispatch FAR* pdisp = (IDispatch FAR*)NULL;
+DISPID dispid;
+OLECHAR FAR* szMember = "color";
+
+// Code that sets a pointer to the dispatch (pdisp) is omitted.
+
+hresult = pdisp-&gt;GetIDsOfNames(
+IID_NULL,
+&amp;szMember,
+1, LOCALE_SYSTEM_DEFAULT,
+&amp;dispid);</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Oaidl.h, Oaidl.idl.<BR>
+<B>Link Library:</B> Oleaut32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfidispatch.htm">IDispatch</A> | <A HREF="wce50lrfdispgetidsofnames.htm">DispGetIDsOfNames</A> | <A HREF="wce50lrfidispatchinvoke.htm">IDispatch::Invoke</A> | <A HREF="wce50lrfitypecomp.htm">ITypeComp</A> | <A HREF="wce50lrfitypeinfo.htm">ITypeInfo</A> | <A HREF="wce50lrfitypeinfo2.htm">ITypeInfo2</A> | <A HREF="wce50lrfitypelib.htm">ITypeLib</A> | <A HREF="wce50lrfitypelib2itypelib.htm">ITypeLib2</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IDispatch::GetIDsOfNames (wce50lrfidispatchgetidsofnames.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

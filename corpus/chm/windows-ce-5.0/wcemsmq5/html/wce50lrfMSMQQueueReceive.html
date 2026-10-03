@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MSMQQueue.Receive</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfmsmqqueuereceive"></A>MSMQQueue.Receive</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method retrieves the first message in the queue and removes the message from the queue when the message is read. </P>
+
+<PRE class="syntax"><B>HRESULT Receive( </B>
+  <B>VARIANT* </B><I>Transaction</I><B>,</B>
+  <B>VARIANT* </B><I>WantDestinationQueue</I><B>,</B> 
+  <B>VARIANT* </B><I>WantBody</I><B>,</B> 
+  <B>VARIANT* </B><I>ReceiveTimeout</I><B>,</B> 
+  <B>MSMQMessage** </B><I>ppmsg</I> 
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>Transaction </I></DT>
+
+<DD>Optional. An <B>MSMQTransaction</B> object, or MQ_NO_TRANSACTION, which specifies that the call is not part of a transaction. </dd>
+
+<DT><I>WantDestinationQueue </I></DT>
+
+<DD>Optional. The default is FALSE. 
+
+<P>If TRUE, <B>MSMQMessage.DestinationQueueInfo</B> is updated when the message is read from the queue. Setting this property to TRUE can slow the operation of the application. 
+</dd>
+
+<DT><I>WantBody </I></DT>
+
+<DD>Optional. The default is TRUE. 
+
+<P>If you do not need to retrieve the body of the message, set this property to FALSE to optimize the speed of the application. 
+</dd>
+
+<DT><I>ReceiveTimeout </I></DT>
+
+<DD>Optional. The default is INFINITE. 
+
+<P>Specifies how long (in milliseconds) Message Queuing waits for a message to arrive. 
+</dd>
+
+<DT><I>ppmsg </I></DT>
+
+<DD>Message.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table describes the common return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Value</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>S-OK</TD>
+<TD width=73%>Success</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_INVALIDARG</TD>
+<TD width=73%>One or more arguments are invalid</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_NOTIMPL</TD>
+<TD width=73%>The function contains no implementation</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_OUTOFMEMORY</TD>
+<TD width=73%>Out of memory</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>MSMQQueue.Receive</B> retrieves the first message in the queue. It does not use the cursor created when the queue is opened, and should not be called when navigating the queue using the cursor.</P>
+
+<P class="label"><B>ReceiveTimeout parameter</B></P>
+
+<P>Optional. If a timeout period is specified and a timeout occurs, a Null message object is returned to the application. </P>
+
+<P>If a timeout period is not specified, the default value of ReceiveTimeout (INFINITE) forces the <B>MSMQQueue.Peek</B> call to block execution until a message arrives.</P>
+
+<P class="label"><B>WantDestinationQueue and WantBody parameters</B></P>
+
+<P>Use the <I>WantDestinationQueue</I> and <I>WantBody</I> parameters to optimize the speed of the application.</P>
+
+<P class="label"><B>Retrieving Messages Synchronously</B></P>
+
+<P>For synchronous calls, execution is stopped until a message is retrieved from the queue or the message's timeout timer expires.</P>
+
+<P class="label"><B>Retrieving Messages Asynchronously</B></P>
+
+<P>The <B>MSMQEvent</B> object, used to read messages asynchronously, is implemented in terms of callbacks, and is limited to 64 callbacks per process. </P>
+
+<P>Internally, Message Queuing uses the <B>WaitForMultipleObjects</B> function, which is limited to 64 objects per process.</P>
+
+<P class="label"><B>Retrieving Message in Transactions</B></P>
+
+<P>To retrieve a message within a transaction, do one of the following:
+
+<UL type="disc">
+	<LI>Set the <I>Transaction</I> parameter to an <B>MSMQTransaction</B> object. </li>
+
+	<LI>Set the <I>Transaction</I> parameter to a constant described in the preceding table.</li>
+
+	<LI>Use the <I>Transaction</I> parameter's default setting (MQ_MTS_TRANSACTION).</li>
+</UL>
+
+<P>To guarantee that no transaction will be used (for example, if you retrieve a message from a nontransactional queue within a transactional MTS component), set <I>Transaction</I> to MQ_NO_TRANSACTION.</P>
+
+<P>Messages cannot be retrieved from remote queues within a transaction.</P>
+
+<P>Message Queuing performs the following tasks when a transaction is specified. 
+
+<UL type="disc">
+	<LI>In the case of a subsequent <B>Abort</B>, the message is returned to its original place in the queue. </li>
+
+	<LI>In the case of a <B>Commit</B>, a positive acknowledgment message is sent to the administration queue of the sending application. The class property of the acknowledgment message is MQMSG_CLASS_ACK_RECEIVE. </li>
+</UL>
+
+<P>Transaction objects cannot be reused after you commit to or abort the transaction. </P>
+
+<P>If you release the transaction object without calling <B>Commit</B> or <B>Abort</B>, the transaction is aborted.</P>
+
+<P class="label"><B>Opening queues</B></P>
+
+<P>To retrieve messages, the queue must be opened with receive access (Access = MQ_RECEIVE_ACCESS). </P>
+
+<P>Messages retrieved from a queue are also removed from the queue. </P>
+
+<P>Opening a queue requires a direct connection to the computer where the queue resides. You cannot retrieve messages from a queue that resides on a computer that has no direct connection to the computer where your application is running. </P>
+
+<P class="label"><B>Responding to Messages</B></P>
+
+<P>The receiving application can determine if the sending application expects a response message by retrieving the <B>MSMQMessage.ResponseDestination</B> (introduced in MSMQ 3.0) or <B>MSMQMessage.ResponseQueueInfo</B> property when reading the message. </P>
+
+<P>If the property is set to Null, the sending application is not expecting a response message. </P>
+
+<P class="label"><B>Message body type</B></P>
+
+<P>When retrieving message, you cannot look at the type of message body included in the message. Message Queuing determines the body type based on the message's body type property. (The body type property of the messages can be accessed only with Message Queuing functions.)</P>
+
+<P>If the message is sent using <B>MQSendMessage</B>, the following situations can occur. 
+
+<UL type="disc">
+	<LI>If the body type property was not set before <B>MQSendMessage</B> is called, the message body is treated as an array of bytes. </li>
+
+	<LI>If the body type was set to an invalid body type before <B>MQSendMessage</B> is called, the message can be retrieved, but an error occurs when you try to read the message body. </li>
+</UL>
+
+<P class="label"><B>Equivalent Function</B></P>
+
+<P>When using function calls, use <B>MQReceiveMessage</B> to retrieve messages in the queue. To retrieve messages using this function, set the <I>dwAction</I> parameter to the appropriate value.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Mqoai.h.<BR>
+<B>Link Library:</B> Mqoa.lib.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: MSMQQueue.Receive (wce50lrfmsmqqueuereceive.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

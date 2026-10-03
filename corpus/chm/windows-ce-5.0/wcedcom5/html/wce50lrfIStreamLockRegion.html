@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IStream::LockRegion</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfistreamlockregion"></A>IStream::LockRegion</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method restricts access to a specified range of bytes in the stream. Supporting this functionality is optional because some file systems do not provide it.</P>
+
+<PRE class="syntax"><B>HRESULT LockRegion( </B>
+  <B>LARGE_INTEGER </B><I>libOffset</I><B>,</B><I> </I>
+  <B>LARGE_INTEGER </B><I>cb</I><B>,</B><I> </I>
+  <B>DWORD</B> <I>dwLockType </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>libOffset</I></DT>
+
+<DD>[in] Integer that specifies the byte offset for the beginning of the range.</dd>
+
+<DT><I>cb</I></DT>
+
+<DD>[in] Integer that specifies the length of the range, in bytes, to be restricted.</dd>
+
+<DT><I>dwLockType</I></DT>
+
+<DD>[in] Specifies the restrictions being requested on accessing the range.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_OK</TD>
+<TD width=66%>The specified range of bytes was locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>E_PENDING</TD>
+<TD width=66%>Asynchronous Storage only: Part or all of the stream's data is currently unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>STG_E_INVALIDFUNCTION</TD>
+<TD width=66%>Locking is not supported at all or the specific type of lock requested is not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>STG_E_LOCKVIOLATION</TD>
+<TD width=66%>Requested lock is supported, but cannot be granted because of an existing lock.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>STG_E_REVERTED</TD>
+<TD width=66%>The object has been invalidated by a revert operation above it in the transaction tree.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The byte range can extend past the current end of the stream. </P>
+
+<P>Locking beyond the end of a stream is useful as a method of communication between different instances of the stream without changing data that is actually part of the stream.</P>
+
+<P>Three types of locking can be supported: locking to exclude other writers, locking to exclude other readers or writers, and locking that allows only one requestor to obtain a lock on the given range, which is usually an alias for one of the other two lock types. </P>
+
+<P>A given stream instance might support either of the first two types, or both. </P>
+
+<P>The lock type is specified by <I>dwLockType</I>, using a value from the <B>LOCKTYPE</B> enumeration.</P>
+
+<P>Any region locked with <B>IStream::LockRegion</B> must later be explicitly unlocked by calling the <A HREF="wce50lrfistreamunlockregion.htm">IStream::UnlockRegion</A> method with exactly the same values for the <I>libOffset</I>, <I>cb</I>, and <I>dwLockTyp</I>e parameters. </P>
+
+<P>The region must be unlocked before the stream is released. </P>
+
+<P>Two adjacent regions cannot be locked separately and then unlocked with a single unlock call.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>Because the type of locking supported is optional and can vary in different implementations of <A HREF="wce50lrfistreamiunknown.htm">IStream</A>, you must provide code to deal with the STG_E_INVALIDFUNCTION error.</P>
+
+<P>This method has no effect in the compound file implementation, because the implementation does not support range locking.</P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>Support for this method is optional for implementations of stream objects because it may not be supported by the underlying file system. </P>
+
+<P>The type of locking supported is also optional. </P>
+
+<P>The STG_E_INVALIDFUNCTION error is returned if the requested type of locking is not supported.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IStream::LockRegion (wce50lrfistreamlockregion.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

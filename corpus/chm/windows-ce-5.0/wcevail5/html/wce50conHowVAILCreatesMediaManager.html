@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>How the VAIL Creates the Media Manager</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoCreateInstance">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhowvailcreatesmediamanager"></A>How the VAIL Creates the Media Manager</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In this topic you learn how to register a custom media manager implementation so the VAIL creates an instance of the custom implementation during startup, instead of creating an instance of the reference media manager implementation.</P>
+
+<P>To register a custom media manager implementation as the media manager implementation used by the VAIL, change the MediaManager registry value in the following registry key to contain the CLSID of your media manager object: HKEY_CLASSES_ROOT\CLSID\254D6845-7CF1-4B90-A658-E4C430C3A7BE\Plugins.</P>
+
+<P>Your object must implement the <A HREF="wce50lrfivoipmediamgriunknown.htm">IVoIPMediaMgr</A> interface.</P>
+
+<P>The VoIP manager performs the following steps during initialization, in the implementation of <A HREF="wce50lrfivoipmgr2initializeex.htm">IVoIPMgr2::InitializeEx</A>: 
+
+<OL type="1">
+	<LI>Opens the MediaManager registry value and retrieves the CLSID value of the media manager implementation. </li>
+
+	<LI>Uses <A HREF="JavaScript:hhobj_1.Click()">CoCreateInstance</A> and the CLSID retrieved in step 1 to create an instance of the media manager object.</li>
+
+	<LI>Retrieves an <B>IVoIPMediaMgr</B> interface from the object created in step 2 by calling <A HREF="JavaScript:hhobj_2.Click()">IUnknown::QueryInterface</A> with the parameter IID_IVoIPMediaMgr. </li>
+
+	<LI>Calls <A HREF="wce50lrfivoipmediamgrinitialize.htm">IVoIPMediaMgr::Initialize</A> using the interface retrieved in step 3.</li>
+</OL>
+
+<P>If any of these steps fail, <B>IVoIPMgr2::InitializeEx</B> fails and returns VOIP_E_NOMEDIAMGR.</P>
+
+<P>The reference media manager used by default has CLSID 3A81E327-7929-4BEE-B6DF-23E7C1D5E67D. The reference media manager leaves the RTC Client API Catalog item's media stack enabled and uses RTC to do all RTP processing.</P>
+
+<P>Windows CE includes a media manager that uses Broadcom BCM91101 hardware. If you have installed this BSP, you can view the registry entries that register the Broadcom media manager. To see these registry entries, examine the platform.reg file in %_WINCEROOT%\Platform\BCM91101SP\Files. </P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50convoipmediamanager.htm">VoIP Media Manager</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Saturday, May 22, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: How%20the%20VAIL%20Creates%20the%20Media%20Manager (wce50conhowvailcreatesmediamanager.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

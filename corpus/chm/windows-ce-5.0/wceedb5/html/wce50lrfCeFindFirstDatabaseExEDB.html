@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CeFindFirstDatabaseEx (EDB)</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcefindfirstdatabaseexedb"></A>CeFindFirstDatabaseEx (EDB)</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is used to create a handle which can then be used with the <A HREF="wce50lrfcefindnextdatabaseexedb.htm">CeFindNextDatabaseEx (EDB)</A> function to enumerate databases in a specific volume, or all of the databases across all mounted volumes.</P>
+
+<P>This function does not work with CEDB databases. For more information about CEDB, see <A HREF="wce50oricedbreference.htm">CEDB Reference</A>.</P>
+
+<PRE class="syntax"><B>HANDLE CeFindFirstDatabaseEx( </B>
+  <B>PCEGUID</B> <I>pGuid</I>, 
+  <B>DWORD</B> <I>dwDbaseType</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pGuid </I></DT>
+
+<DD>[in] If <I>pGuid</I> is NULL or is a value generated with <B>EDB_CREATE_INVALIDGUID</B>, this function enumerates all volumes. If <I>pGuid</I> is not NULL and not an invalid GUID, then this function searches the specified mounted volume. </dd>
+
+<DT><I>dwDbaseType </I></DT>
+
+<DD>[in] The type of database to enumerate. If <I>dwDbaseType</I> is not 0, then this function enumerates all databases whose type matches the value of this parameter. A value of 0 results in all databases being enumerated. The type of a database is set when creating a database by using the <A HREF="wce50lrfcecreatedatabasewithprops.htm">CeCreateDatabaseWithProps (EDB)</A> function or when setting database information by using the <A HREF="wce50lrfcesetdatabaseinfoedb.htm">CeSetDatabaseInfo (EDB)</A> function.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>A return value of INVALID_HANDLE_VALUE indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>. The following table lists possible values returned by <B>GetLastError</B>:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Return Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_NOT_FOUND</TD>
+<TD width=50%>Indicates one of the following:
+<UL type="disc">
+	<LI><I>pGuid</I> is not an invalid GUID and the specified mounted volume does not exist.</li>
+
+	<LI><I>pGuid</I> is set to <B>EDB_CREATE_INVALIDGUID </B>and there are no mounted volumes.</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_NOT_ENOUGH_MEMORY</TD>
+<TD width=50%>Indicates that there is no memory available to create the enumeration context.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This function only returns the handle to an enumeration context. To begin enumerating databases, an application must first call the <B>CeFindNextDatabaseEx</B> function. The handle returned from this function can be used on multiple threads at the same time.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;If you call this function by passing NULL, it enumerates through all volumes on the device, including CEDB volumes. Therefore, the handle returned by this function may be to a CEDB volume; this handle cannot be used with EDB functions.</BLOCKQUOTE>
+
+<P>If a new database volume is mounted after calling this function, that new database volume is not included in the enumeration, because this function takes a snapshot of the currently mounted volumes. If a volume is unmounted after calling this function, then the enumeration skips that volume.</P>
+
+<P>The handle returned from this function must be closed by calling the <A HREF="wce50lrfclosehandle.htm">CloseHandle</A> function.</P>
+
+<P>The following list highlights the differences between this function and the CEDB equivalent function:
+
+<UL type="disc">
+	<LI>If the <I>pGuid</I> has no mounted volume associated with it, EDB returns ERROR_NOT_FOUND, while CEDB returns ERROR_INVALID_PARAMETER. NULL and INVALIDGUID are exceptions.</li>
+
+	<LI><B>EDB_CREATE_INVALIDGUID</B> is used to enumerate EDB volumes only, while <B>CREATE_INVALIDGUID</B> is used to enumerate CEDB volumes only.</li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> Windbase.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcefindnextdatabaseexedb.htm">CeFindNextDatabaseEx (EDB)</A> | <A HREF="wce50lrfcesetdatabaseinfoedb.htm">CeSetDatabaseInfo (EDB)</A> | <A HREF="wce50lrfcecreatedatabasewithprops.htm">CeCreateDatabaseWithProps (EDB)</A> | <A HREF="wce50lrfclosehandle.htm">CloseHandle</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CeFindFirstDatabaseEx%20(EDB) (wce50lrfcefindfirstdatabaseexedb.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

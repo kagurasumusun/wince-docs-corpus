@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Key BLOBs</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conkeyblobs"></A>Key BLOBs</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A key binary large object (key BLOB) provides a way to store a key outside of the cryptographic service provider (CSP). A key BLOB is used as the medium that adds a layer of security when transferring a key from one provider to another. A key BLOB is more secure because it is encrypted with the key exchange public key of the intended recipient. To enhance security, a key is sometimes signed with the key exchange private key of the originating user.</P>
+
+<P>A key BLOB consists of a standard header followed by data that represents the key itself. Key BLOBs exist in three forms: simple, public, and private. </P>
+
+<P>A simple key BLOB, known as a SIMPLEBLOB, is a session key that has been encoded with the public key exchange key of the destination user. Key exchange keys are used to encode session keys so they can be stored with an additional layer of safety and exchanged with other users. This type of key BLOB is used when storing a session key or transmitting a session key to another user. For more information about key exchange, see <A HREF="wce50conexportingcryptographickeys.htm">Exporting Cryptographic Keys</A>.</P>
+
+<P>A public key BLOB, known as PUBLICKEYBLOB, contains the public key portion of a public/private key pair. Unlike simple key BLOBs, these are not encrypted.</P>
+
+<P>A private key BLOB, known as PRIVATEKEYBLOB, contains one complete public/private key pair. Administrative applications use key BLOBs to distribute and transport public/private key pairs. For example, a private key BLOB transports key pairs between a network administrator's computer and a user's computer, or between a user's desktop computer and a laptop computer. These key BLOBs can also be used by advanced applications to store key pairs, rather than relying on the CSP's storage mechanism.</P>
+
+<H2 class="dtH2">Base and Extended Provider Key BLOBs</H2>
+
+<P>The Base Provider and Extended Provider use the same key BLOBs, as follow:
+
+<UL type="disc">
+	<LI>Public-key BLOBs
+<P>Public-key BLOBs, type PUBLICKEYBLOB, are used to store public keys outside a CSP. Extended provider public-key BLOBs have the following format.
+
+<PRE class="code">PUBLICKEYSTRUC  publickeystruc;
+RSAPUBKEY rsapubkey;
+BYTE modulus[rsapubkey.bitlen/8];</PRE>
+
+<P>The following table shows each public-key object. All values are in little-endian format.
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Field</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>publickeystruc </TD>
+<TD width=72%>A <A HREF="wce50lrfpublickeystruc.htm">PUBLICKEYSTRUC</A> structure. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>rsapubkey</TD>
+<TD width=72%>A <B>RSAPUBKEY</B> structure. The magic member must be set to 0x31415352. This hex value is the ASCII encoding of RSA1. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>modulus</TD>
+<TD width=72%>The public-key modulus data is located directly after the <B>RSAPUBKEY</B> structure. The size of this data will vary, depending on the size of the public key. The number of bytes can be determined by dividing the value of the <B>RSAPUBKEY</B> <B>bitlen</B> member by eight. </TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>Public-key BLOBs are not encrypted. They contain public keys in plaintext form.</BLOCKQUOTE>
+</li>
+
+	<LI>Private-key BLOBs
+<P>Private-key BLOBs, type PRIVATEKEYBLOB, are used to store private keys outside a CSP. Extended provider private-key BLOBs have the following format.
+
+<PRE class="code">PUBLICKEYSTRUC  publickeystruc;
+RSAPUBKEY rsapubkey;
+BYTE modulus[rsapubkey.bitlen/8];
+BYTE prime1[rsapubkey.bitlen/16];
+BYTE prime2[rsapubkey.bitlen/16];
+BYTE exponent1[rsapubkey.bitlen/16];
+BYTE exponent2[rsapubkey.bitlen/16];
+BYTE coefficient[rsapubkey.bitlen/16];
+BYTE privateExponent[rsapubkey.bitlen/8];</PRE>
+
+<P>The following table describes the private-key BLOB object. 
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Field</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>publickeystruc </TD>
+<TD width=72%>A <B>PUBLICKEYSTRUC</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>rsapubkey</TD>
+<TD width=72%>A <B>RSAPUBKEY</B> structure. The magic member must be set to 0x32415352. This hex value is the ASCII encoding of RSA2. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>Modulus</TD>
+<TD width=72%>The modulus. This has a value of prime1 * prime2 and is often known as n. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>prime1</TD>
+<TD width=72%>Prime number 1, often known as p. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>prime2</TD>
+<TD width=72%>Prime number 2, often known as q. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>exponent1</TD>
+<TD width=72%>Exponent 1. This has a numeric value of d mod (p - 1). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>exponent2</TD>
+<TD width=72%>Exponent 2. This has a numeric value of d mod (q - 1).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>coefficient</TD>
+<TD width=72%>Coefficient. This has a numeric value of (inverse of q mod p). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>privateExponent</TD>
+<TD width=72%>Private exponent, often known as d. </TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<B><b class="le">Note</b>&nbsp;&nbsp;&nbsp;</B>These fields correspond to the fields described in section 7.2 of Public-Key Cryptography Standards (PKCS #1 with minor differences).</BLOCKQUOTE>
+
+<P>Private-key BLOBs are not encrypted. They contain private keys in plaintext form.
+
+<P>When calling <B>CryptExportKey</B> the developer can choose whether or not to encrypt the key. The PRIVATEKEYBLOB is encrypted if the <I>hExpKey</I> parameter contains a valid handle to a session key. Everything but the <B>PUBLICKEYSTRUC</B> portion of the BLOB is encrypted. The encryption algorithm and encryption key parameters are not stored along with the private-key BLOB. The application must manage and store this information. If zero is passed for <I>hExpKey</I>, the private key will be exported without encryption.
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Warning</b>&nbsp;&nbsp;&nbsp;It is dangerous to export private keys without encryption because they are then vulnerable to interception and use by unauthorized entities.</BLOCKQUOTE>
+</li>
+
+	<LI>Simple-key BLOBs
+<P>Simple key BLOBs, type SIMPLEBLOB, are used to store and transport session keys outside a CSP. Extended provider simple-key BLOBs are always encrypted with a key exchange public key. The <B>pbData</B> member of the SIMPLEBLOB is a sequence of bytes in the following format.
+
+<PRE class="code">PUBLICKEYSTRUC  publickeystruc ;
+ALG_ID algid;
+BYTE encryptedkey[rsapubkey.bitlen/8];</PRE>
+
+<P>The <B>ALG_ID</B> structure immediately following the <B>PUBLICKEYSTRUC</B> structure specifies the encryption algorithm used to encrypt the session key data. This typically has a value of CALG_RSA_KEYX, indicating that the session key data was encrypted with a key exchange public key using the RSA Public-Key algorithm.
+
+<P>The encrypted session key data is in the form of a PKCS #1, type 2 encryption block. For details on this data format, see the Public-Key Cryptography Standards (PKCS) published by RSA Data Security, Inc.
+
+<P>This data is always the same size as the public key's modulus. For example, public keys generated by the Microsoft RSA Base Provider can be 512 bits (64 bytes in length, so, in that case, the encrypted session key data is also 512 bits, or 64 bytes).
+</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfpublickeystruc.htm">PUBLICKEYSTRUC</A> | <A HREF="wce50conusingbasiccryptographyservices.htm">Using Basic Cryptography Services</A> | <A HREF="wce50oricryptography.htm">Cryptography</A> | <A HREF="wce50conmicrosoftcryptographicsystem.htm">Microsoft Cryptographic System</A> | <A HREF="wce50oricertificates.htm">Certificates</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Key%20BLOBs (wce50conkeyblobs.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

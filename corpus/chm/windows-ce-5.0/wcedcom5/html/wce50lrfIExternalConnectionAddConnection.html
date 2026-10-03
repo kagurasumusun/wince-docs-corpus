@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IExternalConnection::AddConnection</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiexternalconnectionaddconnection"></A>IExternalConnection::AddConnection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method increments an object's count of its strong external connections (links).</P>
+
+<PRE class="syntax"><B>HRESULT AddConnection(</B>
+  <B>DWORD </B><I>exconn</I><B>,</B>
+  <B>DWORD </B><I>dwreserved</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>exconn</I></DT>
+
+<DD>[in] Type of external connection to the object. The only type of external connection currently supported by this interface is strong, which means that the object must remain alive as long as this external connection exists. 
+
+<P>Strong external connections are represented by the value EXTCONN_STRONG = 0x0001, which is defined in the enumeration EXTCONN.
+</dd>
+
+<DT><I>dwreserved</I></DT>
+
+<DD>[in] Passes information about the connection. 
+
+<P>This parameter is reserved for use by OLE. Its value can be zero, but not necessarily. Therefore, implementations of <B>AddConnection</B> should not contain blocks of code whose execution depends on whether a zero value is returned.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<DL>
+<DT>DWORD value</DT>
+
+<DD>The number of reference counts on the object; used for debugging purposes only.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>An object created by a EXE object server relies on its stub manager to call <B>IExternalConnection::AddConnection</B> whenever a link client activates and therefore creates an external lock on the object. When the link client breaks the connection, the stub manager calls <A HREF="wce50lrfiexternalconnectionreleaseconnection.htm">IExternalConnection::ReleaseConnection</A> to release the lock.</P>
+
+<P>Because DLL object applications exist in the same process space as their objects, they do not use RPCs (remote procedure calls) and therefore do not have stub managers to keep track of external connections. </P>
+
+<P>Therefore, DLL servers that support external links to their objects must implement <B>IExternalConnection</B> so link clients can directly call the interface to inform them when connections are added or released.</P>
+
+<P>The following is a typical implementation for the <B>AddConnection</B> method.</P>
+
+<PRE class="code">DWORD XX::AddConnection(DWORD extconn, DWORD dwReserved)
+{
+    return extconn&amp;EXTCONN_STRONG ? ++m_cStrong : 0;
+}</PRE>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfiexternalconnectionreleaseconnection.htm">IExternalConnection::ReleaseConnection</A> | <A HREF="wce50lrfirunnableobjectlockrunning.htm">IRunnableObject::LockRunning</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IExternalConnection::AddConnection (wce50lrfiexternalconnectionaddconnection.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Mounting an Installable File System as the Root Directory</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmountinganinstallablefilesystemastherootdirectory"></A>Mounting an Installable File System as the Root Directory</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>An addition to ROM-only file system functionality allows an external file system to be mounted as the root of the entire file system. This means that files and subdirectories of the external file system appear directly off the root directory. Other external volumes, such as \NETWORK or \Hard Disk, will retain those names and calls into those volumes will be routed as they have always been.</P>
+
+<P>Mounting an external file system as the root directory has two advantages:
+
+<UL type="disc">
+	<LI>The ability to store files and directories off the root directory, as if it were the RAM-based file system. Other external volumes still have the same paths. Files in ROM are stored in the Windows directory.</li>
+
+	<LI>The choice of shadowing the Windows directory. The file shadowing is accomplished by routing all Windows calls to the mounted root file system. The ROM then becomes unavailable.</li>
+</UL>
+
+<P>When drivers are loaded and file systems are mounted, the desired file system is registered in a special way to indicate that it should become the root. Before that point, all file API calls accessing files or directories in paths off of the root, except those in ROM, will fail.</P>
+
+<P>To register a file system as the root, set the following flag in the registry to specify the file system.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\System\StorageManager\Profiles\&lt;Your File System&gt;]
+    "MountFlags" = dword:4</PRE>
+
+<P>Only one file system may be registered as the root file system. After one root file system is registered, any subsequent file system making the attempt will still be registered, but will not become the root file system. A different file system may be registered as the root file system by first deregistering the previous root file system. At that point, there will be no root file system and the directory Windows will no longer be shadowed.</P>
+
+<P>The file system has the option of shadowing the Windows ROM directory. In this case, all files from the FILES section of ROM should be copied onto the mounted file system before it is mounted as the root file system. Files from the MODULES section, typically executable and DLL files, will still be accessed directly from ROM by the loader, if they are not present on the mounted root file system.</P>
+
+<P>To cause the root file system to shadow the Windows directory, the <B>MountFlags</B> registry setting must be set to the bitwise OR of the root flag (4) and the shadow flag (8). The following code example shows how the value is assigned.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\System\StorageManager\Profiles\HDProfile\&lt;Your File System&gt;]
+    "MountFlags"=dword:C</PRE>
+
+<P>If you choose to use a file system other than the object store as the root file system, the majority of ActiveSync functionality will not work correctly. ActiveSync assumes that the object store is used as the root file system.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conaddinganinstallablefilesystem.htm">Installable File System</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Mounting%20an%20Installable%20File%20System%20as%20the%20Root%20Directory (wce50conmountinganinstallablefilesystemastherootdirectory.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

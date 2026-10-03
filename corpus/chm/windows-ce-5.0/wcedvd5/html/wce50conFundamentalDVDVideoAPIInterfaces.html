@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Fundamental DVD-Video API Interfaces</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50confundamentaldvdvideoapiinterfaces"></A>Fundamental DVD-Video API Interfaces</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A DVD-Video API application needs to establish a connection to the DVD-Video data through COM interfaces that connect to the data source, provide an interface to the data, and provide an interface for navigation. </P>
+
+<H4 class="dtH4">Connecting to the Data Source</H4>
+
+<P>Before the application can read any data, it must first establish a connection to the DVD-Video data source through a DVDData object. The <A HREF="wce50lrfidvdrom.htm">IDVDROM</A> interface represents the DVD-Video data source to the player application. </P>
+
+<P>The technical details concerning how the Windows CE device hosting the player application interacts with the physical medium are encapsulated within the <B>IDVDROM</B> interface, shielding the player application from this complexity. </P>
+
+<PRE class="code">IDVDROM *  pDisk;
+
+HRESULT hres = CoCreateInstance(
+    CLSID_DVDData,         //Class identifier (CLSID) of the object
+    NULL,                  //Object is or is not part of an aggregate 
+    CLSCTX_INPROC_SERVER,  //Context for running executable code
+    IID_IDVDROM,           //Interface identifier
+    (LPVOID *)&amp;pDisk
+);</PRE>
+
+<P>The <B>IDVDROM</B> interface represents the source of the DVD-Video data. It does not represent the data itself. An application that has obtained a pointer to an <B>IDVDROM</B> interface has the ability to connect to a DVD-Video data source. It has not actually made the connection yet. The <A HREF="wce50lrfidvdrombind.htm">IDVDROM::Bind</A> method ties the DVDData object to a specific media source.</P>
+
+<P>The following code example shows the <B>IDVDROM</B> interface being bound to command line parameters contained in <I>lpCmdLine</I> or a default CD-ROM drive.</P>
+
+<PRE class="code">if (lpCmdLine &amp;&amp; (lpCmdLine[0] != L'\0'))
+{
+    hres = pDisk-&gt;Bind(lpCmdLine);
+}
+else
+{
+    hres = pDisk-&gt;Bind(TEXT("\\cd-rom"));
+}</PRE>
+
+<P>After the media source is bound, subsequent DVD-Video API calls are applied to that media source until the <A HREF="wce50lrfidvdromunbind.htm">IDVDROM::Unbind</A> method is called.</P>
+
+<H4 class="dtH4">Obtaining an Interface to the Data</H4>
+
+<P>An application must obtain an <A HREF="wce50lrfidvdvideovolume.htm">IDVDVideoVolume</A> interface in order to work with the data stored in a DVD-Video source. This interface provides access to the data tables defined by the DVD-Video standard. </P>
+
+<PRE class="code">hres = pDisk-&gt;QueryInterface(IID_IDVDVideoVolume, (LPVOID *) &amp;pVolume);</PRE>
+
+<P>As with the <B>IDVDROM</B> interface, <B>IDVDVideoVolume</B> does not contain any default data upon creation. An <B>IDVDVideoVolume</B> interface must be initialized with data from the source bound to the DVDData object. This is done through an <B>IDVDROM</B> interface as shown in the following code example.</P>
+
+<PRE class="code">hres = pVolume-&gt;InitData(pDisk);</PRE>
+
+<H4 class="dtH4">Obtaining a Navigation Interfaces</H4>
+
+<P>An <B>IDVDVideoVolume</B> interface provides your application with the program data contained within a DVD-Video recording. It does not provide a way for your application to navigate through that data. A DVDNavigationManager object manages the interactions between the user's input and the DVD-Video volume and directs the appropriate output to the DVD-Video renderer.</P>
+
+<P>The <A HREF="wce50lrfidvdnavigationmanager.htm">IDVDNavigationManager</A> interface to a DVDNavigationManager object allows you to set and read the global playback context, such as system parameters (SPRMs) and renderer capabilities, for your application. </P>
+
+<P>The following code example shows how you can instantiate a DVDNavigationManager object and obtain an <B>IDVDNavigationManager</B> interface to it.</P>
+
+<PRE class="code">IDVDNavigationManager *pNavMan;
+
+hres = CoCreateInstance(
+    CLSID_DVDNavigationManager,  //Class identifier (CLSID) of the object
+    NULL,                        //Object is or is not part of an aggregate 
+    CLSCTX_INPROC_SERVER,        //Context for running executable code
+    IID_IDVDNavigationManager,   //Interface identifier
+    (LPVOID *)&amp;pNavMan
+);</PRE>
+
+<P>The <A HREF="wce50lrfidvduseroperation.htm">IDVDUserOperation</A> interface allows your application to actually navigate the DVD-Video data through methods that represent the operational functionality recommended in Annex J functionality of <I>DVD Forum Specification</I>. </P>
+
+<P>The following code example shows how to obtain a pointer to an <B>IDVDUserOperation</B> interface and associate the navigation manager with a DVD-Video volume.</P>
+
+<PRE class="code">IDVDUserOperation *pAnnexJ;
+hres = pNavMan-&gt;QueryInterface(IID_IDVDUserOperation,
+                               (LPVOID *) &amp;pAnnexJ);
+hres = pNavMan-&gt;SetVolume(pVolume);
+
+if (SUCCEEDED(hres))
+{
+  hres = pNavMan-&gt;SetVolume(pVolume);
+  // ...
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concreatingasimpledvdplayer.htm">Creating a Simple DVD Player</A> | <A HREF="wce50conimplementingfirstplay.htm">Implementing First Play</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Fundamental%20DVD-Video%20API%20Interfaces (wce50confundamentaldvdvideoapiinterfaces.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

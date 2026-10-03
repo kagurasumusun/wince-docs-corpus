@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoContext::SetAdaptationData</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecocontextsetadaptationdata"></A>ISpRecoContext::SetAdaptationData</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method sends string data to the SR engine to update the current language model.</P>
+
+<PRE class="syntax"><B>HRESULT SetAdaptationData(</B>
+  <B>const WCHAR* </B><I>pAdaptationData</I><B>,</B>
+  <B>const ULONG </B><I>cch</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pAdaptationData</I> </DT>
+
+<DD>[in] Pointer to data to use in the update. </dd>
+
+<DT><I>cch</I> </DT>
+
+<DD>[in] Number of characters in the data specified by <I>pAdaptationData</I>. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%><I>pAdaptationData</I> is invalid or cch equals zero. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_OUTOFMEMORY </TD>
+<TD width=65%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_SR_ENGINE_EXCEPTION </TD>
+<TD width=65%>An exception was thrown by the SR engine during <B>ISpSREngine::SetAdaptationData</B>. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>An application that wants to improve recognition accuracy for dictating uncommon words, or uncommon word groupings, can train the SR engine for the new words, or word groupings, by creating or obtaining typical text and send the results to the engine using <B>SetAdaptationData</B>.</P>
+
+<P>For example, a word processing application can give users the ability to train its users on previously created text documents. Similarly, an email or collaboration application could train the SR engine on previously sent email or collaborated documents. After training, the SR engine could improve performance within specific domains of information, and improve the application's and SAPI's personalization experience.</P>
+
+<P>The SAPI middleware component (and Microsoft) do not store this information - instead it is passed directly to the SR engine using <A HREF="wce50lrfispsrenginesetadaptationdata.htm">ISpSREngine::SetAdaptationData</A>. Note also that the SR engine (vendor) decides what to do with the string data, including how the data is persisted and for how long. Some SR engines may require a nontrivial amount of time to process the string data, so the application may want to break up the data in smaller chunks to send individually.</P>
+
+<P>Applications that use <B>SetAdaptationData</B> should break the data into small (1K or less) blocks, call <B>SetAdaptationData</B>, and then wait for an SPEI_ADAPTATION event before sending the next small block of data. This method should not be used with large buffers, because calling <B>SetAdaptationData</B> with buffers larger than 32K can cause unpredictable results.</P>
+
+<P>When the SR engine is ready to receive more string data to adapt its language model, it can fire the SPEI_ADAPTATION event to the application.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// get the "training" data, and break it into manageable chunks
+//[for example, an array of strings]
+// ...
+// set interest in the adaptation event
+hr = cpRecoContext-&gt;SetInterest(SPFEI(SPEI_ADAPTATION),
+SPFEI(SPEI_ADAPTATION));
+// Check hr
+// adapt to each chunk of data
+for (int i = 0; i &lt; iCountOfDataChunk; i ++)
+{
+    // send each chunk of data the engine
+    hr = cpRecoContext-&gt;SetAdaptationData(ppwszAdaptationData[i],
+    wcslen(ppwszAdaptationData[i]));
+    // Check hr
+    // wait for the engine to ask for more data
+    hr = cpRecoContext-&gt;WaitForNotifyEvent(PROCESSING_WAIT_TIME);
+    // Check hr
+}
+// SR Engine has adaptated its language model to data</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecocontext.htm">ISpRecoContext</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoContext::SetAdaptationData (wce50lrfisprecocontextsetadaptationdata.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoGetInstanceFromIStorage</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcogetinstancefromistorage"></A>CoGetInstanceFromIStorage</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates a new object and initializes it from a storage object through an internal call to <A HREF="wce50lrfipersiststorageload.htm">IPersistStorage::Load</A>.</P>
+
+<PRE class="syntax"><B>HRESULT CoGetInstanceFromIStorage(</B>
+  <B>COSERVERINFO* </B><I>pServerInfo</I><B>,</B>
+  <B>CLSID* </B><I>pclsid</I><B>,</B>
+  <B>IUnknown* </B><I>punkOuter</I><B>,</B>
+  <B>DWORD </B><I>dwClsCtx</I><B>,</B>
+  <B>IStorage* </B><I>pstg</I><B>,</B>
+  <B>ULONG </B><I>cmq</I><B>,</B>
+  <B>MULTI_QI* </B><I>rgmqResults</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pServerInfo</I></DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfcoserverinfo.htm">COSERVERINFO</A> structure that specifies the machine on which to instantiate the object and the authentication setting to be used. 
+
+<P>May be NULL, in which case the object is either instantiated (1) on the current machine, (2) at the machine specified under the <B>RemoteServerName</B> named-value for the class in the registry, or (3) at the machine where the storage object pointed to by <I>pstg</I> is located if the class is registered with <B>ActivateAtStorage</B> specified or has no local registry information.
+</dd>
+
+<DT><I>pclsid</I></DT>
+
+<DD>[in] Pointer to the class identifier (CLSID) of the object to be created. May be NULL, in which case there is a call to <A HREF="wce50lrfistoragestat.htm">IStorage::Stat</A> to find the class of the object.</dd>
+
+<DT><I>punkOuter</I></DT>
+
+<DD>[in] When non-NULL, indicates the instance is being created as part of an aggregate, and <I>punkOuter</I> is to be used as the pointer to the new instance's controlling <A HREF="wce50lrfiunknown.htm">IUnknown</A>. 
+
+<P>Aggregation is currently not supported cross-process or cross-machine. When instantiating an object out of process, CLASS_E_NOAGGREGATION will be returned if <I>punkOuter</I> is non-NULL.
+</dd>
+
+<DT><I>dwClsCtx</I></DT>
+
+<DD>[in] Values taken from the <B>CLSCTX</B> enumeration.</dd>
+
+<DT><I>pstg</I></DT>
+
+<DD>[in] Pointer to storage to initialize the object with using <B>IPersistStorage::Load</B>. May not be NULL.</dd>
+
+<DT><I>cmq</I></DT>
+
+<DD>Number of <B>MULTI_QI</B> structures in <I>rgmqResults</I>. Must be greater than zero.</dd>
+
+<DT><I>rgmqResults</I></DT>
+
+<DD>Array of <B>MULTI_QI</B> structures. Each structure has three members: the identifier for a requested interface (<B>pIID</B>), the location to return the interface pointer (<B>pItf</B>) and the return value of the call to <A HREF="wce50lrfiunknownqueryinterface.htm">QueryInterface</A> (<B>hr</B>).</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function supports the standard return value E_INVALIDARG, as well as the following:
+
+<DL>
+<DT>S_OK </DT>
+
+<DD>Indicates success.</dd>
+
+<DT>CO_S_NOTALLINTERFACES</DT>
+
+<DD>At least one, but not all of the interfaces requested in the <I>rgmqResults</I> array were successfully retrieved. The <B>hr</B> field of each of the <B>MULTI_QI</B> structures in <I>rgmqResults</I> indicates with S_OK or E_NOINTERFACE whether the specific interface pointer was retrieved.</dd>
+
+<DT>E_NOINTERFACE</DT>
+
+<DD>None of the interfaces requested in the <I>rgmqResults</I> array were successfully retrieved.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>CoGetInstanceFromIStorage</B> creates a new object and initializes it from a storage object through a call to <B>IPersistStorage::Load</B>. This function is similar to creating an instance using <A HREF="wce50lrfcocreateinstanceex.htm">CoCreateInstanceEx</A> followed by a call to <B>IPersistStorage::Load</B>, with the following important distinctions:
+
+<UL type="disc">
+	<LI>Fewer network round trips are required by this function when instantiating remotely.</li>
+
+	<LI>In the case where <I>dwClsCtx</I> is set to CLSCTX_REMOTE_SERVER and <I>pServerInfo</I> is NULL, if the class is registered with the <B>ActivateAtStorage</B> named value or has no associated registry information, this function will instantiate an object on the same machine where the storage object pointed to by <I>pstg</I> resides, providing the least possible network traffic. 
+<P>For example, if <I>pstg</I> were obtained through a call to <B>StgCreateDocfile</B>, specifying "\\myserver\users\johndo\file", the object would be instantiated on the "myserver" machine, and the object would access the storage object directly.
+</li>
+</UL>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoGetInstanceFromIStorage (wce50lrfcogetinstancefromistorage.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

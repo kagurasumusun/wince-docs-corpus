@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoDisconnectObject</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcodisconnectobject"></A>CoDisconnectObject</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function disconnects all remote process connections being maintained on behalf of all the interface pointers that point to a specified object. Only the process that actually manages the object should call <B>CoDisconnectObject</B>. </P>
+
+<PRE class="syntax"><B>STDAPI CoDisconnectObject(</B>
+  <B>IUnknown* </B><I>pUnk</I><B>,</B>
+  <B>DWORD </B><I>dwReserved</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pUnk</I></DT>
+
+<DD>[in] Pointer to any <A HREF="wce50lrfiunknown.htm">IUnknown</A>-derived interface on the object to be disconnected.</dd>
+
+<DT><I>dwReserved</I></DT>
+
+<DD>[in] Reserved for future use; must be zero. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>All connections to remote processes were successfully deleted.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>CoDisconnectObject</B> function enables a server to correctly disconnect all external clients to the object specified by <I>pUnk</I>.</P>
+
+<P>The <B>CoDisconnectObject</B> function performs the following tasks:
+
+<OL type="1">
+	<LI>Checks to see if the object to be disconnected implements the <A HREF="wce50lrfimarshaliunknown.htm">IMarshal</A> interface. If so, it gets the pointer to that interface; if not, it gets a pointer to the standard marshaler's (that is, COM's) <B>IMarshal</B> implementation.</li>
+
+	<LI>Using whichever <B>IMarshal</B> interface pointer it has acquired, the function then calls <A HREF="wce50lrfimarshaldisconnectobject.htm">IMarshal::DisconnectObject</A> to disconnect all out-of-process clients.</li>
+</OL>
+
+<P>An object's client does not call <B>CoDisconnectObject</B> to disconnect itself from the server (clients should use <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> for this purpose). Rather, an OLE server calls <B>CoDisconnectObject</B> to forcibly disconnect an object's clients, usually in response to a user closing the server application.</P>
+
+<P>Similarly, an OLE container that supports external links to its embedded objects can call <B>CoDisconnectObject</B> to destroy those links. Again, this call is normally made in response to a user closing the application. </P>
+
+<P>The container should first call <A HREF="wce50lrfioleobjectclose.htm">IOleObject::Close</A> for all its OLE objects, each of which should send <A HREF="wce50lrfiadvisesinkonclose.htm">IAdviseSink::OnClose</A> notifications to their various clients. Then the container can safely call <B>CoDisconnectObject</B> to close any existing connections.</P>
+
+<P><B>CoDisconnectObject</B> does not necessarily disconnect out-of-process clients immediately. </P>
+
+<P>If any marshaled calls are pending on the server object, <B>CoDisconnectObject</B> disconnects the object only when those calls have returned. </P>
+
+<P>In the meantime, <B>CoDisconnectObject</B> sets a flag that causes any new marshaled calls to return CO_E_OBJECTNOTCONNECTED.</P>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoDisconnectObject (wce50lrfcodisconnectobject.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

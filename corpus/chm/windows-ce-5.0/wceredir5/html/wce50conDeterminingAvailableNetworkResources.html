@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Determining Available Network Resources</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condeterminingavailablenetworkresources"></A>Determining Available Network Resources</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To determine the resources available on a network, an application passes the address of a <A HREF="wce50lrfnetresource.htm">NETRESOURCE</A> structure to the <B>WNetOpenEnum</B> function. Calling <A HREF="wce50lrfwnetopenenum.htm">WNetOpenEnum</A> initializes an enumeration instance with the <B>NETRESOURCE</B> structure specifying the enumeration parameters.</P>
+
+<P class="labelproc"><B>To identify available network resources</B>
+
+<OL type="1">
+	<LI>Set up the <B>NETRESOURCE</B> structure to define enumeration.
+<P>To enumerate a <I>shared directory</I> on a server, change the <B>lpRemoteName</B> member in <B>NETRESOURCE</B> to the name of the server. Similarly, to enumerate servers in a domain, change the <B>lpRemoteName</B> to the name of the domain.
+
+<P>The following code example shows how to enumerate a shared directory on a server:
+
+<PRE class="code">NETRESOURCE nr;
+
+nr.dwScope = RESOURCE_GLOBALNET;
+nr.dwType = RESOURCETYPE_DISK;  
+nr.dwUsage = RESOURCEUSAGE_CONTAINER;
+nr.lpLocalName = TEXT("");
+nr.lpRemoteName = TEXT("\\\\MyServer");
+nr.lpComment = TEXT("");
+nr.lpProvider = TEXT("");
+
+EnumerateFunc (hwnd, &amp;nr); </PRE>
+
+<P>The following code example shows how to enumerate servers in a domain:
+
+<PRE class="code">NETRESOURCE nr;
+
+nr.dwScope = RESOURCE_GLOBALNET;
+nr.dwType = RESOURCETYPE_DISK;  
+nr.dwUsage = RESOURCEUSAGE_CONTAINER;
+nr.lpLocalName = TEXT("");
+nr.lpRemoteName = TEXT("MyDomain");
+nr.lpComment = TEXT("");
+nr.lpProvider = TEXT("");
+
+EnumerateFunc (hwnd, &amp;nr); </PRE>
+</li>
+
+	<LI>Call <B>WNetOpenEnum</B> to create an enumeration handle to the resource defined by <B>NETRESOURCE</B>.</li>
+
+	<LI>Call <A HREF="wce50lrfwnetenumresource.htm">WNetEnumResource</A> with the enumeration handle created in the previous step to package the resource data in an array of <B>NETRESOURCE</B> structures.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Enumeration of network shares on a server (for example, <B>WNetEnumResource</B>, or dir \\server\*) may return incorrect share information if share names contain extended characters. This is due to the fact that the Windows CE redirector uses <B>NetShareEnum</B>, which does not support Unicode. If the complete \\server\share path is specified, file operations operate correctly, even if the share contains extended characters.</BLOCKQUOTE>
+</li>
+
+	<LI>Call <A HREF="wce50lrfwnetcloseenum.htm">WNetCloseEnum</A> to close the enumeration handle.
+<P>An application can continue enumerating any container's resources.
+</li>
+</OL>
+
+<P>If the <B>dwUsage</B> member of <B>NETRESOURCE</B> returned by <B>WNetEnumResource</B> is RESOURCEUSAGE_CONTAINER, an application can continue enumerating that container by passing the address of that structure to <B>WNetOpenEnum</B>. If <B>dwUsage</B> is RESOURCEUSAGE_CONNECTABLE, an application can add a connection to the resource by passing the structure address to the <A HREF="wce50lrfwnetaddconnection3.htm">WNetAddConnection3</A> function. For more information, see <A HREF="wce50conestablishinganetworkconnection.htm">Establishing a Network Connection</A>.</P>
+
+<P>The following code example shows how an application-defined function, <B>EnumerateFunc</B>, that enumerates all the resources in a subdirectory on a network. This function takes a pointer to a <B>NETRESOURCE</B> structure describing the subdirectory. Whenever <B>WNetEnumResource</B> returns a <B>NETRESOURCE</B> structure with the <B>dwUsage</B> member corresponding to RESOURCEUSAGE_CONTAINER, <B>EnumerateFunc</B> calls itself and passes a pointer to this structure in its call to <B>WNetOpenEnum</B>.</P>
+
+<PRE class="code">BOOL WINAPI EnumerateFunc (HWND hwnd, LPNETRESOURCE lpnr)
+{
+  HANDLE hEnum;
+
+  DWORD dwIndex,
+        dwResult,
+        dwBufferSize = 16384,       
+        dwNumEntries = 0xFFFFFFFF;  // Enumerate all possible entries.
+
+  LPNETRESOURCE lpnrLocal;          // Pointer to enumerated structures.
+
+  dwResult = WNetOpenEnum (
+                    RESOURCE_GLOBALNET, // All resources on the network.
+                    RESOURCETYPE_ANY,   // All resources.
+                    0,                  // Enumerate all resources.
+                    lpnr,               // The container to enumerate.
+                    &amp;hEnum);            // Handle to resource.
+
+  if (dwResult != ERROR_SUCCESS) 
+  {
+    ErrorHandler (hwnd, dwResult, TEXT("WNetOpenEnum"));
+    return FALSE;
+  }
+
+  // Allocate memory for NETRESOURCE structures.
+  if (!(lpnrLocal = (LPNETRESOURCE) LocalAlloc (LPTR, dwBufferSize)))
+    MessageBox (hwnd, TEXT("Not enough memory"), TEXT("Error"), MB_OK);
+    
+  do 
+  {
+    dwResult = WNetEnumResource (
+                    hEnum,              // Resource handle.
+                    &amp;dwNumEntries,      // Number of entries.
+                    lpnrLocal,          // LPNETRESOURCE
+                    &amp;dwBufferSize);     // Buffer size.
+
+    if (dwResult == ERROR_SUCCESS) 
+    {
+      for (dwIndex = 0; dwIndex &lt; dwNumEntries; dwIndex++)
+      {
+        // Insert code here to perform operations with lpnrLocal
+        // for example, to display contents of NETRESOURCE structures.
+        // ...
+
+        // If this NETRESOURCE is a container, call the function
+        // recursively.
+        if (RESOURCEUSAGE_CONTAINER ==
+            (lpnrLocal[dwIndex].dwUsage &amp; RESOURCEUSAGE_CONTAINER))
+        {
+          if(!EnumerateFunc (hwnd, &amp;lpnrLocal[dwIndex]))
+              MessageBox (hwnd, TEXT("EnumerateFunc returned FALSE."), 
+                          TEXT("Error"), MB_OK);
+        }
+      }
+    }
+    else if (dwResult != ERROR_NO_MORE_ITEMS) 
+    {
+      ErrorHandler (hwnd, dwResult, TEXT("WNetEnumResource"));
+      break;
+    }
+  } while (dwResult != ERROR_NO_MORE_ITEMS);
+
+  LocalFree (lpnrLocal);
+
+  dwResult = WNetCloseEnum (hEnum);
+
+  if (dwResult != ERROR_SUCCESS) 
+  {
+    ErrorHandler (hwnd, dwResult, TEXT("WNetCloseEnum"));
+    return FALSE;
+  }
+
+  return TRUE;
+} </PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conwindowsnetworkapiredirectorapplicationdevelopment.htm">Windows Networking API/Redirector Application Development</A> | <A HREF="wce50conmanagingnetworkconnectionswithwnet.htm">Managing Network Connections with WNet</A> | <A HREF="wce50conwindowsnetworkingapiredirectorsecurity.htm">Windows Networking API/Redirector Security</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Determining%20Available%20Network%20Resources (wce50condeterminingavailablenetworkresources.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

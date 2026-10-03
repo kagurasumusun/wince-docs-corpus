@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::GetDisplayName</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimonikergetdisplayname"></A>IMoniker::GetDisplayName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method returns the display name.</P>
+
+<PRE class="syntax"><B>HRESULT GetDisplayName( </B>
+  <B>IBindCtx* </B><I>pbc</I><B>, </B>
+  <B>IMoniker* </B><I>pmkToLeft</I><B>, </B>
+  <B>LPOlESTR* </B><I>ppszDisplayName</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfibindctxiunknown.htm">IBindCtx</A> interface on the bind context to be used in this operation. 
+
+<P>The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. 
+
+
+<P>For more information, see <B>IBindCtx</B>.
+</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. 
+
+<P>This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.
+</dd>
+
+<DT><I>ppszDisplayName</I></DT>
+
+<DD>[out] Address of <B>LPOLESTR</B> pointer variable that receives a pointer to the display name string. 
+
+<P>When successful, this string is a zero-terminated wide character string (two bytes per character) that contains the display name of the moniker. 
+
+
+<P>The implementation must use the <A HREF="wce50lrfimallocalloc.htm">IMalloc::Alloc</A> method to allocate the string returned in <I>ppszDisplayName</I>, and the caller is responsible for calling the <A HREF="wce50lrfimallocfree.htm">IMalloc::Free</A> method to free it. 
+
+
+<P>Both the caller and the implementation of this method use the COM task allocator returned by the <A HREF="wce50lrfcogetmalloc.htm">CoGetMalloc</A> function. 
+
+
+<P>If an error occurs, the implementation must set *<I>ppszDisplayName</I> should be set to NULL.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The method supports the standard return value E_OUTOFMEMORY. </P>
+
+<P>The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_OK</TD>
+<TD width=66%>The display name was successfully supplied.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>MK_E_EXCEEDEDDEADLINE </TD>
+<TD width=66%>The binding operation could not be completed within the time limit specified by the bind context's <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>E_NOTIMPL</TD>
+<TD width=66%>There is no display name.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>IMoniker::GetDisplayName</B> provides a string that is a displayable representation of the moniker. </P>
+
+<P>A display name is not a complete representation of a moniker's internal state; it is simply a form that can be read by users. As a result, it is possible, though rare, for two different monikers to have the same display name. </P>
+
+<P>While there is no guarantee that the display name of a moniker can be parsed back into that moniker when calling the <A HREF="wce50lrfmkparsedisplayname.htm">MkParseDisplayName</A> function with it, failure to do so is rare.</P>
+
+<P>As examples, the file moniker implementation of this method supplies the path the moniker represents, and an item moniker's display name is the string identifying the item that is contained in the moniker.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>. </P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>It is possible that retrieving a moniker's display name may be an expensive operation. For efficiency, you may want to cache the results of the first successful call to <B>IMoniker::GetDisplayName</B>, rather than making repeated calls.</P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>If you are writing a moniker class in which the display name does not change, simply cache the display name and supply the cached name when requested. </P>
+
+<P>If the display name can change over time, getting the current display name might mean that the moniker has to access the object's storage or bind to the object, either of which can be expensive operations. </P>
+
+<P>If this is the case, your implementation of <B>IMoniker::GetDisplayName</B> should return MK_E_EXCEEDEDDEADLINE if the name cannot be retrieved by the time specified in the bind context's <B>BIND_OPTS</B> structure.</P>
+
+<P>A moniker that is intended to be part of a generic composite moniker should include any preceding delimiter (such as '\') as part of its display name. For example, the display name returned by an item moniker includes the delimiter specified when it was created with the <A HREF="wce50lrfcreateitemmoniker.htm">CreateItemMoniker</A> function. </P>
+
+<P>The display name for a file moniker does not include a delimiter because file monikers are always expected to be the leftmost component of a composite.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcogetmalloc.htm">CoGetMalloc</A> | <A HREF="wce50lrfcreateitemmoniker.htm">CreateItemMoniker</A> | <A HREF="wce50lrfmkparsedisplayname.htm">MkParseDisplayName</A> | <A HREF="wce50lrfbindopts.htm">BIND_OPTS</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMoniker::GetDisplayName (wce50lrfimonikergetdisplayname.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Allowing Inbound IPSec (IPv6) Traffic to Private Hosts</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50grfallowinboundipsecipv6traffictoprivatehosts"></A>Allowing Inbound IPSec (IPv6) Traffic to Private Hosts</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>By default, the firewall blocks IPSec traffic just like any other inbound traffic. You can configure the firewall to allow inbound IPSec traffic to specific private hosts or to all private hosts by allowing rules for IP_PROTOCOL_AH (51) and IP_PROTOCOL_ESP (50) protocols, and creating an ALLOW rule for the Internet Key Exchange (IKE) packets (UDP port 500). </P>
+
+<P>The following table shows how the members in this structure can be used to allow all inbound IPv6 IPSec traffic, including IKE, to all private hosts.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=25%>dwFlags</TH>
+<TH width=25%>PrivateHost.Family</TH>
+<TH width=25%>Protocol</TH>
+<TH width=25%>Port</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>FWF_ALLOW | FWF_INBOUND</TD>
+<TD width=25%>AF_INET6</TD>
+<TD width=25%>IP_PROTOCOL_AH</TD>
+<TD width=25%>Not applicable</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>FWF_ALLOW | FWF_INBOUND</TD>
+<TD width=25%>AF_INET6</TD>
+<TD width=25%>IP_PROTOCOL_ESP</TD>
+<TD width=25%>Not applicable</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>FWF_ALLOW | FWF_INBOUND</TD>
+<TD width=25%>AF_INET6</TD>
+<TD width=25%>IP_PROTOCOL_UDP</TD>
+<TD width=25%>500</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Registry entries for the rule</H4>
+
+<P>The following registry example shows the registry entries for this rule.</P>
+
+<PRE class="code">[HKEY_LOCAL_MACHINE\COMM\Firewall\Rules\InboundAH]
+    "Mask"=dword:20         ; FWM_PROTOCOL 
+    "Flags"=dword:A         ; FWF_ALLOW | FWF_INBOUND
+    "PrivateHost"=hex:17,00         ; AF_INET6
+    "Protocol"=dword:33     ; IP_PROTOCOL_AH
+
+[HKEY_LOCAL_MACHINE\COMM\Firewall\Rules\InboundESP]
+    "Mask"=dword:20         ; FWM_PROTOCOL 
+    "Flags"=dword:A         ; FWF_ALLOW | FWF_INBOUND
+    "PrivateHost"=hex:17,00         ; AF_INET6
+    "Protocol"=dword:32     ; IP_PROTOCOL_ESP
+
+[HKEY_LOCAL_MACHINE\COMM\Firewall\Rules\InboundUDP]
+    "Mask"=dword:24         ; FWM_PROTOCOL | FWM_PORT
+    "Flags"=dword:A         ; FWF_ALLOW | FWF_INBOUND
+    "PrivateHost"=hex:17,00         ; AF_INET6
+    "Protocol"=dword:11         ; IP_PROTOCOL_UDP
+    "Port"=dword:1F4         ; 500</PRE>
+
+<H4 class="dtH4">Code example to create the rule</H4>
+
+<P>The following code example shows this rule.</P>
+
+<PRE class="code">    FW_RULE InboundAH;
+    // The following fields must always be set.
+    InboundAH.dwSize = sizeof(FW_RULE);
+    InboundAH.dwFlags = FWF_ALLOW | FWF_INBOUND;
+    InboundAH.dwMask |= FWM_PROTOCOL;
+    InboundAH.PrivateHost.Family = AF_INET6;
+    InboundAH.wszDescription = L"Allows inbound AH packets";
+    
+    // Protocol.
+    InboundAH.Protocol = IP_PROTOCOL_AH; 
+     
+    // Create a persistent rule.
+    FirewallCreateRule(&amp;InboundAH, TRUE); 
+
+    FW_RULE InboundESP;
+    // The following fields must always be set.
+    InboundESP.dwSize = sizeof(FW_RULE);
+    InboundESP.dwFlags = FWF_ALLOW | FWF_INBOUND;
+    InboundESP.dwMask = FWM_PROTOCOL;
+    InboundESP.PrivateHost.Family = AF_INET6;
+    InboundESP.wszDescription = L"Allows inbound ESP packets";
+    
+    // Protocol.
+    InboundESP.Protocol = IP_PROTOCOL_ESP; 
+     
+    // Create a persistent rule.
+    FirewallCreateRule(&amp;InboundESP, TRUE); 
+
+
+    FW_RULE InboundUDP;
+    // The following fields must always be set.
+    InboundUDP.dwSize = sizeof(FW_RULE);
+    InboundUDP.dwFlags = FWF_ALLOW | FWF_INBOUND;
+    InboundUDP.dwMask = 0; //initialize to zero
+    InboundUDP.PrivateHost.Family = AF_INET6;
+    InboundUDP.wszDescription = L"Allows inbound Internet Key Exchange (UDP) packets";
+    
+    // Protocol.
+    InboundUDP.dwMask |= FWM_PROTOCOL;
+    InboundUDP.Protocol = IP_PROTOCOL_UDP; 
+    
+    // Port.    
+    InboundUDP.dwMask |= FWM_PORT;
+    InboundUDP.PortMin = 500;
+    InboundUDP.PortMax = 500;
+     
+    // Create a persistent rule.
+    FirewallCreateRule(&amp;InboundUDP, TRUE); </PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50origeneralfirewallruleexamples.htm">General Firewall Rule Examples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Allowing%20Inbound%20IPSec%20(IPv6)%20Traffic%20to%20Private%20Hosts (wce50grfallowinboundipsecipv6traffictoprivatehosts.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

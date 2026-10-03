@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TSPI_lineMonitorMedia</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrftspilinemonitormedia"></A>TSPI_lineMonitorMedia</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function enables and disables the detection of media types on the specified call. When a media type is detected, a <A HREF="wce50lrflinemonitormediatspi.htm">LINE_MONITORMEDIA</A> message is sent to TAPI.</P>
+
+<PRE class="syntax"><B>LONG TSPIAPI TSPI_lineMonitorMedia(</B>
+  <B>HDRVCALL</B> <I>hdCall</I><B>,</B> 
+  <B>DWORD</B> <I>dwMediaModes</I> 
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hdCall </I></DT>
+
+<DD>Handle to the call for which media monitoring is to be set. The call state of <I>hdCall</I> can be any state except idle. </dd>
+
+<DT><I>dwMediaModes</I> </DT>
+
+<DD>Media types to be monitored. The <I>dwMediaModes</I> parameter can have one of the <A HREF="wce50lrflinemediamode.htm">LINEMEDIAMODE</A> constants. 
+
+<P>A value of zero cancels all media type monitoring. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns zero if the function succeeds, or an error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLHANDLE</TD>
+<TD width=50%>The handle to the call is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLSTATE</TD>
+<TD width=50%>The call state is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALMEDIAMODE</TD>
+<TD width=50%>The media mode is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resource is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The service provider returns LINEERR_INVALMEDIAMODE if the list of media types to be monitored contains invalid information.</P>
+
+<P>This function returns zero (success) when media type monitoring has been correctly initiated, not when media type monitoring has terminated. Media monitoring for a given media type remains in effect until it is explicitly disabled by calling <B>TSPI</B>_<B>lineMonitorMedia</B> with a <I>dwMediaModes</I> parameter with the media type set to zero, or until the call transitions to idle.</P>
+
+<P><B>TSPI</B>_<B>lineMonitorMedia</B> is primarily an event reporting mechanism. The media type of a call, as indicated in the <A HREF="wce50lrflinecallinfo.htm">LINECALLINFO</A> structure, is not affected by the service provider's detection of the media type. Only TAPI or a client application can change a call's indicated media type using <B>TSPI</B>_<B>lineSetMediaMode</B>. The actual use of a particular media type occurs through separate media stream APIs (such as COMM or WAVE).</P>
+
+<P>Default media monitoring performed by the service provider for a new call appearance corresponds to the union of all media types specified by the <A HREF="wce50lrftspilinesetdefaultmediadetection.htm">TSPI_lineSetDefaultMediaDetection</A> function. Shortly after a new call is established, TAPI typically calls <B>TSPI</B>_<B>lineMonitorMedia</B> to reduce the set of media types detected and reported for this call to the union of all media types desired by the call's client applications.</P>
+
+<P>The service provider must cancel media monitoring when a call goes idle. TAPI must compute the union of media types desired by all clients, and pass the result to this function. The service provider uses the set passed to this function by TAPI.</P>
+
+<P>Although this function can be invoked in any call state, a call's media type can typically only be detected while the call is in certain call states. These states can be device specific. For example, in ISDN a message can indicate the media type of the media stream before the media stream exists. Similarly, distinctive ringing or the called ID information about the call can be used to identify the media type of a call. Otherwise, the call may have to be answered (call in the connected state) to allow a service provider to determine the call's media type by filtering of the media stream. Because filtering of a call's media stream implies a computational overhead, TAPI typically uses this procedure to disable media monitoring when it is not required.</P>
+
+<P>Because media-mode detection enabled by <B>TSPI</B>_<B>lineMonitorMedia</B> is implemented as a read-only operation of the call's media stream, it is not disruptive. No signals are sent on the line as a result of setting <B>TSPI</B>_<B>lineMonitorMedia</B>.</P>
+
+<P>Regarding the passed media type, TAPI guarantees that there are no reserved bits set. The service provider must perform any further validity checks on the media types, such as checking whether any media types are indeed supported by the service provider.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Tapicomn.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrftspilineconditionalmediadetection.htm">TSPI_lineConditionalMediaDetection</A> | <A HREF="wce50lrftspilinegetdevcaps.htm">TSPI_lineGetDevCaps</A> | <A HREF="wce50lrftspilinesetdefaultmediadetection.htm">TSPI_lineSetDefaultMediaDetection</A> | <A HREF="wce50lrftspilinesetmediamode.htm">TSPI_lineSetMediaMode</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TSPI_lineMonitorMedia (wce50lrftspilinemonitormedia.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

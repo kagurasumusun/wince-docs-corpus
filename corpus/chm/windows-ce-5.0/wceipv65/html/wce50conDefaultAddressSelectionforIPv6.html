@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Default Address Selection for IPv6</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condefaultaddressselectionforipv6"></A>Default Address Selection for IPv6</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In dual stack systems, such as Windows CE .NET 4.1 and later, the DNS name resolution may yield both IPv4 and IPv6 addresses. Algorithms are used to determine source and destination addresses of appropriate scope and configuration status, thus determining which stack (IPv4 or IPv6) to use. IPv6 addresses are created in conformance to the Internet Draft named "Default Address Selection for IPv6" (draftietf-ipngwg-default-addr-select-07.txt). </P>
+
+<P>The following list shows the algorithms that describe the behavior for all IPv6 implementations:
+
+<UL type="disc">
+	<LI>Source address selection algorithm</li>
+
+	<LI>Destination address selection algorithm </li>
+</UL>
+
+<P>You should use this default address selection policy during normal IPv6 operation. By using these algorithms, you can predict the behavior of your system. They do not override a legal destination or source address made by applications, by upper layer protocols, or by more advanced mechanisms.</P>
+
+<P>For example, using <B>getaddrinfo</B> may result in a list that has IPv4 and IPv6 addresses to your application. If no source address was specified by the application or by the upper layer protocol, <B>getaddrinfo</B> uses the destination address selection algorithm that considers both IPv4 and IPv6 addresses. The type of address that is chosen depends on the available source addresses. An application should iterate through the list of addresses returned from <B>getaddrinfo</B> until it finds a working address.</P>
+
+<P>IPv6 interfaces can have multiple unicast addresses that have different reachability scopes. For example, a node may have a link-local address, and a tunneling address. The configuration status of each address can be preferred or deprecated. The algorithms use several criteria in determining their outcomes, and prefer destination/source address pairs. </P>
+
+<P>An administrator can configure a policy that can override the default behavior of the algorithms. The policy override is a configurable table, named the policy table, that specifies precedence values and preferred source prefixes for destination prefixes. </P>
+
+<P>The algorithms and prefix table are described in the following subsections.</P>
+
+<H4 class="dtH4">Source Address Selection Algorithm</H4>
+
+<P>The following list shows the algorithm preferences when determining a source address:
+
+<UL type="disc">
+	<LI>Prefer the same address type</li>
+
+	<LI>Prefer the same address scope</li>
+
+	<LI>Prefer nondeprecated addresses</li>
+
+	<LI>Prefer home addresses over care-of addresses</li>
+
+	<LI>Prefer outgoing interfaces</li>
+
+	<LI>Prefer matching label</li>
+
+	<LI>Prefer public addresses over temporary addresses</li>
+
+	<LI>Use longest matching prefix</li>
+</UL>
+
+<H4 class="dtH4">Destination Address Selection Algorithm</H4>
+
+<P>The destination address selection algorithm operates on both IPv6 and IPv4 addresses. The following list shows the algorithm preferences when determining a destination address:
+
+<UL type="disc">
+	<LI>Prefer matching scope</li>
+
+	<LI>Prefer nondeprecated addresses</li>
+
+	<LI>Prefer home addresses over care-of addresses</li>
+
+	<LI>Prefer matching label</li>
+
+	<LI>Prefer higher precedence</li>
+
+	<LI>Prefer native transport</li>
+
+	<LI>Prefer smaller scope</li>
+
+	<LI>Use longest matching prefix</li>
+
+	<LI>Otherwise, leave order unchanged</li>
+
+	<LI>Avoid unusable destinations</li>
+</UL>
+
+<H4 class="dtH4">Policy Table</H4>
+
+<P>The default policy table is used when an implementation has not been configured. The following list shows the policy table preferences:
+
+<UL type="disc">
+	<LI>Prefer using IPv6 addresses when available.</li>
+
+	<LI>Prefer source and destination addresses that have the same scope (link-local or global).</li>
+
+	<LI>Prefer source and destination addresses that are the same address types. For example, native and 6to4.</li>
+</UL>
+
+<P>The policy table matches prefixes, listing the longest match, similar to a routing table. The following table shows the default policy table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Prefix</TH>
+<TH width=33%>Precedence</TH>
+<TH width=34%>Label</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>::1/128</TD>
+<TD width=33%>50</TD>
+<TD width=34%>0</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>::/0</TD>
+<TD width=33%>40</TD>
+<TD width=34%>1</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>2002::/16</TD>
+<TD width=33%>30</TD>
+<TD width=34%>2</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>::/96</TD>
+<TD width=33%>20</TD>
+<TD width=34%>3</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>::ffff:0:0/96</TD>
+<TD width=33%>10</TD>
+<TD width=34%>4</TD>
+</TR>
+</table></div>
+
+<P>The precedence value is used to sort destination address. If Precedence (A) is greater than Precedence (B), then the algorithm prefers destination address A over address B. </P>
+
+<P>A label value allows policies that prefer a particular source address prefix for use with a destination address prefix. For example, if Label (S) = Label (D), the algorithm prefers source address S and destination address D.</P>
+
+<P>You can override the default policy table by using IPv6.exe. For more information, see <A HREF="wce50conipv6.htm">IPv6</A>.</P>
+
+<P>For more information about the address selection algorithms and the prefix table, see Internet Draft named "Default Address Selection for IPv6" (draftietf-ipngwg-default-addr-select-07.txt).</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conassigningipv6addresstodevice.htm">Assigning an IPv6 Address to a Device</A> | <A HREF="wce50coninternetprotocolversion6addressing.htm">IPv6 Addressing</A> | <A HREF="wce50conipv6configurationmethods.htm">Methods for Configuring IPv6 Addresses</A> | <A HREF="wce50conipv6rfcsandinternetdrafts.htm">IPv6 RFCs and Internet Drafts</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Default%20Address%20Selection%20for%20IPv6 (wce50condefaultaddressselectionforipv6.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

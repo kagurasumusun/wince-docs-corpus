@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IViewObjectEx::QueryHitPoint</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiviewobjectexqueryhitpoint"></A>IViewObjectEx::QueryHitPoint</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method indicates whether a point is within a given aspect of an object.</P>
+
+<PRE class="syntax"><B>HRESULT QueryHitPoint(</B>
+  <B>DWORD</B> <I>dwAspect</I><B>,</B>
+  <B>LPRECT</B> <I>pRectBounds</I><B>,</B>
+  <B>POINTL</B> <I>ptlLoc</I><B>,</B>
+  <B>LONG</B> <I>lCloseHint</I><B>,</B>
+  <B>DWORD* </B><I>pHitResult</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwAspect </I></DT>
+
+<DD>[in] Requested drawing aspect. </dd>
+
+<DT><I>pRectBounds </I></DT>
+
+<DD>[in] Object bounding rectangle in client coordinates of the containing window. This rectangle is computed and passed by the container so that the object can meaningfully interpret the hit location. </dd>
+
+<DT><I>ptlLoc </I></DT>
+
+<DD>[in] Hit location in client coordinates of the containing window. </dd>
+
+<DT><I>lCloseHint </I></DT>
+
+<DD>[in] Suggested distance in HIMETRIC units that the container considers close. This value is a hint, and objects can interpret it in their own way. Objects can also use this hint to roughly infer output resolution to choose the expansiveness of hit test implementation. </dd>
+
+<DT><I>pHitResult </I></DT>
+
+<DD>[out] Pointer to returned information about the hit expressed as the <A HREF="wce50lrfhitresult.htm">HITRESULT</A> enumeration values. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the method returns S_OK, the hit information was successfully returned in <I>pHitResult</I>.</P>
+
+<P>If E_FAIL is returned, this method is not implemented for the requested aspect. Use DVASPECT_CONTENT instead.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To support hit detection on non-rectangular objects, the container needs a reliable way to ask an object whether a given location is inside one of its drawing aspects. This function is provided by <B>IViewObjectEx::QueryHitPoint</B>.</P>
+
+<P>Because this method is part of the <A HREF="wce50lrfiviewobjectexiviewobject2.htm">IViewObjectEx</A> interface, the container can figure whether a mouse hit is over an object without having to necessarily launch the server. </P>
+
+<P>If the hit happens to be inside the object, it is likely that the object will be in-place activated and the server started.</P>
+
+<P>Typically, the container first quickly determines whether a given location is within the rectangular extent of an object. </P>
+
+<P>If the location is within the rectangular extent of an object, the container calls <B>IViewObjectEx::QueryHitPoint</B> to get confirmation that the location is actually inside the object. </P>
+
+<P>The hit location is passed in client coordinates of the container window. Because the object may be inactive when this method is called, the bounding rectangle of the object in the same coordinate system is also passed to this method, similarly to what happens in <B>IPointerInactive::OnInactiveSetCursor</B>.</P>
+
+<P>Possible returned values include the following:
+
+<UL type="disc">
+	<LI>Outside, on a transparent region</li>
+
+	<LI>Close enough to be considered a hit (which may be used by small or thin objects)</li>
+
+	<LI>Hit</li>
+</UL>
+
+<P><B>QueryHitPoint</B> is not concerned by the subobjects of the object it is called for. It merely indicates whether the mouse hit was within the object.</P>
+
+<P><B>QueryHitPoint</B> can be called for any of the drawing aspects an object supports. It should fail if it is not supported for the requested drawing aspect.</P>
+
+<P>Transparent objects may want to implement a complex hit-detection mechanism where the user can select either the transparent object or an object behind it, depending on where exactly the click happens inside the object. </P>
+
+<P>For example, a transparent TextBox showing big enough text may let the user select the object behind, for example, a bitmap, when the user clicks between the characters. </P>
+
+<P>For this reason, the information returned by <B>QueryHitPoint</B> includes indication about whether the hit happens on an opaque or transparent region.</P>
+
+<P>The following illustration shows a transparent circle control with an object behind it.</P>
+
+<P class="fig"><IMG SRC="transparent_circle_control.gif" ALT="" BORDER=0></P>
+
+<P>The values shown are for hit tests against the circle; olive green regions are not part of the control, but they are shown to indicate an area around the image considered close. </P>
+
+<P>Each object implements its own definition of close but is assisted by a hint provided by the container so that closeness can be adjusted as images zoom larger or smaller.</P>
+
+<P>In the previous illustration, the points marked Hit, Close, and Transparent would all be hits of varying strength on the circle, with the exception of the one marked Transparent, (but for the line, close). </P>
+
+<P>This illustrates the effect of the different strength of hits. Because the circle responds transparent while the line claims close, and transparent is weaker than close, the line takes the hit.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P class="label"><B>Note to Implementers</B></P>
+
+<P>An object supporting <B>IViewObjectEx</B> is required to implement this method at least for the DVASPECT_CONTENT aspect. The object should not take any other action in response to this method other than to return the information; there should be no side effects.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Ocidl.h, Ocidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfhitresult.htm">HITRESULT</A> | <A HREF="wce50lrfiviewobjectexiviewobject2.htm">IViewObjectEx</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IViewObjectEx::QueryHitPoint (wce50lrfiviewobjectexqueryhitpoint.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

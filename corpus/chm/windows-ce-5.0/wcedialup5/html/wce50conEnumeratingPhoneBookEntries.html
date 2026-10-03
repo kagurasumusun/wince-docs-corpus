@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enumerating Phone-Book Entries</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conenumeratingphonebookentries"></A>Enumerating Phone-Book Entries</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The <A HREF="wce50lrfrasenumentries.htm">RasEnumEntries</A> function is used to enumerate a list of phone-book entries. Using this list, a user can select a RAS connection.</P>
+
+<P class="labelproc"><B>To enumerate phone-book entries</B>
+
+<OL type="1">
+	<LI>Allocate an array for the <A HREF="wce50lrfrasentryname.htm">RASENTRYNAME</A> structure.</li>
+
+	<LI>Call <B>RasEnumEntries</B> to list the names in the phone book.</li>
+
+	<LI>Display the list for a user.</li>
+</OL>
+
+<H2 class="dtH2">Enumerating Phone-Book Entry Example</H2>
+
+<P>The following code example shows how to dial and connect to a phone-book entry in the registry.</P>
+
+<PRE class="code">BOOL GetPhonebookEntries (HWND hDlgWnd)
+{
+  int index;
+  DWORD dwSize, 
+        dwEntries;
+  HWND hWndListBox;
+
+  // Allocate an array of RASENTRYNAME structures. Assume 
+  // no more than 20 entries to be configured on the 
+  // Windows CE-based device.
+
+  if (!(lpRasEntryName = new RASENTRYNAME [20]))
+  {
+    MessageBox (hDlgWnd, TEXT("Not enough memory"), szTitle, MB_OK);
+    return FALSE;
+  }
+
+  // Initialize the dwSize member of the first RASENTRYNAME structure
+  // in the array to the size of the structure to identify 
+  // the version of the structure being passed.
+  lpRasEntryName[0].dwSize = sizeof (RASENTRYNAME);
+
+  // Size of the array, in bytes
+  dwSize = sizeof (RASENTRYNAME) * 20;
+
+  // List all entry names in a remote access Phone book.
+  if ((RasEnumEntries (
+          NULL,               // Reserved, must be NULL
+          NULL,               // Phone book is stored in the Windows CE
+                              // registry.
+          lpRasEntryName,     // Pointer to structure to receive entries
+          &amp;dwSize,            // Size of lpRasEntryName, in bytes
+          &amp;dwEntries)) != 0)  // Number of entries placed in array
+  {
+    MessageBox (hDlgWnd, TEXT("Could not obtain RAS entries"), szTitle,
+                MB_OK);
+    return FALSE;
+  }
+
+  // Get the HWND of the list box control.
+  hWndListBox = GetDlgItem (hDlgWnd, IDC_RASNAMES);
+
+  // Remove all items from a list box.
+  SendMessage (hWndListBox, LB_RESETCONTENT, 0, 0);
+
+  // Add the names of each RAS connection to the list box.
+  for (index = 0; index &lt; (int)dwEntries; ++index)
+  {
+    SendMessage (hWndListBox, LB_INSERTSTRING, index, 
+                 (LPARAM)lpRasEntryName[index].szEntryName);
+  }
+
+  return TRUE;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conphonebookoperation.htm">Phone-Book Operation</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Enumerating%20Phone-Book%20Entries (wce50conenumeratingphonebookentries.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

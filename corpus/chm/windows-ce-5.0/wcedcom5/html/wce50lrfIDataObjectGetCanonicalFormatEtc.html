@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IDataObject::GetCanonicalFormatEtc</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfidataobjectgetcanonicalformatetc"></A>IDataObject::GetCanonicalFormatEtc</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method provides a standard <A HREF="wce50lrfformatetc.htm">FORMATETC</A> structure that is logically equivalent to one that is more complex. You use this method to determine whether two different <B>FORMATETC</B> structures would return the same data, removing the need for duplicate rendering.</P>
+
+<PRE class="syntax"><B>HRESULT GetCanonicalFormatEtc(</B>
+  <B>FORMATETC* </B><I>pFormatetcIn</I><B>,</B>
+  <B>FORMATETC* </B><I>pFormatetcOut</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pFormatetcIn </I></DT>
+
+<DD>[in] Pointer to the <B>FORMATETC</B> structure that defines the format, medium, and target device that the caller wants to use to retrieve data in a subsequent call such as to the <A HREF="wce50lrfidataobjectgetdata.htm">IDataObject::GetData</A> method. The <B>TYMED</B> member is not significant in this case and should be ignored. </dd>
+
+<DT><I>pFormatetcOut </I></DT>
+
+<DD>[out] Pointer to a <B>FORMATETC</B> structure that contains the most general information possible for a specific rendering, making it canonically equivalent to <I>pFormatetcIn</I>. 
+
+<P>The caller must allocate this structure and the <B>GetCanonicalFormatEtc</B> method must fill in the data. 
+
+
+<P>To retrieve data in a subsequent call such as <B>IDataObject::GetData</B>, the caller uses the supplied value of <I>pFormatetcOut</I>, unless the value supplied is NULL. 
+
+
+<P>This value is NULL if the method returns DATA_S_SAMEFORMATETC. 
+
+
+<P>The <B>TYMED</B> member is not significant in this case and should be ignored. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This method supports the standard return values E_INVALIDARG, E_UNEXPECTED, and E_OUTOFMEMORY. </P>
+
+<P>The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Value</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>S_OK</TD>
+<TD width=67%>The returned <B>FORMATETC</B> structure is different from the one that was passed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>DATA_S_SAMEFORMATETC</TD>
+<TD width=67%>The <B>FORMATETC</B> structures are the same and NULL is returned in <I>pFormatetcOut</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>DV_E_LINDEX</TD>
+<TD width=67%>Invalid value for <B>lindex</B>; currently, only -1 is supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>DV_E_FORMATETC</TD>
+<TD width=67%>Invalid value for <I>pFormatetc</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>OLE_E_NOTRUNNING</TD>
+<TD width=67%>The object application is not running.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>If a data object can supply exactly the same data for more than one requested <B>FORMATETC</B> structure, <B>IDataObject::GetCanonicalFormatEtc</B> can supply a canonical, or standard <B>FORMATETC</B> that gives the same rendering as a set of more complicated <B>FORMATETC</B> structures. </P>
+
+<P>For example, it is common for the data returned to be insensitive to the target device specified in any one of a set of otherwise similar <B>FORMATETC</B> structures.</P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>A call to this method can determine whether two calls to <B>IDataObject::GetData</B> on a data object, specifying two different <B>FORMATETC</B> structures, would actually produce the same renderings, thus eliminating the need for the second call and improving performance. </P>
+
+<P>If the call to <B>GetCanonicalFormatEtc</B> results in a canonical format being written to the <I>pFormatetcOut</I> parameter, the caller then uses that structure in a subsequent call to <B>IDataObject::GetData</B>. </P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P>Conceptually, it is possible to think of <B>FORMATETC</B> structures in groups defined by a canonical <B>FORMATETC</B> structure that provides the same results as each of the group members. </P>
+
+<P>In constructing the canonical <B>FORMATETC</B> structure, you should make sure it contains the most general information possible that still produces a specific rendering.</P>
+
+<P>For data objects that never provide device-specific renderings, the simplest implementation of this method is to copy the input <B>FORMATETC</B> structure to the output <B>FORMATETC</B> structure, store a NULL in the <I>ptd</I> field of the output <B>FORMATETC</B> structure, and return DATA_S_SAMEFORMATETC.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfidataobjectgetdata.htm">IDataObject::GetData</A> | <A HREF="wce50lrfformatetc.htm">FORMATETC</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IDataObject::GetCanonicalFormatEtc (wce50lrfidataobjectgetcanonicalformatetc.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

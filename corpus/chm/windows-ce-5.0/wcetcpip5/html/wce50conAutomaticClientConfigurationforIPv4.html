@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Automatic Client Configuration for IPv4</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conEthernetDebuggingServices">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conautomaticclientconfigurationforipv4"></A>Automatic Client Configuration for IPv4</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>One of the most important client services is the Dynamic Host Configuration Protocol (DHCP) client. Windows CE has the ability to automatically configure an IPv4 address and subnet mask when the client is started on a small private network where no DHCP server is available to assign addresses, such as a home network.</P>
+
+<P>If a Microsoft TCP/IPv4 client is installed and set to dynamically obtain TCP/IP protocol configuration information from a DHCP server, instead of being manually configured with an IPv4 address and other parameters, then the DHCP client service is engaged each time the network interface is initialized. Examples of times the network interface is initialized includes when a device resumes from suspend mode during the boot process or when a removable network card is inserted. The DHCP client service now uses a two-step process to configure the client with an IPv4 address and other configuration information: 
+
+<OL type="1">
+	<LI>When the DHCP client is enabled, it attempts to locate a DHCP server and obtain configuration settings from the server. Most corporate TCP/IP networks use DHCP servers that have been administratively configured to hand out information to the clients on the network. </li>
+
+	<LI>If an attempt to locate a DHCP server fails, the DHCP client auto configures the stack with a LINKLOCAL address of 169.254.0.0 with the subnet mask 255.255.0.0. This process is called Automatic IP (Auto IP). Automatic IP is enabled by default. To disable it, update the <B>AutoCfg</B> registry key. The DHCP client will test, using a gratuitous ARP, to be sure that the IP address the client has chosen is not already in use. If the address is in use, the client selects another IP address. The client repeats this selection process for up to ten addresses. Once the DHCP client has selected an address that is verifiably not in use, the client configures the interface with this address. The client continues to check for a DHCP server in the background every 5 minutes, or according to the interval specified by the <B>AutoInterval</B><I> </I>registry key. If a DHCP server is found, the auto configuration information is abandoned and configuration settings offered by the DHCP server is used instead.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The Windows CE client does a discover. The DHCP server does an offer. The CE client checks the subnet. If the subnet is the same, the CE client requests the same IP address. </BLOCKQUOTE>
+</li>
+</OL>
+
+<P>When the DHCP client has previously obtained a lease from a DHCP server, the following modified sequence of events occurs:
+
+<OL type="1">
+	<LI>If the client's lease is still valid and has not expired at boot time, the client tries to renew its lease with the DHCP server. If the client fails to locate any DHCP server during the renewal attempt, the client attempts to ping the default gateway that is listed in the lease. If pinging the default gateway succeeds, then the DHCP client assumes that it is still located on the same network where it obtained its current lease, and continue to use the lease. The client, by default, attempts to renew its lease in the background when 50 percent of its assigned lease time has expired, or when the amount of time contained in the <B>T1</B> registry key as specified by the DHCP offer has elapsed.</li>
+
+	<LI>If the attempt to ping the default gateway fails, the client assumes that it has been moved to a network that has no DHCP services currently available, such as a home network, and then automatically configures itself as described above for Auto IP. Once automatically configured, the client continues to try to locate a DHCP server every 5 minutes, in the background. If the default gateway is reachable, Windows CE continues using the old address. </li>
+</OL>
+
+<P>After the lease expires, a DHCP client sends three discover attempts to get a DHCP address. If those attempts fail, you can either remove and reinsert the PCMCIA adapter, or reboot if you are using a static adapter. You can also use the IPConfig /release command followed by the IPConfig /renew, or the IP Helper APIs, to reinitiate the DHCP sequence.</P>
+
+<P>To extend the number of attempts that a DHCP client makes to get a DHCP address, use the <B>DhcpRetryDialogue</B> and <B>DhcpMaxRetry</B> registry settings. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;If you set <B>DhcpRetryDialogue</B> to be less than <B>DhcpMaxRetry</B>, you will require a user to click <B>OK</B> on the dialog box that is displayed when the network Control Panel application is included in the image. After the user clicks <B>OK</B>, the DHCP client will continue its attempts to obtain an IP address until <B>DhcpMaxRetry</B> is reached.</BLOCKQUOTE>
+
+<P>For Ethernet debugging, the DHCP subsystem is completely separate from the DHCP operations described above, and has no associated registry settings. No warning dialogs are presented if a failure occurs; typically the system just halts. When the DHCP lease expires and a server cannot be contacted, the device continues to use the address as long as no other device responds to ARP queries for that address. </P>
+
+<P>For information about IPv6 client configuration, see <A HREF="wce50conneighbordiscoverynd.htm">Neighbor Discovery (ND)</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conassigninganipaddresstoadevice.htm">Assigning an IPv4 Address to a Device</A> | <A HREF="wce50contcpipregistrysettings.htm">TCP/IP Registry Settings</A> | <A HREF="JavaScript:hhobj_1.Click()">Ethernet Debugging Services</A> | <A HREF="wce50conmanuallyconfiguringanipv4address.htm">Manually Configuring an IPv4 Address</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Automatic%20Client%20Configuration%20for%20IPv4 (wce50conautomaticclientconfigurationforipv4.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

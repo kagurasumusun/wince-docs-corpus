@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Resolving Conflicts</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conresolvingconflicts"></A>Resolving Conflicts</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A conflict occurs when an object has changed on both the Windows CE-based device and the desktop since the last synchronization. The conflict is resolved by prompting the user to choose which object to save.</P>
+
+<P>Conflict resolution begins when the service manager calls <B>IReplObjHandler::GetPacket</B> on the Windows CE-based device to send a copy of the object to the desktop. The desktop service manager then calls <B>IReplObjHandler::SetPacket</B> to create a temporary object. During both the Windows CE-based device and the desktop call, the service manager passes RSF_CONFLICT_OBJECT in <B>REPLSETUP::dwFlags</B>.</P>
+
+<P>The following illustration shows the call sequence for conflict resolution.</P>
+
+<P class="fig"><IMG SRC="flow2_7.gif" ALT="" BORDER=0></P>
+
+<P>After the service manager receives the data from the Windows CE-based device, it calls <B>IReplStore::GetConflictInfo</B> and passes a handle to both the original desktop object and the temporary device object. Next, the desktop provider fills in the <B>CONFINFO</B> structure to customize the description text displayed in a standard <B>Conflict Resolution</B> dialog box, which is supplied by the service manager.</P>
+
+<P>The following code example shows how to implement <B>IReplStore::GetConflictInfo</B>.</P>
+
+<PRE class="code">STDMETHODIMP CStore::GetConflictInfo
+(
+      PCONFINFO pConfInfo  // pointer to a CONFINFO structure
+)
+{
+   // Verify that you have the right version of OBJUIDATA.
+   if (pConfInfo-&gt;cbStruct != sizeof (CONFINFO))
+       return E_INVALIDARG;
+
+   // Copy "Stock" to szLocalName and szRemoteName. You can use your
+      // own local and remote object names to replace "Stock".
+   lstrcpy (pConfInfo-&gt;szLocalName,  "Stock");
+   lstrcpy (pConfInfo-&gt;szRemoteName, "Stock");
+
+   CItem *pLocalItem  = (CItem*)pConfInfo-&gt;hLocalItem;
+   CItem *pRemoteItem = (CItem*)pConfInfo-&gt;hRemoteItem;
+
+   // Find the local object, then the remote object.
+      // pLocalObject  points to the local  object.
+   // pRemoteObject points to the remote object.
+
+   // If both the local and remote objects are found
+   if (pLocalObject &amp;&amp; pRemoteObject)
+   {
+      // Compare local and remote objects.
+      // If identical, return RERR_IGNORE.
+   }
+
+   // if local object  found
+   if (pLocalObject)
+      // Store information for local object in pConfInfo-&gt;szLocalDesc.
+
+   // if remote object found
+   if (pRemoteObject)
+      // Store information for remote object in pConfInfo-&gt;szRemoteDesc.
+
+   return NOERROR;
+}</PRE>
+
+<P>If the desktop provider cannot write a temporary object on the desktop, it can save the packets in memory and return <B>HREPLITEM</B> with a pointer to the memory location. In this case, the desktop provider must implement this handle in all <B>IReplStore</B> methods that accept an <B>HREPLITEM</B> handle, such as <B>CopyObject</B> or <B>FreeObject</B>. When the service manager calls <B>IReplStore::GetConflictInfo</B>, the handle becomes <B>CONFINFO::hRemoteItem</B>. The desktop provider then can extract descriptive text from the handle and save it in <B>CONFINFO</B>.</P>
+
+<P>The <B>Conflict Resolution</B> dialog box prompts the user to choose one of the following actions:
+
+<UL type="disc">
+	<LI>Replace the desktop object with the modified device object.
+<P>The service manager marks the desktop object as up-to-date and the device object as changed. This ensures that the device object is transferred to the desktop during the next synchronization.
+</li>
+
+	<LI>Replace the device object with the modified device object.
+<P>The service manager marks the device object as up-to-date.
+</li>
+
+	<LI>Leave the information item unresolved.
+<P>The information type is not synchronized. This option will allow the service manager to handle the resolution.
+</li>
+</UL>
+
+<P>In either case, the service manager calls <B>IReplObjHandler::DeleteObject</B> to delete the temporary object.</P>
+
+<P>Conflict situations do not always require a <B>Conflict Resolution</B> dialog box. The following table describes special error values that <B>IReplStore::GetConflictInfo</B> can return to resolve the conflict automatically.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Value</TH>
+<TH width=71%>Action</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>RERR_IGNORE</TD>
+<TD width=71%>The desktop provider compares two handles in <B>CONFINFO</B>, determines that they are identical, and takes no action.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>RERR_DISCARD</TD>
+<TD width=71%>The service manager determines that the desktop object represented by a handle is already deleted and deletes the device object accordingly.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>RERR_DISCARD_LOCAL</TD>
+<TD width=71%>The service manager resolves the conflict by deleting a desktop object instead of allowing the desktop provider to delete the object.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consendingandreceivingchangedobjects.htm">Sending and Receiving Changed Objects</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Resolving%20Conflicts (wce50conresolvingconflicts.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

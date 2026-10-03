@@ -1,0 +1,250 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Message Queuing COM Components in eMbedded Visual C++</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conusingmessagequeuingcomcomponentsinembeddedvisualc"></A>Using Message Queuing COM Components in eMbedded Visual C++</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Message Queuing COM objects can be invoked using Microsoft eMbedded Visual C++. There are different ways to implement and use COM components of MSMQ. </P>
+
+<P>The following code examples illustrate the standard method and one that uses smart pointers.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The desktop version of MSMQ uses #import to reference Mqoa.dll; however, this is not supported in Windows CE. </BLOCKQUOTE>
+
+<P>You need Mqoai.h for standard COM programming and you must include Mqoa.lib in the project directory. </P>
+
+<P>The Mqoa.lib file is in the %_WINCEROOT%\Public\Servers\Oak\Lib\x86\Retail directory. </P>
+
+<P>To use smart pointers, also include Atlbase.h. The smart pointer provides reference counting and <B>IUnknown::QueryInterface</B> support, so you do not need explicit <B>AddRef</B> and <B>QueryInterface</B> calls.</P>
+
+<PRE class="code">//
+// MSMQ COM sample using smart pointer
+//
+// following sample code sends L"sample text" to the Q1 in abcd.microsoft.com
+//
+
+#include &lt;atlbase.h&gt;
+#include &lt;mqoai.h&gt;
+// should include mqoa.lib to the projet
+// mqoa.lib is under %_WINCEROOT%\Public\SERVERS\OAK\LIB\X86\RETAIL
+//#import "mqoa.dll" no_namespace   // not supported
+
+
+HRESULT SendMessage()
+{
+   CComQIPtr&lt;IMSMQQueueInfo, &amp;IID_IMSMQQueueInfo&gt; ipQueueInfo;
+   HRESULT hr = S_OK;
+// hr = ipQueueInfo.CoCreateInstance(CLSID_MSMQQueueInfo);  // this form is not supported
+   hr = CoCreateInstance(
+         CLSID_MSMQQueueInfo,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQQueueInfo,
+         (void**)(&amp;ipQueueInfo.p));
+   if(hr != S_OK)
+      return hr;
+
+   hr = ipQueueInfo-&gt;put_PathName(L"abcd.microsoft.com\\private$\\Q1");
+   if(hr != S_OK)
+      return hr;
+
+   IMSMQQueue* ipSend;
+   hr = ipQueueInfo-&gt;Open(MQ_SEND_ACCESS, MQ_DENY_NONE, &amp;ipSend);
+   if(hr != S_OK)
+      return hr;
+
+   CComQIPtr&lt;IMSMQMessage, &amp;IID_IMSMQMessage&gt; ipMessage;
+// hr = ipMessage.CoCreateInstance(CLSID_MSMQMessage);  // this form is not supported
+   hr = CoCreateInstance(
+         CLSID_MSMQMessage,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQMessage,
+         (void**)(&amp;ipMessage.p));
+   if(hr != S_OK)
+      return hr;
+
+   VARIANT vtFalse;
+   VariantInit(&amp;vtFalse);
+   vtFalse.vt = VT_BOOL;
+   vtFalse.boolVal = FALSE;
+
+   BSTR bszTextBody = SysAllocString(L"sample text");
+   if (!bszTextBody)
+      return ERROR_OUTOFMEMORY;
+   VARIANT vtTextBody;
+   VariantInit(&amp;vtTextBody);
+   vtTextBody.bstrVal = bszTextBody;
+   vtTextBody.vt = VT_BSTR;
+
+   hr = ipMessage-&gt;put_Body(vtTextBody);
+   if(hr != S_OK) {
+      SysFreeString(bszTextBody);
+      return hr;
+   }
+
+   hr = ipMessage-&gt;Send(ipSend, &amp;vtFalse);
+   SysFreeString(bszTextBody);
+
+   return hr;
+}
+
+
+#include &lt;stdio.h&gt;
+
+int main(int argc, WCHAR* argv[])
+{
+   HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+   if(hr != S_OK)
+   {
+      printf(L"MSMQ.COM CoInitializeEx() error 0x%0X\n", hr);
+      return -1;
+   }
+
+   hr = SendMessage();
+   if(S_OK != hr)
+      printf("MSMQ.COM message send error 0x%0X\n", hr);
+
+   CoUninitialize();
+   printf("MSMQ.COM message sent\n");
+   return 0;
+}
+----------------------------------------------------------------------
+//
+// MSMQ COM sample using standard COM interface
+//
+// following sample code sends L"sample text" to the Q1 in abcd.microsoft.com
+//
+
+#include &lt;atlbase.h&gt;
+#include &lt;mqoai.h&gt;
+// should include mqoa.lib to the projet
+// mqoa.lib is under %_WINCEROOT%\Public\SERVERS\OAK\LIB\X86\RETAIL
+//#import "mqoa.dll" no_namespace   // not supported
+
+
+int mqComTest1(CEdit&amp; mEdit)
+{
+   IMSMQQueueInfo *ipQueueInfo;
+   HRESULT hr = S_OK;
+   hr = CoCreateInstance(
+         CLSID_MSMQQueueInfo,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQQueueInfo,
+         (void**)(&amp;ipQueueInfo));
+   if(hr != S_OK)
+      return hr;
+
+   hr = ipQueueInfo-&gt;put_PathName(L"abcd.microsoft.com\\private$\\Q1");
+   if(hr != S_OK)
+   {
+      ipQueueInfo-&gt;Release();
+      return hr;
+   }
+
+   IMSMQQueue* ipSendQueue;
+   hr = ipQueueInfo-&gt;Open(MQ_SEND_ACCESS, MQ_DENY_NONE, &amp;ipSendQueue);
+   if(hr != S_OK)
+   {
+      ipQueueInfo-&gt;Release();
+      return hr;
+   }
+
+   IMSMQMessage *ipSendMessage;
+   hr = CoCreateInstance(
+         CLSID_MSMQMessage,
+         NULL,
+         CLSCTX_SERVER,
+         IID_IMSMQMessage,
+         (void**)(&amp;ipSendMessage));
+   if(hr != S_OK)
+   {
+      ipSendQueue-&gt;Close();
+      ipSendQueue-&gt;Release();
+      ipQueueInfo-&gt;Release();
+      return hr;
+   }
+
+   VARIANT vtFalse;
+   VariantInit(&amp;vtFalse);
+   vtFalse.vt = VT_BOOL;
+   vtFalse.boolVal = FALSE;
+
+   VARIANT vtSendText;
+   VariantInit(&amp;vtSendText);
+   vtSendText.vt = VT_BSTR; 
+   vtSendText.bstrVal = SysAllocString(L"sample text");
+   if (vtSendText.bstrVal != NULL)
+   {
+      if(
+         ((hr=ipSendMessage-&gt;put_Body(vtSendText)) != S_OK) ||
+         ((hr=ipSendMessage-&gt;Send(ipSendQueue, &amp;vtFalse)) != S_OK)
+      )
+         ;
+      SysFreeString(vtSendText.bstrVal);
+   }
+
+   ipSendMessage-&gt;Release();
+   ipSendQueue-&gt;Close();
+   ipSendQueue-&gt;Release();
+   ipQueueInfo-&gt;Release();
+   return hr;
+}
+
+
+
+#include &lt;stdio.h&gt;
+
+int main(int argc, WCHAR* argv[])
+{
+   HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+   if(hr != S_OK)
+   {
+      printf(L"MSMQ.COM CoInitializeEx() error 0x%0X\n", hr);
+      return -1;
+   }
+
+   hr = SendMessage();
+   if(S_OK != hr)
+      printf("MSMQ.COM message send error 0x%0X\n", hr);
+
+   CoUninitialize();
+   printf("MSMQ.COM message sent\n");
+   return 0;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orimessagequeuing.htm">MSMQ Application Development</A> | <A HREF="wce50conmessagequeuingcomsupport.htm">MSMQ COM Support</A> | <A HREF="wce50conusingthecomcomponents.htm">Using the COM Components</A> | <A HREF="wce50conmsmqinstallationoncustomplatforms.htm">Application Installation of MSMQ</A> | <A HREF="wce50conadministration.htm">Administration</A> | <A HREF="wce50condebuggingmsmqinstallations.htm">Debugging MSMQ Installations</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A> | <A HREF="wce50orimsmqsamples.htm">MSMQ Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Using%20Message%20Queuing%20COM%20Components%20in%20eMbedded%20Visual%20C++ (wce50conusingmessagequeuingcomcomponentsinembeddedvisualc.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ber_printf</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfberprintf"></A>ber_printf</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is used to encode a basic encoding rules (BER) element in much the same way that <B>sprintf</B> works. One important difference, though, is that state information is kept in the <I>pBerElement</I> argument so that multiple calls can be made to <B>ber_printf</B> to append to the end of the BER element. The <I>pBerElement</I> argument passed to this function must be a pointer to a <A HREF="wce50lrfberelement.htm">BerElement</A> structure returned by a call to the <A HREF="wce50lrfberalloct.htm">ber_alloc_t</A> function.</P>
+
+<PRE class="syntax"><B>INT ber_printf(</B>
+  <B>BerElement* </B><I>pBerElement</I><B>,</B>
+  <B>UNICODE PTCHAR</B> <I>fmt</I><B>,</B>
+  <I>...</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pBerElement</I></DT>
+
+<DD>[in, out] Pointer to the <A HREF="wce50lrfberelement.htm">BerElement</A> structure being encoded.</dd>
+
+<DT><I>fmt</I></DT>
+
+<DD>[in] Encoding format string (see the <B>Remarks</B> section below).</dd>
+
+<DT><I>...</I></DT>
+
+<DD>[in] Values to be encoded as specified by the <I>fmt</I> argument.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function returns a non-negative number on success and -1 on failure.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The following table shows the format characters that the format string can contain.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=10%>Value</TH>
+<TH width=90%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>t</TD>
+<TD width=90%><I>Tag</I>. The next argument is a ber_tag_t specifying the tag to override the next element to be written to the <A HREF="wce50lrfberelement.htm">BerElement</A>. This works across calls.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>b</TD>
+<TD width=90%><I>Boolean</I>. The next argument is a ber_int_t, containing either 0 for FALSE or 0xff for TRUE. A Boolean element is output. If this format character is not preceded by the t format modifier, the tag 0x01U is used for the element.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>e</TD>
+<TD width=90%><I>Enumerated</I>. The next argument is a ber_int_t, containing the enumerated value. An enumerated element is output. If this format character is not preceded by the t format modifier, the tag 0x0AU is used for the element.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>i</TD>
+<TD width=90%><I>Integer</I>. The next argument is a ber_int_t, containing the integer value. An integer element is output. If this format character is not preceded by the t format modifier, the tag 0x02U is used for the element.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>B</TD>
+<TD width=90%><I>Bitstring</I>. The next two arguments are a char* pointer to the start of the bitstring, followed by a ber_len_t containing the number of bits in the bitstring. A bitstring element is output. If this format character is not preceded by the t format modifier, the tag 0x03U is used for the element.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>n</TD>
+<TD width=90%><I>Null</I>. No argument is needed. An ASN.1 NULL element is output. If this format character is not preceded by the t format modifier, the tag 0x05U is used for the element.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>o</TD>
+<TD width=90%><I>Octet string.</I> The next two arguments are a char* pointer, followed by a ber_len_t with the length of the string. The string may contain null bytes and do not have to be zero-terminated. An octet string element is output. If this format character is not preceded by the t format modifier, the tag 0x04U is used for the element.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>s</TD>
+<TD width=90%><I>Octet string</I>. The next argument is a char* pointing to a zero-terminated string. An octet string element is output, which does not include the trailing '\0' (null) byte. If this format character is not preceded by the t format modifier, the tag 0x04U is used for the element.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>v</TD>
+<TD width=90%><I>Several octet strings</I>. The next argument is a char **, which is an array of char* pointers to zero-terminated strings. The last element in the array must be a NULL pointer. The octet strings do not include the trailing '\0' (null) byte. 
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;A construct like {v} is used to get an actual SEQUENCE OF octet strings. The t format modifier cannot be used with this format character.</BLOCKQUOTE>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>V</TD>
+<TD width=90%><I>Several octet strings</I>. A NULL-terminated array of berval*<B> </B>structures is supplied. 
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;A construct like {V} is used to get an actual SEQUENCE OF octet strings. The t format modifier cannot be used with this format character.</BLOCKQUOTE>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>{</TD>
+<TD width=90%><I>Begin sequence</I>. No argument is needed. If this format character is not preceded by the t format modifier, the tag 0x30U is used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>}</TD>
+<TD width=90%><I>End sequence</I>. No argument is needed. The t format modifier cannot be used with this format character.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>[</TD>
+<TD width=90%><I>Begin set</I>. No argument is needed. If this format character is not preceded by the t format modifier, the tag 0x31U is used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=10%>]</TD>
+<TD width=90%><I>End set</I>. No argument is needed. The t format modifier cannot be used with this format character.</TD>
+</TR>
+</table></div>
+
+<P>Each use of a '{' format character must be matched by a '}' character, either later in the format string, or in the format string of a subsequent call to <B>ber_printf</B> for that specific <A HREF="wce50lrfberelement.htm">BerElement</A>. The same applies to the [and] format characters.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Winber.h.<BR>
+<B>Link Library:</B> Wldap32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfberalloct.htm">ber_alloc_t</A> | <A HREF="wce50lrfberscanf.htm">ber_scanf</A> | <A HREF="wce50lrfberelement.htm">BerElement</A> | <A HREF="wce50lrfberval.htm">berval</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ber_printf (wce50lrfberprintf.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

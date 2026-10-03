@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Querying and Pairing Sample</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conqueryingandpairingsample"></A>Querying and Pairing Sample</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Btpair sample application performs querying, pairing, and authentication to illustrate the use of the Windows CE&#0150;based Bluetooth stack and security subsystem. </P>
+
+<P>The compiled sample generates a Btpair.exe application. It relies on the BTHLINK sample device driver that needs to be compiled and copied to the device.</P>
+
+<P class="label"><B>Usage</B></P>
+
+<PRE class="syntax">btpair.exe</PRE>
+
+<P>When executed, the application displays a dialog box that enables querying, pairing and authentication with other devices.</P>
+
+<P class="label"><B>Querying</B></P>
+
+<P>The query process is used to discover other Bluetooth devices in the area. This process is initiated by the <A HREF="wce50lrfbthnslookupservicebegin.htm">BthNsLookupServiceBegin</A> function.</P>
+
+<PRE class="code">int iErr = BthNsLookupServiceBegin (&amp;wsaq, LUP_CONTAINERS, &amp;hLookup);</PRE>
+
+<P>If the function completes successfully, the discovered devices can be queried to determine which services they offer. The services are learned by calling the <A HREF="wce50lrfbthnslookupservicenext.htm">BthNsLookupServiceNext</A> function.</P>
+
+<PRE class="code">While (iErr== ERROR_SUCCESS)
+  {
+    ...
+    iErr = BthNsLookupServiceNext (
+                     hLookup,
+                     LUP_RETURN_ADDR,
+                     &amp;dwSize,
+                     pwsaResults
+                    );
+    ...
+    if (iErr == ERROR_SUCCESS) {
+      /* store device information */
+      }
+  }</PRE>
+
+<P class="label"><B>Pairing</B></P>
+
+<P>The pairing process generates a common link key between two devices. The link key is generated from a PIN, the Bluetooth address, and a random number. To set the PIN up on a device, an IOCTL call is provided as BT_IOCTL_BthSetPIN.</P>
+
+<PRE class="code">BthSetPIN (&amp;b, cPin, pin);</PRE>
+
+<P>A common link is established between two devices to be paired. This example demonstrates how to use the BTHLINK protocol layer extension to make a connection at the lower protocol layer level.</P>
+
+<P>The following example code loads the protocol layer extension DLL.</P>
+
+<PRE class="code">HANDLE hDev = RegisterDevice (L"BTL", 1, L"bthlink.dll", NULL);
+HANDLE hFile = CreateFile (
+                 L"BTL1:", 
+                 0, 0, NULL,
+                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
+                );</PRE>
+
+<P class="label"><B>Authentication</B></P>
+
+<P>If the link key generates successfully, authentication can be performed. This process is initiated by calling BT_IOCTL_BthAuthenticate, which is provided by an IOCTL call.</P>
+
+<PRE class="code">iRes = BthAuthenticate (&amp;b);</PRE>
+
+<P>If the authentication is successful, the extension layer can be destroyed. The following example code demonstrates how to do this.</P>
+
+<PRE class="code">DeviceIoControl (
+             hFile, BTHLINK_IOCTL_DISCONNECT,
+             &amp;p, sizeof(p), NULL, 0, NULL, NULL
+            );
+DeregisterDevice (hDev);</PRE>
+
+<P class="label"><B>Sample Location</B></P>
+
+<P>%_WINCEROOT%\Public\Common\Oak\Drivers\Bluetooth\Sample\Btpair</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>This sample application has not been thoroughly tested and is not intended for production use. </BLOCKQUOTE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conbluetoothapplicationdevelopment.htm">Bluetooth Application Development</A> | <A HREF="wce50conbluetoothsamples.htm">Bluetooth Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Querying%20and%20Pairing%20Sample (wce50conqueryingandpairingsample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

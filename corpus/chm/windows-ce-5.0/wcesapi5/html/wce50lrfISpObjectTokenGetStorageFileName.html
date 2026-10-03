@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpObjectToken::GetStorageFileName</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispobjecttokengetstoragefilename"></A>ISpObjectToken::GetStorageFileName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method gets the object token file name from the registry.</P>
+
+<PRE class="syntax"><B>HRESULT GetStorageFileName(</B>
+<B>  REFCLSID </B><I>clsidCaller</I><B>,</B>
+<B>  const WCHAR* </B><I>pszValueName</I><B>,</B>
+<B>  const WCHAR* </B><I>pszFileNameSpecifier</I><B>,</B>
+<B>  ULONG </B><I>nFolder</I><B>,</B>
+<B>  WCHAR** </B><I>ppszFilePath</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>clsidCaller</I> </DT>
+
+<DD>[in] GUID of the calling object. The registry is searched for an entry key name of <I>clsidCaller</I>, and then a corresponding subkey of "Files". If the registry entry is not present, one is created. </dd>
+
+<DT><I>pszValueName</I> </DT>
+
+<DD>[in] Pointer to the name of the attribute file for the registry entry of <I>clsidCaller</I>. This attribute stores location of the resource file. </dd>
+
+<DT><I>pszFileNameSpecifier</I> </DT>
+
+<DD>[in] Pointer to the file name specifier, which is either a path and file name for a storage file or NULL. If the specifier starts with "X:\" or "\\", it is assumed to be a full path. Otherwise, it is assumed to be relative to special folders given in the <I>nFolder</I> parameter. If the specifier ends with a "\" or is NULL, a unique file name will be created. The file name will resemble "SP_7454901D23334AAF87707147726EC235.dat", where "SP_" and ".dat" are the default prefix name and file extension. The numbers in between indicate a generated GUID to ensure that the file name is unique.
+
+<P>If the file name specifier contains a "%d", it is replaced by a number to give a unique file name. The default file extension is .dat, but the user can specify anything else.
+
+
+<P>Intermediate directories are created.
+
+
+<P>If a relative file is being used, the value stored in the registry includes the <I>nFolder</I> value as "%<I>nFolder</I>%" before the rest of the path.
+</dd>
+
+<DT><I>nFolder</I> </DT>
+
+<DD>[in] A CSIDL value that identifies the folder for which to retrieve the path. The caller can force creation of a folder by combining the folder CSIDL with CSIDL_FLAG_CREATE. If <I>pszFileNameSpecifier</I> is NULL or "\", <I>nFolder</I> must indicate a specified CSIDL folder combined with CSIDL_FLAG_CREATE to force file creation. </dd>
+
+<DT><I>ppszFilePath</I> </DT>
+
+<DD>[out] Address of a pointer to a null-terminated string specifying file path information. The associated object must be freed when no longer required. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_POINTER </TD>
+<TD width=65%><I>ppszFilePath</I> is invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_OUTOFMEMORY </TD>
+<TD width=65%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_FALSE </TD>
+<TD width=65%>A new file was created. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%><I>pszValueName</I> is invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_UNINITIALIZED </TD>
+<TD width=65%>Either the data key or the token delegate interface is uninitialized. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_TOKEN_DELETED </TD>
+<TD width=65%>Key has been deleted. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet creates and removes an object token for a test file. </P>
+
+<PRE class="code">HRESULT hr;
+GUID guid0;
+GUID guid1;
+
+CComPtr cpSpObjectToken;
+CSpCoTaskMemPtr cpFileName;
+CSpCoTaskMemPtr cpFileName2;</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> sapi.h, sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispobjecttoken.htm">ISpObjectToken</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpObjectToken::GetStorageFileName (wce50lrfispobjecttokengetstoragefilename.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

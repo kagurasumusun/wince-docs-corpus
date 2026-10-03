@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SPWORDLIST</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoTaskMemFree">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfspwordlist"></A>SPWORDLIST</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure contains word information. It is the start of a linked list of <A HREF="wce50lrfspword.htm">SPWORD</A> structures, and contains the size and actual buffer of all subsequent words. The structure is used with <A HREF="wce50lrfisplexicon.htm">ISpLexicon</A> to receive words that are currently in the lexicon or that have changed since the last time an engine checked the lexicon. For its use, see <A HREF="wce50lrfisplexicongetwords.htm">ISpLexicon::GetWords</A> and <A HREF="wce50lrfisplexicongetgenerationchange.htm">ISpLexicon::GetGenerationChange</A>. </P>
+
+<PRE class="syntax"><B>typedef struct SPWORDLIST{</B>
+<B>  ULONG</B> <I>ulSize</I><B>;</B>
+<B>  BYTE* </B><I>pvBuffer</I><B>;</B>
+<B>  SPWORD* </B><I>pFirstWord</I><B>;</B>
+<B>} SPWORDLIST;</B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>ulSize </B></DT>
+
+<DD>Size, in bytes, of the buffer for all the words (<B>pvBuffer</B>). </dd>
+
+<DT><B>pvBuffer </B></DT>
+
+<DD>Pointer to the buffer for all word information or changes. </dd>
+
+<DT><B>pFirstWord </B></DT>
+
+<DD>Pointer to an <A HREF="wce50lrfspword.htm">SPWORD</A> structure representing the first word in the linked list contained in the buffer specified by <B>pvBuffer</B>. </dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The client should call <B>ZeroMemory</B> before using this structure to initialize it, and call <A HREF="JavaScript:hhobj_1.Click()">CoTaskMemFree</A> to free the buffer allocated during the calls The buffer should not be freed between the calls. <A HREF="wce50lrfisplexicongetwords.htm">ISpLexicon::GetWords</A> and <A HREF="wce50lrfisplexicongetgenerationchange.htm">ISpLexicon::GetGenerationChange</A> reuse the buffer for efficiency and will reallocate it when necessary.</P>
+
+<H4 class="dtH4">Examples</H4>
+
+<P>The following example is a code fragment demonstrating the use and creation of an <B>SPWORDLIST</B> structure. The code initializes the structure prior to use. The retrieved structure is attached to a buffer allocated with <B>CoTaskMemAllocate</B>. This buffer is freed after all operations using the list. If not all words are retrieved by <B>ISpLexicon::GetWords</B>, the structure is not wiped and can be passed into subsequent calls to allow efficient reuse of the allocated memory block.</P>
+
+<PRE class="code">SPWORDLIST SPWordList;
+hr = ZeroMemory(&amp;SPWordList, sizeof(SPWordList));
+// Check return value here. Handle error.
+hr = S_FALSE;
+while (hr == S_FALSE)
+{
+hr = pLex-&gt;GetWords(eLEXTYPE_USER, &amp;dwGen, &amp;dwCookie, &amp;SPWordList);
+// Do something with the received words.
+// S_FALSE is returned if there are still words remaining to be got and 
+the cookie is updated.
+}
+// Have finished with the list. Free the enclosed buffer.
+::CoTaskMemFree(SPWordList.pvBuffer);</PRE>
+
+<P>The following helper class will ensure the correct use of <B>SPWORDLIST</B>. </P>
+
+<PRE class="code">class CSpWordList : public SPWORDLIST
+{
+public:
+CSpWordList()
+{
+ZeroMemory(static_cast&lt;SPWORDLIST*&gt;(this), sizeof(SPWORDLIST));
+}
+~CSpWordList()
+{
+CoTaskMemFree(pvBuffer);
+}
+};</PRE>
+
+<P>Using the helper class, the previous example becomes: </P>
+
+<PRE class="code">CSpWordList SPWordList;
+hr = S_FALSE;
+while (hr == S_FALSE)
+{
+hr = pLex-&gt;GetWords(eLEXTYPE_USER, &amp;dwGen, &amp;dwCookie, &amp;SPWordList);
+// Do something with the received words.
+// S_FALSE is returned if there are still words remaining to be got and the cookie is updated.
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfsapistructures.htm">SAPI Structures</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: SPWORDLIST (wce50lrfspwordlist.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

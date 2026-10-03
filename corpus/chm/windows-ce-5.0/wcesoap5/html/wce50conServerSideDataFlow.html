@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Server-Side Data Flow</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conserversidedataflow"></A>Server-Side Data Flow</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>On the server side, the SOAP Toolkit provides two options for implementing a SOAP listener (the handler of incoming SOAP requests on the server):
+
+<UL type="disc">
+	<LI>An Internet Server API (ISAPI) server</li>
+
+	<LI>An Active Server Pages (ASP) server</li>
+</UL>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>SOAP is an industry-standard protocol. The SOAP Toolkit server can handle requests from SOAP clients implemented using a variety of technologies, as long as the messages transmitted by these technologies follow the SOAP protocol. Similarly, the SOAP Toolkit client can communicate with SOAP servers implemented using other technologies.</BLOCKQUOTE>
+
+<P>In the Web Services Description Language (WSDL) file, the URL identified as the server-side handler of the SOAP request determines how the SOAP request is handled on the server. </P>
+
+<P>For instance, the following WSDL file syntax example identifies the URL (shown in bold) that invokes the ISAPI listener:</P>
+
+<PRE class="code">&lt;definitions&gt;
+...
+&lt;service name='Calc' &gt;
+    &lt;port name='CalcSoapPort' binding='wsdlns:CalcSoapBinding' &gt;
+      &lt;soap:address location=<B>'http://MSSoapSampleServer/MSSoapSamples/Calc/Service/Rpc/IsapiCpp/Calc.wsdl</B>' /&gt;
+    &lt;/port&gt;
+  &lt;/service&gt;
+...
+&lt;/definitions&gt;</PRE>
+
+<H2 class="dtH2">Reviewing the Server-Side Data Flow</H2>
+
+<P>Regardless of whether the SOAP request invokes an ISAPI or ASP listener, how the server handles the incoming and outgoing data is the same. </P>
+
+<P>The <B>SoapServer</B> object, (accessed through the <A HREF="wce50lrfisoapserver.htm">ISoapServer</A> interface) receives the SOAP request from the client, processes that request, and forwards a call to the COM method that matches the requested operation. </P>
+
+<P>In the following illustration, this is the call to the <B>AddNum</B> method. The method that was called then sends the result of the requested operation back to the <B>SoapServer</B> object, which then formulates this information into a SOAP response that the object sends back to the client. </P>
+
+<P>The following diagram illustrates how SOAP handles data flow on the server.</P>
+
+<P class="fig"><IMG SRC="serverside.gif" ALT="" BORDER=0></P>
+
+<H2 class="dtH2">Processing Inside the SoapServer Object</H2>
+
+<P>The <B>ISoapServer</B> and <A HREF="wce50lrfisoapclient.htm">ISoapClient</A> interfaces are considered part of high-level API. In your application you use the <B>ISoapServer</B> interface to process SOAP requests and the <B>SoapServer</B> object does several things internally. </P>
+
+<P>The following diagram illustrates how the <B>SoapServer</B> object processes SOAP request message and formulates SOAP response messages.</P>
+
+<P class="fig"><IMG SRC="servenv.gif" ALT="" BORDER=0></P>
+
+<P>Here is what happens:
+
+<OL type="1">
+	<LI>Upon receiving a SOAP request from the client, the <B>SoapReader</B> object (accessed through the <A HREF="wce50lrfisoapreader.htm">ISoapReader</A> interface) loads the request message into one DOM structure; the <A HREF="wce50lrfwsdlreader.htm">WSDLReader</A> object loads the WSDL and Web Services Meta Language (WSML) files into another DOM structure. </li>
+
+	<LI>The <B>WSDLReader</B> parses the request and creates a <A HREF="wce50lrfwsdloperation.htm">WSDLOperation</A> object for the requested operation. </li>
+
+	<LI>The <B>WSDLOperation</B> object calls the <A HREF="wce50lrfgetoperationpartsmethod.htm">WSDLOperation::GetOperationParts</A> method, which returns from the WSDL/WSML DOM tree a collection of the parts defined for both the operation's input and output messages. </li>
+
+	<LI>The <B>SoapServer</B> object creates <A HREF="wce50lrfsoapmapper.htm">SoapMapper</A> objects for each of these parts and loads the values from the SOAP request into these <B>SoapMapper</B> objects.</li>
+
+	<LI>The <B>SoapServer</B> object calls the COM method corresponding to the requested operation.</li>
+
+	<LI>The COM method processes the parameters included in the call and returns the result to the <B>SoapServer</B> object, which maps the return value to the appropriate <B>SoapMapper</B> object. </li>
+
+	<LI>The <B>SoapServer</B> object uses the <B>SoapSerializer</B> object (accessed through the <A HREF="wce50lrfisoapserializer.htm">ISoapSerializer</A> interface) to build a SOAP response message for the result value. </li>
+
+	<LI>The <B>SoapServer</B> object sends this SOAP response message to the client.</li>
+</OL>
+
+<P>The <B>WSDLReader</B>, <B>WSDLOperation</B> and <B>SoapReader</B> objects, and so on, are considered part of the SOAP Toolkit low-level API. Instead of using the <B>ISoapClient</B> high-level API, you can use the low-level API in your application. </P>
+
+<P>For more information about high-level and low-level APIs, see the Calc sample applications described in <A HREF="wce50consoapsampleapplications.htm">SOAP Samples</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consoaptoolkit.htm">SOAP Application Development</A> | <A HREF="wce50conclientsidedataflow.htm">Client-Side Data Flow</A> | <A HREF="wce50conspecifyinganisapilistener.htm">Specifying an ISAPI Listener</A> | <A HREF="wce50conaquickintroductiontowsdl.htm">A Quick Introduction to WSDL</A> | <A HREF="wce50conaquickintroductiontowsml.htm">A Quick Introduction to WSML</A> | <A HREF="wce50consoapsampleapplications.htm">SOAP Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Server-Side%20Data%20Flow (wce50conserversidedataflow.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

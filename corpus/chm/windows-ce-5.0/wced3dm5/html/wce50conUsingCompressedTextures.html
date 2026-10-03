@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Compressed Textures</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conusingcompressedtextures"></A>Using Compressed Textures</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Before your application creates a rendering device, it can determine if the device supports texturing from compressed texture surfaces by calling the <A HREF="wce50lrfidirect3dmobilecheckdeviceformat.htm">IDirect3DMobile::CheckDeviceFormat</A> method. This method determines whether a surface format can be used as a texture on a device representing the adapter. To test the adapter, specify any pixel format that uses the DXT1, DXT2, DXT3, DXT4, or DXT5 Four Character Codes (FOURCC) (see <A HREF="wce50lrfd3dmformat.htm">D3DMFORMAT</A>). If <B>CheckDeviceFormat</B> returns D3D_OK, the device can create texture directly from a compressed texture surface that uses that format. If so, you can use compressed texture surfaces directly with Microsoft&reg; Direct3D Mobile&reg; by calling the <A HREF="wce50lrfidirect3dmobiledevicesettexturestagestate.htm">IDirect3DMobileDevice::SetTextureStageState</A> method. The following code example shows how to determine if the adapter supports a compressed texture format.</P>
+
+<PRE class="code">BOOL IsCompressedTextureFormatOk( D3DMFORMAT TextureFormat, 
+                                  D3DMFORMAT AdapterFormat ) {
+    HRESULT hr = pD3DM-&gt;CheckDeviceFormat( D3DMADAPTER_DEFAULT,
+                                          D3DMDEVTYPE_DEFAULT,
+                                          AdapterFormat,
+                                          0,
+                                          D3DMRTYPEFLAG_TEXTURE,
+                                          TextureFormat);
+
+    return SUCCEEDED( hr );
+}</PRE>
+
+<P>If the device does not support texturing from compressed texture surfaces, you can still store texture data in a compressed format surface, but you must convert any compressed textures to a supported format before they can be used for texturing. </P>
+
+<H2 class="dtH2">Creating Compressed Textures</H2>
+
+<P>After creating a device that supports a compressed texture format on the adapter, you can create a compressed texture resource. Call <A HREF="wce50lrfidirect3dmobiledevicecreatetexture.htm">IDirect3DMobileDevice::CreateTexture</A> and specify a compressed texture format for the <I>Format</I> parameter.</P>
+
+<P>Before loading an image into a texture object, retrieve a pointer to the texture surface by calling the <A HREF="wce50lrfidirect3dmobiletexturegetsurfacelevel.htm">IDirect3DMobileTexture::GetSurfaceLevel</A> method.</P>
+
+<P>The advantage of this behavior is that an application can copy the contents of a compressed surface to a file without calculating how much storage is required for a surface of a particular width and height in the specific format.</P>
+
+<P>The following table shows the five types of compressed textures. For more information on how the data is stored, see <A HREF="wce50concompressedtextureformats.htm">Compressed Texture Formats</A>. You only need this information if you are writing your own compression routines. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=20%>FOURCC</TH>
+<TH width=33%>Description</TH>
+<TH width=47%>Alpha-premultiplied?</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%>DXT1</TD>
+<TD width=33%>Opaque/one-bit alpha</TD>
+<TD width=47%>N/A</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%>DXT2</TD>
+<TD width=33%>Explicit alpha</TD>
+<TD width=47%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%>DXT3</TD>
+<TD width=33%>Explicit alpha</TD>
+<TD width=47%>No</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%>DXT4</TD>
+<TD width=33%>Interpolated alpha</TD>
+<TD width=47%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=20%>DXT5</TD>
+<TD width=33%>Interpolated alpha</TD>
+<TD width=47%>No</TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;When you transfer data from a non-premultiplied format to a premultiplied format, Direct3D scales the colors based on the alpha values. Transferring data from a premultiplied format to a non-premultiplied format is not supported. If you try to transfer data from a premultiplied-alpha source to a non-premultiplied-alpha destination, the method returns D3DMERR_INVALIDCALL (see <A HREF="wce50lrfdirect3dmobileerrorcodes.htm">D3DMERR Values</A>). If you transfer data from a premultiplied-alpha source to a destination that has no alpha, the source color components, which have been scaled by alpha, are copied as is.</BLOCKQUOTE>
+
+<H2 class="dtH2">Decompressing Compressed Textures</H2>
+
+<P>As with compressing a texture surface, decompressing a compressed texture is performed through Direct3D Mobile copying services. </P>
+
+<P>If the driver supports the creation of compressed video-memory surfaces, then the driver can also decompress copies from a compressed video-memory surface to an uncompressed video- or system-memory surface.</P>
+
+<P>Copies from compressed system-memory surfaces to uncompressed video-memory surfaces are largely unsupported and should not be attempted, even when the driver supports compressed textures. This does not mean that it is impossible to decompress a compressed system-memory surface and move its contents into a video-memory surface; it merely requires an additional step.</P>
+
+<P class="labelproc"><B>To decompress a system-memory surface into video memory</B>
+
+<OL type="1">
+	<LI>Create an uncompressed, off-screen plain surface in system memory of the desired dimensions and pixel format.</li>
+
+	<LI>Copy from the compressed system-memory surface to the uncompressed system-memory surface. </li>
+
+	<LI>Copy the uncompressed surface to the uncompressed video-memory surface.</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concompressedtextureresources.htm">Compressed Texture Resources</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Using%20Compressed%20Textures (wce50conusingcompressedtextures.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

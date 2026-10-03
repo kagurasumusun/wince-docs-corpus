@@ -1,0 +1,300 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IShellFolder::ParseDisplayName</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIParseDisplayNameParseDisplayName">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIParseDisplayNameParseDisplayName">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfishellfolderparsedisplayname"></A>IShellFolder::ParseDisplayName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method translates the display name of a file object or folder into an item identifier list. </P>
+
+<PRE class="syntax"><B>HRESULT ParseDisplayName(</B>
+<B>  HWND </B><I>hwnd</I><B>,</B>
+<B>  LPBC </B><I>pbc</I><B>,</B>
+<B>  LPOLESTR </B><I>pwszDisplayName</I><B>,</B>
+<B>  ULONG* </B><I>pchEaten</I><B>,</B>
+<B>  LPITEMIDLIST* </B><I>ppidl</I><B>,</B>
+<B>  ULONG* </B><I>pdwAttributes</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hwnd</I></DT>
+
+<DD>[in] Optional window handle. The client should provide a window handle if it displays a dialog or message box. Otherwise, set <I>hwnd</I> to NULL. </dd>
+
+<DT><I>pbc</I></DT>
+
+<DD>[in] Optional bind context that controls the parsing operation. This parameter is typically set to NULL. </dd>
+
+<DT><I>pwszDisplayName</I></DT>
+
+<DD>[in] Null-terminated UNICODE string with the display name. Because each shell folder defines its own parsing syntax, the form this string can take may vary. The desktop folder, for instance, accepts paths such as "c:\My Docs\My File.txt". It also accepts references to items in the namespace that have a globally unique identifier (GUID) associated with them using the "::{GUID}" syntax. For example, to retrieve a fully qualified identifier list for the control panel from the desktop folder, you can use"{CLSID for My Computer}\::{CLSID for the Control Panel}".</dd>
+
+<DT><I>pchEaten</I></DT>
+
+<DD>[out] Pointer to a <B>ULONG</B> value that receives the number of characters of the display name that was parsed. If your application does not need this information, set <I>pchEaten</I> to NULL, and no value will be returned. </dd>
+
+<DT><I>ppidl</I></DT>
+
+<DD>[out] Pointer to an <A HREF="wce50lrfitemidlist.htm">ITEMIDLIST</A> pointer that receives the item identifier list for the object. The returned item identifier list specifies the item relative to the parsing folder. If the object associated with <I>pwszDisplayName</I> is within the parsing folder, the returned item identifier list contains only one <A HREF="wce50lrfshitemid.htm">SHITEMID</A> structure. If the object is in a subfolder of the parsing folder, the returned item identifier list contains multiple <B>SHITEMID</B> structures. If an error occurs, NULL is returned in this address. </dd>
+
+<DT><I>pdwAttributes</I></DT>
+
+<DD>[in, out] Optional parameter that can be used to query for file attributes. If not used, it should be set to NULL. To query for one or more attributes, initialize the <I>pdwAttributes</I> with the flags that represent the attributes of interest. On return, those attributes that are true and were requested are set. See Remarks for possible values.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns NOERROR if successful, or an error value otherwise.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Some shell folders may not implement <B>IShellFolder::ParseDisplayName</B>. Each folder that does defines its own parsing syntax.</P>
+
+<P>The following values are valid for the <I>pdwAttributes</I> parameter.</P>
+
+<P>A file object's capability flags may be zero or a combination of values shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Flag (value)</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CANCOPY (0x00000001)</TD>
+<TD width=50%>The specified file objects or folders can be copied (same value as the DROPEFFECT_COPY flag). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CANDELETE (0x00000020)</TD>
+<TD width=50%>The specified file objects or folders can be deleted. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CANLINK (0x00000004)</TD>
+<TD width=50%>Shortcuts can be created for the specified file objects or folders. This flag has the same value as DROPEFFECT. The typical use of this flag is to add a Create Shortcut item to the shortcut menu that is displayed during drag-and-drop operations. However, SFGAO_CANLINK also adds a Create Shortcut item to the Windows Explorer File menu, and to typical shortcut menus. If this item is selected, your application's <B>IContextMenu::InvokeCommand</B> interface is invoked with the <B>lpVerb</B> member of the <B>CMINVOKECOMMANDINFO</B> structure set to "link". Your application is responsible for creating the link.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CANMONIKER (0x00400000)</TD>
+<TD width=50%>It is possible to create monikers for the specified file objects or folders.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CANMOVE (0x00000002) </TD>
+<TD width=50%>The specified file objects or folders can be moved (same value as the DROPEFFECT_MOVE flag).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CANRENAME (0x00000010)</TD>
+<TD width=50%>The specified file objects or folders can be renamed. This flag is essentially a suggestion. It does not guarantee that a namespace client will rename the file or folder object.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CAPABILITYMASK (0x00000177)</TD>
+<TD width=50%>A mask for the capability flags.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_DROPTARGET (0x00000100)</TD>
+<TD width=50%>The specified file objects or folders are drop targets.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_HASPROPSHEET (0x00000040)</TD>
+<TD width=50%>The specified file objects or folders have property sheets.</TD>
+</TR>
+</table></div>
+
+<P>A file object's display attributes may be zero or a combination values shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Flag (value)</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_DISPLAYATTRMASK (0x000F0000)</TD>
+<TD width=50%>A mask for the display attributes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_GHOSTED (0x00080000)</TD>
+<TD width=50%>The specified file objects or folders should be displayed using a ghosted icon.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_LINK (0x00010000) </TD>
+<TD width=50%>The specified file objects are shortcuts.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_READONLY (0x00040000)</TD>
+<TD width=50%>The specified file objects or folders are read-only.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_SHARE (0x00020000)</TD>
+<TD width=50%>The specified folders are shared.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_DISPLAYATTRMASK (0x000F0000) </TD>
+<TD width=50%>A mask for the display attributes.</TD>
+</TR>
+</table></div>
+
+<P>A file object's contents flags may be zero or a combination values shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Flag (value)</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_CONTENTSMASK (0x80000000)</TD>
+<TD width=50%>A mask for the contents attributes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_HASSUBFOLDER (0x80000000)</TD>
+<TD width=50%>The specified folders may have subfolders, and are therefore expandable in the left pane of Windows Explorer.
+<P>The SFGAO_HASSUBFOLDER attribute is only advisory, and may be returned by shell folder implementations even if they do not contain subfolders. Returning SFGAO_HASSUBFOLDER is recommended whenever a significant amount of time is required to determine whether or not any subfolders exist. For example, the shell always returns SFGAO_HASSUBFOLDER when a folder is located on a network drive.</P>
+</TD>
+</TR>
+</table></div>
+
+<P>A file object's miscellaneous attributes may be zero or a combination values shown in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Flag (value)</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_BROWSABLE (0x08000000) </TD>
+<TD width=50%>The specified items can be browsed in place.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_COMPRESSED (0x04000000) </TD>
+<TD width=50%>The specified items are compressed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_FILESYSTEM (0x40000000) </TD>
+<TD width=50%>The specified folders or file objects are part of the file system (that is, they are files, directories, or root directories).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_FILESYSANCESTOR (0x10000000) </TD>
+<TD width=50%>The specified folders contain one or more file system folders.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_FOLDER (0x20000000)</TD>
+<TD width=50%>The specified items are folders.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_NEWCONTENT (0x00200000)</TD>
+<TD width=50%>The objects contain new content.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_NONENUMERATED (0x00100000)</TD>
+<TD width=50%>The items are not enumerated.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_REMOVABLE (0x02000000)</TD>
+<TD width=50%>The specified file objects or folders are on removable media.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SFGAO_VALIDATE (0x01000000)</TD>
+<TD width=50%>Validate cached information. The shell confirms that the objects specified in <I>apidl</I> still exist and does not use cached information when retrieving the attributes. If one or more of the items specified in <I>apidl</I> no longer exist, this method returns an error code. If <I>cidl</I> is zero, the shell discards all cached information for the shell folder. This is similar to doing a refresh of the folder.</TD>
+</TR>
+</table></div>
+
+<P>Querying for some attributes may be relatively slow and use significant amounts of memory. For example, to determine if a file is shared, the shell loads network components. This procedure may require the loading of several dynamic-link libraries (DLLs). The purpose of <I>dwAttributes</I> is to allow you to restrict the query to only the information that is needed. </P>
+
+<P>The following example shows how to find out if a file is compressed.</P>
+
+<PRE class="code">IShellFolder *psf;
+DWORD dwAttribs = SFGAO_COMPRESSED;
+...
+hres = psf-&gt;ParseDisplayName(NULL,
+            NULL,
+            lpwszDisplayName,
+            &amp;cbEaten,
+            &amp;pidl,
+            &amp;dwAttribs);
+if(dwAttribs &amp; SFGAO_COMPRESSED)
+{
+//do something with the compressed file
+}</PRE>
+
+<P>Because <I>pdwAttributes</I> is a parameter that is used for both input and output, you should always initialize it. If you pass in an uninitialized value, some of the bits may be set. <B>IShellFolder::ParseDisplayName</B> then queries for the corresponding attributes, and this may lead to undesirable delays or memory demands. If you do not wish to query for attributes, set <I>pdwAttributes</I> to NULL to avoid unpredictable behavior.</P>
+
+<P>This method is similar to the <A HREF="JavaScript:hhobj_1.Click()">IParseDisplayName::ParseDisplayName</A> method.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.2 and later.<BR>
+<B>Header:</B> Shobjidl.h, Shobjidl.idl.<BR>
+<B>Link Library:</B> Implementation dependent.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfishellfolder.htm">IShellFolder</A> | <A HREF="wce50lrfishellfoldergetattributesof.htm">IShellFolder::GetAttributesOf</A> | <A HREF="wce50lrfitemidlist.htm">ITEMIDLIST</A> | <A HREF="wce50lrfshitemid.htm">SHITEMID</A> | <A HREF="JavaScript:hhobj_2.Click()">IParseDisplayName::ParseDisplayName</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IShellFolder::ParseDisplayName (wce50lrfishellfolderparsedisplayname.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

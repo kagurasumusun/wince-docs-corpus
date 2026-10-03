@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NAT and Applications</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50connatandapplications"></A>NAT and Applications</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The way in which an application uses NAT traversal depend upon several factors, including how long-lived a port mapping needs to be and whether the port is used by multiple clients or services. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To avoid orphaned mappings and the depletion of available ports for use by other applications, it is important that applications clean up static port mappings they create.</BLOCKQUOTE>
+
+<P>The following table shows the best method for port mapping for various service or application types.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Service or application type</TH>
+<TH width=63%>Best method for port mapping</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>A network service, such as a Web server, that requires the use of a well-known port for the duration of its lifetime. </TD>
+<TD width=63%>The installation program of an application can use the NAT Traversal APIs to configure a static port mapping. External clients can then contact the service for the life of the service, assuming that other applications, network administrators, and the network topology remain constant and that clean-up mechanisms do not clear the mapping. 
+<P>If the external IP address changes, the static port mapping automatically picks up the change.</P>
+
+<P>The application's uninstall service should delete this mapping. </P>
+
+<P>In the event of a crash, the static port mappings persist in the absence of the service. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>An application that will not always be running, or one that is less trusting of the network to maintain its static port mappings.</TD>
+<TD width=63%>The application can run a script in parallel to reserve a particular well known port every time it launches and return the resource every time it shuts down. 
+<P>An alternative to adding and deleting the port mapping is for the application to enable and disable the mapping as appropriate. </P>
+
+<P>The application can also leave the static port mapping up all the time and simply refresh the mapping whenever the application launches. </P>
+
+<P>If the external IP address changes, the static port mapping automatically picks up the change.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>Multiple applications on different clients on the private network use the same internal port number.</TD>
+<TD width=63%>The applications require modification to support multiple clients, because only a single client can use the internal port number for an external port mapping. 
+<P>The recommended behavior here is that first client wins. The other clients should request asymmetric port mappings where the internal port number is different than the external port. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>Multiple clients listen on the same external port for the sole purpose of being discovered by remote hosts.</TD>
+<TD width=63%>In this special case, incoming packets can be translated to use a broadcast address for the internal client IP address, instead of a particular client's address. Clients that are listening on that port can reply by initiating their own connection to the remote host. 
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This is not recommended for general use, because incoming packets to this address are received by, and affect, every client on the network.</BLOCKQUOTE>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>A service needs to listen to a random port for a short time.</TD>
+<TD width=63%>The service should request a static port mapping from within the application rather than use a script, and the service should delete the mapping as soon as it is done. 
+<P>The application should keep a record of outstanding port mappings. In this way, if the application crashes without closing the mappings, it can retrieve the information necessary to clean up the port mappings the next time it is launched. </P>
+</TD>
+</TR>
+</table></div>
+
+<H2 class="dtH2">Assumptions that Affect NAT Performance</H2>
+
+<P>Clients can use NAT to share a single globally routable IP address when the client initiates the contact and receives a reply on the same port. However, not all network applications use protocols that work with NAT. The strategies of many applications make assumptions that become false assumptions when a NAT device is used to connect to the Internet. </P>
+
+<P>From a user perspective, the impact of NAT without a traversal mechanism is simple: a person cannot use the desired service or application when NAT interferes. A "cannot connect" error message may display on the device or the application may attempt to work and then fail. A user may have no issues when using a dial-up modem to connect to the Internet, yet may experience difficulty when using a broadband service and a DSL or cable modem device with NAT. Typically, the user does not know what the source of the problem is, and technical support staffs do not always know how to troubleshoot these problems over the phone.</P>
+
+<P>The following table shows common assumptions made by applications that affect NAT performance.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Assumption</TH>
+<TH width=65%>Result</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>If a network service or server establishes a listening socket, any client on the Internet can initiate contact with it. </TD>
+<TD width=65%>A NAT device on the edge of the network requires that a port mapping exist to forward incoming traffic to services on an internal network. Therefore, the service only works for clients on the private network. It is unavailable to the rest of Internet. 
+<P>You can manually configure a port mapping that cause the NAT device to forward traffic from the specific external IP address and port of the NAT to the internal IP address and port used by the service. Services can then receive incoming packets. This makes the service accessible to clients external to the private network. </P>
+
+<P>However, manually configuring this mapping is complex. Many consumers or small business users must contact customer support of their broadband Internet service provider, PC manufacturer, retailer, or Internet gateway vendor to determine the source of the problem and the best solution. Manual configuring also results in a less restrictive mapping because any external client can use this mapping to initiate contact with the server.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>The Clients address and port are globally routable and can be used on the Internet directly.</TD>
+<TD width=65%>In many cases these are private IP addresses from IETF reserved address ranges. The application can include this private IP address or port in the payload of packets it sends to the server.
+<P>If the server attempts to reply using this embedded IP address and port to contact the Client instead of the mapped address and port supplied by the NAT, the packet is dropped because the embedded IP address is non-routable. </P>
+
+<P>If the network application can discover the presence of a NAT device and retrieve the external IP address and external port mapping to be used, the application can then embed the correct information in the packet.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>Although traffic is sent to a server or peer using a socket on one port "X," the application expects to receive traffic from the server to a separate listening socket on port "Y".</TD>
+<TD width=65%>Disparate sockets are not recognized by the NAT. The NAT sees the outgoing traffic and creates a port mapping for port "X", but it does not know to make a port mapping for the return packets addressed to port "Y". Therefore, incoming packets addressed to port "Y" are dropped. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>A globally routable, well-known port is always available to a network protocol.</TD>
+<TD width=65%>Even with user-configuring port mappings, special measures must be taken if multiple clients are to be discovered from outside the local network. When multiple clients share an IP address, only one client can use the well-known port at one time. For example only one Web service can use the external port 80 on a local network at a time. If this were not the case, the NAT device would be unable to determine which client the external request applied to. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50connetworkaddresstranslation.htm">Network Address Translation</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: NAT%20and%20Applications (wce50connatandapplications.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

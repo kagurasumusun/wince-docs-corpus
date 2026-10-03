@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating an Application that Demonstrates the Progress Bar</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfTEXT">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50tskcreatinganapplicationthatdemonstratestheprogressbar"></A>Creating an Application that Demonstrates the Progress Bar</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following steps describe how to build a simple application that demonstrates the behavior of a plain horizontal progress bar in a run-time image.</P>
+
+<P class="labelproc"><B>To create the source code for a progress bar demonstration application</B>
+
+<OL type="1">
+	<LI>From the <B>File</B> menu, choose <B>New Project or File</B>. 
+<P>The <B>New Project or File</B> dialog box appears.
+</li>
+
+	<LI>Choose the <B>Projects</B> tab and then choose <B>WCE Application</B>.</li>
+
+	<LI>Type the name <B>ProgBarDemo</B> in the <B>Project name</B> box, select the <B>Workspace project</B> radio button, and choose <B>OK</B>. 
+<P>The <B>New Project Wizard (WCE Application) - Step 1 of 3</B> dialog box appears.
+</li>
+
+	<LI>Type the relevant information in this dialog box and choose <B>Next</B>.</li>
+
+	<LI>In the <B>New Project Wizard (WCE Application) - Step 2 of 3</B> dialog box choose <B>An empty project</B> and choose <B>Finish</B>.
+<P>Note that a new node called <B>Projects</B> appears in the OSDesignView of your workspace, and the project you just created appears as a subnode.
+</li>
+
+	<LI>From the <B>File</B> menu, choose <B>New Project or File</B>. 
+<P>The <B>New Project or File</B> dialog box appears.
+</li>
+
+	<LI>Choose the <B>Files</B> tab and then from the list of available file types choose <B>C++ Source File.</B></li>
+
+	<LI>Type the name <B>ProgBarDemo</B> in the <B>File name</B> field. Verify that the <B>Add to project</B> check box is selected and that <B>ProgBarDemo</B> is selected in the drop-down list, and then choose <B>OK</B>. 
+<P>A window for <B>ProgBarDemo.cpp</B> opens.
+</li>
+
+	<LI>Copy the code from <A HREF="wce50concreatingasampleapplication.htm">Creating a Sample Application</A> into the ProgBarDemo.cpp window.</li>
+
+	<LI>Add the following line of code just below the <CODE>#include</CODE> directive for Windows.h:
+<PRE class="code">#include &lt;commctrl.h&gt;</PRE>
+</li>
+
+	<LI>Paste the following code into the <B>WinMain</B> function between the block of comments that identify the location for code that loads the accelerator table and the <code class="ce">while</code> loop. 
+<P>Placing the code in this location causes the progress bar to be displayed and fully advanced from 0 percent to 100 percent before the application enters its main message loop.
+
+<PRE class="code">//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+// Initialize the common controls and then create the progress bar.
+int i;
+int iSpacing;   // Controls the size of the progress bar.
+HWND hwndPB;    // Handle of progress bar.
+INITCOMMONCONTROLSEX iccInit;
+RECT rcClient;  // Client area of the application window.
+
+// Initialize the common controls.
+iccInit.dwSize = sizeof(iccInit);
+iccInit.dwICC = ICC_PROGRESS_CLASS;
+InitCommonControlsEx(&amp;iccInit);
+
+// Create the window for the progress bar.
+GetClientRect(g_hwndMain, &amp;rcClient); 
+iSpacing = (int)(0.05 * (rcClient.right - rcClient.left));
+hwndPB = CreateWindowEx(0,
+                        PROGRESS_CLASS,
+                        TEXT("Progess Bar"), 
+                        WS_CHILD | WS_VISIBLE,
+                        rcClient.left + iSpacing, 
+                (int)((rcClient.bottom - rcClient.top)/2 - iSpacing/2),
+                        rcClient.right - 2 * iSpacing,
+                        iSpacing, 
+                        g_hwndMain,
+                        NULL,
+                        hInstance,
+                        NULL); 
+ 
+if(!hwndPB)
+{
+  MessageBox(g_hwndMain, TEXT("Unable to create the progress bar"),
+             TEXT("Progress Bar"), MB_OK);
+  return  FALSE;
+}
+
+// Display the progress bar.
+ShowWindow(g_hwndMain, iCmdShow);
+UpdateWindow(g_hwndMain);
+ 
+// Set the range and increment of the progress bar. 
+SendMessage(hwndPB, PBM_SETRANGE, 0, MAKELPARAM(0,100)); 
+SendMessage(hwndPB, PBM_SETSTEP, MAKEWPARAM(1, 0), 0);
+
+// Send data to the progress bar to make it advance.
+for(i=0 ; i &lt; 100 ; i++)
+{
+  SendMessage(hwndPB, PBM_STEPIT, 0, 0); 
+  Sleep(50);
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=</PRE>
+</li>
+
+	<LI>From the <B>File</B> menu, choose <B>Save</B>, and then <B>Close</B> to close the file.</li>
+</OL>
+
+<P>Because the previous code uses a common control, that is, the progress bar, you must add Commctrl.lib to the list of link libraries for ProgBarDemo.exe.</P>
+
+<P class="labelproc"><B>To add Commctrl.lib to the list of link libraries</B>
+
+<OL type="1">
+	<LI>Select the FileView tab in your workspace. Expand the <B>Projects</B> node. You should see <B>ProgBarDemo</B> under the <B>Projects</B> node. Right-click <B>ProgBarDemo</B> and select <B>Settings</B>. 
+<P>The project settings dialog box appears.
+</li>
+
+	<LI>Choose the <B>Link</B> tab.</li>
+
+	<LI>In the <B>Additional Libraries </B>field, add (_$PROJECTROOT)\cesysgen\sdk\lib\(_$CPUINDPATH)\Commctrl.lib to the end of the list of link libraries. Note that the list of libraries is separated by a space character.</li>
+
+	<LI>Choose <B>OK</B>.</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50howhowtocustomizetheappearanceofcommoncontrols.htm">How to Customize the Appearance of Common Controls</A> | <A HREF="wce50grfprogressbarcontrolreference.htm">Progress Bar Control Reference</A> | <A HREF="wce50lrfcreatewindowex.htm">CreateWindowEx</A> | <A HREF="wce50lrfgetclientrect.htm">GetClientRect</A> | <A HREF="wce50lrfinitcommoncontrolsex158.htm">INITCOMMONCONTROLSEX (structure)</A> | <A HREF="wce50lrfinitcommoncontrolsex157.htm">InitCommonControlsEx (function)</A> | <A HREF="wce50lrfmakelparam.htm">MAKELPARAM</A> | <A HREF="wce50lrfmakewparam.htm">MAKEWPARAM</A> | <A HREF="wce50lrfmessagebox.htm">MessageBox</A> | <A HREF="wce50lrfrect.htm">RECT</A> | <A HREF="wce50lrfsendmessage.htm">SendMessage</A> | <A HREF="wce50lrfshowwindow.htm">ShowWindow</A> | <A HREF="JavaScript:hhobj_1.Click()">TEXT</A> | <A HREF="wce50lrfupdatewindow.htm">UpdateWindow</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20an%20Application%20that%20Demonstrates%20the%20Progress%20Bar (wce50tskcreatinganapplicationthatdemonstratestheprogressbar.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

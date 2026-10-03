@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing the Contents of a Vertex Buffer</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conaccessingcontentsofvertexbuffer"></A>Accessing the Contents of a Vertex Buffer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Vertex buffer objects enable applications to directly access the memory allocated for vertex data. You can retrieve a pointer to vertex buffer memory by calling the <A HREF="wce50lrfidirect3dmobilevertexbufferlock.htm">IDirect3DMobileVertexBuffer::Lock</A> method, and then accessing the memory as needed to fill the buffer with new vertex data or to read any data it already contains. The <B>Lock</B> method accepts four parameters. The first, <I>OffsetToLock</I>, is the offset into the vertex data. The second parameter is the size, measured in bytes, of the vertex data. The third parameter accepted by the <B>Lock</B> method, <I>ppbData</I>, is the address of a <B>BYTE</B> pointer that points to the vertex data, if the call succeeds. </P>
+
+<P>The last parameter, <I>Flags</I>, tells the system how the memory should be locked. You can use it to indicate how the application will access the data in the buffer. Specify constants for the <I>Flags</I> parameter according to the way the vertex data will be accessed. This allows the driver to lock the memory and provide the best performance, given the requested access type. Use D3DMLOCK_READONLY flag (see <A HREF="wce50lrfd3dmlockvalues.htm">D3DMLOCK Values</A>) if your application will read only from the vertex buffer memory. Including this flag enables Microsoft&reg; Direct3D Mobile&reg; to optimize its internal procedures to improve efficiency, given that access to the memory will be read-only. </P>
+
+<P>After you finish filling or reading the vertex data, call the <A HREF="wce50lrfidirect3dmobilevertexbufferunlock.htm">IDirect3DMobileVertexBuffer::Unlock</A> method, as shown in the following code example.</P>
+
+<PRE class="code">// This code example assumes the g_pVB is a pointer to an
+// IDirect3DMobileVertexBuffer interface and that g_Vertices has
+// been properly initialized with vertices.
+
+// To fill the vertex buffer, you need to lock the buffer to
+// gain access to the vertices. This mechanism is required because 
+// vertex buffers may be in device memory.
+VOID* pVertices;
+
+if( FAILED( g_pVB-&gt;Lock( 0,                  // Fill from the start of 
+                                             // the buffer.
+                         sizeof(g_Vertices), // Size of the data to 
+                                             // load.
+                         (BYTE**)&amp;pVertices, // Returned vertex data.
+                         0 ) ) )             // Send default flags to 
+                                             // the lock.
+    return E_FAIL;
+
+memcpy( pVertices, g_Vertices, sizeof(g_Vertices) );
+g_pVB-&gt;Unlock();</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;If you create a vertex buffer with the D3DMUSAGE_WRITEONLY flag (see <A HREF="wce50lrfd3dmusagevalues.htm">D3DMUSAGE Values</A>), do not use the D3DMLOCK_READONLY locking flag. Use the D3DMLOCK_READONLY flag if your application will read only from the vertex buffer memory. Including this flag enables Direct3D to optimize its internal procedures to improve efficiency, given that access to the memory will be read-only.</BLOCKQUOTE>
+
+<P>Because you directly access the memory allocated for the vertex buffer, make sure your application properly accesses the allocated memory. Otherwise, you risk rendering that memory invalid. Use the stride of the vertex format that your application uses to move from one vertex in the allocated buffer to another. The vertex buffer memory is a simple array of vertices specified in flexible vertex format. Use the stride of whatever vertex format structure you define. You can calculate the stride of each vertex at run time by examining the flexible vertex format flags (see <A HREF="wce50lrfd3dmfvfvalues.htm">D3DMFVF Values</A>) contained in the vertex buffer description. The following table shows the size for each vertex component.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Vertex format flag</TH>
+<TH width=69%>Size </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>D3DFVF_DIFFUSE</TD>
+<TD width=69%><B>sizeof</B>(<B>DWORD</B>)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>D3DFVF_NORMAL</TD>
+<TD width=69%><B>sizeof</B>(<B>float</B>) &times; 3</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>D3DFVF_SPECULAR</TD>
+<TD width=69%><B>sizeof</B>(<B>DWORD</B>)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>D3DFVF_TEX<I>n</I></TD>
+<TD width=69%><B>sizeof</B>(<B>float</B>) &times; <I>n &times;</I> <I>t </I></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>D3DFVF_XYZ</TD>
+<TD width=69%><B>sizeof</B>(<B>float</B>) &times; 3</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>D3DFVF_XYZRHW</TD>
+<TD width=69%><B>sizeof</B>(<B>float</B>) &times; 4</TD>
+</TR>
+</table></div>
+
+<P>The number of texture coordinates present in the vertex format is described by the D3DFVF_TEX<I>n</I> flags (where <I>n</I> is a value from 0 to 8). Multiply the number of texture coordinate sets by the size of one set of texture coordinates, which can range from one to four floats, to calculate the memory required for that number of texture coordinates.</P>
+
+<P>Use the total vertex stride to increment and decrement the memory pointer as needed to access particular vertices.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingvertexbuffers.htm">Using Vertex Buffers</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Accessing%20the%20Contents%20of%20a%20Vertex%20Buffer (wce50conaccessingcontentsofvertexbuffer.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

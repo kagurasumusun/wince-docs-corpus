@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMultiQI::QueryMultipleInterfaces</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimultiqiquerymultipleinterfaces"></A>IMultiQI::QueryMultipleInterfaces</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method fills a caller-provided array of structures with pointers to multiple interfaces. </P>
+
+<P>Calling this method is equivalent to issuing a series of separate <A HREF="wce50lrfiunknownqueryinterface.htm">QueryInterface</A> calls except that you do not incur the overhead of a corresponding number of RPC calls. </P>
+
+<P>In multithreaded applications and distributed environments, keeping RPC calls to a minimum is essential for optimal performance.</P>
+
+<PRE class="syntax"><B>HRESULT QueryMultipleInterfaces(</B>
+  <B>ULONG </B><I>cMQIs</I><B>,</B>
+  <B>MULTI_QI* </B><I>pMQIs</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>cMQIs</I></DT>
+
+<DD>[in] Pointer to the number of elements in an array of <B>MULTI_QI</B> structures, each of which contains the IID of a single interface.</dd>
+
+<DT><I>pMQIs</I></DT>
+
+<DD>[in, out] Pointer to the first <B>MULTI_QI</B> structure in the array.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>Pointers were returned to all requested interfaces.</dd>
+
+<DT>S_FALSE</DT>
+
+<DD>Pointers were returned to some, but not all, of the requested interfaces.</dd>
+
+<DT>E_NOINTERFACE</DT>
+
+<DD>Pointers were returned to none of the requested interfaces.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>QueryMultipleInterfaces</B> method takes as input an array of <B>MULTI_QI</B> structures. Each structure specifies an interface IID and contains two additional blank members for receiving an interface pointer and return value.</P>
+
+<P>This method obtains as many requested interface pointers as possible directly from the object proxy. </P>
+
+<P>For each interface not implemented on the proxy, the method calls the server to obtain a pointer. </P>
+
+<P>Upon receiving an interface pointer from the server, the method builds a corresponding interface proxy and returns its pointer along with pointers to the interfaces it already implements.</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Notes to Callers</H4>
+
+<P>A caller should begin by querying the object proxy for the <A HREF="wce50lrfimultiqiiunknown.htm">IMultiQI</A> interface. If the object proxy returns a pointer to this interface, the caller should then create a <B>MULTI_QI</B> structure for each interface it wants to obtain. </P>
+
+<P>Each structure should specify an interface IID and set its <B>pItf</B> member to NULL. Failure to set the <B>pItf</B> member to NULL will cause the object proxy to ignore the structure.</P>
+
+<P>On return, <B>QueryMultipleInterfaces</B> writes the requested interface pointer and a return value into each <B>MULTI_QI</B> structure in the client's array. The <B>pItf</B> member receives the pointer; the <B>hr</B> member receives the return value.</P>
+
+<P>If the value returned from a call to <B>QueryMultipleInterfaces</B> is S_OK, then pointers were returned for all requested interfaces. </P>
+
+<P>If the return value is E_NOINTERFACE, then pointers were returned for none of the requested interfaces. </P>
+
+<P>If the return value is S_FALSE, then pointers to one or more requested interfaces were not returned. In this event, the client should check the <B>hr</B> member of each <B>MULTI_QI</B> structure to determine which interfaces were acquired and which were not.</P>
+
+<P>If a client knows ahead of time that it will be using several of an object's interfaces, it can call <B>QueryMultipleInterfaces</B> up front and then, later, if a <B>QueryInterface</B> is done for one of the interfaces already acquired through <B>QueryMultipleInterfaces</B>, no RPC call will be necessary.</P>
+
+<P>On return, the caller should check the <B>hr</B> member of each <B>MULTI_QI</B> structure to determine which interface pointers were and were not returned.</P>
+
+<P>The client is responsible for releasing each of the acquired interfaces by calling <A HREF="wce50lrfiunknownrelease.htm">Release</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfiunknown.htm">IUnknown</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMultiQI::QueryMultipleInterfaces (wce50lrfimultiqiquerymultipleinterfaces.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

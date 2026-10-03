@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoResult::Serialize</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecoresultserialize"></A>ISpRecoResult::Serialize</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method creates a serialized copy of the recognition result object. The serialized copy can be saved and later restored using the <A HREF="wce50lrfisprecocontextdeserializeresult.htm">ISpRecoContext::DeserializeResult</A> method. </P>
+
+<PRE class="syntax"><B>HRESULT Serialize(</B>
+  <B>SPSERIALIZEDRESULT** </B><I>ppCoMemSerializedResult</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>ppCoMemSerializedResult</I> </DT>
+
+<DD>[out] Address of a pointer to an <A HREF="wce50lrfspserializedresult.htm">SPSERIALIZEDRESULT</A> structure containing the serialized result information. The application should call <B>CoTaskMemFree</B> to free the memory associated with the serialized result. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_POINTER </TD>
+<TD width=65%><I>ppCoMemSerializedResult</I> is an invalid pointer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_OUTOFMEMORY </TD>
+<TD width=65%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use this method to serialize a result and deserialize it back into an ISpRecoContext object.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// ... obtain a recognition result object from the recognizer...
+SPSERIALIZEDRESULT* pSerializedResult = NULL;
+ULONG cbWritten = 0;
+ULONG ulSerializedSize = 0;
+LARGE_INTEGER liseek;
+LARGE_INTEGER li;
+CComPtr&lt;IStream&gt; cpStreamWithResult;
+hr = CreateStreamOnHGlobal(NULL, true, &amp;cpStreamWithResult);
+// Check hr
+// Serialize result to memory
+hr = cpRecoResult-&gt;Serialize(&amp;pSerializedResult);
+// Check hr
+//serialized to a stream pointer
+hr = cpStreamWithResult-&gt;Write(pSerializedResult,
+             pSerializedResult-&gt;ulSerializedSize, 
+                                      &amp;cbWritten);
+// Check hr
+// free the serialized result
+if (pSerializedResult) ::CoTaskMemFree(pSerializedResult);
+// commit the stream changes
+hr = cpStreamWithResult-&gt;Commit(STGC_DEFAULT);
+// Check hr
+// ... persist stream to disk, network share, and so on...
+// ... shutdown application .... 
+// ... restart application and get the persisted stream
+// reset the stream seek pointer to the start before deserialization
+li.QuadPart = 0;
+hr = cpStreamWithResult-&gt;Seek(li, STREAM_SEEK_SET, NULL);
+// Check hr
+// find the size of the stream
+hr = cpStreamWithResult-&gt;Read(&amp;ulSerializedSize, sizeof(ULONG), NULL);
+// Check hr
+// reset the seek pointer
+liseek.QuadPart = 0 - sizeof(ULONG);
+hr = cpStreamWithResult-&gt;Seek(liseek, STREAM_SEEK_CUR, NULL);
+// Check hr
+// allocate the memory for the result
+pSerializedResult = (SPSERIALIZEDRESULT*)::CoTaskMemAlloc(ulSerializedSize);
+// Check pSerializedResult in case "out of memory"
+// copy the stream into a serialized result object
+hr = cpStreamWithResult-&gt;Read(pSerializedResult, ulSerializedSize, NULL);
+// Check hr
+// Deserialize result from memory
+hr = cpRecoContext-&gt;DeserializeResult(pSerializedResult, &amp;cpRecoResultNew);
+// Check hr
+// free the pSerializedResult memory
+if (pSerializedResult) {
+  CoTaskMemFree(pSerializedResult);
+}
+// As long as the same engine was used to generate
+// the original result object, as is now being used,
+// applications can now get alternates for the cpRecoResultNew's phrase</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecoresult.htm">ISpRecoResult</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoResult::Serialize (wce50lrfisprecoresultserialize.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

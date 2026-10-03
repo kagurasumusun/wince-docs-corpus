@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CLSCTX</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfclsctx"></A>CLSCTX</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This enumeration contains values used in activation calls to indicate the execution contexts of the object. </P>
+
+<P>In calls to <A HREF="wce50lrfcoregisterclassobject.htm">CoRegisterClassObject</A>, the <B>CLSCTX</B> enumeration values indicate a set of execution contexts that are available for request when a class object is instantiated.</P>
+
+<PRE class="syntax"><B>typedef enum tagCLSCTX {</B>
+  <B>CLSCTX_INPROC_SERVER = 0x1,</B>
+<B>  CLSCTX_INPROC_HANDLER = 0x2,</B>
+<B>  CLSCTX_LOCAL_SERVER = 0x4,</B>
+<B>  CLSCTX_REMOTE_SERVER = 0x10</B>
+<B>} CLSCTX; </B>
+<B>#define CLSCTX_SERVER    (CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER |</B>
+<B>                                                 CLSCTX_REMOTE_SERVER)</B>
+<B>#define CLSCTX_ALL       (CLSCTX_INPROC_HANDLER | CLSCTX_SERVER)</B></PRE>
+
+<H4 class="dtH4">Elements</H4>
+
+<DL>
+<DT>CLSCTX_INPROC_SERVER </DT>
+
+<DD>The code that creates and manages objects of this class runs in the same process as the caller of the function specifying the class context. </dd>
+
+<DT>CLSCTX_INPROC_HANDLER </DT>
+
+<DD>The code that manages objects of this class is an in-process handler. This is a dynamic-link library (DLL) that runs in the client process and implements client-side structures of this class when instances of the class are accessed remotely. </dd>
+
+<DT>CLSCTX_LOCAL_SERVER </DT>
+
+<DD>The EXE code that creates and manages objects of this class is loaded in a separate process space, which runs on same machine but in a different process. </dd>
+
+<DT>CLSCTX_REMOTE_SERVER </DT>
+
+<DD>A remote machine context. The LocalServer32 or LocalService code that creates and manages objects of this class is run on a different machine. </dd>
+</DL>
+
+<H4 class="dtH4">Defined Terms</H4>
+
+<DL>
+<DT>CLSCTX_SERVER </DT>
+
+<DD>Indicates server code, whether in-process, local, or remote. 
+
+<P>This definition ORs CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER, and CLSCTX_REMOTE_SERVER. 
+</dd>
+
+<DT>CLSCTX_ALL </DT>
+
+<DD>Indicates all class contexts. This definition ORs CLSCTX_INPROC_HANDLER and CLSCTX_SERVER. </dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Values from the <B>CLSCTX</B> enumeration are used in activation calls (such as <A HREF="wce50lrfcocreateinstance.htm">CoCreateInstance</A>, <A HREF="wce50lrfcocreateinstanceex.htm">CoCreateInstanceEx</A>, and <A HREF="wce50lrfcogetclassobject.htm">CoGetClassObject</A>) to indicate the preferred execution contexts (in-process, local, or remote) in which an object is to be run. </P>
+
+<P>They are also used in calls to <A HREF="wce50lrfcoregisterclassobject.htm">CoRegisterClassObject</A> to indicate the set of execution contexts in which a class object is to be made available for requests to construct instances (<A HREF="wce50lrficlassfactorycreateinstance.htm">IClassFactory::CreateInstance</A>).</P>
+
+<P>To indicate that more than one context is acceptable, you can string multiple values together with Boolean <B>OR</B>s. The contexts are tried in the order in which they are listed. </P>
+
+<P>The following table shows how other OLE functions and methods that call <B>CoGetClassObject</B> use the <B>CLSCTX</B> values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Function called</TH>
+<TH width=60%>Context flag used</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wce50lrfirunnableobjectrun.htm">IRunnableObject::Run</A></TD>
+<TD width=60%>CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER 
+<P>Running an OLE object requires connecting to the full code of the object wherever it is located.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wce50lrfcounmarshalinterface.htm">CoUnmarshalInterface</A></TD>
+<TD width=60%>CLSCTX_INPROC_HANDLER 
+<P>Unmarshaling needs the form of the class designed for remote access.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A>, for a file moniker created through a call to <B>CreateFileMoniker</B></TD>
+<TD width=60%>In this case, uses CLSCTX_SERVER internally to create the instance after calling <A HREF="wce50lrfgetclassfile.htm">GetClassFile</A> to determine the class to be instantiated. </TD>
+</TR>
+</table></div>
+
+<P>The CLSCTX_REMOTE_SERVER value is added to the <B>CLSCTX</B> enumeration for the distributed Component Object Model (COM). The CLSCTX_SERVER and CLSCTX_ALL constants are further updated to include the CLSCTX_REMOTE_SERVER value.</P>
+
+<P>Given a set of <B>CLSCTX</B> flags, <I>dwClsCtx</I>, the execution context to be used depends on the availability of registered class codes and other parameters according to the following algorithm.</P>
+
+<P>The first part of the processing determines whether CLSCTX_REMOTE SERVER should be specified as follows. </P>
+
+<P>If the call specifies an explicit <A HREF="wce50lrfcoserverinfo.htm">COSERVERINFO</A> structure indicating a machine different from the current machine, or if there is no explicit <B>COSERVERINFO</B> structure specified, but the specified class is registered with either the <B>RemoteServerName</B> or <B>ActivateAtStorage</B> named value, CLSCTX_REMOTE_SERVER is implied and is added to <I>dwClsCtx</I>. </P>
+
+<P>The second case allows applications written prior to the release of distributed COM to be the configuration of classes for remote activation to be used by client applications available prior to DCOM and the CLSCTX_REMOTE_SERVER flag. </P>
+
+<P>The cases in which there would be no explicit <B>COSERVERINFO</B> structure are (1) the value is specified as NULL and (2) it is not one of the function parameters, as would be the case in calls to <B>CoCreateInstance</B> or <B>CoGetClassObject</B> in existing applications. </P>
+
+<P>If the explicit <B>COSERVERINFO</B> parameter indicates the current computer, CLSCTX_REMOTE_SERVER is removed (if present) from <I>dwClsCtx</I>. </P>
+
+<P>The rest of the processing proceeds by looking at the values of <I>dwClsCtx</I> in the following sequence. 
+
+<OL type="1">
+	<LI>If <I>dwClsCtx</I> includes CLSCTX_REMOTE_SERVER and no <B>COSERVERINFO</B> parameter is specified, and the activation request indicates a persistent state from which to initialize the object (with <A HREF="wce50lrfcogetinstancefromfile.htm">CoGetInstanceFromFile</A> or <A HREF="wce50lrfcogetinstancefromistorage.htm">CoGetInstanceFromIStorage</A> or, for a file moniker, in a call to <B>IMoniker::BindToObject</B>), and the class has an <B>ActivateAtStorage</B> subkey or no class registry information whatsoever, the request to activate and initialize is forwarded to the computer where the persistent state resides. </li>
+
+	<LI>If dwClsCtx includes CLSCTX_INPROC_SERVER, the class code in the DLL found under the class's InprocServer32 key is used if this key exists. The class code will run within the same process as the caller. </li>
+
+	<LI>If dwClsCtx includes CLSCTX_INPROC_HANDLER, the class code in the DLL found under the class's InprocHandler32 key is used if this key exists. The class code will run within the same process as the caller. </li>
+
+	<LI>If dwClsCtx includes CLSCTX_LOCAL_SERVER, the class code in the Microsoft&reg; Win32&reg; service found under the class's LocalService key is used if this key exists. 
+<P>If no Win32 service is specified, but an EXE is specified under that same key, the class code associated with that EXE is used. The class code (in either case) will be run in a separate service process on the same machine as the caller. 
+</li>
+
+	<LI>If dwClsCtx is set to CLSCTX_REMOTE_SERVER and an additional COSERVERINFO parameter to the function specifies a particular remote machine, a request to activate is forwarded to this remote machine with dwClsCtx modified to be CLSCTX_LOCAL_SERVER. 
+<P>The class code will run in its own process on this specific machine, which must be different from that of the caller. 
+</li>
+
+	<LI>If dwClsCtx includes CLSCTX_REMOTE_SERVER and no COSERVERINFO parameter is specified and a computer name is given under the class's RemoteServerName named value, the request to activate is forwarded to this remote computer with dwClsCtx modified to be CLSCTX_LOCAL_SERVER. 
+<P>The class code will run in its own process on this specific computer, which must be different from that of the caller. 
+</li>
+</OL>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Wtypes.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcocreateinstance.htm">CoCreateInstance</A> | <A HREF="wce50lrfcocreateinstanceex.htm">CoCreateInstanceEx</A> | <A HREF="wce50lrfcogetclassobject.htm">CoGetClassObject</A> | <A HREF="wce50lrfcogetinstancefromfile.htm">CoGetInstanceFromFile</A> | <A HREF="wce50lrfcogetinstancefromistorage.htm">CoGetInstanceFromIStorage</A> | <A HREF="wce50lrfcoregisterclassobject.htm">CoRegisterClassObject</A> | <A HREF="wce50lrfcounmarshalinterface.htm">CoUnmarshalInterface</A> | <A HREF="wce50lrfgetclassfile.htm">GetClassFile</A> | <A HREF="wce50lrficlassfactorycreateinstance.htm">IClassFactory::CreateInstance</A> | <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A> | <A HREF="wce50lrfirunnableobjectrun.htm">IRunnableObject::Run</A> | <A HREF="wce50lrfcoserverinfo.htm">COSERVERINFO</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CLSCTX (wce50lrfclsctx.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,210 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Debugging MSMQ Installations</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50oriNetworkUtilities">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condebuggingmsmqinstallations"></A>Debugging MSMQ Installations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Effective with version 3.0, Windows CE includes a debug version of MSMQ that simplifies the task of debugging network connections and MSMQ applications. </P>
+
+<P>This debug version checks for consistency of MSMQ's internal and external data. It is also capable of outputting a trace of currently performed operations. </P>
+
+<P>On systems that support a console, the debug version has a command monitor that allows you to view MSMQ's internal data structures.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Use extreme caution when enabling debug output. Some options can prevent the system from booting over, so it is inadvisable to leave debug output enabled across warm boots. For example, if the debugger is not connected to the system, enabling serial port debug output might continuously block the initialization thread on system startup. Enabling text output crashes the system at boot because the console driver has not been initialized. Both conditions require a cold boot for the device to recover. </BLOCKQUOTE>
+
+<P class="labelproc"><B>To install the debug build</B>
+
+<OL type="1">
+	<LI>Stop MSMQ.</li>
+
+	<LI>Rename \Windows\msmqd.dll to \Windows\Msmqd.dll.old.</li>
+
+	<LI>Copy the debug build of Msmqd.dll to \Windows.</li>
+
+	<LI>Restart the system.</li>
+
+	<LI>Start MSMQ.</li>
+</OL>
+
+<P>To select the output method for debugging information, set the <B>DebugOutputChannels</B> registry entry to 0x1 for console output or to 0x2 for output to a log file.</P>
+
+<P>Console and Log File functionality is available for tracing by setting the <B>DebugOutputMask</B> registry entry to any combination of items in the following table.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=41%>Value</TH>
+<TH width=59%>Item</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_API</TD>
+<TD width=59%>0x00000001</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_QUEUE</TD>
+<TD width=59%>0x00000002</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_SESSION</TD>
+<TD width=59%>0x00000004</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_PACKETS</TD>
+<TD width=59%>0x00000008</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_CURSORS</TD>
+<TD width=59%>0x00000010</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_ORDER</TD>
+<TD width=59%>0x00000020</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_IO</TD>
+<TD width=59%>0x00000040</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_FILE</TD>
+<TD width=59%>0x00000080</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_INIT</TD>
+<TD width=59%>0x00000100</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_WARN</TD>
+<TD width=59%>0x00004000</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>VERBOSE_MASK_FATAL</TD>
+<TD width=59%>0x00008000</TD>
+</TR>
+</table></div>
+
+<H2 class="dtH2">Console</H2>
+
+<P>In OS designs that support the console, the debug version of MSMQ can create a console window with a rudimentary monitor prompt that allows you to see the values inside MSMQ internal structures. </P>
+
+<P>The console can be turned on only by running the Console command in MSMQADM. After you see the prompt, the help command gives you the list of currently supported monitor commands.</P>
+
+<H2 class="dtH2">Log Files</H2>
+
+<P>Effective with Windows CE 3.0, MSMQ supports logging. The log file is called MQLOGFILE.TXT and resides in the MSMQ storage directory. It stores event information such as starts, stops, or fatal errors. </P>
+
+<P>The size of the log is controlled by the <B>LogSize</B> registry entry. When the file reaches half of the specified size, it is renamed MQLOGFILE.OLD and a new MQLOGFILE.TXT file is created.</P>
+
+<H2 class="dtH2">Troubleshooting Network Connections</H2>
+
+<P>The following list helps discover the problem with network connection:
+
+<UL type="disc">
+	<LI>Does your device have unique name? Is it different from the default? 
+<P>If not, name registration service will not load.
+</li>
+
+	<LI>Is there a DNS server on the net? 
+<P>Windows NT can operate without DNS server by using NetBIOS broadcasts. Windows CE requires DNS, WINS or subkey in <B>HKEY_LOCAL_MACHINE\Comm\Tcpip\hosts</B> for name resolution.
+</li>
+
+	<LI>Does DNS server know about the target machine? 
+<P>You can use the nslookup utility on a Windows XP computer to find out.
+</li>
+
+	<LI>If DNS does not know about the device, or has wrong IP address, this usually means that it did not sync up with WINS server. What WINS servers are used? 
+<P>Run IPCONFIG /ALL on Windows NT or look in the <B>HKEY_LOCAL_MACHINE\Comm\</B>&lt;<I>Netcard driver name</I>&gt;<B>\Parms\Tcpip</B> subkey for values WINS or DhcpWINS.
+</li>
+
+	<LI>What does WINS know about the name in question? 
+<P>You might need to query WINS to discover this information. RFC1001/1002 explains how to write your own small tool to do WINS queries.
+</li>
+
+	<LI>The VISADM utility provided with MSMQ SDK sample will walk you through registry configuration. Is it properly configured? 
+<P>Check for improper configuration with the following examples.
+
+<UL type="disc">
+	<LI>The redirector is not present, but NetBIOS is configured to use redirector for network administration.</li>
+
+	<LI>Network tracking is enabled on a device running a version of Windows CE earlier than 2.12.</li>
+
+	<LI>Network tracking is enabled in MSMQ on a version of Windows CE earlier than 2.12, which disables the redirector.</li>
+
+	<LI>Network tracking is disabled and periodic update is set to a high number. Remember, the <B>Cycle</B> value is in seconds.</li>
+
+	<LI>The computer has not been assigned a unique name on the network.</li>
+</UL>
+</li>
+
+	<LI>On a device with a redirector, you can run cmd.exe and "net view \\someresource". This forces the redirector to load and attempt to register the name on the net.</li>
+
+	<LI>If WINS does have the correct address, check the <B>HKEY_LOCAL_MACHINE\Comm\Tcpip\hosts</B> registry key for possible outdated cache entries for the target computer.</li>
+
+	<LI>If the target computer is a Windows CE-based device, check its log file. The source computer might not have NetBIOS service running and it might not be correctly responding to node status queries. 
+<P>In this case, MSMQ cannot retrieve the machine name for incoming connection and will reject the connection. 
+
+<P>To check whether the connecting device answers node status query, find out its IP address and run "ping &#0150;a &lt;its_ip_address&gt;".
+</li>
+
+	<LI>The default registry value is "No" for the <B>AllowResponse</B> entry in <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MSMQ\SimpleClient</B> subkey. This sends acknowledgements to the sender using the host name, such as www.adatum.com. If the value is "Yes", MSMQ sends the acknowledgement using the IP address. 
+<P>Usually, the host name and the IP address point to the same computer. However, when the network uses dynamic IP addressing and the computer is online for a long time, the IP address can change. MSMQ might send the acknowledgement to the wrong computer when using IP addresses.
+</li>
+</UL>
+
+<P>The Cambridge Computer Corporation provides a set of free tools, called VxUtil, for troubleshooting the network from the Windows CE device. </P>
+
+<P>Use the NETMON utility to track general connection problems.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_1.Click()">Network Utilities</A> | <A HREF="wce50orimsmqapplicationdevelopment.htm">MSMQ Application Development</A> | <A HREF="wce50conmsmqinstallationoncustomplatforms.htm">Application Installation of MSMQ</A> | <A HREF="wce50conadministration.htm">Administration</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A> | <A HREF="wce50orimsmqsamples.htm">MSMQ Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Debugging%20MSMQ%20Installations (wce50condebuggingmsmqinstallations.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

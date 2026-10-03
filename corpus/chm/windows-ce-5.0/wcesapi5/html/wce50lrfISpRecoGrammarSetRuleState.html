@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoGrammar::SetRuleState</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecogrammarsetrulestate"></A>ISpRecoGrammar::SetRuleState</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method starts or stops a rule by its rule name. The rule name is specified in the XML grammar (using the rule NAME tag). Alternatively it is specified when <A HREF="wce50lrfispgrammarbuildergetrule.htm">ISpGrammarBuilder::GetRule</A> is called. See also <A HREF="wce50lrfispsrenginerulenotify.htm">ISpSREngine::RuleNotify</A> for information on the how SAPI notifies the SR engine.</P>
+
+<PRE class="syntax"><B>HRESULT SetRuleState(</B>
+  <B>const WCHAR* </B><I>pszName</I><B>,</B>
+  <B>void* </B><I>pReserved</I><B>,</B>
+  <B>SPRULESTATE </B><I>NewState</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszName</I> </DT>
+
+<DD>[in] Pointer to a null-terminated string specifying the rule name. If NULL, all rules with attributes SPRAF_TopLevel and SPRAF_Active and set (at rule creation time) are affected. </dd>
+
+<DT><I>pReserved</I> </DT>
+
+<DD>Reserved. Do not use. Must be NULL. </dd>
+
+<DT><I>NewState</I> </DT>
+
+<DD>[in] Value identifying the grammar rule state. Possible values are defined for the <A HREF="wce50lrfsprulestate.htm">SPRULESTATE</A> enumeration. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%><I>pszName</I> is invalid or bad. Alternatively, <I>pReserved</I> is non-null. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SP_STREAM_UNINITIALIZED </TD>
+<TD width=65%><A HREF="wce50lrfisprecognizersetinput.htm">ISpRecognizer::SetInput</A> has not been called with the InProc recognizer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_UNINITIALIZED </TD>
+<TD width=65%>The object has not been properly initialized. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_UNSUPPORTED_FORMAT </TD>
+<TD width=65%>Audio format is bad or is not recognized. Alternatively, the device driver may be busy by another application and cannot be accessed. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_NOT_TOPLEVEL_RULE </TD>
+<TD width=65%>The rule <I>pszName</I> exists, but is not a top-level rule. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>By default, the recognizer state (<A HREF="wce50lrfsprecostate.htm">SPRECOSTATE</A>) is SPRST_ACTIVE and recognition begins as soon as one or more rules are started. Consequently, an application should not start the rule state until it is prepared to receive recognitions. With the recognizer state set to SPRST_ACTIVE, SAPI first attempts to open the audio input stream when a rule (or dictation) is activated. Consequently, if the audio device is already in use by another application, or the stream fails to open, the failure code will be retrieved by <B>ISpRecoGrammar::SetRuleState</B>. The application should handle this failure gracefully.</P>
+
+<P>An application can also disable the SpRecoContext object (see The application can use the SPRS_ACTIVE_WITH_AUTO_PAUSE state for the <I>NewState</I> parameter to pause the engine after each CFG recognition is sent. The application must restart the SR engine using <A HREF="wce50lrfisprecocontextresume.htm">ISpRecoContext::Resume</A> to prevent the loss of input audio data. See also <A HREF="wce50lrfispsrenginesiteread.htm">ISpSREngineSite::Read</A>.</P>
+
+<P>The application can also disable the grammar objects or the recognition context object (<A HREF="wce50lrfisprecocontext.htm">ISpRecoContext</A>) to prevent recognitions from being fired for active rule states.</P>
+
+<P>If an application uses an InProc recognizer, it must call <A HREF="wce50lrfisprecognizersetinput.htm">ISpRecognizer::SetInput</A> with a non-null setting before the recognizer will retrieve recognitions. This call must be made regardless of how many rules are active.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following snippet loads a grammar, starts a single rule ("playcard") and then immediately stops the rule.</P>
+
+<PRE class="code">HRESULT hr;
+// create a grammar object
+hr = cpRecoContext-&gt;CreateGrammar(GRAM_ID, &amp;cpRecoGrammar);
+//Check return value
+// start the rule
+hr = cpRecoGrammar-&gt;SetRuleState(L"playcard", NULL, SPRS_ACTIVE);
+//Check return value
+//Stop the rule
+hr = cpRecoGrammar-&gt;SetRuleState(L"playcard", NULL, SPRS_INACTIVE);
+//Check return value</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecogrammar.htm">ISpRecoGrammar</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoGrammar::SetRuleState (wce50lrfisprecogrammarsetrulestate.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

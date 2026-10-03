@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Windows Messages to Manage Waveform Audio Playback</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conusingwindowsmessagestomanagewaveformaudioplayback"></A>Using Windows Messages to Manage Waveform Audio Playback</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>You can send a variety of Windows CE messages to a window procedure function to manage waveform audio playback. The following table shows these messages.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Message</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>MM_WIM_CLOSE</TD>
+<TD width=72%>Sent when the <A HREF="wce50lrfwaveoutclose.htm">waveOutClose</A> or the <A HREF="wce50lrfwaveinclose.htm">waveInClose</A> function closes a device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>MM_WIM_DATA</TD>
+<TD width=72%>Sent when the device driver finishes with a data block that is sent by the <A HREF="wce50lrfwaveoutwrite.htm">waveOutWrite</A> or the <A HREF="wce50lrfwaveinaddbuffer.htm">waveInAddBuffer</A> function.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>MM_WIM_OPEN</TD>
+<TD width=72%>Sent when the <A HREF="wce50lrfwaveoutopen.htm">waveOutOpen</A> or the <A HREF="wce50lrfwaveinopen.htm">waveInOpen</A> function opens a device.</TD>
+</TR>
+</table></div>
+
+<P>The MM_WIM_DATA message is the most useful message in the preceding table. When MM_WIM_DATA signals a completed data block, you can clean up and free that data block. Unless you need to allocate memory or initialize variables, you probably do not need to process the MM_WIM_OPEN message or the MM_WIM_CLOSE message.</P>
+
+<P>Like other Windows-based messages, these Windows-based messages have a <I>wParam</I> parameter and an <I>lParam</I> parameter that are associated with them. The <I>wParam</I> parameter always specifies a handle to the open waveform audio output device. For the MM_WIM_DATA message, <I>lParam</I> specifies a pointer to a <A HREF="wce50lrfwavehdr.htm">WAVEHDR</A> structure. This structure identifies a completed data block. The MM_WIM_CLOSE and MM_WIM_OPEN messages do not use <I>lParam</I>.</P>
+
+<P>The following code example shows how to process the MM_WIM_DATA message.</P>
+
+<PRE class="code">// WndProc-Main window procedure 
+LRESULT FAR PASCAL WndProc (HWND hWnd, UINT msg, WPARAM wParam, 
+                            LPARAM lParam) 
+{ 
+  switch (msg) 
+  { 
+    case MM_WIM_DATA: 
+      // A waveform audio data block has been played and can now be 
+      // freed. 
+      waveOutUnprepareHeader ((HWAVEOUT)wParam, (LPWAVEHDR)lParam, 
+                              sizeof (WAVEHDR)); 
+      // Free hData memory 
+      waveOutClose ((HWAVEOUT)wParam); 
+
+      break; 
+  } 
+
+  return DefWindowProc (hWnd, msg, wParam, lParam); 
+}</PRE>
+
+<P>The preceding example assumes that the application does not play multiple data blocks, so it can close the output device after playing a single data block.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingthewaveformaudiointerface.htm">Using the Waveform Audio Interface</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Using%20Windows%20Messages%20to%20Manage%20Waveform%20Audio%20Playback (wce50conusingwindowsmessagestomanagewaveformaudioplayback.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

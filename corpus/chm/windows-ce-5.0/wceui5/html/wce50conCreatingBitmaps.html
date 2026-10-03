@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating Bitmaps</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingbitmaps"></A>Creating Bitmaps</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A <I>bitmap</I> is an array of bits that, when mapped to a rectangular pixel array on an output device, creates an image. Use bitmaps to create, modify, and store images.</P>
+
+<P>Windows CE supports two types of bitmaps, <I>device-dependent bitmaps</I> (DDBs) and <I>device-independent bitmaps</I> (DIBs). A device-dependent bitmap does not have its own color table and therefore can be properly displayed only by a device with the same display memory organization as the one on which it was created. A device-independent bitmap, on the other hand, generally has its own color table and therefore can be displayed on multiple devices. It is recommended that you use DIBs in Windows CE&#0150;based applications.</P>
+
+<P class="labelproc"><B>To create a device-independent bitmap</B>
+
+<OL type="1">
+	<LI>Call the <A HREF="wce50lrfcreatedibsection.htm">CreateDIBSection</A> function. 
+<P><B>CreateDIBSection</B> creates a <B>DIBSection</B>, which contains all the information necessary for displaying the DIB.
+</li>
+
+	<LI>Call the <A HREF="wce50lrfselectobject.htm">SelectObject</A> function to select the <B>DIBSection </B>into the device context.</li>
+
+	<LI>Select the <B>DIBSection</B> again and call <A HREF="wce50lrfdeleteobject.htm">DeleteObject</A> to delete the <B>DIBSection</B> when finished.</li>
+</OL>
+
+<P>The <A HREF="wce50lrfbitmapinfo.htm">BITMAPINFO</A> structure defines the dimensions and color information for a DIB. This structure consists of a <A HREF="wce50lrfbitmapinfoheader.htm">BITMAPINFOHEADER</A> structure and an array of two or more <A HREF="wce50lrfrgbquad.htm">RGBQUAD</A><B> </B>structures. The <B>BITMAPINFOHEADER</B> structure contains information about the dimensions and color format of a DIB. Each <B>RGBQUAD</B> structure defines one bitmap color. The <B>BITMAPINFO</B> structure must include a color table if the images are palletized with formats of 1, 2, 4, or 8 bits per pixel (bpp). For a 16 bpp or 32 bpp non-palletized image, the color table must be three entries long; the entries must specify the value of the red, green, and blue (RGB) bitmasks. Because GDI ignores the color table for 24-bpp bitmaps, you should store the image pixels in RGB format.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Windows CE does not support 322 bitfields devices.</BLOCKQUOTE>
+
+<P class="labelproc"><B>To create a device-dependent bitmap</B>
+
+<OL type="1">
+	<LI>Call <A HREF="wce50lrfcreatecompatibledc.htm">CreateCompatibleDC</A> to create a memory device context.
+<P>This function creates a device context compatible with the specified device. The device context contains a single-bit array that serves as a placeholder for a bitmap.
+</li>
+
+	<LI>Call <A HREF="wce50lrfcreatebitmap.htm">CreateBitmap</A> or <A HREF="wce50lrfcreatecompatiblebitmap.htm">CreateCompatibleBitmap</A> to create the bitmap. If calling <B>CreateCompatibleBitmap</B>, be sure that you specify a screen device context rather than a memory device context; otherwise, you will get a device context to a 1-bpp device.</li>
+
+	<LI>Call <B>SelectObject</B> to select the bitmap into the device context.
+<P>Windows CE then replaces the single-bit array with an array large enough to store color data for the specified rectangle of pixels.
+</li>
+</OL>
+
+<P>When you draw using the handle returned by <B>CreateCompatibleDC</B>, the output does not appear on a device's drawing surface; rather, it is stored in memory. To copy the image stored in memory to a display device, call the <A HREF="wce50lrfbitblt.htm">BitBlt</A> function. <B>BitBlt</B> copies the bitmap data from the bitmap in the source device context into the bitmap in the target device context. In this case, the source device context is the memory device context, and the target device context is the display device context. Thus, when <B>BitBlt</B> completes the transfer, the image appears on the screen. By reversing the source and target device contexts, you can call <B>BitBlt</B> to transfer images from the screen into memory.</P>
+
+<P>The following code example shows how to create a memory device context, how to use a <B>CreateCompatibleBitmap</B> to create a bitmap, and how to use <B>BitBlt</B> to copy bitmap data from the source device context to the target device context.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">VOID BitmapDemo (HWND hwnd)
+{
+  
+  HDC hDC,                  // Handle to the display device context 
+      hDCMem;               // Handle to the memory device context
+  HBITMAP hBitmap,          // Handle to the new bitmap
+          hOldBitmap;       // Handle to the old bitmap
+  static int iCoordinate[200][4];  
+  int i, j,                
+      iXSrc, iYSrc,         // x and y coordinates of the source 
+                            // Rectangle's upper-left corner
+      iXDest, iYDest,       // x and y coordinates of the destination 
+                            // Rectangle's upper-left corner
+      iWidth, iHeight;      // Width and height of the bitmap
+
+  // Retrieve the handle to a display device context for the client 
+  // area of the window (hwnd). 
+  if (!(hDC = GetDC (hwnd)))
+    return;
+
+  // Create a memory device context compatible with the device. 
+  hDCMem = CreateCompatibleDC (hDC);
+
+  // Retrieve the width and height of windows display elements.
+  iWidth = GetSystemMetrics (SM_CXSCREEN) / 10;
+  iHeight = GetSystemMetrics (SM_CYSCREEN) / 10;
+
+  // Create a bitmap compatible with the device associated with the 
+  // device context.
+  hBitmap = CreateCompatibleBitmap (hDC, iWidth, iHeight);
+
+  // Select the new bitmap object into the memory device context. 
+  hOldBitmap = SelectObject (hDCMem, hBitmap);
+
+  for (i = 0; i &lt; 2; i++)
+  {
+    for (j = 0; j &lt; 200; j++)
+    {
+      if (i == 0)
+      {
+        iCoordinate[j][0] = iXDest = iWidth * (rand () % 10);
+        iCoordinate[j][1] = iYDest = iHeight * (rand () % 10);
+        iCoordinate[j][2] = iXSrc = iWidth * (rand () % 10);
+        iCoordinate[j][3] = iYSrc = iHeight * (rand () % 10);
+      }
+      else
+      {
+        iXDest = iCoordinate[200 - 1 - j][0];
+        iYDest = iCoordinate[200 - 1 - j][1];
+        iXSrc = iCoordinate[200 - 1 - j][2];
+        iYSrc = iCoordinate[200 - 1 - j][3];
+      }
+
+      // Transfer pixels from the source rectangle to the destination
+      // rectangle.
+      BitBlt (hDCMem, 0, 0, iWidth, iHeight, hDC,  iXDest, iYDest, 
+              SRCCOPY);
+      BitBlt (hDC,  iXDest, iYDest, iWidth, iHeight, hDC,  iXSrc, iYSrc,
+              SRCCOPY);
+    }
+  }
+
+  // Select the old bitmap back into the device context.
+  SelectObject (hDC, hOldBitmap);
+
+  // Delete the bitmap object and free all resources associated with it. 
+  DeleteObject (hBitmap);
+
+  // Delete the memory device context and the display device context.
+  DeleteDC (hDCMem);
+  ReleaseDC (hDC);
+
+  return;  
+}</PRE>
+
+<H2 class="dtH2">Blitting</H2>
+
+<P>Bit block transfer (blit) functions, such as <B>BitBlt</B>, can be used to modify as well as transfer bitmaps. These functions modify a destination bitmap by combining it with a pen, a brush, and, in some cases, a source bitmap, in a format specified by a raster operation (ROP) code. Each ROP code specifies a unique logical pattern for combining graphics objects. For example, the <B>SRCCOPY</B> ROP simply copies a source bitmap to a destination bitmap, while the <B>MERGECOPY</B> ROP merges the colors of a source rectangle with a specified pattern.  For more infromation, see <A HREF="wce50grfrasteroperationcodes.htm">Raster Operation Codes</A>.</P>
+
+<P>The following table shows the ROP code types.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=15%>ROP type </TH>
+<TH width=85%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>ROP2 </TD>
+<TD width=85%>Combines a pen or brush with a destination bitmap in one of 16 possible combinations.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>ROP3 </TD>
+<TD width=85%>Combines a brush, a source bitmap, and a destination bitmap in one of 256 possible combinations.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>ROP4 </TD>
+<TD width=85%>Uses a monochrome mask bitmap to combine a foreground ROP3 and a background ROP3. The mask uses zeros and ones to indicate the areas where each ROP3 will be used.</TD>
+</TR>
+</table></div>
+
+<P>When the source and destination bitmaps are different sizes, you can call the <A HREF="wce50lrfstretchblt.htm">StretchBlt</A> function to perform a blit between the two bitmaps. <B>StrechBlt</B> copies a bitmap from a source rectangle into a destination rectangle, stretching or compressing the bitmap to fit the destination rectangle.</P>
+
+<P>Additionally, you can call the <A HREF="wce50lrfpatblt.htm">PatBlt</A> function to paint a selected rectangle using a selected brush and an ROP3 code. You can also call the <A HREF="wce50lrftransparentimage.htm">TransparentImage</A> to transfer all portions of a bitmap except for those drawn in a specified transparent color. This function is especially useful for transferring non-rectangular images such as icons.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Windows CE supports arbitrary bit pixel formats, which enable you to use blit functions among bitmaps with different pixel depths.</BLOCKQUOTE>
+
+<P>Blit operations are always performed as though they are on displays with left-to-right (LTR) orientations.  Even though the coordinate system is of a right-to-left (RTL) is flipped and has its origin in the upper right corner of the display, a blit onto this display surface will appear in the same physical location on the display as it would if the coordinate system were in LTR mode.  As a result, pixel addressing algorithms for displays in RTL mode are different than those in LTR mode.  The following equations describe the two addressing methods.
+
+<DL>
+<DT><B>Left-to-Right</B></DT>
+
+<DD><CODE>pBitmapPixel(x,y) = pStartPixel + x * rowlength + y * pixelsize</CODE></dd>
+
+<DT><B>Right-to-Left</B></DT>
+
+<DD><CODE>pBitmapPixel(x,y) = pStartPixel + (x + 1) * rowlength - pixelsize - y * pixelsize</CODE></dd>
+</DL>
+
+<P>The ROP code NOMIRRORBITMAP is not valid.  The ROP code 0x80000000 is ignored.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conworkingwithgraphics.htm">Graphics Device Interface (GDI)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20Bitmaps (wce50concreatingbitmaps.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

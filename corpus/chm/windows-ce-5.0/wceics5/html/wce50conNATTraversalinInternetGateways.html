@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NAT Traversal in Internet Gateways</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50connattraversalininternetgateways"></A>NAT Traversal in Internet Gateways</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Internet gateways support NAT traversal by supporting the Internet Gateway Device (IGD) specification defined by the Internet Gateway Working Committee of the Universal Plug and Play Forum. The following list shows the assumptions about IGDs made by NAT traversal APIs in Windows CE:
+
+<UL type="disc">
+	<LI>IGDs only advertise one external interface at a time. Though it is technically acceptable for Internet Gateway Devices to advertise multiple external interfaces, the NAT Traversal APIs use only the first one. </li>
+
+	<LI>IGDs support port mappings that allow any remote IP address to send packets to internal clients. </li>
+
+	<LI>IGDs support port mappings with the broadcast address listed as the client.
+<P>According to the IGD specification, it must be possible to set the internal client to the broadcast IP address 255.255.255.255. This enables multiple NAT clients to use the same well-known port simultaneously. 
+
+<P>In Windows CE .NET 4.2 and later, to enable NAT clients to simultaneously use the same well-known port, the Internet gateway device maps the internal client to a subnet address rather than to the broadcast IP address 255.255.255.255. By using this mapping, packets arrive as subnet broadcast packets to the private host and not with the 255.255.255.255 as the destination address. For this scenario to work, broadcast forwarding must be enabled in the registry for the gateway.
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Security Note&nbsp;&nbsp;&nbsp;</b>If the IP firewall is not included in the gateway configuration, broadcast forwarding is disabled. Enabling the broadcast forwarding can pose a security threat to the private network devices if the firewall is not present.</BLOCKQUOTE>
+
+<P>The following excerpt from the common.reg file shows the registry setting to use to enable broadcast forwarding:
+
+<PRE class="code">; @CESYSGEN IF CE_MODULES_FW6
+; Enable broadcast forwarding only if firewall is present.
+; Broadcast forwarding is needed to support NAT broadcast port mappings 
+; but it could be potentially exploited 
+; if the device is not protected by firewall.
+[HKEY_LOCAL_MACHINE\COMM\Tcpip\Parms]
+    "ForwardBroadcasts"=dword:1
+; @CESYSGEN ENDIF</PRE>
+</li>
+
+	<LI>IGDs support different numbers for the external port of the NAT and internal port of the client. </li>
+
+	<LI>IGDs advertise with a version number of 1. </li>
+
+	<LI>Static port mappings, or port mappings with a duration set to infinity, persist indefinitely, surviving reboots, IP address changes, and the presence of the client on the server. </li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50connatandapplications.htm">NAT and Applications</A> | <A HREF="wce50connattraversal.htm">NAT Traversal</A> | <A HREF="wce50connattraversaloperation.htm">NAT Traversal Operation</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: NAT%20Traversal%20in%20Internet%20Gateways (wce50connattraversalininternetgateways.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

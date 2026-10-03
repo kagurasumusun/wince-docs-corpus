@@ -1,0 +1,320 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptDeriveKey</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptderivekey"></A>CryptDeriveKey</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function generates cryptographic session keys derived from base data. This function guarantees that all keys generated from the same base data are identical, provided the same cryptographic service provider (CSP) and algorithms are used. The base data can be a password or any other user data.</P>
+
+<P>This function is the same as the <A HREF="wce50lrfcryptgenkey.htm">CryptGenKey</A> function, except that the generated session keys are derived from base data instead of being random. The <B>CryptDeriveKey</B> function can only generate session keys and cannot be used to generate public/private key pairs.</P>
+
+<P>A handle to the session key is returned in the <I>phKey </I>parameter. This handle can then be used with any CryptoAPI functions that require key handles.</P>
+
+<PRE class="syntax"><B>BOOL CRYPTFUNC CryptDeriveKey(</B> 
+  <B>HCRYPTPROV</B> <I>hProv</I><B>,</B> 
+  <B>ALG_ID</B> <I>Algid</I><B>,</B> 
+  <B>HCRYPTHASH</B> <I>hBaseData</I><B>,</B> 
+  <B>DWORD</B> <I>dwFlags</I><B>,</B> 
+  <B>HCRYPTKEY* </B><I>phKey</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hProv</I></DT>
+
+<DD>[in] <A HREF="wce50lrfhcryptprov.htm">HCRYPTPROV</A> handle to a CSP created by a call to the <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A> function.</dd>
+
+<DT><I>Algid</I></DT>
+
+<DD>[in] <A HREF="wce50lrfalgid.htm">ALG_ID</A> algorithm identifier for the generated key.
+
+<P>The valid value for this parameter varies depending on the CSP that is used. See the Remarks section for a list of common algorithm identifiers.
+</dd>
+
+<DT><I>hBaseData</I></DT>
+
+<DD>[in] <A HREF="wce50lrfhcrypthash.htm">HCRYPTHASH</A> handle to a hash object that contains the exact base data.
+
+<P>To obtain this handle, an application must first create a hash object with the <A HREF="wce50lrfcryptcreatehash.htm">CryptCreateHash</A> function and then add the base data to the hash object with the <A HREF="wce50lrfcrypthashdata.htm">CryptHashData</A> function. For more information about hashing and digital signatures, see the programmer's guide topics under <A HREF="wce50oricryptography.htm">Cryptography</A>. 
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Specifies the type of key generated. This parameter can be zero. The following table shows flags that you can specify. You can use the bitwise <B>OR</B> operator to combine flags.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_EXPORTABLE</TD>
+<TD width=65%>If this flag is set, the session key can be transferred out of the CSP into a key BLOB through the <A HREF="wce50lrfcryptexportkey.htm">CryptExportKey</A> function. Because keys generally must be exportable, this flag should usually be set.
+<P>If this flag is not set, the session key will not be exportable. This means the key will be available only within the current session and only to the application that created it. </P>
+
+<P>This flag does not apply to public/private key pairs.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_CREATE_SALT</TD>
+<TD width=65%>Typically, when a session key is made from a hash value, there are a number of leftover bits. For example, if the hash value is 128 bits and the session key is 40 bits, there will be 88 bits left over.
+<P>If this flag is set, the key is assigned a salt value based on the unused hash value bits. You can retrieve this salt value by using the <A HREF="wce50lrfcryptgetkeyparam.htm">CryptGetKeyParam</A> function with the <I>dwParam</I> parameter set to KP_SALT.</P>
+
+<P>If CRYPT_CREATE_SALT is not set, the key will be given a salt value of zero.</P>
+
+<P>When keys with nonzero salt values are exported using <A HREF="wce50lrfcryptexportkey.htm">CryptExportKey</A>, the salt value must also be obtained and kept with the key BLOB.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_NO_SALT</TD>
+<TD width=65%>Specifies that no salt value gets allocated for a 40-bit symmetric key.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_USER_PROTECTED</TD>
+<TD width=65%>If this flag is set, the user is notified through a dialog box or another method when certain actions are attempted by using this key. The precise behavior is specified by the CSP being used. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_UPDATE_KEY</TD>
+<TD width=65%>Some CSPs use session keys derived from multiple hash values, in which case <B>CryptDeriveKey</B> must be called multiple times.
+<P>If this flag is set, a new session key is not generated. Instead, the key specified by <I>phKey</I> is modified. The precise behavior of this flag is dependent on the type of key being generated and on the particular CSP being used.</P>
+
+<P>The Microsoft Cryptographic Providers ignore this flag.</P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>phKey</I></DT>
+
+<DD>[out] Pointer to the <A HREF="wce50lrfhcryptkey.htm">HCRYPTKEY</A> handle to the newly generated key.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function. </P>
+
+<P>The following table shows the common values for the <B>GetLastError</B> function. The error values prefaced by NTE are generated by the particular CSP you are using.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Value</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>ERROR_INVALID_HANDLE</TD>
+<TD width=62%>One of the parameters specifies an invalid handle. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>ERROR_INVALID_PARAMETER</TD>
+<TD width=62%>One of the parameters contains an invalid value. This is most often an illegal pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_ALGID</TD>
+<TD width=62%>The <I>Algid</I> parameter specifies an algorithm that this CSP does not support.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_FLAGS</TD>
+<TD width=62%>The <I>dwFlags</I> parameter contains an invalid value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_HASH</TD>
+<TD width=62%>The <I>hBaseData</I> parameter does not contain a valid handle to a hash object.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_HASH_STATE</TD>
+<TD width=62%>An attempt was made to add data to a hash object that is already marked as finished.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_UID</TD>
+<TD width=62%>The <I>hProv</I> parameter does not contain a valid context handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_FAIL</TD>
+<TD width=62%>The function failed in some unexpected way.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To generate a key for a symmetric encryption algorithm, use the <I>Algid</I> parameter to specify the algorithm. The algorithms available will most likely be different for each CSP. </P>
+
+<P>The following table shows the various algorithms defined in the Wincrypt.h file. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Value</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_AES_128</TD>
+<TD width=62%>128-bit AES block encryption algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_AES_192</TD>
+<TD width=62%>192-bit AES block encryption algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_AES_256</TD>
+<TD width=62%>256-bit AES block encryption algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_RSA_SIGN</TD>
+<TD width=62%>RSA public-key signature algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_RSA_KEYX</TD>
+<TD width=62%>RSA public-key exchange algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_RC2</TD>
+<TD width=62%>RC2 block encryption algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_RC4</TD>
+<TD width=62%>RC4 stream encryption algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_RC5</TD>
+<TD width=62%>RC 5 block encryption algorithm</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_DES</TD>
+<TD width=62%>DES encryption</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_3DES_112</TD>
+<TD width=62%>Two-key triple DES encryption</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>CALG_3DES</TD>
+<TD width=62%>Triple DES</TD>
+</TR>
+</table></div>
+
+<P>When keys are generated for symmetric block ciphers, the key by default will be set up in cipher block chaining (CBC) mode with an initialization vector of zero. This cipher mode provides a good default method for bulk-encrypting data. To change these parameters, use the <A HREF="wce50lrfcryptsetkeyparam.htm">CryptSetKeyParam</A> function.</P>
+
+<P>After the <B>CryptDeriveKey</B> function has been called, no more data can be added to the hash object. The <A HREF="wce50lrfcryptdestroyhash.htm">CryptDestroyHash</A> function should be called at this point to destroy the hash object.</P>
+
+<H4 class="dtH4">Example Code</H4>
+
+<PRE class="code">#include &lt;wincrypt.h&gt;
+
+HCRYPTPROV hProv = 0;
+HCRYPTKEY hKey = 0;
+HCRYPTHASH hHash = 0;
+CHAR szPassword[ ] = "apple-camshaft";
+DWORD dwLength;
+
+// Get a handle to user default provider using CryptAcquireContext.
+// For sample code, see <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A>.
+...
+
+// Create a hash object.
+if(!CryptCreateHash(hProv, CALG_MD5, 0, 0, &amp;hHash)) {
+ printf("Error %x during CryptCreateHash!\n", GetLastError());
+ goto done;
+}
+
+// Hash the password string.
+dwLength = strlen(szPassword);
+if(!CryptHashData(hHash, (BYTE *)szPassword, dwLength, 0)) {
+ printf("Error %x during CryptHashData!\n", GetLastError());
+ goto done;
+}
+
+// Create a block cipher session key based on the hash of the password.
+if(!CryptDeriveKey(hProv, CALG_RC2, hHash, CRYPT_EXPORTABLE, &amp;hKey)) {
+ printf("Error %x during CryptDeriveKey!\n", GetLastError());
+ goto done;
+}
+
+// Use 'hKey' to encrypt or decrypt a message.
+...
+
+done:
+
+// Destroy the hash object.
+if(hHash != 0) CryptDestroyHash(hHash);
+
+// Destroy the session key.
+if(hKey != 0) CryptDestroyKey(hKey);
+
+// Free the provider handle.
+if(hProv != 0) CryptReleaseContext(hProv, 0);</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.10 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A> | <A HREF="wce50lrfcryptcreatehash.htm">CryptCreateHash</A> | <A HREF="wce50lrfcryptdestroyhash.htm">CryptDestroyHash</A> | <A HREF="wce50lrfcryptdestroykey.htm">CryptDestroyKey</A> | <A HREF="wce50lrfcryptexportkey.htm">CryptExportKey</A> | <A HREF="wce50lrfcryptgenkey.htm">CryptGenKey</A> | <A HREF="wce50lrfcryptgetkeyparam.htm">CryptGetKeyParam</A> | <A HREF="wce50lrfcrypthashdata.htm">CryptHashData</A> | <A HREF="wce50lrfcryptsetkeyparam.htm">CryptSetKeyParam</A> | <A HREF="wce50lrfalgid.htm">ALG_ID</A> | <A HREF="wce50lrfhcryptkey.htm">HCRYPTKEY</A> | <A HREF="wce50lrfhcrypthash.htm">HCRYPTHASH</A> | <A HREF="wce50lrfhcryptprov.htm">HCRYPTPROV</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptDeriveKey (wce50lrfcryptderivekey.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

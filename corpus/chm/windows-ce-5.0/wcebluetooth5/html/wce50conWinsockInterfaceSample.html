@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Winsock Interface Sample</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conwinsockinterfacesample"></A>Winsock Interface Sample</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Ssa and the SockTest sample applications illustrate the use of the Windows CE&#0150;based Bluetooth stack over the Winsock interface.</P>
+
+<P>The compiled samples generates executables. These applications can be started as server or client. When connected, users can exchange text messages or files.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Either the port name or service UUID can be specified. If the UUID is specified, the server registers the SDP entry and the client connects with the service UUID instead of the server channel.</BLOCKQUOTE>
+
+<P>For more information, see <A HREF="wce50concreatingconnectionusingwinsockextensions.htm">Creating a Connection to a Remote Device Using Winsock</A>.</P>
+
+<P>To view supported command line options, use <CODE>SSA /?</CODE></P>
+
+<P class="label"><B>Usage</B></P>
+
+<PRE class="syntax">ssa server {-g &lt;<I>GUID</I>&gt; | -c &lt;<I>rfcomm_chnl</I>&gt; }
+ssa client &lt;<I>server_bt_addr</I>&gt; { -g &lt;<I>GUID</I>&gt; | -c &lt;<I>rfcomm_chnl</I>&gt; }</PRE>
+
+<P>The following table describes the parameters needed when using the SSA sample application.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Parameters</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><I>GUID</I></TD>
+<TD width=73%>SDP Service Class ID.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><I>rfcomm_chnl</I></TD>
+<TD width=73%>RFCOMM channel (between 1 and 31).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><I>server_bt_addr</I></TD>
+<TD width=73%>Bluetooth address of the server.</TD>
+</TR>
+</table></div>
+
+<P class="label"><B>Server</B></P>
+
+<P>When the server starts, it creates a socket that is associated to the Bluetooth stack. A socket stream is set in the following manner.</P>
+
+<PRE class="code">SOCKET s = socket (AF_BT, SOCK_STREAM, BTHPROTO_RFCOMM);</PRE>
+
+<P>To set the socket up for binding, designate the address family, in the <A HREF="wce50lrfsockaddrbth.htm">SOCKADDR_BTH</A> data structure, as Bluetooth.</P>
+
+<PRE class="code">sa.addressFamily = AF_BT;</PRE>
+
+<P>Connections can be set to reference an RFCOMM channel or an SDP service GUID. To connect through an RFCOMM channel, register the channel number in the data structure in the following manner.</P>
+
+<PRE class="code">sa.port = channel &amp; 0xff;</PRE>
+
+<P>If you specified a GUID argument in the command line, register that GUID through the data field in the following manner.</P>
+
+<PRE class="code">GetGUID (arg3, &amp;serviceClassId);</PRE>
+
+<P>The following line of code binds the socket.</P>
+
+<PRE class="code">bind (gServerSocket, (SOCKADDR *)&amp;sa, sizeof(sa));</PRE>
+
+<P>If the binding is successful, the SDP service connection is initiated with the <A HREF="wce50lrfwsasetservicebluetooth.htm">WSASetService</A> function. </P>
+
+<PRE class="code">BthNsSetService(&amp;Service, RNRSERVICE_REGISTER, 0);</PRE>
+
+<P>The next step is to set the server up to listen to the socket stream for instructions.</P>
+
+<PRE class="code">listen (gServerSocket, 5);</PRE>
+
+<P class="label"><B>Client</B></P>
+
+<P>When the client starts, it creates a socket that is associated to the Bluetooth stack. A socket stream is set in the following manner.</P>
+
+<PRE class="code">SOCKET s = socket (AF_BT, SOCK_STREAM, BTHPROTO_RFCOMM);</PRE>
+
+<P>To set the socket up, designate the address family, in the <A HREF="wce50lrfsockaddrbth.htm">SOCKADDR_BTH</A> data structure, as Bluetooth. Register the Bluetooth server address through the <B>btAddr</B> member.</P>
+
+<PRE class="code">sa.addressFamily = AF_BT;
+sa.btAddr = b;</PRE>
+
+<P>Connections can be set to reference an RFCOMM channel or an SDP service GUID. To connect through an RFCOMM channel, register the channel number in the data structure in the following manner.</P>
+
+<PRE class="code">sa.port = channel &amp; 0xff;</PRE>
+
+<P>If you specified a GUID argument in the command line, register that GUID through the data field in the following manner.</P>
+
+<PRE class="code">GetGUID (arg4, &amp;sa.serviceClassId);</PRE>
+
+<P>The following line of code connects the socket to the stream.</P>
+
+<PRE class="code">connect (s, (SOCKADDR *)&amp;sa, sizeof(sa));</PRE>
+
+<P>If the connection is successful, write and read worker threads are created. </P>
+
+<PRE class="code">CloseHandle (CreateThread(NULL, 0, ReadThread, (LPVOID)s, 0, NULL));
+WriteThread ((LPVOID)s);</PRE>
+
+<P>The <B>WriteThread</B> sends data, entered by the user, over the socket stream, while the <B>ReadThread</B>, on the listening device, displays the received data on the screen.</P>
+
+<P class="label"><B>Sample Location</B></P>
+
+<P>%_WINCEROOT%\Public\Common\Sdk\Samples\Bluetooth\Ssa</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>This sample application has not been thoroughly tested and is not intended for production use.</BLOCKQUOTE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conbluetoothapplicationdevelopment.htm">Bluetooth Application Development</A> | <A HREF="wce50conbluetoothsamples.htm">Bluetooth Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Winsock%20Interface%20Sample (wce50conwinsockinterfacesample.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

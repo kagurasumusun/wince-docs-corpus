@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CPAcquireContext</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSetLastError">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcpacquirecontext"></A>CPAcquireContext</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function acquires a handle to the key container specified by the <I>pszContainer</I> parameter.</P>
+
+<PRE class="syntax"><B>BOOL CPAcquireContext(</B>
+  <B>HCRYPTPROV* </B><I>phProv</I><B>,</B>
+  <B>WCHAR* </B><I>pszContainer</I><B>,</B>
+  <B>DWORD</B> <I>dwFlags</I><B>,</B>
+  <B>PVTableProvStruc</B> <I>pVTable</I> 
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>phProv</I> </DT>
+
+<DD>[out] Address to which the function copies a handle to the cryptographic service provider (CSP). </dd>
+
+<DT><I>pszContainer</I> </DT>
+
+<DD>[in, out] Pointer to the null-terminated string of no more than MAX_PATH characters containing a key container name. The function ignores this parameter if CRYPT_VERIFYCONTEXT is set in <I>dwFlags</I>. 
+
+<P>If <I>pszContainer</I> is NULL or a zero length string on input, a default key container name is used. The Microsoft RSA Base Provider, for example, uses the logon name of the current user as the default key container name. Other CSPs can use different default key container names. 
+</dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>[in] Bitmask of flags. Can be zero. The following table shows possible flags for this parameter. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Flag value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_VERIFYCONTEXT</TD>
+<TD width=65%>The application has no access to the private keys and the return <I>pszContainer</I> parameter must be set to NULL. This option is used with applications that do not use private keys. 
+<P>When <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A> is called, many CSPs require input from the user before granting access to the private keys in the key container. For example, private keys might be encrypted, requiring a password from the user before being used. However, if CRYPT_VERIFYCONTEXT is specified and access to the private keys is not required, the user interface can be bypassed.</P>
+
+<P>When this flag is used and a public/private key pair is created or imported, that pair of keys is treated as treated as ephemeral; that is, the keys are kept only in memory and are automatically destroyed when <A HREF="wce50lrfcryptreleasecontext.htm">CPReleaseContext</A> is called.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_NEWKEYSET</TD>
+<TD width=65%>A new key container is created with the name specified by <I>pszContainer</I>. If <I>pszContainer</I> is NULL on input, a key container with the default name is created. 
+<P>While a CSP is not required to create key pairs at this point; at the CSP author's discretion, a CSP can generate key pairs at this time. Keys are created through calls to <A HREF="wce50lrfcryptgenkey.htm">CPGenKey</A>, either within this call to <B>CPAcquireContext</B> or later as a separate step.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_MACHINE_KEYSET</TD>
+<TD width=65%>By default, key containers and their keys are stored as keys associated with a specific user. For the CSP currently provided by Microsoft, user key containers are stored in the user's profile. The CRYPT_MACHINE_KEYSET flag is useful when access is being performed from a service or user account that did not log on interactively. 
+<P>The CRYPT_MACHINE_KEYSET flag can be combined with other flags indicating that the key container of interest is a machine key container and the CSP will treat it as such. For Microsoft CSPs, this means the keys are stored locally on the computer that created the key container. </P>
+
+<P>The CRYPT_MACHINE_KEYSET flag is used for keys that are machine keys that must be accessible to applications not associated with a user account. UI cannot be associated with these keys because they can be used by unattended server applications. With Microsoft CSPs, access-control lists (ACLs) can be set on these keys by using <A HREF="wce50lrfcryptgetprovparam.htm">CPGetProvParam</A> and <A HREF="wce50lrfcryptsetprovparam.htm">CPSetProvParam</A> with the PP_KEYSET_SEC_DESCR value. CSP writers can consider setting ACLs on keys as well.</P>
+
+<P>If a key container is to be a machine key container, the CRYPT_MACHINE_KEYSET flag must be used with all calls to <B>CryptAcquireContext</B> that reference the container.</P>
+
+<P>CRYPT_MACHINE_KEYSET applies specifically to the Microsoft provider types. Other provider types can store keys differently and can ignore this flag. All compatible CSPs must implement the CRYPT_MACHINE_KEYSET flag; however, simply ignoring the flag can do this implementation.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_DELETEKEYSET</TD>
+<TD width=65%>This flag deletes the key container specified by <I>pszContainer</I> or, if <I>pszContainer</I> is NULL, the key container with the default name. All key pairs in the key container are also destroyed. 
+<P>After a key container has been deleted, the value returned in <I>phProv</I> is undefined; therefore, the context has been freed and the application does not need to call <A HREF="wce50lrfcryptreleasecontext.htm">CryptReleaseContext</A>.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CRYPT_SILENT</TD>
+<TD width=65%>This flag directs the CSP to not display user interface (UI) for this context. If any future function call using this acquired CSP context requires UI to operate, the function call must fail and the function must set the last error to NTE_SILENT_CONTEXT. If CRYPT_SILENT is set and a later call is made to <B>CPGenKey</B> using CRYPT_USER_PROTECTED, that call will fail and the function must set the last error to NTE_SILENT_CONTEXT. 
+<P>This flag is intended for use with applications that cannot tolerate UI being displayed by the CSP. </P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pVTable</I> </DT>
+
+<DD>[in] Pointer to a <A HREF="wce50lrfvtableprovstruc.htm">VTableProvStruc</A> structure containing a list of callback functions provided by the operating system for use by the CSP. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is TRUE. </P>
+
+<P>If the function fails, the return value is FALSE. The following table shows appropriate error codes that can be set using the <A HREF="JavaScript:hhobj_1.Click()">SetLastError</A> function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Error</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_FLAGS</TD>
+<TD width=62%>The <I>dwFlags</I> parameter has an illegal value. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_KEYSET</TD>
+<TD width=62%>The key container could not be opened and might not exist. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_KEYSET_PARAM</TD>
+<TD width=62%>The <I>pszContainer</I> parameter is set to an illegal value. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_BAD_SIGNATURE</TD>
+<TD width=62%>The digital signature of an auxiliary DLL did not verify correctly. Either the DLL or the digital signature has been tampered with. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_EXISTS</TD>
+<TD width=62%>The <I>dwFlags</I> parameter is CRYPT_NEWKEYSET, but the key container already exists. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_KEYSET_ENTRY_BAD</TD>
+<TD width=62%>The <I>pszContainer</I> key container was found but is corrupt. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_KEYSET_NOT_DEF</TD>
+<TD width=62%>The key container specified by <I>pszContainer</I> does not exist. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_NO_MEMORY</TD>
+<TD width=62%>The CSP ran out of memory during the operation. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>NTE_PROVIDER_DLL_FAIL</TD>
+<TD width=62%>An auxiliary DLL file could not be loaded and might not exist. If it exists, the file is not a valid DLL. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Developer defined.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcryptgenkey.htm">CPGenKey</A> | <A HREF="wce50lrfcryptgetprovparam.htm">CPGetProvParam</A> | <A HREF="wce50lrfcryptreleasecontext.htm">CPReleaseContext</A> | <A HREF="wce50lrfcryptsetprovparam.htm">CPSetProvParam</A> | <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A> | <A HREF="wce50lrfcryptsetprovparam.htm">CryptSetProvParam</A> | <A HREF="JavaScript:hhobj_2.Click()">SetLastError</A> | <A HREF="wce50lrfvtableprovstruc.htm">VTableProvStruc</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CPAcquireContext (wce50lrfcpacquirecontext.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

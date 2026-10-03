@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoGetStandardMarshal</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcogetstandardmarshal"></A>CoGetStandardMarshal</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates a default, or standard, marshaling object in either the client process or the server process, depending on the caller, and returns a pointer to that object's <A HREF="wce50lrfimarshaliunknown.htm">IMarshal</A> implementation.</P>
+
+<PRE class="syntax"><B>STDAPI CoGetStandardMarshal(</B>
+<B> </B> <B>REFIID </B><I>riid</I><B>,</B>
+<B> </B> <B>IUnknown* </B><I>pUnk</I><B>,</B>
+<B> </B> <B>DWORD </B><I>dwDestContext</I><B>,</B>
+<B> </B> <B>LPVOID </B><I>pvDestContext</I><B>,</B>
+<B> </B> <B>DWORD </B><I>mshlflags</I><B>,</B>
+<B> </B> <B>LPMARSHAL* </B><I>ppMarshal</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>riid</I></DT>
+
+<DD>[in] Reference to the identifier of the interface whose pointer is to be marshaled. This interface must be derived from the <A HREF="wce50lrfiunknown.htm">IUnknown</A> interface.</dd>
+
+<DT><I>pUnk</I></DT>
+
+<DD>[in] Pointer to the interface to be marshaled.</dd>
+
+<DT><I>dwDestContext</I></DT>
+
+<DD>[in] Destination context where the specified interface is to be unmarshaled. Values for <I>dwDestContext</I> come from the enumeration <B>MSHCTX</B>. 
+
+<P>Currently, unmarshaling can occur either in another apartment of the current process (MSHCTX_INPROC) or in another process on the same computer as the current process (MSHCTX_LOCAL).
+</dd>
+
+<DT><I>pvDestContext</I></DT>
+
+<DD>[in] Reserved for future use; must be NULL.</dd>
+
+<DT><I>mshlflags</I></DT>
+
+<DD>[in] Flag indicating whether the data to be marshaled is to be transmitted back to the client process &#0151; the normal case &#0151; or written to a global table, where it can be retrieved by multiple clients. Valid values come from the <B>MSHLFLAGS</B> enumeration.</dd>
+
+<DT><I>ppMarshal</I></DT>
+
+<DD>[out] Address of <B>IMarshal</B>* pointer variable that receives the interface pointer to the standard marshaler.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function supports the standard return values E_FAIL, E_OUTOFMEMORY and E_UNEXPECTED, as well as the following:
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The <B>IMarshal</B> instance was returned successfully.</dd>
+
+<DT>CO_E_NOTINITIALIZED</DT>
+
+<DD>The <B>CoInitialize</B> function was not called on the current thread before this function was called.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>CoGetStandardMarshal</B> function creates a default, or standard, marshaling object in either the client process or the server process, as may be necessary, and returns that object's <B>IMarshal</B> pointer to the caller. </P>
+
+<P>If you implement <B>IMarshal</B>, you may want your implementation to call <B>CoGetStandardMarshal</B> as a way of delegating to COM's default implementation any destination contexts that you do not fully understand or want to handle. Otherwise, you can ignore this function, which COM calls as part of its internal marshaling procedures.</P>
+
+<P>When the COM library in the client process receives a marshaled interface pointer, it looks for a CLSID to be used in creating a proxy for the purposes of unmarshaling the packet. </P>
+
+<P>If the packet does not contain a CLSID for the proxy, COM calls <B>CoGetStandardMarshal</B>, passing a NULL <I>pUnk</I> value. This function creates a standard proxy in the client process and returns a pointer to that proxy's implementation of <B>IMarshal</B>. COM uses this pointer to call <A HREF="wce50lrfcounmarshalinterface.htm">CoUnmarshalInterface</A> to retrieve the pointer to the requested interface.</P>
+
+<P>If your OLE server application's implementation of <B>IMarshal</B> calls <B>CoGetStandardMarshal</B>, you should pass both the IID of (<I>riid</I>), and a pointer to (<I>pUnk</I>), the interface being requested.</P>
+
+<P>This function performs the following tasks:
+
+<OL type="1">
+	<LI>Determines whether <I>pUnk</I> is NULL.</li>
+
+	<LI>If <I>pUnk</I> is NULL, creates a standard interface proxy in the client process for the specified <I>riid</I> and returns the proxy's <B>IMarshal</B> pointer.</li>
+
+	<LI>If pUnk is not NULL, checks to see if a marshaler for the object already exists, creates a new one if necessary, and returns the marshaler's <B>IMarshal</B> pointer.</li>
+</OL>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoGetStandardMarshal (wce50lrfcogetstandardmarshal.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

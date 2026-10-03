@@ -1,0 +1,368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Annotated Client Code with Checkv4 Output</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conannotatedclientcodewithcheckv4output"></A>Annotated Client Code with Checkv4 Output</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Checkv4 utility can help you find code that is sensitive to using in a version-independent scenario. Checkv4 provides enough information to get you started on changing your code. </P>
+
+<P>These examples show the Checkv4 output for the Client code that you created in <A HREF="wce50howhowtoconvertapplicationfromipv4ipv6.htm">How to Convert an Application from IPv4 to IPv4/IPv6</A>, and annotated code that describes the changes that you must make for the application to support both IPv4 and IPv6.</P>
+
+<P>The following commenting conventions are used in the code example.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Meaning</TH>
+<TH width=66%>Annotation convention</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>Code included in the checkv4 output</TD>
+<TD width=66%>//checkv4 comment: &lt;comment&gt;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>Code to be changed</TD>
+<TD width=66%>// Begin changes not included in the checkv4 output: &lt;change needed&gt; 
+<P>&lt;code&gt;</P>
+
+<P>//End changes.</P>
+</TD>
+</TR>
+</table></div>
+
+<P>The following shows the Checkv4.exe output for the Client code:</P>
+
+<P>client.cpp(46) : sockaddr_in : use sockaddr_storage instead, or use sockaddr_in6 in addition for IPv6 support</P>
+
+<P>client.cpp(50) : hostent : use addrinfo instead</P>
+
+<P>client.cpp(85) : inet_addr : use WSAStringToAddress or getaddrinfo with AI_NUMERICHOST instead</P>
+
+<P>client.cpp(88) : gethostbyname : use getaddrinfo instead</P>
+
+<P>client.cpp(100) : AF_INET : use AF_INET6 in addition for IPv6 support</P>
+
+<P>client.cpp(108) : AF_INET : use AF_INET6 in addition for IPv6 support</P>
+
+<P>client.cpp(137) : AF_INET : use AF_INET6 in addition for IPv6 support</P>
+
+<P>client.cpp(137) : gethostbyaddr : use getnameinfo instead</P>
+
+<P>client.cpp(146) : in_addr : use in6_addr in addition for IPv6 support</P>
+
+<P>client.cpp(146) : inet_ntoa : use WSAAddressToString or getnameinfo with NI_NUMERICHOST instead</P>
+
+<P>client.cpp(192) : AF_INET : use AF_INET6 in addition for IPv6 support</P>
+
+<P>client.cpp(192) : gethostbyaddr : use getnameinfo instead</P>
+
+<P>client.cpp(201) : in_addr : use in6_addr in addition for IPv6 support</P>
+
+<P>client.cpp(201) : inet_ntoa : use WSAAddressToString or getnameinfo with NI_NUMERICHOST instead</P>
+
+<H2 class="dtH2">Annotated IPv4-only source code</H2>
+
+<P>The following IPv4-Only Client source code example shows code that is annotated with changes you should make to fully support IPv4 and IPv6:</P>
+
+<PRE class="code">// Begin changes not included in the checkv4 output: Add winsock2.h and ws2tcpip.h to get access to IP version agnostic Winsock function calls and data structures
+#include &lt;winsock.h&gt;
+#include &lt;windows.h&gt;
+#include &lt;tchar.h&gt;
+// End changes
+
+
+char pBuf[] = "WinCE Echo Test Packet";
+
+#define DEFAULT_FAMILY      AF_UNSPEC
+#define DEFAULT_SOCKTYPE   SOCK_STREAM
+// Begin changes not included in the checkv4 output: Change port numbers to string format
+#define DEFAULT_PORT      1234
+//End changes
+
+
+#define BUFFER_SIZE         23            // length of "WinCE Echo Test Packet"
+
+#define TIMEOUT_SECS      2
+#define TIMEOUT_USECS      0
+
+#define RAS_SIZE 128
+
+#define MIN(a,b) ((a) &lt;= (b)) ? (a) : (b)
+
+void
+Print(
+   TCHAR *pFormat, 
+   ...)
+{
+   va_list ArgList;
+   TCHAR   Buffer[256];
+
+   va_start (ArgList, pFormat);
+
+   (void)wvsprintf (Buffer, pFormat, ArgList);
+
+#ifndef UNDER_CE
+   _putts(Buffer);
+#else
+   OutputDebugString(Buffer);
+#endif
+
+   va_end(ArgList);
+}
+
+int _tmain (int argc, TCHAR* argv[])
+{
+   SOCKET sock = INVALID_SOCKET;
+   int nSockType = DEFAULT_SOCKTYPE;
+   char szRemoteName[64];
+// Begin changes not included in the checkv4 output: Change type of sPort to char*
+   short sPort = DEFAULT_PORT;
+// End changes 
+
+// Begin changes not included in the checkv4 output: see checkv4 comments below..
+   sockaddr_in saRemoteAddr;
+//End changes
+//checkv4 comment: client.cpp(46) : sockaddr_in : use sockaddr_storage instead, or use sockaddr_in6 in addition for IPv6 support
+
+   int cbXfer, cbTotalRecvd, cbRemoteAddrSize;
+   WSADATA wsaData;
+
+// Begin changes not included in the checkv4 output: Remove any DWORDs that hold IP addresses, IPv6 addresses are longer than sizeof(DWORD)
+   DWORD dwIPAddr;
+
+   struct hostent* h;
+//End changes.
+
+//checkv4 comment: client.cpp(50) : hostent : use addrinfo instead
+
+   char szRemoteAddrString[RAS_SIZE];
+   fd_set fdReadSet;
+   TIMEVAL timeout = {TIMEOUT_SECS, TIMEOUT_USECS};
+   char pRecvBuf[BUFFER_SIZE];
+
+   Print(TEXT("** Simple IPv4 Client **"));
+
+// Begin changes not included in the checkv4 output:  Change to MAKEWORD(2,2) so Winsock2.2 is used
+   if(WSAStartup(MAKEWORD(1,1), &amp;wsaData))
+//End changes.
+
+
+   {
+      // WSAStartup failed
+      return 1;
+   }
+
+   if(argc &lt; 2)
+   {
+      Print(TEXT("Server name/address parameter required"));
+      goto Cleanup;
+   }
+   else
+   {
+      // we use the first argument as the server name/address
+#if defined UNICODE
+      wcstombs(szRemoteName, argv[1], sizeof(szRemoteName));
+#else
+      strncpy(szRemoteName, argv[1], sizeof(szRemoteName));
+#endif
+
+      Print(TEXT("Communicating with server - %hs\r\n"), szRemoteName);
+   }
+
+   //
+   // Resolve the server name/address
+   //
+
+// Begin changes not included in the checkv4 output: see checkv4 comments below..
+   if ((dwIPAddr = inet_addr(szRemoteName)) == INADDR_NONE)
+   {
+      // remote server is not a dotted decimal IP address
+      h = gethostbyname(szRemoteName);
+      if(h != NULL)
+      {
+         memcpy(&amp;dwIPAddr, h-&gt;h_addr_list[0], sizeof(dwIPAddr) );
+      }
+      else
+      {
+         Print (TEXT("ERROR: Invalid name/address parameter = %hs"), szRemoteName);
+         goto Cleanup;
+      }
+   }
+//End changes
+//checkv4 comment:client.cpp(85) : inet_addr : use WSAStringToAddress or getaddrinfo with AI_NUMERICHOST instead
+//checkv4 comment:client.cpp(88) : gethostbyname : use getaddrinfo instead
+   
+// Begin changes not included in the checkv4 output: see Checkv4 comments below..
+   sock = socket(AF_INET, nSockType, 0);
+
+   if(sock == INVALID_SOCKET)
+   {
+      Print(TEXT("ERROR: socket() failed with error %d"), WSAGetLastError());
+      goto Cleanup;
+   }
+
+   saRemoteAddr.sin_family = AF_INET;
+   saRemoteAddr.sin_addr.s_addr = dwIPAddr;
+   saRemoteAddr.sin_port = htons(sPort);
+//End changes.
+client.cpp(100) : AF_INET : use AF_INET6 in addition for IPv6 support
+client.cpp(108) : AF_INET : use AF_INET6 in addition for IPv6 support
+
+// Begin changes not included in the checkv4 output: Make the socket and connect calls on each address returned by getaddrinfo until we find one to which we successfully connect to
+   if(nSockType == SOCK_STREAM)
+   {
+      // connect
+      if(connect(sock, (sockaddr *)&amp;saRemoteAddr, sizeof(saRemoteAddr)) == SOCKET_ERROR)
+      {
+         Print(TEXT("ERROR: connect() failed with error %d"), WSAGetLastError());
+         goto Cleanup;
+      }
+      else
+         Print(TEXT("connect()'d successfully to 0x%08x"), dwIPAddr);
+   }
+// End changes.
+
+   //
+   // Send data to the server
+   //
+
+   cbXfer = 0;
+   cbXfer = sendto(sock, pBuf, sizeof(pBuf), 0, (sockaddr *)&amp;saRemoteAddr, sizeof(saRemoteAddr));
+
+   if(cbXfer != sizeof(pBuf))
+   {
+      Print(TEXT("ERROR: Couldn't send the data! error = %d\r\n"), WSAGetLastError());
+      goto Cleanup;
+   }
+
+// Begin changes not included in the checkv4 output:  see checkv4 comments below..
+   h = gethostbyaddr((char *)&amp;dwIPAddr, sizeof(dwIPAddr), AF_INET);
+   if(h != NULL)
+   {
+      memcpy(szRemoteAddrString, h-&gt;h_name, MIN(strlen(h-&gt;h_name)+1, RAS_SIZE-1));
+      szRemoteAddrString[RAS_SIZE-1] = _T('\0');
+   }
+   else
+   {
+      Print (TEXT("Warning: Cannot obtain name for address 0x%08x"), dwIPAddr);
+      strcpy(szRemoteAddrString, inet_ntoa(*((in_addr*)&amp;dwIPAddr)));
+   }
+   //End changes.
+//checkv4 comment: client.cpp(137) : AF_INET : use AF_INET6 in addition for IPv6 support
+//checkv4 comment: client.cpp(137) : gethostbyaddr : use getnameinfo instead
+//checkv4 comment: client.cpp(146) : in_addr : use in6_addr in addition for IPv6 support
+//checkv4 comment: client.cpp(146) : inet_ntoa : use WSAAddressToString or getnameinfo with NI_NUMERICHOST instead
+
+   Print(TEXT("SUCCESS: Sent %d bytes to server %hs\r\n"), cbXfer, szRemoteAddrString);
+
+   //
+   // Receive the echo'd data back from the server
+   //
+
+   FD_ZERO(&amp;fdReadSet);
+   FD_SET(sock, &amp;fdReadSet);
+
+   if(select(0, &amp;fdReadSet, NULL, NULL, &amp;timeout) != 1)
+   {
+      Print(TEXT("ERROR: Server hasn't responded in %d milliseconds\r\n"), 
+         ((timeout.tv_sec * 1000) + (timeout.tv_sec / 1000)));
+      goto Cleanup;
+   }
+
+   cbTotalRecvd = 0;
+   do
+   {
+      cbRemoteAddrSize = sizeof(saRemoteAddr);
+      cbXfer = recvfrom(sock, pRecvBuf + cbTotalRecvd, sizeof(pRecvBuf) - cbTotalRecvd, 0, 
+         (sockaddr *)&amp;saRemoteAddr, &amp;cbRemoteAddrSize);
+      cbTotalRecvd += cbXfer;
+   } while(cbXfer &gt; 0 &amp;&amp; cbTotalRecvd &lt; sizeof(pRecvBuf));
+
+   if(cbXfer == SOCKET_ERROR)
+   {
+      Print(TEXT("ERROR: Couldn't receive the data! Error = %d\r\n"), WSAGetLastError());
+      goto Cleanup;
+   }
+   else if(cbTotalRecvd != sizeof(pRecvBuf))
+   {
+      Print(TEXT("ERROR: Server didn't send back all the expected data!\r\n"));
+      goto Cleanup;
+   }
+
+   if(nSockType == SOCK_STREAM)
+   {
+      memset(&amp;saRemoteAddr, 0, sizeof(saRemoteAddr));
+      cbRemoteAddrSize = sizeof(saRemoteAddr);
+      getpeername(sock, (sockaddr *)&amp;saRemoteAddr, &amp;cbRemoteAddrSize);
+   }
+
+// Begin changes not included in the checkv4 output: see checkv4 comments below..
+   h = gethostbyaddr((char *)&amp;(saRemoteAddr.sin_addr.s_addr), sizeof(saRemoteAddr.sin_addr.s_addr), AF_INET);
+   if(h != NULL)
+   {
+      memcpy(szRemoteAddrString, h-&gt;h_name, MIN(strlen(h-&gt;h_name)+1, RAS_SIZE-1));
+      szRemoteAddrString[RAS_SIZE-1] = _T('\0');      
+   }
+   else
+   {
+      Print (TEXT("Warning: Cannot obtain name for address 0x%08x"), saRemoteAddr.sin_addr.s_addr);
+      strcpy(szRemoteAddrString, inet_ntoa(*((in_addr*)&amp;(saRemoteAddr.sin_addr.s_addr))));
+   }
+// End changes.
+//checkv4 comment: client.cpp(192) : AF_INET : use AF_INET6 in addition for IPv6 support
+//checkv4 comment: client.cpp(192) : gethostbyaddr : use getnameinfo instead
+//checkv4 comment: client.cpp(201) : in_addr : use in6_addr in addition for IPv6 support
+//checkv4 comment: client.cpp(201) : inet_ntoa : use WSAAddressToString or getnameinfo with NI_NUMERICHOST instead
+
+   Print(TEXT("SUCCESS - Received %d bytes back from server %hs\r\n"), cbTotalRecvd, szRemoteAddrString);
+
+Cleanup:
+
+   if(sock != INVALID_SOCKET)
+   {
+      shutdown(sock, 2);
+      closesocket(sock);
+   }
+
+   WSACleanup();
+
+   Print(TEXT("** Simple IPv4 Client, Exiting **"));
+
+   return 0;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50tskchangingapplicationsourcecodetosupportipv6.htm">Changing the Application Source Code to Support IPv6</A> | <A HREF="wce50howhowtoconvertapplicationfromipv4ipv6.htm">How to Convert an Application from IPv4 to IPv4/IPv6</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Annotated%20Client%20Code%20with%20Checkv4%20Output (wce50conannotatedclientcodewithcheckv4output.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

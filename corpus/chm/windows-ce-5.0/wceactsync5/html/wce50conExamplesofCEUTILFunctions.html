@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Examples of CEUTIL Functions</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conexamplesofceutilfunctions"></A>Examples of CEUTIL Functions</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example shows how to enumerate device partnerships and get the path for the file synchronization folder.</P>
+
+<PRE class="code">#include "ceutil.h"
+
+void Example1 (void)
+{
+  // This code runs on the desktop (or host) computer, and not on the
+  // Windows CE&#0150;based device, so set the project settings accordingly.
+
+  HCESVC svc          = NULL;
+  HCESVC svcSync      = NULL;
+  HCESVC svcProfile   = NULL;
+  DWORD  ProfilesEnum = 0;
+  DWORD  ProfileID    = 0;
+
+  while (SUCCEEDED (CeSvcEnumProfiles (&amp;hsvc, cProfilesEnum, &amp;nProfileID)))
+  {
+     if (nProfileID != (DWORD) - 1)
+     {
+         if (SUCCEEDED (CeSvcOpenEx (hsvcProfile,
+                                     TEXT("Services\\Synchronization"),
+                                     FALSE, &amp;hsvcSync)))
+         {
+             TCHAR szPath[MAX_PATH];
+
+             if (SUCCEEDED (CeSvcGetString (hsvcSync, TEXT("Briefcase Path"),
+                                            szPath,
+                                            sizeof(szPath)/sizeof(TCHAR))))
+             {
+                 // Found a path to use.
+                 // Your code to complete tasks goes here.
+             }
+
+             CeSvcClose (hsvcSync);
+         }
+
+         CeSvcClose (hsvcProfile);
+     }
+  }
+
+  cProfilesEnum++;
+}
+
+// The following code example shows how to add a custom menu.
+
+  HCESVC hsvcMyMenu = NULL;
+
+  if (SUCCEEDED (CeSvcOpen (CESVC_CUSTOM_MENUS, TEXT ("MyApp"),
+                            TRUE, &amp;hsvcMyMenu)))
+  {
+      CeSvcSetString (hsvcMyMenu, TEXT ("DisplayName"),
+                      TEXT ("&amp;My Calculator"));
+
+      CeSvcSetString (hsvcMyMenu, TEXT ("Command"), TEXT ("calc.exe"));
+
+      CeSvcSetString (hsvcMyMenu, TEXT ("StatusHelp"),
+                      TEXT ("Displays calculator"));
+
+      CeSvcSetDword  (hsvcMyMenu, TEXT ("Version"), 0x00020000);
+
+      CeSvcClose     (hsvcMyMenu);
+  }</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingtheceutilhelperdllforactivesync.htm">Using the CEUTIL Helper DLL for ActiveSync</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Examples%20of%20CEUTIL%20Functions (wce50conexamplesofceutilfunctions.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

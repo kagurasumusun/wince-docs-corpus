@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Server Support</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conserversupport"></A>Server Support</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The OBEX server is an extensible OS service that facilitates information exchange using Bluetooth or the IrOBEX 1.2 protocol. It acts as a protocol translator and forwards packets to the appropriate transport layer.</P>
+
+<P>The server, itself, is implemented as Obexsrvr.dll, a service/device driver capable of running in the context of Device.exe or Services.exe. It supports two types of networking media: Bluetooth and IrDA. Each can be individually disabled. Network transport extensions are not supported.</P>
+
+<P>Packet interpretation and request servicing is deferred to OBEX extensions, supplied by original equipment manufacturers (OEMs) and independent software vendors (ISVs). The following extensions are included with Windows CE:
+
+<UL type="disc">
+	<LI>Obexinbx.dll
+<P>This library offers default inbox server extensions that support object pushing and pulling using MIME types. 
+</li>
+
+	<LI>Obexfile.dll
+<P>This library offers a browsable file exchange service that supports object pushing and pulling on a local file system.
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The OBEX server does not support command extensions. Received packets must fall under <B>Connect</B>, <B>Disconnect</B>, <B>Put</B>, <B>Get</B>, <B>Abort</B>, or <B>Setpath</B>, which are defined in the <I>IrOBEX 1.2 Specification</I>.</BLOCKQUOTE>
+</li>
+</UL>
+
+<P>If your run-time image includes Obex and you try to open a COM port, it will not open because Obex has control of the port. The following sample code shows how to programmatically disable Obex so that you can open the port.</P>
+
+<PRE class="code">#include &lt;windows.h&gt;
+#include &lt;service.h&gt;
+HRESULT OBEXIOCTL(DWORD dwIOCTL)
+{
+    HANDLE hService;
+    BOOL fRet;
+    hService = CreateFile(L"OBX0:",GENERIC_READ|GENERIC_WRITE,0,
+                          NULL,OPEN_EXISTING,0,NULL);
+    if (INVALID_HANDLE_VALUE == hService)
+        return FALSE;
+    fRet = DeviceIoControl(hService,dwIOCTL,0,0,0,0,NULL,0);
+    CloseHandle(hService);
+    return (0 == fRet)?E_FAIL:S_OK;
+}
+DWORD OBEXQuery() 
+{
+    HANDLE hService;
+    BOOL fRet;
+    DWORD dwStatus;
+    hService = CreateFile(L"OBX0:",GENERIC_READ|GENERIC_WRITE,0,
+                          NULL,OPEN_EXISTING,0,NULL);
+    if (INVALID_HANDLE_VALUE == hService)
+        return FALSE;
+    fRet = DeviceIoControl(hService,IOCTL_SERVICE_STATUS,0,0,&amp;dwStatus,sizeof(DWORD),0, 0);
+    CloseHandle(hService);
+    if(0 == fRet) {
+        return 0xFFFFFFFF;
+    } else {
+        return dwStatus;
+    }
+     
+}
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nShowCmd )
+{
+  HRESULT hr = S_OK;
+  // Query the OBEX state. Based on this state, the server is toggled 
+  //   off or on, and the server status is printed.
+  switch(OBEXQuery()) {
+       // If the server is off, turn it back on.
+       case SERVICE_STATE_OFF:
+            OutputDebugString(L"Server is off -- starting\n");
+            hr = OBEXIOCTL(IOCTL_SERVICE_START);
+            break;
+       // If the server is on, turn it off.
+       case SERVICE_STATE_ON:
+            OutputDebugString(L"Server is on -- stopping\n");
+            hr = OBEXIOCTL(IOCTL_SERVICE_STOP); 
+            break;
+       // Print Obex server status.
+       case SERVICE_STATE_STARTING_UP:
+            OutputDebugString(L"Server is starting up\n");
+            break;
+       case SERVICE_STATE_SHUTTING_DOWN:
+            OutputDebugString(L"Server is shutting down\n");
+            break;
+       case SERVICE_STATE_UNLOADING:
+            OutputDebugString(L"Server is unloading\n");
+            break;
+       case SERVICE_STATE_UNINITIALIZED:
+            OutputDebugString(L"Server is uninitialized\n");
+            break;
+       default:
+            OutputDebugString(L"Server state is unknown at this time\n");
+            break;
+  };
+   if(FAILED(hr)) {
+     OutputDebugString(L"Setting device IOCTL failed\n");
+  }
+  return 0;
+}</PRE>
+
+<P>The following topics contain more information about OBEX server support:
+
+<UL type="disc">
+	<LI><A HREF="wce50conobexserverarchitecture.htm">OBEX Server Architecture</A></li>
+
+	<LI><A HREF="wce50conobexserverservices.htm">OBEX Server Services</A></li>
+
+	<LI><A HREF="wce50concustomserviceextensions.htm">Custom Service Extensions</A></li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oriobjectexchangeprotocol.htm">OBEX Application Development</A> | <A HREF="wce50conclientsupport.htm">Client Support</A> | <A HREF="wce50samobexsamples.htm">OBEX Samples</A> | </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Server%20Support (wce50conserversupport.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

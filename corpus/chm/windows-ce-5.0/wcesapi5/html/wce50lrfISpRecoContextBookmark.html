@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecoContext::Bookmark</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecocontextbookmark"></A>ISpRecoContext::Bookmark</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method sets a bookmark within the current recognition stream. When the engine reaches the specified stream position, a bookmark event is added to the event queue. </P>
+
+<PRE class="syntax"><B>HRESULT Bookmark(</B>
+  <B>SPBOOKMARKOPTIONS </B><I>Options</I><B>,</B>
+  <B>ULONGLONG </B><I>ullStreamPosition</I><B>,</B>
+  <B>LPARAM </B><I>lParamEvent</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>Options</I> </DT>
+
+<DD>[in] Options associated with the bookmark. Possible values are defined for the <A HREF="wce50lrfspbookmarkoptions.htm">SPBOOKMARKOPTIONS</A> enumeration.</dd>
+
+<DT><I>ullStreamPosition</I> </DT>
+
+<DD>[in] Position of the bookmark in the stream. See Remarks section. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TD width=34%>SP_STREAMPOS_ASAP </TD>
+<TD width=66%>Bookmark event will occur when the SR engine reaches a synchronization point. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>SP_STREAMPOS_REALTIME </TD>
+<TD width=66%>Bookmark event will occur when the SR engine reaches the current audio device position. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><I>Specific stream position value </I></TD>
+<TD width=66%>Bookmark event will occur when the SR engine reaches the specified stream position value. </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>lParamEvent</I> </DT>
+
+<DD>[in] The value of the <B>lparam</B> member in the <A HREF="wce50lrfspevent.htm">SPEVENT</A> structure defining the bookmark event. This can be any value the application wants retrieved with the bookmark event (for example, unique identifier, data pointer, NULL, and so on). </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Value</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>S_OK </TD>
+<TD width=63%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_INVALIDARG </TD>
+<TD width=63%>Options has a bad value. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>FAILED(hr) </TD>
+<TD width=63%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>If <I>Options</I> is set to SPBO_PAUSE, then the <A HREF="wce50lrfspevent.htm">SPEVENT</A> <B>wParam</B> member will be set to SPREF_AutoPause.</P>
+
+<P>An application that wants to display a recognition progress/latency meter might use <B>ISpRecoContext::Bookmark</B> with the stream position SP_STREAMPOS_REALTIME, and update the UI when each bookmark is received. See also <A HREF="wce50lrfisprecognizergetstatus.htm">ISpRecognizer::GetStatus</A>.</P>
+
+<P>An application that wants to pause the SR engine to perform specific processing ("auto-pause" bookmark) might use <B>ISpRecoContext::Bookmark</B> with the stream position SPBO_PAUSE SP_STREAMPOS_ASAP. Use of this setting pauses the SR engine automatically and asynchronously (for the application). The application should call <A HREF="wce50lrfisprecocontextresume.htm">ISpRecoContext::Resume</A> to resume operation of the SR engine. See also <A HREF="wce50lrfisprecogrammarsetrulestate.htm">ISpRecoGrammar::SetRuleState</A> regarding auto-pause rules.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method with an auto-pause bookmark.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// setup the recognition context and grammar
+// ...
+// start listening for recognitions
+hr = cpRecoGrammar-&gt;SetRuleState( MY_RULE, NULL, SPRS_ACTIVE );
+// Check hr
+hr = cpRecoContext-&gt;Bookmark( SPBO_PAUSE, SP_STREAMPOS_ASAP, NULL );
+// get the bookmark event in a CSpEvent object
+// ...
+// assert that the recognition context paused after the "auto-pause" bookmark
+was sent
+SPDBG_ASSERT(spEvent.IsPaused());
+// Because the context was paused from the "auto-pause" rule, it must now be
+reactivated to recognize the second rule
+hr = cpRecoContext-&gt;Resume( NULL );
+// Check hr</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecocontext.htm">ISpRecoContext</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecoContext::Bookmark (wce50lrfisprecocontextbookmark.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

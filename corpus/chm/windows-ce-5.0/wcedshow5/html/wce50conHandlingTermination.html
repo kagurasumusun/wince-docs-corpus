@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling Termination</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhandlingtermination"></A>Handling Termination</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Video renderers must correctly handle termination events from the user. This implies correctly hiding the window and knowing what to do if a window is subsequently forced to be displayed. Also, video renderers must notify the filter graph manager when its window is destroyed (or more accurately, when the renderer is removed from the filter graph) to free resources. </P>
+
+<P>If the user closes the video window (for instance by pressing ALT+F4), the convention is to hide the window immediately and send an <A HREF="wce50lrfecuserabort.htm">EC_USERABORT</A> notification to the filter graph manager. </P>
+
+<P>This notification is passed through to the application, which will stop the graph playing. After sending <B>EC_USERABORT</B>, a video renderer should reject any additional samples delivered to it. </P>
+
+<P>The abort flag should be left on by the renderer until it is subsequently stopped, at which point it should be reset so that an application can override the user action and continue playing the graph if it desires. </P>
+
+<P>If ALT+F4 is pressed while the video is running, the window will be hidden and all further samples delivered will be rejected. If the window is subsequently shown (perhaps through <A HREF="wce50lrfivideowindowputvisible.htm">IVideoWindow::put_Visible</A>), no <A HREF="wce50lrfecrepaint.htm">EC_REPAINT</A> notifications should be generated. </P>
+
+<P>The video renderer should also send the <A HREF="wce50lrfecwindowdestroyed.htm">EC_WINDOW_DESTROYED</A> notification to the filter graph when the video renderer is terminating. </P>
+
+<P>In fact, it is best to handle this when the renderer's <A HREF="wce50lrfibasefilterjoinfiltergraph.htm">IBaseFilter::JoinFilterGraph</A> method is called with a null parameter (indicating that the renderer is about to be removed from the filter graph), rather than waiting until the actual video window is destroyed. </P>
+
+<P>Sending this notification enables the plug-in distributor in the filter graph manager to pass on resources that depend on window focus to other filters (such as audio devices). </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Handling%20Termination (wce50conhandlingtermination.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

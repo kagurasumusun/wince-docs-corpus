@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Client-Side Data Flow</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conclientsidedataflow"></A>Client-Side Data Flow</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The user application sends a message to the <B>SoapClient</B> object using the <A HREF="wce50lrfisoapclient.htm">ISoapClient</A> interface. Developers interact with the <B>SoapClient</B> object solely through the <B>ISoapClient</B> interface.</P>
+
+<P>The message sent by the user is an operation; in this example, the operation is adding two numbers, as follows: 
+
+<OL type="1">
+	<LI>The <B>SoapClient</B> object processes this request and formulates a SOAP request to the server. </li>
+
+	<LI>The server receives the request and performs the requested operation.</li>
+
+	<LI>The server sends the result of the operation back to the client in the form of a SOAP response. </li>
+
+	<LI>The <B>SoapClient</B> object processes this SOAP response and sends a message that contains the result of the operation back to the user application. </li>
+</OL>
+
+<P>The following diagram illustrates how SOAP handles data flow on the client.</P>
+
+<P class="fig"><IMG SRC="clientside.gif" ALT="" BORDER=0></P>
+
+<H2 class="dtH2">Setting Up the SoapClient Object</H2>
+
+<P>Before sending operation requests using the <B>ISoapClient</B> interface, the user application must first instantiate the <B>SoapClient</B> object that implements this interface. The <B>SoapClient</B> object is implemented in MSSOAP1.dll.</P>
+
+<P>Upon instantiating the <B>SoapClient</B> object, the user application initializes the object by calling <A HREF="wce50lrfmssoapinitmethod.htm">ISoapClient::mssoapinit</A> and passing in the following parameters:
+
+<UL type="disc">
+	<LI>The name of the Web Services Description Language (WSDL) file.</li>
+
+	<LI>The service name.</li>
+
+	<LI>The port information. A port specifies a binding to a specific communications link used to send the SOAP message. The <A HREF="wce50conporttypeelement.htm">&lt;portType&gt; element</A> ties the port to a collection of operations.</li>
+</UL>
+
+<P>Internally, all methods described in the WSDL file are bound dynamically to the <B>ISoapClient</B> interface during initialization. This dynamic binding allows you to call any method described in the WSDL file. </P>
+
+<H2 class="dtH2">Processing Inside the SoapClient Object</H2>
+
+<P>The <B>SoapClient</B> and <B>SoapServer</B> objects (the latter of which is accessed using the <A HREF="wce50lrfisoapserver.htm">ISoapServer</A> interface) are considered part of high-level API. </P>
+
+<P>In your application, you use the <B>ISoapClient</B> interface to send SOAP requests; then the <B>SoapClient</B> object does several things internally to send the request to the server. </P>
+
+<P>The following diagram illustrates how the <B>SoapClient</B> object processes the operation request from the user application, formulates a SOAP request message, and processes a SOAP response message.</P>
+
+<P class="fig"><IMG SRC="clientenv.gif" ALT="" BORDER=0></P>
+
+<P>Here is what happens:
+
+<OL type="1">
+	<LI>The <A HREF="wce50lrfwsdlreader.htm">WSDLReader</A> object loads the WSDL and Web Services Meta Language (WSML) files into a DOM and then analyzes these files. </li>
+
+	<LI>Based on this analysis, the <B>WSDLReader</B> object creates a <A HREF="wce50lrfwsdloperation.htm">WSDLOperation</A> object for the requested operation (for example, AddNum(3, 4)). </li>
+
+	<LI>The <B>WSDLOperation</B> object calls the <A HREF="wce50lrfgetoperationpartsmethod.htm">WSDLOperation::GetOperationParts</A> method, which returns from the DOM tree a collection of the parts defined for the operation's input and output messages. </li>
+
+	<LI>The <B>SoapClient</B> object creates <A HREF="wce50lrfsoapmapper.htm">SoapMapper</A> objects for each part and loads the values specified in the operation request into these objects. </li>
+
+	<LI>The <B>SoapSerializer</B> object (accessed through the <A HREF="wce50lrfisoapserializer.htm">ISoapSerializer</A> interface) builds the SOAP request message from the appropriate <B>SoapMapper</B> objects and sends it to the server.</li>
+
+	<LI>The server processes the SOAP request and returns a SOAP response to the client. From this response, the <B>SoapClient</B> object loads the result of the operation into the appropriate <B>SoapMapper</B> object and returns the result to the user application.</li>
+</OL>
+
+<P>The <B>WSDLReader</B> and <B>WSDLOperation</B> objects are considered part of the SOAP Toolkit low-level API. Instead of using the <B>ISoapClient</B> high-level API, you can use the low-level API in your application. </P>
+
+<P>For more information about high-level and low-level APIs, see the Calc sample applications described in <A HREF="wce50consoapsampleapplications.htm">SOAP Samples</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consoaptoolkit.htm">SOAP Application Development</A> | <A HREF="wce50conserversidedataflow.htm">Server-Side Data Flow</A> | <A HREF="wce50conaquickintroductiontowsdl.htm">A Quick Introduction to WSDL</A> | <A HREF="wce50conaquickintroductiontowsml.htm">A Quick Introduction to WSML</A> | <A HREF="wce50consoapsampleapplications.htm">SOAP Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Client-Side%20Data%20Flow (wce50conclientsidedataflow.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

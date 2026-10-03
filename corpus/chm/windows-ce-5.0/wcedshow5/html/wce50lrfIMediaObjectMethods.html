@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMediaObject Methods</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimediaobjectmethods"></A>IMediaObject Methods</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Most of the <A HREF="wce50lrfimediaobject.htm">IMediaObject</A> methods are wrappers that call an internal version of the same method. The derived class must implement the internal versions, which have the prefix <I>Internal-</I>.</P>
+
+<P>For a list of methods the derived class must implement, see <A HREF="wce50lrfdmobaseclassreference.htm">DMO Base Class</A>. The following remarks give details about some of the implementations.</P>
+
+<H4 class="dtH4">AllocateStreamingResources</H4>
+
+<P>The template keeps a private flag that indicates whether this method has been called. If the method is called when the flag is already TRUE, it returns S_OK without calling the <B>InternalAllocateStreamingResources</B> method. The <B>FreeStreamingResources</B> method resets the flag to FALSE.</P>
+
+<H4 class="dtH4">DMOLock</H4>
+
+<P>The <B>DMOLock</B> method implements the <A HREF="wce50lrfimediaobjectlock.htm">IMediaObject::Lock</A> method. To avoid name conflicts with ATL for Windows CE, <A HREF="wce50lrfimediaobjectimplclasstemplate.htm">IMediaObjectImpl</A> has renamed the method as <B>DMOLock</B>.</P>
+
+<P>When you build the derived class, define FIX_LOCK_NAME before you include the DMO header file. The FIX_LOCK_NAME directive causes the preprocessor to substitute <B>DMOLock</B> for <A HREF="wce50lrfderivedlock.htm">Lock</A> in the declaration of the <B>IMediaObject</B> interface. Applications can still invoke the method using the name <B>Lock</B> because the vtable order does not change.</P>
+
+<PRE class="code">#define FIX_LOCK_NAME
+#include &lt;dmo.h&gt;</PRE>
+
+<P>This method calls <B>Lock</B> if the parameter is TRUE or <A HREF="wce50lrfderivedunlock.htm">Unlock</A> if the parameter is FALSE. The derived class must implement the <B>Lock</B> and <B>Unlock</B> methods.</P>
+
+<H4 class="dtH4">Flush</H4>
+
+<P>The template keeps a private flag that indicates the object's flushed state. The <A HREF="wce50lrfimediaobjectflush.htm">Flush</A> method sets the flag to TRUE, and the <A HREF="wce50lrfimediaobjectprocessinput.htm">ProcessInput</A> method resets it to FALSE. If <B>Flush</B> is called when the flag is already TRUE, the method returns S_OK without calling the <B>InternalFlush</B> method.</P>
+
+<H4 class="dtH4">GetInputSizeInfo and GetOutputSizeInfo</H4>
+
+<P>The <A HREF="wce50lrfimediaobjectgetinputsizeinfo.htm">GetInputSizeInfo</A> and <A HREF="wce50lrfimediaobjectgetoutputsizeinfo.htm">GetOutputSizeInfo</A> methods return DMO_E_TYPE_NOT_SET unless all of the nonoptional streams have media types. Therefore, in the derived class, the internal methods can assume that all of the nonoptional streams have media types.</P>
+
+<H4 class="dtH4">GetInputStatus</H4>
+
+<P>The <A HREF="wce50lrfimediaobjectgetinputstatus.htm">GetInputStatus</A> method calls the <A HREF="wce50lrfderivedinternalacceptinginput.htm">InternalAcceptingInput</A> method, which the derived class must implement. The <B>InternalAcceptingInput</B> method returns S_OK if the specified input stream can accept input. Otherwise, it returns S_FALSE. </P>
+
+<P>Unless all of the non-optional streams have media types, the <B>GetInputStatus</B> method returns DMO_E_TYPE_NOT_SET. Therefore, the implementation of <B>InternalAcceptingInput</B> does not have to check for this condition.</P>
+
+<H4 class="dtH4">ProcessInput</H4>
+
+<P>Before the <A HREF="wce50lrfimediaobjectprocessinput.htm">ProcessInput</A> method calls <B>InternalProcessInput</B>, it calls <A HREF="wce50lrfimediaobjectallocatestreamingresources.htm">AllocateStreamingResources</A> and <A HREF="wce50lrfderivedinternalacceptinginput.htm">InternalAcceptingInput</A>. Therefore, the implementation of <B>InternalProcessInput</B> can assume the following:
+
+<UL type="disc">
+	<LI>All resources have been allocated. </li>
+
+	<LI>The input stream can accept data. </li>
+</UL>
+
+<H4 class="dtH4">ProcessOutput</H4>
+
+<P>Before the <A HREF="wce50lrfimediaobjectprocessoutput.htm">ProcessOutput</A>method calls <B>InternalProcessOutput</B>, it calls <B>AllocateStreamingResources</B>. Therefore, the implementation of <B>InternalProcessOutput</B> can assume that all resources have been allocated.</P>
+
+<H4 class="dtH4">SetInputType</H4>
+
+<P>The <A HREF="wce50lrfimediaobjectsetinputtype.htm">SetInputType</A>method tests, sets, or clears the media type on an input stream. It calls the <A HREF="wce50lrfderivedinternalcheckinputtype.htm">InternalCheckInputType</A> method, which the derived class must implement. The <B>InternalCheckInputType</B> method returns S_OK if the media type is acceptable or returns an error code otherwise. The <B>SetInputType</B> method implements the rest of the functionality.</P>
+
+<P>The <B>SetInputType</B> method does not allocate any resources. When the DMO switches to a streaming state, it calls the <B>AllocateStreamingResources</B> method. The derived class should use the <B>InternalAllocateStreamingResources</B> method to allocate any resources that it needs, such as memory buffers.</P>
+
+<H4 class="dtH4">SetOutputType</H4>
+
+<P>The <A HREF="wce50lrfimediaobjectsetoutputtype.htm">SetOutputType</A> method tests, sets, or clears the media type on an output stream. It calls the <A HREF="wce50lrfderivedinternalcheckoutputtype.htm">InternalCheckOutputType</A> method, which the derived class must implement. </P>
+
+<P>The <B>InternalCheckOutputType</B> method returns S_OK if the media type is acceptable or returns an error code otherwise. The <B>SetOutputType</B> method implements the rest of the functionality.</P>
+
+<P>The <B>SetOutputType</B> method does not allocate any resources. When the DMO switches to a streaming state, it calls the <B>AllocateStreamingResources</B> method. The derived class should use the <B>InternalAllocateStreamingResources</B> method to allocate any resources that it needs, such as memory buffers.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfdmoreference.htm">DMO Reference</A> | <A HREF="wce50lrfdmobaseclassreference.htm">DMO Base Class Reference</A> | <A HREF="wce50lrfimediaobjectimplclasstemplate.htm">IMediaObjectImpl</A> | <A HREF="wce50lrfimediaobject.htm">IMediaObject</A> | <A HREF="wce50lrfimediaobjectlock.htm">IMediaObject::Lock</A> | <A HREF="wce50lrfderivedlock.htm">Lock</A> | <A HREF="wce50lrfderivedunlock.htm">Unlock</A> | <A HREF="wce50lrfderivedinternalacceptinginput.htm">InternalAcceptingInput</A> | <A HREF="wce50lrfderivedinternalacceptinginput.htm">InternalAcceptingInput</A> | <A HREF="wce50lrfderivedinternalcheckinputtype.htm">InternalCheckInputType</A> | <A HREF="wce50lrfderivedinternalcheckoutputtype.htm">InternalCheckOutputType</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMediaObject%20Methods (wce50lrfimediaobjectmethods.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

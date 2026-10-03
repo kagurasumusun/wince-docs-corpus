@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateDC</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcreatedc"></A>CreateDC</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates a device context (DC) for a device.</P>
+
+<PRE class="syntax"><B>HDC CreateDC(</B> 
+  <B>LPCTSTR</B> <I>lpszDriver</I><B>,</B> 
+  <B>LPCTSTR</B> <I>lpszDevice</I><B>,</B> 
+  <B>LPCTSTR</B> <I>lpszOutput</I><B>,</B> 
+  <B>CONST DEVMODE* </B><I>lpInitData</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>lpszDriver</I></DT>
+
+<DD>[in] Long pointer to a null-terminated string that specifies the file name of a driver. If this parameter is set to NULL, the system returns a screen DC.</dd>
+
+<DT><I>lpszDevice</I></DT>
+
+<DD>[in] Long pointer to a null-terminated string that specifies the name of the specific output device being used, as shown by the Print Manager. It is not the printer model name. The <I>lpszDevice</I> parameter must be used. 
+
+<P>In Windows CE 2.0 and later, this parameter is ignored. 
+</dd>
+
+<DT><I>lpszOutput</I></DT>
+
+<DD>[in] Long pointer to an output destination. 
+
+<P>It can be one of the following values, and the colon is required when specifying a port.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>COM<I>x</I>:</TD>
+<TD width=66%>Serial ports;<I> x</I> is a number from 1 to 9.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>LPT<I>x</I>:</TD>
+<TD width=66%>Parallel ports; <I>x</I> is a number from 1 to 9.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>IRDA:</TD>
+<TD width=66%>IRDA port. 
+<P>For Windows CE 2.0 and 2.01, use COM3: to specify the IRDA port.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>\\<I>servername\sharename</I></TD>
+<TD width=66%>Universal naming convention (UNC) that identifies a network printer server.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>lpInitData</I></DT>
+
+<DD>[in] Long pointer to a <A HREF="wce50lrfdevmode.htm">DEVMODE</A> structure containing device-specific initialization data for the device driver. 
+
+<P>The <I>lpInitData</I> parameter must be NULL if the device driver is to use the default initialization (if any) specified by the user. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The handle to a device context for the specified device indicates success. </P>
+
+<P>NULL indicates failure. </P>
+
+<P>To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>.</P>
+
+<H4 class="dtH4">Code Example</H4>
+
+<P>In the following code example, <B>CreateDC</B> is used to obtain a device context for the display driver.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. This code example should not be used in a release configuration unless it has been modified to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">typedef struct _tagUIEXTRA{
+    HIMC     hIMC;
+    UICHILD  uiStatus;
+    UICHILD  uiCand;
+    DWORD    dwCompStyle;
+    HFONT    hFont;
+    BOOL     bVertical;
+    UICHILD  uiDefComp;
+    UICHILD2 uiComp[MAXCOMPWND];
+    UICHILD  uiGuide;
+} UIEXTRA, NEAR *PUIEXTRA, FAR *LPUIEXTRA;
+
+INT
+GetCompFontHeight(
+    IN LPUIEXTRA lpUIExtra      // IME UI extra information.
+    )
+{
+    HDC hIC;
+    HFONT hOldFont = 0;
+    SIZE sz;
+
+    hIC = CreateDC(TEXT("DISPLAY"),NULL,NULL,NULL);
+    if (lpUIExtra-&gt;hFont)
+        hOldFont = SelectObject(hIC,lpUIExtra-&gt;hFont);
+    GetTextExtentPoint(hIC,TEXT("A"),1,&amp;sz);
+    if (hOldFont)
+        SelectObject(hIC,hOldFont);
+    DeleteDC(hIC);
+
+    return sz.cy;
+}</PRE>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Windows CE passes the <I>lpInitData</I> and <I>lpszOutput</I> parameters to the driver without modification. </P>
+
+<P>The <I>lpszOutput</I> parameter must contain a colon after the port &#0151; that is, use LPT1: or COM1:. Otherwise, the connection fails.</P>
+
+<P>When you no longer need the device context, call the <A HREF="wce50lrfdeletedc.htm">DeleteDC</A> function to delete it. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Windows.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfdeletedc.htm">DeleteDC</A> | <A HREF="wce50lrfdevmode.htm">DEVMODE</A> | <A HREF="wce50grfgdifunctions.htm">GDI Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CreateDC (wce50lrfcreatedc.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

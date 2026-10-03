@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Authentication Protocol Initialization</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conauthenticationprotocolinitialization"></A>Authentication Protocol Initialization</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>When creating an entry for a particular connection, you must select an authentication protocol to use for that connection. The selected authentication protocol may require configuration. If so, the Dial-Up Networking UI displays a configuration UI by calling the<B> </B><A HREF="wce50lrfraseapinvokeconfigui.htm">RasEapInvokeConfigUI</A> function. The Dial-Up Networking UI stores the configuration information returned by <B>RasEapInvokeConfigUI</B> in the entry. The setup program for the authentication protocol may also store default configuration<I> </I>information in the registry. For more information, see <A HREF="wce50coneapinstallation.htm">EAP Installation</A>.</P>
+
+<P>The configuration information stored in the entry should be generic to all users on the client computer. Information specific to a particular user or users should not be stored in the entry. The authentication protocol should obtain user-specific information through the identity function interface or interactive UI. The authentication protocol can store this information in the registry by passing it to RAS in the <I>pEapOutput</I> parameter of <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A>.</P>
+
+<P>When the client attempts to establish the connection, RAS obtains identity information for the user. If the RAS_EAP_VALUENAME_INVOKE_NAMEDLG value is present in the registry for this authentication protocol, and this value is set to 0, RAS calls <A HREF="wce50lrfraseapgetidentity.htm">RasEapGetIdentity</A>. This function typically displays a UI that allows the identity information to be of a type specific to the authentication protocol; for example, a certificate or numeric identifier.</P>
+
+<P>Once RAS has obtained the identity information for the user, RAS calls the authentication protocol's implementation of <A HREF="wce50lrfraseapbegin.htm">RasEapBegin</A>. This call allows the protocol to allocate and initialize a work buffer that RAS passes on subsequent calls to <B>RasEapMakeMessage</B> and <A HREF="wce50lrfraseapend.htm">RasEapEnd</A>. In <B>RasEapBegin</B>, RAS also passes a <A HREF="wce50lrfpppeapinput.htm">PPP_EAP_INPUT</A> structure that contains pointers to the configuration information for the connection, and the identity information for the user. RAS always passes in a value for the <B>pszIdentity</B> member of <B>PPP_EAP_INPUT</B>. However, the <B>pszPassword</B> member of <B>PPP_EAP_INPUT</B> may be NULL.</P>
+
+<P>Within the<B> PPP_EAP_INPUT</B> structure, the <B>fAuthenticator</B><I> </I>member indicates whether the authentication protocol is being invoked to be authenticated (on the client) or as the authenticator (on the server). </P>
+
+<P>On the server, the <B>bInitialID</B> member of <B>PPP_EAP_INPUT</B> specifies the identifier that the server should use for the first EAP packet. The server should increment this identifier for subsequent packets.</P>
+
+<P>Also on the server, the <I>pUserAttributes</I> pointer in <B>PPP_EAP_INPUT</B> points to an array of attributes of the <A HREF="wce50lrfrasauthattributetype.htm">RAS_AUTH_ATTRIBUTE_TYPE</A> type. These are attributes for the user that were obtained from the client.</P>
+
+<P>If the <B>RasEapBegin</B> call returns any value other than NO_ERROR, the session is disconnected. The returned error is logged (on the server), or displayed to the user (on the client).</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50coneapimplementationdetails.htm">EAP Implementation Details</A> | <A HREF="wce50coneapinstallation.htm">EAP Installation</A> | <A HREF="wce50lrfraseapinvokeconfigui.htm">RasEapInvokeConfigUI</A> | <A HREF="wce50lrfraseapmakemessage.htm">RasEapMakeMessage</A> | <A HREF="wce50lrfraseapgetidentity.htm">RasEapGetIdentity</A> | <A HREF="wce50lrfraseapbegin.htm">RasEapBegin</A> | <A HREF="wce50lrfraseapend.htm">RasEapEnd</A> | <A HREF="wce50lrfpppeapinput.htm">PPP_EAP_INPUT</A> | <A HREF="wce50lrfrasauthattributetype.htm">RAS_AUTH_ATTRIBUTE_TYPE</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Authentication%20Protocol%20Initialization (wce50conauthenticationprotocolinitialization.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

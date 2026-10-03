@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>VTableProvStruc</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfLoadLibrary">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfLoadLibrary">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfvtableprovstruc"></A>VTableProvStruc</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure contains pointers to callback functions that can be used by CSP functions.</P>
+
+<PRE class="syntax"><B>typedef struct _VTableProvStruc {</B>
+  <B>DWORD</B> <I>Version</I><B>;</B> 
+  <B>FARPROC</B> <I>FuncVerifyImage</I><B>;</B> 
+  <B>FARPROC</B> <I>FuncReturnhWnd</I><B>;</B> 
+  <B>DWORD</B> <I>dwProvType</I><B>;</B> 
+  <B>BYTE* </B><I>pbContextInfo</I><B>;</B> 
+  <B>DWORD</B> <I>cbContextInfo</I><B>;</B> 
+  <B>LPWSTR</B> <I>pszProvName</I><B>;</B>
+<B>} VTableProvStruc, *PVTableProvStruc;</B>
+<B>BOOL FuncVerifyImage(LPCSTR lpszImage, BYTE *pSigData);</B>
+<B>BOOL FuncReturnhWnd(DWORD *phWnd);</B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>Version</B></DT>
+
+<DD><B>DWORD</B> value indicating the version of the structure. For Windows CE, the value is 3.</dd>
+
+<DT><B>FuncVerifyImage</B></DT>
+
+<DD>Pointer to a callback function to verify a signature. See the Remarks section for details. </dd>
+
+<DT><B>FuncReturnhWnd</B></DT>
+
+<DD>Pointer to a callback function that returns information on a window handle to use when interacting directly with the user using Microsoft&reg; Win32&reg;. CSPs that do not communicate directly with the user and CSPs that use dedicated hardware for this purpose can ignore this entry. This window handle is zero by default, but some applications will set it to a different value by using the <A HREF="wce50lrfcryptsetprovparam.htm">CryptSetProvParam</A> function. </dd>
+
+<DT><B>dwProvType</B></DT>
+
+<DD><B>DWORD</B> value that specifies the type of provider to acquire. The following provider types are predefined:
+
+<UL type="disc">
+	<LI>PROV_RSA_FULL </li>
+
+	<LI>PROV_RSA_SIG </li>
+
+	<LI>PROV_DSS </li>
+
+	<LI>PROV_FORTEZZA </li>
+
+	<LI>PROV_MS_EXCHANGE </li>
+</UL>
+</dd>
+
+<DT><B>pbContextInfo</B></DT>
+
+<DD>Pointer to an array of context information. The <B>pbContextInfo</B> and <B>cbContextInfo</B> members together determine the information set used when a <A HREF="wce50lrfcryptsetprovparam.htm">CPSetProvParam</A> function is called with PP_CONTEXT_INFO set. </dd>
+
+<DT><B>cbContextInfo</B></DT>
+
+<DD><B>DWORD</B> value indicating the number of elements in the <B>pbContextInfo</B> array. </dd>
+
+<DT><B>pszProvName</B></DT>
+
+<DD>String containing the name of the provider. </dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The pointers in the <B>VTableProvStruc</B> structure are only available within the <A HREF="wce50lrfcpacquirecontext.htm">CPAcquireContext</A> function. If members of the structure are needed after a call to <B>CPAcquireContext</B> is completed, copies of the needed structure elements must be made by the CSP. The function pointers in the structure can be copied and the function pointer can be used until the context is freed. </P>
+
+<P>All auxiliary DLLs into which a CSP makes function calls must be signed in the same manner (and with the same key) as the primary CSP DLL. To make this work properly, the auxiliary DLLs must be loaded dynamically, using the <A HREF="JavaScript:hhobj_1.Click()">LoadLibrary</A> function. But before <B>LoadLibrary</B> is called, the signature of the DLL must be verified. The CSP does this verification by calling the <B>FuncVerifyImage</B> function, as illustrated in the following code fragment.</P>
+
+<PRE class="code">BOOL (FARPROC *ProvVerifyImage)(LPCSTR lpszImage, BYTE *pSigData);
+BYTE bSignature[72];
+// "ProvVerifyImage" has been set to "pVTable-&gt;FuncVerifyImage"
+// within the CPAcquireContext function.
+// Load the C:\Winnt40\System32\signature.sig file into the 
+// bSignature buffer. During development, this file is created 
+// with the Sign.exe utility.
+...
+// Verify the signature on the C:\Winnt40\System32\Signature.dll file.
+if(RCRYPT_FAILED(ProvVerifyImage("c:\\winnt40\\system32\\signature.dll",
+                                 bSignature)) {
+    SetLastError(NTE_BAD_SIGNATURE);
+    return CRYPT_FAILED;
+}
+
+// Load the DLL with the LoadLib function, then acquire pointers to 
+// the member functions with the GetProcAddress function.
+...</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcpacquirecontext.htm">CPAcquireContext</A> | <A HREF="wce50lrfcryptsetprovparam.htm">CPSetProvParam</A> | <A HREF="wce50lrfcryptsetprovparam.htm">CryptSetProvParam</A> | <A HREF="JavaScript:hhobj_2.Click()">LoadLibrary</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: VTableProvStruc (wce50lrfvtableprovstruc.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IImageSink::BeginSink</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfRECT">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfRECT">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiimagesinkbeginsink"></A>IImageSink::BeginSink</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method is used to establish a connection between the image source and the sink.  </P>
+
+<P>During the call to this method, the source and the sink negotiate the data transfer parameters of their connection.</P>
+
+<PRE class="syntax"><B>HRESULT BeginSink(
+  ImageInfo*     </B><I>imageInfo</I><B>,
+  OPTIONAL RECT* </B><I>subarea
+</I><B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>imageInfo</I></DT>
+
+<DD>[in, out] A pointer to an <A HREF="wce50lrfimageinfo2.htm">ImageInfo</A> structure used to pass information about the data connection between the source and the sink.
+
+<P>When calling the function, set the values in the structure to describe the image data produced by the source.  
+
+
+<P>When the method returns successfully, this structure contains values describing the resulting negotiated image parameters for the connection between the source and the sink.  
+
+
+<P>The following table describes the values returned by <B>IImageSink::BeginSink</B> in the members of <I>imageInfo</I>.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>imageInfo Member</TH>
+<TH width=72%>Contents</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>RawDataFormat</B></TD>
+<TD width=72%>This member contains one of the following:
+<UL type="disc">
+	<LI>If the sink can take raw image data in that format, it contains the file format ID requested by the source. 
+<P>In this case, the source should then call the <A HREF="wce50lrfiimagesinkpushrawdata.htm">IImageSink::PushRawData</A> method to pass raw image data to the sink. 
+</li>
+
+	<LI>If the sink refuses to take the raw image data from the source, it contains ImageFormatMemoryBMP. For more information about ImageFormatMemoryBMP, see <A HREF="wce50lrfimagingguids.htm">Imaging GUIDs</A>.
+<P>In this case, the source should call one of the following methods:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfiimagesinkpushpixeldata.htm">IImageSink::PushPixelData</A></li>
+
+	<LI><A HREF="wce50lrfiimagesinkgetpixeldatabuffer.htm">IImageSink::GetPixelDataBuffer</A></li>
+
+	<LI><A HREF="wce50lrfiimagesinkreleasepixeldatabuffer.htm">IImageSink::ReleasePixelDataBuffer</A></li>
+</UL>
+</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>PixelFormatID</B></TD>
+<TD width=72%>This member contains the pixel format preferred by the sink. This might or might not be the same format as what was requested by the source. 
+<P>The source can supply pixel data in the format requested by the sink, or it can supply pixel data in one of the canonical pixel formats, which all sinks must support.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>Width</B>, <B>Height</B>, <B>Xdpi</B>, <B>Ydpi</B></TD>
+<TD width=72%>The contents of these members are normally left unchanged by the sink. However, consider the following:
+<UL type="disc">
+	<LI>If the source has set the SinkFlagsScalable flag, the sink can modify <B>Width</B> and <B>Height</B> values to request the source to scale the source image to a new dimension. 
+<P>For more information about SinkFlagsScalable, see <A HREF="wce50lrfsinkflags.htm">SinkFlags</A>.
+
+<P>If the sink changes width and height values, it should change <B>Xdpi</B> and <B>Ydpi</B> values accordingly.
+</li>
+
+	<LI>If the source has set the SinkFlagsPartiallyScalable flag, the sink can modify the <B>Width</B> and <B>Height</B> values to tell the source the ideal width and height for the sink. 
+<P>The source then calls <B>IImageSink::BeginSink</B> again with the closest width and height the source can supply. 
+
+<P>When <B>IImageSink::BeginSink</B> is called the second time, the SinkFlagsPartiallyScalable flag is clear. 
+
+<P>If the sink doesn’t want its <B>BeginSink</B> called twice, it should leave the <B>Width</B> and <B>Height</B> values unchanged and also clear the SinkFlagsPartiallyScalable flag.
+</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>TileWidth</B>, <B>TileHeight</B></TD>
+<TD width=72%>These members contain the tile dimensions preferred by the sink.
+<P>If the SinkFlagsFullWidth flag is set, <B>TileWidth</B> must be the same as <B>Width</B>, and <B>TileHeight</B> is the preferred band height.  </P>
+
+<P>Tile size information is used as a hint for potential performance gains. </P>
+
+<P>The source is not required to use the exact tile size requested by the sink.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>Flags</B></TD>
+<TD width=72%>This member contains one or more of the following flags from the <B>SinkFlags</B> enumeration.
+<UL type="disc">
+	<LI>SinkFlagsScalable. This flag is left unchanged.</li>
+
+	<LI>SinkFlagsPartiallyScalable. See the description for <B>Width</B> and <B>Height</B>.</li>
+
+	<LI>SinkFlagsHasAlpha. If this flag is set by the source, the sink can clear this flag to indicate that the sink cannot support alpha values. 
+<P>Even in that case, the source can still supply alpha to the sink. 
+
+<P>The sink can do whatever it chooses with the alpha information, which includes discarding it.
+</li>
+
+	<LI>SinkFlagsTopDown. Set to reflect the sink's preference.</li>
+
+	<LI>SinkFlagsFullWidth. Set by the sink to describe whether the sink wants data in bands.  
+<P>All sources must support data transfer in top-down banding order, even if that is not their preferred order.
+</li>
+
+	<LI>SinkFlagsBottomUp. This flag is left unchanged.</li>
+
+	<LI>SinkFlagsMultipass. If this flag is set by the source, the sink can clear this flag to indicate that it does not support multipass.  
+<P>In that case, the source is required to handle multipass on its own and give image data to the sink in a single pass. 
+
+<P>If the sink indicates it can support multipass but also requires top-down order, the source must supply data one entire pass after another. In addition, for each pass it must supply one band after another, with no gaps in between.
+</li>
+
+	<LI>SinkFlagsComposite. This flag is left unchanged. If this flag is set by the source and the sink cannot support compositing behavior, the sink should return a failure from the <B>IImageSink::BeginSink</B> method.</li>
+
+	<LI>SinkFlagsWantProps. The sink can set this flag to indicate to the source that it is interested in getting image metadata properties through a call to <A HREF="wce50lrfiimagesinkpushpropertyitems.htm">IImageSink::PushPropertyItems</A>.</li>
+</UL>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>subarea</I></DT>
+
+<DD>[out] A pointer to a <A HREF="JavaScript:hhobj_1.Click()">RECT</A> structure.  
+
+<P>This parameter is used for partial decoding if the image source and sink can support it.  
+
+
+<P>If the image source can support partial image decoding, it should pass a non-NULL <I>subarea</I> parameter. If it does, the image sink must fill in the <B>RECT</B> structure to tell the source which portion of the image to decode.
+
+
+<P>If the sink does not want a partial image, it fills in the <B>RECT</B> structure to include the entire source image.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If successful, this method returns S_OK.</P>
+
+<P>This method may return E_NOTIMPL if it fails.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This method negotiates the parameters for sending image data from an image source to an image sink.  </P>
+
+<P>Prior to sending data to the sink, you must call <A HREF="wce50lrfiimagesinksetpalette.htm">IImageSink::SetPalette</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> Imaging.h.<BR>
+<B>Link Library:</B> Imaging.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfiimagesink.htm">IImageSink</A> | <A HREF="wce50lrfimageinfo2.htm">ImageInfo</A> | <A HREF="wce50lrfimagingguids.htm">Imaging GUIDs</A> | <A HREF="wce50lrfiimagesinkpushrawdata.htm">IImageSink::PushRawData</A> | <A HREF="wce50lrfiimagesinkpushpixeldata.htm">IImageSink::PushPixelData</A> | <A HREF="wce50lrfiimagesinkgetpixeldatabuffer.htm">IImageSink::GetPixelDataBuffer</A> | <A HREF="wce50lrfiimagesinkreleasepixeldatabuffer.htm">IImageSink::ReleasePixelDataBuffer</A> | <A HREF="wce50lrfsinkflags.htm">SinkFlags</A> | <A HREF="wce50lrfiimagesinkpushpropertyitems.htm">IImageSink::PushPropertyItems</A> | <A HREF="JavaScript:hhobj_2.Click()">RECT</A> | <A HREF="wce50lrfiimagesinksetpalette.htm">IImageSink::SetPalette</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IImageSink::BeginSink (wce50lrfiimagesinkbeginsink.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

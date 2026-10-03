@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Connection to a Remote Device Using Winsock</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCloseHandle">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingconnectionusingwinsockextensions"></A>Creating a Connection to a Remote Device Using Winsock</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To enable communication between two Bluetooth devices, you can create a connection by creating client and server sockets. The Bluetooth server socket must be configured to listen for incoming connection and accept a client socket. The Bluetooth client socket must know the address of the Bluetooth device to connect to, before it sends a connection request. </P>
+
+<P>Microsoft&reg; Windows&reg; CE implementation of Bluetooth allows you to create a piconet. As per the Bluetooth specification, a master device can connect with seven active slave devices. For more information about piconet, see the <I>Bluetooth Core Specification</I> at this see this <A HREF="http://go.microsoft.com/fwlink/?LinkId=19901">Official Bluetooth Wireless Info Web site</A>.</P>
+
+<P>You can also create a connection by using the COM Port emulator facility that ships with Microsoft Windows CE. For more information about using this facility to create connections, see <A HREF="wce50concomportemulationfacility.htm">Creating a Connection Using a Virtual COM Port</A>.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Error handling has been omitted in this topic for clarity.</BLOCKQUOTE>
+
+<P>Before you create a connection between two Bluetooth devices, you must have the following information:
+
+<UL type="disc">
+	<LI>The address of the remote Bluetooth device to query, as a <B>BT_ADDR</B> type, as defined in Ws2bth.h:
+<PRE class="code">typedef ULONGLONG bt_addr, *pbt_addr, BT_ADDR, *PBT_ADDR;</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This requirement is for client ports only.</BLOCKQUOTE>
+</li>
+
+	<LI>Service identifier as a GUID type variable.
+<P>- or -
+
+<P>RFCOMM channel (between 1 and 31).
+</li>
+</UL>
+
+<P>The Ssa sample that ships with Windows CE, contains source code for creating a Bluetooth connection by using Winsock. For more information about this sample, see <A HREF="wce50conwinsockinterfacesample.htm">Winsock Interface Sample</A>.</P>
+
+<P class="labelproc"><B>To create a client socket</B>
+
+<OL type="1">
+	<LI>Prepare the caller application by providing data about Winsock such as the version and implementation details. This data can be retrieved by calling the <A HREF="wce50lrfwsastartup.htm">WSAStartup</A> function as the following example code shows.
+<PRE class="code">WSADATA wsd;
+WSAStartup (MAKEWORD(1,0), &amp;wsd);</PRE>
+</li>
+
+	<LI>Create a Bluetooth socket by calling the <A HREF="wce50lrfsocketbluetooth.htm">socket</A> function, as the following example code shows.
+<PRE class="code">SOCKET client_socket = socket (AF_BT, SOCK_STREAM, BTHPROTO_RFCOMM);</PRE>
+
+<P>The parameter values for the <B>socket</B> function configures this socket for Bluetooth services.
+</li>
+
+	<LI>Store information about the remote Bluetooth device that the client is connecting to, by configuring a <A HREF="wce50lrfsockaddrbth.htm">SOCKADDR_BTH</A> structure. 
+<OL type="a">
+	<LI>Create and initialize a <B>SOCKADDR_BTH</B> variable as the following example code shows:
+<PRE class="code">SOCKADDR_BTH sa;
+memset (&amp;sa, 0, sizeof(sa));</PRE>
+</li>
+
+	<LI>Set the <B>btAddr</B> member to a <B>BT_ADDR</B> variable that contains the address of the target device.
+<PRE class="code">sa.btAddr = b; //b is a <B>BT_ADDR </B>variable</PRE>
+
+<P>Your application can accept the device address as a string but must convert the address and store it in a variable of type <B>BT_ADDR</B>. 
+</li>
+
+	<LI>If the service identifier is available, then set the <B>serviceClassId</B> member of <B>SOCKADDR_BTH</B> to the GUID of the RFCOMM-based service. In this case, the client performs an SDP query and then uses the resulting server channel.
+<P>- or- 
+
+<P>If the service identifier is not known, set the <B>port</B> member of <B>SOCKADDR_BTH</B> to the server channel number as the following example code shows.
+
+<PRE class="code">sa.port = channel &amp; 0xff;</PRE>
+</li>
+</OL>
+</li>
+
+	<LI>Connect to the Bluetooth socket, created in step 2, by calling the <A HREF="wce50lrfconnectbluetooth.htm">connect</A> function, as the following example code shows.
+<PRE class="code">if (connect (client_socket, (SOCKADDR *)&amp;sa, sizeof(sa))) 
+{
+  //Perform error handling.
+  closesocket (client_socket);
+  return 0;
+}</PRE>
+
+<P>Specify the attributes of the target device by passing a <B>SOCKADDR_BTH</B>, configured in step 3.
+
+<P>After the connection is established, you can communicate with the target device by sending and receiving data. 
+</li>
+
+	<LI>To close the connection to the target device, call the <A HREF="wce50lrfclosesocket.htm">closesocket</A> function to close the Bluetooth socket. Also, ensure that you release the socket by calling the <A HREF="JavaScript:hhobj_1.Click()">CloseHandle</A> function, as the following example code shows.
+<PRE class="code">closesocket(client_socket);
+CloseHandle ((LPVOID)client_socket);</PRE>
+</li>
+
+	<LI>To terminate the use of Winsock services, call the <A HREF="wce50lrfwsacleanup.htm">WSACleanup</A> function. There must be a call to <B>WSACleanup</B> for every successful call to <B>WSAStartup</B> made by an application.</li>
+</OL>
+
+<P class="labelproc"><B>To create a server socket</B>
+
+<OL type="1">
+	<LI>Prepare the caller application by providing Winsock-related data such as the version and implementation details. This data can be retrieved by calling the <A HREF="wce50lrfwsastartup.htm">WSAStartup</A> function as the following example code shows.
+<PRE class="code">WSADATA wsd;
+WSAStartup (MAKEWORD(1,0), &amp;wsd);</PRE>
+</li>
+
+	<LI>Create a Bluetooth socket by calling the <A HREF="wce50lrfsocketbluetooth.htm">socket</A> function, as the following example code shows.
+<PRE class="code">SOCKET server_socket = socket (AF_BT, SOCK_STREAM, BTHPROTO_RFCOMM);</PRE>
+
+<P>The parameter values for the <B>socket</B> function configures this socket for Bluetooth services.
+</li>
+
+	<LI>Configure a <A HREF="wce50lrfsockaddrbth.htm">SOCKADDR_BTH</A> structure to store information about the server Bluetooth device. The following example code shows the values to set in <B>SOCKADDR_BTH</B> members.
+<PRE class="code">SOCKADDR_BTH sa;
+memset (&amp;sa, 0, sizeof(sa));
+sa.addressFamily = AF_BT;
+sa.port = channel &amp; 0xff;</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To avoid conflicts, when you are selecting the server channel, it is recommended that you set <B>channel</B> to RFCOMM_CHANNEL_MULTIPLE (0xfe). This configures RFCOMM to use the next available channel.</BLOCKQUOTE>
+
+<P>The information that is stored in this structure is used to bind a Bluetooth socket to the local address of the server device.
+</li>
+
+	<LI>Bind the socket created in step 2, by calling the <A HREF="wce50lrfbindbluetooth.htm">bind</A> function, as the following example code shows. Pass a reference to <B>SOCKADDR_BTH</B>, created in step 3, to specify the device information.
+<PRE class="code">if (bind (server_socket, (SOCKADDR *)&amp;sa, sizeof(sa))) 
+{
+  ...  //Perform error handling
+  closesocket (server_socket);
+  return 0;
+}</PRE>
+</li>
+
+	<LI>Listen for incoming connections from remote Bluetooth client devices, by calling the <A HREF="wce50lrflisten.htm">listen</A> function as the following example code shows.
+<PRE class="code">if (listen (server_socket, 5))
+{
+  ...  //Perform error handling
+  closesocket (server_socket);
+  return 0;
+}</PRE>
+</li>
+
+	<LI>Accept incoming connections, by calling the <A HREF="wce50lrfacceptbluetooth.htm">accept</A> function as the following example shows.
+<PRE class="code">SOCKADDR_BTH sa2;
+int size = sizeof(sa2);
+SOCKET s2 = accept (server_socket, (SOCKADDR *)&amp;sa2, &amp;size);</PRE>
+
+<P>A call to <B>accept</B> from the server returns the address of the client in a <B>SOCKADDR_BTH</B> variable.
+</li>
+
+	<LI>Close the Bluetooth socket, by calling the <B>closesocket</B> as the following example code shows.
+<PRE class="code">closesocket(server_socket);</PRE>
+</li>
+
+	<LI>To terminate the use of Winsock services, call the <A HREF="wce50lrfwsacleanup.htm">WSACleanup</A> function. There must be a call to <B>WSACleanup</B> for every successful call to <B>WSAStartup</B> made by an application.</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conbluetoothapplicationdevelopment.htm">Bluetooth Application Development</A> | <A HREF="wce50concomportemulationfacility.htm">Creating a Connection Using a Virtual COM Port</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20a%20Connection%20to%20a%20Remote%20Device%20Using%20Winsock (wce50concreatingconnectionusingwinsockextensions.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

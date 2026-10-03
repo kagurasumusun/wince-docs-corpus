@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMediaObject::ProcessOutput</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimediaobjectprocessoutput"></A>IMediaObject::ProcessOutput</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method generates output from the current input data.</P>
+
+<PRE class="syntax"><B>HRESULT ProcessOutput(</B>
+  <B>DWORD</B> <I>dwFlags</I><B>,</B>
+  <B>DWORD</B> <I>cOutputBufferCount</I><B>,</B>
+  <B>DMO_OUTPUT_DATA_BUFFER* </B><I>pOutputBuffers</I><B>,</B>
+  <B>DWORD* </B><I>pdwStatus</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwFlags </I></DT>
+
+<DD>Bitwise combination of zero or more flags from the <A HREF="wce50lrfdmoprocessoutputflags.htm">DMO_PROCESS_OUTPUT_FLAGS</A> enumeration. </dd>
+
+<DT><I>cOutputBufferCount </I></DT>
+
+<DD>Number of output buffers. </dd>
+
+<DT><I>pOutputBuffers </I></DT>
+
+<DD>[in, out] Pointer to an array of <A HREF="wce50lrfdmooutputdatabuffer.htm">DMO_OUTPUT_DATA_BUFFER</A> structures containing the output buffers. Specify the size of the array in the <I>cOutputBufferCount</I> parameter. </dd>
+
+<DT><I>pdwStatus </I></DT>
+
+<DD>[out] Pointer to a variable that receives a reserved value (zero). The application should ignore this value. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns an <B>HRESULT</B> value. Possible values include the following.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=22%>Value</TH>
+<TH width=78%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>S_OK</TD>
+<TD width=78%>Success</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>S_FALSE</TD>
+<TD width=78%>No output to process</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>E_FAIL</TD>
+<TD width=78%>Failure</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>E_INVALIDARG</TD>
+<TD width=78%>Invalid argument</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%>E_POINTER</TD>
+<TD width=78%>NULL pointer argument</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <I>pOutputBuffers</I> parameter points to an array of <B>DMO_OUTPUT_DATA_BUFFER</B> structures. The application must allocate one structure for each output stream. To determine the number of output streams, call the <A HREF="wce50lrfimediaobjectgetstreamcount.htm">IMediaObject::GetStreamCount</A> method. Set the <I>cOutputBufferCount</I> parameter to this number.</P>
+
+<P>Each <B>DMO_OUTPUT_DATA_BUFFER</B> structure contains a pointer to a buffer's <A HREF="wce50lrfimediabuffer.htm">IMediaBuffer</A> interface. The application allocates these buffers. The other members of the structure are status fields. The DMO sets these fields if the method succeeds. If the method fails, their values are undefined.</P>
+
+<P>When the application calls <B>ProcessOutput</B>, the DMO processes as much input data as possible. It writes the output data to the output buffers, starting from the end of the data in each buffer. To find the end of the data, call the <A HREF="wce50lrfimediabuffergetbufferandlength.htm">IMediaBuffer::GetBufferAndLength</A> method. The DMO never holds a reference count on an output buffer.</P>
+
+<P>If the DMO fills an entire output buffer and still has input data to process, the DMO returns the <A HREF="wce50lrfdmooutputdatabuffer.htm">DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE</A> flag in the <B>DMO_OUTPUT_DATA_BUFFER</B> structure. The application should check for this flag by testing the <B>dwStatus</B> member of each structure.</P>
+
+<P>If the method returns S_FALSE, no output was generated. However, a DMO is not required to return S_FALSE in this situation; it might return S_OK.</P>
+
+<P>You can discard data from a stream by setting the DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER flag in the <I>dwFlags</I> parameter. For each stream that you want to discard, set the <B>pBuffer</B> member of the <B>DMO_OUTPUT_DATA_BUFFER</B> structure to NULL.</P>
+
+<P>For each stream in which <B>pBuffer</B> is NULL:
+
+<UL type="disc">
+	<LI>If the DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER flag is set, and the stream is discardable or optional, the DMO discards the data. </li>
+
+	<LI>If the flag is set but the stream is neither discardable nor optional, the DMO discards the data if possible. It is not guaranteed to discard the data. </li>
+
+	<LI>If the flag is not set, the DMO does not produce output data for that stream and does not discard the data. </li>
+</UL>
+
+<P>To check whether a stream is discardable or optional, call the <A HREF="wce50lrfimediaobjectgetoutputstreaminfo.htm">IMediaObject::GetOutputStreamInfo</A> method.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Dmo.h.<BR>
+<B>Link Library:</B> Dmoguid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfimediaobject.htm">IMediaObject</A> | <A HREF="wce50lrfimediaobjectgetstreamcount.htm">IMediaObject::GetStreamCount</A> | <A HREF="wce50lrfimediaobjectgetoutputstreaminfo.htm">IMediaObject::GetOutputStreamInfo</A> | <A HREF="wce50lrfimediabuffer.htm">IMediaBuffer</A> | <A HREF="wce50lrfimediabuffergetbufferandlength.htm">IMediaBuffer::GetBufferAndLength</A> | <A HREF="wce50lrfdmooutputdatabuffer.htm">DMO_OUTPUT_DATA_BUFFER</A> | <A HREF="wce50lrfdmooutputdatabuffer.htm">DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE</A> | <A HREF="wce50lrfdmoprocessoutputflags.htm">DMO_PROCESS_OUTPUT_FLAGS</A> | <A HREF="wce50lrfdmoerrorcodes.htm">DMO_E_INVALIDSTREAMINDEX</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMediaObject::ProcessOutput (wce50lrfimediaobjectprocessoutput.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Developing Secure ActiveX Controls</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conURLSecurityZones">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condevelopingsecureactivexcontrols"></A>Developing Secure ActiveX Controls</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This topic addresses the special requirements of ActiveX controls that are accessed by Web pages downloaded to an Internet browser. </P>
+
+<P>However, the security issues discussed are also helpful for any developer who uses ActiveX technology in an application. </P>
+
+<P>These security considerations are important for any ActiveX control that is initialized with persistent data (either local or remote), or that is scriptable.</P>
+
+<P>A Microsoft&reg; ActiveX&reg; control is a COM object that supports the <B>IUnknown</B> interface, and is self-registering. </P>
+
+<P>Many ActiveX controls, especially those used in Web pages, support the <B>IDispatch</B> interface, which allows scripting languages such as Microsoft JScript&reg; development system (JScript) and Microsoft Visual Basic&reg; Scripting Edition (VBScript) to access the control easily. </P>
+
+<P>The same mechanism by which ActiveX controls can be properly accessed by other controls and applications makes them particularly vulnerable to misuse, intentional and otherwise. </P>
+
+<P>For example, if an ActiveX control marked "safe for scripting" supports a method that allows it to print a file to an unspecified printer, and if a user browses to a Web page that invokes the control, files on the user's machine could be printed to another printer on the Internet without the user's knowledge.</P>
+
+<P>There are two significant differences between the way ActiveX controls are managed on a Windows-based desktop OS running Microsoft Internet Explorer and the way these controls are managed in Windows CE. 
+
+<UL type="disc">
+	<LI>First, Windows CE does not have the Component Categories Manager to register and unregister controls and to provide information about categories that are implemented or required by a control. 
+<P>Therefore, all ActiveX controls must be registered by manually editing the system registry or by the setup program that installs the control. 
+</li>
+
+	<LI>Second, Internet Explorer for Windows CE does not allow users to download ActiveX controls through the browser. However, a Web page can still load and run ActiveX controls that are built into the run-time image or that were installed by some other means, such as Microsoft ActiveSync, if the browser determines the control is safe to load.
+<P>When Internet Explorer receives a request to load an ActiveX control, it checks the URL security zones settings in the browser to determine whether the control can be run, and if the user should be notified that a control is to be loaded. For more information, see <A HREF="JavaScript:hhobj_1.Click()">URL Security Zones</A>.
+
+<P>If the security zone settings allow the control to be loaded, the browser queries the control to determine if the control implements the <A HREF="wce50lrfiobjectsafetyiunknown.htm">IObjectSafety</A> interface. This interface allows Internet Explorer to retrieve the current initialization or scripting capabilities for an ActiveX control. 
+
+<P>A control marked "INTERFACESAFE_FOR_UNTRUSTED_DATA" is presumed to be safe for any possible arguments. Similarly, a control marked "INTERFACESAFE_FOR_UNTRUSTED_CALLER" is presumed to be safe for any possible use of its properties, methods, and events. 
+
+<P>For example, in response to a query, the control might return that it knows about the INTERFACESAFE_FOR_UNTRUSTED_DATA and INTERFACESAFE_FOR_UNTRUSTED_CALLER capabilities, and that it is safe only for INTERFACESAFE_FOR_UNTRUSTED_DATA. 
+
+<P>The browser can then refuse to load the control, or it can put up a dialog box, asking the user if the operation should be permitted. If the control does not implement <B>IObjectSafety</B>, Internet Explorer checks the compatibility flags in the registry to determine if the control is registered as being safe for scripting. 
+
+<P>A control is registered as safe for scripting if the key for the control includes a subkey under the <B>Implemented Categories </B>key for the control that contains the CATID_SafeForScripting GUID {7DD95801-9882-11CF-9FA9-00AA006C42C4} 
+</li>
+</UL>
+
+<P>Developers should identify an ActiveX control as being safe for initialization and scripting only after thoroughly reviewing the control for security vulnerabilities. Any control that is not intended to be run from a browser container should not be registered as safe for scripting. </P>
+
+<P>Developers should also digitally sign ActiveX controls. Digital signing tells users where the control came from and verifies that the control has not been tampered with since its publication.</P>
+
+<H2 class="dtH2">Security Considerations for ActiveX Controls</H2>
+
+<P>Ultimately the safety of an ActiveX control depends on how frequently it is accessed, by whom, and under what conditions. </P>
+
+<H4 class="dtH4">When a Control Is Considered Safe</H4>
+
+<P>In general, a control is considered safe if there is no way for it to be used by any person or application to do any of the following:
+
+<UL type="disc">
+	<LI>Obtain information about the local computer or user</li>
+
+	<LI>Expose private information on the local computer or network </li>
+
+	<LI>Execute system calls or other actions that could change or destroy information on the local computer or network</li>
+
+	<LI>Launch a denial of service attack by consuming excessive resources</li>
+
+	<LI>In any way cause unpredictable results by being used for something other than its intended purpose</li>
+</UL>
+
+<H4 class="dtH4">Tips for Evaluating How Safe Your Control Is</H4>
+
+<P>Use the following list to help evaluate how safe your control is regarding untrusted data and scripting:
+
+<UL type="disc">
+	<LI>Test for buffer overruns, especially with input that could create a denial of service attack.</li>
+
+	<LI>Test that input to parameters is accepted only if the input is within a range of values that would legitimately be expected and that arbitrary input does not permit access to private information. </li>
+
+	<LI>If your control reads, writes, creates, or deletes arbitrary persisted data, you must implement safeguards to ensure that these methods cannot be applied inappropriately.</li>
+
+	<LI>If it is possible for the control to read from or write to the registry, be sure these methods cannot be accessed by another user or application.</li>
+
+	<LI>Be sure your security evaluation accounts for what your control can do, not only what you expect it to do. Your security evaluation must represent the actual behavior of the control. 
+<P>If the control performs actions that are inherently unsafe, such as exposing or deleting private data (and many useful controls, such as tools for system configuration, are inherently unsafe), be sure to design the control to run only on trusted Web pages, such as the local intranet zone or trusted sites zone.
+
+<P>To prevent an ActiveX control from being used on pages other than the one it designed for, the control can use the DHTML object model to obtain the uniform resource locator (URL) of the page that is trying to load it. 
+
+<P>If the control is to run from a specific site, it can, if called from another site, refuse to load or run in a limited capacity.
+</li>
+</UL>
+
+<P>For more information about security considerations for designing ActiveX controls, see "Designing Secure ActiveX Controls" in the Component Development section of the MSDN&reg; Library.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concomsecurity.htm">COM and DCOM Security</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Developing%20Secure%20ActiveX%20Controls (wce50condevelopingsecureactivexcontrols.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoRegisterPSClsid</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcoregisterpsclsid"></A>CoRegisterPSClsid</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function enables a downloaded DLL to register its custom interfaces within its running process so that the marshaling code will be able to marshal those interfaces.</P>
+
+<PRE class="syntax"><B>WINOLEAPI CoRegisterPSCLsid(</B>
+<B> </B> <B>REFIID </B><I>riid</I><B>,</B>
+<B> </B> <B>REFCLSID </B><I>rclsid</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>riid</I></DT>
+
+<DD>[in] Points to the IID of the interface to be registered.</dd>
+
+<DT><I>rclsid</I></DT>
+
+<DD>[in] Points to the CLSID of the DLL that contains the proxy/stub code for the custom interface specified by <I>riid</I>.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<DL>
+<DT>S_OK </DT>
+
+<DD>The custom interface was successfully registered.</dd>
+
+<DT>E_INVALIDARG</DT>
+
+<DD>One of the parameters is invalid.</dd>
+
+<DT>E_OUTOFMEMORY</DT>
+
+<DD>There is insufficient memory to complete this operation.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Normally the code responsible for marshaling an interface pointer into the current running process reads the HKEY_CLASSES_ROOT\Interfaces section of the registry to obtain the CLSID of the DLL containing the ProxyStub code to be loaded. To obtain the ProxyStub CLSIDs for an existing interface, the code calls the <A HREF="wce50lrfcogetpsclsid.htm">CoGetPSClsid</A> function.</P>
+
+<P>In some cases, however, it may be desirable or necessary for an in-process handler or in-process server to make its custom interfaces available without writing to the registry. </P>
+
+<P>A DLL downloaded across a network might not even have permission to access the local registry, and because the code originated on another machine, the user, for security purposes, might want to run it in a restricted environment. </P>
+
+<P>Or a DLL can have custom interfaces that it uses to talk to a remote server and can also include the ProxyStub code for those interfaces. In such cases, a DLL needs an alternative way to register its interfaces. <B>CoRegisterPSClsid</B>, used in conjunction with <A HREF="wce50lrfcoregisterclassobject.htm">CoRegisterClassObject</A>, provides that alternative.</P>
+
+<P>A DLL would normally call <B>CoRegisterPSClsid</B> as shown in the following code fragment.</P>
+
+<PRE class="code">HRESULT RegisterMyCustomInterface(DWORD *pdwRegistrationKey)
+{
+    HRESULT hr = CoRegisterClassObject(CLSID_MyProxyStubClsid,
+        pIPSFactoryBuffer,
+        CLSCTX_INPROC_SERVER,
+        REGCLS_MULTIPLEUSE
+        pdwRegistrationKey);
+    if(SUCCEEDED)(hr))
+    {
+        hr = CoRegisterPSClsid(IID_MyCustomInterface, CLSID_MyProxyStubClsid);
+    }
+ 
+    return hr;
+}</PRE>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoRegisterPSClsid (wce50lrfcoregisterpsclsid.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

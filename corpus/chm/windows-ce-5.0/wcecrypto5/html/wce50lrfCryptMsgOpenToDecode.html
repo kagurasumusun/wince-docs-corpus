@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptMsgOpenToDecode</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptmsgopentodecode"></A>CryptMsgOpenToDecode</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function opens a cryptographic message for decoding and returns a handle of the opened message. The message remains open until <A HREF="wce50lrfcryptmsgclose.htm">CryptMsgClose</A> is called.</P>
+
+<P>Important changes that affect the handling of enveloped messages have been made to CryptoAPI to support S/MIME e-mail interoperability. For details, see the Remarks section in <A HREF="wce50lrfcryptmsgopentoencode.htm">CryptMsgOpenToEncode</A>.</P>
+
+<PRE class="syntax"><B>HCRYPTMSG WINAPI CryptMsgOpenToDecode(</B>
+<B>  DWORD </B><I>dwMsgEncodingType</I><B>,</B>
+<B>  DWORD </B><I>dwFlags</I><B>,</B>
+<B>  DWORD </B><I>dwMsgType</I><B>,</B>
+<B>  HCRYPTPROV </B><I>hCryptProv</I><B>,</B>
+<B>  PCERT_INFO </B><I>pRecipientInfo</I><B>,</B>
+<B>  PCMSG_STREAM_INFO </B><I>pStreamInfo</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwMsgEncodingType</I></DT>
+
+<DD>[in] Specifies the encoding type used. It is always acceptable to specify both the certificate and message encoding types by combining them with a bitwise-OR operation as shown in the following example: 
+
+<P>X509_ASN_ENCODING | PKCS_7_ASN_ENCODING
+
+
+<P>The message encoding type defines how the message is encoded. The message encoding type is stored in the high-order word of the encoding type structure. 
+
+
+<P>The following list shows the currently defined encoding types:
+
+
+<UL type="disc">
+	<LI>CRYPT_ASN_ENCODING</li>
+
+	<LI>X509_ASN_ENCODING</li>
+
+	<LI>PKCS_7_ASN_ENCODING</li>
+</UL>
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] The following flags are defined. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CMSG_DETACHED_FLAG</TD>
+<TD width=65%>Indicates that the message to be decoded is detached. If this flag is not set, the message is not detached.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>CMSG_CRYPT_RELEASE_CONTEXT_FLAG</TD>
+<TD width=65%>If set, the <I>hCryptProv</I> passed to this function is freed on the final <A HREF="wce50lrfcryptmsgupdate.htm">CryptMsgUpdate</A>. The handle is not freed if the function fails.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>dwMsgType</I></DT>
+
+<DD>[in] In most cases message type is determined from the message header and zero is passed. In some cases, notably with Internet Explorer 3.0, messages do not have headers and the type of message to be decoded must be supplied in the function call. If the header is missing and zero (0) is passed, the function fails. 
+
+<P>The following list shows the non-zero, currently predefined message types:
+
+
+<UL type="disc">
+	<LI>CMSG_DATA</li>
+
+	<LI>CMSG_ENVELOPED</li>
+
+	<LI>CMSG_HASHED</li>
+
+	<LI>CMSG_SIGNED</li>
+
+	<LI>CMSG_SIGNED_AND_ENVELOPED</li>
+</UL>
+</dd>
+
+<DT><I>hCryptProv</I></DT>
+
+<DD>[in] Specifies a handle for the cryptographic provider to use for hashing the message. For signed messages, <I>hCryptProv</I> is used for signature verification. 
+
+<P>Unless there is a strong reason for passing in a specific cryptographic provider in <I>hCryptProv</I>, set this parameter to zero. Passing in zero causes the default RSA or DSS provider to be acquired before performing hash, signature verification, or recipient encryption operations.
+</dd>
+
+<DT><I>pRecipientInfo</I></DT>
+
+<DD>[in] This parameter is reserved for future use and must be NULL. </dd>
+
+<DT><I>pStreamInfo</I></DT>
+
+<DD>[in, optional] When streaming is not being used, this parameter must be set to NULL. 
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Streaming is not used with CMSG_HASHED. When dealing with hashed data, this parameter must be set to NULL.</BLOCKQUOTE>
+
+
+<P>When streaming is being used, <I>pStreamInfo</I> is a pointer to a <A HREF="wce50lrfcmsg_stream_info.htm">CMSG_STREAM_INFO</A> structure that contains a pointer to a callback to be called when <A HREF="wce50lrfcryptmsgupdate.htm">CryptMsgUpdate</A> is executed or when <A HREF="wce50lrfcryptmsgcontrol.htm">CryptMsgControl</A> is executed when decoding a streamed enveloped message.
+
+
+<P>For a signed message, the callback is passed a block of the decoded bytes from the inner content of the message.
+
+
+<P>For an enveloped message, after each call to <B>CryptMsgUpdate</B>, check to see if CMSG_ENVELOPE_ALGORITHM_PARAM is available by calling <A HREF="wce50lrfcryptmsggetparam.htm">CryptMsgGetParam</A>. <B>CryptMsgGetParam</B> will fail with LastError CRYPT_E_STREAM_MSG_NOT_READY until <B>CryptMsgUpdate</B> has processed enough of the message to make CMSG_ENVELOPE_ALGORITHM_PARAM available. Once CMSG_ENVELOPE_ALGORITHM_PARAM is available, the application can iterate through the recipients, retrieving a <A HREF="wce50lrfcertinfo.htm">CERT_INFO</A> structure for each one using <B>CryptMsgGetParam</B> (CMSG_RECIPIENT_INFO_PARAM).
+
+
+<P><B>CERT_INFO</B> is used to find a matching certificate in a previously opened certificate store by using <A HREF="wce50lrfcertgetsubjectcertificatefromstore.htm">CertGetSubjectCertificateFromStore</A>. When the correct certificate is found, <A HREF="wce50lrfcertgetcertificatecontextproperty.htm">CertGetCertificateContextProperty</A> with a <I>CERT_KEY_PROV_INFO_PROP_ID</I> parameter is called to retrieve a <A HREF="wce50lrfcryptkeyprovinfo.htm">CRYPT_KEY_PROV_INFO</A> structure. The structure contains the information necessary to acquire the recipient's private key by calling <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A>, by using the <B>pwszContainerName</B>, <B>pwszProvName</B>, <B>dwProvType</B>, and <B>dwFlags</B> members of <B>CRYPT_KEY_PROV_INFO</B>. The <I>hCryptProv</I> acquired and the dwKeySpec from the <B>CRYPT_KEY_PROV_INFO</B> are passed to <B>CryptMsgControl</B> as a member of the <A HREF="wce50lrfcmsg_ctrl_decrypt_para.htm">CMSG_CTRL_DECRYPT_PARA</A> structure to permit the start of the decryption of the inner content. The streaming code will then perform the decryption as the data is input. The resulting blocks of plaintext are passed to the callback function specified by <I>pfnStreamOutput</I> to handle the output of the decrypted message.
+
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Streaming decoding of an enveloped message queues the ciphertext in memory until <B>CryptMsgControl</B> is called to start the decryption. The application must initiate decryption in a timely manner so that the data can be saved to disk or routed elsewhere before the accumulated ciphertext becomes too large and the system runs out of memory.</BLOCKQUOTE>
+
+
+<P>In the case of a signed message enclosed in an enveloped message, the plaintext output from the streaming decode of the enveloped message can be fed into another streaming decode to process the signed message.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If successful, returns the handle of the opened message. Returns NULL if the operation failed.</P>
+
+<P>To retrieve extended error information, use the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function.</P>
+
+<P>The following table shows the error codes that are most commonly returned by the <B>GetLastError</B> function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Return Code</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_INVALIDARG </TD>
+<TD width=62%>One or more arguments are invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_OUTOFMEMORY </TD>
+<TD width=62%>Ran out of memory.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcryptographyfunctions.htm">Cryptography Functions</A> | <A HREF="wce50lrfcryptmsgclose.htm">CryptMsgClose</A> | <A HREF="wce50lrfcryptmsgupdate.htm">CryptMsgUpdate</A> | <A HREF="wce50lrfcryptmsggetparam.htm">CryptMsgGetParam</A> | <A HREF="wce50lrfcryptmsgopentoencode.htm">CryptMsgOpenToEncode</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptMsgOpenToDecode (wce50lrfcryptmsgopentodecode.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

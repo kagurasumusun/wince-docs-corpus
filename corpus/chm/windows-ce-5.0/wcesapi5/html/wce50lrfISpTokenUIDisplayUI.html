@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpTokenUI::DisplayUI</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisptokenuidisplayui"></A>ISpTokenUI::DisplayUI</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method displays the UI associated with an object token. A call to this method is synchronous. Thus the method does not return until the UI has been closed.</P>
+
+<P>The best practice implementation practice is to call <A HREF="wce50lrfisptokenuiisuisupported.htm">ISpTokenUI::IsUISupported</A> with a specific UI type before calling <B>ISpTokenUI::DisplayUI</B>.</P>
+
+<PRE class="syntax"><B>[local] HRESULT DisplayUI(</B>
+  <B>HWND </B><I>hwndParent</I><B>,</B>
+  <B>const WCHAR* </B><I>pszTitle</I><B>,</B>
+  <B>const WCHAR* </B><I>pszTypeOfUI</I><B>,</B>
+  <B>void* </B><I>pvExtraData</I><B>,</B>
+  <B>ULONG </B><I>cbExtraData</I><B>,</B>
+  <B>ISpObjectToken* </B><I>pToken</I><B>,</B>
+  <B>IUnknown* </B><I>punkObject</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hwndParent</I></DT>
+
+<DD>[in] Handle to the parent window. </dd>
+
+<DT><I>pszTitle</I></DT>
+
+<DD>[in] Pointer to a null-terminated string specifying the window title to display on the UI. This value can be set to NULL to indicate that the object implementing <B>ISpTokenUI</B> should use its default window title. </dd>
+
+<DT><I>pszTypeOfUI</I></DT>
+
+<DD>[in] Pointer to a null-terminated string specifying the type of UI to display. </dd>
+
+<DT><I>pvExtraData</I></DT>
+
+<DD>[in] Pointer to additional information needed for the object token. The implementation of <B>ISpTokenUI</B> dictates the format and use of the data provided. </dd>
+
+<DT><I>cbExtraData</I></DT>
+
+<DD>[in] Size, in bytes, of the data provided in <I>pvExtraData</I>.</dd>
+
+<DT><I>pToken</I></DT>
+
+<DD>[in] Pointer to an object implementing <A HREF="wce50lrfispobjecttoken.htm">ISpObjectToken</A> that represents the object token. See the Remarks section. </dd>
+
+<DT><I>punkObject</I></DT>
+
+<DD>[in] Pointer to <A HREF="JavaScript:hhobj_1.Click()">IUnknown</A>. See the Remarks section. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_OK</TD>
+<TD width=66%>Function completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_FALSE</TD>
+<TD width=66%>The UI is supported but not with the current run-time environment or parameters.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>E_INVALIDARG</TD>
+<TD width=66%>One or more arguments are invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>E_POINTER</TD>
+<TD width=66%>Invalid or bad pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>FAILED(hr)</TD>
+<TD width=66%>Error returned by UI object.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When an object token is requested to display a particular piece of UI, the object implementing <A HREF="wce50lrfispobjecttoken.htm">ISpObjectToken</A> can require extra functionality that only it understands. For example, a request to display the speech recognition training UI requires the use of a specific SR engine.</P>
+
+<P>Common implementation practice for accessing extra token functionality is to call <B>QueryInterface</B> for the object token, or directly create a known object implementing <B>ISpObjectToken</B>. If <B>QueryInterface</B> must be called, the caller of <B>ISpTokenUI::DisplayUI</B> can set <I>punkObject</I> with the necessary <B>IUnknown</B> interface. If the object token is known, the caller sets the <I>pToken</I> parameter with a pointer to the required <B>ISpObjectToken</B> interface. </P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method using the UI type <A HREF="wce50lrfspduiaudiovolume.htm">SPDUI_AudioVolume</A>.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// get the default input audio object token
+hr = SpGetDefaultTokenFromCategoryId(SPCAT_AUDIOIN, &amp;cpObjectToken);
+// Check hr
+
+// get the object token's UI
+hr = cpObjectToken-&gt;QueryInterface(&amp;cpTokenUI);
+// Check hr
+
+// Check if default audio input object has UI for volume
+hr = cpTokenUI-&gt;IsUISupported(SPDUI_AudioVolume, NULL, NULL, NULL,
+&amp;fSupported);
+    // Check hr
+
+// if fSupported == TRUE, then default audio input object has UI for 
+Volume
+// Display the default audio input object's Volume UI 
+hr = cpTokenUI-&gt;DisplayUI(MY_HWND, MY_AUDIO_DIALOG_TITLE, 
+SPDUI_AudioVolume, NULL, NULL, cpObjectToken, NULL);
+// Check hr</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapiddk.h, Sapiddk.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisptokenui.htm">ISpTokenUI</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpTokenUI::DisplayUI (wce50lrfisptokenuidisplayui.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

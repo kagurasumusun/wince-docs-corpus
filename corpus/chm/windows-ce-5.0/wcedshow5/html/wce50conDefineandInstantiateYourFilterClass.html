@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Define and Instantiate Your Filter Class</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condefineandinstantiateyourfilterclass"></A>Define and Instantiate Your Filter Class</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following steps show you how to define and instantiate your filter class. </P>
+
+<P>Determine the base classes from which to derive your filter class (and pin classes, if necessary). Typically, your transform filter class derives from the <A HREF="wce50lrfctransformfilterclass.htm">CTransformFilter</A>, <A HREF="wce50lrfctransinplacefilterclass.htm">CTransInPlaceFilter</A>, or <A HREF="wce50lrfcvideotransformfilterclass.htm">CVideoTransformFilter</A> transform base classes, or from the more generic <A HREF="wce50lrfcbasefilterclass.htm">CBaseFilter</A> class. </P>
+
+<P>If you want to transform video media (especially AVI data), derive from <B>CVideoTransformFilter</B>. </P>
+
+<P>If your filter must copy the input media samples, derive from <B>CTransformFilter</B>. </P>
+
+<P>If your filter can transform the sampled media in place, derive from <B>CTransInPlaceFilter</B>. </P>
+
+<P>If you do not want the simple transform filter support provided in the transform base classes, but prefer to implement your own member functions, derive from <B>CBaseFilter</B>. </P>
+
+<P>For more information, see <A HREF="wce50condeterminewhichbaseclassestouse.htm">Determine Which Base Classes to Use</A>.</P>
+
+<P>In the following example, the filter class derives from <B>CTransInPlaceFilter</B>. </P>
+
+<PRE class="code">    class CMyFilter  : public CTransInPlaceFilter</PRE>
+
+<P>Implement the <A HREF="JavaScript:hhobj_1.Click()">IUnknown</A> interface for your object. </P>
+
+<P>In the public section of your filter class definition, create an instance of <A HREF="wce50lrfcunknownclass.htm">CUnknown</A>, and then call the <A HREF="wce50lrfdeclareiunknown.htm">DECLARE_IUNKNOWN</A> macro. </P>
+
+<PRE class="code">    public:
+        static CUnknown *WINAPI CreateInstance(LPUNKNOWN punk, HRESULT 
+    *phr);
+        DECLARE_IUNKNOWN;</PRE>
+
+<P>Define your constructor. Also, define your <B>Transform</B> and <B>CheckInputType</B> functions (this does not apply if your filter class is derived from <B>CBaseFilter</B>). </P>
+
+<P>In the private section of your filter class definition, define your constructor by calling the constructor of the transform filter class you derived from, and then add code to perform the transform and check the input type. For example: </P>
+
+<PRE class="code">    // Define your constructor by calling the constructor of 
+    // CTransInPlaceFilter.
+    CMyFilter(TCHAR *tszName, LPUNKNOWN punk, HRESULT *phr)
+    : CTransInPlaceFilter (tszName, punk, CLSID_MyFilter, phr)
+    { }
+
+    // Add the transform code.
+    HRESULT Transform(IMediaSample *pSample){ 
+    // Transform code here
+    }
+
+    // Add code to check the input type.
+    HRESULT CheckInputType(const CMediaType* mtIn) { 
+    // Input checking code here
+    }</PRE>
+
+<P>Implement <B>CreateInstance</B> for your filter object. Typically, <B>CreateInstance</B> calls the constructor of your filter class. For example: </P>
+
+<PRE class="code">    CUnknown * WINAPI CMyFilter::CreateInstance(LPUNKNOWN punk, HRESULT *phr) {
+    CMyFilter *pNewObject = new CMyFilter(NAME("Description of My Filter"), 
+        punk, phr );
+    if (pNewObject == NULL) {
+        *phr = E_OUTOFMEMORY;
+    }
+    return pNewObject;
+    } </PRE>
+
+<P>Declare a global array <I>g_Templates</I> of <A HREF="wce50lrfcfactorytemplateclass.htm">CFactoryTemplate</A> objects to inform the default class factory code how to access the <B>CreateInstance</B> function. </P>
+
+<PRE class="code">    CFactoryTemplate g_Templates[]=
+        {   { L"My Filter"          
+            , &amp;CLSID_MyFilter
+            , CMyFilter::CreateInstance  // function called by class factory
+            , NULL
+            , &amp;sudMyFilter }     // address of the AMOVIESETUP_FILTER structure,
+                                 //   or NULL if no structure exists
+    };
+    int g_cTemplates = sizeof(g_Templates)/sizeof(g_Templates[0]);  </PRE>
+
+<P>The <I>g_cTemplates</I> variable defines the number of class factory templates for the filter. </P>
+
+<P>Each template provides a link between COM and the filter and is used to create the base object for the filter. At a minimum, the filter has one template that provides the address of its own <B>CreateInstance</B> function, which, when called, creates the base object. </P>
+
+<P>For information about using <B>CFactoryTemplate</B> in registration, see <A HREF="wce50conregisteringdirectshowfilters.htm">Registering DirectShow Filters</A>. </P>
+
+<P>Generate a GUID for your filter object using either uuidgen.exe or guidgen.exe, which are available in the Microsoft Windows SDK or with Visual Studio. For more information, see MSDN.</P>
+
+<P>Insert the code for the GUID before the class definition in the header file or main file. </P>
+
+<P>The following code shows an example of a GUID definition.</P>
+
+<PRE class="code">    // {3FA5D260-AF2F-11d0-AE9C-00A0C91F0841}
+    DEFINE_GUID(CLSID_MyFilter, 
+    0x3fa5d260, 0xaf2f, 0x11d0, 0xae, 0x9c, 0x0, 0xa0, 0xc9, 0x1f, 0x8, 0x41);</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Define%20and%20Instantiate%20Your%20Filter%20Class (wce50condefineandinstantiateyourfilterclass.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

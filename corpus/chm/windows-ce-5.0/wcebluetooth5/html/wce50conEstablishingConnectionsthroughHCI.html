@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Establishing Connections through HCI</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conBluetoothProtocolStack">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conestablishingconnectionsthroughhci"></A>Establishing Connections through HCI</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>After loading the protocol layer, it calls the <A HREF="wce50lrfhciestablishdevicecontext.htm">HCI_EstablishDeviceContext</A> function for registration. The call to <B>HCI_EstablishDeviceContext</B> establishes a connection to the HCI layer. </P>
+
+<P>The following code example shows the <B>HCI_EstablishDeviceContext</B> function declaration.</P>
+
+<PRE class="code">int HCI_EstablishDeviceContext(
+   void*                  pUserContext,       /* IN */
+   UINT                   uiControl,           /* IN */
+   BD_ADDR*               pba,                /* IN */
+   UINT                   class_of_device,     /* IN */
+   UCHAR                  link_type,           /* IN */
+   HCI_EVENT_INDICATION*  pInd,               /* IN */
+   HCI_CALLBACKS*         pCall,              /* IN */
+   HCI_INTERFACE*         pInt,               /* OUT */
+   in*t                   pcDataHeaders,      /* OUT */
+   int*                   pcDataTrailers,     /* OUT */
+   HANDLE*                phDeviceContext     /* OUT */
+);</PRE>
+
+<P><B>HCI_EstablishDeviceContext</B> supplies a table of <A HREF="wce50conhcieventindication.htm">HCI events</A> and <A HREF="wce50conhcicallbacks.htm">HCI callbacks</A> by passing pointers to <B>HCI_EVENT_INDICATION</B> and <B>HCI_CALLBACKS</B> structures, respectively. The upper layer receives a function table for the HCI layer interface in a pointer to the <B>HCI_INTERFACE</B> structure. For more information about <B>HCI_INTERFACE</B>, see <A HREF="wce50conhcicommands.htm">HCI Commands</A>.</P>
+
+<P>In the call to <B>HCI_EstablishDeviceContext</B>, set the packet routing option by specifying a flag in the <I>uiControl</I> parameter. The following table shows the available packet routing options.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=46%>Flag option</TH>
+<TH width=54%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>BTH_CONTROL_ROUTE_ALL&nbsp;&nbsp;&nbsp;</TD>
+<TD width=54%>This option is typically reserved for the default handler such as the L2CAP stack. Only one stack can register to accept all the notifications. 
+<P>A notification is passed up to this stack if there are no other stacks registered for this event.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>BTH_CONTROL_DEVICEONLY</TD>
+<TD width=54%>Use this option to route all local device control packets here. 
+<P>This is used for local device control, that is, place a device into a particular operating mode, one can register for this access, use this callback to program the device, and then deregister. </P>
+
+<P>Only one client at a time is allowed. </P>
+
+<P>This option is typically used for management layers that do not accept incoming connections at all. There may be more than one of these.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>BTH_CONTROL_ROUTE_SECURITY</TD>
+<TD width=54%>Use this option to route all security events up this stack including PIN requests. This is used to implement the security manager. 
+<P>With this option, link key/PIN requests for all connections will be forwarded to this stack layer. Only one stack is allowed to be handled for security events.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>BTH_CONTROL_ROUTE_BY_ADDR</TD>
+<TD width=54%>This option routes all callbacks associated with a particular device up this stack. Only one client is allowed for each <A HREF="wce50lrfbdaddr.htm">BD_ADDR</A> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>BTH_CONTROL_ROUTE_BY_COD</TD>
+<TD width=54%>Use this option to route connection requests associated with this class of device (COD) up this stack. Only one client is allowed for each COD.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=46%>BTH_CONTROL_ROUTE_BY_LINKTYPE</TD>
+<TD width=54%>Use this option to route connection requests associated with this link type up this stack. This is used to implement SCO connections. 
+<P>A sample SCO connection scenario includes registering for a particular Bluetooth device, processing all SCO data packets here, and then returning all L2CAP packets to the L2CAP layer.</P>
+</TD>
+</TR>
+</table></div>
+
+<P>The extension layer can choose to listen to all, or selected types, of events. For example, if you want the stack to accept only connections from a specified device, set <I>uiControl</I> to BTH_CONTROL_ROUTE_BY_ADDR and specify the Bluetooth device as a single pointer to the device address in the <I>pba</I> parameter. </P>
+
+<P>You can also configure the extension layer to accept only synchronous connection-oriented ( SCO) connections, set <I>uiControl</I> to BTH_CONTROL_ROUTE_BY_LINKTYPE and specify the appropriate link type in the <I>link_type</I> parameter. The same process applies to the class of the device.</P>
+
+<P>If the connection is established, a pointer to the device context handle is returned in the <I>phDeviceContext</I> out parameter. To close the connection, pass this handle in the <A HREF="wce50lrfhciclosedevicecontext.htm">HCI_CloseDeviceContext</A> function.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conhostcontrollerinterface.htm">Host Controller Interface</A> | <A HREF="wce50oribluetoothosdesign.htm">Bluetooth OS Design Development</A> | <A HREF="wce50conclosingconnectionsthroughhci.htm">Closing Connections through HCI</A> | <A HREF="JavaScript:hhobj_1.Click()">Bluetooth Protocol Stack</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Establishing%20Connections%20through%20HCI (wce50conestablishingconnectionsthroughhci.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

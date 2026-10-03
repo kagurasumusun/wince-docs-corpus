@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptGetKeyIdentifierProperty</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptgetkeyidentifierproperty"></A>CryptGetKeyIdentifierProperty</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function acquires a specific property from a specified key identifier.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CryptGetKeyIdentifierProperty(</B>
+  <B>const CRYPT_HASH_BLOB* </B><I>pKeyIdentifier</I><B>,</B>
+  <B>DWORD</B> <I>dwPropId</I><B>,</B>
+  <B>DWORD</B> <I>dwFlags</I><B>,</B>
+  <B>LPCWSTR</B> <I>pwszComputerName</I><B>,</B>
+  <B>void* </B><I>pvReserved</I><B>,</B>
+  <B>void* </B><I>pvData</I><B>,</B>
+  <B>DWORD* </B><I>pcbData</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pKeyIdentifier</I> </DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfblobcryptography.htm">CRYPT_HASH_BLOB</A> structure containing the key identifier.</dd>
+
+<DT><I>dwPropId</I> </DT>
+
+<DD>[in] Specifies the property to retrieve. The value of the <I>dwPropId</I> parameter determines the type and content of the <I>pvData</I> parameter. Any certificate property identifier can be used.</dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>[in] Bitmask of flags. The following table shows the defined values for this parameter<I>, </I>which can be combined with a bitwise <B>OR</B> operation.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=39%>Value</TH>
+<TH width=61%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>CRYPT_KEYID_MACHINE_FLAG</TD>
+<TD width=61%>Searches the list of key identifiers of the local machine (if the <I>pwszComputerName</I> parameter is NULL) or remote computer (if the <I>pwszComputerName</I> parameter is not NULL). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%>CRYPT_KEYID_ALLOC_FLAG</TD>
+<TD width=61%>The <B>LocalAlloc</B> function is called to allocate memory for <I>pvData</I>. The *<I>pvData</I> parameter is updated with a pointer to the allocated memory. <B>LocalFree</B> must be called to free the allocated memory. </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pwszComputerName</I> </DT>
+
+<DD>[in] Pointer to a name of a remote computer to be searched. If the <I>dwFlags</I> parameter has a value of CRYPT_KEYID_MACHINE_FLAG, it searches the remote computer for a list of key identifiers. If the local computer is to be searched rather than a remote computer, set the <I>pwszComputerName</I> parameter to NULL.</dd>
+
+<DT><I>pvReserved</I> </DT>
+
+<DD>[in] Reserved for future use and must be set to NULL.</dd>
+
+<DT><I>pvData</I> </DT>
+
+<DD>[out] Pointer to a buffer to receive the data as determined by the <I>dwPropId</I> parameter. Elements pointed to by fields in the <I>pvData</I> parameter follow the structure. Therefore, the size contained in the <I>pcbData</I> parameter can exceed the size of the structure.
+
+<P>If <I>dwPropId</I> is CERT_KEY_PROV_INFO_PROP_ID, <I>pvData</I> points to a <A HREF="wce50lrfcryptkeyprovinfo.htm">CRYPT_KEY_PROV_INFO</A> structure containing the property of the key identifier.
+
+
+<P>If <I>dwPropId</I> is not CERT_KEY_PROV_INFO_PROP_ID, <I>pvData</I> points to an array of bytes containing the property of the key identifier.
+
+
+<P>When CRYPT_KEYID_ALLOC_FLAG is not set, this parameter can be NULL to get the size of this information for memory allocation purposes.
+
+
+<P>When CRYPT_KEYID_ALLOC_FLAG is set, <I>pvData</I> is the address of a pointer to the buffer that will be updated. Because memory is allocated and its pointer is stored at *<I>pvData</I>, <I>pvData</I> must be non-NULL.
+</dd>
+
+<DT><I>pcbData</I> </DT>
+
+<DD>[in, out] On input, pointer to a <B>DWORD</B> that contains the size, in bytes, of the buffer pointed to by the <I>pvData</I> parameter. On output, the <B>DWORD</B> contains the number of bytes stored in the buffer. The size contained in the variable pointed to by <I>pcbData</I> can indicate a size larger than the <B>CRYPT_KEY_PROV_INFO</B> structure as the structure can contain pointers to auxiliary data. This size is the sum of the size needed by the structure and all auxiliary data.
+
+<P>When the value of the <I>dwFlags</I> parameter is CRYPT_KEYID_ALLOC_FLAG, <I>pcibData</I> is the address of a pointer to the <B>DWORD</B> that will be updated.
+
+
+<P>When processing the data returned in the buffer, applications need to use the actual size of the data returned. The actual size can be slightly smaller than the size of the buffer specified on input. On input, buffer sizes are usually specified large enough to ensure that the largest possible output data fits in the buffer. On output, the variable pointed to by this parameter is updated to reflect the actual size of the data copied to the buffer.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is nonzero, or TRUE.</P>
+
+<P>If the function fails, the return value is zero, or FALSE.</P>
+
+<P>For extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcryptenumkeyidentifierproperties.htm">CryptEnumKeyIdentifierProperties</A> | <A HREF="wce50lrfcryptsetkeyidentifierproperty.htm">CryptSetKeyIdentifierProperty</A> | <A HREF="wce50lrfblobcryptography.htm">CRYPT_HASH_BLOB</A> | <A HREF="wce50lrfcryptkeyprovinfo.htm">CRYPT_KEY_PROV_INFO</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CryptGetKeyIdentifierProperty (wce50lrfcryptgetkeyidentifierproperty.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

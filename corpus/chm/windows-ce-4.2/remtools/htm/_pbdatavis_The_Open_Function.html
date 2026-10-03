@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Open Function</TITLE>
+<!--Filename: remote_performance_monitor.rtf--><SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Manager&nbsp;Help</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="_pbdatavis_the_open_function"></A>Open Function</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The system calls the <B>Open</B> function when an application first connects to the registry to collect performance data. This function performs the initialization required for the application to provide performance data.</P>
+
+<P>The following code example shows the syntax for an <B>Open</B> function.</P>
+
+<PRE class="code">DWORD CALLBACK OpenPerformanceData(
+LPWSTR lpDeviceNames 
+);</PRE>
+
+<P>The <I>OpenPerformanceData</I> function name is a placeholder for a name defined by your application. The <I>lpDeviceNames</I> parameter points to a buffer containing the Unicode strings stored in the <B>Export</B> value in the <B>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Application_Name\Linkage</B> registry key.</P>
+
+<P>The strings are REG_MULTI_SZ strings, separated by a UNICODE_NULL character and terminated by two UNICODE_NULL characters. If the <B>Export</B> value does not exist, the value of <I>lpDeviceNames</I> should be NULL. The strings are the names of the devices managed by the application. The <B>Open</B> function calls the <B>CreateFile</B> function to open a handle to each device named. If <B>CreateFile</B> fails, the <B>Open</B> function must return the error code returned by the <B>GetLastError</B> function; otherwise, it should return ERROR_SUCCESS.</P>
+
+<P>The <B>Open</B> function initializes the data structures it returns to the performance monitoring application. In particular, it examines the registry to get the <B>Counter</B> and <B>Help</B> indexes of the objects and counters supported by the application. It then stores these indexes in the appropriate members of the <A HREF="_pbdatavis_perf_object_type.htm">PERF_OBJECT_TYPE</A> and <A HREF="_pbdatavis_perf_counter_definition.htm">PERF_COUNTER_DEFINITION</A> structures.</P>
+
+<P>The <B>Open</B> function may also perform the following initialization tasks:
+
+<UL type="disc">
+	<LI>Open and map a file-mapping object used by the application to store performance data. Create a mutex to prevent the application from changing a value while the performance DLL is reading it. 
+<P>This is one way to communicate performance data from the application to the performance DLL. If you use a different form of interprocess communication, substitute the appropriate steps to initialize that mechanism.
+</li>
+
+	<LI>Initialize event logging, if the DLL uses event logging to report errors. This is the only way for the performance DLL to report error conditions to the user, other than through the debugger.</li>
+
+	<LI>Initialize the object and counter indexes. This must be done each time the performance DLL is loaded, because the indexes vary from machine to machine.</li>
+
+	<LI>Perform other initialization tasks necessary for the <B>Collect</B> function to collect performance data efficiently.</li>
+
+	<LI>Record, in the event log, any error that prevents the <B>Open</B> function from completing successfully.</li>
+</UL>
+
+</BODY>
+</HTML>

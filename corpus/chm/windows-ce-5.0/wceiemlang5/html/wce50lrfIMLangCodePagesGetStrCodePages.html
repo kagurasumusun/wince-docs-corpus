@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMLangCodePages::GetStrCodePages</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimlangcodepagesgetstrcodepages"></A>IMLangCodePages::GetStrCodePages</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method retrieves the set of code pages to which the Unicode characters in the given string belong. </P>
+
+<PRE class="syntax"><B>HRESULT</B> <B>GetStrCodePages(</B>
+  <B>const</B> <B>WCHAR* </B><I>pszSrc</I><B>,</B>
+  <B>long</B> <I>cchSrc</I><B>,</B>
+  <B>DWORD</B> <I>dwPriorityCodePages</I><B>,</B>
+  <B>DWORD* </B><I>pdwCodePages</I><B>,</B>
+  <B>long* </B><I>pcchCodePages</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszSrc</I></DT>
+
+<DD>[in] Pointer to a source Unicode string for which the client wants the set of code pages. </dd>
+
+<DT><I>cchSrc</I></DT>
+
+<DD>[in] Integer that specifies the number of characters in the source Unicode string specified by the <I>pszSrc</I> parameter. This value must always be specified, even if the source Unicode string is a null-terminated string. </dd>
+
+<DT><I>dwPriorityCodePages</I></DT>
+
+<DD>[in] Specifies a set of code pages to give priority. For more information, see the Remarks section. </dd>
+
+<DT><I>pdwCodePages</I></DT>
+
+<DD>[out] Pointer to an unsigned long integer where the set of code pages that contain the characters in the given string is returned. </dd>
+
+<DT><I>pcchCodePages</I></DT>
+
+<DD>[out] Pointer to an integer where the number of characters that have been processed is returned. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Value</TH>
+<TH width=76%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>S_OK </TD>
+<TD width=76%>Success. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>E_INVALIDARG </TD>
+<TD width=76%>The given string is invalid, or <I>cchSrc</I> is not positive. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>E_FAIL </TD>
+<TD width=76%>An unexpected error occurred. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>For more information about sets of code pages, see <A HREF="wce50lrfimlangcodepages.htm">IMLangCodePages</A>. </P>
+
+<P>The set of code pages that is returned to <I>pdwCodePages</I> will be the intersection of each character's set of code pages. For example, assume that there are three characters A, B, and C in the given string and that the following table shows the set of code pages of these characters. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Character</TH>
+<TH width=76%>Code Pages</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Character A: </TD>
+<TD width=76%>Latin1, Latin2, Greek, Turkish, Hebrew, and Japanese. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Character B: </TD>
+<TD width=76%>Latin1, Greek, Turkish, and Korean. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Character C: </TD>
+<TD width=76%>Latin2, Greek, Turkish, and Japanese. </TD>
+</TR>
+</table></div>
+
+<P>In this example, Greek and Turkish will be returned into <I>pdwCodePages</I> because these character sets contain A, B, and C. The actual code page identifier values for these pages can be retrieved by the <A HREF="wce50lrfimlangcodepagescodepagestocodepage.htm">IMLangCodePages::CodePagesToCodePage</A> method. </P>
+
+<P>In addition, assume another character D follows characters A, B, and C in the given string, and that the following table shows the set of code pages of character D. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Character</TH>
+<TH width=76%>Code Pages</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Character D: </TD>
+<TD width=76%>Latin1, Cyrillic, Hebrew, Japanese, and Korean. </TD>
+</TR>
+</table></div>
+
+<P>The intersection of characters A, B, C, and D is an empty set. In this case, the method returns 3 in the <I>pcchCodePages</I> parameter, which represents the number of characters processed. The method also returns the intersection of the code pages of characters A, B, and C in the <I>pdwCodePages</I> parameter. </P>
+
+<P>The <I>dwPriorityCodePages</I> parameter should be zero if no code pages have special priority. However, this parameter is ideally used to avoid inconsistency in splitting strings. Using the earlier example, if the value of the <I>dwPriorityCodePages</I> parameter is Latin1, the following table shows the behavior of the method. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>String </TH>
+<TH width=29%>pcchCodePages </TH>
+<TH width=47%>pdwCodePages</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>ABCD </TD>
+<TD width=29%>2 </TD>
+<TD width=47%>Latin1, Greek, Turkish. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>CD </TD>
+<TD width=29%>1</TD>
+<TD width=47%>Latin2, Greek, Turkish, and Japanese. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>D </TD>
+<TD width=29%>1 </TD>
+<TD width=47%>Latin1, Cyrillic, Hebrew, Japanese, and Korean.</TD>
+</TR>
+</table></div>
+
+<P>Because character C is not in the Latin1 character set, the value of the <I>pcchCodePages</I> parameter for string ABCD is 2, not 3. In the same way, if the value of the <I>dwPriorityCodePages</I> parameter is Japanese, the following table shows the behavior of the method. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>String </TH>
+<TH width=29%>pcchCodePages </TH>
+<TH width=47%>pdwCodePages.</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>ABCD </TD>
+<TD width=29%>1 </TD>
+<TD width=47%>Latin1, Latin2, Greek, Turkish, Hebrew, and Japanese. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>BCD </TD>
+<TD width=29%>1 </TD>
+<TD width=47%>Latin1, Greek, Turkish, and Korean. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>CD </TD>
+<TD width=29%>2 </TD>
+<TD width=47%>Japanese. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Example Code</H4>
+
+<P>The following example shows the syntax for calling this method on the Unicode string <I>pszSrc</I> with <I>dwACP</I> set as the code page that is given priority. Note that the method might have to be called multiple times to gather the code pages for the entire string. </P>
+
+<PRE class="code">// pszSrc - null-terminated Unicode string.
+int cchDone = 0;
+int cchSrc = lstrlen(pszSrc);
+DWORD dwACP;
+// Give priority to CP_ACP.
+pMLangCodePages-&gt;CodePageToCodePages(CP_ACP, &amp;dwACP);
+while (cchDone &lt; cchSrc)
+{
+    DWORD dwCodePages;
+    int cchCodePages;
+    pMLangCodePages-&gt;GetStrCodePages(pszSrc + cchDone,
+        cchSrc - cchDone, dwACP, &amp;dwCodePages, &amp;cchCodePages);
+    // Do something based on dwCodePages.
+    cchDone += cchCodePages;
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Mlang.h, Mlang.idl.<BR>
+<B>Link Library:</B> Mlang.dll.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMLangCodePages::GetStrCodePages (wce50lrfimlangcodepagesgetstrcodepages.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

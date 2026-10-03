@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Passing Parameters</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfpassingparameters"></A>Passing Parameters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Arguments to the method or property being invoked are passed in the <A HREF="wce50lrfdispparams.htm">DISPPARAMS</A> structure. This structure consists of the following:
+
+<UL type="disc">
+	<LI>A pointer to an array of parameters represented as variants</li>
+
+	<LI>A pointer to an array of DISPIDs for named parameters</li>
+
+	<LI>The number of parameters in each array</li>
+</UL>
+
+<P>For example:</P>
+
+<PRE class="code">typedef struct FARSTRUCT tagDISPPARAMS{
+VARIANTARG FAR* rgvarg;          // Array of parameters.
+DISPID FAR* rgdispidNamedArgs;   // Dispatch IDs of named parameters.
+unsigned int cArgs;              // Number of parameters.
+unsigned int cNamedArgs;         // Number of named parameters.
+} DISPPARAMS;</PRE>
+
+<P>The parameters are passed<B> </B>in the array <I>rgvarg</I>[ ], with the number of parameters passed in <I>cArgs</I>. </P>
+
+<P>The parameters in the array should be placed from last to first, so <I>rgvarg</I>[0] has the last parameter and <I>rgvarg</I>[<I>cArgs</I> –1] has the first parameter. The method or property can change the values of elements within the array <I>rgvarg</I>, but only if it has set the VT_BYREF flag. Otherwise, consider the elements as read-only.</P>
+
+<P>A dispatch invocation can have named parameters as well as positional parameters. </P>
+
+<P>If <I>cNamedArgs</I> is 0, all the elements of <I>rgvarg</I>[ ] represent positional parameters. </P>
+
+<P>If <I>cNamedArgs</I> is not 0, each element of <I>rgdispidNamedArgs</I>[ ] contains the DISPID of a named parameter, and the value of the parameter is in the matching element of <I>rgvarg</I>[ ]. </P>
+
+<P>The DISPIDs of the named parameters are always contiguous in <I>rgdispidNamedArgs</I>, and their values are in the first <I>cNamedArgs</I> elements of <I>rgvarg</I>. </P>
+
+<P>Named parameters cannot be accessed positionally, and positional parameters cannot be named.</P>
+
+<P>The DISPID of a parameter is its zero-based position in the parameter list. </P>
+
+<P>If you include the DISPID with each named parameter, you can pass the named parameters to <A HREF="wce50lrfidispatchinvoke.htm">IDispatch::Invoke</A> in any order.</P>
+
+<P>For example, if a method is to be invoked with two positional parameters, followed by three named parameters (<I>A, B,</I> and <I>C</I>), using the following hypothetical syntax, then <I>cArgs</I> would be 5, and <I>cNamedArgs</I> would be 3.</P>
+
+<P>The first positional parameter would be in <I>rgvarg</I>[4].<B> </B>The second positional parameter would be in <I>rgvarg</I>[3]. </P>
+
+<P>The ordering of named parameters is not important to the <A HREF="wce50lrfidispatch.htm">IDispatch</A> implementation, but these parameters are generally passed in reverse order. </P>
+
+<P>The parameter <I>A</I> would be in <I>rgvarg</I>[2], with the DISPID of <I>A</I> in <I>rgdispidNamedArgs</I>[2]. </P>
+
+<P>The parameter <I>B</I> would be in <I>rgvarg</I>[1], with the corresponding DISPID in <I>rgdispidNamedArgs</I>[1].<B> </B></P>
+
+<P>The parameter <I>C</I> would be in <I>rgvarg</I>[0], with the DISPID corresponding to <I>C</I> in <I>rgdispidNamedArgs</I>[0]. </P>
+
+<P class="fig"><IMG SRC="oa07_01.gif" ALT="" BORDER=0></P>
+
+<P>You can also use <B>Invoke</B> on members with optional parameters, but all optional parameters must be of type <A HREF="wce50lrfvariantandvariantarg.htm">VARIANT</A>. </P>
+
+<P>As with required parameters, the contents of the parameter vector depend on whether the parameters are positional or named. The invoked member must ensure that the parameters are valid. <B>Invoke</B> merely passes the <B>DISPPARAMS</B> structure it receives.</P>
+
+<P>Omitting named parameters is straightforward. You would pass the parameters in <I>rgvarg</I> and their DISPIDs in <I>rgdispidNamedArgs</I>. </P>
+
+<P>To omit the parameter named <I>B</I> (in the preceding example) you would set <I>rgvarg</I>[0] to the value of <I>C</I>, with its DISPID in <I>rgdispidNamedArgs</I>[0]; and <I>rgvarg</I>[1] to the value of <I>A,</I> with its DISPID in <I>rgdispidNamedArgs</I>[1]. The subsequent positional parameters would occupy elements 2 and 3 of the arrays. In this case, <I>cArgs</I> is 4 and <I>cNamedArgs</I> is 2.</P>
+
+<P>If the parameters were positional (unnamed), you would set <I>cArgs</I> to the total number of possible parameters, <I>cNamedArgs </I>to 0, and pass VT_ERROR as the type of the omitted parameters, with the status code DISP_E_PARAMNOTFOUND as the value. </P>
+
+<P>The calling code is responsible for releasing all strings and objects referred to by <I>rgvarg</I>[ ] or placed in <I>*pVarResult</I>. </P>
+
+<P>As with other parameters that are passed by value, if the invoked member must maintain access to a string after returning, you should copy the string. Similarly, if the member needs access to a passed-object pointer after returning, it must call the <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> function on the object.<B> </B></P>
+
+<P>A common example occurs when an object property is changed to refer to a new object, using the DISPATCH_PROPERTYPUTREF flag.</P>
+
+<P>For those implementing <B>Invoke</B>, Automation provides the <A HREF="wce50lrfdispgetparam.htm">DispGetParam</A> function to retrieve parameters from the parameter vector and coerce them to the proper type. </P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conautomation.htm">Automation</A> | <A HREF="wce50lrfdispgetparam.htm">DispGetParam</A> | <A HREF="wce50lrfdispparams.htm">DISPPARAMS</A> | <A HREF="wce50lrfidispatchinvoke.htm">IDispatch::Invoke</A> | <A HREF="wce50lrfvariantandvariantarg.htm">VARIANT</A> | <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Passing%20Parameters (wce50lrfpassingparameters.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Static Routing Infrastructure in the IPv6 Test Lab</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50tskcreatingastaticroutinginfrastructureintheipv6testlab"></A>Creating a Static Routing Infrastructure in the IPv6 Test Lab</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>You can configure a static routing infrastructure so that all test lab nodes are reachable using IPv6 traffic. The following procedure shows how to configure and verify the routing infrastructure.</P>
+
+<P class="labelproc"><B>To configure a static routing infrastructure</B>
+
+<OL type="1">
+	<LI>On CLIENT1, type <B>ipconfig /d</B>, and then capture the following information for use later in these procedures:
+<UL type="disc">
+	<LI>Global address</li>
+</UL>
+</li>
+
+	<LI>On the development system, perform the following steps:
+<OL type="a">
+	<LI>If ROUTER1 is not running on the CEPC, on the <B>Target</B> menu, choose <B>Attach Device</B>. 
+<P>You may have to restart the CEPC for the download to occur.
+</li>
+
+	<LI>On the <B>Target</B> menu, choose <B>CE Target Control</B>.</li>
+
+	<LI>To obtain the link-local address of the Subnet1 interface, in the Target Control window, type <B>s ipconfig /d</B>, and then capture the following information for use later in these procedures:</li>
+</OL>
+
+<UL type="disc">
+	<LI>Subnet1 interface index</li>
+
+	<LI>Subnet2 interface index</li>
+
+	<LI>Link-local address of the ROUTER1 interface on Subnet2</li>
+</UL>
+</li>
+
+	<LI>On ROUTER2, type <B>ipconfig /d</B>, and then capture the following information for use later in these procedures:
+<UL type="disc">
+	<LI>Subnet2 interface index</li>
+
+	<LI>Subnet3 interface index</li>
+
+	<LI>Link-local address of the ROUTER2 interface on Subnet2</li>
+</UL>
+</li>
+
+	<LI>On CLIENT2, type <B>ipconfig /d</B>, and then capture the following information for use later in these procedures:
+<UL type="disc">
+	<LI>Global address</li>
+</UL>
+</li>
+
+	<LI>On the development system, perform the following steps:
+<OL type="a">
+	<LI>Connect to ROUTER1.</li>
+
+	<LI>On the <B>Target</B> menu, choose <B>CE Target Control</B>.</li>
+
+	<LI>In the Target Control window, type the following commands: 
+<P><B>s iPv6 &#0150;d</B> <B>ifc</B> &lt;<I>Subnet1 Interface Index</I>&gt; <B>forwards advertises</B>
+
+<P><B>s iPv6 &#0150;d</B> <B>ifc</B> &lt;<I>Subnet2 Interface Index</I>&gt; <B>forwards advertises</B>
+
+<P><B>s ipv6</B> <B>&#0150;d</B> <B>rtu</B> <B>2000:0:0:1::/64</B> &lt;<I>Subnet1 Interface Index</I>&gt; <B>publish</B>
+
+<P><B>s ipv6</B> <B>&#0150;d</B> <B>rtu</B> <B>2000:0:0:2::/64</B> &lt;<I>Subnet2 Interface Index</I>&gt; <B>publish</B>
+
+<P><B>s ipv6</B> <B>&#0150;d</B> <B>rtu</B> <B>::/0</B> &lt;<I>Subnet2 Interface Index&gt;<B>/</B>&lt;ROUTER2 Address On Subnet2</I>&gt; <B>publish</B>
+</li>
+</OL>
+
+<P>In these commands:
+
+<UL type="disc">
+	<LI>&lt;<I>Subnet1 Interface Index</I>&gt; is the interface index of the ROUTER1 interface on Subnet 1.</li>
+
+	<LI>&lt;<I>Subnet2 Interface Index</I>&gt; is the interface index of the ROUTER1 interface on Subnet 2.</li>
+
+	<LI>&lt;<I>ROUTER2 Address On Subnet2</I>&gt; is the link-local address of the ROUTER2 interface on Subnet 2.</li>
+</UL>
+
+<P>For example, if the Subnet 1 interface index is 4, the Subnet 2 interface index is 3, and the link-local address of the ROUTER2 Subnet 2 interface is FE80::2AA:FF:FE87:4D5C, the commands should be typed as follows:
+
+<P><B>s iPv6 &#0150;d</B> <B>ifc 4<I> </I>forwards advertises</B>
+
+<P><B>s iPv6 &#0150;d</B> <B>ifc 3<I> </I>forwards advertises</B>
+
+<P><B>s ipv6 &#0150;d</B> <B>rtu 2000:0:0:1::/64 4 publish</B>
+
+<P><B>s ipv6 &#0150;d</B> <B>rtu 2000:0:0:2::/64 <I>3</I> publish</B>
+
+<P><B>s ipv6 &#0150;d</B> <B>rtu ::/0 3/FE80::2AA:FF:FE87:4D5C publish</B>
+</li>
+
+	<LI>On ROUTER2, type the following commands: 
+<P><B>IPv6 &#0150;d</B> <B>ifc</B> &lt;<I>Subnet2 Interface Index&gt;</I> <B>forwards advertises</B>
+
+<P><B>IPv6 &#0150;d</B> <B>ifc</B> &lt;<I>Subnet3 Interface Index&gt;</I> <B>forwards advertises</B>
+
+<P><B>ipv6 &#0150;d</B> <B>rtu 2000:0:0:2::/64</B> &lt;<I>Subnet2 Interface Index&gt;</I> <B>publish</B>
+
+<P><B>ipv6 &#0150;d</B> <B>rtu 2000:0:0:3::/64</B> &lt;<I>Subnet3 Interface Index&gt;</I> <B>publish</B>
+
+<P><B>ipv6 &#0150;d</B> <B>rtu ::/0</B> &lt;<I>Subnet2 Interface Index&gt;<B>/&lt;</B>ROUTER1 Address On Subnet2&gt;</I><B> publish</B>
+
+<P>For example, if the Subnet 2 interface index is 4, the Subnet 3 interface index is 3, and the link-local address of the ROUTER1 Subnet 2 interface is FE80::2AA:FF:FE9A:203F, the commands should be typed as follows:
+
+<P><B>IPv6 &#0150;d</B> <B>ifc 4<I> </I>forwards advertises</B>
+
+<P><B>IPv6 &#0150;d</B> <B>ifc 3<I> </I>forwards advertises</B>
+
+<P><B>ipv6 &#0150;d rtu 2000:0:0:2::/64 4 publish</B>
+
+<P><B>ipv6 &#0150;d rtu 2000:0:0:3::/64 3 publish</B>
+
+<P><B>ipv6 &#0150;d</B> <B>rtu ::/0 4/FE80::2AA:FF:FE9A:203F publish</B>
+</li>
+
+	<LI>On CLIENT1, to view a new address on the LAN interface that is based on the Subnet1 global prefix of 2000:0:0:1::/64, type the <B>ipconfig</B> command.</li>
+
+	<LI>On CLIENT1, to view new routes for Subnet1, Subnet2, and the default subnet, type the following commands:
+<P><B>ipv6 &#0150;d rt 2000:0:0:1::/64</B>
+
+<P><B>ipv6 &#0150;d rt 2000:0:0:2::/64</B>
+
+<P><B>ipv6 &#0150;d rt ::/0</B>
+</li>
+
+	<LI>On CLIENT2, to view a new address on the LAN interface that is based on the global prefix of 2000:0:0:3::/64, type the <B>ipconfig</B> command.</li>
+
+	<LI>On CLIENT2, to view new routes for Subnet2, Subnet3, and the default subnet, type the following commands:
+<P><B>ipv6 &#0150;d rt 2000:0:0:2::/64</B>
+
+<P><B>ipv6 &#0150;d rt 2000:0:0:3::/64</B>
+
+<P><B>ipv6 &#0150;d rt ::/0</B>
+</li>
+
+	<LI>On CLIENT1, to ping the CLIENT2 global address, type the following command: 
+<P><B>ping</B> <I>&lt;CLIENT2 Global Address&gt;</I>
+</li>
+
+	<LI>On the development system, perform the following steps:
+<OL type="a">
+	<LI>If ROUTER1 is not running on the CEPC, on the <B>Target</B> menu, choose <B>Attach Device</B>. 
+<P>You may have to restart the CEPC for the download to occur.
+</li>
+
+	<LI>On the <B>Target</B> menu, choose <B>CE Target Control</B>.</li>
+
+	<LI>To view the entries in the ROUTER1 neighbor cache for CLIENT1 and ROUTER2, in the Target Control window, type the following commands: 
+<P><B>s ipv6 &#0150;d</B> <B>nc</B> <I>&lt;Subnet1 Interface Index&gt;</I>
+
+<P><B>s ipv6 &#0150;d</B> <B>nc</B> <I>&lt;Subnet2 Interface Index&gt;</I>
+</li>
+</OL>
+</li>
+
+	<LI>To view the entries in the ROUTER1 route cache for ROUTER1 and ROUTER2, in the Target Control window, type the following command:
+<P><B>s ipv6 &#0150;d</B> <B>rc</B>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The IPv6 protocol currently advertises off-link prefixes in Router Advertisement messages. Prefix Information options for off-link prefixes become routes in the routing table of the receiving host. </BLOCKQUOTE>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50howhowtosetupanduseanipv6testlab.htm">How to Set Up and Use an IPv6 Test Lab</A> | <A HREF="wce50conipv6.htm">IPv6</A> | <A HREF="wce50conping.htm">Ping</A> | <A HREF="wce50condiagnosingconnections.htm">Diagnosing Connections</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20a%20Static%20Routing%20Infrastructure%20in%20the%20IPv6%20Test%20Lab (wce50tskcreatingastaticroutinginfrastructureintheipv6testlab.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

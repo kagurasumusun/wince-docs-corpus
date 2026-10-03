@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MSMQQueueInfo.Open</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfmsmqqueueinfoopen"></A>MSMQQueueInfo.Open</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method opens a queue for sending, peeking at, or retrieving messages. The properties of the queue are based on the current properties of the <A HREF="wce50lrfmsmqqueueinfo.htm">MSMQQueueInfo</A> object.</P>
+
+<PRE class="syntax"><B>HRESULT Open( </B>
+  <B>long</B> <I>Access</I><B>,</B> 
+  <B>long</B> <I>ShareMode</I><B>,</B> 
+  <B>MSMQQueue** </B><I>ppq</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>Access </I></DT>
+
+<DD>Specifies how the application accesses the queue, whether to peek, send, or receive. This setting cannot be changed while the queue is open. 
+
+<P><I>Access</I> can be set to one of the following values: 
+
+
+<UL type="disc">
+	<LI>MQ_PEEK_ACCESS: Messages can only be looked at. They cannot be removed from the queue.</li>
+
+	<LI>MQ_SEND_ACCESS: Messages can only be sent to the queue.</li>
+
+	<LI>MQ_RECEIVE_ACCESS: Messages can be retrieved from the queue or peeked at. For information on limiting who can retrieve messages from the queue, see the description of the ShareMode parameter.</li>
+</UL>
+</dd>
+
+<DT><I>ShareMode </I></DT>
+
+<DD>Specifies who can access the queue. <I>ShareMode</I> can be set to one of the following: 
+
+<UL type="disc">
+	<LI>MQ_DENY_NONE: Default. The queue is available to everyone. This setting must be used if Access is set to MQ_PEEK_ACCESS or MQ_SEND_ACCESS.</li>
+
+	<LI>MQ_DENY_RECEIVE_SHARE: Limits those who can retrieve messages from the queue to this process. If the queue is opened for retrieving messages by another process, this call fails and returns MQ_ERROR_SHARING_VIOLATION. Applicable only when Access is set to MQ_RECEIVE_ACCESS.</li>
+</UL>
+</dd>
+
+<DT><I>ppq</I></DT>
+
+<DD>Queue to open.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table describes the common return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Value</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>S-OK</TD>
+<TD width=73%>Success</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_INVALIDARG</TD>
+<TD width=73%>One or more arguments are invalid</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_NOTIMPL</TD>
+<TD width=73%>The function contains no implementation</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>E_OUTOFMEMORY</TD>
+<TD width=73%>Out of memory</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P><B>MSMQQueueInfo.Open</B> returns an <B>MSMQQueue</B> object each time it is called. </P>
+
+<P>There is a one-to-many relationship between the <B>MSMQQueueInfo</B> object that represents the queue and the <B>MSMQQueue</B> objects that represent an open instance of the queue.</P>
+
+<P class="label"><B>Queue access rights</B></P>
+
+<P>If the calling application does not have sufficient access rights to a queue, two things can happen. 
+
+<UL type="disc">
+	<LI>If Access is set to MQ_SEND_ACCESS, Open succeeds, but errors are thrown when the application tries to send a message. </li>
+
+	<LI>If Access is set to MQ_PEEK_ACCESS or MQ_RECEIVE_ACCESS, Open fails and throws MQ_ERROR_ACCESS_DENIED. </li>
+</UL>
+
+<P>To change the access rights of the queue, call <B>MQSetQueueSecurity</B>. </P>
+
+<P>The following table lists the access rights needed to open the queue in peek, send, or receive access mode.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Queue access mode </TH>
+<TH width=73%>Queue access right</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>MQ_PEEK_ACCESS</TD>
+<TD width=73%>MQSEC_PEEK_MESSAGE </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>MQ_SEND_ACCESS</TD>
+<TD width=73%>MQSEC_WRITE_MESSAGE </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>MQ_RECEIVE_ACCESS</TD>
+<TD width=73%>MQSEC_RECEIVE_MESSAGE </TD>
+</TR>
+</table></div>
+
+<P>After opening a queue, there is no provision to change the access mode of the queue.</P>
+
+<P class="label"><B>Opening queues on remote computers</B></P>
+
+<P>When opening a queue to send messages to a remote computer (when <I>dwAccess</I> is set to MQ_SEND_ACCESS), Message Queuing does not check for the existence of the queue. </P>
+
+<P>When opening a queue to read messages from a remote computer (when <I>dwAccess</I> is set to MQ_RECEIVE_ACCESS or MQ_PEEK_ACCESS), the computer opening the queue must support the same protocol as the remote computer where the queue is located. </P>
+
+<P>To read messages from a queue on a remote computer, there must be a direct connection between both computers.</P>
+
+<P class="label"><B>Opening journal, dead-letter, and connector queues</B></P>
+
+<P>Sending applications cannot open journal queues, dead-letter queues, or connector queues for sending messages. These queues can only be opened with <I>Access</I> set to MQ_PEEK_ACCESS or MQ_RECEIVE_ACCESS.</P>
+
+<P class="label"><B>Opening foreign queues</B></P>
+
+<P>Foreign queues cannot be opened using a direct format name. Message Queuing needs the routing information stored in the directory service to find a MSMQ Connector Server for the foreign queue.</P>
+
+<P class="label"><B>Setting share mode</B></P>
+
+<P>Setting <I>ShareMode</I> to MQ_DENY_RECEIVE_SHARE means that until the calling application calls the <B>MSMQQueue</B> object's <B>MSMQQueue.Close</B> method, no other Message Queuing applications can read the messages in the queue. </P>
+
+<P>This includes applications that might have the correct access rights to read messages from the queue.</P>
+
+<P class="label"><B>Direct format names</B></P>
+
+<P>Direct format names can only be used when sending messages to a queue. </P>
+
+<P>A direct format name tells Message Queuing not to use the directory service for public queues or the local computer for private queues to get routing information. </P>
+
+<P>When a direct format name is used, all routing information is taken from the format name and Message Queuing sends the messages to the queue in a single hop.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Mqoai.h.<BR>
+<B>Link Library:</B> Mqoa.lib.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: MSMQQueueInfo.Open (wce50lrfmsmqqueueinfoopen.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

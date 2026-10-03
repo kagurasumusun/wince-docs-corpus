@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateThread</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCloseHandle">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCloseHandle">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcreatethread"></A>CreateThread</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates a thread to execute within the address space of the calling process. </P>
+
+<PRE class="syntax"><B>HANDLE</B> <B>CreateThread(</B>
+  <B>LPSECURITY_ATTRIBUTES</B> <I>lpsa</I><B>, </B>
+  <B>DWORD</B> <I>cbStack</I><B>, </B>
+  <B>LPTHREAD_START_ROUTINE</B> <I>lpStartAddr</I><B>, </B>
+  <B>LPVOID</B> <I>lpvThreadParam</I><B>, </B>
+  <B>DWORD</B> <I>fdwCreate</I><B>, </B>
+  <B>LPDWORD</B> <I>lpIDThread</I>
+<B>);</B> </PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>lpsa</I></DT>
+
+<DD>[in] Ignored. Must be NULL. </dd>
+
+<DT><I>cbStack</I></DT>
+
+<DD>[in] Ignored unless the STACK_SIZE_PARAM_IS_A_RESERVATION flag is used; in that case the <I>cbStack</I> parameter specifies the virtual memory reserved for the new thread. 
+
+<P>When ignored, the default stack size for a thread is determined by the linker setting /STACK. 
+</dd>
+
+<DT><I>lpStartAddr</I></DT>
+
+<DD>[in] Long pointer to the application-defined function of type LPTHREAD_START_ROUTINE to be executed by the thread; represents the starting address of the thread. For more information on the thread function, see <A HREF="wce50lrfthreadproc.htm">ThreadProc</A>.</dd>
+
+<DT><I>lpvThreadParam</I></DT>
+
+<DD>[in] Long pointer to a single 32-bit parameter value passed to the thread.</dd>
+
+<DT><I>fdwCreate</I></DT>
+
+<DD>[in] Specifies flags that control the creation of the thread. 
+
+<P>The flags are valid. 
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Value</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>CREATE_SUSPENDED</TD>
+<TD width=67%>The thread is created in a suspended state and does not run until the <A HREF="wce50lrfresumethread.htm">ResumeThread</A> function is called. 
+<P>The thread can be run immediately after creation if the flag is not specified.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>STACK_SIZE_PARAM_IS_A_RESERVATION</TD>
+<TD width=67%>The <I>cbStack</I> parameter specified the maximum stack size instead of being ignored.
+<P>This is a Windows CE only flag for the <B>CreateThread</B> function and is used to reserve the stack size for the thread created. </P>
+
+<P>By default, a thread is created with 64 KB stack reserved. You can use this flag to increase the stack size for the new thread that was created.</P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>lpIDThread</I></DT>
+
+<DD>[out] Long pointer to a 32-bit variable that receives the thread identifier. 
+
+<P>If this parameter is NULL, the thread identifier is not returned.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>A handle to the new thread indicates success. </P>
+
+<P>NULL indicates failure. </P>
+
+<P>To get extended error information, call <A HREF="wce50lrfgetlasterror.htm">GetLastError</A>. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The number of threads a process can create is limited by the available virtual memory and depends on the default stack size. </P>
+
+<P>If every thread has 1 MB of stack space, you can create a maximum of 32 threads.</P>
+
+<P>If you reduce the default stack size, you can create more threads. </P>
+
+<P>Your application will perform better if you create one thread per processor and build queues of requests for which the application maintains the context information. That is because a thread processes all requests in a queue before processing requests in the next queue. </P>
+
+<P>The new thread handle is created with THREAD_ALL_ACCESS to the new thread. The handle can be used in any function that requires a thread object handle. </P>
+
+<P>The thread execution begins at the function specified by the <I>lpStartAddr</I> parameter. If this function returns, the <B>DWORD</B> return value is used to terminate the thread in an implicit call to the <A HREF="wce50lrfexitthread.htm">ExitThread</A> function. Use the <A HREF="wce50lrfgetexitcodethread.htm">GetExitCodeThread</A> function to get the thread's return value. </P>
+
+<P>The <B>CreateThread</B> function might succeed even if <I>lpStartAddr</I> points to data, code, or is not accessible. </P>
+
+<P>If the start address is invalid when the thread runs, an exception occurs, and the thread terminates. </P>
+
+<P>Thread termination due to a invalid start address is handled as an error exit for the thread's process. This behavior is similar to the asynchronous nature of <A HREF="wce50lrfcreateprocess.htm">CreateProcess</A>, where the process is created even if it refers to invalid or missing .dll files. </P>
+
+<P>The thread is created with a thread priority of THREAD_PRIORITY_NORMAL. </P>
+
+<P>Use the <A HREF="wce50lrfgetthreadpriority.htm">GetThreadPriority</A> and <A HREF="wce50lrfsetthreadpriority.htm">SetThreadPriority</A> functions to get and set the priority value of a thread. </P>
+
+<P>When a thread terminates, the thread object attains a signaled state, satisfying threads that were waiting on the object. </P>
+
+<P>The thread object remains in the system until the thread has terminated and all handles to it are closed through a call to <A HREF="JavaScript:hhobj_1.Click()">CloseHandle</A>. </P>
+
+<P>The <A HREF="wce50lrfexitthread.htm">ExitThread</A> function, <B>CreateThread</B> function, and a process that is starting (as the result of a call by <B>CreateProcess</B>) are serialized between each other within a process. Only one of these events can happen in an address space at a time. </P>
+
+<P>The following list shows the restrictions during the process: 
+
+<UL type="disc">
+	<LI>During process startup and DLL initialization routines, threads can be created, but they do not begin execution until DLL initialization is done for the process. </li>
+
+	<LI>In a process, only one thread at a time can be in a DLL initialization or detach routine. </li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.01 and later.<BR>
+<B>Header:</B> Winbase.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_2.Click()">CloseHandle</A> | <A HREF="wce50lrfcreateprocess.htm">CreateProcess</A> | <A HREF="wce50lrfexitthread.htm">ExitThread</A> | <A HREF="wce50lrfgetexitcodethread.htm">GetExitCodeThread</A> | <A HREF="wce50lrfgetthreadpriority.htm">GetThreadPriority</A> | <A HREF="wce50lrfresumethread.htm">ResumeThread</A> | <A HREF="wce50lrfsetthreadpriority.htm">SetThreadPriority</A> | <A HREF="wce50lrfthreadproc.htm">ThreadProc</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CreateThread (wce50lrfcreatethread.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Spanning Tree Algorithm Functionality</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conspanningtreealgorithmfunctionality"></A>Spanning Tree Algorithm Functionality</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The STA for network bridging involves the following elements.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Element</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>Root Bridge</B></TD>
+<TD width=72%>Bridge on a multisegmented network with the lowest identifier number.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>Root Port</B></TD>
+<TD width=72%>The port through which a non-root bridge can reach the root bridge.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>Designated Bridge</B></TD>
+<TD width=72%>The single bridge on any given segment that has been selected to forward traffic from that segment toward the root bridge.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><B>Designated Port</B></TD>
+<TD width=72%>Port through which traffic on a network segment is forwarded to the root bridge.</TD>
+</TR>
+</table></div>
+
+<P>Each bridge maintains a record of the identifier of the bridge believed to be the root bridge as well as the hop count that is required to reach the root bridge. When a bridge is first started up, it assumes that it is the root bridge and transmits an STA packet with the root bridge field equal to the identifier of the bridge and the cost field equal to 0. If the bridge receives an STA packet that contains a root bridge identifier that is lower than its own, it will cease to believe that it is the root bridge and instead record the new, lower root bridge identifier and distance in its database.</P>
+
+<P>As long as the bridge assumes the role of the root bridge, it periodically notifies other bridges of its root-bridge status by transmitting an STA packet. If a bridge does not believe that it functions as the root bridge, it forwards STA packets received on its root port through its designated ports to propagate them to other bridges on the network. When the STA packet is forwarded to the next bridge, the distance-to-root field is incremented by 1.</P>
+
+<P>If a bridge is not a root bridge, it keeps track of which port offers the lowest-cost path to the root bridge. The port with the lowest-cost path assumes the function of the root port. The root port is always in the forwarding state. For every non-root port, the bridge keeps track of whether that port offers the lowest cost-to-root path to any bridge on the segment to which it is attached. If a given port does not receive any STA packets advertising a lower cost-to-root path, that port is considered the designated port for that segment and traffic from that segment toward the root bridge is transmitted through that port alone.</P>
+
+<P>If a port assumes the function of a designated port, it is kept in the forwarding state. Ports that are neither designated nor root ports are kept in the blocking state. For every network segment there exists exactly one bridge with a designated port in the forwarding state. This bridge is called the designated bridge. The designated bridge is solely responsible for forwarding network traffic toward the root bridge for that specific segment.</P>
+
+<P>Each bridge maintains a timer for its non-designated ports. This timer is referred to as the Message Age Timer. The bridge must periodically receive STA packets that confirm the forwarding topology in order to maintain its settings. If a bridge port is not a designated port, STA packets must be received regularly to confirm that there still exists a lower-cost path to the root than the receiving bridge could offer. The periodic transmission of STA packets by the root bridge and the timing out of information transmitted by non-root bridges ensures that the network adjusts properly to topology changes.</P>
+
+<P>If the Message Age Timer expires, the bridge turns the port with the expired timer into a designated port and then recalculates the identity of the root bridge according to the changed information available. This can result in the bridge becoming the root bridge.</P>
+
+<P>When a bridge changes the state of one of its ports or becomes the root bridge, it transmits STA packets with a flag set indicating a change of topology for a certain time interval. Other bridges react to STA packets with this flag set by reducing the timeout period for their forwarding table entries. Reducing the timeout period helps the bridges to efficiently discard information on hosts that have not been heard from recently.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50connetworkbridgingspanningtreealgorithm.htm">Network Bridging Spanning Tree Algorithm</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Spanning%20Tree%20Algorithm%20Functionality (wce50conspanningtreealgorithmfunctionality.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMediaSeeking Interface</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimediaseekinginterface"></A>IMediaSeeking Interface</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Although <A HREF="wce50lrfimediapositioninterface.htm">IMediaPosition</A> allows applications a simple seeking interface on a filter graph, it has a number of limitations. </P>
+
+<P>The <B>IMediaPosition</B> interface allows seeking only by using REFTIME time-based units; however, many filter graphs would prefer to seek on units of samples, video frames, or fields in a compressed stream. </P>
+
+<P>Also, the <B>IMediaPosition</B> interface uses separate methods to set and retrieve position properties, which can cause unnecessary filter flushing. </P>
+
+<P>The <B>IMediaSeeking</B> interface improves on the <A HREF="wce50lrfimediapositioninterface.htm">IMediaPosition</A> interface by allowing arbitrary formats for seekable units, such as frames, bytes, and 100-second units of time. </P>
+
+<P>It also offers the ability to start and stop times using a single method call, which is absent in <B>IMediaPosition</B>. </P>
+
+<P>When seeking to time units, <B>IMediaSeeking</B> expresses time as a 64-bit integer (<B>LONGLONG</B>), providing greater accuracy than <B>IMediaPosition</B>, which expresses time in decimal seconds stored as a <B>double</B>. </P>
+
+<P>However, because of this difference in time unit data types, only <B>IMediaPosition</B> supports Automation. </P>
+
+<P><B>IMediaPosition</B> is maintained as an interface for this reason only. </P>
+
+<P>Applications not using Automation to seek the media stream should use the <B>IMediaSeeking</B> interface instead. </P>
+
+<P>The <B>IMediaSeeking</B> interface is set by using a defined time format, such as TIME_FORMAT_MEDIA_TIME or TIME_FORMAT_SAMPLE, which then defines how parameters in other methods are interpreted. </P>
+
+<P>The format can be changed only when the filter graph is stopped (the default DirectShow plug-in distributor method for this method takes care of this automatically, effectively eliminating this restriction). </P>
+
+<P>Only one time format is available at a time. </P>
+
+<P>When a filter is seeked in media time, it must return a time at which the media seek positioned it. </P>
+
+<P>For example, if a source filter is seeked to frame 30, it might return 2 seconds if the video is 15 frames per second. With that position time (of 2 seconds), the filter graph manager can then seek all other filters to that 2-second position so the graph as a whole remains synchronized. </P>
+
+<P>Time formats are globally unique identifiers (GUIDs), which are defined as follows.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=53%>GUID</TH>
+<TH width=47%>Defined as</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=53%>0L-0-0-0-0-0-0-0-0-0-0 </TD>
+<TD width=47%>TIME_FORMAT_NONE </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=53%>7b785570-8c82-11cf-bc0c-00aa00ac74f6 </TD>
+<TD width=47%>TIME_FORMAT_FRAME </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=53%>7b785571-8c82-11cf-bc0c-00aa00ac74f6 </TD>
+<TD width=47%>TIME_FORMAT_BYTE </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=53%>7b785572-8c82-11cf-bc0c-00aa00ac74f6 </TD>
+<TD width=47%>TIME_FORMAT_SAMPLE </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=53%>7b785573-8c82-11cf-bc0c-00aa00ac74f6 </TD>
+<TD width=47%>TIME_FORMAT_FIELD </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=53%>7b785574-8c82-11cf-bc0c-00aa00ac74f6 </TD>
+<TD width=47%>TIME_FORMAT_MEDIA_TIME </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>The filter graph manager exposes the <A HREF="#wce50lrfimediaseekinginterface">IMediaSeeking</A> interface from the plug-in distributor (PID) that handles this interface. </P>
+
+<P>If none of the filters within the graph support this interface, the PID will return E_NOINTERFACE; </P>
+
+<P>If one or more filters support the interface, but all such filters return E_NOTIMPL, the PID will return E_NOTIMPL. </P>
+
+<P>Otherwise, the filter graph manager will return either a success or the first failure it encounters. </P>
+
+<P>A success normally means that a seekable file source filter was found. </P>
+
+<P>Filters, such as a file source filter, will expose <A HREF="#wce50lrfimediaseekinginterface">IMediaSeeking</A> if they can seek their data or if their output pin represents a seekable stream. </P>
+
+<P>The renderer filter also should expose this interface. Output pins of transform filters expose this interface to pass the positioning information upstream, from the renderer through each intermediate filter to the seekable filter. </P>
+
+<P>Use the <A HREF="wce50lrfcpospassthrucpospassthru.htm">CPosPassThru</A> base class to implement this interface on output pins of transform filters used to pass media positioning information upstream. This is enabled by default in the pin base classes. Renderers can use the same class, although in most cases they should use <A HREF="wce50lrfcrendererpospassthrucrendererpospassthru.htm">CRendererPosPassThru</A>, which is derived from <B>CPosPassThru</B>, to implement this interface. </P>
+
+<H4 class="dtH4">When to Use</H4>
+
+<P>Applications can use this interface to set or retrieve properties such as 
+
+<UL type="disc">
+	<LI>The duration of the stream</li>
+
+	<LI>The current position</li>
+
+	<LI>The stop time</li>
+
+	<LI>The media time format being used</li>
+</UL>
+
+<P>Most commonly, an application will use the methods on this interface to play a media stream for some duration starting at some set position in the stream (for example, 10 seconds from the start). </P>
+
+<P>A transform filter will call the <A HREF="#wce50lrfimediaseekinginterface">IMediaSeeking</A> methods on the connected upstream pin when passing media times upstream from the renderer. </P>
+
+<H4 class="dtH4">Methods in Vtable Order</H4>
+
+<P>The following table shows the methods that appear in the Vtable beneath the standard COM methods inherited from <A HREF="JavaScript:hhobj_1.Click()">IUnknown</A>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Method</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetcapabilities.htm">GetCapabilities</A></TD>
+<TD width=73%>Returns the seeking capabilities of the media stream. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingcheckcapabilities.htm">CheckCapabilities</A></TD>
+<TD width=73%>Determines which capabilities exist on a media stream by applying seeking capability flags and checking the returned value. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingisformatsupported.htm">IsFormatSupported</A></TD>
+<TD width=73%>Determines if a specified time format is supported. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingquerypreferredformat.htm">QueryPreferredFormat</A></TD>
+<TD width=73%>Retrieves the preferred time format to be used by the interface. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggettimeformat.htm">GetTimeFormat</A></TD>
+<TD width=73%>Retrieves the current time format. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingisusingtimeformat.htm">IsUsingTimeFormat</A></TD>
+<TD width=73%>Determines if the time format being used in the call is the same as the one currently in use by the interface. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingsettimeformat.htm">SetTimeFormat</A></TD>
+<TD width=73%>Sets the time format, which determines the format of units used during seeking. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetduration.htm">GetDuration</A></TD>
+<TD width=73%>Retrieves the length of time that the media stream will play. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetstopposition.htm">GetStopPosition</A></TD>
+<TD width=73%>Retrieves the position within the media stream at which playback should stop. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetcurrentposition.htm">GetCurrentPosition</A></TD>
+<TD width=73%>Retrieves the current position within the media stream. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingconverttimeformat.htm">ConvertTimeFormat</A></TD>
+<TD width=73%>Converts a time from one time format to another. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingsetpositions.htm">SetPositions</A></TD>
+<TD width=73%>Sets current and stop positions and applies flags to both. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetpositions.htm">GetPositions</A></TD>
+<TD width=73%>Returns the current and stop position settings. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetavailable.htm">GetAvailable</A></TD>
+<TD width=73%>Returns the range of times in which seeking is efficient. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekingsetrate.htm">SetRate</A></TD>
+<TD width=73%>Sets a new playback rate. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetrate.htm">GetRate</A></TD>
+<TD width=73%>Returns the current rate. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfimediaseekinggetpreroll.htm">GetPreroll</A></TD>
+<TD width=73%>Retrieves the preroll settings. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements. </P>
+
+<P>For more information, see <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A>.</P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfdirectshowinterfaces.htm">DirectShow Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMediaSeeking%20Interface (wce50lrfimediaseekinginterface.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

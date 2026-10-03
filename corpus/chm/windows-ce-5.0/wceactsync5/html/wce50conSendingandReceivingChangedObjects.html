@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sending and Receiving Changed Objects</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consendingandreceivingchangedobjects"></A>Sending and Receiving Changed Objects</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P><B>IReplObjHandler</B> both converts an object to a sequence of bytes (serialization) and returns the byte sequence to its original form as an object (deserialization). There is no specification or limitation on how to do this. The sequence can consist of any number of bytes, grouped in any fashion. The conversion is performed in the following order.
+
+<OL type="1">
+	<LI><A HREF="wce50lrfireplobjhandlersetup.htm">IReplObjHandler::Setup</A> informs the desktop provider which object it is to convert or restore, and the provider to allocate any necessary resources.</li>
+
+	<LI><A HREF="wce50lrfireplobjhandlergetpacket.htm">IReplObjHandler::GetPacket</A> is called repeatedly to let the desktop provider create the byte sequence. The calls stop when RWRN_LAST_PACKET is returned.</li>
+
+	<LI><A HREF="wce50lrfireplobjhandlerreset.htm">IReplObjHandler::Reset</A> is called when the sequence to let the desktop free any resources that were allocated from <B>Setup</B>.
+<P>The service manager calls this method when serialization is completed.
+</li>
+</OL>
+
+<P>The service manager pays no attention to the format or content of the byte sequence. It simply sends the packets in the same byte number and sequence as they were originally received.</P>
+
+<P>The following illustration shows the sequence of calls necessary to send and receive data.</P>
+
+<P class="fig"><IMG SRC="flow5_1.gif" ALT="" BORDER=0></P>
+
+<P>The following code example shows how to implement <B>IReplObjHandler::Setup</B> and <B>IReplObjHandler::GetPacket</B>. It also shows the definition for CDataHandler, a COM class whose base is <B>IReplStore</B>.</P>
+
+<PRE class="code">class CDataHandler : public IReplObjHandler
+{
+public:
+   CDataHandler (CStore *pStore);
+  ~CDataHandler ();
+
+   // IUnknown methods
+   // AddRef, Release, QueryInterface
+
+      // IReplObjHandler methods
+   // Setup, Reset, GetPacket, SetPacket, DeleteObj
+
+private:
+   long       m_cRef;
+   PREPLSETUP m_pWriteSetup, m_pReadSetup;
+};
+
+STDMETHODIMP CDataHandler::Setup
+(
+      PREPLSETUP pSetup  // Points a REPLSETUP structure containing
+              // information about object to be sequenced or restored.
+)
+{
+   // Can read and write at the same time, so pointer to
+   // set up the structure differently must be saved.
+   if (pSetup-&gt;fRead)
+       m_pReadSetup  = pSetup;
+   else
+       m_pWriteSetup = pSetup;
+
+   return NOERROR;
+}
+
+STDMETHODIMP CDataHandler::GetPacket
+(
+      LPBYTE *lppbPacket,  // pointer to pointer of outgoing packet
+   DWORD  *pcbPacket,   // pointer to DWORD for packet size
+   DWORD   cbRecommend  // recommended maximum size of packet
+)
+{
+   if (m_pReadSetup-&gt;hItem == NULL)
+       return E_UNEXPECTED;
+
+   // Initialize the packet.
+      // ...
+   // Fill up the packet.
+   // ...
+   // *pcbPacket  = sizeof (packet);
+   // *lppbPacket = (LPBYTE)&amp;packet;
+
+    return NOERROR;
+      // Return RWRN_LAST_PACKET if packet is final packet.
+}</PRE>
+
+<P>During synchronization, the service manager obtains from the desktop provider an instance of <B>IReplObjHandler</B> for each object type. The desktop provider recognizes when <B>IReplObjHandler::SetPacket</B> is sending information about a new object by checking for RSF_NEW_OBJECT in <B>REPLSETUP::dwFlags</B>. The service manager passes <B>REPLSETUP::dwFlags</B> in the <B>IReplObjHandler::Setup</B> call.</P>
+
+<P>The following table shows the <B>REPLSETUP </B>members used by the desktop provider. All other members are internal to the service manager and should not be changed.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>REPLSETUP member</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>fRead</B></TD>
+<TD width=73%>Set TRUE for reading an object from the desktop store.
+<P>Set FALSE for writing an object to the desktop store.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>dwFlags</B></TD>
+<TD width=73%>A collection of bit flags related to serialization and deserialization.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>hfolder</B></TD>
+<TD width=73%>A handle to the folder.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>hItem</B></TD>
+<TD width=73%>A handle to the object to be serialized. The desktop provider uses the information in this handle to identify and convert the object into packets of bytes.</TD>
+</TR>
+</table></div>
+
+<P>The process of receiving an object from the Windows CE-based device is similar to sending an object to the Windows CE-based device. After the packets of data arrive, the service manager calls the <B>IReplObjHandler</B> interface methods, which enable the desktop provider to convert those packets back into an object. The desktop provider must create a new HREPLITEM that represents the object in <B>REPLSETUP::hItem</B>.</P>
+
+<P>When the service manager writes an object to the desktop store, it calls <B>IReplStore::UpdateItem</B>. This prompts the desktop provider to open the object and update the HREPLITEM handle with a time stamp or version number, thus ensuring that the object is not marked as changed on the desktop.</P>
+
+<P>The following code example shows how to implement <B>IReplStore::UpdateItem</B>.</P>
+
+<PRE class="code">STDMETHODIMP_(void) CStore::UpdateItem
+(
+   HREPLFLD  hFolder,   // handle of a folder
+   HREPLITEM hItemDst,  // handle of the destination object
+   HREPLITEM hItemSrc   // handle to the source object
+)
+{
+   CFolder *pFolder  = (CFolder*)hFolder;
+   CItem   *pItemDst = (CItem*)  hItemDst;
+   CItem   *pItemSrc = (CItem*)  hItemSrc;
+
+   if (pItemSrc)
+   {
+       pItemDst-&gt;m_ftModified = pItemSrc-&gt;m_ftModified;
+   }
+   else
+      {
+       // Implementation should update what it used to validate object
+       // changes, such as a time stamp, by reading it from the object.
+
+       // Update the time stamp.
+       // pItemDst-&gt;m_ftModified = time stamp read from object
+   }
+}</PRE>
+
+<P>In some situations it is appropriate to treat objects that are changed on the Windows CE-based device as objects to be deleted from the desktop. For example, when a user deletes an e-mail message on a Windows CE-based device, the message is moved to the Deleted Item folder and marked as changed. The desktop provider receives the changed object and tries to delete the message from the desktop. <B>IReplObjHandler::SetPacket</B> returns one of the following errors in response.
+
+<UL type="disc">
+	<LI>RERR_DISCARD is sent when the desktop provider tries to delete the <I>device object</I> immediately after the change is synchronized. The service manager sends a command to the Windows CE-based device to delete the corresponding object.</li>
+
+	<LI>RERR_DISCARD_LOCAL is sent when the desktop provider tries to delete the <I>desktop object</I> immediately after the change is synchronized. The service manager calls <B>IReplObjHandler::DeleteObject</B> to delete the existing desktop object.</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conresolvingconflicts.htm">Resolving Conflicts</A> | <A HREF="wce50condevelopingthedesktopprovider.htm">Developing the Desktop Provider</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Sending%20and%20Receiving%20Changed%20Objects (wce50consendingandreceivingchangedobjects.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

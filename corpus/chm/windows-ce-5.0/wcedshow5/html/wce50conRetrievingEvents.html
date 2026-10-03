@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Retrieving Events</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conretrievingevents"></A>Retrieving Events</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Filter Graph Manager exposes three interfaces that support event notification.
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfimediaeventsinkinterface.htm">IMediaEventSink</A> contains the method for filters to post events. </li>
+
+	<LI><A HREF="wce50lrfimediaeventinterface.htm">IMediaEvent</A> contains methods for applications to retrieve events. </li>
+
+	<LI><A HREF="wce50lrfimediaeventexinterface.htm">IMediaEventEx</A> inherits from and extends the <B>IMediaEvent</B> interface. </li>
+</UL>
+
+<P>Filters post event notifications by calling the <A HREF="wce50lrfimediaeventsinknotify.htm">IMediaEventSink::Notify</A> method on the Filter Graph Manager. An event notification consists of an event code, which defines the type of event, and two DWORD parameters that give additional information. Depending on the event code, the parameters might contain pointers, return codes, reference times, or other information. For a complete list of event codes and parameters, see <A HREF="wce50lrfeventnotificationcodes.htm">Event Notification Codes</A>.</P>
+
+<P>To retrieve an event from the queue, the application calls the <A HREF="wce50lrfimediaeventgetevent.htm">IMediaEvent::GetEvent</A> method on the Filter Graph Manager. This method blocks until there is an event to return or until a specified time elapses. Assuming there is a queued event, the method returns with the event code and the two event parameters. After calling <B>GetEvent</B>, an application should always call the <A HREF="wce50lrfimediaeventfreeeventparams.htm">IMediaEvent::FreeEventParams</A> method to release any resources associated with the event parameters. For example, a parameter might be a BSTR value that was allocated by the filter graph. </P>
+
+<P>The following code example provides an outline of how to retrieve events from the queue.</P>
+
+<PRE class="code">long evCode, param1, param2;
+HRESULT hr;
+while (hr = pEvent-&gt;GetEvent(&amp;evCode, &amp;param1, &amp;param2, 0), SUCCEEDED(hr))
+{
+    switch(evCode) 
+    { 
+        // Call application-defined functions for each 
+        // type of event that you want to handle.
+    } 
+
+    hr = pEvent-&gt;FreeEventParams(evCode, param1, param2);
+}</PRE>
+
+<P>To override the Filter Graph Manager's default handling for an event, call the <A HREF="wce50lrfimediaeventcanceldefaulthandling.htm">IMediaEvent::CancelDefaultHandling</A> method with the event code as a parameter. You can reinstate the default handling by calling the <A HREF="wce50lrfimediaeventrestoredefaulthandling.htm">IMediaEvent::RestoreDefaultHandling</A> method. If the filter graph performs no default handling for the specified event code, calling these methods has no effect.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;If an application obtains an <B>IMediaEvent</B> interface pointer from the Filter Graph Manager, it must retrieve all events from the queue or they will accumulate and cause the heap to be used up. On the other hand, as long as the application has not obtained an <B>IMediaEvent</B> pointer, the filter graph does not queue any events. Therefore, you have the option of ignoring all events.</BLOCKQUOTE>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Retrieving%20Events (wce50conretrievingevents.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

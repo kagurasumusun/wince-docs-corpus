@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CMSG_STREAM_INFO</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcmsg_stream_info"></A>CMSG_STREAM_INFO</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure is used to enable stream data processing rather than single block processing. Stream processing is most often used when processing large messages. Stream-process messages can originate from any serialized source such as a file on a hard disk, a server, or a CD ROM.</P>
+
+<P>This structure is passed to <A HREF="wce50lrfcryptmsgopentoencode.htm">CryptMsgOpenToEncode</A> and <A HREF="wce50lrfcryptmsgopentodecode.htm">CryptMsgOpenToDecode</A>.</P>
+
+<PRE class="syntax"><B>typedef struct _CMSG_STREAM_INFO {</B>
+<B>  DWORD </B><I>cbContent</I><B>;</B>
+<B>  PFN_CMSG_STREAM_OUTPUT </B><I>pfnStreamOutput</I><B>;</B>
+<B>  void* </B><I>pvArg</I><B>;</B>
+<B>} CMSG_STREAM_INFO, *PCMSG_STREAM_INFO;</B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>cbContent</B></DT>
+
+<DD>Specifies the size of the content in bytes. Normal Distinguised Encoding Rules (DER) encoding is used unless a 0xFFFFFFFF is passed indicating that the application is not specifying the content length. This forces the use of indefinite-length Basic Encoding Rules (BER) encoding. </dd>
+
+<DT><B>pfnStreamOutput</B></DT>
+
+<DD>Address of a callback function used to read from and write data to a disk when processing large messages. 
+
+<P>The callback function must have the following signature and parameters:
+
+
+<PRE class="code">BOOL WINAPI CmsgStreamOutputCallback(
+  const void *pvArg,  //in
+  BYTE *pbData,       //in
+  DWORD cbData,       //in
+  BOOL fFinal         //in
+);</PRE>
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Parameter</TH>
+<TH width=84%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>pvArg </TD>
+<TD width=84%>The arguments that are specified by CMSG_STREAM_INFO. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>pbData </TD>
+<TD width=84%>Pointer to a block of processed data that is available to the application. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>cbData </TD>
+<TD width=84%>Size, in bytes, of the block of processed data at <I>pbData</I>. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>fFinal </TD>
+<TD width=84%>Specifies that the last block of data is being processed and that this is the last time the callback will be executed. </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>pvArg</B></DT>
+
+<DD>Pointer to the argument to pass to the callback function. Typically, this is used for state data that includes the handle to a more deeply nested message (when decoding) or a less deeply nested message (when encoding). </dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Messages can be so large that processing them all at once by storing the whole message in memory can be difficult, if not impossible. It is possible to process large messages without encountering memory limitations by streaming the data that is to be processed into manageable sized blocks. The low-level message functions can be used with streaming to encode or decode a message. Any level of nesting of messages is supported when streaming to encode and streaming to decode.</P>
+
+<P>The input message to be processed as a stream feeds into <A HREF="wce50lrfcryptmsgupdate.htm">CryptMsgUpdate</A> one block at a time, with the application determining the size of the block. As the streamed message is processed for encoding or decoding, the resulting output data is passed back to the application through an application-specified callback function specified by the <B>pfnStreamOutput</B> member.</P>
+
+<P>No assumptions can be made about the block size of the output data because the size can vary for several reasons such as the jitter in output block size caused by the block size for the encryption algorithm when processing an enveloped message, or when blocks that contain the message header and the SignerInfo as defined by PKCS # 7 are processed.</P>
+
+<P>The size of the output block is passed to the callback function in its cbData parameter The use of output data is determined in the calling application. Typically, output from stream processing will not be persisted in memory as a whole due to memory limitations, but will be serialized to a disk or server file.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions</B>: Windows CE .NET 4.0 and later.<BR>
+<B>Header</B>: Wincrypt.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcryptographystructures.htm">Cryptography Structures</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CMSG_STREAM_INFO (wce50lrfcmsg_stream_info.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IRunningObjectTable::Register</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfirunningobjecttableregister"></A>IRunningObjectTable::Register</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method registers an object and its identifying moniker in the Running Object Table (ROT). </P>
+
+<PRE class="syntax"><B>HRESULT Register(</B>
+  <B>DWORD </B><I>grfFlags</I><B>,</B>
+  <B>IUnknown* </B><I>punkObject</I><B>,</B>
+  <B>IMoniker* </B><I>pmkObjectName</I><B>,</B>
+  <B>DWORD* </B><I>pdwRegister</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>grfFlags</I></DT>
+
+<DD>[in] Specifies whether the ROT's reference to <I>punkObject</I> is weak or strong and controls access to the object through its entry in the ROT. For details, see the Remarks section below. </dd>
+
+<DT><I>punkObject</I></DT>
+
+<DD>[in] Pointer to the object that is being registered as running.</dd>
+
+<DT><I>pmkObjectName</I></DT>
+
+<DD>[in] Pointer to the moniker that identifies punkObject.</dd>
+
+<DT><I>pdwRegister</I></DT>
+
+<DD>[out] Pointer to a 32-bit value that can be used to identify this ROT entry in subsequent calls to <A HREF="wce50lrfirunningobjecttablerevoke.htm">IRunningObjectTable::Revoke</A> or <A HREF="wce50lrfirunningobjecttablenotechangetime.htm">IRunningObjectTable::NoteChangeTime</A>. 
+
+<P>The caller cannot specify NULL for this parameter. 
+
+
+<P>If an error occurs, *<I>pdwRegister</I> is set to zero.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This method supports the standard return values E_INVALIDARG and E_OUTOFMEMORY, as well as the following: 
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The object was successfully registered.</dd>
+
+<DT>MK_S_MONIKERALREADYREGISTERED</DT>
+
+<DD>The moniker/object pair was successfully registered, but that another object (possibly the same object) has already been registered with the same moniker.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This method registers a pointer to an object under a moniker that identifies the object. The moniker is used as the key when the table is searched with <A HREF="wce50lrfirunningobjecttablegetobject.htm">IRunningObjectTable::GetObject</A>. </P>
+
+<P>The grfFlags parameter accepts two flag settings:
+
+<UL type="disc">
+	<LI>ROTFLAGS_REGISTRATIONKEEPSALIVE. When set, indicates a strong registration for the object. </li>
+
+	<LI>ROTFLAGS_ALLOWANYCLIENT. When set, any client can connect to the running object through its entry in the ROT. When not set, only clients in the window station that registered the object can connect to it. </li>
+</UL>
+
+<P>When an object is registered, the ROT always calls <A HREF="wce50lrfiunknownaddref.htm">AddRef</A> on the object. </P>
+
+<P>For a weak registration (ROTFLAGS_REGISTRATIONKEEPSALIVE not set), the ROT will release the object whenever the last strong reference to the object is released. </P>
+
+<P>For a strong registration (ROTFLAGS_REGISTRATIONKEEPSALIVE set), the ROT prevents the object from being destroyed until the object's registration is explicitly revoked. </P>
+
+<P>A server registered as either LocalService or RunAs can set the ROTFLAGS_ALLOWANYCLIENT flag in its call to Register to allow any client to connect to it. </P>
+
+<P>A server setting this bit must have its executable name in the AppID section of the registry that refers to the AppID for the executable. </P>
+
+<P>An activate as activator server (not registered as LocalService or RunAs) must not set this flag in its call to Register. For details on installing services, see Installing as a Win32 Service or User Account.</P>
+
+<P>Registering a second object with the same moniker, or reregistering the same object with the same moniker, creates a second entry in the ROT. In this case, Register returns MK_S_MONIKERALREADYREGISTERED. </P>
+
+<P>Each call to Register must be matched by a call to <A HREF="wce50lrfirunningobjecttablerevoke.htm">IRunningObjectTable::Revoke</A> because even duplicate entries have different <I>pdwRegister</I> identifiers. </P>
+
+<P>A problem with duplicate registrations is that there is no way to determine which object will be returned if the moniker is specified in a subsequent call to <A HREF="wce50lrfirunningobjecttableisrunning.htm">IRunningObjectTable::IsRunning</A>. </P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Notes to Callers</H4>
+
+<P>If you are a moniker provider (that is, you hand out monikers identifying your objects to make them accessible to others), you must call the Register method to register your objects when they begin running. You must also call this method if you rename your objects while they are loaded. </P>
+
+<P>The most common type of moniker provider is a compound-document link source. This includes server applications that support linking to their documents (or portions of a document) and container applications that support linking to embeddings within their documents. </P>
+
+<P>Server applications that do not support linking can also use the ROT to cooperate with container applications that support linking to embeddings.</P>
+
+<P>If you are writing a server application, you should register an object with the ROT when it begins running, typically in your implementation of <A HREF="wce50lrfioleobjectdoverb.htm">IOleObject::DoVerb</A>. </P>
+
+<P>The object must be registered under its full moniker, which requires getting the moniker of its container document using <A HREF="wce50lrfioleclientsitegetmoniker.htm">IOleClientSite::GetMoniker</A>. You should also revoke and reregister the object in your implementation of <A HREF="wce50lrfioleobjectsetmoniker.htm">IOleObject::SetMoniker</A>, which is called if the container document is renamed. </P>
+
+<P>If you are writing a container application that supports linking to embeddings, you should register your document with the ROT when it is loaded. If your document is renamed, you should revoke and reregister it with the ROT and call <B>IOleObject::SetMoniker</B> for any embedded objects in the document to give them an opportunity to reregister themselves. </P>
+
+<P>Objects registered in the ROT must be explicitly revoked when the object is no longer running or when its moniker changes. This revocation is important because there is no way for the system to automatically remove entries from the ROT. </P>
+
+<P>You must cache the identifier that is written through <I>pdwRegister</I> and use it in a call to <B>IRunningObjectTable::Revoke</B> to revoke the registration. For a strong registration, a strong reference is released when the object's registration is revoked. </P>
+
+<P>The system's implementation of <B>IRunningObjectTable::Register</B> calls <A HREF="wce50lrfimonikerreduce.htm">IMoniker::Reduce</A> on the <I>pmkObjectName</I> parameter to ensure that the moniker is fully reduced before registration. If an object is known by more than one fully reduced moniker, it should be registered under all such monikers.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfimonikerreduce.htm">IMoniker::Reduce</A> | <A HREF="wce50lrfioleclientsitegetmoniker.htm">IOleClientSite::GetMoniker</A> | <A HREF="wce50lrfioleobjectsetmoniker.htm">IOleObject::SetMoniker</A> | <A HREF="wce50lrfirunningobjecttableisrunning.htm">IRunningObjectTable::IsRunning</A> | <A HREF="wce50lrfirunningobjecttablerevoke.htm">IRunningObjectTable::Revoke</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IRunningObjectTable::Register (wce50lrfirunningobjecttableregister.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

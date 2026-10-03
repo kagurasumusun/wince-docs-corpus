@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Client Application Behind a NAT</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conclientapplicationbehindnat"></A>Client Application Behind a NAT</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In the scenario represented by the following steps, the client is behind a NAT that does not support the Universal Plug and Play (UPnP) Internet Gateway Device (IGD) device control profile (DCP). The client initiates a PC-phone session, using an Internet Telephony Service Provider (ITSP), with a gateway that is not situated behind a NAT.
+
+<OL type="1">
+	<LI>The client application creates a Session object for a PC-phone session using <A HREF="wce50lrfirtcclientcreatesession.htm">IRTCClient::CreateSession</A>. </li>
+
+	<LI>The client application queries the Session object for the <A HREF="wce50lrfirtcsessionportmanagementiunknown.htm">IRTCSessionPortManagement</A> interface. </li>
+
+	<LI>The client application calls <A HREF="wce50lrfirtcsessionportmanagementsetportmanager.htm">IRTCSessionPortManagement::SetPortManager</A> to set the <A HREF="wce50lrfirtcportmanageriunknown.htm">IRTCPortManager</A> interface for this session. </li>
+
+	<LI>The RTC Client API calls the provided <B>IRTCPortManager</B> methods to retrieve the external IP address and port pairs on the NAT and the internal port and address on the client machine. It uses these port and address pairs for the audio streams on the PC-phone session. </li>
+
+	<LI>The RTC Client API uses the internal IP address on the client and the external IP address on the NAT to initiate the session. It transmits the external address and port on the NAT in the SIP INVITE message when a participant is added to the session. 
+<P>For example, the following SIP INVITE message header shows a client requesting a PC-phone session for a client located at 1234567@microsoft.com. The Session Description Protocol (SDP) message in the SIP message body contains the external IP address (5.6.7.8) and port (5678) of the NAT.
+
+<PRE class="code">INVITE sip:1234567@microsoft.com;user-phone SIP/2.0
+To: sip:1234567@microsoft.com;user=phone
+From: sip:ClientA@microsoft.com
+Call-ID: abcdefg
+CSeq: 1 INVITE
+Content-Type: application/sdp
+Content-Length: XXX
+....
+C=IN IP 5.6.7.8:5678 </PRE>
+</li>
+
+	<LI>If the RTC Client API receives a 200 OK response to the INVITE but discovers that the connection address in the received SDP message has changed from the address it sent, the RTC Client API calls <A HREF="wce50lrfirtcportmanagerupdateremoteaddress.htm">IRTCPortManager::UpdateRemoteAddress</A>; then, after the client responds with the corresponding ACK message, the media stream begins. </li>
+
+	<LI>Either party decides to terminate the session. The SIP BYE message is sent and the session is terminated. </li>
+
+	<LI>The RTC Client API calls <A HREF="wce50lrfirtcportmanagerreleasemapping.htm">IRTCPortManager::ReleaseMapping</A> to inform the client application that the session has been terminated and the mappings the Port Manager is maintaining should be released. </li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50connataddressmapping.htm">NAT Address Mapping</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Client%20Application%20Behind%20a%20NAT (wce50conclientapplicationbehindnat.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

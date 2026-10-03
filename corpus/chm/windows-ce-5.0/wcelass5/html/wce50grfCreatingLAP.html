@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a LAP</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50grfcreatinglap"></A>Creating a LAP</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The password LAP that is available by default in Windows CE can be replaced by a customized LAP if you want to have an alternate mechanism to authenticate the user. The custom LAP will be called exclusively by LASS on behalf of applications that need to authenticate a user.</P>
+
+<P>To create a LAP, you must create a DLL with the following entry points:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfinitlap.htm">InitLAP (function)</A></li>
+
+	<LI><A HREF="wce50lrfdeinitlap.htm">DeinitLAP</A></li>
+
+	<LI><A HREF="wce50lrfverifyuser.htm">VerifyUser</A></li>
+
+	<LI><A HREF="wce50lrflapcreateenrollmentconfigdialog.htm">LAPCreateEnrollmentConfigDialog</A></li>
+</UL>
+
+<P><B>InitLap</B> is called before the LAP is ever used. The active LAP is loaded on startup, and will remain loaded until the active LAP is changed. </P>
+
+<P><B>DeinitLAP</B> is called prior to unloading the LAP. No more calls can be made to this particular LAP after this point.</P>
+
+<P>The application's call to <B>VerifyUser</B> is passed on to the LAP if the AE policy requires it. When it receives this call, the LAP should validate the user. Note that if the flag VU_NO_UI is set, the LAP must not display UI.</P>
+
+<P><B>LAPCreateEnrollmentConfigDialog</B> is called by the LASS UI. The LAP can choose to perform its enrollment in this dialog, or it can redirect the user to perform their enrollment elsewhere.</P>
+
+<P><A HREF="wce50lrflassreloadconfig.htm">LASSReloadConfig</A> must be called or the device must be rebooted for changes to take effect.</P>
+
+<H4 class="dtH4">LAP Implementation Issues</H4>
+
+<UL type="disc">
+	<LI>Often LAPs require a fallback mechanisim. For example in the case of a Fingerprint LAP, there is often an ability to enter a strong password if the fingerprint recognition engine fails. Such mechanisms are LAP-dependant, and must be implemented in the LAP itself.</li>
+
+	<LI>When you implement a LAP, it is important to consider what the behavior should be when <B>VerifyUser</B> is called before the user has been enrolled. The two recommended behaviors are:
+<UL type="disc">
+	<LI><B>VerifyUser</B> returns TRUE until the user enrolls</li>
+
+	<LI>Enrollment is forced on the first call to <B>VerifyUser</B></li>
+</UL>
+
+<P>The password LAP, that is available in Windows CE, implements the first option, so it returns TRUE on a call to <B>VerifyUser</B> if the user has not enrolled.
+</li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfinstallinglap.htm">Installing a LAP</A> | <A HREF="wce50grfsettingactivelap.htm">Setting an Active LAP</A> | <A HREF="wce50grflassapplicationdevelopment.htm">LASS Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20a%20LAP (wce50grfcreatinglap.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

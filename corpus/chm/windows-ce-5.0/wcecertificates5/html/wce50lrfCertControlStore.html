@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CertControlStore</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateEvent">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcertcontrolstore"></A>CertControlStore</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function allows an application to be notified when there is a difference between the contents of a cached store in use and the contents of that store as it is persisted to storage. Differences can occur as another process makes a change that affects the store as it is persisted.</P>
+
+<P>This function can be used to synchronize a cached store if necessary and provides a means to commit changes made in the cached store to persisted storage.</P>
+
+<PRE class="syntax"><B>BOOL WINAPI CertControlStore(</B>
+  <B>HCERTSTORE</B> <I>hCertStore</I><B>,</B>
+  <B>DWORD</B> <I>dwFlags</I><B>,</B>
+  <B>DWORD</B> <I>dwCtrlType</I><B>,</B>
+  <B>void const* </B><I>pvCtrlPara</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCertStore </I></DT>
+
+<DD>[in] Handle to the certificate store.</dd>
+
+<DT><I>dwFlags </I></DT>
+
+<DD>[in] Bitmask of flags. The following table shows possible values for this parameter, if the <I>dwCtrlType</I> parameter is set to CERT_STORE_CTRL_COMMIT.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=48%>Value</TH>
+<TH width=52%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CERT_STORE_CTRL_COMMIT_FORCE_FLAG</TD>
+<TD width=52%>Forces the contents of the cache memory store to be copied to permanent storage even if the cache has not been changed</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CERT_STORE_CTRL_COMMIT_CLEAR_FLAG</TD>
+<TD width=52%>Inhibits copying the contents of the cache memory store to permanent storage even when the store is closed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CERT_STORE_CTRL_INHIBIT_DUPLICATE_HANDLE_FLAG</TD>
+<TD width=52%>Inhibits a duplicate handle of the event HANDLE. If this flag is set, <B>CertControlStore</B> with CERT_STORE_CTRL_CANCEL_NOTIFY passed must be called for this event HANDLE before closing the <I>hCertStore</I> handle.</TD>
+</TR>
+</table></div>
+
+
+
+<P>If the <I>dwCtrlType</I> parameter is set to CERT_STORE_CTRL_NOTIFY_CHANGE or CERT_STORE_CTRL_RESYNC, the <I>dwFlags</I> parameter is not used and must be set to zero.
+</dd>
+
+<DT><I>dwCtrlType </I></DT>
+
+<DD>[in] Specifies the control action to be taken by the <B>CertControlStore</B> function. The interpretations of the <I>pvCtrlPara</I> and <I>dwFlags</I> parameters depend on the value of the <I>dwCtrlType</I> parameter. The following table shows the values for the <I>dwCtrlType </I>parameter.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_STORE_CTRL_RESYNC</TD>
+<TD width=53%>The cached store is resynchronized and made to match the persisted store.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CERT_STORE_CTRL_COMMIT</TD>
+<TD width=53%>Any changes made to the cached store are copied to persisted storage. If no changes were made since the cached store was opened or since the last commit, the call is ignored. The call is also ignored if the store provider is a provider that automatically persists changes immediately.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pvCtrlPara </I></DT>
+
+<DD>[in] Not used and must be set to NULL. If the value of the <I>dwCtrlType</I> parameter is CERT_STORE_CTRL_COMMIT, the <I>pvCtrlPara</I> parameter is not used and must be set to NULL.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If the function succeeds, the return value is TRUE.</P>
+
+<P>If the function fails, the return value is FALSE.</P>
+
+<P>If the <I>dwCtrlType</I> value is CERT_STORE_NOTIFY_CHANGE, the function returns TRUE if a handle for the event signal was successfully set up. The function returns FALSE if the event handle was not set up.</P>
+
+<P>If the <I>dwCtrlType</I> value is CERT_STORE_CTRL_RESYNC, the function returns TRUE if the resynchronization succeeded and FALSE if the resynchronization failed.</P>
+
+<P>If the <I>dwCtrlType</I> value is CERT_STORE_CTRL_COMMIT, the function returns TRUE to indicate the successful completion of the commit to persisted storage and FALSE if the commit failed.</P>
+
+<P>For extended error information, call the <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A> function.</P>
+
+<P>Some providers might not support specific control types. In these cases, the <B>CertControlStore</B> function returns FALSE and the <B>GetLastError</B> function is set to the ERROR_NOT_SUPPORTED.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Resynchronization of a store can be done at any time. It need not follow a signaled notification change event.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.<BR>
+<B>Link Library:</B> Crypt32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_2.Click()">CreateEvent</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CertControlStore (wce50lrfcertcontrolstore.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

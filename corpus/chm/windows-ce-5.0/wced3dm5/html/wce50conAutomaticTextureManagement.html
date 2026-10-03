@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Automatic Texture Management</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conautomatictexturemanagement"></A>Automatic Texture Management</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Texture management is the process of determining which textures are needed for rendering at a given time and ensuring that those textures are loaded into video memory. As with any algorithm, texture management schemes vary in complexity, but any approach to texture management involves the following key tasks:
+
+<UL type="disc">
+	<LI>Tracking the amount of available texture memory.</li>
+
+	<LI>Calculating which textures are needed for rendering, and which are not.</li>
+
+	<LI>Determining which existing texture resources can be reloaded with another texture image, and which surfaces should be destroyed and replaced with new texture resources.</li>
+</UL>
+
+<P>Microsoft&reg; Direct3D&reg; Mobile implements system-supported texture management to ensure that textures are loaded for optimal performance. Texture resources that Direct3D Mobile manages are referred to as <I>managed textures</I>.</P>
+
+<P>The texture manager tracks textures with a time-stamp that identifies when the texture was last used. It then uses a least-recently-used algorithm to determine which textures should be removed. Texture priorities are used as tie breakers when two textures are targeted for removal from memory. If two textures have the same priority value, the least-recently-used texture is removed. However, if two textures have the same time-stamp, the texture that has a lower priority is removed first.</P>
+
+<P>You request automatic texture management for texture surfaces when you create them. To retrieve a managed texture in an application, create a texture resource by calling <A HREF="wce50lrfidirect3dmobiledevicecreatetexture.htm">IDirect3DMobileDevice::CreateTexture</A> and specifying the D3DMPOOL_MANAGED (see <A HREF="wce50lrfd3dmpool.htm">D3DMPOOL</A>) for the <I>Pool</I> parameter.  You are not allowed to specify where you want the texture created. You cannot use the D3DMPOOL_VIDEOMEM or D3DMPOOL_SYSTEMMEM flags when creating a managed texture. After creating the managed texture, you can call the <A HREF="wce50lrfidirect3dmobiledevicesettexturestagestate.htm">IDirect3DMobileDevice::SetTextureStageState</A> method to set it to a stage in the rendering device's texture cascade. </P>
+
+<P>You can assign a priority to managed textures by calling the <A HREF="wce50lrfidirect3dmobileresourcesetpriority.htm">IDirect3DMobileResource::SetPriority</A> method for the texture surface. </P>
+
+<P>Direct3D Mobile automatically downloads textures into video memory as needed. The system might cache managed textures in local or nonlocal video memory, depending on the availability of nonlocal video memory or other factors. The cache location of your managed textures is not communicated to your application, nor is this information required to use automatic texture management. If your application uses more textures than can fit in video memory, Direct3D Mobile removes older textures from video memory to make room for the new textures. If you use a removed texture again, the system uses the original system-memory texture surface to reload the texture in the video-memory cache. Although reloading the texture is necessary, it also decreases the application's performance.</P>
+
+<P>You can dynamically modify the original system-memory copy of the texture by updating or locking the texture resource. When the system detects a dirty surface &#0151; after an update is completed, or when the surface is unlocked &#0151; the texture manager automatically updates the video-memory copy of the texture. The performance hit incurred is similar to reloading a removed texture.</P>
+
+<P>When entering a new level in a game, your application might need to flush all managed textures from video memory. You can explicitly request to remove all managed textures by calling the <A HREF="wce50lrfidirect3dmobiledeviceresourcemanagerdiscardbytes.htm">IDirect3DMobileDevice::ResourceManagerDiscardBytes</A> method and specifying a value of 0 for the <I>Bytes</I> parameter. When you call this method, Direct3D Mobile destroys any cached local and nonlocal video-memory textures, but leaves the original system-memory copies untouched. </P>
+
+<P>For more information on resource management, see <A HREF="wce50conmanagingresources.htm">Managing Resources</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contextures.htm">Textures</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Automatic%20Texture%20Management (wce50conautomatictexturemanagement.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

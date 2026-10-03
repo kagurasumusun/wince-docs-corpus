@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Host Name Resolution for Dual Stack (IPv4/IPv6)</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhostnameresolutionfordualstackipv4ipv6"></A>Host Name Resolution for Dual Stack (IPv4/IPv6)</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The IPv6 protocol for Windows CE can use host names to resolve a name to an IPv6 address. To use a host name as an alias for an IPv6 address, you must ensure that the name is unique and that it resolves to the correct IPv6 address. For IPv6 name-to-address entries, the IPv6 address is written by using standard colon-hexadecimal format. For more information, see <A HREF="wce50conipv6addresses.htm">IPv6 Addresses</A>.</P>
+
+<P>When using the <B>getaddrinfo</B> function, dual stack name resolution occurs. Domain names are resolved by sending DNS name queries to a configured DNS server. This is a computer that either stores domain name-to-IPv6 address mapping records or has records of other DNS servers. The DNS name resolution may yield both IPv4 and IPv6 addresses.</P>
+
+<P>The DNS server resolves the queried domain name to an IPv4 or IPv6 address and returns the results. When configured for DHCP, the DHCP server provides IPv4 addresses of DNS and WINS servers used for both A and AAAA searches. </P>
+
+<P>The DNS client in Windows CE .NET 4.1 and later also supports the processing of AAAA (quad-A) resource records. The Internet Protocol (TCP/IP)<B> </B>must be configured with the IPv4 address of a DNS server.</P>
+
+<P>The Host name is resolved to an address by a DNS, WINS, or Link Local Multicast Name Resolution (LLMNR) resolver. The following table shows each resolver mode.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Resolver mode</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>DNS</TD>
+<TD width=72%>The host name in an A record (32-bit IPv4 address) or AAAA record (128-bit IPv6 address) is resolved by a DNS server. The following list shows the resolving order:
+<OL type="1">
+	<LI>Attempt to resolve using the first configured DNS server.
+<P>If the primary DNS server does not respond within the timeout period, the search begins on the secondary DNS server. 
+</li>
+
+	<LI>Attempt to resolve using the second configured server.</li>
+</OL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>LLMNR </TD>
+<TD width=72%>Link Local Multicast Name Resolution (LLMNR) is a peer-to-peer name resolution protocol that is used for IPv6 when DNS name resolution is not possible. LLMNR operates only on the local link. It uses the DNS packet format and supports DNS formats, types, and classes. For information about the address and port used for LLMNR queries, see <A HREF="wce50contcpipv6configurableregistrysettings.htm">TCP/IPv6 Configurable Registry Settings</A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>WINS </TD>
+<TD width=72%>The host name in an A record (32-bit IPv4 address) is resolved by a WINS server. The following list shows the resolving order:
+<OL type="1">
+	<LI>Attempt to resolve using the first configured WINS server.
+<P>If the primary WINS server does not respond within the timeout period, the search begins on the secondary WINS server. 
+</li>
+
+	<LI>Attempt to resolve using the second WINS server.</li>
+
+	<LI>The WINS request is broadcast.</li>
+</OL>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The WINS resolver mode is not used for AAAA searches.</BLOCKQUOTE>
+</TD>
+</TR>
+</table></div>
+
+<P>Using registry entries, you can specify the order in which addresses are resolved.</P>
+
+<P>The following table shows the registry values for controlling the global resolver modes. The registry key <B>HKEY_LOCAL_MACHINE\Comm\AFD</B> contains these values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>Value</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>NameResolutionOrdering</TD>
+<TD width=70%>Use this value to specify the order in which addresses are resolved. 
+<UL type="disc">
+	<LI>1 = DNS LLMNR WINS (default)</li>
+
+	<LI>2 = LLMNR DNS WINS</li>
+
+	<LI>3 = LLMNR WINS DNS</li>
+
+	<LI>4 = WINS DNS LLMNR</li>
+
+	<LI>5 = WINS LLMNR DNS</li>
+
+	<LI>6 = DNS WINS LLMNR</li>
+</UL>
+
+<P>The default order for resolving an A record query is DNS, WINS, and then WINS BC. The default order for resolving an AAAA record query is DNS across an IPv4 network, and then LLMNR to link-local Multicast address.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>EnableDNS6Addresses</TD>
+<TD width=70%>Not supported. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>EnableSingleLabelDNS</TD>
+<TD width=70%>Use this value to enable sending DNS queries for a single label name:
+<UL type="disc">
+	<LI>0 (OFF) (default)</li>
+
+	<LI>1 (ON)</li>
+</UL>
+
+<P>Typically, the host's domain name is appended to a single label name to form a fully qualified domain name for DNS queries. </P>
+</TD>
+</TR>
+</table></div>
+
+<P>For information about how source and destination addresses are determined, see <A HREF="wce50condefaultaddressselectionforipv6.htm">Default Address Selection for IPv6</A>.</P>
+
+<P>For information about the algorithms used to determine source and destination addresses of appropriate scope and configuration status, thus determining which stack (IPv4 or IPv6) to use, see <A HREF="wce50condefaultaddressselectionforipv6.htm">Default Address Selection for IPv6</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conhostnameresolutionforipv6.htm">Host Name Resolution for IPv6</A> | <A HREF="wce50conmulticastipv6addresses.htm">Multicast IPv6 Addresses</A> | <A HREF="wce50howhowtoconvertapplicationfromipv4ipv6.htm">How to Convert an Application from IPv4 to IPv4/IPv6</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Host%20Name%20Resolution%20for%20Dual%20Stack%20(IPv4%2FIPv6) (wce50conhostnameresolutionfordualstackipv4ipv6.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

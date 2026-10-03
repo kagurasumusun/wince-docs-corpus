@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DnsModifyRecordsInSet_W</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSECWINNTAUTHIDENTITY">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfdnsmodifyrecordsinset_w"></A>DnsModifyRecordsInSet_W</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function allows you to modify or remove multiple resource record sets that are associated with a specific name. This function uses Dynamic DNS as its underlying technology. Windows CE supports only the Unicode encoding, as indicated by the <B>*_W</B> suffix.</P>
+
+<PRE class="syntax"><B>DNS_STATUS WINAPI DnsModifyRecordsInSet_W(
+  PDNS_RECORD </B><I>pAddRecords</I><B>,
+  PDNS_RECORD </B><I>pDeleteRecords</I><B>,
+  DWORD </B><I>Options</I><B>,
+  HANDLE </B><I>hContext</I><B>,
+  PIP4_ARRAY </B><I>pServerList</I><B>,
+  PVOID </B><I>pReserved</I><B>
+);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pAddRecords</I></DT>
+
+<DD>[in] Pointer to the <B>DNS_RECORD</B> structure containing the resource records to be added to the resource record set.</dd>
+
+<DT><I>pDeleteRecords</I></DT>
+
+<DD>[in] Pointer to the <B>DNS_RECORD</B> structure containing the resource records to be deleted from the resource record set.</dd>
+
+<DT><I>Options</I></DT>
+
+<DD>[in] Options to apply to the operation. The following table shows available options, which can be combined.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Option</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>DNS_UPDATE_SECURITY_OFF</TD>
+<TD width=50%>Does not attempt secure dynamic updates if names cannot be registered anonymously. This is the default setting.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>DNS_UPDATE_SECURITY_ON</TD>
+<TD width=50%>Attempts nonsecure dynamic update. If refused, then attempts secure dynamic update.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>DNS_UPDATE_SECURITY_ONLY</TD>
+<TD width=50%>Attempts secure dynamic updates only. Does not attempt anonymous name registration.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>hContext</I></DT>
+
+<DD>[in] Handle to the credentials of a specific account. This is used when secure dynamic update is required. This parameter is optional. For more information, see the Remarks section.</dd>
+
+<DT><I>pServerList</I></DT>
+
+<DD>[in] Pointer to an array of DNS server IP addresses to which the Find Authoritative Zone (FAZ) request is sent. Windows CE supports a maximum of one server listed in this parameter. Attempts to specify multiple DNS servers result in failure.</dd>
+
+<DT><I>pReserved</I></DT>
+
+<DD>Reserved for future use.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns success confirmation upon successful completion. Otherwise, it returns the appropriate DNS-specific error code as defined in Winerror.h.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Windows CE only allows A and AAAA records to be updated. See the Windns.h header file for a complete listing of record set types and their numeric representations.</P>
+
+<P>On Windows CE, this <I>hContext</I> is not obtained by a call to <B>DnsAcquireContextHandle</B>, but is instead a SEC_WINNT_AUTH_IDENTITY_<B>W</B> structure filled with the appropriate settings and typecasted to be a HANDLE.<b class="le"> </b></P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Security Note</b>&nbsp;&nbsp;&nbsp;Because <I>hContext</I> might contain a user password, name, and domain information, calling functions should clear <I>hContex</I>t when the data is no longer required.</BLOCKQUOTE>
+
+<P>If <I>pDeleteRecords</I> contains records that exist in the current set, this function deletes those records. Next, this function adds any records that are specified in <I>pAddRecords</I>. </P>
+
+<P>To add a new record, you would provide no records in <I>pDeleteRecords</I>, and provide the record to be added in <I>pAddRecords</I>.</P>
+
+<P>To modify a record, specify the record being modified in both <I>pDeleteRecords</I> and <I>pAddRecords</I>. This removes the old version of the record, and then adds the modified version.</P>
+
+<P>To delete records, specify records to be deleted in <I>pDeleteRecords</I> and leave <I>pAddRecords</I> empty. </P>
+
+<P>Multiple records can be added or deleted in a single call to <B>DnsModifyRecordInSet</B>. If a record specified in <I>pAddRecords</I> is already present, no change occurs.</P>
+
+<P>If no server list is specified, the default name server is queried.</P>
+
+<P>Unlike desktop versions of Windows, Windows CE does not have a registry key that sets the default security in authentication and that is used through DNS_UPDATE_SECURITY_USE_DEFAULT.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> Windns.h.<BR>
+<B>Link Library:</B> Dnsapi.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfddnsfunctions.htm">DNS Functions</A> | <A HREF="wce50contcpipdnsclient.htm">TCP/IP and the DNS Client</A> | <A HREF="JavaScript:hhobj_1.Click()">SEC_WINNT_AUTH_IDENTITY</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: DnsModifyRecordsInSet_W (wce50lrfdnsmodifyrecordsinset_w.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

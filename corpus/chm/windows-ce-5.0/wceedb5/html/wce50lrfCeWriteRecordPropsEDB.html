@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CeWriteRecordProps (EDB)</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcewriterecordpropsedb"></A>CeWriteRecordProps (EDB)</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is used to either insert a new record or update the properties of an existing record.</P>
+
+<P>This function does not work with CEDB databases. For more information about CEDB, see <A HREF="wce50oricedbreference.htm">CEDB Reference</A>.</P>
+
+<PRE class="syntax"><B>CEOID CeWriteRecordProps(</B>
+  <B>HANDLE</B> <I>hDatabase</I>, 
+  <B>CEOID</B> <I>oidRecord</I>, 
+  <B>WORD</B> <I>cPropID</I>, 
+  <B>CEPROPVAL*</B> <I>prgPropVal</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hDatabase </I></DT>
+
+<DD>[in] A handle to the database in which to insert or update the record. The database is opened by using the <A HREF="wce50lrfceopendatabaseinsessionedb.htm">CeOpenDatabaseinSession (EDB)</A> function.</dd>
+
+<DT><I>oidRecord </I></DT>
+
+<DD>[in] The object identifier of the record to which the specified properties are written. If this parameter is 0, a new record is created and filled with the specified properties.</dd>
+
+<DT><I>cPropID </I></DT>
+
+<DD>[in] The number of properties in the array specified by the <I>prgPropVal </I>parameter. This parameter cannot be 0.</dd>
+
+<DT><I>prgPropVal </I></DT>
+
+<DD>[in] A pointer to an array of <A HREF="wce50lrfcepropval.htm">CEPROPVAL</A> structures that specifies the property values to be written to the specified record.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The object identifier of the record to which the properties were written indicates success. Zero indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()">GetLastError</A>. The following table lists possible values returned by <B>GetLastError</B>:</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Return Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_INVALID_PARAMETER</TD>
+<TD width=50%>Indicates one of the following: 
+<UL type="disc">
+	<LI><I>oidRecord</I> is NULL or invalid.</li>
+
+	<LI><I>cPropID</I> is 0, or <I>prgPropVal</I> is NULL.</li>
+
+	<LI>A property ID, specified in the <I>prgPropVal</I> array, does not exist in the current database property set. You must specify the properties when creating a database or use the <A HREF="wce50lrfceadddatabasepropsedb.htm">CeAddDatabaseProps (EDB)</A> function after a database is created. The one exception is if the database is empty (contains no data, although it may have properties) &#0151; in this case this function will add those properties.</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_INVALID_HANDLE</TD>
+<TD width=50%>Indicates that <I>hDatabase</I> is NULL or equal to INVALID_HANDLE_VALUE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_BAD_LENGTH</TD>
+<TD width=50%>Indicates that the data that is to be written exceeds the maximum record size.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_NOT_FOUND</TD>
+<TD width=50%>Indicates one of the following: 
+<UL type="disc">
+	<LI>The record specified by <I>oidRecord</I> does not exist.</li>
+
+	<LI>The database for which the handle was obtained has been unmounted.</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_ACCESS_DENIED</TD>
+<TD width=50%>Indicates one of the following: 
+<UL type="disc">
+	<LI>A property was added with DB_PROP_NOTNULL set and NULL is given as the value for that property, or you try to delete that property.</li>
+
+	<LI>The database has sort orders that have the CEDB_SORT_NONNULL flag, and one of the corresponding properties in the updated or inserted record is NULL or is deleted.</li>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_ALREADY_EXISTS</TD>
+<TD width=50%>Indicates that the database has sort orders that have the CEDB_SORT_UNIQUE flag, and the record being updated or inserted generates a key that is a duplicate of another key in the sort order.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_SHARING_VIOLATION</TD>
+<TD width=50%>Indicates a lock conflict.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_INSUFFICIENT_BUFFER</TD>
+<TD width=50%>Indicates that an odd number of bytes were written when using CEVT_LPWSTR. See "Remarks" later in this topic for more information.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Write operations are cached until a flush operation occurs. The flush occurs either after the flush interval has elapsed or when you call the <A HREF="wce50lrfceflushdbvoledb.htm">CeFlushDBVol (EDB)</A> function.</P>
+
+<P>This function leaves the seek pointer on the record that is written to. However, the position of that record in the sort order may change if its sort properties are included in those properties that are modified. Therefore, using this function in conjunction with the <A HREF="wce50lrfceseekdatabaseexedb.htm">CeSeekDatabaseEx (EDB)</A> function may result in unexpected seek behavior.</P>
+
+<P>To delete a property's value (that is, to set the value to NULL), set the CEDB_PROPDELETE flag for the appropriate property value. This allows multiple deletes and changes in a single call, which is much more efficient than multiple calls.</P>
+
+<P>No memory is freed by the caller. Pointers in the <B>CEPROPVAL</B> structures can be anywhere in the caller's address space &#0151; they can be marshaled, as in the array returned by <A HREF="wce50lrfcereadrecordpropsexedb.htm">CeReadRecordPropsEx (EDB)</A>, or they can be independently allocated.</P>
+
+<P>When writing strings using CEVT_LPWSTR, you must write an even number of bytes. Otherwise, <B>GetLastError</B> returns ERROR_INSUFFICIENT_BUFFER.</P>
+
+<P>The following list highlights the differences between this function and the CEDB equivalent function:
+
+<UL type="disc">
+	<LI>To write properties, you must first have added the property ID to the database by using the <A HREF="wce50lrfceadddatabasepropsedb.htm">CeAddDatabaseProps (EDB)</A> function. The one exception to this is if the database is empty of data (although it may have properties). In this case the record is written, and the properties passed in via <I>prgPropVal</I> are added as properties to the database. If properties are added to the database, then the relevant errors from the <B>CeAddDatabaseProps</B> function are propagated.</li>
+
+	<LI>If CEDB_SORT_UNIQUE is used, then an insert that does not specify all the properties may still succeed, with NULL being inserted for the properties that were not specified. For the purpose of determining uniqueness, NULL is treated as though it were a value; one NULL value is permitted. In CEDB, a unique constraint requires that all properties are written.</li>
+</UL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> Windbase.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfceopendatabaseinsessionedb.htm">CeOpenDatabaseinSession (EDB)</A> | <A HREF="wce50lrfceadddatabasepropsedb.htm">CeAddDatabaseProps (EDB)</A> | <A HREF="wce50lrfceflushdbvoledb.htm">CeFlushDBVol (EDB)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CeWriteRecordProps%20(EDB) (wce50lrfcewriterecordpropsedb.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

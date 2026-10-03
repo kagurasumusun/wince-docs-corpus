@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>RasDial</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfPostMessage">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfrasdial"></A>RasDial</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function establishes a RAS connection between a RAS client and a RAS server. The connection data includes callback and user authentication information.</P>
+
+<PRE class="syntax"><B>DWORD</B> <B>RasDial(</B>
+  <B>LPRASDIALEXTENSIONS</B> <I>dialExtensions</I><B>, </B>
+  <B>LPTSTR</B> <I>phoneBookPath</I><B>, </B>
+  <B>LPRASDIALPARAMS</B> <I>rasDialParam</I><B>, </B>
+  <B>DWORD</B> <I>NotifierType</I><B>, </B>
+  <B>LPVOID</B> <I>notifier</I><B>, </B>
+  <B>LPHRASCONN</B> <I>pRasConn </I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dialExtensions</I></DT>
+
+<DD>This parameter is ignored and should be set to NULL. On Windows CE, <B>RasDial</B> always uses the default behaviors for the <B>RASDIALEXTENSIONS</B> options.</dd>
+
+<DT><I>phoneBookPath</I></DT>
+
+<DD>This parameter should be set to NULL. Dial-up networking stores phone-book entries in the registry rather than in a phone-book file.</dd>
+
+<DT><I>rasDialParam</I></DT>
+
+<DD>Pointer to a<B> RASDIALPARAMS</B> structure that specifies calling parameters for the RAS connection. 
+
+<P>The caller must set the <B>RASDIALPARAMS</B> structure's <B>dwSize</B> member to the <B>sizeof(RASDIALPARAMS)</B> to identify the version of the structure being passed. 
+</dd>
+
+<DT><I>NotifierType</I></DT>
+
+<DD>Specifies the nature of the <I>notifier</I> parameter. If <I>notifier</I> is NULL, <I>NotifierType</I> is ignored. If <I>notifier</I> is not NULL, set <I>NotifierType</I> to the following value.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=23%>Value</TH>
+<TH width=77%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>0xFFFFFFFF<BR>
+0xFFFFFFFF</TD>
+<TD width=77%>The <I>notifier</I> parameter is a handle to a window to receive progress notification messages. In a progress notification message, <I>wParam</I> indicates the connection state <I>(rasconnstate</I>) which the RAS connection is about to enter, while <I>lParam</I> indicates whether or not an error occurred.
+<P>The progress notification message uses the WM_RASDIALEVENT message code.</P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>notifier</I></DT>
+
+<DD>Pointer to a window handle to receive <B>RasDial</B> event notifications. If this parameter is not NULL, <B>RasDial</B> sends the window a message for each <B>RasDial</B> event. Additionally, the <B>RasDial</B> call operates asynchronously: <B>RasDial</B> returns immediately, before the connection is established, and uses the window to communicate its progress. 
+
+<P>If <I>notifier</I> is NULL, the <B>RasDial</B> call operates synchronously: <B>RasDial </B>does not return until the connection attempt has completed successfully or failed. 
+
+
+<P>If <I>notifier</I> is not NULL, notifications to the window can occur at any time after the initial call to <B>RasDial</B>. Notifications end when one of the following events occurs:
+
+
+<UL type="disc">
+	<LI>The connection is established. In other words, the RAS connection state is RASCS_Connected.</li>
+
+	<LI>The connection fails. In other words, <I>dwError</I> is nonzero.</li>
+
+	<LI><A HREF="wce50lrfrashangup.htm">RasHangUp</A> is called on the connection.</li>
+</UL>
+
+
+<P>The callback notifications are made in the context of a thread captured during the initial call to <B>RasDial</B>.
+</dd>
+
+<DT><I>pRasConn</I></DT>
+
+<DD>Pointer to a variable of type <B>HRASCONN</B>. You must set the <B>HRASCONN</B> variable to NULL before calling <B>RasDial</B>. If <B>RasDial</B> succeeds, it stores a handle to the RAS connection into <I>pRasConn</I>.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Zero indicates success. In addition, the function stores a handle to the RAS connection into the variable pointed to by <I>pRasConn</I>. A nonzero error value, either from the set listed in the RAS header file or ERROR_NOT_ENOUGH_MEMORY, indicates failure. </P>
+
+<P>Include Raserror.h for definitions of the RAS error codes.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>szCallBackNumber</B> and <B>szPhoneNumber</B> members of the structure pointed to by <I>rasDialParam</I> are not used and should be set to NULL.</P>
+
+<P><B>RasDial</B> will not automatically display the logon dialog box. This is currently done through the Network and Dial-up Connections application. Applications are responsible for getting the information from the user.</P>
+
+<P>Errors that occur after the immediate return can be detected by <A HREF="wce50lrfrasgetconnectstatus.htm">RasGetConnectStatus</A>. Data is available until an application calls <A HREF="wce50lrfrashangup.htm">RasHangUp</A> to hang up the connection. </P>
+
+<P>An application must eventually call <B>RasHangUp</B> whenever a non-NULL connection handle is stored into <I>pRasConn</I>. This applies even if <B>RasDial </B>returns a nonzero (error) value. </P>
+
+<P>An application can call <B>RasHangUp</B> from a <B>RasDial</B> notifier handler. If this is done, however, the hangup does not occur until the routine returns. </P>
+
+<P>The window handle-based notification only works if the underlying configuration supports the <A HREF="JavaScript:hhobj_1.Click()">PostMessage</A> function. <B>PostMessage</B> is exposed through the msgque component, which is a part of the GWES module. Event notification through a window handle can only work if GWES is part of the underlying configuration. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Ras.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfrasgetconnectstatus.htm">RasGetConnectStatus</A> | <A HREF="wce50lrfrashangup.htm">RasHangUp</A> | <A HREF="wce50lrfrasdialparams.htm">RASDIALPARAMS</A> | <A HREF="wce50lrfwmrasdialevent.htm">WM_RASDIALEVENT</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: RasDial (wce50lrfrasdial.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Windows Networking API/Redirector OS Design Development</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateFile">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfGetLastError">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50oriwindowsnetworkingapiredirectoroverview"></A>Windows Networking API/Redirector OS Design Development</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The Windows Networking API/Redirector implementation in Microsoft&reg; Windows&reg; CE provides functions to establish and terminate network connections and to access files on servers supporting the Common Internet File System (CIFS). Access to this data is made possible by way of the networking API (WNet). WNet communicates through the CIFS (also called Server Message Block or SMB) redirector to the remote host. A CIFS redirector enables one computer to access files on another. An application can use WNet functions to manage network connections anywhere in the network hierarchy.</P>
+
+<P>An application can also access network resources using the Universal Naming Convention (UNC). UNC is a system for naming files on a network so that a file on a computer has the same path when accessed from any other computer &#0151; for example, \\<I>Servername</I>\<I>Sharename</I>\<I>Filename</I>.ext, where <I>Servername</I> is the server name and <I>Sharename</I> is a directory on <I>Servername</I> that contains the file <I>Filename</I>.ext. Most of the standard Windows CE file APIs, such as <A HREF="JavaScript:hhobj_1.Click()">CreateFile</A>, work with UNC path names.</P>
+
+<P>The Windows CE WNet API is similar to WNet for Windows-based desktop operating systems with the following exceptions:
+
+<UL type="disc">
+	<LI>Windows CE does not support drive letters. The WNet API supports mapping a remote UNC name to a local name, whereas for desktop operating systems the local name is drive-based, for example H:&lt;path&gt;. Windows CE local names can take any form, for example \Myshare\Path. Local names can be up to 64 characters in length, thus expanding the number of mapped network resources beyond 26.</li>
+
+	<LI>The only network provider currently supported is the Microsoft Windows Network.</li>
+
+	<LI>No connections are automatically restored when a device is warm booted. A persistent connection is stored in the registry and the connection appears in the list of resources. This data is enumerated and retrieved by calling the <A HREF="wce50lrfwnetopenenum.htm">WNetOpenEnum</A> function with the <I>dwScope</I> parameter set to RESOURCE_REMEMBERED, and then calling <A HREF="wce50lrfwnetenumresource.htm">WNetEnumResource</A> on the returned handle.</li>
+
+	<LI>Windows CE does not expose APIs for mail slots.</li>
+
+	<LI>Windows CE does not support named pipes.</li>
+
+	<LI>Windows CE supports only a subset of the full WNet API. For example, the WNet function <B>WNetGetLastError</B> is not supported. This function is redundant because supported WNet functions do not return extended error data. The user can use the <A HREF="JavaScript:hhobj_2.Click()">GetLastError</A> function. All WNet functions return an ERROR_<I>XXX</I> value. This is not the same as Microsoft Windows NT&reg;, which returns WN_<I>XXX</I> error values. ERROR _<I>XXX</I> error values are mapped to the appropriate WN_<I>XXX</I> error codes for backward compatibility.</li>
+
+	<LI>LAN Manager functions are not exposed.</li>
+
+	<LI>Windows CE does not support the concept of a computer or device belonging to a specific network context.</li>
+</UL>
+
+<H4 class="dtH4">OS Design Information</H4>
+
+<P>The following table shows operating system design information for Windows Networking API/Redirector.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Concept</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Dependencies</TD>
+<TD width=50%>TCP\IP, Winsock, and NDIS</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>Hardware considerations</TD>
+<TD width=50%>Modem or network interface card (NIC)</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Modules and Components</H4>
+
+<P>The following table shows the components and modules that implement Windows Networking API/Redirector.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Item</TH>
+<TH width=33%>Module</TH>
+<TH width=34%>Component</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows Networking API/Redirector (SMB/CIFS)</TD>
+<TD width=33%>redir</TD>
+<TD width=34%>None</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Windows Networking API/Redirector Implementation Considerations</H4>
+
+<P>The following table shows the Sysgen variable for the Windows Networking API/Redirector. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Sysgen variable</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SYSGEN_REDIR</TD>
+<TD width=50%>When this variable is set, the Windows Networking API/Redirector (SMB/CIFS) Catalog item is included in the OS design.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Application Development Topics</H4>
+
+<P><A HREF="wce50conwindowsnetworkapiredirectorapplicationdevelopment.htm">Windows Networking API/Redirector Application Development</A></P>
+
+<P><A HREF="wce50conaccessingremotefilesystems.htm">Accessing Remote File Systems</A></P>
+
+<P><A HREF="wce50conmanagingnetworkconnectionswithwnet.htm">Managing Network Connections with WNet</A></P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concommunicationservicesandnetworking89.htm">Communication Services and Networking</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Windows%20Networking%20API%2FRedirector%20OS%20Design%20Development (wce50oriwindowsnetworkingapiredirectoroverview.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

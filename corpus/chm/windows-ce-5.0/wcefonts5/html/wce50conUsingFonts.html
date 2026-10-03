@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Fonts</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conusingfonts"></A>Using Fonts</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In Windows CE, fonts are grouped into families that share common stroke width characteristics. Fonts within a family are distinguished by size and style. The following table shows the font families.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Font family name</TH>
+<TH width=76%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Decorative</TD>
+<TD width=76%>Specifies a novelty font such as Old English.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Dontcare</TD>
+<TD width=76%>Specifies a generic family name. This name is used when information about a font does not exist or does not matter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Modern</TD>
+<TD width=76%>Specifies a monospace font with or without serifs. Monospace fonts are usually modern such as Pica, Elite, and Courier New.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Roman</TD>
+<TD width=76%>Specifies a proportional font with serifs such as Times New Roman.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Script</TD>
+<TD width=76%>Specifies a font designed to look like handwriting such as Script and Cursive.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Swiss</TD>
+<TD width=76%>Specifies a proportional font without serifs such as Arial.</TD>
+</TR>
+</table></div>
+
+<P>These family names correspond to constants found in the Wingdi.h header file: FF_DECORATIVE, FF_DONTCARE, FF_MODERN, FF_ROMAN, FF_SCRIPT, and FF_SWISS. Use these constants to create, select, or retrieve font information.</P>
+
+<P>For information about how fonts are represented and stored, see <A HREF="wce50conworkingwithtruetypeandrasterfonts.htm">Working with TrueType and Raster Fonts</A>.</P>
+
+<H4 class="dtH4">Enabling Font Linking</H4>
+
+<P>Windows CE provides font linking capability, making it possible to link one or more fonts, called linked fonts, to another font, called the base font. Once you link fonts, you can use the base font to display code points that do not exist in the base font, but do exist in one of the linked fonts. For example, linking a Hangeul font and a Japanese font to a Latin font gives you the ability to display both Korean and Japanese characters in the Latin font using the Unicode text API.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Font linking can only add glyphs to a base font; you cannot override or replace glyphs in the base font.</BLOCKQUOTE>
+
+<P>If font linking is enabled on your device, you can examine the registry by enumerating the subkeys of the registry key <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\FontLink\SystemLink</B> to determine the mappings of linked fonts to base fonts. You can add additional links by creating additional subkeys. The following code shows how to add an additional link.</P>
+
+<PRE class="code">base font face name = path and file to link to, face name of the font to link</PRE>
+
+<H4 class="dtH4">Creating End User Defined Characters</H4>
+
+<P>Although Windows CE defines thousands of characters, you can define your own set of characters. Use an end user defined character (EUDC) when you need to define a character or glyph for a device. Always associate an EUDC with a double-byte character set (DBCS) and a TrueType font. When you create an EUDC, choose a reserved DCBS value. Applications use DBCS values to identify the EUDC. Windows CE uses DBCS values to locate the shape and style information in the corresponding TrueType font. The shape and style information specifies how to draw the EUDC.</P>
+
+<P class="labelproc"><B>To create an EUDC</B>
+
+<OL type="1">
+	<LI>Choose a character value in the specified range or ranges of reserved characters.</li>
+
+	<LI>Use an EUDC editor to create the shape and style of the character.</li>
+
+	<LI>Add the shape and style information to the TrueType font in the entry that corresponds to the selected character value.</li>
+</OL>
+
+<P class="labelproc"><B>To associate an EUDC font with another font</B>
+
+<OL type="1">
+	<LI>Copy the EUDC font to a folder.
+<P>The EUDC font has a .tte extension.
+</li>
+
+	<LI>Call <B>EnableEUDC</B> (FALSE).</li>
+
+	<LI>Modify the <B>HKEY_CURRENT_USER\EUDC</B> registry key.</li>
+
+	<LI>Create a subkey under <B>HKEY_CURRENT_USER\EUDC</B>.</li>
+
+	<LI>In the subkey that you created in step 4, enter the font path that contains the EUDCs.
+<P>For example, type the following code in the subkey to link the Tahoma font with the test03.tte font located in the Windows directory.
+
+<PRE class="code">Tahoma=\windows\test03.tte</PRE>
+</li>
+
+	<LI>Call <B>EnableEUDC</B> (TRUE).
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Before creating EUDC entries in the registry, enumerate the existing EUDC settings to ensure that you do not overwrite entries defined for the Windows CE&#0150;based device.</BLOCKQUOTE>
+</li>
+</OL>
+
+<H4 class="dtH4">Working with Fonts</H4>
+
+<P>Your OS design can contain a number of fonts. To learn how to determine what fonts are available on your system, see <A HREF="wce50conenumeratingfonts.htm">Enumerating Fonts</A>. For information about loading a font from a resource file, see <A HREF="wce50coninstallingandusingfonts.htm">Installing and Using Fonts</A>.</P>
+
+<P>Windows CE provides six standard logical fonts. You can use the <B>GetStockObject</B> function to obtain a standard font. The following table shows the standard font values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>Value</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>ANSI_FIXED_FONT</TD>
+<TD width=70%>Specifies a monospace font based on the Windows character set, usually represented by a Courier font.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>ANSI_VAR_FONT</TD>
+<TD width=70%>Specifies a proportional font based on the Windows character set, usually represented by the MS Sans Serif font.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>DEVICE_DEFAULT_FONT</TD>
+<TD width=70%>Specifies the preferred font for the specified device, usually represented by the System font for display devices.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>OEM_FIXED_FONT</TD>
+<TD width=70%>Specifies a monospace font based on an OEM character set.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>SYSTEM_FONT</TD>
+<TD width=70%>Specifies the System font. This is a proportional font based on the Windows character set and is used by the operating system to display window titles, menu names, and text in dialog boxes. The System font is always available. Other fonts are available only if installed.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orifontsapplicationdevelopment.htm">Fonts Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Using%20Fonts (wce50conusingfonts.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

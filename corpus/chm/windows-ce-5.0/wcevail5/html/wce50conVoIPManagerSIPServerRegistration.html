@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>VoIP Manager SIP Server Registration</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50convoipmanagersipserverregistration"></A>VoIP Manager SIP Server Registration</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This topic explains how to register the VoIP manager with a SIP server. The VoIP manager must be registered with a SIP server for VAIL to support non-peer-to peer-calls (that is, making calls that use the SIP server).</P>
+
+<P>Windows CE 5.0 includes the source code for the VAIL and for the TUI, so you can see how to register the VoIP manager with a SIP server by examining the TUI and VAIL code that is executed when the TUI registers the VoIP manager with a SIP server.</P>
+
+<P>The following list explains how the TUI registers the VoIP manager with a SIP server.
+
+<OL type="1">
+	<LI>The TUI registers with the SIP server in the <B>CVoIPApp::Run</B> method in the VoIPApp.cpp file in %_WINCEROOT%\Public\VoIP\OAK\Phone\TUI\App. 
+<P>Among other things, <B>CVoIPApp::Run</B> creates and initializes the VoIP manager by calling the internal TUI function <B>InitializeComponents</B>. This step is explained in more detail in <A HREF="wce50convoipmanagerinitialization.htm">VoIP Manager Initialization</A>.
+</li>
+
+	<LI>After the VoIP manager object is initialized, the TUI application code calls the internal <B>ReprovisionVoIPMgr</B> function, which takes the following high-level actions:
+<OL type="a">
+	<LI>Retrieves information needed to register the VoIP manager with a SIP server. 
+<P>The default TUI implementation retrieves this information using the VAIL configuration data store through the <A HREF="wce50lrfivoipconfigurationdatastoreiunknown.htm">IVoIPConfigurationDataStore</A> interface. 
+
+<P>You can change the TUI to retrieve this information from any source, including a network location or the code itself.
+</li>
+
+	<LI>Creates a <A HREF="wce50lrfsipserverregistrationparameters.htm">SIPServerRegistrationParameters</A> instance using the information retrieved in step 1. 
+<P>At a minimum, the <B>SIPServerRegistrationParameters</B> instance must contain valid wszURI and wszServer fields. The VoIP manager assumes defaults for any other fields that are not set.
+</li>
+
+	<LI>Calls <A HREF="wce50lrfivoipmgr2registerwithsipserver.htm">IVoIPMgr2::RegisterWithSIPServer</A>, passing the <B>SIPServerRegistrationParameters</B> instance created in step 2. </li>
+
+	<LI>Notifies the TUI Desktop Manager object that registration has been started. 
+<P>This step is specific to the TUI; it enables the TUI to update its UI to tell the user that registration is underway.
+</li>
+</OL>
+</li>
+</OL>
+
+<P>The <B>RegisterWithSIPServer</B> method is asynchronous and returns before registration is complete. </P>
+
+<P>The VoIP manager posts status updates about registration by calling the <A HREF="wce50lrfivoipuionsystemevent.htm">IVoIPUI::OnSystemEvent</A> method. The TUI implements this method in the DesktopManager.cpp file in the %_WINCEROOT%\Public\VoIP\OAK\Phone\TUI\App directory.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50coninitializingthevoipmanager.htm">VoIP Manager Setup</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Saturday, May 22, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: VoIP%20Manager%20SIP%20Server%20Registration (wce50convoipmanagersipserverregistration.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

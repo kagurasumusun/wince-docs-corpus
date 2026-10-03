@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>OleSave</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfolesave"></A>OleSave</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function saves an object opened in transacted mode into the specified storage object.</P>
+
+<PRE class="syntax"><B>WINOLEAPI OleSave(</B> 
+  <B>IPersistStorage* </B><I>pPS</I><B>,</B> 
+  <B>IStorage* </B><I>pStg</I><B>,</B> 
+  <B>BOOL</B> <I>fSameAsLoad</I>
+<B>);</B> </PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pPS</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfipersiststorageipersist.htm">IPersistStorage</A> interface on the object to be saved.</dd>
+
+<DT><I>pStg</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfistorageiunknown.htm">IStorage</A> interface on the destination storage object that the object indicated in <I>pPS</I> is to be saved to.</dd>
+
+<DT><I>fSameAsLoad</I></DT>
+
+<DD>[in] Boolean that is set to TRUE if <I>pStg</I> is the same storage object from which the object was loaded or created, or to FALSE if <I>pstg</I> was loaded or created from a different storage object.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function returns S_OK if the object was saved. </P>
+
+<P>This function returns STG_E_MEDIUMFULL if the object could not be saved due to lack of disk space.</P>
+
+<P>This function can also return any error value returned by the <A HREF="wce50lrfipersiststoragesave.htm">IPersistStorage::Save</A> method.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Passing invalid (and under some circumstances NULL) pointers into this function causes an unexpected termination of the application.</P>
+
+<P>The <B>OleSave</B> helper function handles the common situation in which an object is open in transacted mode and is then to be saved into the specified storage object that uses the OLE-provided compound file implementation. </P>
+
+<P>Transacted mode means that changes to the object are buffered until either of the <B>IStorage</B> methods <B>Commit</B> or <B>Revert</B> is called. </P>
+
+<P>Callers can handle other situations by calling the <B>IPersistStorage</B> and <A HREF="wce50lrfistorageiunknown.htm">IStorage</A> interfaces directly.</P>
+
+<P><B>OleSave</B> does the following:
+
+<OL type="1">
+	<LI>Calls the <A HREF="wce50lrfipersistgetclassid.htm">IPersist::GetClassID</A> method to get the CLSID of the object.</li>
+
+	<LI>Writes the CLSID to the storage object using the <A HREF="wce50lrfwriteclassstg.htm">WriteClassStg</A> function. </li>
+
+	<LI>Calls the <A HREF="wce50lrfipersiststoragesave.htm">IPersistStorage::Save</A> method to save the object.</li>
+
+	<LI>If there were no errors on the save, calls the <A HREF="wce50lrfistoragecommit.htm">IStorage::Commit</A> method to commit the changes.
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Static objects are saved into a stream called CONTENTS. </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+Static metafile objects get saved in "placeable metafile format." Static DIB data gets saved in DIB file format. These formats are defined to be the OLE standards for metafile and DIB. </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+All data transferred using an <A HREF="wce50lrfistreamiunknown.htm">IStream</A> interface or a file transferred using <A HREF="wce50lrfidataobjectgetdatahere.htm">IDataObject::GetDataHere</A> must be in these formats. </BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+Also, all objects whose default file format is a metafile or DIB must write their data into a CONTENTS stream using these standard formats.</BLOCKQUOTE>
+</li>
+</OL>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Ole2.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfautomationfunctions.htm">Automation Functions</A> | <A HREF="wce50lrfipersiststorageipersist.htm">IPersistStorage</A> | <A HREF="wce50lrfistorageiunknown.htm">IStorage</A> | <A HREF="wce50lrfipersiststoragesave.htm">IPersistStorage::Save</A> | <A HREF="wce50lrfistorageiunknown.htm">IStorage</A> | <A HREF="wce50lrfwriteclassstg.htm">WriteClassStg</A> | <A HREF="wce50lrfipersiststoragesave.htm">IPersistStorage::Save</A> | <A HREF="wce50lrfistoragecommit.htm">IStorage::Commit</A> | <A HREF="wce50lrfistreamiunknown.htm">IStream</A> | <A HREF="wce50lrfidataobjectgetdatahere.htm">IDataObject::GetDataHere</A> | <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: OleSave (wce50lrfolesave.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

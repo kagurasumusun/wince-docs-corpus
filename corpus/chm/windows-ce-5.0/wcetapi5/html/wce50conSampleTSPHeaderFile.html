@@ -1,0 +1,355 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample TSP Header File</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consampletspheaderfile"></A>Sample TSP Header File</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The following code example illustrates how to write a customized TSP by using the TSPI that is supported in Windows CE.</P>
+
+<PRE class="code">/*++
+THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+PARTICULAR PURPOSE.
+Copyright (c) 1995-2000 Microsoft Corporation.  All rights reserved.
+
+Module Name:
+
+    Samptspi.h
+
+Abstract:
+Private constants, structures, and function prototypes for the 
+Windows CE sample TAPI Service Provider
+
+Notes:
+
+
+--*/
+
+#include &lt;Termctrl.h&gt;
+#include &lt;Mcx.h&gt;
+#include &lt;Tspi.h&gt;
+
+#define SAMPTSPI_VERSION 0x0003
+#define SAMPTSPI_SUBTYPE 0xFEDCBA98
+
+#define EXCEPTION_ACCESS_VIOLATION STATUS_ACCESS_VIOLATION 
+
+#ifdef DEBUG
+#define ZONE_INIT      DEBUGZONE(0)
+#define ZONE_CALLS      DEBUGZONE(10)
+#define ZONE_MISC      DEBUGZONE(11)
+#define ZONE_ALLOC      DEBUGZONE(12)
+#define ZONE_FUNCTION   DEBUGZONE(13)
+#define ZONE_FUNC       ZONE_FUNCTION
+#define ZONE_WARN      DEBUGZONE(14)
+#define ZONE_ERRORDEBUGZONE(15)
+#endif
+
+#define  WM_MDMMESSAGE      WM_USER+0x0100
+#define  WM_MDMCHANGE       WM_USER+0x0101
+#define  WM_MDMCANCEL       WM_USER+0x0102
+
+#define  MDM_SUCCESS        0
+#define  MDM_PENDING        1
+#define  MDM_FAILURE        2
+#define  MDM_HANGUP         3
+#define  MDM_BUSY           4
+#define  MDM_NOANSWER       5
+#define  MDM_NOCARRIER      6
+#define  MDM_NODIALTONE     7
+
+#define SPI_VERSION     TAPI_CURRENT_VERSION
+#define  VALIDATE_VERSION(version)  \
+    {if (version != SPI_VERSION) \
+        { \
+        DEBUGMSG(1|ZONE_ERROR, (TEXT("Invalid SPI Version x%X\r\n"), version)); \
+        return LINEERR_OPERATIONFAILED; \
+        } \
+    }
+
+
+#define SUCCESS                             0x0
+
+#define  MDM_ID_NULL        0xffff  // Async ID for an unexpected message
+
+#define  SZTCHAR (sizeof(TCHAR))
+
+#define MAXDEVICENAME       128
+#define  MAXADDRESSLEN      TAPIMAXDESTADDRESSSIZE
+#define MAX_CLASS_NAME_LEN  128
+
+#define  INVALID_DEVICE     0xFFFFFFFF
+#define  INVALID_PENDINGID  0xFFFFFFFF
+
+// Check for an error code
+//
+#define  IS_TAPI_ERROR(err)         (BOOL)(HIWORD(err) &amp; 0x8000)
+
+
+// Device class and information
+//
+#define TAPILINE            0
+#define COMM                1
+#define COMMMODEM           2
+#define NDIS                3
+#define MAX_SUPPORT_CLASS   4
+
+typedef struct  _GETIDINFO {
+    LPTSTR       szClassName;
+    DWORD       dwFormat;
+}   GETIDINFO;
+
+extern const GETIDINFO   aGetID[MAX_SUPPORT_CLASS];
+
+// Pending operation type
+//
+#define INVALID_PENDINGOP       0
+#define PENDING_LINEMAKECALL    1
+#define PENDING_LINEANSWER      2
+#define PENDING_LINEDROP        3
+#define PENDING_LINEDIAL        4
+
+// Flags for setting pass-through mode
+#define PASSTHROUGH_ON                 1
+#define PASSTHROUGH_OFF                2
+#define PASSTHROUGH_OFF_BUT_CONNECTED  3
+
+// Flags for resources
+//
+#define LINEDEVFLAGS_OUTOFSERVICE   0x00000001
+#define LINEDEVFLAGS_REMOVING       0x00000002
+
+// Enumerated states of the line device
+typedef enum DevStates  {
+    DEVST_DISCONNECTED      = 0,
+    DEVST_PORTSTARTPRETERMINAL,
+    DEVST_PORTPRETERMINAL,
+    DEVST_PORTCONNECTINIT,
+    DEVST_PORTCONNECTWAITFORLINEDIAL, // this is a resting state. That is, you sit here waiting for a lineDial.
+    DEVST_PORTCONNECTDIALTONEDETECT,
+    DEVST_PORTCONNECTDIAL,
+    DEVST_PORTCONNECTING,
+    DEVST_PORTPOSTTERMINAL,
+    DEVST_CONNECTED
+}   DEVSTATES;
+
+typedef enum _MDMSTATE
+{
+    MDMST_UNKNOWN       = 1,
+    MDMST_INITIALIZING,       
+    MDMST_DISCONNECTED,       
+    MDMST_DIALING,                    
+    MDMST_CONNECTED,                  
+    MDMST_DIALED,             
+    MDMST_ORIGINATING,        
+    MDMST_HANGING_UP_REMOTE,  // This is when the remote side hangs up.
+                              // modem: Wait for response and then:
+                              //        - send MODEM_HANGUP
+                              //        - set MDMSTATE to MDMSTATE_DISCONNECTED
+    MDMST_HANGING_UP_DTR,     // After dropping DTR and waiting for 1200ms, check RLSD:
+                              //   If RLSD is low, raise DTR and set state to
+                              //     modem: MDMSTATE_HANGING_UP_NON_CMD
+                              //     null-modem: MDMSTATE_DISCONNECTED
+                              //   Else set state to:
+                              //     modem: MDMSTATE_HANGING_UP_NON_COMMAND and send "+++"
+                              //     null-modem: same, wait another 200ms (keeping count, stop at 3 or so)
+    MDMST_HANGING_UP_NON_CMD, // After sending a \r to hangup or sending +++ or getting RLSD low:
+                              // Wait for any response or time-out and then:
+                              // - send ATH&lt;cr&gt;
+                              // - set state to MDMSTATE_HANGING_UP_CMD
+    MDMST_HANGING_UP_CMD,     // Wait for a response to ATH&lt;cr&gt;
+                              // If you get one, you are hung up, raise DTR, set state to
+                              //   MDMSTATE_DISCONNECTED, and return MODEM_SUCCESS.
+                              // Else if you do not get one, consider dropping DTR, waiting 200ms more
+                              //   and setting state to MDMSTATE_HANGING_UP_DTR. (keep track of
+                              //   how many times you do this, max out at 3 or so.)
+} MDMSTATE;
+
+
+// Flags for the call attributes
+//
+#define CALL_ALLOCATED   0x00000001
+#define CALL_ACTIVE      0x00000002
+#define CALL_INBOUND     0x00000004
+#define CALL_DROPPING    0x00000008
+
+#define CALL_NOT_DROPPED( dwCall ) ( (dwCall &amp; CALL_ALLOCATED) &amp;&amp; !(dwCall &amp; CALL_DROPPING) )
+
+#define AnsiNext(x)         ((x)+1)
+#define AnsiPrev(y,x)       ((x)-1)
+
+// Flags for the fwOptions field of DEVCFGHDR
+//
+#define TERMINAL_NONE       0x0000
+#define TERMINAL_PRE        0x0001
+#define TERMINAL_POST       0x0002
+#define MANUAL_DIAL         0x0004
+#define LAUNCH_LIGHTS       0x0008
+
+#define  MIN_WAIT_BONG      0
+#define  MAX_WAIT_BONG      60
+#define  DEF_WAIT_BONG      8
+#define  INC_WAIT_BONG      2
+
+// Device setting information
+//
+typedef struct  tagDEVCFG  {
+    WORD        wWaitBong;
+    DWORD       dwModemOptions;
+    DWORD       dwCallSetupFailTimer;
+    COMMCONFIG  commconfig;
+}   DEVCFG, *PDEVCFG, FAR* LPDEVCFG;
+
+
+// Line device data structure
+//
+typedef struct __LineDev   {
+    LIST_ENTRY  llist;        // pointer to next LineDev
+    DWORD       dwVersion;             // Version stamp
+    DWORD       dwDeviceID;            // Local device ID
+    TCHAR       szDeviceName[MAXDEVICENAME+1]; // Actual device name
+    TCHAR       szFriendlyName[MAXDEVICENAME+1]; // Friendly device name
+
+    HKEY        hSettingsKey;          // Registry handle for settings key
+    
+    WORD        wDeviceType;           // The modem type
+    WORD        wDeviceAvail;          // Is the modem currently available?
+
+    DWORD       dwDefaultMediaModes;   // Default supported media modes
+    DWORD       dwBearerModes;         // Supported bearer modes
+    DWORD       dwCurBearerModes;      // The current media bearer modes. Plural because
+                                        // You keep track of PASSTHROUGH _and_ the real b-mode
+                                        // at the same time.
+    DWORD       dwMediaModes;          // Current supported media modes
+    DWORD       dwCurMediaModes;       // The current media modes
+    DWORD       dwDetMediaModes;       // The current detection media modes
+
+    HANDLE      hDevice;               // Device handle
+    DWORD       pidDevice;             // Device owner pid
+    HTAPILINE   htLine;                // TAPI line handle
+    LINEEVENT   lpfnEvent;             // Line event callback function
+    HWND        hwndLine;              // TAPI emulation
+    TCHAR       szAddress[MAXADDRESSLEN+1];
+    DWORD       dwPendingID;           // Async pending ID
+    DWORD       dwPendingType;         // Pending operation
+    DWORD       dwCall;                // Call attributes
+    HTAPICALL   htCall;                // TAPI call handle
+
+    HWND        hwTermCtrl;            // TermCtrl Window Handle
+    
+    CRITICAL_SECTION OpenCS;            // Critical Section for DevLineClose
+
+    HANDLE      hTimeoutEvent;         // Event handle for call time-out event
+    DWORD       dwTimeout;             // Time-out parameter passed to watchdog task
+    HANDLE      hCallComplete;         // Event handle for call completions
+    DWORD       dwCallState;           // Current call state
+
+    DEVSTATES   DevState;              // Intermediate TAPI device state
+    
+    MDMSTATE    MdmState;              // What state is the modem in?
+    
+    DWORD       dwDialOptions;         // Options set in a lineMakeCall
+
+    BOOL        fTakeoverMode;         // True if samptspi is in takeover mode
+    TCHAR       szDriverKey[MAX_CLASS_NAME_LEN+10];  // ex. "Modem\0000"
+
+    DWORD       dwDevCapFlags;         // LINEDEVCAPSFLAGS (that is, DIALBILLING, DIALQUIET, DIALDIALTONE)
+    DWORD       dwMaxDCERate;          // Max DCE as stored in the Properties line of the registry
+    DEVCFG      DevCfg;
+}   TLINEDEV, *PTLINEDEV;
+
+// Default mask to MDM_ options
+//
+#define MDM_MASK (MDM_TONE_DIAL | MDM_BLIND_DIAL)
+
+typedef struct _TSPIGLOBALS {
+    HINSTANCE          hInstance;
+    DWORD              dwProviderID;
+    HPROVIDER          hProvider;
+    HKEY               hDefaultsKey;
+    LINEEVENT          fnLineEventProc;      // Line event callback in TAPI
+    ASYNC_COMPLETION   fnCompletionCallback; // Completion create callback in TAPI
+    
+    LIST_ENTRY         LineDevs;             // Linked List of TLINEDEV
+    CRITICAL_SECTION   LineDevsCS;           // Critical section for above list
+} TSPIGLOBALS, *PTSPIGLOBALS;
+extern TSPIGLOBALS TspiGlobals;
+
+// DeviceType defines
+//
+#define DT_NULL_MODEM       0
+#define DT_EXTERNAL_MODEM   1
+#define DT_INTERNAL_MODEM   2
+#define DT_PCMCIA_MODEM     3
+#define DT_PARALLEL_PORT    4
+#define DT_PARALLEL_MODEM   5
+#define DT_IRCOMM_MODEM     6
+
+
+// The following info is returned from the GetDevCaps call as the
+// device-specific data. The wDeviceType field indicates the type of device on
+// the port, and the wActive field indicates if the port is currently active.
+typedef struct  _EXT_INFO {
+    WORD        wDeviceType;
+    WORD        wActive;
+}   EXT_INFO;
+
+
+// Some quick macros until MemTracking is actually implemented
+#define TSPIAlloc( Size )  LocalAlloc( LPTR, Size )
+#define TSPIFree( Ptr )    LocalFree( Ptr )
+
+// Helper routines defined in Sampmisc.c
+void TSPIDLL_Load(void);
+PTLINEDEV createLineDev(HKEY hActiveKey, LPCTSTR lpszDevPath, LPCTSTR lpszDeviceName);
+PTLINEDEV GetLineDevfromID(DWORD dwDeviceID);
+PTLINEDEV GetLineDevfromName(LPCTSTR lpszDeviceName,LPCTSTR lpszFriendlyName);
+PTLINEDEV GetLineDevfromHandle (DWORD handle);
+PTLINEDEV LineExists( PTLINEDEV ptNewLine);
+BOOL ValidateDevCfgClass (LPCTSTR lpszDeviceClass);
+LONG DevlineClose (PTLINEDEV pLineDev, BOOL fDoDrop);
+DWORD NullifyLineDevice (PTLINEDEV pLineDev);
+LONG DevlineDrop(PTLINEDEV pLineDev);
+LONG DevlineOpen(PTLINEDEV pLineDev);
+LONG ValidateAddress( PTLINEDEV pLineDev, LPCTSTR lpszInAddress, LPTSTR lpszOutAddress);
+LONG DevlineMakeCall( PTLINEDEV pLineDev );
+void NewCallState(PTLINEDEV pLineDev, DWORD dwNewState, DWORD dwParm2);
+
+// Routines from Sampdial.c
+void DialerThread(PTLINEDEV pLineDev);</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consampletsp.htm">Sample TSP</A> | <A HREF="wce50consampletspsourcefile.htm">Sample TSP Source File</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Sample%20TSP%20Header%20File (wce50consampletspheaderfile.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

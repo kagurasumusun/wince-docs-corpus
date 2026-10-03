@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CRYPT_KEY_PROV_INFO</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcryptkeyprovinfo"></A>CRYPT_KEY_PROV_INFO</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure contains fields that are passed as arguments to the <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A> function to acquire a handle to a particular key container within a particular cryptographic service provider (CSP) or to create or destroy a key container.</P>
+
+<PRE class="syntax"><B>typedef struct _CRYPT_KEY_PROV_INFO {</B>
+  <B>LPWSTR</B> <I>pwszContainerName</I><B>;</B>
+  <B>LPWSTR</B> <I>pwszProvName</I><B>;</B>
+  <B>DWORD</B> <I>dwProvType</I><B>;</B>
+  <B>DWORD</B> <I>dwFlags</I><B>;</B>
+  <B>DWORD</B> <I>cProvParam</I><B>;</B>
+  <B>PCRYPT_KEY_PROV_PARAM</B> <I>rgProvParam</I><B>;</B>
+  <B>DWORD</B> <I>dwKeySpec</I><B>;</B>
+<B>} CRYPT_KEY_PROV_INFO, *PCRYPT_KEY_PROV_INFO;</B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>pwszContainerName</B> </DT>
+
+<DD>String naming a key container within a particular CSP. </dd>
+
+<DT><B>pwszProvName</B> </DT>
+
+<DD>String that names a CSP. </dd>
+
+<DT><B>dwProvType</B> </DT>
+
+<DD>CSP type. This member can be set to the following values: 
+
+<UL type="disc">
+	<LI>PROV_RSA_FULL</li>
+
+	<LI>PROV_RSA_SIG</li>
+
+	<LI>PROV_DSS</li>
+
+	<LI>PROV_FORTEZZA</li>
+
+	<LI>PROV_MS_EXCHANGE</li>
+
+	<LI>PROV_SSL</li>
+
+	<LI>PROV_RSA_SCHANNEL</li>
+
+	<LI>PROV_DSS_DH</li>
+
+	<LI>PROV_DH_SCHANNEL </li>
+</UL>
+</dd>
+
+<DT><B>dwFlags</B> </DT>
+
+<DD>Values indicating whether a key container is to be created or destroyed and whether an application is allowed access to a key container. 
+
+<P>The following table shows flags that are defined and must not collide with any <B>CryptAcquireContext</B> function <B>dwFlags</B> definitions.
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=28%>Flag value</TH>
+<TH width=72%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>CERT_SET_KEY_PROV_HANDLE_PROP_ID</TD>
+<TD width=72%>Enables the handle to the key provider to be kept open for subsequent calls to the cryptographic functions.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>CERT_SET_KEY_CONTEXT_PROP_ID</TD>
+<TD width=72%>Enables the handle to the key provider to be kept open for subsequent calls to the cryptographic functions.</TD>
+</TR>
+</table></div>
+
+
+
+<P>See the <B>CryptAcquireContext</B> function for the list of the flags passed through. The flags listed in the previous table are cleared before the <B>CryptAcquireContext</B> function is called. The cryptographic functions <B>CryptDecryptMessage</B>, <B>CryptSignMessage</B>, <B>CryptDecryptAndVerifyMessageSignature</B>, and <B>CryptSignAndEncryptMessage</B> internally perform <B>CryptAcquireContext</B> operations using CRYPT_KEY_PROV_INFO from a certificate. When the CERT_SET_KEY_CONTEXT_PROP_ID or CERT_SET_KEY_PROV_HANDLE_PROP_ID flag is set, these cryptographic functions then can call <B>CertSetCertificateContextProperty</B> (CERT_KEY_CONTEXT_PROP_ID). This call enables the handle to the key provider to be kept open for subsequent calls to the cryptographic functions mentioned that use that same certificate, which eliminates the need to perform another <B>CryptAcquireContext</B>, improving efficiency. Also, because some providers can require that a password be entered for calls to <B>CryptAcquireContext</B>, it is desirable for applications to minimize the number of <B>CryptAcquireContext</B> calls made. Handles to key providers that were kept open are freed when the store is closed. 
+
+
+<P>For example, consider an e-mail application where five encrypted messages have been received, all encrypted with the public key from the same certificate. If the handle to the key provider is kept open after the first message is processed, calls to <B>CryptAcquireContext</B> are not required for the four remaining messages. 
+</dd>
+
+<DT><B>cProvParam</B> </DT>
+
+<DD>Number of elements in the <B>rgProvParam</B> array. </dd>
+
+<DT><B>rgProvParam</B> </DT>
+
+<DD>Array of pointers to <A HREF="wce50lrfcryptkeyprovparam.htm">CRYPT_KEY_PROV_PARAM</A> structures. </dd>
+
+<DT><B>dwKeySpec</B></DT>
+
+<DD>Specification of the private key to retrieve. The following table shows values for the <B>dwKeySpec</B> member that are defined for the default provider. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=24%>Value</TH>
+<TH width=76%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>AT_KEYEXCHANGE</TD>
+<TD width=76%>Keys used to encrypt/decrypt session keys.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>AT_SIGNATURE</TD>
+<TD width=76%>Keys used to create and verify digital signatures.</TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wincrypt.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcertgetcertificatecontextproperty.htm">CertGetCertificateContextProperty</A> | <A HREF="wce50lrfcertsetcertificatecontextproperty.htm">CertSetCertificateContextProperty</A> | <A HREF="wce50lrfcryptacquirecontext.htm">CryptAcquireContext</A> | <A HREF="wce50lrfcryptkeyprovparam.htm">CRYPT_KEY_PROV_PARAM</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CRYPT_KEY_PROV_INFO (wce50lrfcryptkeyprovinfo.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

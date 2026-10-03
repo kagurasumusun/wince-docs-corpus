@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpRecognizer::SetInput</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisprecognizersetinput"></A>ISpRecognizer::SetInput</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method specifies the input stream that the SR engine should use. This method can be used to switch the input for the recognizer to a wave input stream, a different soundcard device, or to a custom audio object. The <I>pUnkInput</I> parameter can be a pointer to an object token representing an audio input device; or to an actual object implementing <A HREF="wce50lrfispstreamformat.htm">ISpStreamFormat</A>.</P>
+
+<PRE class="syntax"><B>HRESULT SetInput(</B>
+  <B>IUnknown* </B><I>pUnkInput</I><B>,</B>
+  <B>BOOL </B><I>fAllowFormatChanges</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pUnkInput</I> </DT>
+
+<DD>[in] Pointer to <B>IUnknown</B> for the stream object token. See Remarks section </dd>
+
+<DT><I>fAllowFormatChanges</I> </DT>
+
+<DD>[in] Value indicating if SAPI should try to change the input stream format to the engine-preferred format. Set this value to TRUE if SAPI should try to make the change, and to FALSE otherwise. This method can typically be set to TRUE. However, when doing both speech recognition and speech output at the same time some soundcards may require both input and output to be in the same audio format. Setting this parameter to FALSE prevents changes to the audio format on the input device. Instead, SAPI will try to convert the audio format itself to something that the SR engine can use. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%><I>pUnkInput</I> is invalid or not a stream. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_ENGINE_BUSY </TD>
+<TD width=65%>The current method cannot be performed while the engine is currently processing audio. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The input stream object will implement IStream, <A HREF="wce50lrfispstreamformat.htm">ISpStreamFormat</A>, and <A HREF="wce50lrfispaudio.htm">ISpAudio</A> for real-time streams. Applications should NOT use methods on these interfaces that actually change the state of the audio device or read data from it at the same time that the stream is being used by SAPI. For example, reading data from the application with IStream::Read will prevent the correct data from being passed to the SR engine. Altering the state of the audio by using <A HREF="wce50lrfispaudiosetstate.htm">ISpAudio::SetState</A> will put the audio device into an unexpected state and may cause errors. All control of the audio is done by SAPI.</P>
+
+<P>When using the InProc recognizer, SAPI does not automatically setup the audio input. You must be call <B>ISpRecognizer::SetInput</B> with a non-null <I>pUnkInput</I> to setup and start the audio input stream. Until <B>ISpRecognizer::SetInput</B> is called, methods such as <A HREF="wce50lrfisprecogrammarsetrulestate.htm">ISpRecoGrammar::SetRuleState</A> will return success code SP_STREAM_UNITIALIZED, but actual recognition will not start.</P>
+
+<P>When using the shared recognizer this, SAPI does automatically setup the audio input. However, you can call <B>ISpRecognizer::SetInput</B> with NULL as the <I>pUnkInput</I> parameter to force the recognizer to re-check the default audio input and re-set up the audio input (for example, the default audio input object changes while recognizing, and you would like to use the new audio input).</P>
+
+<P>If the engine is currently processing audio, this call will fail with SPERR_ENGINE_BUSY.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method.</P>
+
+<PRE class="code">// setup the inproc recognizer audio input with an audio input object token
+// get the default audio input token
+hr = SpGetDefaultTokenFromCategoryId(SPCAT_AUDIOIN, &amp;cpObjectToken);
+// Check hr
+// set the audio input to our token
+hr = cpRecognizer-&gt;SetInput(cpObjectToken, TRUE);
+// Check hr
+// setup the inproc recognizer audio input with an audio input object
+// create the default audio input object
+hr = SpCreateDefaultObjectFromCategoryId(SPCAT_AUDIOIN, &amp;cpAudio);
+// Check hr
+// set the audio input to our object
+hr = cpRecognizer-&gt;SetInput(cpAudio, TRUE);
+// Check hr
+// ask the shared recognizer to re-check the default audio input token
+hr = cpRecognizer-&gt;SetInput(NULL, TRUE);
+// Check hr - if SPERR_ENGINE_BUSY, then retry later</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisprecognizer.htm">ISpRecognizer</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpRecognizer::SetInput (wce50lrfisprecognizersetinput.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling Command Line Parameters</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50tskhandlingcommandlineparameters"></A>Handling Command Line Parameters</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Services.exe supports the IOCTL_SERVICE_COMMAND_LINE_PARAMS IOCTL for handling command line parameters. This IOCTL can be used to indicate that a set of command-line arguments are being passed to the service from the command-line tool. </P>
+
+<P>For example, a user could type the following information using the Services.exe command line tool: <code class="ce">"services command HTP0: Arg1 Arg2 Arg3"</code>. The command string indicates that a set of arguments follows after the service instance name (<code class="ce">HTP0:</code>). Services.exe should pass these arguments directly to the service's <B>xxx_IOControl</B> function.</P>
+
+<P>The Services.exe command-line tool is particularly useful for applications that have only few configuration options and do not require a separate application to configure them.</P>
+
+<P>The following example shows how to print out each command line argument to a debug output window and displays a "Mission accomplished" message.</P>
+
+<PRE class="code">xxx_IOControl(....) {
+ 
+  case IOCTL_SERVICE_COMMAND_LINE_PARAMS:
+  {
+   ServicesExeCommandLineParams *pCmdLine = (ServicesExeCommandLineParams*) pBufIn;
+ 
+   DEBUGMSG(1,(L"xxx_IOCTL got IOCTL_SERVICE_COMMAND_LINE_PARAMS, # args = %d\r\n",pCmdLine-&gt;dwArgs));
+   for (DWORD i = 0; i &lt; pCmdLine-&gt;dwArgs; i++) {
+       DEBUGMSG(1,(L" xxx_IOCTL arg %d = %s\r\n",i,pCmdLine-&gt;ppwszArgs[i]));
+   }
+   WCHAR *szBuf = (WCHAR*)pBufOut;
+   DEBUGCHK(szBuf[0] == 0);
+ 
+   wsprintf(szBuf,L"Mission accomplished!!!");
+   return TRUE;
+  }
+  break;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conservicesexe.htm">Services.exe</A> | <A HREF="wce50conusingservicesexefromthecommandline.htm">Using Services.exe from the Command Line</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Handling%20Command%20Line%20Parameters (wce50tskhandlingcommandlineparameters.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

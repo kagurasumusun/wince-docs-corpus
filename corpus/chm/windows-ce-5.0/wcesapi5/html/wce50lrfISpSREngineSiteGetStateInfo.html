@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpSREngineSite::GetStateInfo</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispsrenginesitegetstateinfo"></A>ISpSREngineSite::GetStateInfo</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method gets information on the transitions from a CFG state. The SR engine calls the method to find out the full contents of the rule. This can be done immediately on receiving a <A HREF="wce50lrfispsrenginerulenotify.htm">ISpSREngine::RuleNotify</A> call about a rule, or later during recognition. </P>
+
+<P>The engine passes into this method a handle to a state for the rule, starting with the initial state. The engine also calls this method with a pointer to an <A HREF="wce50lrfspstateinfo.htm">SPSTATEINFO</A> structure, with all its members set to zero. During processing, the method fills in the structure with information on all the transitions out of the provided state, using an array allocated by SAPI using <B>CoTaskMemAlloc</B>. </P>
+
+<P>To get information about all the states in the rule, the engine repeats its call to <B>GetStateInfo</B> for each state following the current state. Since loop-back transitions are possible in a rule, the engine needs to check to see if it has visited a state before. </P>
+
+<P>When the engine calls <B>GetStateInfo</B> after the first time, it can leave the <B>cAllocatedEntries</B> and <B>pTransitions</B> members of <B>SPSTATEINFO</B> unchanged from the last call. SAPI then reuses the memory from the transition array if possible, rather that reallocating it. Alternatively, the engine can use <B>CoTaskMemFree</B> to free the memory for the transition array, and set <B>cAllocatedEntries</B> and <B>pTransitions</B> to NULL so that SAPI will reallocate the memory for each subsequent call.</P>
+
+<PRE class="syntax"><B>HRESULT GetStateInfo(</B>
+<B>  SPSTATEHANDLE </B><I>hState</I><B>, </B>
+<B>  SPSTATEINFO* </B><I>pStateInfo</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hState</I></DT>
+
+<DD>[in] Handle to the current CFG state.</dd>
+
+<DT><I>pStateInfo</I></DT>
+
+<DD>[in, out] Pointer to an <A HREF="wce50lrfspstateinfo.htm">SPSTATEINFO</A> structure. On input, all members of the structure are set to zero. On output, the structure contains the retrieved state information.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>S_OK </TD>
+<TD width=53%>Function completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>E_POINTER</TD>
+<TD width=53%>Either <I>pStateInfo</I> or <I>pTransitions</I> in the <B>SPSTATEINFO</B> structure<I> </I>points to invalid memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>E_OUTOFMEMORY </TD>
+<TD width=53%>Not enough memory to complete the operation. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>SPERR_INVALID_HANDLE </TD>
+<TD width=53%>Invalid <I>hState</I> parameter. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>FAILED(hr) </TD>
+<TD width=53%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Each transition represents a link from one state to another state. A transition is represented by an <A HREF="wce50lrfsptransitionentry.htm">SPTRANSITIONENTRY</A> structure. This structure contains an identifier that uniquely identifies the transition, a handle that shows the state to which the transition is connected, and a type for the transition. </P>
+
+<P>There are three common types of transition that all engines should support: word transitions, rule transitions, and epsilon transitions. There are also special transitions that may not be supported by all engines. All transition types are defined by the <A HREF="wce50lrfsptransitiontype.htm">SPTRANSITIONTYPE</A> enumeration. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapiddk.h, Sapiddk.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispsrenginesite.htm">ISpSREngineSite</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpSREngineSite::GetStateInfo (wce50lrfispsrenginesitegetstateinfo.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Time and Clocks in DirectShow</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50contimeandclocksindirectshow"></A>Time and Clocks in DirectShow</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This topic gives an overview of time and clocks in the DirectShow architecture. It contains the following sections:
+
+<UL type="disc">
+	<LI><A HREF="#wce50contimeandclocksindirectshowanchor1">Reference Clocks</A></li>
+
+	<LI><A HREF="#wce50contimeandclocksindirectshowanchor2">Clock Times</A></li>
+
+	<LI><A HREF="#wce50contimeandclocksindirectshowanchor3">Time Stamps and Media Times</A></li>
+</UL>
+
+<H2 class="dtH2"><A NAME="wce50contimeandclocksindirectshowanchor1"></A>Reference Clocks</H2>
+
+<P>One function of the filter graph manager is to synchronize the filters in the graph. To accomplish this, the filter graph manager and the filters all rely on a single clock, called the reference clock. Any object that supports the <A HREF="wce50lrfireferenceclockinterface.htm">IReferenceClock</A> interface can serve as a reference clock. A filter with access to a hardware timer can provide a clock (an example is the audio renderer), or the filter graph manager can create one that uses the system time.</P>
+
+<P>At run time, the filter graph manager selects a reference clock and calls <A HREF="wce50lrfimediafiltersetsyncsource.htm">IMediaFilter::SetSyncSource</A> on all the filters to inform them of the choice. An application can override the filter graph manager's choice by calling <B>SetSyncSource</B> on the filter graph manager. Only do this if you have a particular reason to prefer another clock. </P>
+
+<P>The filter graph manager uses the following heuristic to select the reference clock:
+
+<UL type="disc">
+	<LI>If any filter in the graph can provide a reference clock, use that filter. <I>Exception:</I> If the graph contains live sources, choose only a source filter clock. </li>
+
+	<LI>If no filter provides a suitable clock, use the system time. </li>
+</UL>
+
+<P>Reference clocks measure time in 100-nanosecond intervals. To retrieve a clock's current time, call the <A HREF="wce50lrfireferenceclockgettime11.htm">IReferenceClock::GetTime</A> method. A clock's baseline &#0151; the time from which it starts counting &#0151; depends on the clock's implementation, so the particular time value it returns is not inherently meaningful. What matters is that it returns monotonically increasing values at a rate of one per 100 nanoseconds.</P>
+
+<H2 class="dtH2"><A NAME="wce50contimeandclocksindirectshowanchor2"></A>Clock Times</H2>
+
+<P>DirectShow defines two related clock times: reference time and stream time.
+
+<UL type="disc">
+	<LI><I>Reference time</I> is the absolute time returned by the reference clock. </li>
+
+	<LI><I>Stream time</I> is defined relative to when the graph last started running. 
+<UL type="disc">
+	<LI>While the graph is running, stream time equals reference time minus start time. </li>
+
+	<LI>While the graph is paused, stream time remains at the stream time when it was paused. </li>
+
+	<LI>While the graph is stopped, stream time is zero. </li>
+</UL>
+</li>
+</UL>
+
+<P>When an application calls <A HREF="wce50lrfimediacontrolrun.htm">IMediaControl::Run</A> to run the filter graph, the filter graph manager calls <A HREF="wce50lrfimediafilterrun.htm">IMediaFilter::Run</A> on each filter. To compensate for the slight amount of time it takes for the filters to start running, the filter graph manager specifies a start time slightly in the future.</P>
+
+<H2 class="dtH2"><A NAME="wce50contimeandclocksindirectshowanchor3"></A>Time Stamps and Media Times</H2>
+
+<P>A media sample has two time-based properties: a time stamp, and a media time.</P>
+
+<H3 class="dtH3">Time Stamps</H3>
+
+<P>The <I>time stamp</I> defines the sample's start and finish times, measured in stream time. The time stamp is sometimes called the <I>presentation time</I>.</P>
+
+<P>When a renderer filter receives a sample, it schedules rendering based on the time stamp. If the sample arrives late, or has no time stamp, the filter renders the sample immediately. Otherwise, the filter waits until the sample's start time before it renders the sample. (It waits for the start time by calling the <A HREF="wce50lrfireferenceclockadvisetime10.htm">IReferenceClock::AdviseTime</A> method.)</P>
+
+<P>Source filters and parser filters are responsible for setting the correct time stamps on the samples they process. The first sample is time stamped with a start time of zero. Subsequent time stamps are determined by the sample length and the playback rate. </P>
+
+<P>To set the time stamp on a sample, call the <A HREF="wce50lrfimediasamplesettime.htm">IMediaSample::SetTime</A> method.</P>
+
+<H3 class="dtH3">Media Time</H3>
+
+<P><I>Media time</I> specifies the sample's original position within a seekable medium, such as a file on disk. For video, media time represents the frame number. For audio, media time represents the sample number in the packet. For example, if each packet contains one second of 44.1 kilohertz (kHz) audio, the first packet has a media start time of zero and a media stop time of 44100. Renderer filters can determine whether frames or samples have been dropped by checking for gaps in the media times.</P>
+
+<P>Whereas the time stamp depends on factors outside the source, such as seeking and playback rate, the media time is always calculated relative to the original source.</P>
+
+<P>To set the media time on a sample, call the <A HREF="wce50lrfimediasamplesetmediatime.htm">IMediaSample::SetMediaTime</A> method.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Time%20and%20Clocks%20in%20DirectShow (wce50contimeandclocksindirectshow.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

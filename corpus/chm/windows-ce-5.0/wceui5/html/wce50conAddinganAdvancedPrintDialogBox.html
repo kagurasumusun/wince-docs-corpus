@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Adding an Advanced Print Dialog Box</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conDrvAdvPageSetupDlg">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfLocalAlloc">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conaddinganadvancedprintdialogbox"></A>Adding an Advanced Print Dialog Box</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>If your printer includes advanced functionality, you can add an <B>Advanced</B> button to the <B>Page Setup</B> dialog box. A user can choose <B>Advanced</B> to display another dialog box that allows the user to choose additional printer settings that are not available in the <B>Page Setup</B> dialog box.</P>
+
+<P>You must implement the <A HREF="JavaScript:hhobj_1.Click()">DrvAdvPageSetupDlg</A> function in the printer driver to make the <B>Advanced</B> button available. The <B>Advanced</B> button remains disabled if the printer driver does not implement this function. When the user chooses <B>Advanced</B>, the operating system (OS) calls <B>DrvAdvPageSetupDlg</B>.</P>
+
+<P>A printer driver that has an export routine declared, such as the following example shows, provides an <B>Advanced Print</B> dialog box.</P>
+
+<PRE class="code">UINT APIENTRY* DrvAdvPageSetupDlg(LPPAGESETUPDLG lppsd, HWND hwndDlg);</PRE>
+
+<P>The following table describes each advanced printer driver parameter in <B>DrvAdvPageSetupDlg</B>. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=15%>Parameter</TH>
+<TH width=85%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><I>lppsd</I></TD>
+<TD width=85%>Pointer to the <A HREF="wce50lrfpagesetupdlg154.htm">PAGESETUPDLG (structure)</A> passed to <A HREF="wce50lrfpagesetupdlg151.htm">PageSetupDlg (function)</A> by the application. The members in this structure reflect the settings the user has made in the <B>Print Setup</B> dialog box before the <B>Advanced</B> button was chosen.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><I>hwndDlg</I></TD>
+<TD width=85%>Handle to the <B>Print Setup</B> dialog box, which is the parent of any new window created by the printer driver <B>DrvAdvPageSetupDlg</B> function.</TD>
+</TR>
+</table></div>
+
+<P>This function executes in the context of the calling application. It communicates user preferences to the Print Setup system through changes to the driver-specific area at the end of the <A HREF="wce50lrfdevmode.htm">DEVMODE</A> structure referred to by <I>lppsd </I><B>hDevMode</B>. If the driver-specific area is changed, the driver must update the <B>dmDriverExtra</B> member of the <B>DEVMODE</B> structure, which contains the number of bytes of private driver-data that follow <B>DEVMODE</B> structure. If necessary, the pre-existing <B>DEVMODE</B> structure can be replaced by one allocated by the printer driver itself. The printer driver should use the <A HREF="JavaScript:hhobj_2.Click()">LocalAlloc</A> function to allocate the new <B>DEVMODE</B> structure, and it should copy the driver-independent part of the old <B>DEVMODE</B> structure into the beginning of the new one. The <B>Print Setup</B> dialog box is responsible for freeing the old <B>DEVMODE</B> structure if a new structure has been allocated.</P>
+
+<P>Upon return from <B>DrvAdvPageSetupDlg</B>, the Print Setup system records all changes to the driver-independent portion of the <B>DEVMODE</B> structure and sets the user interface (UI) items in the <B>Print Setup</B> dialog box appropriately. The behavior of the <B>Print Setup</B> dialog box is undefined if any of the values in the driver-independent part of the <B>DEVMODE</B> structure are out of bounds. The Print Setup system will not affect anything in the driver-dependent part at the end of the <B>DEVMODE</B> structure.</P>
+
+<P>The application calling <B>PageSetupDlg</B> must call <B>LocalFree</B> and release the <B>DEVMODE</B> structure allocated by the printer driver after completion.</P>
+
+<P>The following example shows how the <B>DEVMODE</B> structure is used for a print dialog box.</P>
+
+<PRE class="code">static DEVMODE dmDef;
+BOOL MyPrintDialog()
+{
+  DWORD        dwErr;
+  PAGESETUPDLG psdlg;
+  HDC          hdc = NULL;
+  int          fSuccess;
+  LPDEVMODE    lpdmMyOriginalDevMode = &amp;dmDef;
+ 
+  // The DEVMODE structure provided to PageSetupDlg() through the 
+  // hDevMode member of the PAGESETUPDLG structure is a pointer to a 
+  // static DEVMODE. When PageSetupDlg() returns, DEVMODE may
+  // have changed.
+
+  memset(lpdmMyDevMode, 0, sizeof(DEVMODE));
+  lpdmMyOriginalDevMode-&gt;dmSize = sizeof(dmDef);
+  lpdmMyOriginalDevMode-&gt;dmFields = DM_PRINTQUALITY | DM_ORIENTATION |
+                                    DM_PAPERSIZE;
+  lpdmMyOriginalDevMode-&gt;dmPrintQuality = DMRES_HIGH ;
+  lpdmMyOriginalDevMode-&gt;dmOrientation = DMORIENT_PORTRAIT;
+  lpdmMyOriginalDevMode-&gt;dmPaperSize = MyGetLocalePaperSize();
+ 
+  memset(&amp;psdlg, 0, sizeof(PAGESETUPDLG));
+  psdlg.hDevMode = lpdmMyOriginalDevMode;
+  psdlg.lStructSize = sizeof(PAGESETUPDLG);
+  psdlg.hwndOwner = pdoc-&gt;hWndTopLevel;
+  psdlg.hInstance = hInstApp;
+  psdlg.Flags = PSD_MARGINS ;
+  MyGetMargins(psdlg.Flags, &amp;psdlg.rtMargin);
+
+  fSuccess = PageSetupDlg(&amp;psdlg);
+
+  if ( fSuccess ) {
+    hdc = MyCreatePrinterDC((LPDEVNAMES)psdlg.hDevNames,  psdlg.hDevMode);
+  }
+
+  if ( fSuccess &amp;&amp; hdc ) {
+    MyAcceptMargins(psdlg.Flags, &amp;psdlg.rtMargin);
+  
+    MyPrintDocument(hdc, pdoc, (psdlg.Flags &amp; PSD_RANGESELECTION) ? 
+                    PRINT_SELECTION : PRINT_ENTIRE);  
+  }
+  else {
+    MyHandlePageSetupDlgError(CommDlgExtendedError());
+  }
+
+  if ( psdlg.hDevNames ) {
+    LocalFree(psdlg.hDevNames);
+    psdlg.hDevNames = NULL;
+  }
+
+  // Check to see whether the DEVMODE returned in hDevMode is
+  // the same one that was provided. If not, assume that
+  // it was locally allocated by the print driver, and this code is 
+  // responsible for cleaning it up.
+
+  if ( psdlg.hDevMode &amp;&amp; (lpdmMyOriginalDevMode != psdlg.hDevMode) ) {
+    LocalFree(psdlg.hDevMode);
+  }
+
+  if (hdc) {
+    DeleteDC(hdc);
+  }
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concommondialogboxes128.htm">Common Dialog Boxes (Shell)</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Adding%20an%20Advanced%20Print%20Dialog%20Box (wce50conaddinganadvancedprintdialogbox.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

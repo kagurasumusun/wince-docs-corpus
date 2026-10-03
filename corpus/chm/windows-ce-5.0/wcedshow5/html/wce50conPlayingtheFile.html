@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Playing the File</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conplayingthefile"></A>Playing the File</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Playing a file using DirectShow is a three-step process:
+
+<OL type="1">
+	<LI>Create an instance of the filter graph manager. </li>
+
+	<LI>Use the filter graph manager to create a filter graph. </li>
+
+	<LI>Use the filter graph manager to run the filter graph. </li>
+</OL>
+
+<P>To accomplish this, you need to use two interfaces:
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfigraphbuilderinterface.htm">IGraphBuilder</A>: Constructs the filter graph. </li>
+
+	<LI><A HREF="wce50lrfimediacontrolinterface.htm">IMediaControl</A>: Handles media streaming in the filter graph. </li>
+</UL>
+
+<P>The filter graph manager implements both of these interfaces. Here is the basic code, minus some COM details.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;To make the following code example easier to read, error checking is not included. Do not use this code example in a release configuration unless it you have modified it to include secure error handling.</BLOCKQUOTE>
+
+<PRE class="code">IGraphBuilder *pGraph;
+IMediaControl *pMediaControl;
+CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC, 
+                    IID_IGraphBuilder, (void **)&amp;pGraph);
+// Query for IMediaControl (not shown)
+// Filenames on Windows CE start with a \\ instead of a drive letter.
+pGraph-&gt;RenderFile(L"\\Hello_World.avi", NULL);
+pMediaControl-&gt;Run();</PRE>
+
+<P>The <A HREF="wce50lrfigraphbuilderrenderfile.htm">IGraphBuilder::RenderFile</A> method constructs a filter graph that will play the specified file. The first parameter is the file name, represented as a wide character (2-byte) Unicode string. For simplicity, the example program specifies a literal string, rather than have the user select a file name. The "L" prefix converts an ASCII string to a wide character string. The second parameter is reserved and must equal NULL.</P>
+
+<P>After the filter graph manager has constructed a filter graph, it is ready to begin playback. The <A HREF="wce50lrfimediacontrolrun.htm">IMediaControl::Run</A> method switches the graph into running mode. When the application invokes this method, media data begins to move through the filter graph and is rendered as video, audio, or both.</P>
+
+<P>If this were the last statement in the program, the program would abruptly stop the moment playback began. In a real application, you would wait for an end-of-stream event, a topic discussed in <A HREF="wce50conrespondingtoevents.htm">Responding to Events</A>. To keep the example as short as possible, the sample program merely displays a message box, which blocks program execution. Playback continues on a separate thread until the user clicks the OK button. Also, in a real application, you should test the return value of <B>RenderFile</B> to confirm that it created the filter graph successfully. For example, if the specified file does not exist, <B>RenderFile</B> fails and returns the error code VFW_E_NOT_FOUND. </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Playing%20the%20File (wce50conplayingthefile.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

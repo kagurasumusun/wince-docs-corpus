@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing Surface Memory Directly</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conaccessingsurfacememorydirectly"></A>Accessing Surface Memory Directly</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>You can directly access the frame buffer or off-screen surface memory by using the <A HREF="wce50lrfidirectdrawsurface5lock.htm">IDirectDrawSurface5::Lock</A> method. </P>
+
+<P>When you call this method, the <I>lpDestRect</I> parameter is a pointer to a <B>RECT</B> structure that describes the rectangle on the surface you want to access directly. </P>
+
+<P>To request that the entire surface be locked, set <I>lpDestRect</I> to NULL. Also, you can specify a <B>RECT</B> that covers only a portion of the surface. </P>
+
+<P>Providing that no two rectangles overlap, two threads or processes can simultaneously lock multiple rectangles in a surface.</P>
+
+<P>The <B>Lock</B> method fills a <A HREF="wce50lrfddsurfacedesc2.htm">DDSURFACEDESC2</A> structure with all the information you need to properly access the surface memory. </P>
+
+<P>The structure includes information about the pitch (or stride) and the pixel format of the surface, if different from the pixel format of the primary surface. </P>
+
+<P>When you finish accessing the surface memory, call the <A HREF="wce50lrfidirectdrawsurface5unlock.htm">IDirectDrawSurface5::Unlock</A> method to unlock it.</P>
+
+<P>While you have a surface locked, you can directly manipulate the contents. The following list describes some tips for avoiding common problems with directly rendering surface memory:
+
+<UL type="disc">
+	<LI>Never assume a constant display pitch. Always examine the pitch information returned by the <A HREF="wce50lrfidirectdrawsurface5lock.htm">IDirectDrawSurface5::Lock</A> method. This pitch can vary for a number of reasons, including the location of the surface memory, the type of display card, or even the version of the DirectDraw driver. For more information, see <A HREF="wce50conwidthvspitch110.htm">Width vs. Pitch</A>.</li>
+
+	<LI>Make certain you blit to unlocked surfaces. DirectDraw blit methods will fail, returning <A HREF="wce50condirectdrawreturnvalues.htm#wce50condirectdrawreturnvaluesanchor96">DDERR_SURFACEBUSY</A> or <B>DDERR_LOCKEDSURFACES</B>, if called on a locked surface. Similarly, GDI blit functions fail without returning error values if called on a locked surface that exists in display memory.</li>
+
+	<LI>Limit your application's activity while a surface is locked. The <A HREF="wce50lrfidirectdrawsurface5getdc.htm">IDirectDrawSurface5::GetDC</A> method implicitly calls <B>Lock</B>, and the <A HREF="wce50lrfidirectdrawsurface5releasedc.htm">IDirectDrawSurface5::ReleaseDC</A> implicitly calls <B>Unlock</B>.</li>
+
+	<LI>Always copy data aligned to display memory. Copying data unaligned to display memory can cause the system to suspend operations if the copy spans memory banks.</li>
+</UL>
+
+<P>If a blit is in progress when you call <A HREF="wce50lrfidirectdrawsurface5lock.htm">IDirectDrawSurface5::Lock</A>, the method will return immediately with an error, as a lock cannot be obtained. To prevent the error, use the DDLOCK_WAIT flag to cause the method to wait until a lock can be successfully obtained.</P>
+
+<P>Locking portions of the primary surface can interfere with the display of a software cursor. If the cursor intersects the locked rectangle, it is hidden for the duration of the lock. If it does not intersect the rectangle, it is frozen for the duration of the lock. Neither of these effects occurs if the entire surface is locked.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Accessing%20Surface%20Memory%20Directly (wce50conaccessingsurfacememorydirectly.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

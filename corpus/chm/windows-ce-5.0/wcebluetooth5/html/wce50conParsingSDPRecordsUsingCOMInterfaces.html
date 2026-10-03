@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Searching SDP Attributes Using COM Interfaces</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCoInitializeEx">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conparsingsdprecordsusingcominterfaces"></A>Searching SDP Attributes Using COM Interfaces</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Microsoft&reg; Windows&reg; CE provides COM interfaces that you can use to parse SDP records as streams. The application can check the validity of the response and convert the raw binary SDP data to a record stream by using <A HREF="wce50lrfisdpstreamiunknown.htm">ISdpStream</A> methods. The record is returned as an <A HREF="wce50lrfisdprecordiunknown.htm">ISdpRecord</A> array. The array contains attribute identifiers and <A HREF="wce50lrfnodedata.htm">NodeData</A> structures that contain meta data associated with the attributes. To retrieve attribute information about a service use the <A HREF="wce50lrfisdpnodecontaineriunknown.htm">ISdpNodeContainer:IUnknown</A> methods.</P>
+
+<P>The Bthnscreate sample that ships with Windows CE, contains source code for creating and searching SDP records. For more information about this sample, see <A HREF="wce50consdpsearchandrecordgeneratorsample.htm">SDP Search and Record Generator Sample</A>.</P>
+
+<P>The following procedure converts binary service data into <B>ISdpRecords</B> and retrieves the RFCOMM channel identifier. For the complete code, see <A HREF="wce50conretrievingrfcommchannelidentifier.htm">Retrieving the RFCOMM Channel Identifier</A>. </P>
+
+<P class="labelproc"><B>To search SDP attributes by using COM interfaces</B>
+
+<OL type="1">
+	<LI>Retrieve raw SDP binary data in a <A HREF="wce50lrfblobwindowssockets.htm">BLOB</A> structure that you want to parse. For more information about discovering services of a Bluetooth device, see <A HREF="wce50conqueryingservicecapabilityonremotebluetoothdevices.htm">Querying Service Capability on Remote Bluetooth Devices</A>.</li>
+
+	<LI>To initialize the Component Object Model (COM) for use by the current thread, call <A HREF="JavaScript:hhobj_1.Click()">CoInitializeEx</A>, as the following example code shows.
+<PRE class="code">CoInitializeEx(NULL,COINIT_MULTITHREADED);</PRE>
+</li>
+
+	<LI>To parse the buffer that contains the SDP data and return the service data in an <A HREF="wce50lrfisdprecordiunknown.htm">ISdpRecord</A> array, use <A HREF="wce50lrfisdpstreamiunknown.htm">ISdpStream</A> methods. Retrieve the SDP records in a pointer of type <B>ISdpRecord</B>, as the following example code shows.
+<PRE class="code">ISdpRecord **pRecordArg;
+ISdpRecord *pRecord = NULL;
+if (ERROR_SUCCESS != ServiceAndAttributeSearchParse(szBuf,sizeof(szBuf),&amp;pRecordArg,
+                                                   &amp;ulRecords))
+{
+  ...//Error handling code goes here.
+}</PRE>
+
+<P>For information about SDP record parsing, and the implementation of the ServiceAndAttributeSearchParse function, see <A HREF="wce50conparsingsdprecordusingcominterfaces.htm">Parsing an SDP Record Using COM Interfaces</A>.
+</li>
+
+	<LI>To store information about a specific attribute, define a class that inherits the <B>NodeData</B> class.
+<PRE class="code">class CNodeDataFreeString : public NodeData {
+  public:
+  CNodeDataFreeString() {
+    type = SDP_TYPE_NIL;
+  }
+  ~CNodeDataFreeString() {
+  if (type == SDP_TYPE_STRING)
+    CoTaskMemFree(u.str.val);
+  else if (type == SDP_TYPE_URL)
+    CoTaskMemFree(u.url.val);
+  }
+};</PRE>
+
+<P><B>NodeData</B>, is defined in the Bthapi.idl file, and stores information about Bluetooth service attributes.
+</li>
+
+	<LI>To retrieve the information about the attribute of the service record, iterate through the SDP record array and call the <A HREF="wce50lrfisdprecordgetattribute.htm">ISdpRecord::GetAttribute</A> method. Pass the attribute identifier and receive the <B>NodeData</B> structure in the <I>pNode</I> parameter. The following code example shows how to call the <B>ISdpRecord::GetAttribute</B> function to retrieve a <B>NodeData</B> structure that is associated with the attribute identifier SDP_ATTRIB_PROTOCOL_DESCRIPTOR_LIST (4). The <B>NodeData</B> structure that is received contains information about the Bluetooth protocols settings for the service.
+<PRE class="code">ULONG ulRecords = 0;
+...
+for (ULONG i = 0; i &lt; ulRecords; i++) 
+{
+  pRecord = pRecordArg[i]; // Record to be examined.
+  CNodeDataFreeString protocolList;
+  // Contains SDP_ATTRIB_PROTOCOL_DESCRIPTOR_LIST data, if available.
+  if (ERROR_SUCCESS != pRecord-&gt;GetAttribute(
+             SDP_ATTRIB_PROTOCOL_DESCRIPTOR_LIST, &amp;protocolList) ||
+             (protocolList.type != SDP_TYPE_CONTAINER))
+  {
+    continue;
+  }
+   ...  //If GetAttribute is sucessful process attribute.
+}</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;When the application calls <B>ISdpRecord::GetAttribute</B>, the result set is returned as a URL or a string that is allocated by the caller. To ensure that the string is automatically released, use the class created in step 4. This class can also be used with <A HREF="wce50lrfisdpnodecontainergetnodestringdata.htm">ISdpNodeContainer::GetNodeStringData</A>.</BLOCKQUOTE>
+
+<P>In the preceding example, the returned <B>NodeData</B> structure, received in protocolList, may contain Bluetooth protocol information in multiple <B>NodeData</B> child elements. Each one of these elements represents a particular Bluetooth protocol, such as RFCOMM or L2CAP. These protocol elements are composed of <B>NodeData</B> child elements that contain information about the protocol such as the UUID and the channel identifier. 
+</li>
+
+	<LI>To retrieve information such as the channel for a protocol, from the <B>NodeData</B> structure retrieved in step 5, iterate through the <B>NodeData</B> structure by using <A HREF="wce50lrfisdpnodecontaineriunknown.htm">ISdpNodeContainer</A> methods such as:
+<UL type="disc">
+	<LI><A HREF="wce50lrfisdpnodecontainergetnodecount.htm">ISdpNodeContainer::GetNodeCount</A> to get the number of child elements within the <B>NodeData </B>parent element.</li>
+
+	<LI><A HREF="wce50lrfisdpnodecontainergetnode.htm">ISdpNodeContainer::GetNode</A> to retrieve the contents of the <B>NodeData</B> structure.</li>
+</UL>
+
+<P>The following code example determines the channel identifier for the RFCOMM protocol. To do this, the application iterates through the child elements of each protocol <B>NodeData</B> structure to find the RFCOMM UUID. As per the Bluetooth specification, the next item in this <B>NodeData</B> structure is an integer that contains the channel identifier. Once this integer value is found, searching is terminated and the channel identifier is returned to the caller.
+
+<PRE class="code">ISdpNodeContainer *pRecordContainer = protocolList.u.container;
+DWORD cProtocols = 0;
+NodeData protocolDescriptor; // Information about a specific protocol (for example, L2CAP, RFCOMM).
+pRecordContainer-&gt;GetNodeCount(&amp;cProtocols);
+for (j = 0; j &lt; cProtocols; j++) 
+{
+  pRecordContainer-&gt;GetNode(j,&amp;protocolDescriptor);
+  if (protocolDescriptor.type != SDP_TYPE_CONTAINER)
+    continue;
+  ISdpNodeContainer *pProtocolContainer = protocolDescriptor.u.container;
+  DWORD cProtocolAtoms;
+  pProtocolContainer-&gt;GetNodeCount(&amp;cProtocolAtoms);
+  for (k = 0; k &lt; cProtocolAtoms; k++) 
+  {
+    NodeData nodeAtom;  // Individual data element, such as what protocol this is or RFCOMM channel ID.
+    pProtocolContainer-&gt;GetNode(k,&amp;nodeAtom);
+    if (IsRfcommUuid(&amp;nodeAtom))
+    {
+      if (k+1 == cProtocolAtoms) 
+      {
+        break;// Misformatted response.
+      }
+      NodeData channelID;
+      pProtocolContainer-&gt;GetNode(k+1,&amp;channelID);
+//Call the helper function that returns the channel ID based on specificType.
+      if (GetChannel(&amp;channelID,&amp;ulChannelId)) 
+      {
+        fSuccess = TRUE;
+        goto done;
+      }
+      break; // Formatting error.
+    }
+  }
+}</PRE>
+</li>
+
+	<LI>Perform memory cleanup operations by releasing the <B>ISdpRecord</B> record. 
+<P>The following code example shows how to release the SDP record by using standard COM methods.  
+
+<PRE class="code">for (i = 0; i &lt; ulRecords; i++) 
+  pRecordArg[i]-&gt;Release();
+  CoTaskMemFree(pRecordArg);
+  CoUninitialize();
+  return 0;</PRE>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conbluetoothapplicationdevelopment.htm">Bluetooth Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Searching%20SDP%20Attributes%20Using%20COM%20Interfaces (wce50conparsingsdprecordsusingcominterfaces.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

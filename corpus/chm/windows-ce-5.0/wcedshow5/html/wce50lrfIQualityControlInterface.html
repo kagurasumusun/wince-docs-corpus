@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IQualityControl Interface</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownQueryInterface">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknown">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfiqualitycontrolinterface"></A>IQualityControl Interface</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This interface defines quality messages and allows a quality manager to install itself as the sink for these messages. The following structures are defined for quality management. 
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfqualitymessagetype.htm">QualityMessageType</A></li>
+
+	<LI><A HREF="wce50lrfquality.htm">Quality</A></li>
+</UL>
+
+<P>The <A HREF="wce50lrfiqualitycontrolnotify.htm">IQualityControl::Notify</A> method receives a Quality message. </P>
+
+<P>A filter may call <B>IQualityControl::Notify</B> to send a Quality message to another filter to ask for help in managing the graph quality (typically to achieve graceful degradation on a processor that is not powerful enough to handle all the data). </P>
+
+<P>Quality messages usually flow upstream. </P>
+
+<P>The <A HREF="wce50lrfiqualitycontrolsetsink.htm">IQualityControl::SetSink</A> method tells a filter where to send it. If no sink has been explicitly set or if the last <A HREF="wce50lrfiqualitycontrolsetsink.htm">SetSink</A> set the sink to NULL, the message should go upstream. </P>
+
+<P>The filter sends a message upstream by calling <A HREF="JavaScript:hhobj_1.Click()">QueryInterface</A> on the output pin to which its input pin is connected, in order to retrieve an <B>IQualityControl</B> interface. </P>
+
+<P>Filters export the <B>IQualityControl</B> interface through their pins. </P>
+
+<P>Messages start with rendering filters, because these must run in real time. Other filters must run to keep the renderers supplied; these do not originate messages, but they can pass them on. </P>
+
+<P>If a filter receives a quality message, it returns S_OK if it agrees to act on the quality message to handle the situation, or S_FALSE if it cannot handle it. </P>
+
+<P>For example, if the video renderer receives S_FALSE (or failure codes), it will readily drop frames to try to maintain synchronization. If it receives S_OK, it will trust the upstream filter; it also will allow frames to be played much earlier than their due time and will allow frames to be played much later without dropping them. </P>
+
+<P>Usually, the video renderer causes early frames to be blocked until their due time, but if this is the first frame after a dropped frame, the video renderer will play the frame as soon as possible so as not to lose time. </P>
+
+<P>A reasonable implementation for a filter that cannot handle a message is to pass the message upstream and to pass on the result. For example: </P>
+
+<PRE class="code">HRESULT Notify(IBaseFilter * pSelf, QualityMessage qm)
+{
+    if (m_QualitySink!=NULL)
+        // Note how pSelf has changed into pMyself
+        return m_QualitySink-&gt;ChangeQuality(pMyself, qm);
+    else
+        return  m_Upstream-&gt;Notify(pMyself, qm);
+}</PRE>
+
+<P>A quality managing component would typically set the sink for all filters to itself. It can identify filters by their <A HREF="wce50lrfibasefilterinterface.htm">IBaseFilter</A> interface pointers in the <I>Self</I> parameters. </P>
+
+<P>A filter must always supply the same value for its <B>IBaseFilter</B> interface. </P>
+
+<P>The official COM way of determining if two filters are the same is to use <A HREF="JavaScript:hhobj_2.Click()">QueryInterface</A> on them both for their <A HREF="JavaScript:hhobj_3.Click()">IUnknown</A> interfaces and compare those. However, because DirectShow is a real-time system, and because these calls are made during streaming, it is implemented this way for efficiency. </P>
+
+<P>A quality managing component (for example, an application) typically returns S_OK when called upon to help. </P>
+
+<P>However, it should be prepared to find that when it sends a message to a filter requesting help from that filter, it immediately gets a request from that filter for help, and that whatever return code it gives to that filter in response to the request immediately comes back from the filter as the reply to its original message. </P>
+
+<P>This happens if the filter uses the suggested default implementation of passing the messages upstream, but with the <A HREF="wce50lrfquality.htm">Quality</A> managing component intercepting all the traffic. </P>
+
+<P>The <A HREF="wce50lrfquality.htm">Quality</A> message structure is as follows.</P>
+
+<PRE class="code">typedef enum {
+    Famine,
+    Flood
+} QualityMessageType;
+
+typedef struct {
+    QualityMessageType Type;
+    long               Proportion;
+    REFERENCE_TIME     Late;
+} Quality;</PRE>
+
+<P>The <B>Type</B> member of the structure indicates which filter appears to have the problem: 
+
+<UL type="disc">
+	<LI>If set to Famine, the renderer is not getting enough samples and the receiver of the message should speed up by any means possible. </li>
+
+	<LI>If set to Flood, the sender of the message cannot keep up with the data being sent and the receiver must send less data. </li>
+</UL>
+
+<P>Other methods of degradation are not appropriate. </P>
+
+<P>The <B>Proportion</B> member gives a rate (expressed in parts per thousand) to be used by a recipient that cannot seek (dropping frames is equivalent to seeking) but can only control its rate. </P>
+
+<P>For example, a proportion of 823 means that it should degrade enough to go faster by a factor of 1000/823. Likewise, a proportion of 1200 means that it can improve its quality by 20 percent, even if this results in going slower. </P>
+
+<P>The numbers are not cumulative. </P>
+
+<P>If a filter can degrade only in steps of, say, 20 percent, and if it receives a series of <A HREF="wce50lrfquality.htm">Quality</A> messages all with <B>Proportion</B> equal to 990, it should ignore them all. It should not multiply them (for example, it should not deduce that a 20 percent reduction is called for after the twenty-third message in this case). </P>
+
+<P>The <B>Late</B> member says how late the application is running at the moment: 
+
+<UL type="disc">
+	<LI>A negative value means there is some slack (probably the renderer is waiting for this time before rendering the samples). </li>
+
+	<LI>A positive value from an audio renderer does not necessarily mean that there is an audio break; it means that the audio renderer's buffer queue is running low and is heading for a break. </li>
+</UL>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>Pins that are required to pass quality control messages upstream must implement this interface. </P>
+
+<P>The <A HREF="wce50lrfcbasepincbasepin.htm">CBasePin</A> class inherits <A HREF="#wce50lrfiqualitycontrolinterface">IQualityControl</A> and provides a pass-through implementation for output pins. </P>
+
+<P>Any filter that can act on a quality control message to adjust the rate of data flow should implement this interface. </P>
+
+<P>Any quality management component external to the filter graph should implement this interface to receive quality control messages. </P>
+
+<H4 class="dtH4">When to Use</H4>
+
+<P>The rendering filter (usually the video renderer) is the primary user of this interface because it originates the quality control messages. Because the messages pass from one filter to another upstream, each downstream filter calls the <A HREF="wce50lrfiqualitycontrolnotify.htm">IQualityControl::Notify</A> method on the upstream output pin and so is a user. </P>
+
+<H4 class="dtH4">Methods in Vtable Order</H4>
+
+<P>The following table shows the methods that appear in the Vtable beneath the standard COM methods inherited from <A HREF="JavaScript:hhobj_4.Click()">IUnknown</A>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=14%>Method</TH>
+<TH width=86%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=14%><A HREF="wce50lrfiqualitycontrolnotify.htm">Notify</A></TD>
+<TD width=86%>Notifies the recipient that a quality change is requested. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=14%><A HREF="wce50lrfiqualitycontrolsetsink.htm">SetSink</A></TD>
+<TD width=86%>Sets the <A HREF="#wce50lrfiqualitycontrolinterface">IQualityControl</A> object that will receive quality messages. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements. </P>
+
+<P>For more information, see <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A>.</P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfdirectshowinterfaces.htm">DirectShow Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IQualityControl%20Interface (wce50lrfiqualitycontrolinterface.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

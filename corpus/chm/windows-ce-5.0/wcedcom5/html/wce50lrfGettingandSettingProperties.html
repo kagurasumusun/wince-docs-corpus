@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Getting and Setting Properties</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfgettingandsettingproperties"></A>Getting and Setting Properties</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Properties are accessed in the same way as methods, except you specify DISPATCH_PROPERTYGET or DISPATCH_PROPERTYPUT instead of DISPATCH_METHOD. </P>
+
+<P>Some languages cannot distinguish between retrieving a property and calling a method. In this case, set the flags DISPATCH_PROPERTYGET and DISPATCH_METHOD.</P>
+
+<P>The following code example gets the value of a property named <B>On</B>. You can assume that the object has been created, and that its interfaces have been queried, as in the previous example.</P>
+
+<PRE class="code">VARIANT FAR *pVarResult;
+// Code omitted for brevity.
+szMember = "On";
+hresult = pdisp-&gt;GetIDsOfNames(IID_NULL, &amp;szMember, 1, 
+LOCALE_USER_DEFAULT, &amp;dispid);
+
+hresult = pdisp-&gt;Invoke(
+dispid,
+IID_NULL,
+LOCALE_USER_DEFAULT,
+DISPATCH_PROPERTYGET,
+&amp;dispparamsNoArgs, pVarResult, NULL, NULL);</PRE>
+
+<P>As in the previous example, the code calls <A HREF="wce50lrfidispatchgetidsofnames.htm">IDispatch::GetIDsOfNames</A> for the DISPID of the <B>On</B> property, and then passes the identifier to <A HREF="wce50lrfidispatchinvoke.htm">IDispatch::Invoke</A>. </P>
+
+<P>Then, <B>Invoke</B> returns the property's value in <I>pVarResult.</I> </P>
+
+<P>In general, the return value does not set VT_BYREF. However, this bit might be set and a pointer returned to the return value, if the lifetime of the return value is the same as that of the object.</P>
+
+<P>To change the property's value, the call looks like the following.</P>
+
+<PRE class="code">VARIANT FAR *pVarResult;
+DISPPARAMS dispparams; 
+DISPID mydispid = DISP_PROPERTYPUT
+
+// Code omitted for brevity.
+
+szMember = "On";
+dispparams.rgvarg[0].vt = VT_BOOL;
+dispparams.rgvarg[0].bool = FALSE;
+dispparams.rgdispidNamedArgs = &amp;mydispid;
+dispparams.cArgs = 1;
+dispparams.cNamedArgs = 1;
+hresult = pdisp-&gt;GetIDsOfNames(IID_NULL, &amp;szMember, 1, 
+LOCALE_USER_DEFAULT, &amp;dispid); 
+
+hresult = pdisp-&gt;Invoke(
+dispid,
+IID_NULL,
+LOCALE_USER_DEFAULT,
+DISPATCH_PROPERTYPUT,
+&amp;dispparams, NULL, NULL, NULL);</PRE>
+
+<P>The new value for the property (the Boolean value FALSE) is passed as a parameter when the <B>On</B> property's <B>Put</B> function is invoked. </P>
+
+<P>The DISPID for the parameter is DISPID_PROPERTYPUT. This DISPID is defined by Automation to designate the parameter that contains the new value for a property's <B>Put</B> function. The remaining details of the <A HREF="wce50lrfdispparams.htm">DISPPARAMS</A> structure are described in <A HREF="wce50lrfpassingparameters.htm">Passing Parameters</A>.</P>
+
+<P>The DISPATCH_PROPERTYPUT flag in the previous example indicates that a property is being set by value. In Visual Basic, the following statement assigns the <B>Value</B> property (the default) of YourObj to the <B>Prop</B> property.</P>
+
+<PRE class="code">MyObj.Prop = YourObj</PRE>
+
+<P>This statement should be flagged as a DISPATCH_PROPERTYPUT. Similarly, statements like the following assign the <B>Value</B> property of one object to the <B>Value</B> property of another object.</P>
+
+<PRE class="code">Worksheet.Cell(1,1) = Worksheet.Cell(6,6)
+MyDoc.Text1 = YourDoc.Text1</PRE>
+
+<P>These statements result in a PROPERTY_PUT operation on Worksheet.Cell(1,1) and MyDoc.Text1.</P>
+
+<P>Use the DISPATCH_PROPERTYPUTREF flag to indicate a property or data member that should be set by reference. </P>
+
+<P>For example, the following Visual Basic statement assigns the pointer <B>YourObj</B> to the property <B>Prop</B>, and should be flagged as DISPATCH_PROPERTYPUTREF.</P>
+
+<PRE class="code">Set MyObj.Prop = YourObj</PRE>
+
+<P>The <B>Set</B> statement causes a reference assignment, rather than a value assignment.</P>
+
+<P>The parameter on the right side is always passed by name, and should not be accessed positionally.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conautomation.htm">Automation</A> | <A HREF="wce50lrfdispparams.htm">DISPPARAMS</A> | <A HREF="wce50lrfidispatchgetidsofnames.htm">IDispatch::GetIDsOfNames</A> | <A HREF="wce50lrfidispatchinvoke.htm">IDispatch::Invoke</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Getting%20and%20Setting%20Properties (wce50lrfgettingandsettingproperties.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

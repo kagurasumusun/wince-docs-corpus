@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IDataObject::GetData</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfidataobjectgetdata"></A>IDataObject::GetData</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method is called by a data consumer to obtain data from a source data object. The <B>GetData</B> method renders the data described in the specified <A HREF="wce50lrfformatetc.htm">FORMATETC</A> structure and transfers it through the specified <A HREF="wce50lrfstgmedium124.htm">STGMEDIUM</A> structure. The caller then assumes responsibility for releasing the <B>STGMEDIUM</B> structure.</P>
+
+<PRE class="syntax"><B>HRESULT GetData(</B>
+  <B>FORMATETC* </B><I>pFormatetc</I><B>,</B>
+  <B>STGMEDIUM* </B><I>pmedium</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pFormatetc </I></DT>
+
+<DD>[in] Pointer to the <B>FORMATETC</B> structure that defines the format, medium, and target device to use when passing the data. It is possible to specify more than one medium by using the Boolean <B>OR</B> operator, allowing the method to choose the best medium among those specified. </dd>
+
+<DT><I>pmedium </I></DT>
+
+<DD>[out] Pointer to the <B>STGMEDIUM</B> structure that indicates the storage medium containing the returned data through its <B>TYMED</B> member and the responsibility for releasing the medium through the value of its <B>pUnkForRelease</B> member.
+
+<P>If <B>pUnkForRelease</B> is NULL, the receiver of the medium is responsible for releasing it; otherwise, <B>pUnkForRelease</B> points to the <A HREF="wce50lrfiunknown.htm">IUnknown</A> interface on the appropriate object so its <A HREF="wce50lrfiunknownrelease.htm">Release</A> method can be called. 
+
+
+<P>The medium must be allocated and filled in by <B>IDataObject::GetData</B>. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This method supports the standard return values E_INVALIDARG, E_UNEXPECTED, and E_OUTOFMEMORY. </P>
+
+<P>The following table shows the additional return values for this method. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=26%>Value</TH>
+<TH width=74%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>S_OK</TD>
+<TD width=74%>Data was successfully retrieved and placed in the storage medium provided.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>DV_E_LINDEX</TD>
+<TD width=74%>Invalid value for <B>lindex</B>; currently, only -1 is supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>DV_E_FORMATETC</TD>
+<TD width=74%>Invalid value for <I>pFormatetc</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>DV_E_TYMED</TD>
+<TD width=74%>Invalid <B>TYMED</B> value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>DV_E_DVASPECT</TD>
+<TD width=74%>Invalid <B>dwAspect </B>value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>OLE_E_NOTRUNNING</TD>
+<TD width=74%>The object application is not running.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=26%>STG_E_MEDIUMFULL</TD>
+<TD width=74%>An error occurred when allocating the medium.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>A data consumer calls <B>IDataObject::GetData</B> to retrieve data from a data object, conveyed through a storage medium (defined through the <B>STGMEDIUM</B> structure). </P>
+
+<P class="label"><B>Notes to Callers</B></P>
+
+<P>You can specify more than one acceptable <B>TYMED</B> medium with the Boolean <B>OR</B> operator. <B>IDataObject::GetData</B> must choose the medium that best represents the data from the <B>OR</B> values, do the allocation, and indicate responsibility for releasing the medium.</P>
+
+<P>Data transferred across a stream extends from position zero of the stream pointer through to the position immediately before the current stream pointer (that is, the stream pointer position on exit).</P>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P class="label"><B>Notes to Implementers</B></P>
+
+<P><B>IDataObject::GetData</B> must check all fields in the <B>FORMATETC</B> structure. It is important that <B>IDataObject::GetData</B> render the requested aspect and, if possible, use the requested medium. </P>
+
+<P>If the data object cannot comply with the information specified in the <B>FORMATETC</B>, the method should return DV_E_FORMATETC. </P>
+
+<P>If an attempt to allocate the medium fails, the method should return STG_E_MEDIUMFULL. </P>
+
+<P>It is important to fill in all of the fields in the <B>STGMEDIUM</B> structure. </P>
+
+<P>Although the caller can specify more than one medium for returning the data, <B>IDataObject::GetData</B> can supply only one medium. </P>
+
+<P>If the initial transfer fails with the selected medium, this method can be implemented to try one of the other media specified before returning an error.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfidataobjectgetdatahere.htm">IDataObject::GetDataHere</A> | <A HREF="wce50lrfidataobjectsetdata.htm">IDataObject::SetData</A> | <A HREF="wce50lrfformatetc.htm">FORMATETC</A> | <A HREF="wce50lrfstgmedium124.htm">STGMEDIUM</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IDataObject::GetData (wce50lrfidataobjectgetdata.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

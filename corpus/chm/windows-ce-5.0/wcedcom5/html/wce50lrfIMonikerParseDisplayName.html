@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::ParseDisplayName</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimonikerparsedisplayname"></A>IMoniker::ParseDisplayName</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This<B> </B>method converts a display name into a moniker.</P>
+
+<PRE class="syntax"><B>HRESULT ParseDisplayName( </B>
+  <B>IBindCtx* </B><I>pbc</I><B>, </B>
+  <B>IMoniker* </B><I>pmkToLeft</I><B>, </B>
+  <B>LPOLESTR* </B><I>pszDisplayName</I><B>, </B>
+  <B>ULONG* </B><I>pchEaten</I><B>, </B>
+  <B>IMoniker** </B><I>ppmkOut</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfibindctxiunknown.htm">IBindCtx</A> interface on the bind context to be used in this binding operation. 
+
+<P>The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. 
+
+
+<P>For more information, see <B>IBindCtx</B>.
+</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> interface on the moniker that has been built out of the display name up to this point.</dd>
+
+<DT><I>pszDisplayName</I></DT>
+
+<DD>[in] Pointer to a null-terminated string that contains the remaining display name to be parsed. For Microsoft&reg; Win32&reg; applications, the <B>LPOLESTR</B> type indicates a wide character string (two bytes per character); otherwise, the string has one byte per character.</dd>
+
+<DT><I>pchEaten</I></DT>
+
+<DD>[out] Pointer to the number of characters in <I>pszDisplayName</I> that were consumed in this step.</dd>
+
+<DT><I>ppmkOut</I></DT>
+
+<DD>[out] Address of <B>IMoniker</B>* pointer variable that receives the interface pointer to the moniker that was built from <I>pszDisplayName</I>. 
+
+<P>When successful, the implementation must call the <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> method on the new moniker; it is the caller's responsibility to call the <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> method. 
+
+
+<P>If an error occurs, the implementation sets *<I>ppmkOut</I> to NULL. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The method supports the standard return values E_OUTOFMEMORY and E_UNEXPECTED. The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Value</TH>
+<TH width=69%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>S_OK</TD>
+<TD width=69%>The parsing operation was completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>MK_E_SYNTAX</TD>
+<TD width=69%>An error in the syntax of the input components (<I>pmkToLeft</I>, this moniker, and <I>pszDisplayName</I>). 
+<P>For example, a file moniker returns this error if <I>pmkToLeft</I> is non-NULL, and an item moniker returns it if <I>pmkToLeft</I> is NULL.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A> errors</TD>
+<TD width=69%>Parsing display names may cause binding. Thus, any error associated with this function may be returned.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>Moniker clients do not typically call <B>IMoniker::ParseDisplayName</B> directly. </P>
+
+<P>Instead, they call the <A HREF="wce50lrfmkparsedisplayname.htm">MkParseDisplayName</A> function when they want to convert a display name into a moniker (for example, in implementing the Links dialog box for a container application, or for implementing a macro language that supports references to objects outside the document). </P>
+
+<P>That function first parses the initial portion of the display name itself.</P>
+
+<P>It then calls <B>IMoniker::ParseDisplayName</B> on the moniker it has just created, passing the remainder of the display name and getting a new moniker in return; this step is repeated until the entire display name has been parsed. </P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>Your implementation may be able to perform this parsing by itself if your moniker class is designed to designate only certain kinds of objects. </P>
+
+<P>Otherwise, you must get an <A HREF="wce50lrfiparsedisplaynameiunknown.htm">IParseDisplayName</A> interface pointer for the object identified by the moniker-so-far (that is, the composition of <I>pmkToLeft</I> and this moniker) and then return the results of calling the <A HREF="wce50lrfiparsedisplaynameparsedisplayname.htm">IParseDisplayName::ParseDisplayName</A> method.</P>
+
+<P>There are different strategies for getting an <B>IParseDisplayName</B> pointer:
+
+<UL type="disc">
+	<LI>You can try to get the object's CLSID (by calling the <A HREF="wce50lrfipersistgetclassid.htm">IPersist::GetClassID</A> method on the object), and then call the <A HREF="wce50lrfcogetclassobject.htm">CoGetClassObject</A> function, requesting the <B>IParseDisplayName</B> interface on the class factory associated with that CLSID.</li>
+
+	<LI>You can try to bind to the object itself to get an <B>IParseDisplayName</B> pointer.</li>
+
+	<LI>You can try binding to the object identified by <I>pmkToLeft</I> to get an <A HREF="wce50lrfioleitemcontaineriunknown.htm">IOleItemContainer</A> pointer, and then call the <A HREF="wce50lrfioleitemcontainergetobject.htm">IOleItemContainer::GetObject</A> method to get an <B>IParseDisplayName</B> pointer for the item.</li>
+</UL>
+
+<P>Any objects that are bound should be registered with the bind context (see <A HREF="wce50lrfibindctxregisterobjectbound.htm">IBindCtx::RegisterObjectBound</A>) to ensure that they remain running for the duration of the parsing operation.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcogetclassobject.htm">CoGetClassObject</A> | <A HREF="wce50lrfmkparsedisplayname.htm">MkParseDisplayName</A> | <A HREF="wce50lrfimonikerbindtoobject.htm">IMoniker::BindToObject</A> | <A HREF="wce50lrfiparsedisplaynameiunknown.htm">IParseDisplayName</A> | <A HREF="wce50lrfipersistgetclassid.htm">IPersist::GetClassID</A> | <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> | <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMoniker::ParseDisplayName (wce50lrfimonikerparsedisplayname.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

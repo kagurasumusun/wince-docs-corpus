@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpLexicon</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisplexicon"></A>ISpLexicon</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This interface is used to access lexicons, which contain information about words that can be recognized or spoken. The interface provides a uniform way for applications and engines to access the user lexicon, application lexicon, and private engine lexicons. It is used differently by application and engine developers.</P>
+
+<P><B>SpLexicon</B> is the SAPI standard lexicon class that implements the <B>ISpLexicon</B> interface. When an object is created, it contains the user lexicon and all application lexicons registered in the system.</P>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>The following list shows what classes implement this interface:
+
+<UL type="disc">
+	<LI><B>SpLexicon</B> (implements <B>ISpContainerLexicon</B>, which is derived from <B>ISpLexicon</B>)</li>
+
+	<LI><B>SpCompressedLexicon </B></li>
+
+	<LI><B>SpUncompressedLexicon </B></li>
+</UL>
+
+<H4 class="dtH4">Methods</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=30%>Method</TH>
+<TH width=70%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfisplexiconaddpronunciation.htm">AddPronunciation</A></TD>
+<TD width=70%>Adds pronunciation and parts of speech of a word to the user lexicon. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfisplexicongetgeneration.htm">GetGeneration</A></TD>
+<TD width=70%>Gets the generation identifier for a word. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfisplexicongetgenerationchange.htm">GetGenerationChange</A></TD>
+<TD width=70%>Gets a list of words which have changed between the current and a specified generation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfisplexicongetwords.htm">GetWords</A></TD>
+<TD width=70%>Gets a list of all words in the lexicon. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfisplexicongetpronunciations.htm">GetPronunciations</A></TD>
+<TD width=70%>Gets pronunciations and parts of speech for a word. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="wce50lrfisplexiconremovepronunciation.htm">RemovePronunciation</A></TD>
+<TD width=70%>Removes a word from the user lexicon.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P class="labelproc"><b class="le">ISpLexicon information for application developers</b></P>
+
+<P>Engines can add their private lexicons through the <A HREF="wce50lrfispcontainerlexicon.htm">ISpContainerLexicon</A> interface. However, if an application uses <B>ISpContainerLexicon</B> to add a lexicon to an <B>ISpLexicon</B> object, the lexicon will not be used by the engine.</P>
+
+<P>Your application can use <A HREF="wce50lrfisplexicongetpronunciations.htm">ISpLexicon::GetPronunciations</A> to get pronunciations from both user and application lexicons:</P>
+
+<PRE class="code">hr = cpLexicon-&gt;GetPronunciation(... eLEXTYPE_USER ...);
+hr = cpLexicon-&gt;GetPronunciation(... eLEXTYPE_APP ...); 
+hr = cpLexicon-&gt;GetPronunciation(... eLEXTYPE_USER | eLEXTYPE_APP ...);</PRE>
+
+<P>Your application can also add an application lexicon to the system, and remove it later. When an application lexicon is added to the system, it is shared by all applications. Any <B>SpLexicon</B> object created afterward will automatically load the application lexicon. Application lexicons will override engine private lexicons.</P>
+
+<P>To add an application lexicon, let your COM object implement the <B>ISpLexicon</B> and <A HREF="wce50lrfispobjectwithtoken.htm">ISpObjectWithToken</A> interfaces, and register the lexicon as illustrated in the following example:</P>
+
+<PRE class="code">hr = SpCreateNewTokenEx(SPCAT_APPLEXICONS, pszLangIndependentName,
+&amp;CLSID_YourLexicon, pszLangIndependentName, langid, pszLangDependentName,
+&amp;cpToken, &amp;cpDataKeyAttribs);
+// hr = cpDataKeyAttribs-&gt;SetStringValue(name1, value1); // optional.  Can be
+used to find your lexicon later
+// hr = cpDataKeyAttribs-&gt;SetStringValue(name2, value2); // optional
+// ...</PRE>
+
+<P>Your application can also use the SAPI-provided <B>SpUncompressedLexicon</B> class (CLSID_SpUnCompressedLexicon) to implement your application lexicon as follows. Note that the class <B>SpCompressedLexicon</B> (CLSID_SpCompressedLexicon is intended for engine vendors.</P>
+
+<PRE class="code">hr = SpCreateNewTokenEx(SPCAT_APPLEXICONS, pszLangIndependentName,
+&amp;CLSID_SpUnCompressedLexicon, pszLangIndependentName, langid,
+pszLangDependentName, &amp;cpToken, &amp;cpDataKeyAttribs);
+// hr = cpDataKeyAttribs-&gt;SetStringValue(name1, value1); // optional.  Can be
+used to find your lexicon later
+// hr = cpDataKeyAttribs-&gt;SetStringValue(name2, value2); // optional
+// ...
+
+hr = SpCreateObjectFromToken(cpToken, &amp;cpAppLexicon);
+
+cpAppLexicon-&gt;AddPronunciation(...);
+cpAppLexicon-&gt;AddPronunciation(...);
+cpAppLexicon.Release();  // the CLSID_SpUnCompressedLexicon object will be read-only after this point</PRE>
+
+<P>To remove an application lexicon from the system, your application should:
+
+<OL type="1">
+	<LI>Locate the lexicon with the <A HREF="wce50lrfspfindbesttoken.htm">SpFindBestToken</A> function. </li>
+
+	<LI>Call <A HREF="wce50lrfispobjecttokenremove.htm">ISpObjectToken::Remove</A> (passing NULL) to remove the lexicon from the system. </li>
+</OL>
+
+<P class="labelproc"><B>ISpLexicon information for engine developers</B></P>
+
+<P>An engine can use the <B>ISpLexicon</B> interface to add or remove words from the user lexicon. However, the engine developer will not typically use <A HREF="wce50lrfisplexiconaddpronunciation.htm">ISpLexicon::AddPronunciation</A> and <A HREF="wce50lrfisplexiconremovepronunciation.htm">ISpLexicon::RemovePronunciation</A> to add or remove words from user lexicons.</P>
+
+<P>When the engine implements private lexicons through the <B>ISpLexicon</B> interface, SAPI will only call <A HREF="wce50lrfisplexicongetpronunciations.htm">ISpLexicon::GetPronunciations</A> and <A HREF="wce50lrfisplexicongetwords.htm">ISpLexicon::GetWords</A> on the private lexicon. Private lexicons can be modified by implementing the <B>AddPronunciation</B> or <B>RemovePronunciation</B> methods to populate lexicons.</P>
+
+<P>If the engine caches pronunciations from user or application lexicons, it needs to call <A HREF="wce50lrfisplexicongetgeneration.htm">ISpLexicon::GetGeneration</A> periodically to determine if the pronunciation has been modified by an application. For optimum efficiency, an engine should maintain synchronization with the user and application lexicons. The SAPI 5.0 compliance test can verify an engine's ability to detect changes in the user or application lexicons. </P>
+
+<P>When the call to <B>GetGeneration</B> retrieves a larger generation number than that retrieved by the previous call, the engine should call <B>ISpLexicon::GetGenerationChange</B> or <B>GetWords</B> to update the cache.</P>
+
+<P>The engine can add private lexicons to the <A HREF="wce50lrfispcontainerlexicon.htm">ISpContainerLexicon</A> interface. Alternatively the engine can use a customized method for implementing a private lexicon. However, to ensure consistent behavior among all applications, engines should always use the pronunciations from the user and application lexicons.</P>
+
+<PRE class="code">CComPtr&lt;ISpContainerLexicon&gt; cpLexicon;
+// load user lexicon and all application lexicons registered in the system
+automatically
+hr = cpLexicon.CoCreateInstance(CLSID_SpLexicon);  
+
+// create your private lexicons implementing ISpLexicon, (for example, pMyLex1,
+pMyLex2)
+hr = cpLexicon-&gt;AddLexicon(pMyLex1, eLEXTYPE_PRIVATE1);
+hr = cpLexicon-&gt;AddLexicon(pMyLex2, eLEXTYPE_PRIVATE2);
+...</PRE>
+
+<P>Engines can access lexicons as shown in the following example:</P>
+
+<PRE class="code">hr = cpLexicon-&gt;GetPronunciations(... eLEXTYPE_USER ...);
+hr = cpLexicon-&gt;GetPronunciations(... eLEXTYPE_APP ...); 
+hr = cpLexicon-&gt;GetPronunciations(... eLEXTYPE_USER | eLEXTYPE_APP | eLEXTYPE_PRIVATE1 | eLEXTYPE_PRIVATE2 ...);</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpLexicon (wce50lrfisplexicon.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

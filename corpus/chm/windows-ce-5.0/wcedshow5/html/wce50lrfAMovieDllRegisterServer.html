@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AMovieDllRegisterServer</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfamoviedllregisterserver"></A>AMovieDllRegisterServer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function registers filters. </P>
+
+<PRE class="syntax"><B>HRESULT AMovieDllRegisterServer(void);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<P>None.</P>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns an <B>HRESULT</B> value. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Use this function to set up your filters. The following function shows an example of how this might be done.</P>
+
+<PRE class="code">static const WCHAR *g_wszName = L"Sample Compressor Filter" ;
+ 
+// Register Sample Compressor Filter
+STDAPI
+DllRegisterServer( void )
+ {
+    // register the server
+    HRESULT hr = AMovieDllRegisterServer( );
+    if( FAILED(hr) )
+        return hr;
+ 
+    IFilterMapper2 *pFm2 = 0;
+ 
+    hr = CoCreateInstance( CLSID_FilterMapper2
+                           , NULL
+                           , CLSCTX_INPROC_SERVER
+                           , IID_IFilterMapper2
+                           , (void **)&amp;pFm2 );
+    
+    if(FAILED(hr))
+        return hr;
+ 
+    static const AMOVIESETUP_MEDIATYPE sudAVICoTypeOut =  {
+        &amp;MEDIATYPE_Video,
+        &amp;MEDIASUBTYPE_SampleVideoType };
+
+    static const AMOVIESETUP_MEDIATYPE sudAVICoTypeIn =  {
+        &amp;MEDIATYPE_Video,
+        &amp;GUID_NULL };
+
+    static const AMOVIESETUP_PIN psudAICoPins[] =
+    {
+        {
+            L"Input"        // strName
+            , FALSE         // bRendered
+            , FALSE         // bOutput
+            , FALSE         // bZero
+            , FALSE         // bMany
+            , &amp;CLSID_NULL   // clsConnectsToFilter
+            , 0             // strConnectsToPin
+            , 1             // nTypes
+            , &amp;sudAVICoTypeIn } // lpTypes
+        , { L"Output"       // strName
+            , FALSE         // bRendered
+            , TRUE          // bOutput
+            , FALSE         // bZero
+            , FALSE         // bMany
+            , &amp;CLSID_NULL   // clsConnectsToFilter
+            , 0             // strConnectsToPin
+            , 1             // nTypes
+            , &amp;sudAVICoTypeOut
+        }
+    };   // lpTypes     
+
+    REGFILTER2 rf2;
+    rf2.dwVersion = 1;
+    rf2.dwMerit = MERIT_DO_NOT_USE;
+    rf2.cPins = NUMELMS(psudAVICoPins);
+    rf2.rgPins = psudAVICoPins;
+ 
+    hr = pFm2-&gt;RegisterFilter(
+        CLSID_SampleCompressorFilter,
+        g_wszName,              // name shown to the user
+        0,                      // device moniker
+        &amp;CLSID_VideoCompressorCategory,
+        g_wszName,              // unique instance name
+        &amp;rf2);
+ 
+    pFm2-&gt;Release();
+
+    return hr;
+ }</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements.</P>
+
+<P>For more information, see <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A>.</P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.<BR>
+<B>Header:</B> </P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfdllandsetupfunctions.htm">DLL and Setup Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: AMovieDllRegisterServer (wce50lrfamoviedllregisterserver.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

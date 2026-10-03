@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>STGC</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfstgc"></A>STGC</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This enumeration specifies the conditions for performing the commit operation in the <A HREF="wce50lrfistoragecommit.htm">IStorage::Commit</A> and <A HREF="wce50lrfistreamcommit.htm">IStream::Commit</A> methods.</P>
+
+<PRE class="syntax"><B>typedef enum tagSTGC {</B> 
+<B>  STGC_DEFAULT = 0, </B>
+<B>  STGC_OVERWRITE = 1, </B>
+<B>  STGC_ONLYIFCURRENT = 2, </B>
+<B>  STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE = 4, </B>
+<B>} STGC; </B></PRE>
+
+<H4 class="dtH4">Elements</H4>
+
+<DL>
+<DT>STGC_DEFAULT </DT>
+
+<DD>You can specify this condition with STGC_CONSOLIDATE, or some combination of the other three flags in this list of elements. Use this value mainly to make your code more readable. </dd>
+
+<DT>STGC_OVERWRITE </DT>
+
+<DD>The commit operation can overwrite existing data to reduce overall space requirements. 
+
+<P>This value is not recommended for typical usage because it is not as robust as the default value. In this case, it is possible for the commit operation to fail after the old data is overwritten but before the new data is completely committed. Then, neither the old version nor the new version of the storage object will be intact. 
+
+
+<P>The following list shows the use cases for this value: 
+
+
+<UL type="disc">
+	<LI>The user has indicated a willingness to risk losing the data. </li>
+
+	<LI>The low-memory save sequence will be used to safely save the storage object to a smaller file. </li>
+
+	<LI>A previous commit returned STG_E_MEDIUMFULL but overwriting the existing data would provide enough space to commit changes to the storage object. </li>
+</UL>
+
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The commit operation checks for adequate space before any overwriting occurs. Therefore, even with this value specified, if the commit operation fails because of space requirements, the old data will remain safe. </BLOCKQUOTE>
+
+
+<BLOCKQUOTE class="dtBlock">
+It is possible however, for data loss to occur with the STGC_OVERWRITE value specified, if the commit operation fails for any reason other than lack of disk space. </BLOCKQUOTE>
+</dd>
+
+<DT>STGC_ONLYIFCURRENT</DT>
+
+<DD>Prevents multiple users of a storage object from overwriting each other's changes. 
+
+<P>The commit operation occurs only if there have been no changes to the saved storage object since the user most recently opened it. Therefore, the saved version of the storage object is the same version that the user has been editing.
+
+
+<P>If other users have changed the storage object, the commit operation fails and returns the STG_E_NOTCURRENT value. 
+
+
+<P>You can override this behavior by calling the <B>IStorage::Commit</B> or <B>IStream::Commit</B> method again using the STGC_DEFAULT value. 
+</dd>
+
+<DT>STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE</DT>
+
+<DD>Commits the changes to a write-behind disk cache, but does not save the cache to the disk. 
+
+<P>In a write-behind disk cache, the operation that writes to disk actually writes to a disk cache, and therefore increasing performance. The cache is eventually written to the disk, but usually not until after the write operation has already returned. 
+
+
+<P>The performance increase comes at the expense of an increased risk of losing data if a problem occurs before the cache is saved and the data in the cache is lost. 
+
+
+<P>If you do not specify this value, then committing changes to root-level storage objects is robust even if a disk cache is used. The two-phase commit process ensures that data is stored on the disk and not just to the disk cache. 
+</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>You can specify STGC_DEFAULT or some combination of STGC_OVERWRITE, STGC_ONLYIFCURRENT, and STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE for normal commit operations. You can specify STGC_CONSOLIDATE with any other STGC flags.</P>
+
+<P>Typically, you would use STGC_ONLYIFCURRENT to protect the storage object in cases where more than one user can edit the object simultaneously.</P>
+
+<H4 class="dtH4">Requirements </H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Wtypes.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfistorageiunknown.htm">IStorage</A> | <A HREF="wce50lrfistreamiunknown.htm">IStream</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: STGC (wce50lrfstgc.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

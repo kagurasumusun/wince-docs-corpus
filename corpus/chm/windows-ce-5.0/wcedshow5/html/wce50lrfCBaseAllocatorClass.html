@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CBaseAllocator Class</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfIUnknownRelease">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcbaseallocatorclass"></A>CBaseAllocator Class</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P class="fig"><IMG SRC="filter09.gif" ALT="" BORDER=0></P>
+
+<P>This is an abstract base class that implements the basic mechanisms for an allocator with a fixed number of fixed-size buffers. </P>
+
+<P>The number of buffers and their size can be changed using the <A HREF="wce50lrfcbaseallocatorsetproperties.htm">CBaseAllocator::SetProperties</A> member function when an input pin and an output pin negotiate the allocator between them. </P>
+
+<P>The class provides the basic functionality for a memory allocator by implementing the <A HREF="wce50lrfimemallocatorinterface.htm">IMemAllocator</A> interface. </P>
+
+<P>It provides support for managing a list of <A HREF="wce50lrfcmediasampleclass.htm">CMediaSample</A> objects (or objects derived from this class), including support for the <A HREF="wce50lrfimemallocatorcommit.htm">IMemAllocator::Commit</A> and <A HREF="wce50lrfimemallocatordecommit.htm">IMemAllocator::Decommit</A> methods, and blocking the <A HREF="wce50lrfimemallocatorgetbuffer.htm">IMemAllocator::GetBuffer</A> method. </P>
+
+<P>Any class derived from this class (such as <A HREF="wce50lrfcmemallocatorclass.htm">CMemAllocator</A>) must create <A HREF="wce50lrfcmediasampleclass.htm">CMediaSample</A> objects, which this base class does not. </P>
+
+<P>A signaling mechanism employing a semaphore is used so that if there are no samples, a thread can wait until there are samples or until the allocator is decommitted. The <B>m_lFree</B> and <B>m_hSem</B> member variables are used to implement this simple signaling mechanism as follows. </P>
+
+<P>When a thread calls <A HREF="wce50lrfcbaseallocatorgetbuffer.htm">CBaseAllocator::GetBuffer</A> and there are no samples available, <B>m_lWaiting</B> is incremented and the thread calls the Win32 <B>WaitForSingleObject</B> function on the semaphore indicated by <B>m_hSem</B>. </P>
+
+<P>When a sample is freed (by the <A HREF="JavaScript:hhobj_1.Click()">IUnknown::Release</A> method returning the reference count to zero) or <A HREF="wce50lrfcbaseallocatordecommit.htm">CBaseAllocator::Decommit</A> is called and <B>m_lWaiting</B> is nonzero, the Win32 <B>ReleaseSemaphore</B> function is called on <B>m_hSem</B> with a release count of <B>m_lWaiting</B>, and <B>m_lWaiting</B> is reset to zero. </P>
+
+<P>All member functions in this class that return <B>HRESULT</B> and accept a pointer as a parameter return E_POINTER when passed a null pointer. </P>
+
+<H4 class="dtH4">Protected Data Members</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Member</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_bChanged </B></TD>
+<TD width=64%>TRUE if the buffers have changed; otherwise, FALSE. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_bCommitted</B></TD>
+<TD width=64%>If TRUE, the allocator is in a state in which all <A HREF="wce50lrfimemallocatorgetbuffer.htm">IMemAllocator::GetBuffer</A> methods fail. 
+<P>The <A HREF="wce50lrfimemallocatorsetproperties.htm">IMemAllocator::SetProperties</A> method is the only member function permitted to operate in this state. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_bDecommitInProgress</B></TD>
+<TD width=64%>If TRUE, the decommit process completes upon the return of all media samples. 
+<P>Until the decommit process has completed, any calls to <A HREF="wce50lrfimemallocatorgetbuffer.htm">IMemAllocator::GetBuffer</A> return E_OUTOFMEMORY. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_hSem</B></TD>
+<TD width=64%>Semaphore for signaling. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_lAlignment</B></TD>
+<TD width=64%>Agreed alignment of the buffer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_lAllocated </B></TD>
+<TD width=64%>Number of buffers actually allocated. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_lCount</B></TD>
+<TD width=64%>Established number of buffers to provide. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_lFree</B></TD>
+<TD width=64%>List of <A HREF="wce50lrfcmediasampleclass.htm">CMediaSample</A> objects that are currently free (free list). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_lPrefix</B></TD>
+<TD width=64%>Agreed prefix of the buffer (precedes value returned by <A HREF="wce50lrfimediasamplegetpointer.htm">IMediaSample::GetPointer</A>). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_lSize </B></TD>
+<TD width=64%>Size of each buffer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>m_lWaiting</B></TD>
+<TD width=64%>Count of threads waiting for samples. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Member Functions</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Member function</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorcbaseallocator.htm">CBaseAllocator</A></TD>
+<TD width=64%>Constructs a <B>CBaseAllocator</B> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatornotifysample.htm">NotifySample</A></TD>
+<TD width=64%>Notifies a waiting thread that a sample is available on the free list. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorsetwaiting.htm">SetWaiting</A></TD>
+<TD width=64%>Increments the <B>m_lWaiting</B> data member to indicate that a thread is waiting for a sample. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Overrideable Member Functions</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Member function</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatoralloc.htm">Alloc</A></TD>
+<TD width=64%>Allocates memory, instantiates <A HREF="wce50lrfcmediasampleclass.htm">CMediaSample</A> objects, and adds them to the <B>m_lAllocated</B> and <B>m_lFree</B> data members. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorfree.htm">Free</A></TD>
+<TD width=64%>Decommits memory when the last buffer is freed. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Implemented IMemAllocator Methods</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Method</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorcommit.htm">Commit</A></TD>
+<TD width=64%>Allocates memory by calling the <A HREF="wce50lrfcbaseallocatoralloc.htm">CBaseAllocator::Alloc</A> member function, which you must override. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatordecommit.htm">Decommit</A></TD>
+<TD width=64%>Releases any resources and enters the inactive state. 
+<P>Blocking calls to <A HREF="wce50lrfimemallocatorgetbuffer.htm">IMemAllocator::GetBuffer</A> should return with an error value, and all further calls to <A HREF="wce50lrfimemallocatorgetbuffer.htm">GetBuffer</A> fail when in the inactive state. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorgetbuffer.htm">GetBuffer</A></TD>
+<TD width=64%>Retrieves a container for a sample. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorgetproperties.htm">GetProperties</A></TD>
+<TD width=64%>Determines the size, number, and alignment of blocks. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorreleasebuffer.htm">ReleaseBuffer</A></TD>
+<TD width=64%>Releases the <A HREF="wce50lrfcmediasampleclass.htm">CMediaSample</A> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatorsetproperties.htm">SetProperties</A></TD>
+<TD width=64%>Specifies a desired number of blocks, size of the blocks, and block alignment figure. This method returns the actual values for the same. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Implemented INonDelegatingUnknown Methods</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Method</TH>
+<TH width=64%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><A HREF="wce50lrfcbaseallocatornondelegatingqueryinterface.htm">NonDelegatingQueryInterface</A></TD>
+<TD width=64%>Passes out pointers to any interfaces added to the derived filter class. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements.</P>
+
+<P>For more information, see <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A>. </P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.<BR>
+<B>Header:</B> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CBaseAllocator%20Class (wce50lrfcbaseallocatorclass.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

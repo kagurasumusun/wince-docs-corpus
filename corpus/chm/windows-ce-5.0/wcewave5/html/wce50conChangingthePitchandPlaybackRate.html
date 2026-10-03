@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Changing the Pitch and Playback Rate</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conchangingthepitchandplaybackrate"></A>Changing the Pitch and Playback Rate</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Some waveform audio I/O devices can vary the pitch and the playback rate of waveform audio data. As with other device capabilities, you can query your waveform audio I/O device by using the <A HREF="wce50lrfwaveoutgetdevcaps.htm">waveOutGetDevCaps</A> function to determine if your device supports either of these capabilities.</P>
+
+<P>The following table describes the functions that you can use to query and set the waveform audio pitch and playback rate.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Function</TH>
+<TH width=66%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="wce50lrfwaveoutgetpitch.htm">waveOutGetPitch</A></TD>
+<TD width=66%>Retrieves the pitch for the specified waveform audio output device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="wce50lrfwaveoutgetplaybackrate.htm">waveOutGetPlaybackRate</A></TD>
+<TD width=66%>Retrieves the playback rate for the specified waveform audio output device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="wce50lrfwaveoutsetpitch.htm">waveOutSetPitch</A></TD>
+<TD width=66%>Sets the pitch for the specified waveform audio device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="wce50lrfwaveoutsetplaybackrate.htm">waveOutSetPlaybackRate</A></TD>
+<TD width=66%>Sets the playback rate for the specified waveform audio output device.</TD>
+</TR>
+</table></div>
+
+<P>These functions change the pitch and the playback rate by a factor that is specified with a fixed-point number that is packed into a <B>DWORD</B> value. The upper 16 bits specify the integer part of the number; the lower 16 bits specify the fractional part of the number. A value of 0x8000 in the low-order word represents one-half, and 0x4000 represents one-quarter. The following table shows three examples of this style of packaging.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Value</TH>
+<TH width=66%>Packaged value</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>1.5</TD>
+<TD width=66%>0x00018000L</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>0.75</TD>
+<TD width=66%>0x0000C000L</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>1.0</TD>
+<TD width=66%>0x00010000L</TD>
+</TR>
+</table></div>
+
+<P>A value of 1.0 means that the pitch or playback rate is unchanged.</P>
+
+<P>If your application relies on floating point values for it pitch and playback rate controls then you can create a macros to convert your floating point values to the 16.16 fixed point values used by these functions.  The following code shows a way to set the playback rate in this manner.</P>
+
+<PRE class="code">#define FL2FX(x) ((ULONG) (32768.0 * (x)))
+
+// set playback rate using a floating point multiplier
+MMRESULT SetRate(HWAVEOUT hwo, double rate)
+{
+   return waveOutSetPlaybackRate(hwo, FL2FX(rate));
+} </PRE>
+
+<P>Although changing the pitch and changing the playback rate seem similar to the user, they are implemented quite differently. Because the device driver controls the playback rate, altering the playback rate does not require any specialized hardware. However, the driver does not change the sample rate. Instead, the driver skips or synthesizes samples. For example, the driver could skip every other sample if an application changed the playback rate by a factor of two. In contrast, changing the pitch requires specialized hardware. When an application alters the pitch, the application does not alter specifically the playback or the sample rate.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conplayingwaveformaudiofiles.htm">Playing Waveform Audio Files</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Changing%20the%20Pitch%20and%20Playback%20Rate (wce50conchangingthepitchandplaybackrate.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

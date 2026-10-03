@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SCARD_READERSTATE</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfscardreaderstate"></A>SCARD_READERSTATE</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This structure is used by functions for tracking smart cards within readers.</P>
+
+<PRE class="syntax"><B>typedef struct {</B>
+  <B>LPCTSTR </B><I>szReader</I><B>;</B>
+  <B>LPVOID </B><I>pvUserData</I><B>;</B>
+  <B>DWORD </B><I>dwCurrentState</I><B>;</B>
+  <B>DWORD </B><I>dwEventState</I><B>;</B>
+  <B>DWORD </B><I>cbAtr</I><B>;</B>
+  <B>BYTE </B><I>rgbAtr[36]</I><B>;</B>
+<B>} SCARD_READERSTATE, *PSCARD_READERSTATE, *LPSCARD_READERSTATE;</B></PRE>
+
+<H4 class="dtH4">Members</H4>
+
+<DL>
+<DT><B>szReader</B></DT>
+
+<DD>Points to the name of the reader being monitored.</dd>
+
+<DT><B>pvUserData</B></DT>
+
+<DD>Not used by the smart card subsystem but is used by the application.</dd>
+
+<DT><B>dwCurrentState</B></DT>
+
+<DD>Supplies the current state of the reader, as seen by the application. This field can take on any of the following values, in combination, as a bit mask.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Value</TH>
+<TH width=60%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_UNAWARE</TD>
+<TD width=60%>The application is unaware of the current state and would like to know it. The use of this value results in an immediate return from state transition monitoring services. This is represented by all bits set to zero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_IGNORE</TD>
+<TD width=60%>The application is not interested in this reader, and it should not be considered during monitoring operations. If this bit value is set, all other bits are ignored.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_UNAVAILABLE</TD>
+<TD width=60%>The application believes that this reader is not available for use. If this bit is set, then all the following bits are ignored.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_EMPTY</TD>
+<TD width=60%>The application believes that there is not a card in the reader. If this bit is set, all the following bits are ignored.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_PRESENT</TD>
+<TD width=60%>The application believes that there is a card in the reader.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_ATRMATCH</TD>
+<TD width=60%>The application believes that there is a card in the reader with an ATR matching one of the target cards. If this bit is set, SCARD_STATE_PRESENT is assumed. This bit has no meaning to <A HREF="wce50lrfscardgetstatuschange.htm">SCardGetStatusChange</A> beyond SCARD_STATE_PRESENT.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_EXCLUSIVE</TD>
+<TD width=60%>The application believes that the card in the reader is allocated for exclusive use by another application. If this bit is set, SCARD_STATE_PRESENT is assumed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_INUSE</TD>
+<TD width=60%>The application believes that the card in the reader is in use by one or more other applications, but it may be connected to in shared mode. If this bit is set, SCARD_STATE_PRESENT is assumed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_MUTE</TD>
+<TD width=60%>The application believes that there is an unresponsive card in the reader.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>dwEventState</B></DT>
+
+<DD>Receives the current state of the reader, as known by the smart card resource manager. This field can take on any of the following values, in combination, as a bit mask.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=40%>Value</TH>
+<TH width=60%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_IGNORE</TD>
+<TD width=60%>This reader should be ignored.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_CHANGED</TD>
+<TD width=60%>There is a difference between the state believed by the application and the state known by the resource manager. When this bit is set, the application may assume a significant state change has occurred on this reader.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_UNKNOWN</TD>
+<TD width=60%>The given reader name is not recognized by the resource manager. If this bit is set, SCARD_STATE_CHANGED and SCARD_STATE_IGNORE will also be set.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_UNAVAILABLE</TD>
+<TD width=60%>The actual state of this reader is not available. If this bit is set, all the following bits are clear.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_EMPTY</TD>
+<TD width=60%>There is no card in the reader. If this bit is set, all the following bits are be clear.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_PRESENT</TD>
+<TD width=60%>There is a card in the reader.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_ATRMATCH</TD>
+<TD width=60%>There is a card in the reader with an ATR matching one of the target cards. If this bit is set, SCARD_STATE_PRESENT will also be set. This bit is only returned on the <A HREF="wce50lrfscardlocatecards.htm">SCardLocateCards</A> function.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_EXCLUSIVE</TD>
+<TD width=60%>The card in the reader is allocated for exclusive use by another application. If this bit is set, SCARD_STATE_PRESENT will also be set.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_INUSE</TD>
+<TD width=60%>The card in the reader is in use by one or more other applications, but it may be connected to in shared mode. If this bit is set, SCARD_STATE_PRESENT will also be set.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>SCARD_STATE_MUTE</TD>
+<TD width=60%>There is an unresponsive card in the reader.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><B>cbAtr</B></DT>
+
+<DD>Number of bytes in the returned ATR.</dd>
+
+<DT><B>rgbAtr</B></DT>
+
+<DD>ATR of the inserted card, with extra alignment bytes.</dd>
+</DL>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Winscard.h.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfscardgetstatuschange.htm">SCardGetStatusChange</A> | <A HREF="wce50lrfscardlocatecards.htm">SCardLocateCards</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: SCARD_READERSTATE (wce50lrfscardreaderstate.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

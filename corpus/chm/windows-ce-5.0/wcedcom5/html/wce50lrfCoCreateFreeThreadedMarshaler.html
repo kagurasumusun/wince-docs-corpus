@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoCreateFreeThreadedMarshaler</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcocreatefreethreadedmarshaler"></A>CoCreateFreeThreadedMarshaler</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function creates an aggregatable object capable of context-dependent marshaling.</P>
+
+<PRE class="syntax"><B>HRESULT CoCreateFreeThreadedMarshaler(</B>
+  <B>LPUNKNOWN </B><I>punkOuter</I><B>,</B>
+  <B>LPUNKNOWN* </B><I>ppunkMarshaler</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>punkOuter</I></DT>
+
+<DD>[in] Pointer to the aggregating object's controlling <A HREF="wce50lrfiunknown.htm">IUnknown</A>.</dd>
+
+<DT><I>ppunkMarshaler</I></DT>
+
+<DD>[out] Address of <B>IUnknown</B>* pointer variable that receives the interface pointer to the aggregatable marshaler.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function supports the standard return value E_OUTOFMEMORY, as well as the following:
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The marshaler was created.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>CoCreateFreeThreadedMarshaler</B> function enables an object to efficiently marshal interface pointers between threads in the same process. </P>
+
+<P>If your objects do not support interthread marshaling, you have no need to call this function. It is intended for use by free-threaded DLL servers that must be accessed directly by all threads in a process, even those threads associated with single-threaded apartments. </P>
+
+<P>It custom-marshals the real memory pointer over into other apartments as a bogus proxy and gives direct access to all callers, even if they are not free-threaded.</P>
+
+<P>The <B>CoCreateFreeThreadedMarshaler</B> function performs the following tasks:
+
+<OL type="1">
+	<LI>Creates a free-threaded marshaler object.</li>
+
+	<LI>Aggregates this marshaler to the object specified by the <I>punkOuter</I> parameter. This object is normally the one whose interface pointers are to be marshaled.</li>
+</OL>
+
+<P>The aggregating object's implementation of <A HREF="wce50lrfimarshaliunknown.htm">IMarshal</A> should delegate <A HREF="wce50lrfiunknownqueryinterface.htm">QueryInterface</A> calls for IID_IMarshal to the <B>IUnknown</B> of the free-threaded marshaler. Upon receiving a call, the free-threaded marshaler performs the following tasks:
+
+<OL type="1">
+	<LI>Checks the destination context specified by the <A HREF="wce50lrfcomarshalinterface.htm">CoMarshalInterface</A> function's <I>dwDestContext</I> parameter. </li>
+
+	<LI>If the destination context is MSHCTX_INPROC, copies the interface pointer into the marshaling stream.</li>
+
+	<LI>If the destination context is any other value, finds or creates an instance of COM's default (standard) marshaler and delegates marshaling to it.</li>
+</OL>
+
+<P>Values for <I>dwDestContext</I> come from the MSHCTX enumeration. MSHCTX_INPROC indicates that the interface pointer is to be marshaled between different threads in the same process. </P>
+
+<P>Because both threads have access to the same address space, the client thread can dereference the pointer directly rather than having to direct calls to a proxy. </P>
+
+<P>In all other cases, a proxy is required, so <B>CoCreateFreeThreadedMarshaler</B> delegates the marshaling job to COM's default implementation.</P>
+
+<P>Great care should be exercised in using the <B>CoCreateFreeThreadedMarshaler</B> function. </P>
+
+<P>This is because the performance of objects which aggregate the free-threaded marshaler is obtained through a calculated violation of the rules of COM, with the ever-present risk of undefined behavior unless the object operates within certain restrictions. </P>
+
+<P>The most important restrictions are as follows:
+
+<OL type="1">
+	<LI>A free-threaded marshaler object cannot hold direct pointers to interfaces on an object that does not aggregate the free-threaded marshaler as part of its state. 
+<P>If the object were to use direct references to ordinary single-threaded aggregate objects, it may break their single threaded property. 
+
+<P>If the object were to use direct references to ordinary multi-threaded aggregate objects, these objects can behave in ways that show no sensitivity to the needs of direct single-threaded aggregate clients. 
+
+<P>For example, these objects can spin new threads and pass parameters to the threads that are references to ordinary single-threaded aggregate objects.
+</li>
+
+	<LI>A free-threaded marshaler object cannot hold references to proxies to objects in other apartments. Proxies are sensitive to the threading model and can return RPC_E_WRONG_THREAD if called by the wrong client.</li>
+</OL>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A> | <A HREF="wce50lrfcomarshalinterthreadinterfaceinstream.htm">CoMarshalInterThreadInterfaceInStream</A> | <A HREF="wce50lrfcogetinterfaceandreleasestream.htm">CoGetInterfaceAndReleaseStream</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoCreateFreeThreadedMarshaler (wce50lrfcocreatefreethreadedmarshaler.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

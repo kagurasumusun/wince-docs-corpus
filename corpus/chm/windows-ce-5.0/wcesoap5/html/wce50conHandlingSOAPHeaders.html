@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling SOAP Headers</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conhandlingsoapheaders"></A>Handling SOAP Headers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The SOAP Toolkit for Windows CE allows messages to contain header content in addition to the normal body content. </P>
+
+<P>Headers often pass information between the client and service that is not strictly part of the operation being performed. </P>
+
+<P>For example, a client request for a login operation might cause the server to store a session ID in the header of a response message. The client would then return this session ID in the header of each subsequent request message.</P>
+
+<P>The SOAP Toolkit allows headers to be accessed and created on client and server.</P>
+
+<H2 class="dtH2">Using Headers on the Client Side</H2>
+
+<P>To use headers on the client, you must provide a COM class that implements the <A HREF="wce50lrfiheaderhandler.htm">IHeaderHandler</A> interface. Further, you must have the <A HREF="wce50lrfheaderhandlerpropertyisoapclient.htm">HeaderHandler</A> property of the <B>SoapClient</B> object reference an instance of this class. You access the <B>SoapClient</B> object using the <A HREF="wce50lrfisoapclient.htm">ISoapClient</A> interface.</P>
+
+<P>Each time the client application calls a method of the <B>SoapClient</B> object, the <B>SoapClient</B> object calls the <A HREF="wce50lrfwillwriteheadersmethod.htm">ISoapClient::willWriteHeaders</A> method of the header handler. </P>
+
+<P>If <B>willWriteHeaders</B> returns True, the <B>SoapClient</B> object writes a SOAP &lt;Header&gt; element to the request message and then calls the <A HREF="wce50lrfwriteheadersmethod.htm">IHeaderHandler::writeHeaders</A> method. </P>
+
+<P>The <B>writeHeaders</B> method uses the specified <B>SoapSerializer</B> object (accessed using the <A HREF="wce50lrfisoapserializer.htm">ISoapSerializer</A> interface) to write header content. The <B>SoapClient</B> object then writes the body of the request message, sends the message to the server, and receives the response message. </P>
+
+<P>When the response message is complete, the <B>SoapClient</B> object calls the <A HREF="wce50lrfreadheadermethod.htm">IHeaderHandler::readHeader</A> method once for each header in the response message. Finally, the operation method returns to the client application.</P>
+
+<P>On the client, the <I>pObject</I> parameter of the <B>readHeader</B> and <B>writeHeader</B> methods is always NULL. Also, the return value of <B>readHeader</B> is ignored.</P>
+
+<H2 class="dtH2">Using Headers on the Server Side</H2>
+
+<P>To use headers in the service, you must provide a COM class that implements the <B>IHeaderHandler</B> interface and identify that class in the appropriate &lt;service&gt; element in the Web Services Meta Language (WSML) file. </P>
+
+<P>In that &lt;service&gt; element, you use a &lt;using&gt; element to define the header handler object. Then, to associate this header handler object to a particular port or service, you use the <B>headerHandler</B> attribute of that particular &lt;port&gt; or &lt;operation&gt; element. </P>
+
+<P>For example, the following WSML file defines the <B>ServiceHeaderHandler</B> object as being the <B>SessionInfo.ServiceHeaderHandler</B> class; then it associates the handler with the port named <B>ServiceSoapPort</B>.</P>
+
+<PRE class="code">&lt;service name='SessionInfo'&gt;
+  &lt;using PROGID='SessionInfo.Service' cachable='0' ID='ServiceObject' /&gt;
+  &lt;using PROGID='SessionInfo.ServiceHeaderHandler' 
+         cachable='0' ID='ServiceHeaderHandler' /&gt;
+  &lt;port name='ServiceSoapPort' headerHandler="ServiceHeaderHandler"&gt;
+         ...
+  &lt;/port&gt;
+&lt;/service&gt;</PRE>
+
+<P>When the server receives a request for a port or operation that a header handler is defined for, the <B>SoapServer</B> object calls the header handler's <B>readHeader</B> method for each header in the request message. </P>
+
+<P>If the handler understood the header, the <B>readHeader</B> method returns True. </P>
+
+<P>If the header handler returns False for a header that contains the <B>mustUnderstand</B>='1' attribute, the <B>SoapServer</B> object returns the must understand fault. </P>
+
+<P>The <I>pObject</I> parameter passed to <B>readHeader</B> method references the object that is going to handle the request. </P>
+
+<P>The header handler sets properties or call methods on this object as necessary to prepare it for the request.</P>
+
+<P>After each header in the request is passed to the <B>readHeader</B> method, the <B>SoapServer</B> object calls the server object. When the server object returns, the <B>SoapServer</B> object calls the header handler's <B>willWriteHeaders</B> method. </P>
+
+<P>If <B>willWriteHeaders</B> returns True, the <B>SoapServer</B> calls the handler's <B>writeHeader</B> method. The <I>pObject</I> parameter passed to the <B>writeHeader</B> references the object that has handled the request. </P>
+
+<P>The header handler accesses properties or call methods on this object as necessary to retrieve the information to be sent in the response header. </P>
+
+<P>The <B>writeHeader</B> method can use the provided <B>SoapSerializer</B> object to write header content to the response message.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conadvancedtopics.htm">Advanced Topics</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Handling%20SOAP%20Headers (wce50conhandlingsoapheaders.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

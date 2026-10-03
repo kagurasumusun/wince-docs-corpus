@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::ComposeWith</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimonikercomposewith"></A>IMoniker::ComposeWith</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This<B> </B>method composes with another moniker.</P>
+
+<PRE class="syntax"><B>HRESULT ComposeWith( </B>
+  <B>IMoniker* </B><I>pmkRight</I><B>,</B> 
+  <B>BOOL </B><I>fOnlyIfNotGeneric</I><B>,</B> 
+  <B>IMoniker** </B><I>ppmkComposite</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pmkRight</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> interface on the moniker to compose onto the end of this moniker.</dd>
+
+<DT><I>fOnlyIfNotGeneric </I></DT>
+
+<DD>[in] Boolean that is set to TRUE if the caller requires a non-generic composition. 
+
+<P>The operation should proceed only if <I>pmkRight</I> is a moniker class that this moniker can compose with in some way other than forming a generic composite. 
+
+
+<P>If FALSE, the method can create a generic composite if necessary. 
+</dd>
+
+<DT><I>ppmkComposite</I></DT>
+
+<DD>[out] Address of <B>IMoniker</B>* pointer variable that receives the interface pointer to the resulting composite moniker pointer. 
+
+<P>When successful, the implementation must call the <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> method on the resulting moniker; it is the caller's responsibility to call the <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> method. 
+
+
+<P>If an error occurs or if the monikers compose to nothing (for example, composing an anti-moniker with an item moniker or a file moniker), *<I>ppmkComposite</I> should be set to NULL.
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The method supports the standard return values E_OUTOFMEMORY and E_UNEXPECTED. </P>
+
+<P>The following table shows the additional return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=29%>Value</TH>
+<TH width=71%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>S_OK</TD>
+<TD width=71%>The monikers were successfully combined.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%>MK_E_NEEDGENERIC</TD>
+<TD width=71%>Indicates that <I>fOnlyIfNotGeneric</I> was TRUE, but the monikers could not be composed together without creating a generic composite moniker.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>Joining two monikers together is called composition. Sometimes two monikers of the same class can be combined in what is called non-generic composition. </P>
+
+<P>For example, a file moniker representing an incomplete path and another file moniker representing a relative path can be combined to form a single file moniker representing the complete path. </P>
+
+<P>Nongeneric composition for a given moniker class can be handled only in the implementation of <B>IMoniker::ComposeWith</B> for that moniker class.</P>
+
+<P>Composition of monikers is an associative operation. That is, if A, B, and C are monikers, then, where <B>Comp</B>() represents the composition operation.</P>
+
+<PRE class="code">Comp( Comp( A, B ), C )
+    is always equal to
+Comp( A, Comp( B, C ) )</PRE>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<P><B>Notes to Callers</B></P>
+
+<P>To combine two monikers, call <B>IMoniker::ComposeWith</B> to give the first moniker a chance to perform a non-generic composition. </P>
+
+<P>An object that provides item monikers to identify its objects would call <B>IMoniker::ComposeWith</B> to provide a moniker that completely identifies the location of the object. </P>
+
+<P>This would apply, for example, to a server that supports linking to portions of a document, or a container that supports linking to embedded objects within its documents. </P>
+
+<P>In such a situation, do the following:
+
+<OL type="1">
+	<LI>Create an item moniker identifying an object.</li>
+
+	<LI>Get a moniker that identifies the object's container.</li>
+
+	<LI>Call <B>IMoniker::ComposeWith</B> on the moniker identifying the container, passing the item moniker as the <I>pmkRight</I> parameter. </li>
+</OL>
+
+<P>Most callers of <B>IMoniker::ComposeWith</B> should set the <I>fOnlyIfNotGeneric</I> parameter to FALSE. </P>
+
+<P><B>Notes to Implementers</B></P>
+
+<P>You can use either non-generic or generic composition to compose the current moniker with the moniker that <I>pmkRight</I> points to. If the class of the moniker indicated by <I>pmkRight</I> is the same as that of the current moniker, it is possible to use the contents of <I>pmkRight</I> to perform a more intelligent non-generic composition. </P>
+
+<P>In writing a new moniker class, you must decide if there are any kinds of monikers, whether of your own class or another class, to which you want to give special treatment. </P>
+
+<P>If so, implement <B>IMoniker::ComposeWith</B> to check whether <I>pmkRight</I> is a moniker of the type that should have this treatment. To do this, you can call the moniker's <A HREF="wce50lrfipersistgetclassid.htm">GetClassID</A> method (derived from the <A HREF="wce50lrfipersistiunknown.htm">IPersist</A> interface), or, if you have defined a moniker object that supports a custom interface, you can call the <A HREF="wce50lrfiunknownqueryinterface.htm">IUnknown::QueryInterface</A> method on the moniker for that interface. </P>
+
+<P>An example of special treatment would be the non-generic composition of an absolute file moniker with a relative file moniker. The most common case of a special moniker is the inverse for your moniker class (whatever you return from your implementation of the <A HREF="wce50lrfimonikerinverse.htm">IMoniker::Inverse</A> method). </P>
+
+<P>If <I>pmkRight</I> completely negates the receiver so the resulting composite is empty, you should pass back <B>NULL</B> in <I>ppmkComposite</I> and return the status code S_OK.</P>
+
+<P>If the <I>pmkRight</I> parameter is not of a class to which you give special treatment, examine <I>fOnlyIfNotGeneric</I> to determine what to do next. </P>
+
+<P>If <I>fOnlyIfNotGeneric</I> is TRUE, pass back NULL through <I>ppmkComposite</I> and return the status code MK_E_NEEDGENERIC. </P>
+
+<P>If <I>fOnlyIfNotGeneric</I> is FALSE, call the <A HREF="wce50lrfcreategenericcomposite.htm">CreateGenericComposite</A> function to perform the composition generically. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcreategenericcomposite.htm">CreateGenericComposite</A> | <A HREF="wce50lrfimonikeriunknown.htm">IMoniker</A> | <A HREF="wce50lrfipersistgetclassid.htm">GetClassID</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMoniker::ComposeWith (wce50lrfimonikercomposewith.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

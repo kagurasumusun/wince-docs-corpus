@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Context Requirements</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concontextrequirements"></A>Context Requirements</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Context requirements are expressed as a combination of bit flags passed to either the <A HREF="wce50lrfinitializesecuritycontext.htm">InitializeSecurityContext</A> function or the <A HREF="wce50lrfacceptsecuritycontext.htm">AcceptSecurityContext</A> function. These flags affect the context in many ways: not all flags apply to all contexts, some flags are valid only for the server, and other flags are valid only for the client.</P>
+
+<P>The caller uses the <I>fContextReq</I> parameter of the <B>InitializeSecurityContext</B> or the <B>AcceptSecurityContext</B> function to specify a set of flags that indicate the required capabilities. When the function returns, the <I>pfContextAttr</I> parameter indicates the attributes of the established context. The caller is responsible for determining if the final context attributes are acceptable. For example, if the caller requested mutual authentication, but the security package indicates that it did not perform such authentication, the caller must decide whether to cancel the context or continue without authentication.</P>
+
+<H2 class="dtH2">Initialization Flags</H2>
+
+<P>Flags requested from or returned by <B>InitializeSecurityContext</B> are prefixed by ISC. Flags passed into a function include REQ, while returned flags include RET.</P>
+
+<P>For example, ISC_REQ_DELEGATE is a request flag for delegation passed to <B>InitializeSecurityContext</B>.</P>
+
+<H2 class="dtH2">Acceptance Flags</H2>
+
+<P>Flags requested from or returned by <B>AcceptSecurityContext</B> are prefixed by ASC. Flags passed into a function include REQ, while returned flags include RET.</P>
+
+<P>For example, ASC_REQ_MUTUAL_AUTH is a request flag for mutual authentication passed to <B>AcceptSecurityContext</B>. If mutual authentication is achieved, <B>InitializeSecurityContext</B> returns ISC_RET_MUTUAL_AUTH and <B>AcceptSecurityContext</B> returns ASC_RET_MUTUAL_AUTH.</P>
+
+<P>The following table shows the various context requirements.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Type</TH>
+<TH width=67%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>DELEGATE</TD>
+<TD width=67%>Indicates that the server in the transport application requires simple delegation rights, that is, impersonation of the client on the node at which the server is executing.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>MUTUAL_AUTH</TD>
+<TD width=67%>Indicates that both client and server must authenticate the peer identity.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>REPLAY_DETECT</TD>
+<TD width=67%>Indicates that the context should be established to enable detection of replayed packets later through the message support functions: <A HREF="wce50lrfmakesignature.htm">MakeSignature</A> and <A HREF="wce50lrfverifysignature.htm">VerifySignature</A>. This context implies INTEGRITY.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>SEQUENCE_DETECT</TD>
+<TD width=67%>Indicates that the context should be established to enable detection of out-of-order delivery of packets later through the message support functions. This context implies INTEGRITY.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>CONFIDENTIALITY</TD>
+<TD width=67%>Indicates that the context should be established to protect data while in transit. This context type is reserved for future use.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>USE_SESSION_KEY</TD>
+<TD width=67%>Indicates that a new session key should be negotiated.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>PROMPT_FOR_CREDS</TD>
+<TD width=67%>Indicates that the security package should prompt the user for the appropriate credentials, and, if possible, determine if the client is an interactive user.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>USE_SUPPLIED_CREDS</TD>
+<TD width=67%>Indicates that package-specific credential data is available in the input buffer. The security package should use these credentials to authenticate the connection.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>ALLOCATE_MEMORY</TD>
+<TD width=67%>Indicates that the security package should allocate memory. The caller must eventually call the <A HREF="wce50lrffreecontextbuffer.htm">FreeContextBuffer</A> function to free memory allocated by the security package. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>USE_DCE_STYLE</TD>
+<TD width=67%>Indicates that the caller expects a three-transfer authentication transaction.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>DATAGRAM</TD>
+<TD width=67%>Indicates datagram semantics should be used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>CONNECTION</TD>
+<TD width=67%>Indicates connection semantics should be used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>STREAM</TD>
+<TD width=67%>Indicates stream semantics should be used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>EXTENDED_ERROR</TD>
+<TD width=67%>Indicates that if the context fails, the application will generate an error reply message for the peer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>INTEGRITY</TD>
+<TD width=67%>Indicates that buffer integrity can be verified, but that no sequencing or reply detection is enabled.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conauthenticationservices.htm">Authentication Services</A> | <A HREF="wce50consecuritysupportproviderinterface.htm">Security Support Provider Interface Architecture</A> | <A HREF="wce50consecuritypackages.htm">Security Packages</A> | <A HREF="wce50conauthenticationservicessecurity.htm">Authentication Services Security</A> | <A HREF="wce50conauthenticationservicesregistrysettings.htm">Authentication Services Registry Settings</A> | <A HREF="wce50grfauthenticationservicesreference.htm">Authentication Services Reference</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Context%20Requirements (wce50concontextrequirements.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

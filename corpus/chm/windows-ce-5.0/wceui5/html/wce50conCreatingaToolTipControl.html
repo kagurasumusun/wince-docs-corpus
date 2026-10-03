@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a ToolTip Control</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingatooltipcontrol"></A>Creating a ToolTip Control</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>A ToolTip appears to the upper-left of the point where the user first taps the screen. You can use ToolTips to extend the name of a control. For example, a <B>New</B> button can have a ToolTip that displays <B>New Mail Message</B>. A ToolTip can also direct a user to Help files or printed documentation.</P>
+
+<P>In addition to the UI elements that can have ToolTips, you can declare static and button controls as ToolTip controls. You can also place ToolTip controls in dialog boxes and other application windows.</P>
+
+<P>As of Windows CE .NET 4.2, you can use either a window class or resource file to create ToolTips. Resource files are used to create cross-operating system applications that can run on both Windows CE operating systems and also on the Pocket PC operating system.</P>
+
+<P>The window procedure for a ToolTip control automatically sets the size, position, and visibility of the ToolTip control. The height of the ToolTip window is based on the height of the font that currently is selected into the device context for the ToolTip control. The width depends on the length of the string that the ToolTip window currently displays.</P>
+
+<P>A ToolTip control exists in either an active or inactive state. When the ToolTip control is active, it appears when the cursor remains stationary over a tool. When the ToolTip control is inactive, it does not appear, even when the cursor remains stationary over a tool. Use the <A HREF="wce50lrfttmactivate.htm">TTM_ACTIVATE</A> message to activate or deactivate a ToolTip control.</P>
+
+<P class="labelproc"><B>To create a ToolTip control using a window class</B>
+
+<UL type="disc">
+	<LI>Call the <A HREF="wce50lrfcreatewindowex.htm">CreateWindowEx</A> function and specify the TOOLTIPS_CLASS window class. 
+<P>The class registers when you load the DLL for the common control. To load the DLL for the common control, include a call to the <A HREF="wce50lrfinitcommoncontrols156.htm">InitCommonControls</A> function in your application.
+
+<P>The following code example shows how to create a ToolTip using a window class.
+
+<PRE class="code">HWND hwndTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
+                              WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+                              CW_USEDEFAULT, CW_USEDEFAULT,
+                              CW_USEDEFAULT, CW_USEDEFAULT,
+                              hWndParent, NULL, 
+                              hinstMyDll, NULL);</PRE>
+</li>
+</UL>
+
+<P class="labelproc"><B>To create a ToolTip control using a resource file</B>
+
+<OL type="1">
+	<LI>Call <A HREF="wce50lrfshinitextracontrols.htm">SHInitExtraControls</A>. 
+<P>This initializes the ToolTip control. If you are programming multiple ToolTip controls, you need to call <B>SHInitExtraControls</B> only once.
+</li>
+
+	<LI>Declare the ToolTip control in your resource file.
+<UL type="disc">
+	<LI>Declare buttons, group boxes, check boxes, and radio buttons as TTBUTTON.</li>
+
+	<LI>Declare static controls as TTSTATIC. </li>
+
+	<LI>Declare all other ToolTips as standard Windows CE ToolTips.</li>
+</UL>
+</li>
+
+	<LI>Write the ToolTip control text in two sections. Separate the sections with a double tilde: ~~. 
+<P>The text before the double tilde is the text that appears on the control. The text after the double tilde is the text that appears in the ToolTip. This text can be up to 253 characters long. If you do not add any text after the double tilde, the shell displays <B>No Help provided</B> when the user accesses the control's ToolTip.
+
+<P>The following code example shows how to declare a button ToolTip control in a resource file.
+
+<PRE class="code">CONTROL        "CheckBox~~A Checkbox ToolTip",IDC_SAVE,"TTBUTTON",
+               BS_AUTOCHECKBOX|WS_GROUP|WS_TABSTOP,3,0,95,11</PRE>
+
+<P>If the ToolTip is wider than the screen, it wraps to a new line. You can force a line break by placing the \r character within the ToolTip text. However, do not use \r as a first or last character. Also, do not use \r consecutively, such as \r\r. 
+
+<P>The following code shows how to use the \r character in a control declaration of a resource file.
+
+<PRE class="code">CONTROL        "Static Text~~First ToolTip line\rSecond ToolTip 
+               line",IDC_STATIC,"TTSTATIC",WS_VISIBLE,19,24,56,8</PRE>
+</li>
+</OL>
+
+<H2 class="dtH2">Modifying a ToolTip</H2>
+
+<P>The following code sample shows how to modify ToolTips and the control text of a button control:</P>
+
+<PRE class="code">// Change the ToolTip text but keep the current control text. 
+SetWindowText (hwndBtn, TEXT("~~New ToolTip text"));
+
+// Keep the current ToolTip text but change the control text. 
+SetWindowText (hwndBtn, TEXT("New Control Text"));
+
+// Change the ToolTip text and the control text. 
+SetWindowText (hwndBtn, TEXT("New Control Text~~New ToolTip text")); 
+
+// Remove the ToolTip text and keep the control text. 
+// After this call, the ToolTip display "No Help provided". 
+SetWindowText (hwndBtn, TEXT("Old Control Text~~"));</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingtooltips.htm">Using ToolTips</A> | <A HREF="wce50lrfcreatewindowex.htm">CreateWindowEx</A> | <A HREF="wce50lrfinitcommoncontrols156.htm">InitCommonControls</A> | <A HREF="wce50lrfttmactivate.htm">TTM_ACTIVATE</A> | <A HREF="wce50lrfshinitextracontrols.htm">SHInitExtraControls</A> | <A HREF="wce50conworkingwithcommoncontrols.htm">Working with Common Controls</A> | <A HREF="wce50concreatingcontrols.htm">Creating Controls</A> | <A HREF="wce50orishellapplicationdevelopment.htm">Shell Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20a%20ToolTip%20Control (wce50concreatingatooltipcontrol.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

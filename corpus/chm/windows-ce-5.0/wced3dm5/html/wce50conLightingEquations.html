@@ -1,0 +1,275 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Lighting Equations</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conlightingequations"></A>Lighting Equations</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Microsoft&reg; Direct3D&reg; Mobile models illumination with equations that approximate the physics light. The lighting equations utilize the currently enabled lights, the current material parameters, the position of the viewer and the position of the vertex that is to be lit. </P>
+
+<P>These equations describe a camera space implementation of Direct3D Mobile lighting. It is up to the driver implementation to decide which space to do lighting in, so long as the reformulation of the lighting equations produces the same results as the formulation listed in this section.</P>
+
+<H2 class="dtH2">Notation</H2>
+
+<P>The following table shows the variables used in the lighting equations for vertex positions and properties.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Parameter</TH>
+<TH width=21%>Default Value</TH>
+<TH width=25%>Type</TH>
+<TH width=38%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>P<SUB>e</SUB></TD>
+<TD width=21%>(0,0,0)</TD>
+<TD width=25%><A HREF="wce50lrfd3dmvector.htm">D3DMVECTOR</A></TD>
+<TD width=38%>Camera position in camera space.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>P<SUB>o</SUB></TD>
+<TD width=21%>N/A</TD>
+<TD width=25%><B>D3DMVECTOR</B></TD>
+<TD width=38%>Position of current model origin (0,0,0,1) in the camera space, which is the fourth row of Mwv.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>M<SUB>w</SUB></TD>
+<TD width=21%>Identity</TD>
+<TD width=25%><A HREF="wce50lrfd3dmmatrix.htm">D3DMMATRIX</A></TD>
+<TD width=38%>The current world matrix.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>M<SUB>v</SUB></TD>
+<TD width=21%>Identity</TD>
+<TD width=25%><B>D3DMMATRIX</B></TD>
+<TD width=38%>The current view matrix.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>M<SUB>wv</SUB></TD>
+<TD width=21%>Identity</TD>
+<TD width=25%><B>D3DMMATRIX</B></TD>
+<TD width=38%>The product of Mv and Mw.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>L<SUB>a</SUB></TD>
+<TD width=21%>(0,0,0,0)</TD>
+<TD width=25%><A HREF="wce50lrfd3dmcolorvalue.htm">D3DMCOLORVALUE</A></TD>
+<TD width=38%>Global ambient color from the D3DMRS_AMBIENT render state (see <A HREF="wce50lrfd3dmrenderstatetype.htm">D3DMRENDERSTATETYPE</A>).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>V</TD>
+<TD width=21%>Not applicable</TD>
+<TD width=25%><B>D3DMVECTOR</B></TD>
+<TD width=38%>Vertex position in camera space.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>N</TD>
+<TD width=21%>Not applicable</TD>
+<TD width=25%><B>D3DMVECTOR</B></TD>
+<TD width=38%>Normalized vertex normal in camera space.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>V<SUB>cd</SUB></TD>
+<TD width=21%>0xFFFFFFFF (White)</TD>
+<TD width=25%><B>D3DMCOLORVALUE</B></TD>
+<TD width=38%>Vertex Diffuse Color.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>V<SUB>cs</SUB></TD>
+<TD width=21%>0x00000000 (Black)</TD>
+<TD width=25%><B>D3DMCOLORVALUE</B></TD>
+<TD width=38%>Vertex Specular Color.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Atten</TD>
+<TD width=21%>(0,0,0,0)</TD>
+<TD width=25%><B>D3DMCOLORVALUE</B></TD>
+<TD width=38%>Light Attenuation.</TD>
+</TR>
+</table></div>
+
+<P>The following table shows the variables used in the lighting equations for material properties.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=15%>Parameter</TH>
+<TH width=19%>Default Value</TH>
+<TH width=27%>Type </TH>
+<TH width=39%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>M<SUB>a</SUB></TD>
+<TD width=19%>Not applicable</TD>
+<TD width=27%><B>D3DMCOLORVALUE</B></TD>
+<TD width=39%>Ambient color of the material.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>M<SUB>d</SUB></TD>
+<TD width=19%>Not applicable</TD>
+<TD width=27%><B>D3DMCOLORVALUE</B></TD>
+<TD width=39%>Diffuse color of the material.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>M<SUB>s</SUB></TD>
+<TD width=19%>Not applicable</TD>
+<TD width=27%><B>D3DMCOLORVALUE</B></TD>
+<TD width=39%>Specular color of the material.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>M<SUB>p</SUB></TD>
+<TD width=19%>0.0</TD>
+<TD width=27%>Float</TD>
+<TD width=39%>Specular power exponent of the material.</TD>
+</TR>
+</table></div>
+
+<P>The following table shows the variables used in the lighting equations for the properties of light i.  These variables correspond the the members of the <A HREF="wce50lrfd3dmlight.htm">D3DMLIGHT</A> structure passed in calls to <A HREF="wce50lrfidirect3dmobiledevicesetlight.htm">IDirect3DMobileDevice::SetLight</A>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=16%>Parameter</TH>
+<TH width=21%>Default Value</TH>
+<TH width=28%>Type</TH>
+<TH width=35%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Lp<SUB>i</SUB></TD>
+<TD width=21%>(0,0,0)</TD>
+<TD width=28%><B>D3DMVECTOR</B></TD>
+<TD width=35%>Light position in camera space.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Ld<SUB>i</SUB></TD>
+<TD width=21%>(0,0,1)</TD>
+<TD width=28%><B>D3DMVECTOR</B></TD>
+<TD width=35%>Light direction in camera space.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Lr<SUB>i</SUB></TD>
+<TD width=21%>0.0</TD>
+<TD width=28%>float</TD>
+<TD width=35%>Light range distance.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Lca<SUB>i</SUB></TD>
+<TD width=21%>(0,0,0,0)</TD>
+<TD width=28%><B>D3DMCOLORVALUE</B></TD>
+<TD width=35%>Ambient color.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Lcs<SUB>i</SUB></TD>
+<TD width=21%>(0,0,0,0)</TD>
+<TD width=28%><B>D3DMCOLORVALUE</B></TD>
+<TD width=35%>Specular color.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Lc<SUB>i</SUB></TD>
+<TD width=21%>(1,1,1,0)</TD>
+<TD width=28%><B>D3DMCOLORVALUE</B></TD>
+<TD width=35%>Diffuse color.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>L<SUB>Att0i</SUB></TD>
+<TD width=21%>0.0</TD>
+<TD width=28%>float</TD>
+<TD width=35%>Linear Attenuation Factor.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>L<SUB>Att1i</SUB></TD>
+<TD width=21%>0.0</TD>
+<TD width=28%>float</TD>
+<TD width=35%>Squared Attenuation Factor.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>L<SUB>Att2i</SUB></TD>
+<TD width=21%>0.0</TD>
+<TD width=28%>float</TD>
+<TD width=35%>Exponential Attenuation Factor.</TD>
+</TR>
+</table></div>
+
+<P>The following list show the mathematical notations used to describe the lighting equations.
+
+<UL type="disc">
+	<LI><CODE>||V||</CODE> is the length of vector <CODE>V</CODE>.</li>
+
+	<LI><CODE>V</CODE><SUB>1</SUB><SUP>.</SUP><CODE>V</CODE><SUB>2</SUB> is the dot product of vectors <CODE>V</CODE><SUB>1</SUB> and <CODE>V</CODE><SUB>2</SUB>.</li>
+
+	<LI><CODE>Norm(V)</CODE> is the vector <CODE>V</CODE>, normalized.</li>
+
+	<LI><CODE>P</CODE><SUB>1</SUB><CODE>P</CODE><SUB>2</SUB> is the vector from point <CODE>P</CODE><SUB>1</SUB> to point <CODE>P</CODE><SUB>2</SUB>.</li>
+
+	<LI><CODE>M<SUP>-1</SUP></CODE> is the inverse of matrix <CODE>M</CODE>.</li>
+
+	<LI><CODE>M<SUP>T</SUP></CODE> is the transpose of matrix <CODE>M</CODE>.</li>
+
+	<LI><CODE>V<SUB>1</SUB>/V<SUB>2</SUB></CODE> is the vector where each component of <CODE>V<SUB>1</SUB></CODE> is divided by the corresponding component of <CODE>V<SUB>2</SUB></CODE>.</li>
+
+	<LI><CODE>V<SUB>1</SUB>*V<SUB>2</SUB></CODE> is the vector where each component of <CODE>V<SUB>1</SUB></CODE> is multiplied by the corresponding component of <CODE>V<SUB>2</SUB></CODE>.</li>
+</UL>
+
+<P>The following topics provide additional deatail about the lighting equations.
+
+<UL type="disc">
+	<LI><A HREF="wce50concameraspacetransformation.htm">Camera Space Transformation</A></li>
+
+	<LI><A HREF="wce50conbasiclightingformula.htm">Basic Lighting Formulas</A></li>
+</UL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conlighting.htm">Lighting</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Lighting%20Equations (wce50conlightingequations.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

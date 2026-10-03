@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Filter Base Classes</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50confilterbaseclasses"></A>Filter Base Classes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The DirectShow stream architecture is based on filters and pins. Filters communicate with the filter graph manager and with the pins on the filter. Pins connect filters and handle transporting data down the stream. </P>
+
+<P><A HREF="wce50lrfcbasefilterclass.htm">CBaseFilter</A> is the base class for all filter classes. It implements the <A HREF="wce50lrfibasefilterinterface.htm">IBaseFilter</A> interface, which specifies methods that allow the filter graph manager to create and enumerate pins, retrieve filter information, and notify the filter that it has been added to a filter graph. </P>
+
+<P><B>CBaseFilter</B> also implements the <A HREF="wce50lrfimediafilterinterface.htm">IMediaFilter</A> interface (from which <B>IBaseFilter</B> derives) to allow the filter to receive run, pause, and stop commands from the filter graph manager. </P>
+
+<P>This base class adds member functions to retrieve the pin count, retrieve pointers to individual pins, and retrieve the pin version. </P>
+
+<P>The <A HREF="wce50lrfcbasemediafilterclass.htm">CBaseMediaFilter</A> class also implements the <B>IMediaFilter</B> interface. However, because <B>IMediaFilter</B> is also implemented by <B>CBaseFilter</B>, this class is seldom used except to write a plug-in distributor (PID). </P>
+
+<P>Several classes are derived directly from <B>CBaseFilter</B>. Each of these classes provides a base class for implementing a specific type of filter. These include: 
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfcsourceclass.htm">CSource</A>, a base class for source filters. </li>
+
+	<LI><A HREF="wce50lrfctransformfilterclass.htm">CTransformFilter</A>, a base class for transform filters. </li>
+
+	<LI><A HREF="wce50lrfcbaserendererclass.htm">CBaseRenderer</A>, a base class for renderer filters. </li>
+</UL>
+
+<P>The <B>CSource</B> filter class works in conjunction with the <A HREF="wce50lrfcsourcestreamclass.htm">CSourceStream</A> pin class to help create a source filter. Most of the work is done in the pin class, and <B>CSource</B> adds pin creation and deletion member functions. The <A HREF="wce50lrfcsourcepositionclass.htm">CSourcePosition</A> class implements a source filter. </P>
+
+<P>The <B>CTransformFilter</B> class implements a transform filter. If you want to make a copy of the data, derive your transform class from <B>CTransformFilter</B>. </P>
+
+<P>The <A HREF="wce50lrfctransinplacefilterclass.htm">CTransInPlaceFilter</A> class, derived from <B>CTransformFilter</B>, allows in-place transforms that do not copy the data. These transform filter classes work in conjunction with similarly named pin classes (for example, <A HREF="wce50lrfctransformoutputpinclass.htm">CTransformOutputPin</A> and <A HREF="wce50lrfctransforminputpinclass.htm">CTransformInputPin</A>). </P>
+
+<P>Most member functions in the pin classes are implemented to call member functions in the transform filter class, so typically you need only to derive your filter from the filter class and override a few member functions to implement a transform filter. </P>
+
+<P><B>CTransformFilter</B> adds several member functions to those inherited from <B>CBaseFilter</B>. Some of these are pure virtual member functions that the derived class must override. </P>
+
+<P>One example is the <A HREF="wce50lrfctransformfiltertransform.htm">CTransformFilter::Transform</A> member function, which is called when the input pin receives a sample. This member function provides the core of the transform functionality. Other member functions to be overridden also involve implementations that are specific to the derived class, such as verifying media types on pins and allocating the correct amount of memory. </P>
+
+<P>Additionally, several <B>CTransformFilter</B> member functions are called at various points in the connection or streaming process. The derived class can override these to handle requirements such as adding or releasing references to interfaces. </P>
+
+<P>The <A HREF="wce50lrfcvideotransformfilterclass.htm">CVideoTransformFilter</A> class derives from the <B>CTransformFilter</B> class and is used as a base class for filters that can affect the quality of a rendered video by dropping frames when the video renderer sends quality-control messages. This class is primarily used by video decompressors in the DirectShow run time. </P>
+
+<P>The <B>CBaseRenderer</B> class and its derived class, <A HREF="wce50lrfcbasevideorendererclass.htm">CBaseVideoRenderer</A>, are the base filter classes that implement a video renderer filter. The video renderer filter used in DirectShow is derived from <B>CBaseVideoRenderer</B>. </P>
+
+<P>Other renderer classes work in conjunction with these classes but are not derived from <B>CBaseFilter</B>, including the following: 
+
+<UL type="disc">
+	<LI><A HREF="wce50lrfcrendererinputpinclass.htm">CRendererInputPin</A></li>
+
+	<LI><A HREF="wce50lrfcbasecontrolvideoclass.htm">CBaseControlVideo</A> and its base class <A HREF="wce50lrfcbasebasicvideoclass.htm">CBaseBasicVideo</A></li>
+
+	<LI><A HREF="wce50lrfcbasecontrolwindowclass.htm">CBaseControlWindow</A>, and its base classes <A HREF="wce50lrfcbasevideowindowclass.htm">CBaseVideoWindow</A> and <A HREF="wce50lrfcbasewindowclass.htm">CBaseWindow</A></li>
+
+	<LI><A HREF="wce50lrfcaggdirectdrawclass.htm">CAggDirectDraw</A></li>
+
+	<LI><A HREF="wce50lrfcaggdrawsurfaceclass.htm">CAggDrawSurface</A></li>
+</UL>
+
+<P>The following illustration shows all classes that support renderers that are not derived from either <B>CBaseFilter</B> or <A HREF="wce50lrfcbasepinclass.htm">CBasePin</A>. </P>
+
+<P class="fig"><IMG SRC="basecl6.gif" ALT="" BORDER=0></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Filter%20Base%20Classes (wce50confilterbaseclasses.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

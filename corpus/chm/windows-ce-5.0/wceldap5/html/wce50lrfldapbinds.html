@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ldap_bind_s</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSECWINNTAUTHIDENTITY">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSECWINNTAUTHIDENTITY">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfldapbinds"></A>ldap_bind_s</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is a synchronous function that authenticates a client to the LDAP server.</P>
+
+<PRE class="syntax"><B>ULONG ldap_bind_s(</B>
+  <B>LDAP* </B><I>ld</I><B>,</B>
+  <B>UNICODE PTCHAR</B> <I>dn</I><B>,</B>
+  <B>UNICODE PTCHAR</B> <I>cred</I><B>,</B>
+  <B>ULONG</B> <I>method</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>ld</I></DT>
+
+<DD>[in] Session handle.</dd>
+
+<DT><I>dn</I></DT>
+
+<DD>[in] Distinguished name of the entry used to bind.</dd>
+
+<DT><I>cred</I></DT>
+
+<DD>[in] Credentials with which to authenticate. Arbitrary credentials can be passed using this parameter. The format and content of the credentials depend on the setting of the mechanism parameter. See the <B>Remarks</B> section for more information.</dd>
+
+<DT><I>method</I></DT>
+
+<DD>[in] Indicates the authentication method to use. See the <B>Remarks</B> section for a listing of valid synchronous authentication methods. See the <A HREF="wce50lrfldapbind.htm">ldap_bind</A> function for a description of the valid asynchronous authentication method.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>If this function succeeds, the return value is LDAP_SUCCESS. </P>
+
+<P>If this function fails, it returns an error code. See the <A HREF="wce50lrfldapretcode.htm">LDAP_RETCODE</A> enumeration for a list of possible return values.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The following table shows the authentication methods supported in the implementation of this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=31%>Authentication method</TH>
+<TH width=27%>Description</TH>
+<TH width=42%>Credential</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>LDAP_AUTH_NTLM</TD>
+<TD width=27%>Microsoft Windows NT LAN Manager</TD>
+<TD width=42%>Set the <I>dn</I> parameter to NULL and pass in a pointer to a <A HREF="JavaScript:hhobj_1.Click()">SEC_WINNT_AUTH_IDENTITY</A> structure using the <I>cred </I>parameter.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>LDAP_AUTH_NEGOTIATE</TD>
+<TD width=27%>Generic security services (GSS) (Snego). Does not provide any authentication services. Instead GSS chooses the most appropriate authentication method from a list of available services and passes all authentication information on to that service. </TD>
+<TD width=42%>To log in as the current user, set the <I>dn</I> and <I>cred</I> parameters to NULL. To log in as another user, pass a pointer to a <A HREF="JavaScript:hhobj_2.Click()">SEC_WINNT_AUTH_IDENTITY</A> structure with the appropriate user name and password.</TD>
+</TR>
+</table></div>
+
+<P>For asynchronous bind authentication, use <A HREF="wce50lrfldapbind.htm">ldap_bind</A>. </P>
+
+<P>The bind operation identifies a client to the directory server by providing a distinguished name and some type of authentication credential, such as a password. The exact credentials are dependent on the authentication method being used. </P>
+
+<P>In a multithreading environment, bind calls are not safe because they apply to the connection as a whole. Use caution if threads share connections and try to thread the bind operations with other operations.</P>
+
+<P>The following code example shows how to identify a client to the directory server by using the bind operation.</P>
+
+<PRE class="code">#include &lt;windows.h&gt;
+#include &lt;winldap.h&gt;
+#include &lt;tchar.h&gt;
+
+LDAP *ld;
+SEC_WINNT_AUTH_IDENTITY AuthId;
+ULONG AuthMethod;
+TCHAR szDomain[128] = _T("sample.domain.com");
+TCHAR szUserName[128] = _T("admin");
+TCHAR szPassword[128] = _T("adminpass");
+
+// Set up AuthId for NTLM authentication
+AuthId.User = _tcslen(szUserName) ? szUserName :  NULL;
+AuthId.UserLength = _tcslen(szUserName);
+AuthId.Domain = _tcslen(szDomain) ? szDomain :  NULL;
+AuthId.DomainLength = _tcslen(szDomain);
+AuthId.Password = _tcslen(szPassword) ? szPassword :  NULL;
+AuthId.PasswordLength = _tcslen(szPassword);
+#ifdef UNICODE
+AuthId.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+#else
+AuthId.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+#endif
+
+AuthMethod = LDAP_AUTH_NTLM;
+
+if( (ld = ldap_init( _T("server.sample.domain.com"), 389 )) == NULL )
+{
+    // Error
+}
+
+ldap_bind_s( ld, NULL, (TCHAR *) &amp;AuthId, AuthMethod );</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Winldap.h.<BR>
+<B>Link Library:</B> Wldap32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfldapbind.htm">ldap_bind</A> | <A HREF="wce50lrfldapsimplebinds.htm">ldap_simple_bind_s</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ldap_bind_s (wce50lrfldapbinds.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

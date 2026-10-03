@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMessageFilter</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfSendMessage">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfimessagefilteriunknown"></A>IMessageFilter:IUnknown</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This interface provides COM servers and applications with the ability to selectively handle incoming and outgoing COM messages while waiting for responses from synchronous calls. </P>
+
+<P>Filtering messages helps to ensure that calls are handled in a manner that improves performance and avoids deadlocks. COM messages can be synchronous, asynchronous, or input-synchronized; the majority of interface calls are synchronous. </P>
+
+<P>Synchronous calls require the caller to wait for a reply before continuing. COM enters a modal loop while waiting for the reply. During this time, the caller is still able to receive and dispatch incoming messages. </P>
+
+<P>Asynchronous calls allow the caller to proceed without waiting for a response from the called object. Today, in COM, the only asynchronous calls are to an object's <A HREF="wce50lrfiadvisesinkiunknown.htm">IAdviseSink</A> interface. While the object is processing an asynchronous call, it is prohibited from making any synchronous calls back to the calling object. </P>
+
+<P>Input-synchronized calls require the called object to complete the call before relinquishing control, ensuring that behaviors such as focus management and type-ahead function correctly. </P>
+
+<H4 class="dtH4">When to Implement</H4>
+
+<P>You will probably want to implement your own message filter. The default implementation provided by COM offers only minimal message filtering capability. </P>
+
+<P>Although message filtering is no longer as significant as it was with 16-bit applications, because the size of the message queue is now virtually unlimited, you still should implement <B>IMessageFilter</B> as a way of resolving deadlocks. </P>
+
+<P>COM will call your implementation of <B>IMessageFilter</B> to find out if an application is blocking, so that you can task-switch to that application and give the user an opportunity to deal with the situation. </P>
+
+<P>For example, if you have Microsoft Word talking to Microsoft Excel, with Excel running in the background in formula mode, in which formulas are being applied to data on the worksheet to compute different or what if results, Excel will not check all calls, thereby blocking further action. </P>
+
+<P><B>IMessageFilter</B> would put up a dialog box indicating which task was blocking and provide the user with an opportunity to deal with the deadlock. </P>
+
+<P>Remember that <A HREF="wce50lrfimessagefilterhandleincomingcall.htm">HandleIncomingCall</A> is an object-based method and <A HREF="wce50lrfimessagefilterretryrejectedcall.htm">RetryRejectedCall</A> and <A HREF="wce50lrfimessagefiltermessagepending.htm">MessagePending</A> are client-based methods. The object must have some way of handling incoming calls from external clients. <B>HandleIncomingCall</B> provides that functionality by allowing the object to handle or defer some incoming calls and reject others. </P>
+
+<P>The client also needs to know how an object is going to handle its call. so that it can respond appropriately. The client needs to know if a call has been rejected, or just deferred temporarily, so that it can retry rejected calls after some specified time. </P>
+
+<P>The client also needs to be able to respond to Windows messages, while at the same time waiting for replies to pending messages. </P>
+
+<P>You will use <A HREF="wce50lrfcoregistermessagefilter.htm">CoRegisterMessageFilter</A> to register your message filter. Once registered, COM then calls your message filter instead of the default implementation. </P>
+
+<H4 class="dtH4">When to Use</H4>
+
+<P>You do not call this interface directly. It is provided by the COM server or application and called by COM.</P>
+
+<H4 class="dtH4">Application Shutdown with WM_QUERYENDSESSION and WM_ENDSESSION</H4>
+
+<P>When a user exits Windows, each open application receives a WM_QUERYENDSESSION message followed by a WM_ENDSESSION message, provided the exit is not canceled. </P>
+
+<P>These messages are invoked with <A HREF="JavaScript:hhobj_1.Click()">SendMessage</A>, which unfortunately restricts the initiation of all outgoing LRPC calls. This is a problem for container applications that have open embedded objects when they receive the shutdown request because LRPC is needed to close those objects.</P>
+
+<P>Container and container/server applications with open documents typically display a message box on receipt of the WM_QUERYENDSESSION message that asks if the user wants to save changes before exiting. A positive response is usually the default. </P>
+
+<P>To deal with this situation, consider having the application display an alternate message box asking if the user wants to discard changes; a negative response should be the default. </P>
+
+<P>If the user chooses to discard the changes, TRUE should be returned for WM_QUERYENDSESSION, which signals to Windows that it can terminate. </P>
+
+<P>If the user does not want to discard the changes, FALSE should be returned. </P>
+
+<P>No attempt should be made to close or release running embeddings.</P>
+
+<P>Server applications should return TRUE for WM_QUERYENDSESSION without prompting the user. On receipt of a WM_ENDSESSION message, all COM applications should execute the standard close sequence for each application's documents and/or objects. </P>
+
+<P>At the same time, you should ignore errors resulting from cross-process calls or calls to <A HREF="wce50lrfiunknownrelease.htm">Release</A>. </P>
+
+<P>All storage pointers (<A HREF="wce50lrfistorageiunknown.htm">IStorage</A> and <A HREF="wce50lrfistreamiunknown.htm">IStream</A> interface pointers) must be released to properly flush temporary files maintained by the compound file implementation of structured storage.</P>
+
+<H4 class="dtH4">Methods in Vtable Order</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=32%>IUnknown method</TH>
+<TH width=68%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="wce50lrfiunknownqueryinterface.htm">QueryInterface</A></TD>
+<TD width=68%>Returns pointers to supported interfaces.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="wce50lrfiunknownaddref.htm">AddRef</A></TD>
+<TD width=68%>Increments the reference count.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="wce50lrfiunknownrelease.htm">Release</A></TD>
+<TD width=68%>Decrements the reference count.</TD>
+</TR>
+</table></div>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=32%>Method</TH>
+<TH width=68%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="wce50lrfimessagefilterhandleincomingcall.htm">HandleIncomingCall</A></TD>
+<TD width=68%>Provides a single entry point for incoming calls.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="wce50lrfimessagefilterretryrejectedcall.htm">RetryRejectedCall</A></TD>
+<TD width=68%>Provides application with opportunity to display a dialog box offering retry or cancel or task switching options.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="wce50lrfimessagefiltermessagepending.htm">MessagePending</A></TD>
+<TD width=68%>Indicates a Windows message has arrived while COM is waiting to respond to a remote call.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>To determine whether the platform supports this interface, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objidl.h, Objidl.idl.<BR>
+<B>Link Library:</B> Ole32.lib, Uuid.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfcoregistermessagefilter.htm">CoRegisterMessageFilter</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IMessageFilter (wce50lrfimessagefilteriunknown.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

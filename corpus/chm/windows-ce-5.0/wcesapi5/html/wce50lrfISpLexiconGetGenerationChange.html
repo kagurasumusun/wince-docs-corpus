@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpLexicon::GetGenerationChange</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfisplexicongetgenerationchange"></A>ISpLexicon::GetGenerationChange</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method gets a list of words that have changed between the current generation and a specified generation.</P>
+
+<PRE class="syntax"><B>HRESULT GetGenerationChange(</B>
+  <B>DWORD </B><I>dwFlags</I><B>,</B>
+  <B>DWORD* </B><I>pdwGeneration</I><B>,</B>
+  <B>SPWORDLIST* </B><I>pWordList</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwFlags</I> </DT>
+
+<DD>[in] Lexicon category. Possible values are defined by the <A HREF="wce50lrfsplexicontype.htm">SPLEXICONTYPE</A> enumeration. Currently the value chosen must be zero for the <B>SpLexicon</B> (container lexicon) class. It must be the correct flag for the <B>SpUnCompressedLexicon</B> class, either eLEXTYPE_USER or eLEXTYPE_APP.</dd>
+
+<DT><I>pdwGeneration</I> </DT>
+
+<DD>[in, out] Pointer to the generation identifier. On input, the identifier is for the client. On output, the current current generation identifier is provided. </dd>
+
+<DT><I>pWordList</I> </DT>
+
+<DD>[in, out] Pointer to an <A HREF="wce50lrfspwordlist.htm">SPWORDLIST</A> structure containing the word list and its related information. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK</TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SP_LEX_NOTHING_TO_SYNC </TD>
+<TD width=65%>Nothing changed because the passed in generation identifier. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_LEX_VERY_OUT_OF_SYNC</TD>
+<TD width=65%>There are too many changes because the passed in generation identifier, so that a change history is not available. It could also be returned after installation/uninstallation of an application lexicon. Use <A HREF="wce50lrfisplexicongetwords.htm">ISpLexicon::GetWords</A> if GetGenerationChange returns SPERR_LEX_VERY_OUT_OF_SYNC to regenerate an entire list of words based on the current generation. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_POINTER </TD>
+<TD width=65%><I>pdwGeneration</I> or <I>pWordList</I> is not a valid write pointer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%><I>dwFlags</I> is invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_UNINITIALIZED </TD>
+<TD width=65%>Interface has not been initialized. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_OUTOFMEMORY </TD>
+<TD width=65%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This method and <A HREF="wce50lrfisplexicongetgeneration.htm">ISpLexicon::GetGeneration</A> can be used when an application wants to determine what it has done to the lexicon over a given period of time (for example, to remove changes it has made due to a user cancel). To do this, the application calls <B>ISpLexicon::GetGeneration</B> before it starts modifying the lexicon, and stores that generation identifier. Later, when the application must determine the words in the lexicon it has modified, it calls <B>ISpLexicon::GetGenerationChange</B> with the stored identifier. This can only be done for small changes as SPERR_LEX_VERY_OUT_OF_SYNC will be returned once sufficient changes have been made.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following is an example of this method.</P>
+
+<PRE class="code">for (;;)
+{
+  hr = pISpLexicon-&gt;GetGenerationChange(eLEXTYPE_USER,
+    &amp;m_dwGeneration,
+    &amp;spwordlist);
+  // If, for example, a new application lexicon was added, 
+  // rebuild from scratch.
+  if (hr == SPERR_LEX_VERY_OUT_OF_SYNC)
+  {
+    Rebuild(); // Call GetWords
+  }
+  else if (FAILED(hr))
+  {
+    DealWithOtherErrors();
+  }
+  else
+  {
+    // Loop through the changed words, and their new pronunciations
+    for (SPWORD *pword = spwordlist.pFirstWord;
+      pword != NULL;
+      pword = pword-&gt;pNextWord)
+    {
+      for (SPWORDPRON pwordpron = pword-&gt;pFirstWordPron;
+       pwordpron != NULL;
+       pwordpron = pwordpron-&gt;pNextWordPron)
+      {
+        if(pword-&gt;eWordType == eWORDTYPE_ADDED)
+        {
+          AddPronunciationToEngineDataStructures(
+            pword-&gt;pszWord,
+            pwordpron-&gt;ePartOfSpeech,
+            pwordpron-&gt;pszPronIPA);
+        }
+        else // pword-&gt;eWordType == eWORDTYPE_DELETED
+        {
+          RemovePronunciationFromEngineDataStructures(
+            pword-&gt;pszWord,
+            pwordpron-&gt;ePartOfSpeech,
+            pwordpron-&gt;pszPronIPA);
+        } 
+      }
+    }
+  }
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfisplexicon.htm">ISpLexicon</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpLexicon::GetGenerationChange (wce50lrfisplexicongetgenerationchange.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

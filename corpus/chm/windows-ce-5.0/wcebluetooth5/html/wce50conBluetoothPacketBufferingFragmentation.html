@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Bluetooth Packet Buffering and Fragmentation</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conBluetoothProtocolStack">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conbluetoothpacketbufferingfragmentation"></A>Bluetooth Packet Buffering and Fragmentation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Data packets are sent to the HCI layer by using the<A HREF="wce50conhcidatapacketdownin.htm"> HCI_DataPacketDown_In</A> interface and the <A HREF="wce50conhcidatapacketdownout.htm">HCI_DataPacketDown_Out</A> callback function.</P>
+
+<P>The following code shows the function pointer declarations for <B>HCI_DataPacketDown_In</B> and <B>HCI_DataPacketDown_Out</B>.</P>
+
+<PRE class="code">typedef int (*HCI_DataPacketDown_In) (
+  HANDLE         hDeviceContext,
+  void          *pCallContext,
+  unsigned short connection_handle,
+  BD_BUFFER     *pBuffer
+);
+typedef int (*HCI_DataPacketDown_Out) (
+  void    *pCallContext,
+  int      iError
+);</PRE>
+
+<P>Both data and command packets are placed in the HCI queue. The upper layers of the Bluetooth stack do not control data packet fragmentation, which occurs automatically.</P>
+
+<P>To reassemble data on the way up, it is required that the size of the total packet is known. If the protocol follows the L2CAP packet format ( the data is length-prefixed), then reassembly is handled by the HCI, and the packet is delivered. Reassembled data packets are notified by the HCI by using the <A HREF="wce50conhcidatapacketup.htm">HCI_DataPacketUp</A> event. </P>
+
+<P>The following code shows the function pointer declaration for <B>HCI_DataPacketUp</B>.</P>
+
+<PRE class="code">typedef int (*HCI_DataPacketUp) (
+  void             *pUserContext,
+  unsigned short    connection_handle,
+  BD_BUFFER        *pBuffer
+);</PRE>
+
+<P>To indicate pre-reassembly data packets, the HCI uses the <A HREF="wce50conhcidatapacketupaclunbuffered.htm">HCI_DataPacketUpAclUnbuffered</A> event. However, if upper interface exposes the <B>HCI_DataPacketUpAclUnbuffered</B>, it is expected to handle the buffering of incoming asynchronous connection-less (ACL) packets, which will be reported to it immediately. In this case, there are no restrictions on the packet format. </P>
+
+<P>The following code shows the function pointer declaration for <B>HCI_DataPacketUpAclUnbuffered</B>.</P>
+
+<PRE class="code">typedef int (*HCI_DataPacketUpAclUnbuffered) (
+  void             *pUserContext,
+  unsigned short    connection_handle,
+  unsigned char     boundary,
+  unsigned char     broadcast,
+  BD_BUFFER        *pBuffer
+);</PRE>
+
+<P>See Bt_ddi.h for complete specifications of the HCI interface.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conhostcontrollerinterface.htm">Host Controller Interface</A> | <A HREF="JavaScript:hhobj_1.Click()">Bluetooth Protocol Stack</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Bluetooth%20Packet%20Buffering%20and%20Fragmentation (wce50conbluetoothpacketbufferingfragmentation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

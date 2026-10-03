@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Loading a Bluetooth Extension Layer</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfRegisterDevice">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateFile">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conloadingbluetoothextensionlayer"></A>Loading a Bluetooth Extension Layer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>With the installable device driver architecture you must compile the extension layer as a DLL. To use the extension layer the application must load and then create a driver instance by using standard stream driver procedures. </P>
+
+<P>The L2capapi sample located in the %_WINCEROOT%\Public\Common\Oak\Drivers\Bluetooth\Sample\L2capapi directory, shows how an application can use the L2capdev extension layer DLL.</P>
+
+<P class="labelproc"><B>To load the extension layer from your application</B>
+
+<OL type="1">
+	<LI>Register the DLL by calling the <A HREF="JavaScript:hhobj_1.Click()">RegisterDevice</A> function. 
+<P>The following example code shows a function L2CAPLoad, that is defined in the L2capapi sample. This function registers the L2CAP extension layer, L2capdev.dll by calling <B>RegisterDevice</B> and sets the appropriate registry key values.
+
+<PRE class="code">int L2CAPLoad (void) 
+{
+  HANDLE hDevice = RegisterDevice (L"L2C", 0, L"l2capdev.dll", 0);
+  if (hDevice) 
+  {
+    HKEY hk;
+    if (ERROR_SUCCESS == RegOpenKeyEx (HKEY_BASE, L"Software\\Microsoft\\Bluetooth", 0, KEY_READ, &amp;hk)) 
+    {
+      RegSetValueEx (hk, L"l2capdev_handle", 0, REG_DWORD, (LPBYTE)&amp;hDevice, sizeof(hDevice));
+      RegCloseKey (hk);
+    }
+  }
+  return hDevice != NULL ? ERROR_SUCCESS : ERROR_SERVICE_NOT_ACTIVE;
+}</PRE>
+</li>
+
+	<LI>To create an instance of the driver, call the <A HREF="JavaScript:hhobj_2.Click()">CreateFile</A> function. 
+<P>The following example code shows a function Initialize, that is declared in the L2capapi sample. This function creates an instance of the driver by calling <B>CreateFile</B>.
+
+<PRE class="code">HANDLE hDev = INVALID_HANDLE_VALUE;
+int Initialize (void) 
+{
+  if (hDev != INVALID_HANDLE_VALUE)
+  return TRUE;
+  hDev = CreateFile (L"L2C0:", 
+    GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+    NULL, OPEN_EXISTING, 0, NULL);
+  return (hDev != INVALID_HANDLE_VALUE) ? TRUE : FALSE;
+}</PRE>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concreatingbluetoothstackextensionlayer.htm">Creating a Bluetooth Stack Extension Layer</A> | <A HREF="wce50oribluetoothosdesign.htm">Bluetooth OS Design Development</A> | <A HREF="wce50conhostcontrollerinterface.htm">Host Controller Interface</A> | <A HREF="wce50howhowtowritebluetoothstackextensionlayer.htm">How to Develop and Load a Bluetooth HCI Stack Extension Layer</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Loading%20a%20Bluetooth%20Extension%20Layer (wce50conloadingbluetoothextensionlayer.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

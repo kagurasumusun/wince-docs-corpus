@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Authenticating an LDAP Client</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conauthenticatinganldapclient"></A>Authenticating an LDAP Client</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The bind operation identifies the person (or device or application) that is trying to connect to the server by providing a distinguished name and some type of authentication credential, such as a password. The exact credentials depend on the authentication method being used. You can also bind anonymously by passing NULL parameters.</P>
+
+<P>The <A HREF="wce50lrfldapsimplebind.htm">ldap_simple_bind</A> functions use a clear text password for authentication. Call the <A HREF="wce50lrfldapbind.htm">ldap_bind</A> or <A HREF="wce50lrfldapbinds.htm">ldap_bind_s</A> function to use authentication services, such as the Windows NT&reg; LAN Manager (NTLM), distributed password authentication, or the Generic Security Services API. Note that <A HREF="wce50lrfldapbind.htm">ldap_bind</A> is not supported for Negotiate.</P>
+
+<P>The following code example shows how to bind to a server using NTLM.</P>
+
+<PRE class="code">#include &lt;windows.h&gt;
+#include &lt;winldap.h&gt;
+#include &lt;winber.h&gt;
+#include &lt;tchar.h&gt;
+
+LPTSTR szServer[64], szUserName[32], szPassword[32], szDomain[64], szOutput[128];
+WORD wPort;
+ULONG ulAuthMethod, ulLdapError;
+LDAP *ld;
+SEC_WINNT_AUTH_IDENTITY AuthId;
+
+_tcscpy( szServer, TEXT("dc.microsoft.com") );
+wPort = LDAP_PORT;
+
+_tcscpy( szUserName, TEXT("Admin") );
+_tcscpy( szPassword, TEXT("Password") );
+_tcscpy( szDomain, TEXT("MICROSOFT") );
+
+ulAuthMethod = LDAP_AUTH_NTLM;
+
+// ...
+
+// Set up AuthId for NTLM authentication
+AuthId.User = _tcslen(szUserName) ? szUserName : NULL;
+AuthId.UserLength = _tcslen(szUserName);
+AuthId.Domain = _tcslen(szDomain) ? szDomain : NULL;
+AuthId.DomainLength = _tcslen(szDomain);
+AuthId.Password = _tcslen(szPassword) ? szPassword : NULL;
+AuthId.PasswordLength = _tcslen(szPassword);
+#ifdef UNICODE
+AuthId.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+#else
+AuthId.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+#endif
+
+ld = ldap_init( szServer, wPort );
+if( ld == NULL )
+{
+   wsprintf (szOutput, TEXT("ldap_init() failed. Error: %u"), LdapGetLastError());
+   MessageBox (NULL, szOutput, TEXT("Error"), MB_OK);
+   return FALSE;
+}
+
+// use v3 Client
+ULONG version = LDAP_VERSION3;
+ulLdapError = ldap_set_option( ld, LDAP_OPT_VERSION, &amp;version );
+if( ulLdapError != LDAP_SUCCESS )
+{
+   wsprintf (szOutput, TEXT("ldap_set_option() failed. Error: %u"), ulLdapError);
+   MessageBox (NULL, szOutput, TEXT("Error"), MB_OK);
+   ldap_unbind( ld );
+   return FALSE;
+}
+
+ulLdapError = ldap_bind_s( 
+ld, 
+(ulAuthMethod == LDAP_AUTH_SIMPLE) ? AuthId.User : NULL,
+(ulAuthMethod == LDAP_AUTH_SIMPLE) ? AuthId.Password : (TCHAR *) &amp;AuthId, 
+ulAuthMethod );
+
+if( ulLdapError != LDAP_SUCCESS )
+{
+   wsprintf (szOutput, TEXT("ldap_bind_s() failed. Error: %u"), ulLdapError);
+   MessageBox (NULL, szOutput, TEXT("Error"), MB_OK);
+   ldap_unbind( ld );
+   return FALSE;
+}
+
+// Successfully bound to the server!
+
+// Request information from the directory and/or modify it...
+
+ldap_unbind( ld );
+return TRUE; </PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conusingtheldapapi.htm">Using the LDAP API</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Authenticating%20an%20LDAP%20Client (wce50conauthenticatinganldapclient.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

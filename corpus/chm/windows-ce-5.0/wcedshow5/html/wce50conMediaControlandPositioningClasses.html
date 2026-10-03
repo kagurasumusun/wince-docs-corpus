@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Media Control and Positioning Classes</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conmediacontrolandpositioningclasses"></A>Media Control and Positioning Classes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Media control interfaces pass commands such as <B>Run</B>, <B>Stop</B>, or <B>Pause</B> from an application through the filter graph manager to the individual filters. </P>
+
+<P>From the filter's perspective, the only control interface that is necessary is <A HREF="wce50lrfimediafilterinterface.htm">IMediaFilter</A>. This interface exposes methods to accept and implement these commands. The <A HREF="wce50lrfcbasefilterclass.htm">CBaseFilter</A> class implements this interface. All other interfaces that expose media control methods are handled by the filter graph manager and are therefore already implemented. </P>
+
+<P>Although a <A HREF="wce50lrfcmediacontrolclass.htm">CMediaControl</A> class exists and implements the <A HREF="wce50lrfimediacontrolinterface.htm">IMediaControl</A> interface, it is not often used because the filter graph manager is responsible for this functionality. </P>
+
+<P>The following illustration shows the relationship between these classes and interfaces. </P>
+
+<P class="fig"><IMG SRC="basecl5.gif" ALT="" BORDER=0></P>
+
+<P>Media positioning interfaces start the media stream at a specified position, play the stream for a specified period of time, or change the rate of the media stream. </P>
+
+<P>The <A HREF="wce50lrfimediapositioninterface.htm">IMediaPosition</A> interface is the primary interface supporting this functionality. The <A HREF="wce50lrfcmediapositionclass.htm">CMediaPosition</A> class implements this interface and serves as a base class for two other classes: <A HREF="wce50lrfcpospassthruclass.htm">CPosPassThru</A> and <A HREF="wce50lrfcsourcepositionclass.htm">CSourcePosition</A>. </P>
+
+<P>Typically, the filter graph manager calls the <B>IMediaPosition</B> interface on the renderer filters when it wants to position the media stream. </P>
+
+<P>The renderer acknowledges the sample times that it will be expected to display and then passes the media positioning data upstream, destined for a seekable filter, such as a source file filter, that can provide the properly positioned source stream.</P>
+
+<P>To pass that information upstream, output pins must be able to receive the positioning information. </P>
+
+<P>The <B>CPosPassThru</B> class implements the <B>IMediaPosition</B> interface and the <A HREF="wce50lrfimediaseekinginterface.htm">IMediaSeeking</A> interface on the output pins of filters and, for the most part, does nothing but call the corresponding interface on the output pin of the next upstream filter, thereby passing through the positioning data. </P>
+
+<P><B>IMediaSeeking</B> is different than <B>IMediaPosition</B> in that it allows the media stream to be searched based on units other than time, such as frames, samples, or indexed fields in an MPEG format. </P>
+
+<P>The <A HREF="wce50lrfcrendererpospassthruclass.htm">CRendererPosPassThru</A> class, implemented on a video renderer, sets the start and end reference times on individual samples, so that samples can be queried at any time for this information. This is helpful when dealing with seeking by using <B>IMediaSeeking</B>. </P>
+
+<P><B>IMediaSeeking</B> seeks to <I>media time</I>, and does not keep track of the sample's reference time. </P>
+
+<P>The reason for serially informing every filter in the graph of the new position is to allow filters that might be concerned with media positioning to be prepared for the new position. </P>
+
+<P>For example, certain stream splitters might be splitting off streams with media positions relative to the main media stream. This is why the filter graph manager does not simply call the source filter's <B>IMediaPosition</B> or <B>IMediaSeeking</B> interface directly. </P>
+
+<P><B>CSourcePosition</B> is the class that helps the source filter implement its <B>IMediaPosition</B> interface. </P>
+
+<P>The <A HREF="wce50lrfcsourceseekingclass.htm">CSourceSeeking</A> class helps the source filter implement its <B>IMediaSeeking</B> interface. This class enables a source filter to handle calls that change the start and stop positions in the media stream, and the playback rate. </P>
+
+<P>The <A HREF="wce50lrfcbasestreamcontrolclass.htm">CBaseStreamControl</A> class helps the source filter implement its <A HREF="wce50lrfiamstreamcontrolinterface.htm">IAMStreamControl</A> interface. This class is used primarily by capture filters. </P>
+
+<P>The following illustration shows the relationship between <B>CBaseStreamControl</B> and the interfaces from which it inherits. </P>
+
+<P class="fig"><IMG SRC="basecl7.gif" ALT="" BORDER=0></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Media%20Control%20and%20Positioning%20Classes (wce50conmediacontrolandpositioningclasses.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

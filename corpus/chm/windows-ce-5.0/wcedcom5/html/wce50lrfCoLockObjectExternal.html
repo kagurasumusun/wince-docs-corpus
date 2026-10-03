@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoLockObjectExternal</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50conProgrammingElementNotSupported">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcolockobjectexternal"></A>CoLockObjectExternal</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is called either to lock an object to ensure that it stays in memory, or to release such a lock. Call <B>CoLockObjectExternal</B> to place a strong lock on an object to ensure that it stays in memory.</P>
+
+<PRE class="syntax"><B>STDAPI CoLockObjectExternal(</B>
+<B> </B> <B>IUnknown* </B><I>pUnk</I><B>,</B>
+<B> </B> <B>BOOL </B><I>fLock</I><B>,</B>
+<B> </B> <B>BOOL </B><I>fLastUnlockReleases</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pUnk</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfiunknown.htm">IUnknown</A> interface on the object to be locked or unlocked.</dd>
+
+<DT><I>fLock</I></DT>
+
+<DD>[in] Whether the object is to be locked or released. Specifying TRUE holds a reference to the object (keeping it in memory), locking it independently of external or internal AddRef/Release operations, registrations, or revocations. 
+
+<P>If <I>fLock</I> is TRUE, fLastLockReleases is ignored. 
+
+
+<P>FALSE releases a lock previously set with a call to this function.
+</dd>
+
+<DT><I>fLastUnlockReleases</I></DT>
+
+<DD>[in] Whether a given lock is the last reference that is supposed to keep an object alive. If it is, TRUE releases all pointers to the object (there may be other references that are not supposed to keep it alive).</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>This function supports the standard return values E_INVALIDARG, E_OUTOFMEMORY, and E_UNEXPECTED, as well as the following:
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The object was locked successfully.</dd>
+</DL>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>CoLockObjectExternal</B> function prevents the reference count of an object from going to zero, thereby locking it into existence until the lock is released. </P>
+
+<P>The same function (with different parameters) releases the lock. The lock is implemented by having the system call <A HREF="wce50lrfiunknownaddref.htm">IUnknown::AddRef</A> on the object. </P>
+
+<P>The system then waits to call <A HREF="wce50lrfiunknownrelease.htm">IUnknown::Release</A> on the object until a later call to <B>CoLockObjectExternal</B> with fLock set to FALSE. </P>
+
+<P>This function can be used to maintain a reference count on the object on behalf of the end user, because it acts outside of the object, as does the user.</P>
+
+<P>The <B>CoLockObjectExternal</B> function must be called in the process in which the object actually resides (the EXE process, not the process in which handlers may be loaded). </P>
+
+<P>Calling <B>CoLockObjectExternal</B> sets a strong lock on an object. A strong lock keeps an object in memory, while a weak lock does not. Strong locks are required, for example, during a silent update to an OLE embedding. </P>
+
+<P>The embedded object's container must remain in memory until the update process is complete. There must also be a strong lock on an application object to ensure that the application stays alive until it has finished providing services to its clients. </P>
+
+<P>All external references place a strong reference lock on an object.</P>
+
+<P>The <B>CoLockObjectExternal</B> function is typically called in the following situations:
+
+<UL type="disc">
+	<LI>Object servers should call <B>CoLockObjectExternal</B> with both <I>fLock</I> and <I>fLastLockReleases</I> set to TRUE when they become visible. This call creates a strong lock on behalf of the user. When the application is closing, free the lock with a call to <B>CoLockObjectExternal</B>, setting <I>fLock</I> to FALSE and fLastLockReleases to TRUE.</li>
+
+	<LI>A call to <B>CoLockObjectExternal</B> on the server can also be used in the implementation of <A HREF="JavaScript:hhobj_1.Click()">IOleContainer::LockContainer</A>. </li>
+</UL>
+
+<P>There are several things to be aware of when you use <B>CoLockObjectExternal</B> in the implementation of <B>IOleContainer::LockContainer</B>. </P>
+
+<P>An embedded object would call <B>IOleContainer::LockContainer</B> on its container to keep it running (to lock it) in the absence of other reasons to keep it running. </P>
+
+<P>When the embedded object becomes visible, the container must weaken its connection to the embedded object with a call to the <B>OleSetContainedObject</B> function, so other connections can affect the object.</P>
+
+<P>Unless an application manages all aspects of its application and document shutdown completely with calls to <B>CoLockObjectExternal</B>, the container must keep a private lock count in <B>IOleContainer::LockContainer</B> so that it exits when the lock count reaches zero and the container is invisible. </P>
+
+<P>Maintaining all aspects of shutdown, and thereby avoiding keeping a private lock count, means that <B>CoLockObjectExternal</B> should be called whenever one of the following conditions occur:
+
+<UL type="disc">
+	<LI>A document is created and destroyed or made visible or invisible.</li>
+
+	<LI>An application is started and shut down by the user.</li>
+
+	<LI>A pseudo-object is created and destroyed.</li>
+</UL>
+
+<P>For debugging purposes, it may be useful to keep a count of the number of external locks (and unlocks) set on the application.</P>
+
+<P>The end user has explicit control over the lifetime of an application, even if there are external locks on it. That is, if a user decides to close the application (<B>File</B>, <B>Exit</B>), it must shut down. </P>
+
+<P>In the presence of external locks (such as the lock set by <B>CoLockObjectExternal</B>), the application can call the <A HREF="wce50lrfcodisconnectobject.htm">CoDisconnectObject</A> function to force these connections to close prior to shutdown.</P>
+
+<P>To determine whether the platform supports this function, see <A HREF="wce50condeterminingsupportedcomapis.htm">Determining Supported COM APIs</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Objbase.h.<BR>
+<B>Link Library:</B> Ole32.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfcomfunctions.htm">COM Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CoLockObjectExternal (wce50lrfcolockobjectexternal.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

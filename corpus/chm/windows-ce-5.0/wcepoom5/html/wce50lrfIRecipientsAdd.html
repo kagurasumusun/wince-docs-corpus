@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IRecipients::Add</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfirecipientsadd"></A>IRecipients::Add</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function adds a person to the recipient list for a meeting request. After you add the recipient you must set the recipient's <B>Address</B> property.</P>
+
+<PRE class="syntax"><B>HRESULT Add(</B>
+  <B>BSTR</B> <I>pwszName</I><B>,</B>
+  <B>IRecipient** </B><I>pRecipient</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pwszName</I></DT>
+
+<DD>[in] Pointer to a null-terminated Unicode string with the display name for the recipient.</dd>
+
+<DT><I>pRecipient</I></DT>
+
+<DD>[out] Pointer to the new recipient.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>S_OK indicates success. If an error occurs, the appropriate <B>HRESULT</B> is returned.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code example creates a meeting and sends it to three recipients.</P>
+
+<PRE class="code">void CreateMeetingRequest (IPOutlookApp *polApp)
+{
+  IRecurrencePattern *pRec;
+  IAppointment *pAppt;
+  IRecipients *pRecipients;
+  IRecipient *pRecipient;
+  VAR_BOOL bResolved
+
+  // Add a new appointment
+  polApp-&gt;CreateItem (olAppointmentItem, (IDispatch**)&amp;pAppt);
+
+  // Set the subject on the appointment
+  pAppt-&gt;put_Subject (TEXT ("Recurring Appointment"));
+
+  // Convert Monday, 4/5/9 at 10:00 am to a DATE
+  SYSTEMTIME st;
+  DATE date;
+  memset (&amp;st, 0, sizeof(SYSTEMTIME));
+  st.wMonth = 4;
+  st.wDay   = 5;
+  st.wYear  = 1999;
+  st.wHour  = 10;
+  polApp-&gt;SystemTimeToVariantTime (&amp;st, &amp;date);
+
+  // Set the start date
+  pAppt-&gt;put_Start (date);
+
+  // Add recipients.
+  pAppt-&gt;get_Recipients (&amp;pRecipients);
+  pRecipients-&gt;Add (TEXT ("Kathryn Wilson"), &amp;pRecipient);
+  pRecipients-&gt;Add (TEXT ("Blanca"), &amp;pRecipient);
+  pRecipients-&gt;Add (TEXT ("Robert"), &amp;pRecipient);
+
+  // Resolve the recipients against contacts on the device
+  IPOlRecipient *pRecip2;
+  int iRecipientCount;
+  pRecipients-&gt;get_Count (&amp;iRecipientCount);
+  // Count down so removing recipient does not reorder
+  // remaining unresolved recipients.
+  for (int i = iRecipientCount; i &gt; 0; i--) {
+    pRecipients-&gt;Item (i, &amp;pRecipient)
+    pRecipient-&gt;QueryInterface (IID_IPOlRecipient, (LPVOID*)&amp;pRecip2);
+    pRecip2-&gt;Resolve (TRUE, &amp;bResolved);
+    if !bResolved pRecipients-&gt;Remove (i);
+  }
+  pRecip2-&gt;Release();
+
+  // Send the meeting request
+  pRecipients-&gt;get_Count (&amp;iRecipientCount);
+  if (iRecipientCount &gt; 0) pAppt-&gt;Send ();
+
+  // Release objects
+  pRec-&gt;Release ();
+  pAppt-&gt;Release ();
+  pRecipients-&gt;Release ();
+  pRecipient-&gt;Release ();
+}</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 2.0 and later.<BR>
+<B>Header:</B> Pimstore.h. <BR>
+<B>Link Library:</B> Pimstore.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfirecipientsiunknown.htm">IRecipients</A> | <A HREF="wce50lrfirecipientsproperties.htm">IRecipients Properties</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IRecipients::Add (wce50lrfirecipientsadd.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

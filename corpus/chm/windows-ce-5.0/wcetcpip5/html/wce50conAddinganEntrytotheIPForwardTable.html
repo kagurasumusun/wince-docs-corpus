@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Adding an Entry to the IP Forward Table</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conaddinganentrytotheipforwardtable"></A>Adding an Entry to the IP Forward Table</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This code creates a new route in the IP Forward Table. Note the route must be a viable one or IP will not take it.</P>
+
+<PRE class="code">PMIB_IPFORWARDROW pRow = NULL;
+   ULONG dwSize = 0;
+   DWORD dwStatus = 0;
+
+   // Allocate some memory to store the row in
+   pRow = (PMIB_IPFORWARDROW)malloc(sizeof(MIB_IPFORWARDROW));
+   if (!pRow) {
+      OutputMessage(TEXT("Malloc failed, Out of Memory!\r\n"));
+      exit(1);
+   }
+
+   pRow-&gt;dwForwardDest = 0xAACCBBDD;   // AA.BB.CC.DD   
+   pRow-&gt;dwForwardNextHop = 0x01CCBBAA; // this is in host order Ip
+   //Address AA.BB.CC.01 is 01CCBBAA 
+   pRow-&gt;dwForwardMask = 0x0000FFFF; // 255.255.0.0
+
+   pRow-&gt;dwForwardIfIndex = 2;
+   pRow-&gt;dwForwardType = MIB_IPROUTE_TYPE_DIRECT; // A local route
+   pRow-&gt;dwForwardProto = MIB_IPPROTO_RIP; // This is defined in 
+   //iprtrmib.h
+   pRow-&gt;dwForwardAge = 0; // Just created it
+   pRow-&gt;dwForwardMetric1 = 1; 
+
+
+   // Create a new route entry for the default gateway.
+   dwStatus = CreateIpForwardEntry(pRow);
+
+   if (dwStatus == NO_ERROR)
+      OutputMessage(TEXT("Route Added Successfully\n"));
+   else if (dwStatus == ERROR_INVALID_PARAMETER)
+      OutputMessage(TEXT("Invalid Parameter\n"));
+   else 
+      DisplayErrorMessage(dwStatus);
+
+   // Free resources
+   if (pRow)
+      free(pRow);</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50coniphelpercodesamples.htm">IP Helper Code Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Adding%20an%20Entry%20to%20the%20IP%20Forward%20Table (wce50conaddinganentrytotheipforwardtable.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

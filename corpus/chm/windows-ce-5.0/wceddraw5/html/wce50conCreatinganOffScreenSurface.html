@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating an Off-Screen Surface</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatinganoffscreensurface"></A>Creating an Off-Screen Surface</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>An off-screen surface is often used to cache bitmaps that will later be blitted to the primary surface or a back buffer. </P>
+
+<P>You must declare the dimensions of an off-screen surface by including the DDSD_WIDTH and DDSD_HEIGHT flags and the corresponding values in the <B>dwWidth</B> and <B>dwHeight</B> members. </P>
+
+<P>Additionally, you must include the DDSCAPS_OFFSCREENPLAIN flag in the accompanying <A HREF="wce50lrfddscaps2.htm">DDSCAPS2</A> structure.</P>
+
+<P>By default, DirectDraw creates a surface in display memory unless it will not fit, in which case it creates the surface in system memory. </P>
+
+<P>You can explicitly choose display or system memory by including the DDSCAPS_SYSTEMMEMORY or DDSCAPS_VIDEOMEMORY flags in the <B>dwCaps</B> member of the <B>DDSCAPS2</B> structure. The method fails, returning an error, if it cannot create the surface in the specified location.</P>
+
+<P>The following example shows how to prepare for creating a simple off-screen surface.</P>
+
+<PRE class="code">DDSURFACEDESC2 ddsd; 
+ddsd.dwSize = sizeof(ddsd); 
+ 
+// Tell DirectDraw which members are valid. 
+ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH; 
+ 
+// Request a simple off-screen surface, sized 
+// 100 by 100 pixels. 
+//
+// (This assumes that the off-screen surface that is about 
+// to be created will match the pixel format of the 
+// primary surface.)
+ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN; 
+ddsd.dwHeight = 100; 
+ddsd.dwWidth = 100; </PRE>
+
+<P>Additionally, you can create surfaces whose pixel format differs from the primary surface's pixel format. However, in this case there is one drawback &#0151; you are limited to using system memory. </P>
+
+<P>The following code fragment shows how to prepare the <A HREF="wce50lrfddsurfacedesc2.htm">DDSURFACEDESC2</A> structure members in order to create an 8-bit palettized surface (assuming that the current display mode is something other than 8-bits per pixel).</P>
+
+<PRE class="code">memset(&amp;ddsd, 0, sizeof(ddsd));
+ddsd.dwSize  = sizeof(ddsd);
+ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+ddsd.dwHeight = 100;
+ddsd.dwWidth  = 100;
+ddsd.ddpfPixelFormat.dwSize  = sizeof(DDPIXELFORMAT);
+ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+ 
+// Set the bit depth for an 8-bit surface, but DO NOT 
+// specify any RGB mask values. The masks must be zero
+// for a palettized surface.
+ddsd.ddpfPixelFormat.dwRGBBitCount = 8;</PRE>
+
+<P>In previous versions of DirectX, the maximum width of off-screen surfaces was limited to the width of the primary surface. </P>
+
+<P>Beginning with DirectX 5.0, you can create surfaces as wide as you need, permitting that the display hardware can support them. </P>
+
+<P>Be careful when declaring wide off-screen surfaces; if the video card memory cannot hold a surface as wide as you request, the surface is created in system memory. </P>
+
+<P>If you explicitly choose video memory and the hardware cannot support it, the call fails. </P>
+
+<P>For more information, see <A HREF="wce50concreatingwidesurfaces.htm">Creating Wide Surfaces</A>.</P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20an%20Off-Screen%20Surface (wce50concreatinganoffscreensurface.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

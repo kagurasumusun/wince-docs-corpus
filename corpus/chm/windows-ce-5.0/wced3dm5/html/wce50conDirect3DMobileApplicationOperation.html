@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Direct3D Mobile Application Operation</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfRECT">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50condirect3dmobileapplicationoperation"></A>Direct3D Mobile Application Operation</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>After your application has created and initialized the appropriate resources you can have it enter its rendering loop to animate your application's scene. This loop is also sometimes called the main loop. You can drive your application's rendering loop by taking user input, watching an external clock, listening for windows messages, or by simply letting your application draw its scenes as quickly as possible.</P>
+
+<P>The following list shows the typical sequence of operations for an application's rendering loop.
+
+<OL type="1">
+	<LI>Change the appropriate render states, see <A HREF="wce50lrfidirect3dmobiledevicesetrenderstate.htm">IDirect3DMobileDevice::SetRenderState</A>.</li>
+
+	<LI>Clear the render target, the depth buffer, and the stencil buffer to a known initial value, see <A HREF="wce50lrfidirect3dmobiledeviceclear.htm">IDirect3DMobileDevice::Clear</A>.</li>
+
+	<LI>Begin the scene, see <A HREF="wce50lrfidirect3dmobiledevicebeginscene.htm">IDirect3DMobileDevice::BeginScene</A>.</li>
+
+	<LI>Draw the primitives, see <A HREF="wce50lrfidirect3dmobiledevicedrawprimitive.htm">IDirect3DMobileDevice::DrawPrimitive</A> and <A HREF="wce50lrfidirect3dmobiledevicedrawindexedprimitive.htm">IDirect3DMobileDevice::DrawIndexedPrimitive</A>.</li>
+
+	<LI>End the scene, see <A HREF="wce50lrfidirect3dmobiledeviceendscene.htm">IDirect3DMobileDevice::EndScene</A> method.</li>
+
+	<LI>Present the scene see <A HREF="wce50lrfidirect3dmobiledevicepresent.htm">IDirect3DMobileDevice::Present</A>.</li>
+</OL>
+
+<P>This typical sequence of operations is not the only possible sequence. The following sections provide greater detail on the operations listed in the typical sequence. You can draw on this information to help you implement any of a number of variations of this typical sequence to best serve the design goals for you application. </P>
+
+<H2 class="dtH2">Clearing the Direct3D Mobile Swap Chain</H2>
+
+<P>Clearing is the process of setting pixels values of surfaces in the swap chain to a known value. You can clear an entire surface or just an array of sub rectangles. You can clear any combination of the render target color buffer, stencil buffer, or depth buffer.</P>
+
+<P>You can clear the current swap chain by calling the <A HREF="wce50lrfidirect3dmobiledeviceclear.htm">IDirect3DMobileDevice::Clear</A> method. This method lets you identify the buffers you want to clear, any sub rectangles, and the values that you want to clear the color, depth and stencil buffers to.</P>
+
+<P>You clear the color buffer with a 32 bit ARGB value of type <A HREF="wce50lrfd3dmcolor.htm">D3DMCOLOR</A>. You clear the depth buffer with an IEEE 32 bit floating point value where 0.0 represents the nearest distance to the viewer and 1.0 represents the farthest. Values outside of the range 0.0 to 1.0 cause the <B>IDirect3DMobileDevice::Clear</B> method to fail in debug D3DM middleware builds. The behavior in release builds is undefined. You clear the stencil buffer with an unsigned integer value between 0 and 2^n - 1 where n is the number of bits in the stencil channel.</P>
+
+<P>You can command the <B>IDirect3DMobileDevice::Clear</B> method to clear the entire area of the various surfaces. It may also take an optional array of <A HREF="JavaScript:hhobj_1.Click()">RECT</A> structures that describe sub-rectangles of the surface to clear. The size of the Microsoft&reg; Direct3D Mobile&reg; command buffer limits the number of rectangles that can be cleared by a single call to this method 1024.</P>
+
+<H2 class="dtH2">Drawing Primitives</H2>
+
+<P>The <A HREF="wce50lrfidirect3dmobiledevicedrawprimitive.htm">IDirect3DMobileDevice::DrawPrimitive</A> and <A HREF="wce50lrfidirect3dmobiledevicedrawindexedprimitive.htm">IDirect3DMobileDevice::DrawIndexedPrimitive</A> methods are used to signal the middleware that the primitives in a scene are ready to be drawn.</P>
+
+<P>Using the <B>IDirect3DMobileDevice::DrawPrimitive</B> method requires you to specify the primitive type, the number of vertices of offset in the vertex buffer, and the number of primitives to draw. The middleware automatically reads successive groups of vertices appropriate for the primitive type from the vertex buffer.</P>
+
+<P>Using the <B>IDirect3DMobileDevice::DrawIndexedPrimitive</B> method is slightly more complicated. You must also specify the primitive type, however instead of reading vertices sequentially from the vertex buffer, this method reads indices sequentially from the index buffer. The index is the offset, counted in vertices, of the vertex. Using an index buffer allows vertices to be shared among primitives without replicating the vertex data in the vertex buffer.</P>
+
+<P>As part of the design of Direct3D Mobile, both of these drawing methods actually result in Direct3D Mobile cause the middleware to write command tokens into the command buffer. The middleware does not send these commands to the driver until you flush the command buffer.</P>
+
+<H2 class="dtH2">Beginning and Ending a Scene</H2>
+
+<P>Direct3D Mobile uses the concept of a scene. A scene is a block of drawing commands made between a call to the <A HREF="wce50lrfidirect3dmobiledevicebeginscene.htm">IDirect3DMobileDevice::BeginScene</A> method and a call to the <A HREF="wce50lrfidirect3dmobiledeviceendscene.htm">IDirect3DMobileDevice::EndScene</A> method. Explicitly marking when drawing commands will occur by containing them within a scene allows the driver optimize its setup and internal state. A side effect of this optimization is that changing driver states within a scene may result in a higher performance penalty than changing them outside of the scene.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50condirect3dmobileprogramming.htm">Direct3D Mobile Programming</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Direct3D%20Mobile%20Application%20Operation (wce50condirect3dmobileapplicationoperation.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

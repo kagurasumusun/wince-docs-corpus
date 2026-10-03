@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>PC Authentication and IPsec</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfVerifyUser">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conpcauthenticationipsec"></A>PC Authentication and IPsec</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Desktop computers running Windows can be configured to require that IP traffic be protected using IP security protocol (IPsec). Desktop computers that are configured like this can cause the PC Authentication LAP and desktop computer application to communicate differently.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Explaining how to configure IPsec on desktop computers running Windows is outside the scope of this topic. For more information about IPsec, refer to the documentation for your version of Windows.</BLOCKQUOTE>
+
+<P>In one scenario, a desktop computer can be configured to attempt to protect any IP communication using IPsec. When the PC Authentication LAP on a Windows CE-based IP phone attempts to connect to a desktop computer that requires IPsec, the desktop computer waits for a non-negligible amount of time &#0151; between two and five seconds&#0151; for IPsec communication. </P>
+
+<P>When no IPsec communication is forthcoming, the desktop computer makes an exception for that device and allows communication to proceed without IPsec. Future requests do not require the timeout period to expire and so complete immediately. </P>
+
+<P>The initial desktop computer timeout causes the call to the LASS <A HREF="JavaScript:hhobj_1.Click()">VerifyUser</A> function to also timeout, which results in the LAP not authenticating the user. Because of the resulting exception, subsequent authentication attempts are processed normally and, if the desktop computer is authenticated and unlocked, the user is authenticated.</P>
+
+<P>From the perspective of an application that uses the PC Authentication LAP, like the Telephony User Interface (TUI), this can cause initial authentication attempts to fail while subsequent attempts succeed. Applications that use the PC Authentication Catalog item should take this possibility into account, perhaps by providing a user interface that notifies the user when a timeout occurs or by retrying the authentication attempt automatically.</P>
+
+<P>The exception that allows non-IPsec communication is limited in time and the desktop computer may discard the exception data after a certain number of minutes. This means that another request from the same Windows CE-based device may result in the same pattern of initial timeout followed by success.</P>
+
+<P>Although the LASS always calls the LAP's <B>VerifyUser </B>implementation, applications using the PC Authentication LAP directly can call <A HREF="wce50lrfattemptconnection.htm">AttemptConnection</A> to avoid this problem. <B>AttemptConnection</B> makes the some connection to the desktop computer, but waits for a longer period before timing out. As long as this longer period of time is sufficient for the desktop computer to make a non-IPsec exception and allow IP communication, <B>AttemptConnection</B> can succeed on an initial call.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oripcauthenticationapplicationdevelopment.htm">PC Authentication Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: PC%20Authentication%20and%20IPsec (wce50conpcauthenticationipsec.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

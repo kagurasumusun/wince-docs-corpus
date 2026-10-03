@@ -1,0 +1,250 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Custom Service Extensions</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concustomserviceextensions"></A>Custom Service Extensions</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Custom server extensions enable you to extend the types of services your OBEX server offers. To create a service extension, create a DLL that exports the <B>ServiceCallback</B> function. The Obexserver.h header file provides all of the necessary definitions and data structures.</P>
+
+<P>The function has the following type definition.</P>
+
+<PRE class="code">typedef int  (*ServiceCallback) (
+   struct _obex_transaction *pTrans
+);</PRE>
+
+<P>It takes a single <B>ObexTransaction</B> structure argument, defined in the following manner.</P>
+
+<PRE class="code">typedef struct _obex_transaction {
+   unsigned int uiConnectionId;
+   unsigned int uiTransactionId;
+   unsigned int uiOp;
+   ObexCommand *pObex;
+   MemAlloc ObexAlloc;
+   MemFree ObexFree;
+   ServerCallback ObexExecute;
+   AuthCallback ObexAuthRequest;
+} ObexTransaction;</PRE>
+
+<P>It contains a connection identifier that is allocated by server. The transaction identifier is unique for standard OBEX Request-Response exchange. The operation selector may be one of the following.</P>
+
+<PRE class="code">#define OBEX_REQ_REQUEST 0x00000001
+#define OBEX_REQ_CLOSE   0x00000002
+#define OBEX_REQ_INIT    0x00000003
+#define OBEX_REQ_UNLOAD  0x00000004</PRE>
+
+<P>If the transaction is invoked as a result of an OBEX command, received as <CODE>uiOp == OBEX_REQ_REQUEST</CODE>, the transaction also contains the command. All OBEX transaction structures contain a callback pointer <B>ObexExecute</B> that communicates a response for the command to the OBEX server. Memory allocation APIs are also included to give service access to the OBEX heap.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Memory allocation function pointers must be the same so that <B>ObexAlloc</B> can be used to allocate memory and <B>ObexFree</B> can be used to free the memory. Memory allocations must be persistent across transactions.</BLOCKQUOTE>
+
+<P><B>ObexAuthRequest</B> and <B>ObexEncryptionRequest</B> functions are used to request the underlying transport authentication and encryption, respectively. These functions are used mainly for Bluetooth, IrDA does not support it. The FileBrowser sample also uses these functions. For more information about the FileBrowser sample, see <A HREF="wce50samobexsamples.htm">OBEX Samples</A>.</P>
+
+<P>The following code example shows how to use <B>ObexAuthRequest</B>.</P>
+
+<PRE class="code">static int ServiceRequest (ObexTransaction *pOT) {
+   UINT retCode;
+   HRESULT hr = pOT-&gt;ObexAuthRequest(uiTransaction, &amp;retCode);
+
+// If this succeeds, there were no errors during the execution. However, this does not mean that you are authenticated.
+
+if(SUCCEEDED(hr)){
+    //Authentication is supported, but failed
+    if(retCode == 0){
+    }
+    //Authentication is supported, and succeeded
+    else if(retCode == 1){
+    }
+    //Authentication is not supported, for example IrDA. It is up to the service to decide what to do
+    else if(retCode == 2){
+    }
+}
+else{
+   //Internal error 
+}
+
+}</PRE>
+
+<P>The following code example shows how to use <B>ObexEncryptionRequest</B>.</P>
+
+<PRE class="code">static int ServiceRequest (ObexTransaction *pOT) 
+{
+  UINT retCode;
+  HRESULT hr = pOT-&gt;ObexEncryptionRequest(uiTransaction, &amp;retCode);
+//If this succeeds, there were no errors during the execution.
+  if(SUCCEEDED(hr))
+  {
+    //Encryption is supported, but failed.
+    if(retCode == 0){
+    }
+    //Encryption is supported, and succeeded.
+    else if(retCode == 1){
+    }
+    //Encryption is not supported.
+    else if(retCode == 2){
+    }
+  }
+  else{
+   //Internal error. 
+  }
+}</PRE>
+
+<P>The following table shows the return values and their corresponding descriptions.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%>Return values (for return code)</TH>
+<TH width=56%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>0 == FAILED</TD>
+<TD width=56%>The transport supports authentication but failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>1 == SUCCESS</TD>
+<TD width=56%>The transport supports authentication and succeeded.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>2 == NOT_SUPPORTED</TD>
+<TD width=56%>The transport does not support authentication.</TD>
+</TR>
+</table></div>
+
+<P>The following code example shows signatures for <B>ObexAuthRequest</B> and <B>ObexEncryptionRequest</B>.</P>
+
+<PRE class="code">typedef HRESULT (*AuthCallback)(unsigned int uiTransactionId, UINT *uiRetCode);
+typedef HRESULT  (*EncryptionCallback) (unsigned int uiTransactionId, UINT *uiRetCode);</PRE>
+
+<P>When the first OBEX request comes in, it has a TARGET field that specifies a universally unique identifier (UUID) of the OBEX service for which the packet is intended. The OBEX server searches the registry for this OBEX service and loads the server extension DLL. If the TARGET is missing, the default inbox service is assumed.</P>
+
+<P>The first call the OBEX server makes to the service extension is OBEX_REQ_INIT. This call is serialized and used to create synchronization primitives and initialize the service.</P>
+
+<P>The service is called when a package for it is received. These calls are not guaranteed to be serialized within a single connection or multiple simultaneous connections.</P>
+
+<P>Calls that carry OBEX requests have <CODE>uiOp == OBEX_REQ_REQUEST</CODE> and <CODE>pObex != NULL</CODE>, that point to an <B>ObexCommand</B> data structure, defined in the following manner.</P>
+
+<PRE class="code">typedef union {
+   unsigned char  uc;
+   unsigned int  ui;
+   WCHAR *pwsz;
+   struct {
+      unsigned int cuc;
+      unsigned char *puc;
+   } caub;
+} ObexVariant;
+
+typedef struct _obex_command {
+   unsigned int uiOp;
+   unsigned int uiResp;
+   unsigned int fFinal;
+   ObexPacketData sPktData;
+   unsigned int cProp;
+   unsigned int *aPropID;
+   ObexVariant *aPropVar;
+} ObexCommand;</PRE>
+
+<P><B>ObexCommand</B> is a preparsed OBEX packet that arrives through a supported transport.</P>
+
+<P>In this packet, <B>uiOp</B> equals one of the following minus the OBEX_OP_FINAL flag, indicated by the <B>fFinal</B> field in the structure.</P>
+
+<PRE class="code">#define OBEX_OP_CONNECT (0x00 | OBEX_OP_ISFINAL)
+#define OBEX_OP_DISCONNECT 0x01 | OBEX_OP_ISFINAL)
+#define OBEX_OP_PUT 0x02
+#define OBEX_OP_GET  0x03
+#define OBEX_OP_SETPATH (0x05 | OBEX_OP_ISFINAL)
+#define OBEX_OP_ABORT (0x7f | OBEX_OP_ISFINAL)</PRE>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The Windows CE&#0150;based OBEX server does not support extensions to op-codes because it does not know how to parse them.</BLOCKQUOTE>
+
+<P>The array of <B>OBEXVARIANT</B> structures contains properties of the OBEX packet. <B>OBEXPACKETDATA</B> contains data that is intrinsic to the current OBEX command.</P>
+
+<P>When the command executes, the service extension MUST indicate a response to the OBEX server before the function returns. OBEX is a client-server protocol; the server must send a data response to every client command.</P>
+
+<P>To facilitate the response, the OBEX server provides the following callback.</P>
+
+<PRE class="code">typedef int  (*ServerCallback) (
+   unsigned int uiOp,
+   unsigned int uiId,
+   struct _obex_command *pCommand
+);</PRE>
+
+<P>The <I>uiId</I> is the transaction identifier for this response. </P>
+
+<P><I>uiOp</I> is one of the following.</P>
+
+<PRE class="code">#define OBEX_RESP_RESPOND    0x00000001
+#define OBEX_RESP_OK         0x00000002
+#define OBEX_RESP_ACCEPT     0x00000003
+#define OBEX_RESP_REJECT     0x00000004
+#define OBEX_RESP_DENY       0x00000005
+#define OBEX_RESP_CONTINUE   0x00000006
+#define OBEX_RESP_ABORT      0x00000007
+#define OBEX_RESP_DISCONNECT 0x00000008
+#define OBEX_RESP_HANGUP     0x00000009</PRE>
+
+<P>The OBEX server allows simple canned responses that do not require a server extension to generate a command. The following codes cause the OBEX server to format and send respective OBEX responses back to the client:
+
+<UL type="disc">
+	<LI>OBEX_RESP_OK</li>
+
+	<LI>OBEX_RESP_ACCEPT</li>
+
+	<LI>BEX_RESP_REJECT</li>
+
+	<LI>OBEX_RESP_DENY</li>
+
+	<LI>OBEX_RESP_CONTINUE</li>
+
+	<LI>OBEX_RESP_ABORT</li>
+</UL>
+
+<P>OBEX_RESP_RESPOND requires an explicit command to be present in the function call parameters. This command has the same data structure as request, except the <I>uiResp</I> field is used for the response code. The <I>uiOp</I> field MUST contain the same operation code as the original command. The remaining data must be consistent with the OBEX protocol. The OBEX server, however, cannot verify the data's semantics.</P>
+
+<P>OBEX_RESP_DISCONNECT and OBEX_RESP_HANGUP are special commands that can be called with or without a real command response. If used with a command body, the response is sent like OBEX_RESP_RESPOND.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;OBEX_RESP_DISCONNECT and OBEX_RESP_HANGUP tend to close the current connection. OBEX_RESP_HANGUP actually closes the physical connection to the client and should only be used if authentication fails or a security attack is detected by the service extension. </BLOCKQUOTE>
+
+<P>To avoid leaking logical connection identifiers, the service extension MUST indicate OBEX_RESP_DISCONNECT when a disconnect request is received.</P>
+
+<P>The service extension is notified of closed physical connections by an OBEX_REQ_CLOSE transaction containing a NULL OBEX command body.</P>
+
+<P>The service is held in a loaded cache of services until the logical connections to the service are terminated. Before the cache unloads, the OBEX_REQ_CLOSE command is called to release all resources and shutdown active threads. This request is serialized. Immediately following this transaction, the UNLOADLIBRARY command is called on the service DLL.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conserversupport.htm">Server Support</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Custom%20Service%20Extensions (wce50concustomserviceextensions.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>What the Derived Class Must Provide</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conwhatthederivedclassmustprovide"></A>What the Derived Class Must Provide</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>The derived filter class must provide a few member functions, typically to perform the following tasks: 
+
+<UL type="disc">
+	<LI>Determine if the filter accepts the media type. </li>
+
+	<LI>Specify the count and size of any required allocators (for copy transforms only). </li>
+
+	<LI>Provide the transform functionality of the filter. </li>
+</UL>
+
+<P>All derived filter classes must implement a static <A HREF="wce50lrfcfactorytemplatecreateinstance.htm">CFactoryTemplate::CreateInstance</A> function. </P>
+
+<P>You can also choose to override the <A HREF="wce50lrfcbasefiltergetsetupdata.htm">CBaseFilter::GetSetupData</A> member function to make your filter self-registering. </P>
+
+<P>Beyond this, your classes must override a few member functions in the transform base classes. </P>
+
+<P>For more information about instantiating the filter, see <A HREF="wce50concreatingatransformfilter.htm">Creating a Transform Filter</A>. </P>
+
+<P>If your derived filter class is based on the <A HREF="wce50lrfctransformfilterclass.htm">CTransformFilter</A> class, you must override the following member functions. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=22%>Member function</TH>
+<TH width=78%>Purpose</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><A HREF="wce50lrfctransformfiltertransform.htm">Transform</A></TD>
+<TD width=78%>Implement transform. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><A HREF="wce50lrfctransformfiltercheckinputtype.htm">CheckInputType</A></TD>
+<TD width=78%>Verify support of media type. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><A HREF="wce50lrfctransformfilterchecktransform.htm">CheckTransform</A></TD>
+<TD width=78%>Verify support for transforming this type (for debugging builds only). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><A HREF="wce50lrfctransformfilterdecidebuffersize.htm">DecideBufferSize</A></TD>
+<TD width=78%>Set size and count when copying. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><A HREF="wce50lrfctransformfiltergetmediatype.htm">GetMediaType</A></TD>
+<TD width=78%>Suggest media types for the output pin. </TD>
+</TR>
+</table></div>
+
+<P>If your derived filter class is based on the <A HREF="wce50lrfctransinplacefilterclass.htm">CTransInPlaceFilter</A> class, override the following member functions. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=22%>Member function</TH>
+<TH width=78%>Purpose</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><A HREF="wce50lrfctransformfiltertransform.htm">Transform</A></TD>
+<TD width=78%>Implement transform. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><A HREF="wce50lrfctransformfiltercheckinputtype.htm">CheckInputType</A></TD>
+<TD width=78%>Verify support of media type. </TD>
+</TR>
+</table></div>
+
+<P>Beyond providing your transform filter with a default implementation by providing the minimum overrides, you can override other member functions to provide more specialized behavior. </P>
+
+<P>The member functions you override depend on what you want your filter to do. For example, you must override the <A HREF="wce50lrfctransformfiltergetpin.htm">GetPin</A> and <A HREF="wce50lrfctransformfiltergetpincount.htm">GetPinCount</A> member functions if you want to have more than one input pin and one output pin on the filter. </P>
+
+<P>Also, several base class member functions, such as <A HREF="wce50lrfctransformfilterbreakconnect.htm">BreakConnect</A> or <A HREF="wce50lrfctransformfiltercompleteconnect.htm">CompleteConnect</A>, are called as notifications to your filter through the pins. Typically, most of these member functions exist only on the pins. </P>
+
+<P>In the classes based on <B>CTransformFilter</B>, the pin functions are implemented to call similarly named functions in the filter class. </P>
+
+<P>This means that the member functions you most likely will want to override are all collected into one filter class, so you can leave the pin classes unchanged, making implementation smaller and easier. </P>
+
+<P>The member functions are as follows. </P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Member function</TH>
+<TH width=65%>Reason to override</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfcunknownnondelegatingqueryinterface.htm">NonDelegatingQueryInterface</A></TD>
+<TD width=65%>To distribute any interfaces added in the derived class. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfiltergetpincount.htm">GetPinCount</A></TD>
+<TD width=65%>If adding more pins to the transform filter. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfiltergetpin.htm">GetPin</A></TD>
+<TD width=65%>If adding more pins to the transform filter. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfiltercheckconnect.htm">CheckConnect</A></TD>
+<TD width=65%>To obtain extra interfaces at connect time or for other reasons. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfilterbreakconnect.htm">BreakConnect</A></TD>
+<TD width=65%>To release extra interfaces when connection is broken or for other reasons. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfiltercompleteconnect.htm">CompleteConnect</A></TD>
+<TD width=65%>To perform some action at the end of connection (such as reconnecting the input pin). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfiltersetmediatype.htm">SetMediaType</A></TD>
+<TD width=65%>To be notified when the media type has been set. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfilterstartstreaming.htm">StartStreaming</A></TD>
+<TD width=65%>To be notified when entering the streaming state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfilterstopstreaming.htm">StopStreaming</A></TD>
+<TD width=65%>To be notified when exiting the streaming state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><A HREF="wce50lrfctransformfilteralterquality.htm">AlterQuality</A></TD>
+<TD width=65%>To do anything with quality control messages other than passing them on. </TD>
+</TR>
+</table></div>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: What%20the%20Derived%20Class%20Must%20Provide (wce50conwhatthederivedclassmustprovide.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Searching for a File or Directory</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consearchingforafileordirectory"></A>Searching for a File or Directory</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Use the <A HREF="wce50lrffindfirstfile.htm">FindFirstFile</A>, <A HREF="wce50lrffindnextfile.htm">FindNextFile</A>, and <A HREF="wce50lrffindclose.htm">FindClose</A> functions to search for file names or directory names that match a specified pattern. The pattern must be a valid file name and can include the asterisk (*) and question mark (?) wildcards.</P>
+
+<P class="labelproc"><B>To find a single file or a series of files</B>
+
+<OL type="1">
+	<LI>Call the <B>FindFirstFile</B> function with the file name that is passed in through the <I>lpFileName</I> parameter.
+<P>The <B>FindFirstFile</B> function returns a handle that you can use in the <B>FindNextFile</B> function. <B>FindFirstFile</B> also returns the file name, alternate file name, file size, Windows CE object identifier, attributes, creation time, last access time, and last write time of the found file.
+</li>
+
+	<LI>If necessary, call the <B>FindNextFile</B> function with the handle that was returned by the <B>FindFirstFile</B> function.
+<P>The <B>FindNextFile</B> function returns the same data as the <B>FindFirstFile</B> function. You can call <B>FindNextFile</B> multiple times to find variations of the same file.
+</li>
+
+	<LI>Modify the file, as necessary.</li>
+
+	<LI>Destroy the handle that was created by the <B>FindFirstFile</B> function by using the <B>FindClose</B> function.</li>
+</OL>
+
+<P>The following code example shows how to copy all .txt files to a new directory, Textro, which contains read-only files. The example also shows how to change all of the files in the new directory to read-only, if necessary. In the example, the <B>FindFirstFile</B> and <B>FindNextFile</B> functions search the root directory for all .txt files. Each .txt file is then copied into Textro. If a file is not read-only, the example changes to the Textro directory and the <A HREF="wce50lrfsetfileattributes.htm">SetFileAttributes</A> function converts the copied file to read-only. After all of the .txt files are copied, the <B>FindClose</B> function closes the search handle.</P>
+
+<PRE class="code">void FindFileExample (void)
+{
+  WIN32_FIND_DATA FileData;   // Data structure describes the file found
+  HANDLE hSearch;             // Search handle returned by FindFirstFile
+  TCHAR szMsg[100];           // String to store the error message
+  TCHAR szNewPath[MAX_PATH];  // Name and path of the file copied
+  TCHAR szDirPath[] = TEXT("\\TEXTRO");
+
+  BOOL bFinished = FALSE;
+
+  // Create a new directory.
+
+  if (!CreateDirectory (szDirPath, NULL))
+  {
+    wsprintf (szMsg, TEXT("Unable to create new directory."));
+    return;
+  }
+
+  // Start searching for .txt files in the root directory.
+
+  hSearch = FindFirstFile (TEXT("\\*.txt"), &amp;FileData);
+  if (hSearch == INVALID_HANDLE_VALUE)
+  {
+    wsprintf (szMsg, TEXT("No .TXT files found."));
+    return;
+  }
+
+  // Copy each .txt file to the new directory and change it to
+  // read-only, if it is not already read-only.
+
+  while (!bFinished)
+  {
+    lstrcpy (szNewPath, szDirPath);
+    lstrcat (szNewPath, TEXT("\\"));
+    lstrcat (szNewPath, FileData.cFileName);
+
+    if (CopyFile (FileData.cFileName, szNewPath, FALSE))
+    {
+      if (!(FileData.dwFileAttributes &amp; FILE_ATTRIBUTE_READONLY))
+      {
+        SetFileAttributes (szNewPath,
+                FileData.dwFileAttributes | FILE_ATTRIBUTE_READONLY);
+      }
+    }
+    else
+    {
+      wsprintf (szMsg, TEXT("Unable to copy file."));
+
+      // Your error-handling code goes here.
+    }
+
+    if (!FindNextFile (hSearch, &amp;FileData))
+    {
+      bFinished = TRUE;
+
+      if (GetLastError () == ERROR_NO_MORE_FILES)
+      {
+        wsprintf (szMsg, TEXT("Found all of the files."));
+      }
+      else
+      {
+        wsprintf (szMsg, TEXT("Unable to find next file."));
+      }
+    }
+  }
+
+  // Close the search handle.
+
+  if (!FindClose (hSearch))
+  {
+    wsprintf (szMsg, TEXT("Unable to close search handle."));
+  }
+} // End of FindFileExample code</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50confilesystemoperations.htm">File System Operations</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Searching%20for%20a%20File%20or%20Directory (wce50consearchingforafileordirectory.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

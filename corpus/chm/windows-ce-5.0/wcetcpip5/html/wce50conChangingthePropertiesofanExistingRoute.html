@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Changing the Properties of an Existing Route</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conchangingthepropertiesofanexistingroute"></A>Changing the Properties of an Existing Route</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This code sample finds a route in the table and changes its metric to NewMetric. The metric change must be viable otherwise TCP/IP will not accept it.</P>
+
+<PRE class="code">   PMIB_IPFORWARDTABLE pIpForwardTable = NULL;
+   ULONG dwSize = 0;
+   BOOL bOrder = FALSE;
+   DWORD dwStatus = 0;
+   DWORD Dest = 0xDDCCBBAA; // this is in host order Ip Address AA.BB.CC.DD is 0xDDCCBBAA
+   DWORD NewMetric = 3;
+
+   // Find out how big our buffer needs to be
+   dwStatus = GetIpForwardTable(pIpForwardTable, &amp;dwSize, bOrder);
+   if (dwStatus == ERROR_INSUFFICIENT_BUFFER) {
+
+      // Allocate the memory for the table
+      if (!(pIpForwardTable = (PMIB_IPFORWARDTABLE)malloc(dwSize))) {
+         OutputMessage(TEXT("Malloc failed, Out of Memory!\r\n"));
+         exit(1);
+      }
+
+      // Now get the table
+      dwStatus = GetIpForwardTable(pIpForwardTable, &amp;dwSize, bOrder);
+   }
+
+   if (dwStatus != ERROR_SUCCESS) {
+      OutputMessage(TEXT("GetIpForwardTable Failed, ERROR %d\r\n"), dwStatus);
+      if (pIpForwardTable) 
+         free(pIpForwardTable);
+      exit(1);
+   }
+   
+   // Search for the row in the table that is wanted.
+   for (unsigned long int i=0; i &lt; pIpForwardTable-&gt;dwNumEntries; i++) {
+      if (pIpForwardTable-&gt;table[i].dwForwardDest == 0x0000389D) {
+         
+         pIpForwardTable-&gt;table[i].dwForwardMetric1 = 3;
+
+         // Delete the old default gateway entry
+         dwStatus = SetIpForwardEntry(&amp;(pIpForwardTable-&gt;table[i]));
+
+         if (dwStatus != ERROR_SUCCESS) {
+            OutputMessage(TEXT("Could not change route metric\n"));
+            exit(1);
+         }
+      }
+   }           
+
+   if (dwStatus == NO_ERROR)
+      OutputMessage(TEXT("Metric changed successfully\n"));
+   else if (dwStatus == ERROR_INVALID_PARAMETER)
+      OutputMessage(TEXT("Invalid Parameter\n"));
+   else 
+      DisplayErrorMessage(dwStatus);
+
+   // Free resources
+   if (pIpForwardTable) 
+      free(pIpForwardTable);</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50coniphelpercodesamples.htm">IP Helper Code Samples</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Changing%20the%20Properties%20of%20an%20Existing%20Route (wce50conchangingthepropertiesofanexistingroute.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

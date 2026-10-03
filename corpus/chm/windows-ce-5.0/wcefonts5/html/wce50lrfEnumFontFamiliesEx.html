@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>EnumFontFamiliesEx</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfenumfontfamiliesex"></A>EnumFontFamiliesEx</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function enumerates all fonts in the system that match the font characteristics specified by the <A HREF="wce50lrflogfont.htm">LOGFONT</A> structure. <B>EnumFontFamiliesEx</B> enumerates fonts based on typeface name, character set, or both. </P>
+
+<PRE class="syntax"><B>int EnumFontFamiliesEx(
+  HDC hdc,                          // handle to DC
+  LPLOGFONT lpLogfont,              // font information
+  FONTENUMPROC lpEnumFontFamExProc, // callback function
+  LPARAM lParam,                    // additional data
+  DWORD dwFlags                     // not used; must be 0
+);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hdc</I></DT>
+
+<DD>[in] Handle to the device context. </dd>
+
+<DT><I>lpLogfont </I></DT>
+
+<DD>[in] Pointer to a <B>LOGFONT</B> structure that contains information about the fonts to enumerate. The function examines the following members. 
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=34%>Member </TH>
+<TH width=66%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>lfCharset </TD>
+<TD width=66%>If set to DEFAULT_CHARSET, the function enumerates all fonts in all character sets. If set to a valid character set value, the function enumerates only fonts in the specified character set. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>lfFaceName </TD>
+<TD width=66%>If set to an empty string, the function enumerates one font in each available typeface name. If set to a valid typeface name, the function enumerates all fonts with the specified name. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>lfPitchAndFamily</TD>
+<TD width=66%>Must be set to zero for all language versions of the operating system. </TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>lpEnumFontFamExProc </I></DT>
+
+<DD>[in] Pointer to the application defined callback function. The callback function is used to process the fonts and is called once for each enumerated font. </dd>
+
+<DT><I>lParam</I> </DT>
+
+<DD>[in] Specifies an application defined value. The function passes this value to the callback function along with font information. </dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>This parameter is not used and must be zero. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The return value is the last value returned by the callback function. This value depends on which font families are available for the specified device. </P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The <B>EnumFontFamiliesEx</B> function does not use tagged typeface names to identify character sets. Instead, it always passes the correct typeface name and a separate character set value to the callback function. The function enumerates fonts based on the values of the <B>lfCharset</B> and <B>lfFacename</B> members in the <B>LOGFONT</B> structure. </P>
+
+<P>As with <A HREF="wce50lrfenumfontfamilies.htm">EnumFontFamilies</A>, <B>EnumFontFamiliesEx</B> enumerates all font styles. Not all styles of a font cover the same character sets. For example, Fontorama Bold might contain ANSI, Greek, and Cyrillic characters, but Fontorama Italic might contain only ANSI characters. For this reason, it is best not to assume that a specified font covers a specific character set, even if it is the ANSI character set. The following table shows the results of various combinations of values for <B>lfCharSet</B> and <B>lfFaceName</B>.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Values </TH>
+<TH width=50%>Meaning </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>lfCharSet</B> = DEFAULT_CHARSET<BR>
+<B>lfFaceName</B> = '\0' </TD>
+<TD width=50%>Enumerates all fonts in all character sets. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>lfCharSet</B> = DEFAULT_CHARSET<BR>
+<B>lfFaceName</B> = a specific font </TD>
+<TD width=50%>Enumerates all character sets and styles in a specific font. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>lfCharSet</B> =a specific character set<BR>
+<B>lfFaceName</B> = '\0' </TD>
+<TD width=50%>Enumerates all styles of all fonts in the specific character set. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%><B>lfCharSet</B> =a specific character set<BR>
+<B>lfFaceName</B> = a specific font </TD>
+<TD width=50%>Enumerates all styles of a font in a specific character set. </TD>
+</TR>
+</table></div>
+
+<P>The following code sample shows how these values are used.</P>
+
+<PRE class="code">//To enumerate all styles and charsets of all fonts:
+lf.lfFaceName[0] = '\0';
+lf.lfCharSet = DEFAULT_CHARSET;
+HRESULT hr;
+
+//To enumerate all styles and character sets of the Arial font:
+hr = StringCchCopy( (LPSTR)&amp;lf.lfFaceName, 6, "Arial" );
+if (FAILED(hr))
+{
+// TODO: write error handler
+}
+
+lf.lfCharSet = DEFAULT_CHARSET;
+
+//To enumerate all styles of all fonts for the ANSI character set:
+lf.lfFaceName[0] = '\0';
+lf.lfCharSet = ANSI_CHARSET;
+
+//To enumerate all styles of Arial font that cover the ANSI charset:
+hr = StringCchCopy( (LPSTR)&amp;lf.lfFaceName, 6, "Arial" );
+if (FAILED(hr))
+{
+// Handle errors appropriately
+}
+lf.lfCharSet = ANSI_CHARSET;</PRE>
+
+<P>The callback functions for <B>EnumFontFamilies</B> and <B>EnumFontFamiliesEx</B> are very similar. </P>
+
+<P>Based on the values of <B>lfCharSet</B> and <B>lfFaceName</B>, <B>EnumFontFamiliesEx</B> will enumerate the same font as many times as there are distinct character sets in the font. This can create an extensive list of fonts that can be burdensome to a user. For example, the Century Schoolbook font can appear for the Baltic, Western, Greek, Turkish, and Cyrillic character sets. To avoid this, an application should filter the list of fonts.</P>
+
+<P>The fonts for many East Asian languages have two typeface names: an English name and a localized name. <A HREF="wce50lrfenumfonts.htm">EnumFonts</A>, <B>EnumFontFamilies</B>, and <B>EnumFontFamiliesEx</B> return the English typeface name if the system locale does not match the language of the font. </P>
+
+<H4 class="dtH4">Requirements </H4>
+
+<P><B>OS Versions:</B> Windows CE 5.0 and later.<BR>
+<B>Header:</B> wingdi.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grffontsfunctions.htm">Fonts Functions</A> | <A HREF="wce50lrfenumfonts.htm">EnumFonts</A> | <A HREF="wce50lrfenumfontfamilies.htm">EnumFontFamilies</A> | <A HREF="wce50lrflogfont.htm">LOGFONT</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: EnumFontFamiliesEx (wce50lrfenumfontfamiliesex.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AutoDial-Compatible Dialers</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="topicnotfound.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wce50lrfCreateMsgQueue">
+</OBJECT>
+</DIV>
+
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conautodialcompatibledialers"></A>AutoDial-Compatible Dialers</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>An AutoDial-compatible dialer is an application that communicates with the AutoDial DLL. AutoDial expects information about the dialer to be located at the following registry key:</P>
+
+<PRE class="code">HKEY_LOCAL_MACHINE\Comm\Autoras
+    Dialer = Rnaapp.exe
+    NoPromptOpt = -p
+    RasEntryOpt = -e</PRE>
+
+<P>As in this example, the <I>Dialer</I> entry contains the name of the executable file of the dialer. The <I>NoPromptOpt</I> entry defines the argument that AutoDial will use to inform the dialer at launch time not to prompt the user for anything. The <I>RasEntryOpt</I> defines the argument that AutoDial will use to inform the dialer at launch time which phone-book entry to dial.</P>
+
+<P>AutoDial passes messages to the dialer through a message queue that the dialer must create using <A HREF="JavaScript:hhobj_1.Click()">CreateMsgQueue</A>. The dialer should pass AUTORAS_MSGQUEUE_NAME as the name of the message queue, set the options to write access, and set the MSGQUEUE_ALLOW_BROKEN flag. </P>
+
+<P>At the current time, AutoDial recognizes only two messages: DIALER_START and DIALER_TERMINATE. More messages may be added in the future.</P>
+
+<P>Sample code for a working dialer application is provided for you in this SDK. Go to the %_WINCEROOT%\Public\Common\Oak\Drivers\Netsamp\Rnaapp directory to view the code. The following examples were taken from the Rnaapp.c file.</P>
+
+<H2 class="dtH2">Setting up the Message Queue</H2>
+
+<P>The following sample shows how to set up the message queue.</P>
+
+<PRE class="code">// RNAAPP as autodialer for AutoRas needs to send feedback
+// to Autoas through message queue.
+sOptions.dwSize         = sizeof(MSGQUEUEOPTIONS);
+sOptions.dwFlags        = MSGQUEUE_ALLOW_BROKEN;
+sOptions.dwMaxMessages  = 8;
+sOptions.cbMaxMessage   = sizeof(DIALER_NOTIFICATION);
+sOptions.bReadAccess    = FALSE;
+g_hMsgQueue = CreateMsgQueue(AUTORAS_MSGQUEUE_NAME, &amp;sOptions);
+
+if (g_hMsgQueue == NULL)
+{
+   DEBUGMSG(ZONE_ERROR,
+      (TEXT("RNAAPP:: Failed CreateMsgQueue..\r\n")));
+}
+else
+{
+   //
+   // Autoras is at the other side, send DIALER_START to it.
+   //
+   g_DialerNotification.dwNotificationId = DIALER_START;
+
+   WriteMsgQueue(
+      g_hMsgQueue,
+      &amp;g_DialerNotification,
+      sizeof(DIALER_NOTIFICATION),
+      0x00,
+      0x00);
+}</PRE>
+
+<H2 class="dtH2">Terminating the Dialer</H2>
+
+<P>The following sample shows how to terminate the dialer.</P>
+
+<PRE class="code">if (g_hMsgQueue)
+   {
+      g_DialerNotification.dwNotificationId = DIALER_TERMINATE;
+
+      WriteMsgQueue(
+         g_hMsgQueue,
+         &amp;g_DialerNotification,
+         sizeof(DIALER_NOTIFICATION),
+         0x00,
+         0x00);
+
+      CloseMsgQueue(g_hMsgQueue);
+   }</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conrasautodial.htm">RAS AutoDial</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: AutoDial-Compatible%20Dialers (wce50conautodialcompatibledialers.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

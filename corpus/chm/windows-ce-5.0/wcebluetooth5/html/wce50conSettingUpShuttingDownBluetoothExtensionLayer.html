@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Setting Up and Shutting Down a Bluetooth Extension Layer</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50consettingupshuttingdownbluetoothextensionlayer"></A>Setting Up and Shutting Down a Bluetooth Extension Layer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>After you write the extension layer according to the guidelines described in <A HREF="wce50condevelopingbluetoothextensionlayer.htm">Implementing Commands, Callbacks, and Events Handlers for an Extension Layer</A>, you need to facilitate the initializing, instantiating, deinitializing, and deleting of the extension layer.</P>
+
+<P>All Bluetooth stack layers, from HCI and up, follow the same guidelines for exporting interfaces and connecting to lower layers of the stack. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;The functions described in this section are templates for creating and deleting a driver instance.</BLOCKQUOTE>
+
+<P class="labelproc"><B>To initialize, instantiate, deinitialize, and delete the extension layer</B>
+
+<OL type="1">
+	<LI>To initialize the extension layer, write a function called <B><I>ExtensionLayer_</I>InitializeOnce</B>. 
+<P>The following code example shows the function signature for <B><I>ExtensionLayer_</I>InitializeOnce</B>.
+
+<PRE class="code">int <I>ExtensionLayer</I>_InitializeOnce (void);</PRE>
+
+<P>This function can be called from <B>DllMain</B> during driver load. <B><I>ExtensionLayer_</I>InitializeOnce</B> should not perform anything beyond the initialization of synchronization primitives or I/O. It must be called only once and should check if the driver has been initialized. If the driver initialization has already occurred, it should be deinitialized by calling the <B><I>ExtensionLayer_</I>CloseDriverInstance</B> function (discussed later). 
+</li>
+
+	<LI>To create an instance of the extension layer, write a function <B><I>ExtensionLayer</I>_CreateDriverInstance</B>.
+<P>The following code example shows the function signature for <B><I>ExtensionLayer</I>_CreateDriverInstance</B>.
+
+<PRE class="code">int <I>ExtensionLayer</I>_CreateDriverInstance (void);</PRE>
+
+<P>This function is used to initialize the stack layer. It is called after <B><I>ExtensionLayer</I>_InitializeOnce</B> and can count on synchronization primitives being initialized. It can be called out of sequence with <B><I>ExtensionLayer</I>_CloseDriverInstance</B> and must maintain state and protect against duplicate calls. 
+
+<P>Implement this function to initialize the stack layer and perform the following tasks:
+
+<UL type="disc">
+	<LI>Connect to the lower layer in the protocol stack.</li>
+
+	<LI>Prepare for connection requests from upper layers of the stack.</li>
+
+	<LI>Initialize hardware appropriately. </li>
+</UL>
+
+<P>The stack layer must be in an operational state for this function to complete successfully.
+</li>
+
+	<LI>To deinitialize the extension layer, write a function <B><I>ExtensionLayer</I>_UninitializeOnce</B>.
+<P>The following code example shows the function declaration for the <B><I>ExtensionLayer</I>_UnInitializeOnce</B>.
+
+<PRE class="code">int <I>ExtensionLayer</I>_UnInitialize (void);</PRE>
+
+<P>This function is called during driver unload from <B>DllMain</B>. <B><I>ExtensionLayer</I>_UnInitializeOnce</B> should only perform deinitialization of existing synchronization primitives. It must be called only once when the driver is in a shutdown state. The driver is unloaded immediately after the call to this function. 
+
+<P>A driver can be reinitialized, by using <B><I>Extensionlayer</I>_InitializeOnce</B>, only after calling <B><I>ExtensionLayer</I>_UnInitializeOnce</B>.
+</li>
+
+	<LI>To delete the instance of the extension layer created by calling <B><I>ExtensionLayer</I>_CreateDriverInstance</B>, write a function <B><I>ExtensionLayer_</I>CloseDriverInstance</B>.
+<P>The following code example shows the function signature for <B><I>ExtensionLayer</I>_CloseDriverInstance</B>.
+
+<PRE class="code">int <I>ExtensionLayer</I>_CloseDriverInstance (void);</PRE>
+
+<P>Implement this function to shutdown the stack layer and perform the following tasks:
+
+<UL type="disc">
+	<LI>Close all connections.</li>
+
+	<LI>Release the interface to the lower layer.</li>
+
+	<LI>Notify the upper layers that the layer is shutting down.</li>
+
+	<LI>Destroy all threads.</li>
+
+	<LI>Free memory allocated by <B><I>ExtensionLayer</I>_CreateDriverInstance</B>.</li>
+</UL>
+</li>
+</OL>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50concreatingbluetoothstackextensionlayer.htm">Creating a Bluetooth Stack Extension Layer</A> | <A HREF="wce50oribluetoothosdesign.htm">Bluetooth OS Design Development</A> | <A HREF="wce50conhostcontrollerinterface.htm">Host Controller Interface</A> | <A HREF="wce50howhowtowritebluetoothstackextensionlayer.htm">How to Develop and Load a Bluetooth HCI Stack Extension Layer</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Setting%20Up%20and%20Shutting%20Down%20a%20Bluetooth%20Extension%20Layer (wce50consettingupshuttingdownbluetoothextensionlayer.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

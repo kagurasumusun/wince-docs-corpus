@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TSPI_lineSetDevConfig</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrftspilinesetdevconfig"></A>TSPI_lineSetDevConfig</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function restores the configuration of a device associated one-to-one with the line device from an "" data structure previously obtained using the <A HREF="wce50lrftspilinegetdevconfig.htm">TSPI_lineGetDevConfig</A> function. The contents of this data structure are specific to the line [service provider] and device class.</P>
+
+<PRE class="syntax"><B>LONG</B> <B>TSPIAPI</B> <B>TSPI</B>_<B>lineSetDevConfig(</B>
+  <B>DWORD</B> <I>dwDeviceID</I><B>,</B> 
+  <B>LPVOID</B> <B>const</B> <I>lpDeviceConfig</I><B>,</B>  
+  <B>DWORD</B> <I>dwSize</I><B>,</B> 
+  <B>LPCWSTR</B> <I>lpszDeviceClass</I> 
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>dwDeviceID </I></DT>
+
+<DD>Line device to be configured. </dd>
+
+<DT><I>lpDeviceConfig</I> </DT>
+
+<DD>Pointer to the configuration data structure that is returned in the variable portion of the <A HREF="wce50lrfvarstring.htm">VARSTRING</A> structure by <B>TSPI</B>_<B>lineGetDevConfig</B>. </dd>
+
+<DT><I>dwSize</I> </DT>
+
+<DD>Number of bytes in the structure pointed to by <I>lpDeviceConfig</I>. This value is returned in the <B>dwStringSize</B> member in the <B>VARSTRING</B> structure returned by <B>TSPI_lineGetDevConfig</B>. </dd>
+
+<DT><I>lpszDeviceClass</I> </DT>
+
+<DD>Pointer to a null-terminated Unicode string that specifies the device class of the device whose configuration is to be restored. Valid device class strings are the same as those specified for the <A HREF="wce50lrftspilinegetid.htm">TSPI_lineGetID</A> function when it is applied to a "line" device (that is, when <I>dwSelect</I> has the value LINECALLSELECT_LINE). </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns zero if the function succeeds, or an error number if an error occurs. The following table shows the return values for this method.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALDEVICECLASS</TD>
+<TD width=50%>The device class is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALPOINTER</TD>
+<TD width=50%>The pointer is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALPARAM</TD>
+<TD width=50%>The parameter is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALLINESTATE</TD>
+<TD width=50%>The line state is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resource is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NODRIVER</TD>
+<TD width=50%>The driver cannot be found.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The call state is device specific.</P>
+
+<P>The service provider returns LINEERR_INVALPARAM if the information contained in the structure pointed to by <I>lpDeviceConfig</I> is not valid for this device.</P>
+
+<P>The service provider returns LINEERR_INVALLINESTATE if the device configuration cannot be changed in the current line state. The line may be in use by another application.</P>
+
+<P>This function can be used to restore the configuration of a device associated one-to-one with the line device from a data structure previously retrieved from the service provider using the <B>TSPI</B>_<B>lineGetDevConfig</B> function. The <I>lpszDeviceClass</I> parameter selects which of among possibly several different classes of devices is to have its configuration restored. The set of supported classes is restricted to those whose devices correspond one-to-one with the line device. </P>
+
+<P>A service provider typically allows the tapi/line device class under this function. It restores parameters that have "line" scope, such as the list of addresses in this line and the list of physical hardware devices such as COMM ports corresponding to the addresses or the maximum number of concurrent calls (if configurable).</P>
+
+<P>In general, this function does NOT allow media-related device classes such as mci waveaudio, low level wave, or datamodem device classes, because these usually apply to a particular call or a particular address. Because there can be more than one of these per line device, the identification of the particular call or address simply by the line device identifier parameter in this function is ambiguous. An exception can be made for call-specific or address-specific device classes in cases where there is class configuration information that applies to the entire line device scope, such as initial defaults.</P>
+
+<P>There are several reasons why exceptional support for call-specific and address-specific device classes is of only limited value under this function. First, because these classes can be ambiguous on multiple-address, multiple-call service providers, only a subset of service providers support them. Application programs are not likely to add a device-specific dependency on the inclusion of these classes in this function. Second, as higher-level media classes emerge that implement high-level protocols such as dial-in file system access in terms of low-level transport APIs, configuration for these classes tends toward instance scope instead of class scope. The high-level media API has to supply its own functions to configure call-specific or address-specific instances.</P>
+
+<P>Whatever sort of devices and device classes this function supports, it can potentially affect two kinds of configuration information: permanent and temporary. Permanent information survives across different "opens" of the line, and even across different "inits" of the service provider itself. Temporary information survives only within a unique "open" of the line. When the line is closed, any such temporary information that has been set or retrieved through <B>TSPI</B>_<B>lineGetDevConfig</B> can revert to default or undefined values. The caller can reliably retrieve any temporary configuration only by a sequence such as <A HREF="wce50lrftspilineopen.htm">TSPI_lineOpen</A>, or <B>TSPI</B>_<B>lineGetDevConfig</B>. The caller can reliably set temporary configuration information retrieved by such a sequence through a sequence such as <B>TSPI</B>_<B>lineOpen</B>, <B>TSPI</B>_<B>lineSetDevConfig</B>. The temporary part of configuration remains stable only until the next <B>TSPI</B>_<B>lineSetDevConfig</B>, or <A HREF="wce50lrftspilineclose.htm">TSPI_lineClose</A>. The service provider must take care of storing any permanent part of the configuration, and reloading it whenever the service provider is initialized.</P>
+
+<P>The exact format of the data contained within the structure passed to this function is specific to the line and device class API, is undocumented, and is undefined. The structure passed to this function cannot be directly accessed or manipulated by the application, but can only be stored intact and later used from a previous <B>TSPI</B>_<B>lineGetDevConfig</B> to obtain the settings. The structure also cannot necessarily be passed to other devices, even of the same device class (although this may work in some instances, it is not guaranteed). A service provider should check this data structure for consistency to guard against failures due to a client application passing incompatible information.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Some service providers may permit the configuration to be set while a device is in use, and others may not.</BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 3.0 and later.<BR>
+<B>Header:</B> Tapicomn.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrftspilineclose.htm">TSPI_lineClose</A> | <A HREF="wce50lrftspilinegetdevconfig.htm">TSPI_lineGetDevConfig</A> | <A HREF="wce50lrftspilinegetid.htm">TSPI_lineGetID</A> | <A HREF="wce50lrftspilineopen.htm">TSPI_lineOpen</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TSPI_lineSetDevConfig (wce50lrftspilinesetdevconfig.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TCP Retransmission Behavior</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50contcpretransmissionbehavior"></A>TCP Retransmission Behavior</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>TCP starts a retransmission timer when each outbound segment is handed down to IP. If no acknowledgment has been received for the data in a given segment before the timer expires, the segment is retransmitted. For new connection requests, the retransmission timer is initialized to 3 seconds (controllable using the <B>TcpInitialRtt</B> per-adapter registry parameter), and the request (SYN) is resent up to the value specified in <B>TcpMaxConnectRetransmissions</B> (the default for Windows CE is two times). On existing connections, the number of retransmissions is controlled by the <B>TcpMaxDataRetransmissions</B> registry parameter (five by default). The retransmission time-out is adjusted on the fly to match the characteristics of the connection, using Smoothed Round Trip Time (SRTT) calculations as described in Van Jacobson's paper titled Congestion Avoidance and Control. The timer for a given segment is doubled after each retransmission of that segment. Using this algorithm, TCP tunes itself to the normal delay of a connection. TCP connections over high-delay links take much longer to time out than those over low-delay links.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;Increasing either of the registry parameters <B>TcpMaxDataRetransmissions</B> or <B>TcpMaxConnectRetransmissions</B> by one approximately doubles the total retransmission time-out period. If it is necessary to configure longer time-outs, these parameters should be increased very gradually.</BLOCKQUOTE>
+
+<P>The following network trace shows the retransmission algorithm for two hosts that are connected over Ethernet on the same subnet. An FTP file transfer was in progress when the receiving host was disconnected from the network. Because the SRTT for this connection was very small, the first retransmission was sent after about one-half second. The timer was then doubled for each of the retransmissions that followed. After the fifth retransmission, the timer was once again doubled. If no acknowledgment was received before it expired, the connection was aborted. </P>
+
+<PRE class="code">delta  source ip    dest ip      pro flags description
+0.000  10.57.10.32  10.57.9.138  TCP .A.., len: 1460, seq: 8043781, ack: 8153124, win: 8760
+0.521  10.57.10.32  10.57.9.138  TCP .A.., len: 1460, seq: 8043781, ack: 8153124, win: 8760
+1.001  10.57.10.32  10.57.9.138  TCP .A.., len: 1460, seq: 8043781, ack: 8153124, win: 8760
+2.003  10.57.10.32  10.57.9.138  TCP .A.., len: 1460, seq: 8043781, ack: 8153124, win: 8760
+4.007  10.57.10.32  10.57.9.138  TCP .A.., len: 1460, seq: 8043781, ack: 8153124, win: 8760
+8.130  10.57.10.32  10.57.9.138  TCP .A.., len: 1460, seq: 8043781, ack: 8153124, win: 8760</PRE>
+
+<P>There are some circumstances under which TCP retransmits data prior to the time that the retransmission timer expires. The most common of these occurs due to <I>fast retransmit</I>. When a receiver that supports fast retransmit receives data with a sequence number beyond the current expected one, it assumes that some data was dropped. To help make the sender aware of this event, the receiver immediately sends an ACK, with the ACK number set to the sequence number that it was expecting. It continues to do this for each additional TCP segment that arrives containing data subsequent to the missing data in the incoming stream. When the sender starts to receive a stream of ACKs that are acknowledging the same sequence number and that sequence number is earlier than the current sequence number being sent, it can infer that a segment (or more) must have been dropped. Senders that support the fast retransmit algorithm immediately resend the segment that the receiver is expecting to fill in the gap in the data, without waiting for the retransmission timer to expire for that segment. This optimization greatly improves performance in a busy network environment. </P>
+
+<P>By default, Windows CE resends a segment if it receives three ACKs for the same sequence number and that sequence number lags the current one. This is controllable with the <B>TcpMaxDupAcks</B> registry parameter. For more information about how Windows CE acknowledges segments that do not have the most recent sequence number, see <A HREF="wce50contcpselectiveacknowledgment.htm">TCP Selective Acknowledgment</A>.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contransmissioncontrolprotocoltcp.htm">Transmission Control Protocol (TCP)</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: TCP%20Retransmission%20Behavior (wce50contcpretransmissionbehavior.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

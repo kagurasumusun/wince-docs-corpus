@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>VirtualChannelOpenEvent</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfvirtualchannelopenevent"></A>VirtualChannelOpenEvent</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function is an application-defined callback function. Terminal Services calls this function to notify the client DLL of events for a specific virtual channel.</P>
+
+<P>The <B>PCHANNEL_OPEN_EVENT_FN</B> type defines a pointer to this callback function. <B>VirtualChannelOpenEvent</B> is a placeholder for the application-defined or library-defined function name.</P>
+
+<PRE class="syntax"><B>VOID VCAPITYPE VirtualChannelOpenEvent(</B>
+  <B>DWORD</B><I> openHandle</I><B>,</B>
+  <B>UINT</B><I> event</I><B>,</B>
+  <B>LPVOID</B><I> pData</I><B>,</B>
+  <B>UINT32</B><I> dataLength</I><B>,</B>
+  <B>UINT32</B><I> totalLength</I><B>,</B>
+  <B>UINT32</B> <I>dataFlags</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>openHandle</I></DT>
+
+<DD>[in] Handle to the virtual channel. This is the handle returned in the <I>pOpenHandle</I> parameter of the <A HREF="wce50lrfvirtualchannelopen.htm">VirtualChannelOpen</A> function.</dd>
+
+<DT><I>event</I></DT>
+
+<DD>[in] Indicates the event that caused the notification. The following table shows possible values for this parameter.
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=47%>Value</TH>
+<TH width=53%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CHANNEL_EVENT_DATA_RECEIVED</TD>
+<TD width=53%>The virtual channel received data from the server end. The <I>pData</I> parameter is a pointer to a chunk of the data. The <I>dataLength</I> parameter indicates the size of this chunk. The <I>totalLength</I> parameter indicates the total size of the data written by the server.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CHANNEL_EVENT_WRITE_CANCELLED</TD>
+<TD width=53%>A write operation started by a <A HREF="wce50lrfvirtualchannelwrite.htm">VirtualChannelWrite</A> function call has been canceled. The <I>pData</I> parameter is the value specified in the <I>pUserData</I> parameter of <B>VirtualChannelWrite</B>.
+<P>A write operation is canceled when the client session is disconnected. This notification enables you to free any memory associated with the write operation.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=47%>CHANNEL_EVENT_WRITE_COMPLETE</TD>
+<TD width=53%>A write operation started by a <A HREF="wce50lrfvirtualchannelwrite.htm">VirtualChannelWrite</A> function call has been completed. The <I>pData</I> parameter is the value specified in the <I>pUserData</I> parameter of <B>VirtualChannelWrite</B>.</TD>
+</TR>
+</table></div>
+
+</dd>
+
+<DT><I>pData</I></DT>
+
+<DD>[in] Pointer to additional data for the event. The type of data depends on the event, as described in the event descriptions.
+
+<P>If the event is CHANNEL_EVENT_DATA_RECEIVED, the data written by the server is broken into chunks of not more than CHANNEL_CHUNK_LENGTH bytes. The <I>dataFlags</I> parameter indicates whether the current chunk is at the beginning, middle, or end of the block of data written by the server.
+
+
+<P>The size of this parameter can be greater than the value specified by the <I>dataLength</I> parameter. The application should read only the number of bytes specified by the <I>dataLength</I> parameter.
+</dd>
+
+<DT><I>dataLength</I></DT>
+
+<DD>[in] Specifies the size, in bytes, of the data in the <I>pData</I> buffer.</dd>
+
+<DT><I>totalLength</I></DT>
+
+<DD>[in] Specifies the total size, in bytes, of the data written by a single write operation to the server end of the virtual channel.</dd>
+
+<DT><I>dataFlags</I></DT>
+
+<DD>[in] Provides information about the chunk of data being received in a CHANNEL_EVENT_DATA_RECEIVED event. The following table shows the bit flags that are set.
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note&nbsp;&nbsp;&nbsp;</b>Do not make direct comparisons using the <B>==</B> operator; use the methods described in the following table to compare the corresponding flag value.</BLOCKQUOTE>
+
+
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=44%>Value</TH>
+<TH width=56%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CHANNEL_FLAG_FIRST</TD>
+<TD width=56%>The chunk is the beginning of the data written by a single write operation.
+<P>Use bitwise comparisons when comparing this flag.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CHANNEL_FLAG_LAST</TD>
+<TD width=56%>The chunk is the end of the data written by a single write operation.
+<P>Use bitwise comparisons when comparing this flag.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CHANNEL_FLAG_MIDDLE</TD>
+<TD width=56%>This flag is set by default. The chunk is in the middle of a block of data written by a single write operation.
+<P>Do not use bitwise comparisons to compare this flag value directly. Instead, use bitwise comparisons to determine that the flag value is not CHANNEL_FLAG_FIRST or CHANNEL_FLAG_LAST. This is done by using the following comparison:</P>
+
+<PRE class="code">Result = !(flags &amp; CHANNEL_FLAG_FIRST) &amp;&amp; !(flags &amp; CHANNEL_FLAG_LAST)</PRE>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>CHANNEL_FLAG_ONLY</TD>
+<TD width=56%>Combines the CHANNEL_FLAG_FIRST and CHANNEL_FLAG_LAST values. The chunk contains all the data from a single write operation.
+<P>Use bitwise comparisons when comparing this flag.</P>
+</TD>
+</TR>
+</table></div>
+
+</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>None.</P>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The client DLL uses <A HREF="wce50lrfvirtualchannelopen.htm">VirtualChannelOpen</A> to register a <B>VirtualChannelOpenEvent</B> function for a specific virtual channel.</P>
+
+<P>You can use the same <B>VirtualChannelOpenEvent</B> function for multiple calls to <B>VirtualChannelOpen</B>.</P>
+
+<P>This function can be called with a different event type while it is executing. For example, it might be called with CHANNEL_EVENT_WRITE_COMPLETE or CHANNEL_EVENT_WRITE_CANCELLED while it is processing the CHANNEL_EVENT_DATA_RECEIVED event. This function is not called with the same type it is currently processing. </P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.0 and later.<BR>
+<B>Header:</B> Cchannel.h.<BR>
+<B>Link Library:</B> Developer implemented.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50grfrdpfunctions.htm">RDP Functions</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: VirtualChannelOpenEvent (wce50lrfvirtualchannelopenevent.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

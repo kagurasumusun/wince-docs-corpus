@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating Client Memory Surfaces</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50concreatingclientmemorysurfaces"></A>Creating Client Memory Surfaces</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Client memory surfaces are simply DirectDrawSurface objects that use system memory that your application has previously allocated to hold image data. Creating such a surface is not common, but it is not difficult to do and it can be useful for applications that need to use DirectDraw surface capabilities on existing memory buffers. </P>
+
+<P>Like creating all surfaces, DirectDraw needs information about the dimensions of the surface (measured in pixels) and the surface pitch (measured in bytes), as well as the surface's pixel format. </P>
+
+<P>However, unlike creating other types of surfaces, this information does not tell DirectDraw how you want the surface to be created, it tells DirectDraw how you have already created it. </P>
+
+<P>You set these characteristics, plus the memory address of the buffer you have allocated, in the <A HREF="wce50lrfddsurfacedesc2.htm">DDSURFACEDESC2</A> structure you pass to the <A HREF="wce50lrfidirectdraw4createsurface.htm">IDirectDraw4::CreateSurface</A> method.</P>
+
+<P>A client memory surfaces works just like a normal system-memory surface, with the exception that DirectDraw does not attempt to free the surface memory when it is no longer needed; freeing client allocated memory is the application's responsibility.</P>
+
+<P>The following example shows how you might allocate memory and create a DirectDrawSurface object for a 64&times;64 pixel 24-bit RGB surface.</P>
+
+<PRE class="code">// For this example, g_lpDD4 is a valid IDirectDraw4 interface pointer.
+ 
+#define WIDTH  64 // in pixels
+#define HEIGHT 64
+#define DEPTH  3  // in bytes (3bytes == 24 bits)
+ 
+    HRESULT hr;
+    LPVOID  lpSurface  = NULL;
+    HLOCAL  hMemHandle = NULL;
+    DDSURFACEDESC2 ddsd2;
+    LPDIRECTDRAWSURFACE4 lpDDS4;
+ 
+    // Allocate memory for a 64 by 64, 24-bit per pixel buffer.
+    // REMEMBER: The application is responsible for freeing this
+    //           buffer when it is no longer needed.
+    if (lpSurface = malloc((size_t)WIDTH*HEIGHT*DEPTH))
+        ZeroMemory(lpSurface, (DWORD)WIDTH*HEIGHT*DEPTH);
+    else
+        return DDERR_OUTOFMEMORY;
+ 
+    // Initialize the surface description.
+    ZeroMemory(&amp;ddsd2, sizeof(DDSURFACEDESC2));
+    ZeroMemory(&amp;ddsd2.ddpfPixelFormat, sizeof(DDPIXELFORMAT));
+    ddsd2.dwSize = sizeof(ddsd2);
+    ddsd2.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_LPSURFACE |
+                    DDSD_PITCH | DDSD_PIXELFORMAT;
+    ddsd2.dwWidth = WIDTH;
+    ddsd2.dwHeight= HEIGHT;
+    ddsd2.lPitch  = (LONG)DEPTH * WIDTH;
+    ddsd2.lpSurface = lpSurface;
+ 
+    // Set up the pixel format for 24-bit RGB (8-8-8).
+    ddsd2.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+    ddsd2.ddpfPixelFormat.dwFlags= DDPF_RGB;
+    ddsd2.ddpfPixelFormat.dwRGBBitCount = (DWORD)DEPTH*8;
+    ddsd2.ddpfPixelFormat.dwRBitMask    = 0x00FF0000;
+    ddsd2.ddpfPixelFormat.dwGBitMask    = 0x0000FF00;
+    ddsd2.ddpfPixelFormat.dwBBitMask    = 0x000000FF;
+ 
+    // Create the surface
+    hr = g_lpDD4-&gt;CreateSurface(&amp;ddsd2, &amp;lpDDS4, NULL);
+    return hr;</PRE>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Creating%20Client%20Memory%20Surfaces (wce50concreatingclientmemorysurfaces.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

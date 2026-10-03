@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpStream::BindToFile</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispstreambindtofile"></A>ISpStream::BindToFile</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method binds the input stream to the file that it identifies. For Speech Recognition, this is typically a standard wave file. For Text to Speech, it is typically a text or XML file. <A HREF="wce50lrfispvoicespeakstream.htm">ISpVoice::SpeakStream</A> has a flag which allows the text to be rendered as XML or pure text (default is XML).</P>
+
+<PRE class="syntax"><B>HRESULT BindToFile(</B>
+  <B>const WCHAR* </B><I>pszFileName</I><B>,</B>
+  <B>SPFILEMODE </B><I>eMode</I><B>,</B>
+  <B>const GUID* </B><I>pguidFormatId</I><B>,</B>
+  <B>const WAVEFORMATEX* </B><I>pWaveFormatEx</I><B>,</B>
+  <B>ULONGLONG </B><I>ullEventInterest</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszFileName</I></DT>
+
+<DD>[in] Pointer to a null-terminated string specifying the name of the file to which to bind the stream.</dd>
+
+<DT><I>eMode</I></DT>
+
+<DD>[in] Flag of type <A HREF="wce50lrfspfilemode.htm">SPFILEMODE</A> to define the file opening mode. When opening an audio wave file, this must be SPFM_OPEN_READONLY or SPFM_CREATE_ALWAYS, otherwise the call will fail. </dd>
+
+<DT><I>pguidFormatId</I></DT>
+
+<DD>[in] Pointer to the data format identifier associated with the stream. This can be NULL and the format will be determined from the supplied wave file, if the file has the wav extension. If it does not, the file is assumed to be a text file. </dd>
+
+<DT><I>pWaveFormatEx</I></DT>
+
+<DD>[in] Pointer to the <A HREF="wce50lrfwaveformatex353.htm">WAVEFORMATEX</A> structure that contains the wave file format information. If guidFormatId is SPDFID_WaveFormatEx, this must point to a valid <B>WAVEFORMATEX</B> structure. For other formats, it should be NULL. </dd>
+
+<DT><I>ullEventInterest</I></DT>
+
+<DD>[in] Flags of type <A HREF="wce50lrfspeventenum.htm">SPEVENTENUM</A> for the format converter to watch. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=38%>Value</TH>
+<TH width=62%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>S_OK</TD>
+<TD width=62%>Function completed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_INVALIDARG </TD>
+<TD width=62%>Exceeded available memory.
+<P>At least one of the following was encountered. <I>pszFileName</I> or <I>pguidFormatId</I> is invalid or bad; <I>eMode</I> exceeds SPFM_CREATE_ALWAYS; an operation could not be completed. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_OUTOFMEMORY </TD>
+<TD width=62%>Exceeded available memory. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>STG_E_FILENOTFOUND </TD>
+<TD width=62%>File <I>pszFileName</I> does not exist. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>SPERR_ALREADY_INITIALIZED </TD>
+<TD width=62%>The object has already been initialized.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>FAILED(hr) </TD>
+<TD width=62%>Appropriate error message.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>The helper class <B>CSpStreamFormat</B> and the <A HREF="wce50lrfspstreamformat.htm">SPSTREAMFORMAT</A> enumeration can be used to avoid the possibility of typos or mistakes when filling in the <B>WAVEFORMATEX</B> structure.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method for creating a writable wave file.</P>
+
+<PRE class="code">HRESULT hr = S_OK;
+// create the stream object
+hr = cpSpStream.CoCreateInstance(CLSID_SpStream);
+// Check hr
+// create a stream format helper for 22khzm 16-bit, mono wave stream
+CSpStreamFormat Fmt(SPSF_22kHz16BitMono, &amp;hr);
+// Check hr
+// create the new stream and its corresponding file on the hard disk
+// NOTE: Specify the file format when creating the file 
+hr = cpSpStream-&gt;BindToFile(WAVE_FILENAME, 
+                            SPFM_CREATE_ALWAYS, 
+                            &amp;Fmt.FormatId(),
+                            Fmt.WaveFormatExPtr(),
+                            NULL);
+// Check hr
+// write some data to the stream
+hr = cpSpStream-&gt;Write(WAVE_DATA_CHUNK, SIZEOF_WAVE_DATA_CHUNK, &amp;cbWritten);
+// Check hr
+The following code snippet illustrates the use of ISpStream::BindToFile for
+creating a read-only wave file
+HRESULT hr = S_OK;
+// create the stream object
+hr = cpSpStream.CoCreateInstance(CLSID_SpStream);
+// Check hr
+// create a new stream, by opening a wave file from the hard disk
+// NOTE: Because an existing file is being read, SAPI will read the wave stream
+format automatically
+hr = cpSpStream-&gt;BindToFile(WAVE_FILENAME, SPFM_OPEN_READONLY, NULL, NULL,
+NULL);
+// Check hr
+// read some data from the stream
+hr = cpSpStream-&gt;Read(&amp;bData, SIZEOF_WAVE_DATA_CHUNK, &amp;cbWritten);
+// Check hr</PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> Sapi.h, Sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispstream.htm">ISpStream</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpStream::BindToFile (wce50lrfispstreambindtofile.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

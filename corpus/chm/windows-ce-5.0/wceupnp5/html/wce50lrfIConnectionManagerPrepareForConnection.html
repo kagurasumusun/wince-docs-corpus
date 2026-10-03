@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IConnectionManager::PrepareForConnection</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrficonnectionmanagerprepareforconnection"></A>IConnectionManager::PrepareForConnection</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method enables devices to prepare for an upcoming media transfer. Called immediately before a media transfer, its input parameters contain information about the upcoming transfer. The implementation uses this information and the internal state of the device to create virtual AVTransport and RenderingControl service instances, which it returns.</P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This method returns <A HREF="wce50lrfiavtransport.htm">IAVTransport</A> and <A HREF="wce50lrfirenderingcontrol.htm">IRenderingControl</A> references. When control point code is finished with these objects, it must call <A HREF="wce50lrfivirtualservicerelease.htm">IVirtualService::Release</A> on each reference.</BLOCKQUOTE>
+
+<PRE class="syntax"><B>virtual DWORD PrepareForConnection(</B>
+<B>  LPCWSTR              </B><I>pszRemoteProtocolInfo</I><B>,</B>
+<B>  LPCWSTR </B>             <I>pszPeerConnectionManager</I><B>,</B>
+<B>  long </B>                <I>PeerConnectionID</I><B>,</B>
+<B>  DIRECTION            </B><I>Direction</I><B>,</B>
+<B>  long*                </B><I>pConnectionID</I><B>,</B>
+<B>  IAVTransport**       </B><I>ppAVTransport</I><B>,</B>
+<B>  IRenderingControl**  </B><I>ppRenderingControl</I>
+<B>) = 0;</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><B>pszRemoteProtocolInfo</B></DT>
+
+<DD>[in] Specifies the protocol, network, and media format to be used when the content is transferred. The value of this parameter is the same as one of the entries in the list returned by the remote device's GetProtocolInfo action (GetProtocolInfo is exposed in the Windows CE UPnP AV Framework by <A HREF="wce50lrficonnectionmanagergetprotocolinfo.htm">IConnectionManager::GetProtocolInfo</A>). If the remote device does not provide the GetProtocolInfo action, this value is one of the entries in the protocol information list on this device. Corresponds to the A_ARG_TYPE_ProtocolInfo state variable.</dd>
+
+<DT><B>pszPeerConnectionManager</B></DT>
+
+<DD>[in] UPnP UDN and service ID of the ConnectionManager instance on the remote device. Control points that use the Windows CE UPnP AV Framework can retrieve this value from the second parameter of <A HREF="wce50lrfmediaserverdevicegetconnectionmanager.htm">MediaServerDevice::GetConnectionManager</A> and <A HREF="wce50lrfmediarendererdevicegetconnectionmanager.htm">MediaRendererDevice::GetConnectionManager</A>. Corresponds to the A_ARG_TYPE_ConnectionManager state variable.</dd>
+
+<DT><B>PeerConnectionID</B></DT>
+
+<DD>[in] Connection ID value maintained by the remote ConnectionManager instance for this connection. Returns -1 if the remote connection ID is not known, either because this is the first of the paired calls to the PrepareForConnection action or because the remote device does not implement PrepareForConnection. Corresponds to the A_ARG_TYPE_ConnectionID state variable.</dd>
+
+<DT><B>Direction</B></DT>
+
+<DD>[in] If OUTPUT, the local device uses this connection to send content. If INPUT, the local device uses this connection to receive content. Corresponds to the A_ARG_TYPE_Direction state variable.</dd>
+
+<DT><B>pConnectionID</B></DT>
+
+<DD>[in, out] Pointer to an integer allocated by the caller that this method modifies to contain the connection ID for this connection on the local device. Corresponds to the A_ARG_TYPE_ConnectionID state variable.</dd>
+
+<DT><B>ppAVTransport</B></DT>
+
+<DD>[in, out] Pointer to an <B>IAVTransport</B> implementation that implements the virtual AVTransport service on the local device for this connection. Corresponds to the A_ARG_TYPE_AVTransportID state variable, except that instead of a numeric ID, the method returns a pointer to an <B>IAVTransport</B> object. Control points using this pointer must call <B>IVirtualService::Release</B> when the object is no longer needed.</dd>
+
+<DT><B>ppRenderingControl</B></DT>
+
+<DD>[in, out] Pointer to an <B>IRenderingControl</B> implementation that implements the virtual RenderingControl service on the local device for this connection. Corresponds to the A_ARG_TYPE_ProtocolInfo state variable, except that instead of a numeric ID, the method returns a pointer to an <B>IRenderingControl</B> object. Control points using this pointer must call <B>IVirtualService::Release</B> when the object is no longer needed.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Custom implementations can return appropriate error codes. If this method succeeds, it should return SUCCESS_AV. Otherwise, it should return an error code defined in WinError.h or UPnP.h, or one of the UPnP AV-specific return values specified in <A HREF="wce50oriupnpaverror.htm">UPnPAVError</A>, especially the following errors documented for this action in the ConnectionManager DCP documentation:
+
+<UL type="disc">
+	<LI>ERROR_AV_UPNP_CM_INCOMPATIBLE_PROTOCOL</li>
+
+	<LI>ERROR_AV_UPNP_CM_INCOMPATIBLE_DIRECTION</li>
+
+	<LI>ERROR_AV_UPNP_CM_INSUFFICIENT_NET_RESOURCES</li>
+
+	<LI>ERROR_AV_UPNP_CM_LOCAL_RESTRICTIONS</li>
+
+	<LI>ERROR_AV_UPNP_CM_ACCESS_DENIED</li>
+
+	<LI>ERROR_AV_UPNP_CM_NOT_IN_NETWORK</li>
+</UL>
+
+<P>The implementation of this method in <A HREF="wce50lrficonnectionmanagerimpl.htm">IConnectionManagerImpl</A> returns the errors in the following table. In addition, it returns any error returned by the custom <A HREF="wce50lrficonnectionmanagerimplcreateconnection.htm">IConnectionManagerImpl::CreateConnection</A> implementation.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_AV_UPNP_CM_LOCAL_RESTRICTIONS</TD>
+<TD width=50%>All available connection IDs are in use.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_AV_POINTER</TD>
+<TD width=50%>At least one of pointers in the following list is NULL. 
+<UL type="disc">
+	<LI><I>pszRemoteProtocolInfo</I></li>
+
+	<LI><I>pszPeerConnectionManager </I></li>
+
+	<LI><I>pConnectionID </I></li>
+
+	<LI><I>ppAVTransport </I></li>
+
+	<LI><I>ppRenderingControl</I></li>
+</UL>
+
+<P>All of these pointers must point to valid memory locations.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>ERROR_AV_OOM</TD>
+<TD width=50%>There was not enough memory to complete connection preparation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SUCCESS_AV</TD>
+<TD width=50%>Connection preparation completed successfully.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>This method corresponds to the ConnectionManager service's PrepareForConnection action.</P>
+
+<P>The implementation of this method in <B>IConnectionManagerImpl</B> performs these tasks:
+
+<OL type="1">
+	<LI>Calls <A HREF="wce50lrficonnectionmanagerimplcreateconnection.htm">IConnectionManagerImpl::CreateConnection</A> to provide developers with a chance to perform any specific connection-preparation tasks. </li>
+
+	<LI>Updates its internal connection data.</li>
+
+	<LI>Raises an event by calling <A HREF="wce50lrfieventsinkonstatechanged.htm">IEventSink::OnStateChanged</A> with the CurrentConnectionIDs constant documented in <A HREF="wce50lrfconnectionmanagerstate.htm">ConnectionManagerState</A>.</li>
+
+	<LI>Uses the [out] parameters in the method signature to return the new connection ID and references to the <B>IAVTransport</B> and <B>IRenderingControl</B> objects that it has created.</li>
+</OL>
+
+<P>Control point applications that call <B>PrepareForConnection</B> must call <B>IVirtualService::Release</B> on the <B>IAVTransport</B> and <B>IRenderingControl</B> pointers when the objects are no longer needed.</P>
+
+<P>The AVTransport service's PrepareForConnection action is defined as optional in the UPnP AV DCP. The AV renderer sample implements PrepareForConnection, or does not, depending on the value of the CM_NO_PREPARE_FOR_CONNECTION preprocessor definition. If this constant is defined, the sample does not support PrepareForConnection; otherwise, the sample provides support for multiple connections. To see how this definition is used, examine ConnectionManager.cpp in the AV renderer sample's source directory.</P>
+
+<P>For more information about the actions in the ConnectionManager service, including detailed information about when and how <B>PrepareForConnection</B> is used, see <A HREF="wce50conupnpavdcpdocumentation.htm">UPnP AV DCP Documentation</A>.</P>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions: </B>Windows CE 5.0 and later.<BR>
+<B>Header: </B>Av_upnp.h.<BR>
+<B>Link Library: </B>Av_upnp.lib.<BR>
+<B>C++ Namespace:</B> av_upnp.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrficonnectionmanager.htm">IConnectionManager</A> | <A HREF="wce50lrfiavtransport.htm">IAVTransport</A> | <A HREF="wce50lrficonnectionmanagergetprotocolinfo.htm">IConnectionManager::GetProtocolInfo</A> | <A HREF="wce50lrficonnectionmanagerimpl.htm">IConnectionManagerImpl</A> | <A HREF="wce50lrficonnectionmanagerimplcreateconnection.htm">IConnectionManagerImpl::CreateConnection</A> | <A HREF="wce50lrfieventsinkonstatechanged.htm">IEventSink::OnStateChanged</A> | <A HREF="wce50lrfirenderingcontrol.htm">IRenderingControl</A> | <A HREF="wce50lrfivirtualservicerelease.htm">IVirtualService::Release</A> | <A HREF="wce50lrfmediarendererdevicegetconnectionmanager.htm">MediaRendererDevice::GetConnectionManager</A> | <A HREF="wce50lrfmediaserverdevicegetconnectionmanager.htm">MediaServerDevice::GetConnectionManager</A> | <A HREF="wce50oriupnpaverror.htm">UPnPAVError</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: IConnectionManager::PrepareForConnection (wce50lrficonnectionmanagerprepareforconnection.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

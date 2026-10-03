@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>COM Threads and Processes</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conthreadsandprocesses"></A>COM Threads and Processes</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>In the Minimal COM implementation, Windows CE does not support concurrency management, which means that your application is responsible for synchronizing access to various objects. </P>
+
+<P>Multiple threads should not access ActiveX controls, which have thread affinity because of their use of thread-specific resources. </P>
+
+<P>Because the COM implementation does not support apartment threading, you cannot implement data synchronization with an apartment-threaded singleton. Instead, you must make explicit calls to thread-synchronization primitives to protect member and global data.</P>
+
+<P>This restriction does not apply to the DCOM implementation.</P>
+
+<H2 class="dtH2"><A NAME="wce50conthreadsandprocessesanchor2"></A>Specifying the Threading Model</H2>
+
+<P>In Windows CE, if the <B>ThreadingModel</B> registry key is not set, the threading model defaults to "Free." </P>
+
+<P>In the COM implementation, this is not an issue because COM on Windows CE does not support other threading models. </P>
+
+<P>However, because DCOM on Windows CE supports all threading models and interactions between apartments in the same way that Windows NT does, your application must set this registry key. </P>
+
+<P>In particular, for proxy objects, you must set the <B>ThreadingModel</B> value to "Both," which means that both single-threaded and multithreaded apartment types are supported. If you fail to do this and a thread that belongs to a different apartment accesses the proxy object, the DCOM run-time attempts to marshal the object and fails.</P>
+
+<P>In Windows NT, if the <B>ThreadingModel</B> registry key is not set, the threading model defaults to "Single." In Windows CE, you must specify the Single threading model explicitly. </P>
+
+<P>The following table summarizes the registry settings for Windows CE and Windows NT.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=33%>Windows CE registry key</TH>
+<TH width=34%>Windows NT registry key</TH>
+<TH width=33%>Threading model</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Single</TD>
+<TD width=34%>default (not set)</TD>
+<TD width=33%>Main single-threaded apartment</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Apartment</TD>
+<TD width=34%>Apartment</TD>
+<TD width=33%>Single-threaded apartment</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>default (not set)</TD>
+<TD width=34%>Free</TD>
+<TD width=33%>Free threading</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Both</TD>
+<TD width=34%>Both</TD>
+<TD width=33%>Supports both single-threaded and multithreaded apartment models</TD>
+</TR>
+</table></div>
+
+<H2 class="dtH2"><A NAME="wce50conthreadsandprocessesanchor1"></A>Thread/Process Affinity and Protected Server Libraries</H2>
+
+<P>The DCOM implementation requires every object to have thread/process affinity. </P>
+
+<P>This means that threads that are within protected server libraries (PSLs) cannot create or access objects or APIs that are within a DCOM application and that also require an explicit concurrency model (that is, objects that must be initialized with a call to the <B>CoInitializeEx</B> function). </P>
+
+<P>Specifically, this restriction applies to every callback that the OS makes to an application, and DLL initialization or termination functions, and any call to a device driver.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50oricomdcomapplicationdevelopment.htm">COM and DCOM Application Development</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Tuesday, May 25, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: COM%20Threads%20and%20Processes (wce50conthreadsandprocesses.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

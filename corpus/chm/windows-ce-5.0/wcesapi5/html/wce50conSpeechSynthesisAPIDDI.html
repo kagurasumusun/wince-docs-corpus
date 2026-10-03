@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Speech Synthesis API and DDI</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conspeechsynthesisapiddi"></A>Speech Synthesis API and DDI</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This topic describes the APIs and DDIs required for basic speech synthesis.</P>
+
+<H2 class="dtH2">API</H2>
+
+<P>For basic speech synthesis, an application needs to use the interface <A HREF="wce50lrfispvoice.htm">ISpVoice</A>. An application calls COM's <B>CoCreateInstance</B> for the component CLSID_SpVoice to get a pointer to the <B>ISpVoice</B> interface of a voice object. An application can start calling the methods of <B>ISpVoice</B> such as <A HREF="wce50lrfispvoicespeak.htm">ISpVoice::Speak</A>, which will synthesize speech for the text passed in as a parameter. By default, a voice object is set to the default voice unless the voice has been changed by a call to <A HREF="wce50lrfispvoicesetvoice.htm">ISpVoice::SetVoice</A>. Similarly, a voice object will also be set to a default audio data destination unless <A HREF="wce50lrfispvoicesetoutput.htm">ISpVoice::SetOutput</A> is called with an <B>IUnknown</B> and an appropriate SPSTREAMFORMAT format.</P>
+
+<P>General management functions are provided through an <A HREF="wce50lrfispresourcemanager.htm">ISpResourceManager</A> object that is created by calling <B>CoCreateInstance </B>with <B>CLSID_SpResourceManager</B>.</P>
+
+<P>In addition to generating speech from plain text, an application can place synthesis markup language within the text passed into <B>ISpVoice::Speak</B>. This markup language is based on the XML format. An application can also play raw audio data using the <A HREF="wce50lrfispvoicespeakstream.htm">ISpVoice::SpeakStream</A>. Text files can be spoken using the <B>ISpVoice::SpeakStream</B> as well. The format of the text (either Unicode or ANSI) will automatically be detected. Both functions have flags to control whether or not to purge any sounds not already played and whether or not calls are asynchronous.</P>
+
+<P>Because an <B>ISpVoice</B> object is also an <A HREF="wce50lrfispeventsource.htm">ISpEventSource</A> object, an application can start receiving notifications of events by calling <A HREF="wce50lrfispnotifysourcesetnotifysink.htm">ISpNotifySource::SetNotifySink</A>, by passing in an <A HREF="wce50lrfispnotifysink.htm">ISpNotifySink</A> object. In association with an <B>ISpVoice::Speak</B> or <B>ISpVoice::SpeakStream</B> call, <B>ISpVoice</B> provides an SPEI_START_INPUT_STREAM event before the engine begins synthesizing and an SPEI_END_INPUT_STREAM event when the engine has finished synthesizing. For each call to <B>ISpVoice::Speak</B> or <B>ISpVoice::SpeakStream</B>, a stream number is assigned (<I>pulStreamNum</I>). For each <B>SPEVENT</B> structure describing an event, the <B>ulStreamNum</B> member identifies the stream number associated with an <B>ISpVoice::Speak</B> or <B>ISpVoice::SpeakStream</B> call. ISpVoice generates the following events of type SPEVENTENUM.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=36%>Event</TH>
+<TH width=64%>Function</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SPEI_VOICE_CHANGE</TD>
+<TD width=64%>Voice identifier or voice type has changed during stream synthesis. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SPEI_TTS_BOOKMARK </TD>
+<TD width=64%>A bookmark was encountered during synthesis. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SPEI_WORD_BOUNDARY </TD>
+<TD width=64%>Start of word being spoken. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SPEI_SENTENCE_BOUNDARY </TD>
+<TD width=64%>Start of sentence being spoken. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SPEI_PHONEME </TD>
+<TD width=64%>Phoneme being spoken. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%>SPEI_VISEME </TD>
+<TD width=64%>Viseme being spoken. </TD>
+</TR>
+</table></div>
+
+<P>Applications can call ISpVoice::GetStatus to receive the current status of speech synthesis.</P>
+
+<H2 class="dtH2">DDI</H2>
+
+<P>A SAPI speech synthesis engine implements the <A HREF="wce50lrfispttsengine.htm">ISpTTSEngine</A> interface. The primary method called by SAPI to perform speech rendering is <A HREF="wce50lrfispttsenginespeak.htm">ISpTTSEngine::Speak</A>. SAPI, rather than the engine, performs XML parsing of the input text stream. The Speak method is handed a linked list of text fragments with their associated XML attribute state. The Speak method also receives a pointer to the <B>SpVoice</B> object's <B>ISpTTSEngineSite</B> interface. The TTS engine uses this interface to queue events and write output data.</P>
+
+<P>Even though SAPI is a free-threaded architecture, the TTS engine instances will always be called by SAPI on a single thread. TTS engines are never directly accessed by applications. SAPI ensures that all parameter validation and thread synchronization has been properly performed before the TTS engine is called. For more Speech Synthesis DDI information, see Text-to-Speech Engine Manager.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50consapi50overview.htm">SAPI Overview</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Speech%20Synthesis%20API%20and%20DDI (wce50conspeechsynthesisapiddi.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISpObjectToken::IsUISupported</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfispobjecttokenisuisupported"></A>ISpObjectToken::IsUISupported</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This method determines if the UI associated with the object is supported. Use of this method is similar to calling <A HREF="wce50lrfisptokenuiisuisupported.htm">ISpTokenUI::IsUISupported</A>.</P>
+
+<PRE class="syntax"><B>[local] HRESULT IsUISupported(</B>
+<B>  const WCHAR* </B><I>pszTypeOfUI</I><B>,</B>
+<B>  void* </B><I>pvExtraData</I><B>,</B>
+<B>  ULONG </B><I>cbExtraData</I><B>,</B>
+<B>  IUnknown* </B><I>punkObject</I><B>,</B>
+<B>  BOOL* </B><I>pfSupported</I>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>pszTypeOfUI</I> </DT>
+
+<DD>[in] Pointer to a null-terminated string specifying the UI type to query. Must be a SPDUI_xxx type. </dd>
+
+<DT><I>pvExtraData</I> </DT>
+
+<DD>[in] Pointer to additional information needed for the object. The implementation of <A HREF="wce50lrfisptokenui.htm">ISpTokenUI</A> dictates the format and use of the data provided. See Remarks section. </dd>
+
+<DT><I>cbExtraData</I> </DT>
+
+<DD>[in] Size, in bytes, of the extra data defined in <I>pvExtraData</I>. </dd>
+
+<DT><I>punkObject</I> </DT>
+
+<DD>[in] Pointer to the <B>IUnknown</B> interface. See Remarks section. </dd>
+
+<DT><I>pfSupported</I> </DT>
+
+<DD>[out] Pointer to a value indicating if the object token supports the UI. This value is TRUE when the UI is supported, and FALSE otherwise. If the value is TRUE, but the return code is S_FALSE, the UI type (guidTypeOfUI) is supported, but not with the current parameters or run-time environment. Check with the implementer of the UI object to verify run time requirements.</dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>The following table shows the possible return values.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=35%>Value</TH>
+<TH width=65%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK </TD>
+<TD width=65%>Function completed successfully. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_FALSE </TD>
+<TD width=65%>The UI is supported but not with the current run time environment or parameters. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_INVALIDARG </TD>
+<TD width=65%>One of the parameters is invalid or bad. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_UNINITIALIZED </TD>
+<TD width=65%>Either the data key or token delegate interface is not initialized. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>SPERR_TOKEN_DELETED </TD>
+<TD width=65%>Key has been deleted. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>FAILED(hr) </TD>
+<TD width=65%>Appropriate error message. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When the caller requests an <B>ISpObjectToken</B> implementation to display a particular piece of UI, the UI object may require extra functionality that only it understands. Common implementation practice for accessing this functionality is to call <B>QueryInterface</B> on a known <B>IUnknown</B> interface. The caller of <B>ISpTokenUI::IsUISupported</B> can set the <I>punkObject</I> parameter with the necessary <B>IUnknown</B> interface. For example, a request to display the Speech Recognition Training UI (see SPDUI_UserTraining) requires the use of a specific SR engine.</P>
+
+<H4 class="dtH4">Example</H4>
+
+<P>The following code snippet illustrates the use of this method using SPGUID_EngineProperties.</P>
+
+<PRE class="code">    HRESULT hr = S_OK;
+
+    // get the default text-to-speech engine object token
+    hr = SpGetDefaultTokenFromCategoryId(SPCAT_VOICES, &amp;cpObjectToken);
+    // Check hr
+
+    // create the engine object based on the object token
+    hr = SpCreateObjectFromToken(cpObjectToken, &amp;cpVoice);
+    // Check hr
+
+    // create a data key for the voice's UI objects
+    hr = cpObjectToken-&gt;OpenKey(L"UI", &amp;cpUIDataKey);
+    // Check hr
+
+    // create a data key for the specific Engine Properties UI
+    hr = cpUIDataKey-&gt;OpenKey(SPDUI_EngineProperties, &amp;cpEngPropsDataKey);
+    // Check hr
+
+    // get the GUID for the voice's engine properties UI
+    hr = cpEngPropsDataKey-&gt;GetStringValue(L"CLSID", &amp;pwszEngPropsCLSID);
+    // Check hr
+
+    // convert GUID string to pure GUID
+    hr = CLSIDFromString(pwszEngPropsCLSID, &amp;clsidEngProps);
+    // Check hr
+
+    // check if the default voice object has UI for Properties
+    hr = cpObjectToken-&gt;IsUISupported(&amp;clsidEngProps, NULL, NULL, cpVoice, &amp;fSupported);
+    // Check hr
+
+    // if fSupported == TRUE, then default voice object has UI for Engine Properties </PRE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE .NET 4.1 and later.<BR>
+<B>Header:</B> sapi.h, sapi.idl. <BR>
+<B>Link Library:</B> Sapilib.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrfispobjecttoken.htm">ISpObjectToken</A> | <A HREF="wce50grfsapiinterfaces.htm">SAPI Interfaces</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: ISpObjectToken::IsUISupported (wce50lrfispobjecttokenisuisupported.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

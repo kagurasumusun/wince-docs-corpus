@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Nearest-Point Sampling</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50connearest-pointsampling"></A>Nearest-Point Sampling</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Applications are not required to use texture filtering. Microsoft&reg; Direct3D&reg; Mobile can be set so that it computes the texel address, which often does not evaluate to integers, and simply copies the color of the texel with the closest integer address. This process is called <I>nearest-point sampling</I>. This can be a fast and efficient way to process textures if the size of the texture is similar to the size of the primitive's image on the screen. If not, the texture must be magnified or minified. The result can be a chunky, aliased, or blurred image.</P>
+
+<P>Your application can select nearest-point sampling by calling the <A HREF="wce50lrfidirect3dmobiledevicesettexturestagestate.htm">IDirect3DMobileDevice::SetTextureStageState</A> method. Set the value of the first parameter to the integer index number (0-7) of the texture for which you are selecting a texture filtering method. Pass one of the <A HREF="wce50lrfd3dmtexturestagestatetype.htm">D3DMTEXTURESTAGESTATETYPE</A> enumeraiton values D3DMTSS_MAGFILTER, D3DMTSS_MINFILTER, or D3DMTSS_MIPFILTER for the second parameter to set the magnification, minification, or mipmapping filter. Pass a member of the <A HREF="wce50lrfd3dmtexturefiltertype.htm">D3DMTEXTUREFILTERTYPE</A> enumerated type as the value in the third parameter to set the magnification, minification, or mipmapping filter.</P>
+
+<P>You should use nearest-point sampling carefully, as it can sometimes cause graphic artifacts when the texture is sampled at the boundary between two texels. This boundary is the position along the texture (u or v) at which the sampled texel transitions from one texel to the next. When point sampling is used, the system chooses one sample texel or the other, and the result can change abruptly from one texel to the next texel as the boundary is crossed. This effect can appear as undesired graphic artifacts in the displayed texture. When linear filtering is used, the resulting texel is computed from both adjacent texels and smoothly blends between them as the texture index moves through the boundary.</P>
+
+<P>This effect can be seen when mapping a very small texture onto a very large polygon: an operation often called <I>magnification</I>. For example, when using a texture that looks like a checkerboard, nearest-point sampling results in a larger checkerboard that shows distinct edges. By contrast, linear texture filtering results in an image where the checkerboard colors vary smoothly across the polygon. </P>
+
+<P>In most cases, applications receive the best results by avoiding nearest-point sample wherever possible. The majority of hardware today is optimized for linear filtering, so your application should not suffer degraded performance. If the effect you desire absolutely requires the use of the nearest-point sampling &#0151; such as when using textures to display readable text characters &#0151; then your application should be extremely careful to avoid sampling at the texel boundaries, which might result in undesired effects. The following illustration shows what these artifacts can look like.</P>
+
+<P class="fig"><IMG SRC="dx3d-ptrtfct.gif" ALT="" BORDER=0></P>
+
+<P>Notice that the two squares in the top-right of the group appear different than their neighbors, with diagonal offsets running through them. To avoid graphic artifacts like these, you must be familiar with Direct3D Mobile texture sampling rules for nearest-point filtering. Direct3D Mobile maps a floating-point texture coordinate ranging from [0.0, 1.0] (0.0 to 1.0, inclusive) to an integer texel space value ranging from [–0.5, <I>n –</I> 0.5], where <I>n</I> is the number of texels in a given dimension on the texture. The resulting texture index is rounded to the nearest integer. This mapping can introduce sampling inaccuracies at texel boundaries.</P>
+
+<P>For a simple example, imagine an application that renders polygons with the D3DMTADDRESS_WRAP texture addressing mode (see <A HREF="wce50lrfd3dmtextureaddress.htm">D3DMTEXTUREADDRESS</A>). Using the mapping employed by Direct3D Mobile, the <I>u</I> texture index maps as shown in the following illustration for a texture with a width of 4 texels.</P>
+
+<P class="fig"><IMG SRC="dx3d-ptsmpprb.gif" ALT="" BORDER=0></P>
+
+<P>Notice that the texture coordinates &#0151; 0.0 and 1.0 &#0151; for this illustration are exactly at the boundary between texels. Using the method by which Direct3D Mobile maps values, the texture coordinates range from [–0.5, 4<I> –</I> 0.5], where 4 is the width of the texture. For this case, the sampled texel is the 0<SUP>th</SUP> texel for a texture index of 1.0. However, if the texture coordinate was only slightly less than 1.0, the sampled texel would be the <I>n</I><SUP>th</SUP> texel instead of the 0<SUP>th</SUP> texel. </P>
+
+<P>The implication of this is that magnifying a small texture using texture coordinates of exactly 0.0 and 1.0 with nearest-point filtering on a screen-space aligned triangle results in pixels for which the texture map is sampled at the boundary between texels. Any inaccuracies in the computation of texture coordinates, however small, results in artifacts along the areas in the rendered image that correspond to the texel edges of the texture map. </P>
+
+<P>Performing this mapping of floating point texture coordinates to integer texels with perfect accuracy is difficult, computationally expensive, and generally not necessary. Most hardware implementations use an iterative approach for computing texture coordinates at each pixel location within a triangle. Iterative approaches tend to hide these inaccuracies because the errors are accumulated evenly during iteration. </P>
+
+<P>The Direct3D Mobile reference driver uses a direct-evaluation approach for computing texture indexes at each pixel location. Direct evaluation differs from the iterative approach in that any inaccuracy in the operation exhibits a more random error distribution. The result of this is that the sampling errors that occur at the boundaries can be more noticeable because the reference driver does not perform this operation with perfect accuracy.  For more information on the reference driver, see <A HREF="wce50condevicetypes.htm">Device Types</A>.</P>
+
+<P>The best approach is to use nearest-point filtering only when necessary. When you must use it, it is recommended that you offset texture coordinates slightly from the boundary positions to avoid artifacts.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50contexturefiltering.htm">Texture Filtering</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Nearest-Point%20Sampling (wce50connearest-pointsampling.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

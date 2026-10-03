@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineAnswer</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrflineanswer"></A>lineAnswer</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This function answers the specified offering call. </P>
+
+<PRE class="syntax"><B>LONG WINAPI lineAnswer(</B>
+  <B>HCALL </B><I>hCall</I><B>,</B>
+  <B>LPCSTR </B><I>lpsUserUserInfo</I><B>,</B>
+  <B>DWORD </B><I>dwSize</I><B> </B>
+<B>);</B></PRE>
+
+<H4 class="dtH4">Parameters</H4>
+
+<DL>
+<DT><I>hCall</I> </DT>
+
+<DD>Handle to the call to be answered. The application must be an owner of this call. The call state of <I>hCall</I> must be offering or accepted. </dd>
+
+<DT><I>lpsUserUserInfo</I> </DT>
+
+<DD>Pointer to a string containing user-user information to be sent to the remote party at the time the call is answered. This pointer can be left NULL if no user-user information is to be sent. User-user information is only sent if supported by the underlying network. For more information, see <A HREF="wce50lrflinedevcaps.htm">LINEDEVCAPS</A>. The protocol discriminator field for the user-user information, if required, should appear as the first byte of the buffer pointed to by <I>lpsUserUserInfo</I>, and must be accounted for in the <I>dwSize</I> parameter. </dd>
+
+<DT><I>dwSize </I></DT>
+
+<DD>Size, in bytes, of the user-user information in <I>lpsUserUserInfo</I>. If <I>lpsUserUserInfo</I> is NULL, no user-user information is sent to the calling party and <I>dwSize</I> is ignored. </dd>
+</DL>
+
+<H4 class="dtH4">Return Values</H4>
+
+<P>Returns a positive request identifier if the function is completed asynchronously, or a negative error number if an error occurs. The <I>dwParam2</I> parameter of the corresponding LINE_REPLY message is zero if the function succeeds or it is a negative error number if an error occurs. The following table shows the return values for this function.</P>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=50%>Value</TH>
+<TH width=50%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INUSE</TD>
+<TD width=50%>The line is in use.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONUNAVAIL</TD>
+<TD width=50%>The operation is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLHANDLE</TD>
+<TD width=50%>The call handle is invalid</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+<TD width=50%>The operation failed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCALLSTATE</TD>
+<TD width=50%>The call state is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=50%>The resource is unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALPOINTER</TD>
+<TD width=50%>The pointer is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_UNINITIALIZED</TD>
+<TD width=50%>The parameter is uninitialized.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOMEM</TD>
+<TD width=50%>Not enough memory is available.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_USERUSERINFOTOOBIG</TD>
+<TD width=50%>The user-user information is too big.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_NOTOWNER</TD>
+<TD width=50%>The application is not the owner of the call.</TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Remarks</H4>
+
+<P>When a new call arrives, applications with an interest in the call are sent a <A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> message to provide the new call handle and to inform the application about the call's state and the privileges to the new call (such as monitor or owner). The application with owner privilege for the call can answer this call using <B>lineAnswer</B>. After the call has been successfully answered, the call typically transitions to the connected state. Initially, only one application is given owner privilege to the incoming call. </P>
+
+<P>In some telephony environments (like ISDN), where user alerting is separate from call offering, the application can have the option to accept a call prior to answering or to reject or redirect the offering call. </P>
+
+<P>If a call comes in (is offered) at the time another call is already active, invoking <B>lineAnswer</B> connects to the new call. The effect this has on the existing active call depends on the line's device capabilities. The first call can be unaffected, it can automatically be dropped, or it can automatically be placed on hold. The appropriate LINE_CALLSTATE messages report state transitions to the application about both calls. </P>
+
+<P>In a bridged situation, if a call is connected but in the LINECONNECTEDMODE_INACTIVE state, it can be joined using the <B>lineAnswer</B> function. </P>
+
+<P>The application has the option to send user-user information at the time of the answer. Even if user-user information can be sent, there is no guarantee that the network will deliver this information to the calling party. An application should consult a line's device capabilities to determine whether sending user-user information upon answering the call is available. </P>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;This function is for TAPI version 2.0 and later.</BLOCKQUOTE>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P><B>OS Versions:</B> Windows CE 1.0 and later.<BR>
+<B>Header:</B> Tapi.h.<BR>
+<B>Link Library:</B> Coredll.lib.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50lrflinecallstatetapi.htm">LINE_CALLSTATE</A> | <A HREF="wce50lrflinereply.htm">LINE_REPLY</A> | <A HREF="wce50lrflinedevcaps.htm">LINEDEVCAPS</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: lineAnswer (wce50lrflineanswer.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

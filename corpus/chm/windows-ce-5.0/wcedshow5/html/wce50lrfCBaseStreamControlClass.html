@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CBaseStreamControl Class</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50lrfcbasestreamcontrolclass"></A>CBaseStreamControl Class</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P class="fig"><IMG SRC="strmctl1.gif" ALT="" BORDER=0></P>
+
+<P>This class implements the <A HREF="wce50lrfiamstreamcontrolinterface.htm">IAMStreamControl</A> interface on input and output pins in a filter graph. </P>
+
+<P>This class provides control of the starting and stopping of various components of the stream. </P>
+
+<P>Various streams can be turned on or off without affecting the rest of the graph. For example, an audio stream can be turned off while a video stream continues, for muting. Or perhaps a capture stream can be turned off while preview continues to flow. This could be used to assist in frame accuracy when exact capture start or stop times are important. </P>
+
+<P><B>CBaseStreamControl</B> enables you to specify start and stop times in the <A HREF="wce50lrfcbasestreamcontrolstartat.htm">StartAt</A> and <A HREF="wce50lrfcbasestreamcontrolstopat.htm">StopAt</A> member functions and provides stream information in the <A HREF="wce50lrfcbasestreamcontrolgetinfo.htm">GetInfo</A> member function. </P>
+
+<P><B>CBaseStreamControl</B> uses the <A HREF="wce50lrfstreamcontrolstate.htm">StreamControlState</A> enumerated data type to describe the various states a stream is in. If a stream is flowing it is indicated by the STREAM_FLOWING setting; otherwise, it is in a discarding state indicated by the STREAM_DISCARDING setting. </P>
+
+<P>Filters that need to implement the interface on their own should typically inherit from <B>CBaseStreamControl</B> to obtain an implementation of the <A HREF="wce50lrfcbasestreamcontrolstartat.htm">StartAt</A>, <A HREF="wce50lrfcbasestreamcontrolstopat.htm">StopAt</A>, and <A HREF="wce50lrfcbasestreamcontrolgetinfo.htm">GetInfo</A> methods. </P>
+
+<P>The <B>CBaseStreamControl</B> class also maintains state information and decides what to do with the sample. </P>
+
+<P>To implement your own filter with pins that support <B>CBaseStreamControl,</B> do the following (but if you implement the <A HREF="wce50lrfiamstreamcontrolinterface.htm">IAMStreamControl</A> interface without using <B>CBaseStreamControl</B>, the last two points do not apply): 
+
+<UL type="disc">
+	<LI>Inform the filter object of all state changes through the <A HREF="wce50lrfcbasestreamcontrolnotifyfilterstate.htm">NotifyFilterState</A> member function. </li>
+
+	<LI>Inform the filter object of all <A HREF="wce50lrfcbasestreamcontrolsetsyncsource.htm">SetSyncSource</A> calls to the filter. </li>
+
+	<LI>Inform the filter object when in a flushing state, and when flushing is completed, in the <A HREF="wce50lrfcbasestreamcontrolflushing.htm">CBaseStreamControl::Flushing</A> member function. </li>
+
+	<LI>Use the <A HREF="wce50lrfcbasestreamcontrolcheckstreamstate.htm">CheckStreamState</A> function to make decisions about discarding or passing samples. </li>
+
+	<LI>Make sure output pins set discontinuity flags on the first sample flowed after samples are discarded. </li>
+
+	<LI>Tell your pin what the sink is when your filter joins a filter graph, as shown in the following example. 
+<PRE class="code">STDMETHODIMP CMyFilter::JoinFilterGraph(IFilterGraph * pGraph, LPCWSTR pName)
+{
+   HRESULT hr = CBaseFilter::JoinFilterGraph(pGraph, pName);
+   if (hr == S_OK)
+      m_pMyPin-&gt;SetFilterGraph(m_pSink);
+   return hr;
+}</PRE>
+</li>
+</UL>
+
+<P>For sample code, see the video capture sample in the Samples\Multimedia\DShow\Src\Vidcap directory of the DirectX Media SDK. </P>
+
+<H4 class="dtH4">Member Functions</H4>
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=27%>Member function</TH>
+<TH width=73%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolcbasestreamcontrol.htm">CBaseStreamControl</A></TD>
+<TD width=73%>Constructs a <B>CBaseStreamControl</B> object. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolcheckstreamstate.htm">CheckStreamState</A></TD>
+<TD width=73%>Retrieves a stream's current state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolflushing.htm">Flushing</A></TD>
+<TD width=73%>Notifies the pin when the filter is flushing. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolgetinfo.htm">GetInfo</A></TD>
+<TD width=73%>Retrieves information about the current streaming settings. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolnotifyfilterstate.htm">NotifyFilterState</A></TD>
+<TD width=73%>Notifies the pin of what state your filter is in. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolsetfiltergraph.htm">SetFilterGraph</A></TD>
+<TD width=73%>Sets the event sink notification that your filter graph is using. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolsetsyncsource.htm">SetSyncSource</A></TD>
+<TD width=73%>Identifies the reference clock being used by the graph your filter is in. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolstartat.htm">StartAt</A></TD>
+<TD width=73%>Informs the pin when to start sending streaming data. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><A HREF="wce50lrfcbasestreamcontrolstopat.htm">StopAt</A></TD>
+<TD width=73%>Informs the pin when to stop processing data and discard any new samples. </TD>
+</TR>
+</table></div>
+
+<H4 class="dtH4">Requirements</H4>
+
+<P>DirectShow applications and DirectShow filters have different include file and link library requirements.</P>
+
+<P>For more information, see <A HREF="wce50consettingupthebuildenvironment.htm">Setting Up the Build Environment</A>.</P>
+
+<P><B>OS Versions:</B> Windows CE 2.12 and later. Version 2.12 requires DXPAK 1.0 or later.<BR>
+<B>Header:</B> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: CBaseStreamControl%20Class (wce50lrfcbasestreamcontrolclass.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

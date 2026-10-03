@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registering a Peer Name</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conregisteringunregisteringpeername"></A>Registering a Peer Name</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>Registration includes a peer name and set of endpoints where a service can be contacted. A registration is specific to a PNRP cloud. After a peer is registered, there is a delay between the registration and the propagation of the registration information to other nodes. During this time, other nodes may not be able to resolve a newly registered peer.</P>
+
+<P>PNRP uses the <A HREF="wce50lrfwsasetservicewindowssockets.htm">WSASetService</A> function to register peer names.</P>
+
+<P>Registering a peer name requires the application to provide the following information:
+
+<UL type="disc">
+	<LI>IP address list </li>
+
+	<LI>Peer identity </li>
+
+	<LI>Peer name </li>
+</UL>
+
+<P>Service registration is not persistent. If a client process that registers a peer name exits or calls <A HREF="wce50lrfwsacleanup.htm">WSACleanup</A>, then the peer name is unregistered. If a specified peer name is already registered in the same cloud by the current process, it is replaced with new registration values.</P>
+
+<P>If the <CODE>Authority</CODE> part of a peer name is zero (0), an identity is optional. If a peer identity is specified as NULL, the Peer Name Resolution Protocol (PNRP) uses an internal default peer identity.</P>
+
+<P>After the IP address list, peer identity, and peer name are identified, the application can register a peer name. </P>
+
+<P class="labelproc"><B>To register a peer name</B>
+
+<OL type="1">
+	<LI>Configure a <A HREF="wce50lrfwsaquerysetwindowssockets.htm">WSAQUERYSET (Windows Sockets)</A> structure. 
+<P>The following table shows the values to set.
+<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Value</TH>
+<TH width=63%>Description</TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>dwSize </B></TD>
+<TD width=63%>Specifies the size the <B>WSAQUERYSET</B> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>dwNameSpace </B></TD>
+<TD width=63%>Must be either NS_PNRPNAME or NS_ALL. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpServiceClassID </B></TD>
+<TD width=63%>Must be SVCID_PNRPNAME. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpszServiceInstanceName </B></TD>
+<TD width=63%>Points to the peer name that is being registered.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpszContext </B></TD>
+<TD width=63%>Must be a valid cloud name, an empty string, or NULL. If this value is NULL or an empty string, the default cloud, <code class="ce">"Global_",</code> is used. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpBlob </B></TD>
+<TD width=63%>Points to a <A HREF="wce50lrfpnrpinfo.htm">PNRPINFO</A> structure. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><B>lpcsaBuffer </B></TD>
+<TD width=63%>Point to the address list. </TD>
+</TR>
+</table></div>
+
+<BLOCKQUOTE class="dtBlock">
+<b class="le">Note</b>&nbsp;&nbsp;&nbsp;All <B>WSAQUERYSET</B> members that are not specified in the preceding table are reserved and must be set to NULL or zero (0) depending on the data type of the member.</BLOCKQUOTE>
+
+<BLOCKQUOTE class="dtBlock">
+PNRP uses the <A HREF="wce50lrfblobwindowssockets.htm">BLOB (Windows Sockets)</A> structure to pass data to the <B>WSAQUERYSET</B> structure during calls to several functions. For use with PNRP, <B>BLOB</B> points to either a <B>PNRPINFO </B>structure or a <A HREF="wce50lrfpnrpcloudinfo.htm">PNRPCLOUDINFO</A> structure.</BLOCKQUOTE>
+</li>
+
+	<LI>Call the <B>WSASetService</B> function. The following table shows the parameter values to pass.<div class="tablediv"><table cellspacing="0" class="dtTABLE">
+
+<TR VALIGN="top">
+<TH width=37%>Parameter</TH>
+<TH width=63%>Description </TH>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><I>essOperation </I></TD>
+<TD width=63%>Must have a value of RNRSERVICE_REGISTER.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><I>dwFlags </I></TD>
+<TD width=63%>Must be zero (0). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><I>lpqsRegInfo </I></TD>
+<TD width=63%>Must point to <B>WSAQUERYSET</B> that is configured to register a peer name.</TD>
+</TR>
+</table></div>
+</li>
+</OL>
+
+<P>After a peer name is registered, the information is available to the Peer-to-Peer Networking APIs. However, there is a delay between the registration time and the propagation of the registration information to other nodes. During that time, other nodes may not be able to resolve the newly registered peer.</P>
+
+<P>The following code example shows how to register a peer name by configuring the <A HREF="wce50lrfwsaquerysetwindowssockets.htm">WSAQUERYSET (Windows Sockets)</A> structure and calling the <A HREF="wce50lrfwsasetservicewindowssockets.htm">WSASetService (Windows Sockets)</A> function. </P>
+
+<PRE class="code">/-------------------------------------------------------------------------
+// Function: PnrpRegister
+// Purpose:  Register the given name in the PNRP cloud
+// Arguments:
+//   pwzIdentity : identity string created using PeerIdentityCreate
+//   pwzName     : name to register in PNRP
+//   pwzCloud    : name of the cloud to register in, NULL = global cloud
+//   pNodeInfo   : local node info returned from 
+// Returns:  HRESULT
+/-------------------------------------------------------------------------
+HRESULT PnrpRegister(PWSTR pwzIdentity, PWSTR pwzName, PWSTR pwzCloud, SOCKADDR_IN6* pAddress)
+{
+  HRESULT         hr = S_OK;
+  CSADDR_INFO     csaAddr = {0};
+  PNRPINFO        pnrpInfo = {0};
+  BLOB            blPnrpData = {0};
+  WSAQUERYSET     querySet = {0};
+  INT             iRet;
+  // Fill a CSADDR_INFO structure from the address.
+  csaAddr.iProtocol = IPPROTO_TCP;
+  csaAddr.iSocketType = SOCK_STREAM;
+  csaAddr.LocalAddr.iSockaddrLength = sizeof(SOCKADDR_IN6);
+  csaAddr.LocalAddr.lpSockaddr = (LPSOCKADDR)pAddress; 
+  // Build the WSAQUERYSET required to register.
+  pnrpInfo.dwSize = sizeof(pnrpInfo);
+  pnrpInfo.dwLifetime = 60 * 60 * 8; //8 hours
+  pnrpInfo.lpwszIdentity = pwzIdentity;
+
+  blPnrpData.cbSize = sizeof(pnrpInfo);
+  blPnrpData.pBlobData = (BYTE*)&amp;pnrpInfo;
+
+  querySet.dwSize = sizeof(querySet);
+  querySet.dwNameSpace = NS_PNRPNAME;
+  querySet.dwNumberOfCsAddrs = 1; // one address
+  querySet.lpServiceClassId = (LPGUID)&amp;SVCID_PNRPNAME;
+  querySet.lpszServiceInstanceName = pwzName;
+  querySet.lpszContext = pwzCloud;
+  querySet.lpszComment = L"SomeComment";
+  querySet.lpcsaBuffer = &amp;csaAddr;
+  querySet.lpBlob = &amp;blPnrpData;
+
+  // Register the name with PNRP.
+  iRet = WSASetService(&amp;querySet;, RNRSERVICE_REGISTER, 0);
+  if (iRet != 0)
+  {
+    hr = HRESULT_FROM_WIN32(WSAGetLastError());
+  }
+  return hr;
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conpeernamesclouds.htm">Peer Names and Clouds</A> | <A HREF="wce50conpeer-to-peerapplicationdevelopment.htm">Peer-to-Peer Application Development</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Thursday, June 03, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Registering%20a%20Peer%20Name (wce50conregisteringunregisteringpeername.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>C++ COM Code Example: Purging a Queue Synchronously</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conccomcodeexamplepurgingaqueuesynchronously"></A>C++ COM Code Example: Purging a Queue Synchronously</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>This example synchronously retrieves all messages from a known queue.</P>
+
+<PRE class="code">#include &lt;windows.h&gt;
+#include &lt;stdio.h&gt;      // for printf
+#import "mqoa.dll" no_namespace
+
+
+int main()
+{
+
+
+  ///////////////////////////////////////////////////////////
+  // Initialize OLE
+  /////////////////////////////////////////////////////////// 
+  OleInitialize(NULL);
+  
+  // Set value of ReceiveTimout parameter.
+  _variant_t vtReceiveTimeout;
+  vtReceiveTimeout = (long)1000;
+  
+  
+  try
+  {
+    IMSMQQueueInfoPtr qinfo("MSMQ.MSMQQueueInfo");
+    IMSMQQueuePtr qRec;
+    IMSMQMessagePtr msgRec("MSMQ.MSMQMessage");
+    
+    qinfo-&gt;PathName = ".\\testqueue";    
+    try
+    {
+      qinfo-&gt;Create();
+    }
+    catch (_com_error comerr) 
+    {
+      HRESULT hr = comerr.Error();
+      if (hr == MQ_ERROR_QUEUE_EXISTS)
+    {
+        printf("Opening existing queue.\n");
+      }
+      else 
+    {
+        throw comerr;
+      }
+    };
+  
+  ////////////////////////////////////////////////////////////
+  // Open queue to retrieve message.
+  ////////////////////////////////////////////////////////////
+  qRec = qinfo-&gt;Open(MQ_RECEIVE_ACCESS, MQ_DENY_NONE);
+  
+  
+  ////////////////////////////////////////////////////////////
+  // Retrieve messages from queue.
+  ////////////////////////////////////////////////////////////
+  msgRec = qRec-&gt;Receive(&amp;vtMissing, &amp;vtMissing, &amp;vtMissing, &amp;vtReceiveTimeout);
+  if (msgRec == NULL)
+  {
+     printf("There are no messages in the queue.\n");
+     return 0;
+  }
+  
+  while (msgRec != NULL)
+  {
+     printf("Message removed from queue.\n");
+     msgRec = qRec-&gt;Receive(&amp;vtMissing, &amp;vtMissing, &amp;vtMissing, &amp;vtReceiveTimeout);
+  }
+  printf("All messages are removed from the queue.\n");
+  
+  
+  ////////////////////////////////////////////////////////////
+  // Close queue.
+  ////////////////////////////////////////////////////////////
+  qRec-&gt;Close();
+  return 0;
+  
+  }
+  
+  
+  catch (_com_error comerr) 
+  {
+    HRESULT hr = comerr.Error();
+    printf("unexpected error: %x\n", hr);
+    exit(-1);       // failure
+  }
+}</PRE>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50orimessagequeuing.htm">MSMQ Application Development</A> | <A HREF="wce50conmessagequeuingcomsupport.htm">MSMQ COM Support</A> | <A HREF="wce50conusingthecomcomponents.htm">Using the COM Components</A> | <A HREF="wce50conmsmqsecurity.htm">MSMQ Security</A> </P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: C++%20COM%20Code%20Example:%20Purging%20a%20Queue%20Synchronously (wce50conccomcodeexamplepurgingaqueuesynchronously.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>

@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML DIR="LTR"><HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using the Callback Function</TITLE>
+<SCRIPT SRC="../scripts/dtuelink.js"></SCRIPT></HEAD>
+<body topmargin=0 id="bodyID" class = "dtBODY">
+
+<!--NONSCROLLING BANNER START-->
+<div id="nsbanner">
+<div id="bannerrow1">
+<TABLE CLASS="bannerparthead" CELLSPACING=0>
+<TR ID="hdr">
+<TD CLASS="runninghead" nowrap>Platform&nbsp;Builder&nbsp;for&nbsp;Microsoft&nbsp;Windows&nbsp;CE&nbsp;5.0</TD>
+<TD CLASS="product" nowrap>&nbsp;</TD>
+</TR>
+</TABLE>
+</div>
+<div id="TitleRow">
+<H1 class="dtH1"><A NAME="wce50conusingthecallbackfunction"></A>Using the Callback Function</H1>
+</div></div>
+<!--NONSCROLLING BANNER END-->
+<DIV id="nstext" valign="bottom">
+<P>To receive status notices, the application can implement the <A HREF="wce50lrflinecallbackfunc.htm">lineCallbackFunc</A> function to establish a way to communicate with TAPI 2.0. The callback function processes messages or notifications that TAPI sends to the application. TAPI uses the callback function to notify the application of changes in the status of calls, lines, and telephone devices.</P>
+
+<P>The LINE_CALLSTATE message dispatches various pieces of information to the application, such as that the call is receiving a dial tone from the hookswitch or the call is receiving a busy signal, as well as other data that is sent by the network. A telephone call passes through different stages during a session, and the application can display the result from the LINE_CALLSTATE message in a dialog box.</P>
+
+<P>The following code example shows how to process LINE_CALLSTATE messages in the <B>lineCallbackFunc</B> function. With minor modifications, you can use the same code with the <A HREF="wce50lrflinegetmessage.htm">lineGetMessage</A> function, because the fields in the <A HREF="wce50lrflinemessage.htm">LINEMESSAGE</A> structure are the same as the callback function parameters. Calling <B>lineGetMessage</B> is more efficient than using a callback function, because the thread that is waiting in <B>lineGetMessage</B> gets notified immediately when a new message is available.</P>
+
+<PRE class="code">LPTSTR lpszStatus;
+
+case LINE_CALLSTATE:
+
+  // If the CALLSTATE does not apply to the call in progress, return.
+  if (g_hCall != (HCALL) hDevice)
+    return;
+
+  // dwParam1 is the specific CALLSTATE change occurring
+  switch (dwParam1) 
+  {
+    case LINECALLSTATE_DIALTONE:
+      lpszStatus = TEXT("Dial tone");
+      break;
+
+    case LINECALLSTATE_DIALING:
+      lpszStatus = TEXT("Dialing");
+      break;
+
+    case LINECALLSTATE_PROCEEDING:
+      lpszStatus = TEXT("Dialing has completed and the call ")
+                   TEXT("is proceeding");
+      break;
+
+    case LINECALLSTATE_RINGBACK:
+      lpszStatus = TEXT("Ring back");
+      break;
+
+    case LINECALLSTATE_CONNECTED:
+      lpszStatus = TEXT("Connected");
+      break;
+    .
+    .
+    .
+
+    case LINECALLSTATE_DISCONNECTED:
+    {
+      LPTSTR lpszDisconnected;
+
+      switch (dwParam2)
+      {
+        case LINEDISCONNECTMODE_NORMAL:
+          lpszDisconnected = TEXT("Remote party disconnected");
+          break;
+
+        case LINEDISCONNECTMODE_UNKNOWN:
+          lpszDisconnected = TEXT("Disconnected: Unknown reason");
+          break;
+
+        case LINEDISCONNECTMODE_REJECT:
+          lpszDisconnected = TEXT("Remote party rejected call");
+          break;
+        .
+        .
+        .
+
+        default:
+          lpszDisconnected = TEXT("Disconnected: Unknown reason");
+          break;
+      }
+
+      ErrorBox (lpszDisconnected);
+      // Insert code here to close the current open line device.
+      // ...
+      break;
+    } 
+  }
+  break; </PRE>
+
+<P>A more efficient notification mechanism is available through the <A HREF="wce50lrflineinitializeex.htm">lineInitializeEx</A> and <B>lineGetMessage</B> functions. When the LINEINITIALIZEEXOPTION_USEEVENT constant is specified in <B>lineInitializeEx</B>, TAPI creates an event that gets signaled whenever a message is available. The application can call <B>lineGetMessage</B> to retrieve the next message. The application can wait for the event to be signaled, or it can specify a time-out and have <B>lineGetMessage</B> wait for the next message.</P>
+
+<H4 class="dtH4">See Also</H4>
+
+<P><A HREF="wce50conestablishingamodemconnection.htm">Establishing a Modem Connection</A> | <A HREF="wce50grftapifunctions.htm">TAPI Functions</A> | <A HREF="wce50lrflinemessage.htm">LINEMESSAGE</A></P>
+<!--Footer Start-->
+<br>
+<div class="footer">
+<hr>
+<p><font size="1">&nbsp;Last updated on Friday, May 21, 2004</font></p>
+</div><!--Feedback Link Bottom Start-->
+<table width=100&#37;>
+<tr>
+<td align=left><font size="1"><i><a href="mailto:eapgfdbk&#64;microsoft.com?subject=Windows CE 5.0 (EVC) Documentation Feedback on Topic: Using%20the%20Callback%20Function (wce50conusingthecallbackfunction.htm)&amp;body=We cannot answer technical support questions, but we welcome your suggestions and comments about the documentation. For technical support, see http://go.microsoft.com/fwlink/?linkid=3939. All feedback is monitored regularly by the Windows CE documentation team and typically answered within two business days.">Send feedback</a> on this topic to the authors</i></font></td>
+</table>
+<!--Feedback Link Bottom End-->
+<br>
+<!--Footer End-->
+</BODY>
+</HTML>
