@@ -40,6 +40,8 @@ def set_name(section):
     parts = section.split("/")
     if parts[0] == "learn":
         return parts[1] if len(parts) > 1 else parts[0]
+    if parts[0] == "dotnet":
+        return "dotnet/" + (parts[1] if len(parts) > 1 else parts[0])
     if parts[0] == "msdn-library":
         return "/".join(parts[1:3]) if len(parts) > 2 else parts[-1]
     if parts[0] == "chm":

@@ -11,6 +11,9 @@
 #   * tools/check-corpus.py --report for
 #     data/reports/{duplicates,corpus-problems}.tsv
 #   * tools/check-policy.py: the corpus has to stay Windows CE documentation
+#   * tools/dedupe-corpus.py --check: the alias table stays intact
+#   * tools/build-kb.py: knowledge/ is rebuilt from the pages, so the
+#     knowledge base never drifts from the corpus
 #     only (docs/COLLECTION-POLICY.md) - a harvested page that is not out of
 #     scope fails the run
 #   * data/reports/harvest-last.json records what the run did (counters, rate)
@@ -156,10 +159,16 @@ jobs:
           python3 tools/build-index-sql.py
           python3 tools/build-ce-api-names.py
           python3 tools/build-win32-map.py
+          # the alias table has to stay intact (a collapsed page must not
+          # come back, its keeper must not change) and the knowledge base has
+          # to be rebuilt from the pages this run changed
+          python3 tools/dedupe-corpus.py --check
+          python3 tools/build-kb.py --workers 4
           python3 tools/check-corpus.py --report || true
           python3 tools/check-policy.py
           python3 tools/summarize-harvest.py || true
-          git add data/index/ data/reports/ corpus/ data/logs/ || true
+          git add data/index/ data/reports/ corpus/ data/logs/ knowledge || true
+
           if ! git diff --quiet || ! git diff --staged --quiet; then
             git commit -m "corpus: harvest run + index refresh"
             git pull --rebase

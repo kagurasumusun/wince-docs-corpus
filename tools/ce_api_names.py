@@ -29,9 +29,11 @@ Where the names come from
    (``msdn-library/wcedevcon-99/``), the 2010-05 capture, Windows Mobile 6.5,
    the KnowledgeBase and the CE 4.2/5.0 CHM trees.
 
-   The .NET object documentation is deliberately **not** mined (``VBCE``,
-   ``learn/dotnet-*``, ``learn/pos-for-net``): its class and property names
-   (``Font``, ``Image``, ``CheckColors``) collide with unrelated Win32 pages.
+   The .NET object documentation is deliberately **not** mined
+   (``corpus/dotnet/``: POS for .NET, the Compact Framework, the Micro
+   Framework, and the ``VBCE``/``vbce``/``adoce`` sets of the MSDN Library):
+   its class and property names (``Font``, ``Image``, ``CheckColors``) collide
+   with unrelated Win32 pages.
 
 3. Names and modules listed in ``data/win32-exclude.tsv`` are removed again:
    a CE page and a Win32 page can share a name and document different things
@@ -64,6 +66,9 @@ CATALOGED_SETS = (
 )
 
 # Sets mined from the index instead (no catalog exists for them).  Prefixes.
+# ``corpus/site/`` is deliberately absent: those pages are the CE-era
+# whitepapers/product pages (the Win32 model, porting notes), not an API
+# reference, so they contribute no names.
 MINE_SECTIONS = (
     "mvb/",
     "msdn-library/techshelps/",
@@ -83,8 +88,7 @@ MINE_EXCLUDE = (
     "msdn-library/techshelps/VBCE",
     "msdn-library/datadungeon-2000-04/vbce",
     "msdn-library/datadungeon-2000-04/adoce",
-    "learn/dotnet",
-    "learn/pos-for-net",
+    "dotnet/",
 )
 
 # sdk-api page file names: ``nf-fileapi-createfilew.md``.

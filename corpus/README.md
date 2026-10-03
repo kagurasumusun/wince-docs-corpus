@@ -7,13 +7,15 @@ that way:
 
 ```
 corpus/
-├── learn/<set>/              pages harvested from learn.microsoft.com
+├── learn/<set>/              CE pages harvested from learn.microsoft.com
 ├── chm/windows-ce-3.0/       pages extracted from the official CE 3.0 CHM
 ├── chm/windows-ce-5.0/       the 98 component CHMs of the CE 5.0 CD1
 ├── chm/windows-ce-4.2/       emulator + remote tools CHMs of CE .NET 4.2
 ├── mvb/windows-ce-1.0/       CE 1.0 books (Multimedia Viewer/WinHelp era)
 ├── mvb/windows-ce-2.0-sdk/   CE 2.0 SDK (H/PC) debugger reference + disc ReadMe
 ├── kb/                       Windows CE KnowledgeBase articles (CE 1.0/2.0 era)
+├── site/<set>/               pages of the CE-era web sites that came with the media
+├── dotnet/<set>/             the .NET families, documented on top of Windows CE
 ├── win32/api/                the Win32-common API reference (MicrosoftDocs)
 └── msdn-library/
     ├── 2010-05/<set>/        Internet Archive copies of MSDN topics
@@ -23,22 +25,23 @@ corpus/
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 121,686 pages (116,407 in the CE trees + 5,279 Win32-common pages, as
-of 2026-10-04; the April 2000 crawl is still running) — see
+Total: 121,058 pages = **105,122 CE pages + 10,657 .NET pages + 5,279
+Win32-common pages** (as of 2026-10-04; the April 2000 crawl is still
+running). The CE trees are `learn/`, `chm/`, `mvb/`, `kb/`, `site/` and
+`msdn-library/`; `dotnet/` is separated because it documents a layer on top of
+Windows CE, not the OS its include/def files describe — see
+`dotnet/README.md`. For provenance, see
 the per-tree READMEs for the provenance of each, and `../queues/
 third-party-sources.md` for the mirror policy. What may be collected at all is
 `../docs/COLLECTION-POLICY.md`; `../tools/check-policy.py` enforces it.
 
-## Sets under `corpus/learn/` (68,703 pages)
+## Sets under `corpus/learn/` (58,046 pages)
 
 | Set | Pages | Contents |
 |-----|------:|----------|
 | `windows-ce-5.0` | 24,694 | Windows CE 5.0 product documentation and API reference. |
 | `windows-embedded-ce-6.0` | 23,714 | Windows Embedded CE 6.0 documentation and API reference. |
-| `windows-ce-net-4x` | 8,970 | Windows CE .NET 4.0/4.1/4.2 topics (native API, drivers, guides). |
-| `pos-for-net` | 5,793 | POS for .NET (`Microsoft.PointOfService`) reference. |
-| `dotnet-micro-framework` | 4,012 | .NET Micro Framework (`Microsoft.SPOT.*`, `Ws.*`, `Dpws.*`, `System.Ext.*`, WSD/DPWS stack). |
-| `dotnet-compact-framework` | 852 | .NET Compact Framework class-library pages (`System.*` namespaces). |
+| `windows-ce-net-4x` | 8,969 | Windows CE .NET 4.0/4.1/4.2 topics (native API, drivers, guides). |
 | `windows-embedded-compact-7` | 256 | Windows Embedded Compact 7 remote-tools reference (`(Compact 7)`). |
 | `unclassified` | 413 | Set could not be determined from page metadata. |
 
@@ -72,14 +75,28 @@ fallback, markers in the body):
 | `(Windows CE 5.0)` | `windows-ce-5.0` |
 | `(Windows Embedded CE 6.0 …)` / `(Microsoft.RemoteToolSdk …)` | `windows-embedded-ce-6.0` |
 | `(Compact 7)` | `windows-embedded-compact-7` |
-| `(Microsoft.PointOfService …)` | `pos-for-net` |
-| `(Microsoft.SPOT …)` / `(Microsoft.Web.Services …)` / `(Ws …)` / `(Dpws …)` / `(System.Ext …)` | `dotnet-micro-framework` |
-| `(System …)` / `(Microsoft …)` / `(… Method\|Property\|Class\|…)` | `dotnet-compact-framework` |
+| `(Microsoft.PointOfService …)` | `dotnet/pos-for-net` |
+| `(Microsoft.SPOT …)` / `(Microsoft.Web.Services …)` / `(Ws …)` / `(Dpws …)` / `(System.Ext …)` | `dotnet/dotnet-micro-framework` |
+| `(System …)` / `(Microsoft …)` / `(… Method\|Property\|Class\|…)` | `dotnet/dotnet-compact-framework` |
 | `(Windows Mobile <ver>)` | `windows-mobile-<ver>` |
 | anything else | `uncategorized` → files land in `unclassified/` |
 
 The table is the single source of truth for both the code and this document;
-if you change `BOOK_RULES` in `tools/harvest.py`, update this table.
+if you change `BOOK_RULES` in `tools/harvest.py`, update this table. The .NET
+rules put their pages under `corpus/dotnet/` (`DOTNET_SETS` in the same tool);
+everything else goes under `corpus/learn/`.
+
+## Sets under `corpus/dotnet/` (10,657 pages)
+
+| Set | Pages | Contents |
+|-----|------:|----------|
+| `pos-for-net` | 5,793 | POS for .NET (`Microsoft.PointOfService`) reference and guides. |
+| `dotnet-micro-framework` | 4,012 | .NET Micro Framework (`Microsoft.SPOT.*`, `Ws.*`, `Dpws.*`, `System.Ext.*`, WSD/DPWS stack). |
+| `dotnet-compact-framework` | 852 | .NET Compact Framework class-library pages (`System.*` namespaces). |
+
+This is a managed-code layer: its records stay in the knowledge base with
+`layer: "dotnet"` and are kept out of the CE include/def surface
+(`knowledge/README.md`).
 
 ## File naming
 
@@ -110,7 +127,7 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 * `msdn-library/datadungeon-2000-04/` — the Windows CE documentation of the
   MSDN Library April 2000 (CE 2.12/3.0 era), crawled from
   <https://library.thedatadungeon.com/> (`queues/mirrors.tsv`,
-  `tools/crawl-mirror.py`); 2,372 pages of it are collected so far and the
+  `tools/crawl-mirror.py`); 2,931 pages of it are collected so far and the
   crawl continues twice a day where it stopped
 * Nothing in `corpus/` is source code: the trees hold pages only, and a medium
   is never unpacked into the corpus (see "What is collected" in the top-level
@@ -150,6 +167,12 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
   pages, sample trees, desktop Media Player 2 help and FrontPage metadata are
   refused by the exclude regex in `queues/media.tsv` — see
   `msdn-library/wcedevcon-99/PROVENANCE.md`.
+* `site/` — 44 pages imported from the CE-era web sites that came with the
+  media (`sources/windows-ce-2.0/developer/` — the CE 2.0 developer site,
+  including the w32model, comm_mod, porting and mgdi guides — plus the CE
+  4.2/5.0/6.0 pages that were still only under `sources/`), by
+  `tools/import-site.py` from `queues/site-sets.tsv`; see
+  `data/reports/site-imported.tsv` for the receipt.
 * `win32/` — 5,279 pages from Microsoft's public Win32 API reference
   (`MicrosoftDocs/sdk-api`, pinned commit): every sdk-api page whose API name
   Windows CE documents, including the `A`/`W` variants of a shared base name.
@@ -167,4 +190,6 @@ python3 tools/build-index.py       # data/index/INDEX.tsv
 python3 tools/build-index-sql.py   # data/index/corpus.sqlite3
 python3 tools/build-gap-report.py  # data/reports/missing-pages.tsv
 python3 tools/check-policy.py      # the collection policy (must print OK)
+
+# knowledge/ is built from the indexed pages: python3 tools/build-kb.py
 ```

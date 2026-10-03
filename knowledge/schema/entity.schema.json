@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kagurasumusun/wince-docs-corpus/knowledge/schema/entity.schema.json",
+  "title": "Knowledge base entity",
+  "description": "One API name the corpus documents, with everything the corpus says about it. Written by tools/build-kb.py to knowledge/kb/entities.jsonl(.gz).",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "layers",
+    "doc_role",
+    "kinds",
+    "ce_sets",
+    "ce_pages",
+    "win32_pages",
+    "dotnet_pages",
+    "headers",
+    "libraries",
+    "dlls",
+    "declarations",
+    "syntax_declarations",
+    "requirements",
+    "constraints",
+    "name_evidence",
+    "kind_evidence",
+    "noise",
+    "modules",
+    "relations",
+    "generation_use"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Canonical lookup key: the name lowercased with '::' and punctuation removed (tools/ce_api_names.py normalize())."
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name as a page prints it (the most common one)."
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "ce",
+          "win32",
+          "dotnet"
+        ]
+      },
+      "description": "Which corpus layers document the name."
+    },
+    "doc_role": {
+      "enum": [
+        "api-definition",
+        "api-page",
+        "topic"
+      ],
+      "description": "DERIVED from the corpus. api-definition: a page prints a syntax block. api-page: a page looks like reference (Header/Library/DLL/OS-version requirements) but prints no syntax block. topic: the name is only the title of a prose page."
+    },
+    "kinds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "function/struct/enum/callback/interface/macro/..., most supported first."
+    },
+    "kind_evidence": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "sdk-api-filename",
+        "syntax",
+        null
+      ],
+      "description": "Where the kind came from. null when no evidence decided it."
+    },
+    "name_evidence": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "catalog",
+          "page-title",
+          "sdk-api-filename"
+        ]
+      },
+      "description": "How the name was taken from the source pages."
+    },
+    "ce_sets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Corpus-relative set directories of the CE pages (e.g. learn/windows-embedded-ce-6.0). This is the version scope of the entity."
+    },
+    "ce_pages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "win32_pages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dotnet_pages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "headers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Header names stated by the pages (Header / req.header). Values are quoted, not normalised."
+    },
+    "libraries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Link libraries stated by the pages (Link Library / Library / req.lib)."
+    },
+    "dlls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "DLL names stated by the pages (DLL / req.dll / api_location)."
+    },
+    "unicode_ansi": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "declarations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ids of declarations.jsonl records for this entity (all roles)."
+    },
+    "syntax_declarations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The subset whose role is 'syntax': the entity's own declaration, not a quoted example."
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "noise": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "build-variable",
+        null
+      ],
+      "description": "DERIVED flag for a name that is not an API. Only one pattern is certain enough to flag: an all-caps double-underscore identifier (__COMMONPUBROOT) that a page's code block mentioned. Flagged records stay in the file (and in reports/coverage.tsv); reports/gaps.tsv skips them."
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "sdk-api module the page belongs to (from the page's UID, e.g. 'fileapi'). The Win32-side grouping; CE pages state no module."
+    },
+    "relations": {
+      "type": "array",
+      "description": "DERIVED links to other definitions, each with the evidence it was read from. Every entry is a lead with its page, never a merged claim.",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "name",
+          "id",
+          "present",
+          "evidence",
+          "page"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "unicode-ansi",
+              "interface-method",
+              "layer"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "description": "Canonical id of the target, '' when the relation has no single target (type 'layer')."
+          },
+          "present": {
+            "type": "boolean",
+            "description": "Whether that target exists as an entity in this file."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "The printed text the relation was read from."
+          },
+          "page": {
+            "type": "string",
+            "description": "Corpus-relative page the evidence is on."
+          }
+        }
+      }
+    },
+    "generation_use": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "include-declaration",
+          "type-definition",
+          "link-library",
+          "def-export",
+          "abi-layout",
+          "unicode-mapping",
+          "version-scope",
+          "ce-restriction"
+        ]
+      },
+      "description": "DERIVED, rule-based: which part of an include/def generator this record can feed. include-declaration = a syntax declaration plus a stated header; type-definition = struct/enum/union/typedef; link-library = a function/callback with a stated library or DLL; def-export = a function/callback with a stated DLL; abi-layout = a struct/union whose declaration lists members; unicode-mapping = it has a unicode-ansi relation; version-scope = it names the CE sets that document it; ce-restriction = it has constraint sentences."
+    }
+  }
+}

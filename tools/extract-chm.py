@@ -42,6 +42,9 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+
+import alias_index  # noqa: E402  (duplicate pages already collapsed)
 PAGE_EXT = (".htm", ".html")
 SKIP_EXT = (".hhc", ".hhk", ".css", ".js", ".gif", ".png", ".jpg", ".jpeg",
             ".bmp", ".ico", ".xml", ".dtd", ".xsl", ".h", ".cpp", ".c",
@@ -173,6 +176,11 @@ def extract_chm(seven_zip, chm_path, dest_dir, dry_run=False):
                     counter += 1
                 used_stems.add(target_stem.lower())
                 target = os.path.join(dest_dir, target_stem + ".html")
+                if alias_index.is_aliased(target):
+                    # the same page of another component CHM is already in
+                    # the corpus (see data/index/aliases.tsv)
+                    skipped["duplicate"] += 1
+                    continue
                 os.makedirs(os.path.dirname(target), exist_ok=True)
                 with open(target, "wb") as fh:
                     fh.write(body)

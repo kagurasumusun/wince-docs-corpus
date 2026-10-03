@@ -1,18 +1,21 @@
 # wince-docs-corpus
 
 Offline, page-per-file copy of Microsoft's official Windows CE / Windows
-Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
-.NET Compact Framework, .NET Micro Framework, POS for .NET and Windows Mobile
-6.5 topics that shipped in the same documentation namespace — **plus the Win32
-documentation Windows CE shares**, so that an API question can be answered
-without breaking the offline copy.
+Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7 and
+Windows Mobile 6.5 — **plus the Win32 documentation Windows CE shares**, so
+that an API question can be answered without breaking the offline copy.
+The .NET families that shipped in the same documentation namespace
+(.NET Compact Framework, .NET Micro Framework, POS for .NET) are kept as a
+**separate tree**, `corpus/dotnet/`: they document a layer on top of Windows CE,
+not the operating system its include/def files describe.
 
-**121,686 pages** (2026-10-04 — `data/index/INDEX.tsv` is the live count):
-116,407 extracted/harvested/mirrored CE pages and 5,279 Win32 pages
-(markdown, from Microsoft's public `MicrosoftDocs` repositories). The
-repository also carries the media the pages were extracted from, the URL
-queues used to harvest them, the upstream snapshot the Win32 pages come from,
-and the derived catalogs, manifests and indexes.
+**121,058 pages** (2026-10-04 — `data/index/INDEX.tsv` is the live count):
+105,122 CE pages, 10,657 .NET pages and 5,279 Win32 pages (markdown, from
+Microsoft's public `MicrosoftDocs` repositories). The repository also carries
+the media the pages were extracted from, the URL queues used to harvest them,
+the upstream snapshot the Win32 pages come from, and the derived catalogs,
+manifests, indexes — and `knowledge/`, the machine-readable knowledge base
+built from the pages.
 
 What belongs in the corpus — and what is kept out — is written down once, in
 [`docs/COLLECTION-POLICY.md`](docs/COLLECTION-POLICY.md), and enforced by
@@ -30,7 +33,8 @@ and support articles, one page per file. Nothing else is imported.
 * **Collected, as the Win32-common half**: a page of `MicrosoftDocs/sdk-api`
   **only when its API name is one Windows CE documents** — including the `A`/`W`
   variants of a shared base name (`CreateFileA`/`CreateFileW` because CE
-  documents `CreateFile`). That is 5,279 pages for 5,068 shared names. The
+  documents `CreateFile`). That is 5,279 pages for
+5,068 shared names. The
   desktop-only context of those modules (the Shell, DirectX, WMI, WinRT,
   Windows Media, …) is **not** imported, and neither are the desktop Win32
   programming guides (`MicrosoftDocs/win32`).
@@ -56,27 +60,36 @@ and support articles, one page per file. Nothing else is imported.
 
 ## Repository layout
 
+The top level separates the four kinds of material the project needs —
+**media** (`sources/`, the origin), **documents** (`corpus/`, the material),
+**knowledge** (`knowledge/`, the machine-readable statements extracted from the
+documents) and **working data** (`data/`, `queues/`, `docs/`, `tools/`, about
+the collection rather than part of it).
+
 | Path | Contents |
 |------|----------|
 | `corpus/` | The documentation itself, one page per file (HTML, plus markdown for the Win32 pages). See `corpus/README.md`. |
-| `corpus/learn/<set>/` | 68,703 pages harvested from `learn.microsoft.com/…/previous-versions/windows/embedded`. |
-| `corpus/chm/windows-ce-5.0/` | 20,209 pages: the 98 component CHMs of the CE 5.0 CD1 — per-component guides and API reference, complementary to the Learn harvest (4 shared titles out of 20,141). |
+| `corpus/learn/<set>/` | 58,046 pages harvested from `learn.microsoft.com/…/previous-versions/windows/embedded`: CE 5.0 (24,694), Embedded CE 6.0 (23,714), CE .NET 4.x (8,969), Compact 7 (256) and 413 unclassified CE 2.12/3.0-era topics. |
+| `corpus/chm/windows-ce-5.0/` | 20,179 pages: the 98 component CHMs of the CE 5.0 CD1 — per-component guides and API reference, complementary to the Learn harvest. |
 | `corpus/chm/windows-ce-4.2/` | 566 pages: the emulator board and remote-tools reference of the CE .NET 4.2 Platform Builder Emulation Edition media. |
 | `corpus/chm/windows-ce-3.0/` | 8,962 pages extracted from the official Windows CE 3.0 documentation CHM. |
-| `corpus/mvb/windows-ce-1.0/` | 2,104 pages decoded from the CE 1.0 Books Online (Multimedia Viewer books + WinHelp release notes). |
-| `corpus/mvb/windows-ce-2.0-sdk/` | 293 pages of the Windows CE Platform SDK (H/PC) 2.0 disc (02/98): the CE debugger reference (`windbg.hlp`) and the disc ReadMe. The disc's InfoViewer Books Online has no decoder yet; the SDK's headers, libraries and samples are deliberately not imported. |
+| `corpus/mvb/windows-ce-1.0/` | 2,103 pages decoded from the CE 1.0 Books Online (Multimedia Viewer books + WinHelp release notes). |
+| `corpus/mvb/windows-ce-2.0-sdk/` | 292 pages of the Windows CE Platform SDK (H/PC) 2.0 disc (02/98): the CE debugger reference (`windbg.hlp`) and the disc ReadMe. The disc's InfoViewer Books Online has no decoder yet; the SDK's headers, libraries and samples are deliberately not imported. |
 | `corpus/msdn-library/techshelps/` | 5,165 pages of the MSDN Library's Windows CE 1.0/2.0 sets, from the techshelps mirror (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED). |
-| `corpus/msdn-library/datadungeon-2000-04/` | The Windows CE documentation of the MSDN Library April 2000 (CE 2.12/3.0 era), crawled page by page from library.thedatadungeon.com — 3,571 pages so far, the crawl continues twice a day. |
+| `corpus/msdn-library/datadungeon-2000-04/` | The Windows CE documentation of the MSDN Library April 2000 (CE 2.12/3.0 era), crawled page by page from library.thedatadungeon.com — 2,931 pages collected so far, the crawl continues twice a day. |
 | `corpus/msdn-library/wcedevcon-99/` | 6,382 pages of the Windows CE 2.11/2.12 SDK, DDK and Platform Builder documentation on the DevCon '99 conference disc. The disc's sponsor pages, sample trees, desktop Media Player 2 help and FrontPage metadata are refused (see `queues/media.tsv`). |
 | `corpus/kb/` | 257 Windows CE KnowledgeBase articles (CE 1.0/2.0/2.1x era, the CE toolkits, H/PC, Palm-size PC, Pocket PC). |
-| `corpus/win32/api/` | 5,279 Win32 pages for the 5,068 API names Windows CE documents (from `MicrosoftDocs/sdk-api`, pinned by commit). `data/reports/win32-shared.tsv` maps each name to its CE pages, `data/reports/win32-imported.tsv` records each page's CE evidence, and `tools/find-api.py` looks a name up on both sides. |
+| `corpus/site/` | 44 pages imported from the CE-era web sites that came with the media (`sources/windows-ce-2.0/developer/` — the CE 2.0 developer site including w32model, comm_mod, porting and mgdi — plus the CE 4.2/5.0/6.0 pages that were still outside the corpus). |
+| `corpus/dotnet/<set>/` | 10,657 .NET pages, kept apart from the CE trees: POS for .NET (5,793), .NET Micro Framework (4,012), .NET Compact Framework (852). See `corpus/dotnet/README.md`. |
+| `corpus/win32/api/` | 5,279 Win32 pages for the 5,068 API names Windows CE documents (from `MicrosoftDocs/sdk-api`, pinned by commit). `data/reports/win32-shared.tsv` maps each name to its CE pages, `data/reports/win32-imported.tsv` records each page's CE evidence, `data/reports/win32-coverage.tsv` is the review worklist of that rule, and `tools/find-api.py` looks a name up on both sides. |
 | `corpus/msdn-library/2010-05/<set>/` | 161 Internet Archive copies of MSDN topics (May 2010), filed under the set they duplicate. |
 | `corpus/msdn-library/windows-mobile-6.5/` | 34 Windows Mobile 6.5 topics in MSDN Library (MSHelp) format. |
+| `knowledge/` | The machine-readable knowledge base built from `corpus/` by `tools/build-kb.py`: 24,442 API entities with their header/library/DLL/module statements, relations and generation use, 110,345 verbatim declarations, 156,548 requirements and the CE constraints, every record naming its page. See `knowledge/README.md`. |
 | `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror) and the sdk-api snapshot (`sources/microsoftdocs/`), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
-| `docs/` | `COLLECTION-POLICY.md` — what belongs in the corpus, the Win32-common rule, and the 2026-10 review that removed 16,228 pages that did not. |
+| `docs/` | `COLLECTION-POLICY.md` — what belongs in the corpus, the Win32-common rule and the .NET split; `review-2026-10.ja.md` — the 2026-10 review, including the round that removed 16,228 pages and the round that separated the .NET tree, resolved the duplicates and added the knowledge layer. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
-| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the CE-shared Win32 pages), `ce_api_names.py` (the API names Windows CE documents), `check-policy.py` (the collection policy), `extract-mvb.py` (decode Books Online into pages), `extract-chm.py` (unpack documentation CHMs), `crawl-mirror.py` (crawl a documentation mirror), `import-media.py` + `iso9660.py` (fetch a CD image from the Internet Archive and import its documentation), `import-techshelps.py` / `import-kbarchive.py` (third-party sources), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report, the CE-name and Win32-map generators. |
+| `tools/` | Collection: `harvest.py` (queue → corpus), `fetch-upstream.py` (import the CE-shared Win32 pages), `extract-mvb.py`, `extract-chm.py`, `crawl-mirror.py`, `import-media.py` + `iso9660.py`, `import-techshelps.py` / `import-kbarchive.py` / `import-site.py`. Checks and indexes: `check-policy.py` (the collection policy), `check-corpus.py` (integrity/duplicate/source-file check), `dedupe-corpus.py` + `alias_index.py` (resolve duplicates and keep the page ids traceable), `build-index.py`, `build-index-sql.py`, `build-gap-report.py`, `build-ce-api-names.py` + `ce_api_names.py`, `build-win32-map.py`, `build-win32-coverage.py`, `find-api.py`. Knowledge: `page_parse.py` (the page-format readers) + `build-kb.py` (writes `knowledge/`). |
 | `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`; runs on demand or whenever `queues/auto-harvest.txt` changes), `crawl-mirror.yml` (crawl the mirror sites in `queues/mirrors.tsv`, twice a day — this is the live collection), `extract-chm.yml` (unpack the documentation CHMs of a media set in `queues/chm-sets.tsv`), `import-media.yml` (fetch a CD image from the Internet Archive and import its documentation, `queues/media.tsv`) and `import-win32.yml` (re-import `corpus/win32/` from the pinned sdk-api commit). All are `workflow_dispatch` — run them from the Actions tab — and all end with `tools/check-corpus.py` and `tools/check-policy.py`. |
 
 ## Corpus conventions
@@ -109,6 +122,7 @@ and support articles, one page per file. Nothing else is imported.
 ```bash
 python3 tools/check-policy.py          # is corpus/ still CE documentation only?
 python3 tools/check-corpus.py --report # integrity, duplicates, source files
+python3 tools/dedupe-corpus.py --check # duplicates/aliases still in place
 python3 tools/build-index.py           # data/index/INDEX.tsv  (id, set, path, title)
 python3 tools/build-index-sql.py       # data/index/corpus.sqlite3 (incremental; --full to rebuild)
 python3 tools/build-gap-report.py      # data/reports/missing-pages.tsv (catalog vs corpus)
@@ -116,7 +130,9 @@ python3 tools/build-ce-api-names.py    # data/reports/ce-api-names.tsv (the CE A
 python3 tools/fetch-upstream.py list   # what the Win32 import would take
 python3 tools/fetch-upstream.py subset --source sdk-api   # corpus/win32/api (pinned commit)
 python3 tools/build-win32-map.py       # data/reports/win32-{shared,imported}.tsv
+python3 tools/build-win32-coverage.py  # data/reports/win32-coverage.tsv (review worklist)
 python3 tools/find-api.py CreateFile   # look a name up across CE + Win32
+python3 tools/build-kb.py              # knowledge/ (entities, declarations, requirements)
 
 # The desktop Win32 programming guides, as an offline extra outside the corpus
 python3 tools/fetch-upstream.py guides --out .cache/win32-guides
@@ -153,6 +169,17 @@ resume check) don't have to rescan ~120k files.
 
 ## Provenance and history
 
+* 2026-10 (.NET and knowledge layer): the .NET sets moved out of
+  `corpus/learn/` into `corpus/dotnet/` (10,657 pages — Windows CE's own
+  documentation stays in `corpus/learn/`), the remaining duplicate pages were
+  resolved (672 page copies collapsed to the copy kept, recorded per page in
+  `data/index/aliases.tsv`, 673 rows), 45 pages that were still only under
+  `sources/` (44 of them remain — one was a byte-identical FrontPage temp copy
+  of another page)
+  were imported into `corpus/site/`, and `knowledge/` was added: the
+  machine-readable knowledge base (24,442 API entities, 110,345 declarations,
+  156,548 requirements, 3,289 Windows CE constraint sentences), built by
+  `tools/build-kb.py` and consumed by an include/def generator.
 * Per-release provenance: `sources/*/PROVENANCE.md` (source item, archive
   URL, what was and was not extracted) and
   `corpus/msdn-library/windows-mobile-6.5/PROVENANCE.md`.
@@ -180,7 +207,10 @@ resume check) don't have to rescan ~120k files.
   `tools/make-index.py` → `tools/build-index.py`.
   Pages were deduplicated and renamed to their canonical page ids at the
   same time.
-* 2026-10 additions: `corpus/mvb/windows-ce-1.0/` (2,104 CE 1.0 pages),
+* 2026-10 additions: `corpus/site/` (the CE-era web sites that came with the
+  media), `corpus/dotnet/` (the .NET families as their own tree),
+  `knowledge/` (the knowledge base), `data/reports/win32-coverage.tsv`,
+  `corpus/mvb/windows-ce-1.0/` (CE 1.0 pages),
   `corpus/win32/` (the CE-shared Win32 pages from
   `MicrosoftDocs/sdk-api` + the sdk-api snapshot), `tools/fetch-upstream.py`,
   `corpus/msdn-library/2010-05/` (the wayback capture, filed by set instead of

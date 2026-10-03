@@ -15,6 +15,10 @@ after every collection step.
     python3 tools/check-policy.py --json     # machine readable
 
 Checks
+  * The corpus trees are the declared ones: the CE trees (``learn``, ``chm``,
+    ``mvb``, ``msdn-library``, ``kb``), the separate ``dotnet`` tree for the
+    .NET-family sets of the same namespace, and ``win32`` for the shared
+    surface.  A new top-level tree has to be added here deliberately.
   * corpus/win32/ holds **only** CE-shared API reference pages: every markdown
     page must be a ``<kind>-<module>-<name>.md`` sdk-api page whose name
     Windows CE documents, and its module must not be in
@@ -46,11 +50,17 @@ PAGE_EXT = (".html", ".htm", ".md")
 PAPERWORK = {"README.md", "PROVENANCE.md"}
 
 # The corpus trees that may exist.
-TOP_LEVEL = {"README.md", "learn", "chm", "mvb", "msdn-library", "kb", "win32"}
+TOP_LEVEL = {"README.md", "learn", "dotnet", "chm", "mvb", "msdn-library", "kb",
+             "site", "win32"}
 
 # Windows CE product history, documented in ``corpus/win32/README.md``: these
-# are the sections whose pages make up the CE-specific half.
-CE_SECTIONS = {"learn", "chm", "mvb", "msdn-library", "kb"}
+# are the sections whose pages make up the CE-specific half.  ``dotnet`` is
+# the documented-elsewhere tree: the .NET-family sets that shipped in the same
+# namespace (POS for .NET, .NET Compact Framework, .NET Micro Framework).  They
+# are Windows-Embedded documentation of a *layer on top of* CE, kept separate
+# from the OS/SDK material that an include/def database is built from.
+CE_SECTIONS = {"learn", "chm", "mvb", "msdn-library", "kb", "site"}
+OTHER_SECTIONS = {"dotnet"}
 
 # Things that must not come back (a CD image's or a web server's leftovers, not
 # documentation of the product).
@@ -122,6 +132,26 @@ def check_win32(problems, checked):
     checked["win32_shared_pages"] = shared
 
 
+def check_sections(problems, checked):
+    """Count the CE trees separately from the documented-elsewhere tree."""
+    counts = {}
+    for path in walk():
+        page = rel(path)
+        if not page.startswith("corpus/"):
+            continue
+        section = page.split("/")[1]
+        if os.path.splitext(path)[1].lower() not in PAGE_EXT:
+            continue
+        if os.path.basename(path) in PAPERWORK:
+            continue
+        counts[section] = counts.get(section, 0) + 1
+    checked["section_pages"] = counts
+    ce = sum(counts.get(s, 0) for s in CE_SECTIONS)
+    other = sum(counts.get(s, 0) for s in OTHER_SECTIONS)
+    checked["ce_pages"] = ce
+    checked["other_pages"] = other
+
+
 def check_junk(problems, checked):
     pages = sources = 0
     for path in walk():
@@ -166,6 +196,7 @@ def main():
     problems = []
     checked = {}
     check_top_level(problems, checked)
+    check_sections(problems, checked)
     check_junk(problems, checked)
     check_win32(problems, checked)
 
@@ -175,10 +206,15 @@ def main():
     else:
         print(f"corpus/            {checked.get('pages', 0):,} pages in "
               f"{len(checked.get('trees', []))} trees")
+        print(f"  CE trees         {checked.get('ce_pages', 0):,} pages "
+              f"({', '.join(sorted(CE_SECTIONS))})")
+        print(f"  docs of the .NET layer {checked.get('other_pages', 0):,} "
+              f"pages ({', '.join(sorted(OTHER_SECTIONS))})")
         print(f"corpus/win32/api/  {checked.get('win32_shared_pages', 0):,} "
               f"CE-shared API pages")
         if not problems:
-            print("policy             OK - Windows CE documentation only")
+            print("policy             OK - CE documentation, the shared Win32 "
+                  "surface, and the separate .NET-layer tree")
             return 0
         kinds = {}
         for kind, _path, _why in problems:

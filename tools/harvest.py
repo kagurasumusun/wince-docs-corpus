@@ -76,10 +76,20 @@ import urllib.parse
 import urllib.request
 import urllib.robotparser
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import alias_index  # noqa: E402  (duplicate pages already collapsed)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORPUS = os.path.join(ROOT, "corpus")
 LEARN_DIR = os.path.join(CORPUS, "learn")
+# The .NET-family sets of the same namespace (POS for .NET, the Compact
+# Framework, the Micro Framework) are documentation of a *product built for*
+# Windows CE, not of Windows CE itself, so they live in their own tree; see
+# docs/COLLECTION-POLICY.md and corpus/dotnet/README.md.
+DOTNET_DIR = os.path.join(CORPUS, "dotnet")
+DOTNET_SETS = ("pos-for-net", "dotnet-compact-framework",
+               "dotnet-micro-framework")
 WAYBACK_DIR = os.path.join(CORPUS, "msdn-library", "2010-05")
 INDEX_DB = os.path.join(ROOT, "data", "index", "corpus.sqlite3")
 
@@ -526,6 +536,7 @@ def build_have_index(db_path=INDEX_DB, use_sqlite=True):
             return have_ids
 
     for root, _dirs, files in ((LEARN_DIR, None, None),
+                               (DOTNET_DIR, None, None),
                                (WAYBACK_DIR, None, None)):
         if not os.path.isdir(root):
             continue
@@ -719,6 +730,11 @@ def wayback_retimestamp(url, timestamp):
 
 def store_page(content, path, page_id):
     final = os.path.join(path, page_id + ".html")
+    if alias_index.is_aliased(final):
+        # dedupe-corpus.py already collapsed this page into an identical one
+        # recorded in data/index/aliases.tsv; storing it again would just
+        # recreate the duplicate.
+        return None
     temporary = final + ".part"
     os.makedirs(path, exist_ok=True)
     try:
@@ -826,7 +842,9 @@ def process_url(url, have_ids, faillog, fetcher, index_by_id, dry_run=False,
     title = match.group(1).strip() if match else ""
 
     if kind == "learn":
-        directory = os.path.join(LEARN_DIR, classify(title, head))
+        bucket = classify(title, head)
+        base = DOTNET_DIR if bucket in DOTNET_SETS else LEARN_DIR
+        directory = os.path.join(base, bucket)
         stored_id = pid
     else:
         book = index_by_id.get(pid, "unclassified")
@@ -858,11 +876,12 @@ def index_sets_by_id():
     """page id -> set directory, from the flat learn corpus."""
 
     index = {}
-    for dirpath, _dirnames, filenames in os.walk(LEARN_DIR):
-        book = os.path.basename(dirpath)
-        for fn in filenames:
-            if fn.endswith(".html"):
-                index.setdefault(fn[:-5], book)
+    for base in (LEARN_DIR, DOTNET_DIR):
+        for dirpath, _dirnames, filenames in os.walk(base):
+            book = os.path.basename(dirpath)
+            for fn in filenames:
+                if fn.endswith(".html"):
+                    index.setdefault(fn[:-5], book)
     return index
 
 

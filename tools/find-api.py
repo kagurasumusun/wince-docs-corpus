@@ -34,6 +34,7 @@ Uses the SQL index built by ``tools/build-index-sql.py``; falls back to
 ``data/index/INDEX.tsv`` when the DB is missing.
 """
 import argparse
+import gzip
 import json
 import os
 import sqlite3
@@ -43,6 +44,42 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB = os.path.join(ROOT, "data", "index", "corpus.sqlite3")
 TSV = os.path.join(ROOT, "data", "index", "INDEX.tsv")
 SHARED = os.path.join(ROOT, "data", "reports", "win32-shared.tsv")
+KB = os.path.join(ROOT, "knowledge", "kb", "entities.jsonl.gz")
+
+
+def load_kb():
+    """name -> the knowledge-base record for it (None when kb/ is not built)."""
+    entities = {}
+    path = KB if os.path.exists(KB) else KB[:-3]
+    if not os.path.exists(path):
+        return entities
+    opener = gzip.open if path.endswith(".gz") else open
+    with opener(path, "rt", encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                record = json.loads(line)
+            except ValueError:
+                continue
+            entities[record.get("id", "")] = record
+    return entities
+
+
+def kb_line(record):
+    """One line summarizing what the knowledge base has for an entity."""
+    if not record:
+        return None
+    parts = [f"kb: {record.get('doc_role', '?')}"]
+    if record.get("kinds"):
+        parts.append("/".join(record["kinds"]))
+    if record.get("syntax_declarations"):
+        parts.append(f"{len(record['syntax_declarations'])} declaration(s)")
+    if record.get("headers"):
+        parts.append("header: " + ", ".join(record["headers"][:3]))
+    if record.get("libraries"):
+        parts.append("lib: " + ", ".join(record["libraries"][:3]))
+    if record.get("ce_sets"):
+        parts.append("sets: " + ",".join(record["ce_sets"][:3]))
+    return "  ".join(parts)
 
 
 def load_shared():
@@ -186,9 +223,13 @@ def main():
         print(json.dumps(out, ensure_ascii=False, indent=2))
         return 0
 
+    kb = load_kb()
     for name in names:
         sh = shared.get(name.lower())
         print(f"{name}" + (f"  [win32-shared: {sh[0]}]" if sh else ""))
+        line = kb_line(kb.get(name.lower()))
+        if line:
+            print(f"  {line}")
         for _n, kind, page_id, section, title, path in by_name[name]:
             side = "ce   " if is_ce(section) else "win32"
             print(f"  {side} {kind:5s} {pretty_id(page_id):32s} {section}")

@@ -9,16 +9,23 @@ that does not belong appears in `corpus/`. Every collection workflow runs it.
 
 ```
 python3 tools/check-policy.py
-corpus/            121,686 pages in 7 trees
+corpus/            121,058 pages in 9 trees
 corpus/win32/api/  5,279 CE-shared API pages
 policy             OK - Windows CE documentation only
 ```
+
+The .NET families are collected but **kept apart** (`corpus/dotnet/`, 10,657
+pages): they document a managed layer on top of Windows CE, so they are neither
+part of the CE API surface nor a reason to widen the Win32 rule. See
+`corpus/dotnet/README.md`.
 
 ## In scope
 
 | Tree | What it holds |
 |------|---------------|
-| `corpus/learn/` | the `previous-versions/windows/embedded` documentation on Microsoft Learn: Windows CE 5.0, Windows CE .NET 4.x, Windows Embedded CE 6.0, Windows Embedded Compact 7, Windows Mobile topics, .NET Compact Framework, .NET Micro Framework, POS for .NET |
+| `corpus/learn/` | the `previous-versions/windows/embedded` documentation on Microsoft Learn for the operating system itself: Windows CE 5.0, Windows CE .NET 4.x, Windows Embedded CE 6.0, Windows Embedded Compact 7 and the unclassified CE-era topics |
+| `corpus/dotnet/` | the .NET families that shipped in the same namespace but document a layer on top of CE: POS for .NET, the .NET Micro Framework, the .NET Compact Framework |
+| `corpus/site/` | the CE-era web sites that came with the media (the CE 2.0 developer site, plus the CE 4.2/5.0/6.0 pages that were still only under `sources/`) |
 | `corpus/chm/` | the product documentation shipped as CHMs: CE 3.0, the 98 CE 5.0 component CHMs, the CE .NET 4.2 emulator/remote-tools CHMs |
 | `corpus/mvb/` | the CE 1.0 Books Online and the CE 2.0 SDK (H/PC) disc documentation |
 | `corpus/msdn-library/` | the MSDN Library CE sets of the CE 1.0/2.0 era (techshelps), the April 2000 MSDN Library crawl (CE 2.12/3.0), the 2010-05 capture, Windows Mobile 6.5, and the CE 2.11/2.12 SDK documentation of the DevCon '99 disc |
@@ -34,6 +41,19 @@ policy             OK - Windows CE documentation only
 | a medium's shop window and leftovers: sponsor and vendor pages, sample trees and their readme pages, FrontPage metadata (`_vti_cnf/`, `_vti_pvt/`, `_derived/`) | per-medium exclude regexes in `queues/media.tsv` plus the built-in metadata-directory rule in `tools/import-media.py` |
 | help for a medium's own viewer/IDE (InfoViewer, the Visual C++ help) | per-medium exclude regexes in `queues/media.tsv` |
 | third-party mirrors, vendor knowledge bases, blog posts | `queues/third-party-sources.md` (the accepted mirrors for the CE 1.0/2.0 era are listed there explicitly) |
+
+## What the corpus is for
+
+The corpus is the *material* of a knowledge base, not the end product: the
+goal is a machine-readable, traceable description of the Windows CE API
+surface from which the include and def files of a CE-targeting toolchain can be
+generated. The collection policy therefore also decides what is *structured*:
+`tools/build-kb.py` reads the pages and writes `knowledge/` (entities,
+declarations, requirements, constraints), each record quoting the page it came
+from, and the .NET tree is parsed into that layer with `layer: "dotnet"` rather
+than mixed into the CE surface. Nothing is ever invented to fill a gap; gaps
+are listed (`knowledge/reports/gaps.tsv`) and collected. See
+`knowledge/README.md`.
 
 ## The Win32-common rule
 
@@ -67,6 +87,13 @@ Every imported page carries its CE evidence:
 ce_page_ids`, and `data/reports/win32-shared.tsv` maps each shared name to the
 CE page ids that document it.
 
+The rule is reviewed from both sides: `tools/build-win32-coverage.py` lists the
+CE-documented names that state a Win32 header but have no page in
+`corpus/win32/` (`data/reports/win32-coverage.tsv`, 1,226 names, of which 16
+are a spelling variant of an imported name). Most of them are compiler
+intrinsics, CE extensions and names sdk-api has no page for -- i.e. the rule is
+not cutting anything off -- but the list keeps the question answerable.
+
 ## Review 2026-10 (what was wrong, what changed)
 
 The corpus had grown by collecting whole Win32 *modules* instead of the shared
@@ -80,6 +107,7 @@ review removed 16,228 pages (68 MB) and closed the doors that let them in.
 | the DevCon '99 import dragged in 839 pages of sponsor shop window, sample trees and their readmes, plus `_vti_cnf`/`_vti_pvt` FrontPage metadata (423 pages), `MPLAYER2/` (desktop Media Player 2 Books Online), `MPSUPP/` (generic product support pages), `ACCESSIB/` (general accessibility pages) and `Handhelds/` (a vendor's spec sheets) | `find corpus/msdn-library/wcedevcon-99 -path '*_vti_cnf*'` etc. | the medium's exclude regex in `queues/media.tsv` now refuses them; `tools/import-media.py` refuses metadata directories for every medium; 6,382 pages of CE 2.11/2.12 SDK documentation remain |
 | a Microsoft Commerce Server page sat in `learn/unclassified/` | `ms866183(v=msdn.10).html` (canonical URL in the embedded namespace, content about `Microsoft.CommerceServer`) | removed |
 | four pages survived the name rule although the *same name* documents another product: Windows Contacts (`icontact`), the desktop Task Scheduler (`mstask`), the shim-database `TAG` macro (`exposeenums2managed`) and the dbghelp `ADDRESS` structure | their upstream descriptions name the other product (`[Windows Contacts]`, `[Task Scheduler]`, "Identifies an entry in the shim database") while the CE page of that name documents the Pocket Outlook object, the Mobile Channels `TAG` or the device-driver `Address` | the four modules/pages are refused in `data/win32-exclude.tsv`; 5,279 pages remain, and every remaining page's CE evidence is one line in `data/reports/win32-imported.tsv` |
+| the .NET families were mixed into `corpus/learn/` (10,657 pages), so CE counts, `learn/` greps and coverage numbers were ambiguous | every set-level count in the repository, and `tools/ce_api_names.py`, which had to exclude the same pages from the Win32 mining by hand | the .NET sets moved to `corpus/dotnet/` (`tools/harvest.py` has `DOTNET_DIR`/`DOTNET_SETS`); the CE trees hold CE pages only; the knowledge base records the pages with `layer: "dotnet"` |
 | the mined Win32 name list was never looked at as a whole | — | `data/reports/ce-api-names.tsv` makes every name, its CE sets and its CE page ids reviewable; the two name-level and seven module-level exceptions live in `data/win32-exclude.tsv` |
 | `data/index/INDEX.tsv` had 6 ragged rows (page titles spanned several lines) | `awk -F'\t' 'NF!=4'` | `tools/build-index.py` folds whitespace in titles |
 
@@ -97,13 +125,22 @@ Checked and found correct during the same review, so it stayed:
   against. The 149 pages whose CE side is a catalog entry or a CE SDK anchor
   page were read one by one — the CE page has the same API name in all of them,
   except for the `address` case above.
-* the 672 byte-for-byte duplicate groups of `data/reports/duplicates.tsv` are
-  the media's own structure, not import errors: 640 pages of the CE 2.12 SDK
-  reference appear both in the DevCon '99 capture and in the `datadungeon` MSDN
-  CD capture, 30 CE 5.0 pages sit in both the `wcemouse5` and the `wcestylus5`
-  component CHM, and 2 are one CE 1.0 book page that shipped twice on its CD.
-  (`corpus/msdn-library/2010-05/` keeps 161 wayback captures next to the Learn
-  pages they duplicate for the same reason: they are a different capture.)
+* the duplicates were the media's own structure, not import errors: of the
+  672 byte-for-byte duplicate groups, 640 pages of the CE 2.12 SDK reference
+  appeared both in the DevCon '99 capture and in the `datadungeon` MSDN CD
+  capture, 30 CE 5.0 pages sat in both the `wcemouse5` and the `wcestylus5`
+  component CHM, and 2 were one CE 1.0 book page that shipped twice on its CD.
+  **They have since been resolved** (2026-10): the duplicate copy was removed
+  and the keeper recorded per page in `data/index/aliases.tsv`
+  (`tools/dedupe-corpus.py`; priority `learn` > `dotnet` > `chm` > `mvb` >
+  `wcedevcon-99` > `techshelps` > `kb` > `windows-mobile-6.5` > `2010-05` >
+  `datadungeon`, so the page survives in the most authoritative tree; a 673rd
+  row is the FrontPage temp copy `site/windows-ce-2.0/programs/~hsB154.html`,
+  byte-identical to `weblogo.html`, which the CE 2.0 site import brought along).
+  `--check` reports 0 groups now, and
+  `corpus/msdn-library/2010-05/` keeps its 161 wayback captures next to the
+  Learn pages they duplicate because they are a *different capture* of the same
+  documentation, not a copy of it.
 
 ## Adding something new
 
@@ -111,5 +148,7 @@ Checked and found correct during the same review, so it stayed:
 2. If it is Win32 material, it goes through `tools/ce_api_names.py` — do not
    add a folder by hand.
 3. Run `tools/check-policy.py`, `tools/check-corpus.py --report`,
-   `tools/build-index.py`, `tools/build-index-sql.py` and
-   `tools/build-ce-api-names.py`, and commit the refreshed reports with it.
+   `tools/dedupe-corpus.py --check`, `tools/build-index.py`,
+   `tools/build-index-sql.py`, `tools/build-ce-api-names.py`,
+   `tools/build-win32-map.py` and `tools/build-kb.py`, and commit the
+   refreshed reports with it.

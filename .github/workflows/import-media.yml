@@ -116,11 +116,17 @@ jobs:
           python3 tools/build-index-sql.py
           python3 tools/build-ce-api-names.py
           python3 tools/build-win32-map.py
+          # the alias table has to stay intact (a collapsed page must not
+          # come back, its keeper must not change) and the knowledge base has
+          # to be rebuilt from the pages this run changed
+          python3 tools/dedupe-corpus.py --check
+          python3 tools/build-kb.py --workers 4
           python3 tools/check-corpus.py --report || true
           python3 tools/check-policy.py
           git config user.name "wince-docs-corpus importer"
           git config user.email "wince-corpus-harvester@users.noreply.github.com"
-          git add sources/ corpus/ data/index data/reports queues || true
+          git add sources/ corpus/ data/index data/reports queues knowledge || true
+
           if git diff --staged --quiet; then
             echo "nothing new"
             exit 0

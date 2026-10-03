@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kagurasumusun/wince-docs-corpus/knowledge/schema/declaration.schema.json",
+  "title": "Declaration record",
+  "description": "A declaration, prototype, struct/enum body or quoted code block, exactly as one corpus page prints it. knowledge/kb/declarations.jsonl(.gz).",
+  "type": "object",
+  "required": [
+    "id",
+    "entity",
+    "page_id",
+    "layer",
+    "kind",
+    "role",
+    "language",
+    "markup",
+    "spacing",
+    "text",
+    "members",
+    "source"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^d[0-9a-f]{12}$"
+    },
+    "entity": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Canonical entity id, or null when the page is not an API page."
+    },
+    "page_id": {
+      "type": "string"
+    },
+    "layer": {
+      "enum": [
+        "ce",
+        "win32",
+        "dotnet"
+      ]
+    },
+    "kind": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "DERIVED from the text (typedef struct -> struct, ...). null when the text does not say."
+    },
+    "role": {
+      "enum": [
+        "syntax",
+        "example"
+      ],
+      "description": "syntax: the page's Syntax/Declaration block for the entity. example: a code block quoted in the prose."
+    },
+    "language": {
+      "enum": [
+        "c",
+        "managed"
+      ],
+      "description": "DERIVED from the layer the page belongs to: 'c' for the CE and Win32 trees, 'managed' for corpus/dotnet (C#/VB/C++/JScript signatures; those records are written to kb/declarations-dotnet.jsonl, not the C declaration file)."
+    },
+    "markup": {
+      "type": "string",
+      "description": "pre / PRE class=syntax / paragraph / fence:cpp ..."
+    },
+    "spacing": {
+      "enum": [
+        "preserved",
+        "collapsed"
+      ],
+      "description": "DERIVED heuristic on the text itself. collapsed: the page lost the spaces between tokens (HANDLECreateFile()); the same API's declaration from another source may be intact. The text is never repaired."
+    },
+    "text": {
+      "type": "string",
+      "description": "The declaration verbatim, whitespace and all."
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "For struct/union/enum bodies: the member lines, quoted as they appear."
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": [
+        "path",
+        "page_id",
+        "set",
+        "title",
+        "layer"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Repository-relative path of the page this record quotes."
+        },
+        "page_id": {
+          "type": "string"
+        },
+        "set": {
+          "type": "string",
+          "description": "Corpus-relative set directory."
+        },
+        "title": {
+          "type": "string"
+        },
+        "layer": {
+          "enum": [
+            "ce",
+            "win32",
+            "dotnet"
+          ]
+        }
+      }
+    }
+  }
+}

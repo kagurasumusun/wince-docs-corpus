@@ -111,11 +111,17 @@ jobs:
           python3 tools/build-index-sql.py
           python3 tools/build-ce-api-names.py
           python3 tools/build-win32-map.py
+          # the alias table has to stay intact (a collapsed page must not
+          # come back, its keeper must not change) and the knowledge base has
+          # to be rebuilt from the pages this run changed
+          python3 tools/dedupe-corpus.py --check
+          python3 tools/build-kb.py --workers 4
           python3 tools/check-corpus.py --report || true
           python3 tools/check-policy.py
           echo "--- crawl state (errors and skips are recorded here) ---"
           head -c 1200 data/crawl/*.json || true
-          git add corpus/ data/index data/crawl data/reports queues || true
+          git add corpus/ data/index data/crawl data/reports queues knowledge || true
+
           if git diff --staged --quiet; then
             echo "nothing new"
             exit 0

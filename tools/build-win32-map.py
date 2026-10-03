@@ -45,6 +45,8 @@ REPORTS = os.path.join(ROOT, "data", "reports")
 def set_name(section):
     """``msdn-library/techshelps/WCEMFC`` -> ``techshelps/WCEMFC``."""
     parts = section.split("/")
+    if parts[0] == "dotnet":
+        return "dotnet/" + (parts[1] if len(parts) > 1 else parts[0])
     if parts[0] == "learn":
         return parts[1] if len(parts) > 1 else parts[0]
     if parts[0] == "msdn-library":

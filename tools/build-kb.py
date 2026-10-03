@@ -1,0 +1,886 @@
+#!/usr/bin/env python3
+"""tools/build-kb.py -- build the knowledge base from the corpus.
+
+The corpus (``corpus/``) holds the *documents*.  This tool turns them into the
+*statements* a Windows CE include/def database can be built from, without
+asking a model to guess anything: every fact is quoted from a page and carries
+that page's path, id, set and title.
+
+    python3 tools/build-kb.py                 # build knowledge/
+    python3 tools/build-kb.py --report        # summarize, write nothing
+    python3 tools/build-kb.py --tree learn/windows-ce-5.0   # one tree
+    python3 tools/build-kb.py --workers 8
+
+What it writes (all under ``knowledge/``, see knowledge/README.md and
+knowledge/schema/):
+
+    kb/entities.jsonl       one record per API name the corpus documents
+                            (kinds, CE sets, pages, headers, libraries, DLLs,
+                            counts, the ids of its evidence records)
+    kb/declarations.jsonl   every C/C++ declaration/prototype/member block,
+                            verbatim, with its source page and markup
+    kb/requirements.jsonl   every Header/Library/DLL/OS-version statement
+    kb/constraints.jsonl    sentences that state a Windows CE restriction
+    kb/headers.tsv          header -> entities (the include mapping)
+    kb/libraries.tsv        library -> entities (the link mapping)
+    kb/dlls.tsv             DLL -> entities
+    kb/sets.tsv             CE set -> entities, with coverage counts
+    reports/coverage-by-tree.tsv   what each corpus tree contributed
+    reports/coverage.tsv           per entity: what is known, what is missing
+    reports/gaps.tsv               the actionable gaps (a list to collect for)
+    reports/summary.md              the same in prose (English)
+
+Rules
+
+* No fabrication: a value only enters the knowledge base when a page in the
+  corpus states it.  ``source`` is mandatory for every declaration,
+  requirement and constraint record.
+* No normalisation of C text: declarations are stored exactly as the page
+  prints them (``spacing`` tells whether the page itself lost the spaces).
+* Derived values (``kind``, ``spacing``, the ``field`` of a requirement) are
+  documented in the schema as derived and carry their evidence.
+"""
+
+import argparse
+import collections
+import concurrent.futures
+import datetime
+import hashlib
+import json
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import ce_api_names  # noqa: E402
+import page_parse  # noqa: E402
+
+ROOT = ce_api_names.ROOT
+CORPUS = os.path.join(ROOT, "corpus")
+INDEX = os.path.join(ROOT, "data", "index", "INDEX.tsv")
+CATALOG_DIR = os.path.join(ROOT, "data", "catalogs")
+WIN32_MAP = os.path.join(ROOT, "data", "reports", "win32-imported.tsv")
+KNOWLEDGE = os.path.join(ROOT, "knowledge")
+KB = os.path.join(KNOWLEDGE, "kb")
+REPORTS = os.path.join(KNOWLEDGE, "reports")
+
+TREE_LAYER = (
+    ("corpus/win32/", "win32"),
+    ("corpus/dotnet/", "dotnet"),
+)
+PAPERWORK = {"README.md", "PROVENANCE.md"}
+
+
+# ------------------------------------------------------------------- inputs
+
+def read_index(only_tree=None):
+    rows = []
+    with open(INDEX, encoding="utf-8") as fh:
+        for line in fh:
+            if line.startswith("#") or not line.strip():
+                continue
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 4:
+                continue
+            page_id, book, path, title = parts[0], parts[1], parts[2], parts[3]
+            if os.path.basename(path) in PAPERWORK:
+                continue
+            if only_tree and not path.startswith("corpus/" + only_tree):
+                continue
+            rows.append((page_id, book, path, title))
+    return rows
+
+
+def read_catalogs():
+    """page id -> official name, from data/catalogs/*.tsv."""
+    names = {}
+    if not os.path.isdir(CATALOG_DIR):
+        return names
+    for fn in sorted(os.listdir(CATALOG_DIR)):
+        if not fn.endswith(".tsv"):
+            continue
+        with open(os.path.join(CATALOG_DIR, fn), encoding="utf-8",
+                  errors="replace") as fh:
+            for line in fh:
+                if line.startswith("#") or not line.strip():
+                    continue
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) >= 2 and parts[0] not in names:
+                    names[parts[0]] = parts[1]
+    return names
+
+
+def read_win32_map():
+    """corpus path -> (module, kind, name, ce_sets, ce_page_ids)."""
+    out = {}
+    if not os.path.isfile(WIN32_MAP):
+        return out
+    with open(WIN32_MAP, encoding="utf-8") as fh:
+        next(fh, None)
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) == 6:
+                out[parts[0]] = (parts[1], parts[2], parts[3],
+                                 parts[4].split(";"), parts[5].split(";"))
+    return out
+
+
+def layer_of(book):
+    page = "corpus/" + book
+    for prefix, layer in TREE_LAYER:
+        if page.startswith(prefix):
+            return layer
+    return "ce"
+
+
+# ------------------------------------------------------------------- worker
+
+def parse_page(job):
+    """One page -> its facts.  Runs in a worker process."""
+    page_id, book, path, title = job
+    layer = layer_of(book)
+    fact = {"page_id": page_id, "book": book, "path": path, "title": title,
+            "layer": layer, "entity": None, "entity_evidence": None,
+            "display": None, "kind": None,
+            "requirements": [], "declarations": [], "constraints": []}
+    full = os.path.join(ROOT, path)
+    try:
+        raw = open(full, "rb").read()
+    except OSError:
+        return fact
+    name = os.path.basename(path)
+
+    if name.endswith(".md"):
+        text = page_parse.decode(raw)
+        fields, reqs, decls = page_parse.markdown(text)
+        # The title carries the public name in its own casing; the file name
+        # is lower-case and the UID uses the C tag name for structures.
+        title_name = page_parse.name_from_markdown_title(fields.get("title", ""))
+        api = title_name or page_parse.name_from_filename(name)
+        fact["display"] = api
+        fact["entity"] = ce_api_names.normalize(api) if api else None
+        fact["entity_evidence"] = ("sdk-api-title" if title_name else
+                                   "sdk-api-filename" if api else None)
+        fact["kind"] = page_parse.kind_from_filename(name)
+        fact["requirements"] = reqs
+        fact["declarations"] = decls
+        fact["constraints"] = []
+        fact["front_matter"] = {k: v for k, v in fields.items()
+                                if k in ("title", "UID", "ms.date",
+                                         "req.header", "req.lib", "req.dll")}
+        return fact
+
+    fragment = page_parse.article_html(raw)
+    display = None
+    evidence = None
+    catalog_hit = CATALOGS.get(page_id)
+    title_name = page_parse.name_from_title(title)
+    if catalog_hit and page_parse.name_from_title(catalog_hit):
+        display = page_parse.name_from_title(catalog_hit)
+        evidence = "catalog"
+    elif title_name:
+        display = title_name
+        evidence = "page-title"
+    fact["display"] = display
+    fact["entity"] = ce_api_names.normalize(display) if display else None
+    fact["entity_evidence"] = evidence
+    fact["requirements"] = page_parse.requirements(fragment)
+    fact["declarations"] = page_parse.declarations(fragment)
+    fact["constraints"] = page_parse.constraints(fragment)
+    kinds = collections.Counter(d["kind"] for d in fact["declarations"]
+                                if d["role"] == "syntax" and d["kind"])
+    if kinds:
+        fact["kind"] = kinds.most_common(1)[0][0]
+    return fact
+
+
+# ------------------------------------------------------------------ records
+
+VALUE_TAIL = re.compile(r"[\s.,;:]+$")
+
+
+def normalize_value(value):
+    """DERIVED key for grouping a requirement value.
+
+    The pages print the same header as ``Winbase.h``, ``Winbase.h.`` and
+    ``winbase.h``; grouping needs one key.  Only trailing punctuation and
+    whitespace are removed -- the verbatim ``value`` stays in the record, so
+    nothing is invented and nothing is lost.
+    """
+    return VALUE_TAIL.sub("", re.sub(r"\s+", " ", value)).strip()
+
+
+def declaration_records(facts, entity_of):
+    records = []
+    for fact in facts:
+        for decl in fact["declarations"]:
+            key = hashlib.sha1(
+                (fact["path"] + "\x00" + decl["text"]).encode("utf-8")
+            ).hexdigest()[:12]
+            records.append({
+                "id": "d" + key,
+                "entity": entity_of(fact),
+                "page_id": fact["page_id"],
+                "layer": fact["layer"],
+                "kind": decl["kind"],
+                "role": decl["role"],
+                # The .NET tree documents managed classes: its signature blocks
+                # are C#/VB/C++/JScript, so they say "managed" and are written
+                # to their own file (they are not include/def material).
+                "language": "managed" if fact["layer"] == "dotnet" else "c",
+                "markup": decl["markup"],
+                "spacing": decl["spacing"],
+                "text": decl["text"],
+                "members": decl["members"],
+                "source": source_of(fact),
+            })
+    records.sort(key=lambda r: (r["entity"] or "", r["source"]["path"], r["id"]))
+    return records
+
+
+def source_of(fact):
+    return {"path": fact["path"], "page_id": fact["page_id"],
+            "set": fact["book"], "title": fact["title"],
+            "layer": fact["layer"]}
+
+
+def requirement_records(facts, entity_of):
+    records = []
+    for fact in facts:
+        for req in fact["requirements"]:
+            key = hashlib.sha1(
+                (fact["path"] + "\x00" + req["field"] + "\x00" +
+                 req["value"]).encode("utf-8")).hexdigest()[:12]
+            records.append({
+                "id": "r" + key,
+                "entity": entity_of(fact),
+                "page_id": fact["page_id"],
+                "layer": fact["layer"],
+                "field": req["field"],
+                "label": req["label"],
+                "value": req["value"],
+                "key": normalize_value(req["value"]),
+                "evidence": req["evidence"],
+                "source": source_of(fact),
+            })
+    records.sort(key=lambda r: (r["entity"] or "", r["field"],
+                                r["source"]["path"], r["value"]))
+    return records
+
+
+def constraint_records(facts, entity_of):
+    records = []
+    for fact in facts:
+        for item in fact["constraints"]:
+            key = hashlib.sha1(
+                (fact["path"] + "\x00" + item["text"]).encode("utf-8")
+            ).hexdigest()[:12]
+            records.append({
+                "id": "c" + key,
+                "entity": entity_of(fact),
+                "page_id": fact["page_id"],
+                "layer": fact["layer"],
+                "pattern": item["pattern"],
+                "text": item["text"],
+                "source": source_of(fact),
+            })
+    records.sort(key=lambda r: (r["entity"] or "", r["source"]["path"], r["id"]))
+    return records
+
+
+def entity_records(facts, declarations, requirements):
+    by_entity = collections.defaultdict(list)
+    for fact in facts:
+        if fact["entity"]:
+            by_entity[fact["entity"]].append(fact)
+
+    decl_by_entity = collections.defaultdict(list)
+    for record in declarations:
+        if record["entity"]:
+            decl_by_entity[record["entity"]].append(record)
+    req_by_entity = collections.defaultdict(list)
+    for record in requirements:
+        if record["entity"]:
+            req_by_entity[record["entity"]].append(record)
+
+    out = []
+    for entity in sorted(by_entity):
+        pages = by_entity[entity]
+        ce_pages = sorted({f["path"] for f in pages if f["layer"] == "ce"})
+        win32_pages = sorted({f["path"] for f in pages if f["layer"] == "win32"})
+        dotnet_pages = sorted({f["path"] for f in pages if f["layer"] == "dotnet"})
+        sets = sorted({f["book"] for f in pages if f["layer"] == "ce"})
+        displays = collections.Counter(f["display"] for f in pages if f["display"])
+        kinds = collections.Counter()
+        for f in pages:
+            if f["kind"]:
+                kinds[f["kind"]] += 1
+        for record in decl_by_entity[entity]:
+            if record["role"] == "syntax" and record["kind"]:
+                kinds[record["kind"]] += 1
+        reqs = req_by_entity[entity]
+
+        def values(field):
+            return sorted({r["key"] for r in reqs
+                           if r["field"] == field and r["key"]})
+
+        syntax_decls = sorted({d["id"] for d in decl_by_entity[entity]
+                               if d["role"] == "syntax"})
+        reference_fields = {"header", "library", "dll", "os_versions"}
+        looks_like_reference = bool(values("header") or values("library") or
+                                    values("dll")) or any(
+            r["field"] in reference_fields for r in reqs)
+        # doc_role is derived, and says what the *corpus* has for this name:
+        #   api-definition -- a page prints a syntax block for it
+        #   api-page       -- a page looks like reference (requirements) but
+        #                     prints no syntax block  -> a collection gap
+        #   topic          -- the name only appears as the title of a prose page
+        if syntax_decls:
+            doc_role = "api-definition"
+        elif looks_like_reference:
+            doc_role = "api-page"
+        else:
+            doc_role = "topic"
+
+        out.append({
+            "id": entity,
+            "name": displays.most_common(1)[0][0] if displays else entity,
+            # A name that is not an API at all.  Only one pattern is certain
+            # enough to flag: an all-caps double-underscore identifier
+            # (__COMMONPUBROOT, __PROJROOT) is a build-system variable that a
+            # page's code block mentioned, not something to generate a
+            # declaration for.  Flagged, never deleted -- the record and its
+            # page stay readable.
+            "noise": "build-variable"
+            if re.match(r"^__[A-Z0-9_]+$", displays.most_common(1)[0][0]
+                        if displays else entity) else None,
+            "layers": sorted({f["layer"] for f in pages}),
+            "kinds": [k for k, _n in kinds.most_common()],
+            "kind_evidence": "sdk-api-filename" if any(
+                f["entity_evidence"] == "sdk-api-filename" for f in pages) else (
+                "syntax" if any(d["kind"] for d in decl_by_entity[entity]
+                                if d["role"] == "syntax") else None),
+            "ce_sets": sets,
+            "ce_pages": ce_pages,
+            "win32_pages": win32_pages,
+            "dotnet_pages": dotnet_pages,
+            "name_evidence": sorted({f["entity_evidence"] for f in pages
+                                     if f["entity_evidence"]}),
+            "headers": values("header"),
+            "modules": values("module"),
+            "libraries": values("library"),
+            "dlls": values("dll"),
+            "unicode_ansi": values("unicode_ansi"),
+            "doc_role": doc_role,
+            "declarations": sorted({d["id"] for d in decl_by_entity[entity]}),
+            "syntax_declarations": syntax_decls,
+            "requirements": sorted({r["id"] for r in reqs}),
+            "constraints": [],
+            "relations": [],
+            "generation_use": [],
+        })
+    return out
+
+
+# --------------------------------------------------------------- relations
+
+UNICODE_PAIR = re.compile(
+    r"([A-Za-z_][A-Za-z0-9_]*)\s*\((Unicode|ANSI)\)", re.I)
+
+
+def add_relations(entities, requirements, declarations):
+    """Fill ``relations`` and ``generation_use``.
+
+    Both are DERIVED, and every relation carries the page and the printed text
+    it was read from:
+
+    * ``unicode-ansi``  -- the page's own ``Unicode and ANSI`` requirement names
+      the pair (``CreateFileW (Unicode) and CreateFileA (ANSI)``), so the two
+      spellings are linked, not guessed;
+    * ``interface-method`` -- the name is printed as ``Interface::Method``, so
+      the method belongs to that interface's vtable;
+    * ``layer`` -- the same name is documented both by Windows CE and by the
+      Win32 reference (the pages are already listed in the record; this states
+      the relation for a consumer that only reads ``relations``).
+    """
+    by_id = {e["id"]: e for e in entities}
+    per_entity = collections.defaultdict(list)
+
+    for record in requirements:
+        if record["field"] != "unicode_ansi" or not record["entity"]:
+            continue
+        names = list(dict.fromkeys(UNICODE_PAIR.findall(record["value"])))
+        if len(names) < 2:
+            continue
+        # keep the order the page printed: "X (Unicode) and Y (ANSI)"
+        plain = [name for name, _tag in names]
+        # The base name the pair belongs to: when the two spellings differ
+        # only in a trailing A/W and the base is documented, link the base as
+        # well (``CreateFile`` -> ``CreateFileW``/``CreateFileA``).  The pair
+        # is printed by the page; the base link is derived from it.
+        base = None
+        if len(plain) == 2 and plain[0][:-1].lower() == plain[1][:-1].lower() \
+                and {plain[0][-1:].upper(), plain[1][-1:].upper()} == {"A", "W"}:
+            base = plain[0][:-1]
+            if ce_api_names.normalize(base) not in by_id:
+                base = None
+        if base:
+            base_id = ce_api_names.normalize(base)
+            for variant in plain:
+                per_entity[base_id].append({
+                    "type": "unicode-ansi-base",
+                    "name": variant,
+                    "id": ce_api_names.normalize(variant),
+                    "present": True,
+                    "evidence": (f"{base} -> " + " and ".join(plain) + "; " +
+                                 record["evidence"]),
+                    "page": record["source"]["path"],
+                })
+            for n in plain:
+                per_entity[ce_api_names.normalize(n)].append({
+                    "type": "unicode-ansi-base",
+                    "name": base,
+                    "id": base_id,
+                    "present": True,
+                    "evidence": record["evidence"],
+                    "page": record["source"]["path"],
+                })
+        for name in plain:
+            other = [n for n in plain if n != name]
+            per_entity[record["entity"]].append({
+                "type": "unicode-ansi",
+                "name": name,
+                "id": ce_api_names.normalize(name),
+                "present": ce_api_names.normalize(name) in by_id,
+                "evidence": record["evidence"],
+                "page": record["source"]["path"],
+            })
+            for n in other:
+                per_entity[ce_api_names.normalize(name)].append({
+                    "type": "unicode-ansi",
+                    "name": n,
+                    "id": ce_api_names.normalize(n),
+                    "present": ce_api_names.normalize(n) in by_id,
+                    "evidence": record["evidence"],
+                    "page": record["source"]["path"],
+                })
+
+    members = collections.defaultdict(set)
+    for record in declarations:
+        if record["entity"] and record["members"]:
+            members[record["entity"]].add(record["id"])
+
+    for entity in entities:
+        name = entity["name"]
+        if "::" in name:
+            interface = name.split("::", 1)[0]
+            entity["relations"].append({
+                "type": "interface-method",
+                "name": interface,
+                "id": ce_api_names.normalize(interface),
+                "present": ce_api_names.normalize(interface) in by_id,
+                "evidence": name,
+                "page": entity["ce_pages"][0] if entity["ce_pages"] else "",
+            })
+        layers = set(entity["layers"])
+        if {"ce", "win32"} <= layers:
+            entity["relations"].append({
+                "type": "layer",
+                "name": "Windows CE and Win32",
+                "id": "",
+                "present": True,
+                "evidence": "documented by both corpora",
+                "page": "",
+            })
+        entity["relations"] += per_entity.get(entity["id"], [])
+        unique = {}
+        for relation in entity["relations"]:
+            unique[(relation["type"], relation["id"], relation["page"],
+                    relation["evidence"])] = relation
+        entity["relations"] = [unique[key] for key in sorted(unique)]
+
+        use = []
+        kinds = set(entity["kinds"])
+        if entity["syntax_declarations"] and entity["headers"]:
+            use.append("include-declaration")
+        if kinds & {"struct", "enum", "union", "typedef", "attribute"}:
+            use.append("type-definition")
+        if kinds & {"function", "callback", "interface", "other"} and \
+                (entity["libraries"] or entity["dlls"]):
+            use.append("link-library")
+        if kinds & {"function", "callback"} and entity["dlls"]:
+            use.append("def-export")
+        if kinds & {"struct", "union"} and entity["id"] in members:
+            use.append("abi-layout")
+        if any(r["type"].startswith("unicode-ansi")
+               for r in entity["relations"]):
+            use.append("unicode-mapping")
+        if entity["ce_sets"]:
+            use.append("version-scope")
+        if entity["constraints"]:
+            use.append("ce-restriction")
+        entity["generation_use"] = use
+        entity["relations"].sort(key=lambda r: (r["type"], r["id"]))
+
+
+# ------------------------------------------------------------------- outputs
+
+def write_jsonl(path, records, compress=True):
+    """Write JSONL, gzipped by default.
+
+    The three big files are ~150 MB of text but ~15 MB gzipped, and they are
+    generated: ``knowledge/README.md`` explains how to read them.  ``--plain``
+    keeps them uncompressed for local work.
+    """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if compress:
+        import gzip
+        target = path + ".gz"
+        with gzip.open(target, "wt", encoding="utf-8", compresslevel=9) as fh:
+            for record in records:
+                fh.write(json.dumps(record, ensure_ascii=False,
+                                    sort_keys=True) + "\n")
+        if os.path.exists(path):
+            os.remove(path)
+        return target
+    with open(path, "w", encoding="utf-8") as fh:
+        for record in records:
+            fh.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+    if os.path.exists(path + ".gz"):
+        os.remove(path + ".gz")
+    return path
+
+
+def write_tsv(path, header, rows):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\t".join(header) + "\n")
+        for row in rows:
+            fh.write("\t".join(str(c) for c in row) + "\n")
+
+
+def aggregate(records, field):
+    """key -> entities/sets, plus the verbatim forms seen (for evidence)."""
+    table = collections.defaultdict(
+        lambda: {"entities": set(), "sets": set(),
+                 "printed": collections.Counter()})
+    for record in records:
+        if record["field"] != field or not record["value"]:
+            continue
+        entry = table[record["key"]]
+        if record["entity"]:
+            entry["entities"].add(record["entity"])
+        entry["sets"].add(record["source"]["set"])
+        entry["printed"][record["value"]] += 1
+    return table
+
+
+def build(rows, workers, report_only, plain=False):
+    facts = []
+    with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as pool:
+        for index, fact in enumerate(pool.map(parse_page, rows, chunksize=200), 1):
+            facts.append(fact)
+            if index % 20000 == 0:
+                print(f"  parsed {index:,}/{len(rows):,}", flush=True)
+
+    entity_of = lambda f: f["entity"]  # noqa: E731
+    declarations = declaration_records(facts, entity_of)
+    requirements = requirement_records(facts, entity_of)
+    constraints = constraint_records(facts, entity_of)
+    entities = entity_records(facts, declarations, requirements)
+
+    # attach constraint ids to entities
+    constraint_ids = collections.defaultdict(list)
+    for record in constraints:
+        if record["entity"]:
+            constraint_ids[record["entity"]].append(record["id"])
+    for entity in entities:
+        entity["constraints"] = sorted(constraint_ids.get(entity["id"], []))
+    add_relations(entities, requirements, declarations)
+
+    if report_only:
+        return facts, entities, declarations, requirements, constraints
+
+    compress = not plain
+    write_jsonl(os.path.join(KB, "entities.jsonl"), entities, compress)
+    # The .NET layer is separated here as in corpus/: kb/declarations.jsonl is
+    # the include/def material (C/C++), declarations-dotnet.jsonl.gz the
+    # managed-code signature blocks, kept as evidence of that layer.
+    write_jsonl(os.path.join(KB, "declarations.jsonl"),
+                [r for r in declarations if r["layer"] != "dotnet"], compress)
+    write_jsonl(os.path.join(KB, "declarations-dotnet.jsonl"),
+                [r for r in declarations if r["layer"] == "dotnet"], compress)
+    write_jsonl(os.path.join(KB, "requirements.jsonl"), requirements, compress)
+    write_jsonl(os.path.join(KB, "constraints.jsonl"), constraints, compress)
+
+    for field, filename, title in (("header", "headers.tsv", "header"),
+                                   ("library", "libraries.tsv", "library"),
+                                   ("dll", "dlls.tsv", "dll"),
+                                   ("module", "modules.tsv", "module")):
+        table = aggregate(requirements, field)
+        write_tsv(os.path.join(KB, filename),
+                  [title, "entities", "sets", "as_printed", "entity_names"],
+                  sorted((value, len(entry["entities"]),
+                          ",".join(sorted(entry["sets"])),
+                          ",".join(v for v, _n in entry["printed"].most_common(3)),
+                          ",".join(sorted(entry["entities"]))) for value, entry in
+                         table.items()))
+
+    entity_of_set = collections.defaultdict(set)
+    for entity in entities:
+        for book in entity["ce_sets"]:
+            entity_of_set[book].add(entity["id"])
+    write_tsv(os.path.join(KB, "sets.tsv"),
+              ["set", "entities", "with_declaration", "with_header",
+               "with_library", "with_dll"],
+              sorted((book, len(ids),
+                      sum(1 for e in entities if e["id"] in ids and
+                          e["syntax_declarations"]),
+                      sum(1 for e in entities if e["id"] in ids and e["headers"]),
+                      sum(1 for e in entities if e["id"] in ids and e["libraries"]),
+                      sum(1 for e in entities if e["id"] in ids and e["dlls"]))
+                     for book, ids in entity_of_set.items()))
+
+    # ---- coverage per tree
+    per_tree = collections.defaultdict(collections.Counter)
+    for fact in facts:
+        tree = fact["book"]
+        counts = per_tree[tree]
+        counts["pages"] += 1
+        counts["pages_with_entity"] += bool(fact["entity"])
+        counts["pages_with_requirements"] += bool(fact["requirements"])
+        counts["pages_with_declaration"] += bool(fact["declarations"])
+        counts["requirements"] += len(fact["requirements"])
+        counts["declarations"] += len(fact["declarations"])
+        counts["constraints"] += len(fact["constraints"])
+    write_tsv(os.path.join(REPORTS, "coverage-by-tree.tsv"),
+              ["tree", "pages", "pages_with_entity", "pages_with_requirements",
+               "pages_with_declaration", "requirements", "declarations",
+               "constraints"],
+              [(tree, c["pages"], c["pages_with_entity"],
+                c["pages_with_requirements"], c["pages_with_declaration"],
+                c["requirements"], c["declarations"], c["constraints"])
+               for tree, c in sorted(per_tree.items())])
+
+    # ---- coverage per entity and the gap list
+    declaration_sets = {}
+    for record in declarations:
+        if record["entity"] and record["role"] == "syntax":
+            declaration_sets.setdefault(record["entity"], set()).add(
+                record["source"]["set"])
+    coverage_rows, gap_rows = [], []
+    for entity in sorted(entities, key=lambda e: (not bool(e["ce_pages"]), e["id"])):
+        row = (entity["id"], entity["name"], ",".join(entity["kinds"]),
+               ",".join(entity["layers"]), ",".join(entity["ce_sets"]),
+               len(entity["ce_pages"]), len(entity["win32_pages"]),
+               len(entity["syntax_declarations"]), len(entity["declarations"]),
+               len(entity["requirements"]), len(entity["headers"]),
+               len(entity["libraries"]), len(entity["dlls"]),
+               len(entity["constraints"]))
+        coverage_rows.append(row)
+        missing = []
+        if not entity["syntax_declarations"]:
+            missing.append("no-declaration")
+        if not entity["headers"]:
+            missing.append("no-header")
+        if not entity["libraries"]:
+            missing.append("no-library")
+        if entity.get("noise"):
+            continue
+        if missing and entity["doc_role"] in ("api-definition", "api-page"):
+            elsewhere = ",".join(sorted(declaration_sets.get(entity["id"], set()) -
+                                        set(entity["ce_sets"])))
+            gap_rows.append((entity["id"], entity["name"], entity["doc_role"],
+                             ",".join(entity["ce_sets"]), ",".join(missing),
+                             len(entity["ce_pages"]), elsewhere,
+                             "yes" if entity["win32_pages"] else "",
+                             entity["ce_pages"][0] if entity["ce_pages"] else ""))
+    write_tsv(os.path.join(REPORTS, "coverage.tsv"),
+              ["entity", "name", "kinds", "layers", "ce_sets", "ce_pages",
+               "win32_pages", "syntax_declarations", "declarations",
+               "requirements", "headers", "libraries", "dlls", "constraints"],
+              [row for row in coverage_rows])
+    write_tsv(os.path.join(REPORTS, "gaps.tsv"),
+              ["entity", "name", "doc_role", "ce_sets", "missing", "ce_pages",
+               "declaration_in_other_sets", "has_win32_page", "example_page"],
+              gap_rows)
+    write_summary(facts, entities, declarations, requirements, constraints,
+                  per_tree, gap_rows)
+    return facts, entities, declarations, requirements, constraints
+
+
+def jst_today():
+    """The report date in the timezone the collection is run from (JST)."""
+    now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=9)
+    return now.date().isoformat()
+
+
+def write_summary(facts, entities, declarations, requirements, constraints,
+                  per_tree, gap_rows):
+    def top(book):
+        """learn/windows-ce-5.0/... -> learn/windows-ce-5.0 (the report unit)."""
+        parts = book.split("/")
+        if parts[0] in ("learn", "dotnet") and len(parts) > 1:
+            return "/".join(parts[:2])
+        if parts[0] == "msdn-library" and len(parts) > 1:
+            return "/".join(parts[:2])
+        if parts[0] == "chm" and len(parts) > 1:
+            return "/".join(parts[:2])
+        return book
+
+    rolled = collections.defaultdict(collections.Counter)
+    for book, counts in per_tree.items():
+        rolled[top(book)].update(counts)
+    per_tree = rolled
+    decs_c = sum(1 for r in declarations if r["layer"] != "dotnet")
+    ce_entities = [e for e in entities if e["layers"] == ["ce"]]
+    shared = [e for e in entities if "win32" in e["layers"] and e["ce_pages"]]
+
+    def pct(part, whole):
+        return f"{part:,} ({100 * part // whole if whole else 0}%)"
+
+    lines = [
+        "# Knowledge base coverage",
+        "",
+        f"Generated {jst_today()} by "
+        "`python3 tools/build-kb.py`.",
+        "",
+        "The knowledge base is built from the pages in `corpus/` only: every "
+        "declaration, requirement and constraint record quotes the page it came "
+        "from. This report says how much of the corpus is *structured* so far, "
+        "and what is missing -- it is the collection worklist, not a quality "
+        "judgement of a document.",
+        "",
+        "## Totals",
+        "",
+        f"* pages parsed: **{len(facts):,}**",
+        f"* API entities: **{len(entities):,}** "
+        f"(CE-only {len(ce_entities):,}, documented on both sides "
+        f"{len(shared):,})",
+        f"* declarations extracted: **{len(declarations):,}** "
+        f"(C/C++ {decs_c:,} in `kb/declarations.jsonl`, managed-code "
+        f"signatures {len(declarations) - decs_c:,} in "
+        f"`kb/declarations-dotnet.jsonl` -- the separated .NET layer)",
+        f"* requirement statements: **{len(requirements):,}**",
+        f"* Windows CE constraint sentences: **{len(constraints):,}**",
+        f"* entities with a gap record: **{len(gap_rows):,}** "
+        "(`reports/gaps.tsv`)",
+        "",
+        "## What each tree contributed",
+        "",
+        "| tree | pages | with entity | with requirements | with declaration |"
+        " requirements | declarations |",
+        "|------|-------|-------------|-------------------|------------------|"
+        "--------------|--------------|",
+    ]
+    for tree, c in sorted(per_tree.items(), key=lambda kv: -kv[1]["pages"]):
+        lines.append(f"| `{tree}` | {c['pages']:,} | {c['pages_with_entity']:,} | "
+                     f"{c['pages_with_requirements']:,} | "
+                     f"{c['pages_with_declaration']:,} | {c['requirements']:,} | "
+                     f"{c['declarations']:,} |")
+    lines += ["",
+              "The full per-book breakdown (one row per component CHM, mirror "
+              "folder, ...) is `reports/coverage-by-tree.tsv`."]
+    lines += [
+        "",
+        "## Reading the numbers",
+        "",
+        "* *with requirements / with declaration* counts pages, not entities: a "
+        "page of prose has neither, and that is expected.",
+        "* `corpus/site/` and `corpus/kb/` are mostly prose and release notes, so "
+        "their reference coverage is low by nature.",
+        "* The `.NET` tree (`corpus/dotnet/`) is documentation of a layer on top "
+        "of Windows CE; its `Namespace:`/`Assembly:` values are recorded in the "
+        "same requirement records, with `layer: dotnet`, and are not part of the "
+        "CE include/def surface.",
+        "",
+        "## The gaps",
+        "",
+        "`reports/gaps.tsv` lists, for every CE-only entity, which of the three "
+        "things an include/def generator needs is missing from the documents "
+        "collected so far:",
+        "",
+        "`doc_role` in `kb/entities.jsonl` says what the corpus has for a name: "
+        "`api-definition` (a page prints its syntax), `api-page` (a reference "
+        "page without a syntax block -- the gap this list is about) or `topic` "
+        "(the name is only the title of a prose page, so it is not listed here).",
+        "",
+        "| missing | entities | what to collect |",
+        "|---------|----------|-----------------|",
+        f"| `no-declaration` | "
+        f"{sum(1 for g in gap_rows if 'no-declaration' in g[4]):,} | the page "
+        "prints no syntax block -- look for the same topic in another collected "
+        "set (another medium often has it), or add the SDK/DOC medium that does |",
+        f"| `no-header` | {sum(1 for g in gap_rows if 'no-header' in g[4]):,} | "
+        "the page has no `Header` requirement -- same approach |",
+        f"| `no-library` | {sum(1 for g in gap_rows if 'no-library' in g[4]):,} | "
+        "the page has no `Link Library`/`Library` requirement -- expected for "
+        "compiler intrinsics and macros, worth collecting for functions |",
+        "",
+        "## Using it",
+        "",
+        "* `kb/entities.jsonl` -- one record per API name; `headers`, `libraries` "
+        "and `dlls` are the include/link mapping, `syntax_declarations` the "
+        "evidence for the declaration, `ce_sets` the version scope.",
+        "* `kb/entities.jsonl` `relations` -- the links between definitions "
+        "(the page's own Unicode/ANSI pair, `Interface::Method`, the CE<->Win32 "
+        "layer match), each with its page and the printed text; `present` says "
+        "whether the target exists in this file.",
+        "* `kb/entities.jsonl` `generation_use` -- the derived, rule-based list "
+        "of generator steps the record can feed (`include-declaration`, "
+        "`type-definition`, `link-library`, `def-export`, `abi-layout`, "
+        "`unicode-mapping`, `version-scope`, `ce-restriction`). It says what "
+        "the record *can* be used for, with the fields that justify it.",
+        "* `kb/modules.tsv` -- sdk-api module -> entities (the Win32-side "
+        "grouping; the module comes from each page's UID).",
+        "* `kb/declarations.jsonl` -- the raw C/C++ declarations. Nothing is "
+        "normalised: an include generator reads the text and the `spacing` flag.",
+        "* `kb/declarations-dotnet.jsonl` -- the signature blocks of the "
+        "separated .NET layer (`language: managed`), kept out of the C "
+        "declaration file on purpose.",
+        "* `kb/requirements.jsonl` -- Header/Library/DLL/OS-version statements "
+        "with both the mapped `field` and the page's own `label`.",
+        "* `kb/constraints.jsonl` -- the Windows CE restriction sentences.",
+        "* `kb/sets.tsv`, `kb/headers.tsv`, `kb/libraries.tsv`, `kb/dlls.tsv`, "
+        "`kb/modules.tsv` -- the same data aggregated.",
+        "",
+    ]
+    os.makedirs(REPORTS, exist_ok=True)
+    with open(os.path.join(REPORTS, "summary.md"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+
+# ---------------------------------------------------------------------- main
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--tree", help="only this corpus tree (e.g. learn/windows-ce-5.0)")
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--workers", type=int, default=min(8, os.cpu_count() or 4))
+    ap.add_argument("--report", action="store_true", help="print totals, write nothing")
+    ap.add_argument("--plain", action="store_true",
+                    help="write the JSONL files uncompressed (they are gzipped by default)")
+    args = ap.parse_args()
+
+    global CATALOGS
+    CATALOGS = read_catalogs()
+    rows = read_index(args.tree)
+    if args.limit:
+        rows = rows[:args.limit]
+    print(f"[kb] parsing {len(rows):,} page(s) with {args.workers} worker(s)",
+          flush=True)
+    facts, entities, declarations, requirements, constraints = build(
+        rows, args.workers, args.report, args.plain)
+    print(f"[kb] entities={len(entities):,} declarations={len(declarations):,} "
+          f"requirements={len(requirements):,} constraints={len(constraints):,}",
+          flush=True)
+    if not args.report:
+        print(f"[kb] written to knowledge/ (see knowledge/reports/summary.md)")
+    return 0
+
+
+CATALOGS = {}
+
+if __name__ == "__main__":
+    sys.exit(main())

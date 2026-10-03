@@ -239,7 +239,7 @@ def seven_zip():
     return None
 
 
-def _load_tool(name):
+def _tool_module(name):
     """Import a tools/ module by path (``extract-chm.py`` has a hyphen)."""
     import importlib.util
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -248,6 +248,9 @@ def _load_tool(name):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+alias_index = _tool_module("alias_index")
 
 
 def unpack(seven, source, dest):
@@ -466,6 +469,11 @@ def extract_pages(root, out, label, dry_run=False, exclude=""):
                 continue
             body = to_utf8(body)
             target = os.path.join(out, os.path.splitext(rel)[0] + ".html")
+            if alias_index.is_aliased(target):
+                # an identical page of another medium is already in the
+                # corpus (see data/index/aliases.tsv)
+                skipped += 1
+                continue
             os.makedirs(os.path.dirname(target), exist_ok=True)
             with open(target, "wb") as fh:
                 fh.write(body)
@@ -478,7 +486,7 @@ def extract_pages(root, out, label, dry_run=False, exclude=""):
             if dry_run:
                 imported += 1
                 continue
-            extract_chm = _load_tool("extract-chm")
+            extract_chm = _tool_module("extract-chm")
             pages, _size = extract_chm.extract_chm(seven, path, components)
             imported += pages
         elif ext in HELP_EXT:

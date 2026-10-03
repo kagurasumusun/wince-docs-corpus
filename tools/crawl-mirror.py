@@ -42,6 +42,7 @@ import time
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import alias_index  # noqa: E402  (duplicate pages already collapsed)
 import harvest  # noqa: E402  (the Fetcher, HostPacer and robots handling)
 
 ROOT = harvest.ROOT
@@ -348,6 +349,15 @@ class Crawl:
             return
         body = to_utf8(body)
         dest = self.dest_for(url)
+        if alias_index.is_aliased(dest):
+            # an identical page is already in the corpus; the alias table
+            # records that this copy was collapsed (dedupe-corpus.py)
+            self.skipped["duplicate"] += 1
+            self.done.add(url)
+            for link in self.links(url, body):
+                if link not in self.done and link not in self.seen:
+                    queue.append(link)
+            return
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         with open(dest, "wb") as fh:
             fh.write(body)
