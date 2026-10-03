@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Adding a Critical Process Monitor</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_adding_a_critical_process_monitor"></A>Adding a Critical Process Monitor</H2>
+
+<P>A critical process monitor is a system service implemented as software, firmware, and hardware that keeps critical processes running at all times. If a critical process stops running, an Auto PC ceases to function fully. A critical process must regularly notify the critical process monitor that the process is running properly. If a process is not running properly, the OS can restart the improperly running process.</P>
+
+<P>In addition to monitoring individual processes, a critical process monitor notifies a hardware watchdog timer at least once every four seconds to demonstrate that an Auto PC is still active. If the notification fails to occur, the hardware forces an Auto PC to reboot.</P>
+
+<P>The following illustration shows the relationship between applications and the components of the critical process monitor.</P>
+
+<P><B><IMG SRC="cpmapi.gif" ALT="" BORDER=0></B></P>
+
+<P>You call critical process monitor functions to register your application with a critical process monitor and to regularly notify that critical process monitor. You can provide a callback function that the critical process monitor can call to clean up after your application, if the critical process monitor needs to terminate your application. When your application no longer qualifies as a critical process, you can also call a function to notify the critical process monitor of this change.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To register an application as a critical process</H4>
+
+<OL>
+	<LI>Call <B>GetCurrentProcessID</B> to obtain the process identifer.</li>
+
+	<LI>Determine how many milliseconds should occur between each signal.
+<P>If your application does not notify the critical process monitor within this interval, the critical process monitor considers your application to be an improperly running process.
+</li>
+
+	<LI>Determine a callback function to close your application, if your application must be terminated.</li>
+
+	<LI>Call <B>CPMRegister</B> to pass the parameters that you determined in the previous steps.</li>
+</OL>
+
+<P>The following code example shows how to register an application as a critical process.</P>
+
+<PRE><CODE>dwProcessId = GetCurrentProcessID ();
+
+if (!CPMRegister (dwProcessId, 1000, CPM_RELAUNCH, szAppName, pCallback,
+    CPM_RELAUNCH_FAIL_OK))
+{
+// If an error occurs, handle it here.
+}
+</CODE></PRE>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a notification loop</H4>
+
+<OL>
+	<LI>Use a <B>while</B> loop statement to construct a notification loop.</li>
+
+	<LI>Specify the time between notifications by calling <B>Sleep</B>.</li>
+
+	<LI>Include code that determines if the process continues to run properly.</li>
+
+	<LI>Call <B>CPMNotify</B> with the process identifier to let the critical process monitor know that the process is still running properly.</li>
+</OL>
+
+<P>The following code example shows how to create a notification loop.</P>
+
+<PRE><CODE>while (TRUE)
+{
+Sleep(500);
+// You must provide code that determines if the application 
+// continues to function properly.
+CPMNotify (dwProcessId);
+}
+</CODE></PRE>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a callback function</H4>
+
+<OL>
+	<LI>Create an application-defined callback function. <B>CPMCallback</B> shows the necessary parameters and is a placeholder for the application-defined function name. You may use any name that you prefer for your callback function.</li>
+
+	<LI>Include in the callback function, code to save open data files and save the status of the running application so that the application can be restarted in its current state.</li>
+
+	<LI>Be sure that you pass the callback function as a parameter when you invoke <B>CPMRegister</B>.</li>
+</OL>
+
+<P>The following code example shows how to create a callback function. The name of the function is <B>pCallback</B>, rather than <B>CPMCallback</B>. The two parameters are specified in <B>CPMCallback</B> and the function is called with CPM_CLEANUP.</P>
+
+<PRE><CODE>Void pCallback (DWORD dwCmd, DWORD dwCmdInfo)
+{
+ASSERT (dwCmd == CPM_CLEANUP);
+// You must provide code to save open data files, and you
+// must save the status of the running application.
+}
+</CODE></PRE>
+
+<P>To notify the critical process monitor that a process is no longer critical, call <B>CPMUnRegister</B> with the same process identifier that you used to register the process.</P>
+<p>&nbsp;</p></body>
+</HTML>

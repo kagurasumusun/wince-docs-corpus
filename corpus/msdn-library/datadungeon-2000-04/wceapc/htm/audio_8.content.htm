@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating an Audio Application</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_an_audio_application"></A>Creating an Audio Application</H2>
+
+<P>When you create an audio application, the steps are the same as for other applications, except for additional steps that add audio features.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create an audio application</H4>
+
+<OL>
+	<LI>Create a message loop that uses <B>GetMessage</B> or <B>DispatchMessage</B>.</li>
+
+	<LI>Call <B>GetFormsManager</B> to create an instance of a Forms Manager.
+<UL>
+	<LI>Use <B>CoCreateInstance</B> to create a Forms Manager.</li>
+
+	<LI>Get a context handle.</li>
+
+	<LI>Attach a class message sink to a Forms Manager.</li>
+
+	<LI>Register the application.</li>
+</UL>
+</li>
+
+	<LI>Call the function <B>CreateFormRadio</B> to create a form.
+<P><B>CreateFormRadio</B> creates a form by loading it from the resource file and getting all the interfaces for the controls contained in the form. As you create a form, get the interface pointers to access the controls. Each Auto PC application must have at least one form.
+</li>
+
+	<LI>Start the form.</li>
+
+	<LI>Add menus.
+<UL>
+	<LI>Call <B>BuildSettingsMenu</B> to load the settings menu from a resource file and get an interface to each of the menu items. In this function, set the maximum, minimum, and current values for all the integer spin box controls. 
+<P>Integer spin box controls are used with each menu item to provide a method for changing settings.
+</li>
+</UL>
+</li>
+
+	<LI>Add controls and strings.</li>
+
+	<LI>Initialize the audio manager.
+<P>The audio manager gives you access and control over audio sources. For example, if you want to use the CD player and the radio is running, you need software that stops the radio before starting the CD player.
+</li>
+
+	<LI>Initialize the AM/FM tuner.</li>
+
+	<LI>Create an event sink.</li>
+</OL>
+
+<P>This procedure uses code examples from a sample audio application, Tuneit.cpp, included in the SDK. Tuneit.cpp highlights the use of tuner and audio manager APIs.</P>
+
+<P>In the Tuneit.cpp file, the <B>WinMain</B> function shows how to program a message loop, and the <B>GetFormsManager</B> function shows how the Forms Manager is created. The TuneSink.cpp and TuneSink.h files show how to create an event sink.</P>
+
+<P>Tuneit.cpp has only one form: form radio. The <B>CreateFormRadio</B> function creates a form by loading it from the resource file and getting all the interfaces for the controls contained in the form.</P>
+
+<P>The following code example shows how to set up and initialize an audio manager. It shows only bass and treble; you need to cover all other application settings.</P>
+
+<PRE><CODE>HRESULT
+CTuneitApp::InitAudioManager()
+{
+    long lRet;
+    long bMute = FALSE;
+    DWORD dwEQCaps = NULL;
+
+    // Verify support for bass and treble
+    if(AAM_GetEQCaps(&amp;dwEQCaps))
+    {
+        return E_FAIL;
+    }
+    // Set local audio manager storage variables using
+    // local flags understood by your resource script
+    // menu-loading function.
+    if(dwEQCaps &amp; AAM_FLAG_BASS) m_dwfAudioCaps |= FLAG_BASS;
+    if(dwEQCaps &amp; AAM_FLAG_TREBLE) m_dwfAudioCaps |= FLAG_TREBLE;
+
+    // Get minimum, maximum, and current bass values.
+    if(!AAM_EQPreset(AAM_FLAG_BASS | AAM_FLAG_GET, &amp;lRet))
+    {
+        m_lSetting[BASS] = lRet;
+        AAM_EQPreset(AAM_FLAG_BASS | AAM_FLAG_GET | AAM_FLAG_RANGE, &amp;lRet);
+        m_lSettingMin[BASS] = -LOWORD(lRet);
+        m_lSettingMax[BASS] = LOWORD(lRet);
+    }
+
+    // Get minimum, maximum, and current treble values.
+    if(!AAM_EQPreset(AAM_FLAG_TREBLE | AAM_FLAG_GET, &amp;lRet))
+    {
+        m_lSetting[TREBLE] = lRet;
+        AAM_EQPreset(AAM_FLAG_TREBLE | AAM_FLAG_GET | AAM_FLAG_RANGE, &amp;lRet);
+        m_lSettingMin[TREBLE] = -LOWORD(lRet);
+        m_lSettingMax[TREBLE] = LOWORD(lRet);
+    }
+
+    // Turn off mute.
+    AAM_VolumeControl(AAM_FLAG_MUTE | AAM_FLAG_SET, &amp;bMute);
+
+    // Set the source to radio.
+    AAM_SelectSource(AAM_SRC_TUNER);
+
+    return NOERROR;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

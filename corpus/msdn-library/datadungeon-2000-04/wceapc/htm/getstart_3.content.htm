@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Forms Manager</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_a_forms_manager"></A>Creating a Forms Manager</H2>
+
+<P>A <I>Forms Manager</I> is an ActiveX® control container that provides speech and keyboard navigation, input to all controls, and common services such as visual Help and application menus. A Forms Manager passes messages from one form to another and from the OS to a form.</P>
+
+<P>An Auto PC application uses a Forms Manager to handle its forms, even if it uses only one form. The device context handle is derived from the form. An Auto PC application is composed of at least three COM objects:
+
+<UL>
+	<LI>A Forms Manager object controls application-wide functionality and its forms. You can only have one Forms Manager.</li>
+
+	<LI>A Form object holds the controls for a screen. You can have multiple forms.</li>
+
+	<LI>A Control object is placed on a form and displays information or receives user input. You can have multiple controls per form.</li>
+</UL>
+
+<P>Create each object with <B>CoCreateInstance</B> and access its other interfaces through the <B>IUnknown</B> interface. A Forms Manager’s primary interface is <B>IfmManage</B>, which provides an application with methods and common services for an application and its forms. In addition, a Forms Manager exposes the following specialized interfaces:
+
+<UL>
+	<LI><B>IASActiveForms</B>, which manages form focus when an application has multiple forms</li>
+
+	<LI><B>IfmSystem</B>, which contains system-level methods</li>
+</UL>
+
+<P>The following illustration shows an Auto PC application architecture.</P>
+
+<P><IMG SRC="frmmgr.gif" ALT="" BORDER=0></P>
+
+<P>Because a Forms Manager consists of several interfaces, it performs the following tasks:
+
+<UL>
+	<LI>Displays one or more active device contexts</li>
+
+	<LI>Creates and manages a single device context for all applications with activated faceplate forms</li>
+
+	<LI>Manages device contexts internally rather than externally</li>
+
+	<LI>Enables applications to specify the control layout for the information displayed on the faceplate while the faceplate has the input focus</li>
+
+	<LI>Enables applications to dynamically interact with a control to change its appearance and internal data</li>
+
+	<LI>Enables applications to receive events from active controls on a form</li>
+
+	<LI>Provides tab and focus management between the controls on an active form</li>
+
+	<LI>Enables you to add custom controls to an application</li>
+
+	<LI>Handles speech-to-text input for controls and for navigation between controls</li>
+</UL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a Forms Manager</H4>
+
+<OL>
+	<LI>Call <B>CoCreateInstance</B> to create an instance of a Forms Manager.</li>
+
+	<LI>Call <B>RegisterStartedApplication</B> to register your application with the Forms Manager.</li>
+
+	<LI>Call <B>MoveAppToForeground</B> to move your application to the foreground.</li>
+</OL>
+
+<P>The following code example shows how to create a Forms Manager.</P>
+
+<PRE><CODE>HRESULT GetFormsManager()
+{
+    HRESULT         hr;
+    
+    hr = CoCreateInstance(CLSID_FMMANAGE, NULL, CLSCTX_INPROC_SERVER,
+        IID_FMMANAGE, 
+                            (PVOID *) &amp;g_pManage);
+    if (FAILED(hr)) goto LReturn;
+
+ WCHAR wszAppName[ _MAX_PATH +1 ];
+
+ //Use the name in the resource script with ID #1(STR_APP_SHELL_NAME)
+    LoadString(g_hInst, STR_APP_SHELL_NAME, wszAppName,_MAX_PATH );
+
+ g_bstrAppName = ::SysAllocString(wszAppName);
+
+ if (g_bstrAppName){ 
+ // Register the application as started with the Forms Manager.
+ // Send the Forms Manager the name of the faceplate on
+ // which to execute the application.
+     g_pManage-&gt;RegisterStartedApplication(FC_MAINFACEPLATE,
+            g_bstrAppName, 0, 0);
+ } 
+ else {
+  hr = E_OUTOFMEMORY;
+ }
+ 
+ hr = g_pManage-&gt;MoveAppToForeground(GetCurrentProcessId(), 0, 0); 
+
+LReturn:
+ return hr;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

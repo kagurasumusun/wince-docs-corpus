@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Example Channel Script</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+
+
+<H1><A NAME="_wcesdk_mobile_channels_example_channel_script"></A>Example Channel Script</H1>
+
+<PRE><CODE>&lt;HTML&gt;
+&lt;%
+    Set MC   = Server.CreateObject("MobileChannels.Utilities")
+    URL      = Request.ServerVariables("URL")
+    DataID   = Request.QueryString("DATAID")
+    Pieces   = Split(URL,"/")
+    ChanID   = Pieces(2)
+
+' Get logo and title of channel 
+    TopElem = MC.Locate(ChanID)
+    ChanTitle = ""
+    LogoHref = 0
+    If TopElem Then
+        ChanTitle = MC.Title(TopElem)
+        LogoElem = TopElem
+        LogoElem = MC.Navigate(LogoElem, "INMATCH", "LOGO")
+        Do While LogoElem
+            LogoStyleElem = MC.Navigate(LogoElem, "INMATCH", "STYLE")
+            If LogoStyleElem Then
+                If StrComp(MC.Value(LogoStyleElem), "IMAGE", 1) = 0 Then
+                    LogoHref = MC.Href(LogoElem)
+                    If LogoHref Then
+                        If MC.HrefExists(LogoHref) Then
+                            Exit Do
+                        Else
+                            LogoHref = 0
+                        End If
+                   End If
+                End If
+            End If
+
+            LogoElem = MC.Navigate(LogoElem,"NEXT")
+            If LogoElem Then
+                LogoElem = MC.Navigate(LogoElem,"MATCH","LOGO")
+            End If
+        Loop
+    End If
+
+    NeedTitle = 1
+    Response.Write("&lt;HEAD&gt;&lt;TITLE&gt;" &amp; ChanTitle &amp; "&lt;/TITLE&gt;&lt;/HEAD&gt;")
+    If LogoHref Then
+Response.Write("&lt;BODY&gt;&lt;A HREF=mctp://" &amp; ChanID &amp; "&gt;
+           &lt;IMG SRC=" &amp; LogoHref &amp; "&gt;&lt;/A&gt;&lt;BR&gt;&amp;nbsp;&lt;BR&gt;")
+    ElseIf ChanTitle And Len(ChanTitle) Then
+       Response.Write("&lt;BODY&gt;&lt;A HREF=mctp://" &amp; ChanID &amp; "&gt;
+           &lt;H3&gt;" &amp; ChanTitle &amp; "&lt;/H3&gt;&lt;/a&gt;")
+       NeedTitle = 0
+    Else
+        Response.Write("&lt;BODY&gt;")
+    End If
+
+    ' Decide whether you need a title for this channel or subchannel.
+    If DataID And (DataID &lt;&gt; ChanID) Then
+        NeedTitle = 1
+    Else
+        DataID = ChanID
+    End If
+    
+    SubTitle = 0
+    SubElem = MC.Locate(DataID)
+    If SubElem Then
+        SubTitle = MC.Title(SubElem)
+        If SubTitle And NeedTitle Then
+            Response.Write("&lt;B&gt;" &amp; SubTitle &amp; "&lt;/B&gt;&lt;BR&gt;&amp;nbsp;&lt;BR&gt;")
+        End If
+
+        ' Display contents of chan/subchan
+        Response.Write("&lt;TABLE BORDER=0 CELLPADDING=-2 CELLSPACING=-2&gt;")
+        ChildElem = MC.Navigate(SubElem,"IN")
+        Do While ChildElem
+            ShowIt = 1
+            IsChan = 0
+            If MC.Tag(ChildElem) = "CHANNEL" Then
+                IsChan = 1
+                If Not MC.IsSubscribed(ChildElem) Then
+                    ShowIt = 0
+                End If
+            ElseIf MC.Tag(ChildElem) = "ITEM" Then
+                VisParElem = MC.Navigate(ChildElem,"INMATCH","USAGE")
+                    If VisParElem Then
+                        Usage = MC.Value(VisParElem)
+                            If Usage Then
+                                If StrComp(Usage,"NONE",1) = 0 Then
+                                    ShowIt  = 0
+                                End If
+                           End If
+                    End If
+                    ' Be sure item exists
+                    If ShowIt Then
+                        ChildHref = MC.Href(ChildElem)
+                        If ChildHref Then
+                            If Not MC.HrefExists(ChildHref) Then
+                                ShowIt = 0
+                            End If
+                        Else
+                            ShowIt = 0
+                        End If
+                    End If
+          Else
+              ShowIt = 0
+          End If
+
+          If ShowIt Then
+            ' Be sure you can get the ID
+            IDVal = 0
+            IDElem = MC.Navigate(ChildElem,"InMatchINMATCH","ID")
+                If IDElem Then
+                    IDVal = MC.Value(IDElem)
+                End If
+                If Not IDVal Then
+                    ShowIt = 0
+                End If
+          End If
+        ' Get title
+        If ShowIt Then
+            ItemTitle = MC.Title(ChildElem)
+            If Not ItemTitle Or (Len(ItemTitle) = 0) Then
+                ShowIt = 0
+            Else
+                If Len(ItemTitle) &gt; 26 Then
+                    ItemTitle = Mid(ItemTitle,0,25) &amp; "…"
+                End If
+            End If
+        End If
+        ' You know what it is and are going to try to show it
+        If ShowIt Then
+            If IsChan Then
+                Response.Write("&lt;TR&gt;&lt;TD&gt;*")
+            Else
+                Response.Write("&lt;TR&gt;&lt;TD&gt;")
+            End If
+            Response.Write("&lt;TD&gt;&amp;nbsp;&lt;a href=mctp://" &amp; ChanID &amp; "/"
+               &amp; IDVal &amp; "&gt;" &amp; ItemTitle &amp; "&lt;/A&gt;")
+        End If
+
+        ChildElem = MC.Navigate(ChildElem,"NEXT")
+        Loop
+        Response.Write("&lt;/TABLE&gt;")
+    Else
+        Response.Write("Data ID not found.")
+    End If
+%&gt;
+
+&lt;BR&gt;&amp;nbsp;&lt;BR&gt;&lt;HR&gt;
+&lt;B&gt;Note:&lt;/B&gt; This page was automatically generated because the correct
+scripts could not be found. If this problem persists after synchronization,
+please contact the content provider.
+&lt;/BODY&gt;
+&lt;/HTML&gt;
+</CODE></PRE>
+
+</BODY>
+</HTML>

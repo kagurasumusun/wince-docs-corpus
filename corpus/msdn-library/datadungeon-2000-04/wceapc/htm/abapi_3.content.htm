@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Reading and Writing Records</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_reading_and_writing_records"></A>Reading and Writing Records</H2>
+
+<P>You can read and write Address Book records by calling <B>abRead</B> and <B>abWrite</B>. Both functions take the CEOID of the record you want to read or write as their first parameter, and return a HRESULT that indicates success or failure.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To read a record using abRead</H4>
+
+<OL>
+	<LI>Specify the CEOID of the record to read, or specify NULL to read the current record.</li>
+
+	<LI>Specify the number of properties to read from this record.
+<P>This parameter is also used to return the number of properties actually read.
+</li>
+
+	<LI>Specify an array of HPR_* identifiers that indicates the properties to retrieve.</li>
+
+	<LI>Specify a pointer to an array of CEPROPVAL structures that will receive the properties read.</li>
+
+	<LI>Call <B>abRead</B>.</li>
+
+	<LI>Check the return value to verify if the call succeeded.</li>
+</OL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create or update a record using abWrite</H4>
+
+<OL>
+	<LI>Specify the CEOID of the record to update, or specify NULL to create a new record.</li>
+
+	<LI>Specify the number of properties to write.</li>
+
+	<LI>Specify a pointer to the array of CEPROPVAL structures that contain the properties to write.</li>
+
+	<LI>Call <B>abWrite</B>.</li>
+
+	<LI>Check the return value to verify if the call succeeded.</li>
+</OL>
+
+<P>The following code example shows how to call <B>abDialog</B> to have the user find a record, and how to call <B>abRead</B> to read two properties from the selected record.</P>
+
+<PRE><CODE>HRESULT            hr;
+ABDIALOGINFO        abDI;
+static char        sCaption[80] = “Where do you want to go today?”;
+
+// Set the caption to use at the top of the screen.
+abDI.bstrMainFormCaption = &amp;sCaption;
+
+abDI.ceoid = NULL; // Do not use a default record.
+
+// Set the initial view to be the Address Book List dialog box
+// and put an Auto PC into locate mode.
+abDI.wInitView = ABV_LOCATE;
+
+// Make an Auto PC behave as if it were put
+// into locate mode by voice commands.
+abDI.dwEnabled = ABE_TTS ; 
+
+hr = abDialog(&amp;abDI); // Enable the user to pick a contact.
+
+if (SUCCEEDED(hr))
+{
+    // The user has picked a contact. Read the record’s properties.
+    // The list of properties to read
+    CEPROPID rgidProps[] = { HHPR_GIVEN_NAME, HHPR_SURNAME };
+
+    // The pointer in which abRead returns a pointer to the list of
+    // properties that were read
+    PCEPROPVAL prgProps = NULL;
+
+    // The number of properties to read
+    WORD cProps = sizeof(rgidProps)/sizeof(CEPROPID);
+
+    hr = abRead(abDI.ceoid, &amp;cProps, rgidProps, &amp;prgProps);
+    if(SUCCEEDED(hr))
+    {
+        // Copy the first name to m_bstrName.
+        wcscpy(m_bstrName, prgProps-&gt;val.lpwstr);
+
+        prgProps++;        // Go to the next property.
+
+        // Copy the last name to m_bstrlastname.
+        wcscpy(m_bstrLastName, prgProps-&gt;val.lpwstr);
+    }
+    else hr = E_FAIL;
+}
+
+return;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>
