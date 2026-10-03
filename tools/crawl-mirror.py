@@ -57,6 +57,22 @@ CP1252 = {"windows-1252", "cp1252", "iso-8859-1", "latin-1", "iso8859-1"}
 UTF8 = {"utf-8", "utf8", "ascii", "us-ascii"}
 
 
+def normalize(url):
+    """Percent-encode the parts of a link that are not ASCII.
+
+    A few pages of the mirror carry raw typographic quotes in their hrefs;
+    a request line must be ASCII, so those URLs have to be encoded before
+    they can be fetched (the local file name decodes back to the same text).
+    """
+    parts = urllib.parse.urlsplit(url)
+    if parts.path.isascii() and parts.query.isascii():
+        return url
+    path = urllib.parse.quote(parts.path, safe="/%:@&=+$,;~()!*'")
+    query = urllib.parse.quote(parts.query, safe="=&%:;+,/?@!*'()~$")
+    return urllib.parse.urlunsplit(
+        (parts.scheme, parts.netloc, path, query, ""))
+
+
 def to_utf8(body):
     """Decode a page the way its own meta tag says and re-encode as UTF-8.
 
@@ -252,7 +268,7 @@ class Crawl:
                 head = rel.split("/", 1)[0]
                 if head and not head.startswith("_") and head != "images":
                     self.dirs.add(head)
-            found.append(self.prefer_content(absolute))
+            found.append(self.prefer_content(normalize(absolute)))
         return found
 
     def dest_for(self, url):
@@ -293,6 +309,7 @@ class Crawl:
             url = original
         if body is None:
             self.errors[str(status)] += 1
+            self.failures.append(f"{status}: {url}")
             return
         # Follow everything, store the documentation: the wrappers are
         # navigation chrome, their links are still worth walking.
