@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Creating Kernel Debugging Extensions</title>
+</head>
+<body>
+<!-- WINDBG Books Online (windbg.hlp); text extracted with helpdeco, images dropped. -->
+<h1>Creating Kernel Debugging Extensions</h1>
+<p>Creating Extensions</p>
+<p>You can create your own debugging commands by writing an extension DLL. You might want to write a command, for example, to dump a complex data structure.</p>
+<p>To run a command called foo, which is an exported function from mydll.dll, enter the following at the WinDbg command prompt:</p>
+<p>!mydll.foo [args]</p>
+<p>WinDbg will load mydll.dll, call the entry point foo, and pass args to foo. Once WinDbg has loaded mydll.dll, you can run an extension command contained in it by using just the command's name:</p>
+<p>!foo [args]</p>
+<p>You can explicitly load an extension DLL with either of the following commands:</p>
+<p>!mydll.foo</p>
+<p>!load mydll.dll</p>
+<p>There can be as many as 32 extension DLLs loaded, including the default extension DLL, kdext???, where ??? is x86, mip, or alp, depending upon the type of target machine.</p>
+<p>When you run !foo, WinDbg looks for foo in the current extension DLL, which is the last one loaded or the one that you specify with</p>
+<p>!default mydll</p>
+<p>If it does not find foo in the current extension DLL, WinDbg searches through the loaded extension DLLs, in the order that they were loaded, and runs the first instance of foo that it finds.</p>
+<p>You can unload the current extension DLL with the following command:</p>
+<p>!unload</p>
+<p>The DDK provides source code for a few simple debugger extension samples in the src\krnldbg\kdexts directory of the DDK tree. Use the files wdbgexts.h and dbgexts.c (below) as a starting point for writing your own extension DLLs. There are certain requirements for your DLLs:</p>
+<p>1.	Your extension names must be lowercase: foo is good; Foo isn't.</p>
+<pre class="code">2.	You must export a function named WinDbgExtensionDllInit (refer to the source for dbgexts.c, below). When WinDbg loads an extension DLL, it first calls WinDbgExtensionDllInit and passes it the following arguments:</pre>
+<table class="dtTABLE">
+<tr><td>Pointer to an extension API structure</td><td>This structure contains the callbacks to functions that you can use to do standard operations. For example, to print a string you can use dprintf("string"). Include the header file wdbgexts.h in your extension source and use the #define function definitions from that file. The file wdbgexts.h also defines the parameters to the functions.<br>Save the pointer in a global variable named ExtensionApis (refer to dbgexts.c, below).</td></tr>
+<tr><td>Major version</td><td>This indicates whether the target system is running a checked build of Windows NT (0x0c) or a free build (0x0f).</td></tr>
+<tr><td>Minor version</td><td>This is the Windows NT build number of the target system (for example, 757).</td></tr>
+<tr><td>3.    You must export a function called ExtensionApiVersion (refer to the source for dbgexts.c, below). WinDbg calls this function and expects back a pointer to API_VERSION. The version number of your extension DLL must match the version number of WinDbg . If the numbers don't match, WinDbg will not load the extension DLL.<br>4.    You can optionally export a function called CheckVersion (refer to the source for dbgexts.c, below). WinDbg calls this function every time you use your DLL. Use it to verify that the version of your DLL matches the target system. To disable version checking, issue the !noversion command at the WinDbg prompt.<br>5.    Use the DECLARE_API macro defined in wdbgexts.h to declare your command functions. The basic format is:<br>DECLARE_API(foo)<br>{-<br>code for foo<br>}<br>WinDbg does a try/except around a call to an extension DLL. Even though they won't crash WinDbg, bugs in your code can still cause it not to work properly, and you will have to quit and restart WinDbg.<br>Source for dbgexts.c:<br>/*++<br>Copyright (c) 1993  Microsoft Corporation<br>Module Name:<br>dbgexts.c<br>Abstract:<br>This file contains the minimum required apis for a debugger extension dll.<br>Environment:<br>User Mode<br>--*/<br>#include &lt;imagehlp.h&gt;<br>//<br>// globals<br>//<br>API_VERSION            ApiVersion = {- 3, 5, API_VERSION_NUMBER, 0 };<br>WINDBG_EXTENSION_APIS  ExtensionApis;<br>USHORT                 SavedMajorVersion;<br>USHORT                 SavedMinorVersion;<br>VOID<br>WinDbgExtensionDllInit(<br>PWINDBG_EXTENSION_APIS lpExtensionApis,<br>USHORT MajorVersion,<br>USHORT MinorVersion<br>)<br>{-<br>ExtensionApis = *lpExtensionApis;<br>SavedMajorVersion = MajorVersion;<br>SavedMinorVersion = MinorVersion;<br>return;<br>}<br>VOID<br>CheckVersion(<br>VOID<br>)<br>{-<br>//<br>// your check version code goes here<br>//<br>}<br>LPAPI_VERSION<br>ExtensionApiVersion(<br>VOID<br>)<br>{-<br>return &amp;ApiVersion;<br>}</td></tr>
+</table>
+</body>
+</html>

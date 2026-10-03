@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Free and Checked Builds of Windows NT</title>
+</head>
+<body>
+<!-- WINDBG Books Online (windbg.hlp); text extracted with helpdeco, images dropped. -->
+<h1>Free and Checked Builds of Windows NT</h1>
+<p>The DDK provides two versions of the Windows NT operating system, called the free build and the checked build. The DDK Getting Started manual explains how to install each version.</p>
+<p>The free build of Windows NT is the retail version that end users receive. Free binaries are built with full optimization and contain minimal debugging symbols, such as function entry points and global variables.</p>
+<p>The checked build is shipped only with the DDK; it is used in debugging drivers and other system code. Checked binaries provide error checking, argument verification, and system debugging code not present in the free binaries.</p>
+<p>Much of the additional code in the checked binaries is in the form of ASSERT macros that test an expression. If the expression evaluates to FALSE, the macro generates a kernel debugger error message and breaks into the debugger. This lets you immediately determine the cause and location of the error. For example, recursive acquisition of a spin lock (where a thread tries to acquire a spin lock that it already owns) hangs the system in the free build, but generates a breakpoint on the checked build.</p>
+<p>Use the free and checked builds of Windows NT as follows:</p>
+<pre class="code">·	Use the free build on the host machine, where you run WinDbg.</pre>
+<pre class="code">·	Use the free build when you develop and build your driver. Performance suffers in the checked build due to the additional code that is executed.</pre>
+<pre class="code">·	Use the checked build on the target machine when you test and debug your driver during the initial phases of its development.</pre>
+<pre class="code">·	Use the free build on the target machine when you test and debug your driver during the final phases of its development. You must do the final testing of your driver with a free version of the driver on the free build of Windows NT.</pre>
+<p>The extra protection of the checked build of Windows NT carries some penalties. Because of the additional code, the checked binaries are larger and run slower than the free binaries. This can conceal synchronization problems, such as race conditions, that become apparent only when you use the free build.</p>
+<p>If you run the checked build of Windows NT without having enabled kernel debugging (see Enabling Kernel Debugging on the Target), unexpected system shutdowns can occur. This is because the additional checks in the checked build increase the likelihood of encountering a breakpoint. A kernel-mode breakpoint with kernel debugging disabled is an unhandled kernel-mode exception, so the system calls the KeBugCheck function and shuts down.</p>
+<p>If kernel debugging is enabled, however, a breakpoint freezes all threads in the target system except for the component that communicates with WinDbg KD. This lets WinDbg KD connect to a running target machine that has kernel debugging enabled, even after a breakpoint has been encountered. See Connecting to a Running Target for details.</p>
+</body>
+</html>
