@@ -37,3 +37,13 @@ offline source.
   tstcon32) — desktop host-tool help, not CE documentation.
 * CDs 2–6 were not downloaded: CD1's installer payload is the only doc
   carrier; the remaining discs are the OS catalog / shared-source volume.
+
+## Extraction (2026-10-03)
+
+The 98 component CHMs are now extracted instead of sitting next to them: the
+pages are in `corpus/chm/windows-ce-5.0/<component>/`, one directory per CHM
+(`P312_wcecore5.chm` -> `wcecore5/`), 20,209 pages. `tools/extract-chm.py`
+(entry `windows-ce-5.0` of `queues/chm-sets.tsv`,
+`.github/workflows/extract-chm.yml`) walks each CHM with 7z, keeps the HTML,
+re-encodes it as UTF-8 and skips the `Topic Not Found` placeholder that every
+component carries. The files here are the untouched media.

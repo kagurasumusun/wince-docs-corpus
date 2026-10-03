@@ -29,7 +29,8 @@ import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORPUS = os.path.join(ROOT, "corpus")
-TITLE = re.compile(r"<title>(.*?)</title>", re.S)
+# The CHM pages use uppercase <TITLE>, the harvested pages lowercase.
+TITLE = re.compile(r"<title>(.*?)</title>", re.S | re.I)
 MD_TITLE = re.compile(r"^title:\s*(.+?)\s*$", re.M)
 PAGE_SUFFIXES = (".html", ".htm", ".md")   # matched case-insensitively
 # Repository paperwork, not documentation pages.

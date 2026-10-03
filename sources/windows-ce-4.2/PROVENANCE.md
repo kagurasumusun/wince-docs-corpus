@@ -30,3 +30,10 @@ The official CE .NET 4.x API reference documentation is therefore taken from
 carries the .NET Compact Framework 1.0 reference) — see the .NET track.
 No third-party/vendor/sample content is preserved (documents only; policy:
 wince-api docs/iso-collection.md).
+
+## Extraction (2026-10-03)
+
+`EMULATOR.CHM` and `REMTOOLS.CHM` are extracted: 566 pages in
+`corpus/chm/windows-ce-4.2/` (`emulator/`, `remtools/`), via
+`tools/extract-chm.py` and the `windows-ce-4.2` entry of
+`queues/chm-sets.tsv`. The files here are the untouched media.

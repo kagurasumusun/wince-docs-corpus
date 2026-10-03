@@ -9,6 +9,8 @@ that way:
 corpus/
 ├── learn/<set>/              pages harvested from learn.microsoft.com
 ├── chm/windows-ce-3.0/       pages extracted from the official CE 3.0 CHM
+├── chm/windows-ce-5.0/       the 98 component CHMs of the CE 5.0 CD1
+├── chm/windows-ce-4.2/       emulator + remote tools CHMs of CE .NET 4.2
 ├── mvb/windows-ce-1.0/       CE 1.0 books (Multimedia Viewer/WinHelp era)
 ├── kb/                       Windows CE KnowledgeBase articles (CE 1.0/2.0 era)
 ├── win32/api/, win32/guide/  Win32 reference + guides (MicrosoftDocs)
@@ -19,7 +21,7 @@ corpus/
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 108,210 pages (87,758 in the CE trees + 20,452 Win32 pages) — see
+Total: 130,185 pages (109,733 in the CE trees + 20,452 Win32 pages) — see
 the per-tree READMEs for the provenance of each, and `../queues/
 third-party-sources.md` for the mirror policy.
 
@@ -92,6 +94,10 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
 * `chm/windows-ce-3.0/` — extracted from
   `sources/windows-ce-3.0/WindowsCE3.0_DocumentationArchive.zip`
   (see `sources/windows-ce-3.0/PROVENANCE.md`).
+* `chm/windows-ce-5.0/` and `chm/windows-ce-4.2/` — the documentation CHMs of
+  those two releases, extracted from the official media in `sources/`
+  (`tools/extract-chm.py`); see the tree READMEs for what each adds over the
+  Learn harvest.
 * `msdn-library/techshelps/` — 5,165 pages: the MSDN Library sets for
   Windows CE 1.0/2.0 (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED)
   as mirrored by <https://techshelps.github.io/>; see

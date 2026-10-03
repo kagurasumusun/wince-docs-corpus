@@ -7,9 +7,8 @@ Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
 documentation Windows CE shares**, so that an API question can be answered
 without breaking the offline copy.
 
-**108,210 pages**: 87,758 harvested/extracted/mirrored CE pages (HTML) and
-20,452 Win32 pages (markdown, from Microsoft's public `MicrosoftDocs`
-repositories). The
+**130,185 pages**: 109,733 extracted/harvested/mirrored CE pages and 20,452
+Win32 pages (markdown, from Microsoft's public `MicrosoftDocs` repositories). The
 repository also carries the original media the pages were extracted from, the
 URL queues used to harvest them, the complete upstream snapshots, and the
 derived catalogs, manifests and indexes.
@@ -20,6 +19,8 @@ derived catalogs, manifests and indexes.
 |------|----------|
 | `corpus/` | The documentation itself, one page per file (HTML, plus markdown for the Win32 trees). See `corpus/README.md`. |
 | `corpus/learn/<set>/` | 68,704 pages harvested from `learn.microsoft.com/…/previous-versions/windows/embedded`. |
+| `corpus/chm/windows-ce-5.0/` | 20,209 pages: the 98 component CHMs of the CE 5.0 CD1 — per-component guides and API reference, complementary to the Learn harvest (4 shared titles out of 20,141). |
+| `corpus/chm/windows-ce-4.2/` | 566 pages: the emulator board and remote-tools reference of the CE .NET 4.2 Platform Builder Emulation Edition media. |
 | `corpus/chm/windows-ce-3.0/` | 8,962 pages extracted from the official Windows CE 3.0 documentation CHM. |
 | `corpus/mvb/windows-ce-1.0/` | 2,104 pages decoded from the CE 1.0 Books Online (Multimedia Viewer books + WinHelp release notes). |
 | `corpus/msdn-library/techshelps/` | 5,165 pages of the MSDN Library's Windows CE 1.0/2.0 sets, from the techshelps mirror (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED). |

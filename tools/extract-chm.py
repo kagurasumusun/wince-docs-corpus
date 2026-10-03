@@ -47,6 +47,9 @@ SKIP_EXT = (".hhc", ".hhk", ".css", ".js", ".gif", ".png", ".jpg", ".jpeg",
             ".bmp", ".ico", ".xml", ".dtd", ".xsl", ".h", ".cpp", ".c",
             ".rc", ".def", ".lib", ".dll", ".exe", ".cab", ".chm", ".zip")
 CHARSET_RE = re.compile(rb"charset\s*=\s*[\"']?([A-Za-z0-9_.:-]+)", re.I)
+# Every component CHM of the CE 5.0 CD ships the same navigation placeholder;
+# it is the CHM saying "this jump target does not exist", not documentation.
+PLACEHOLDER_RE = re.compile(rb"<title>\s*Topic Not Found\s*</title>", re.I)
 TITLE_RE = re.compile(r"<title>(.*?)</title>", re.S | re.I)
 COMPONENT_RE = re.compile(r"^P\d+_")
 SEVEN_ZIP_CANDIDATES = ("7z", "7za", "7zr")
@@ -102,6 +105,11 @@ def to_utf8(body):
     return text.encode("utf-8")
 
 
+def stem_matches_placeholder(lower_name):
+    stem = os.path.splitext(lower_name)[0]
+    return stem in ("topicnotfound", "topic_not_found", "notopic")
+
+
 def component_name(chm_path):
     stem = os.path.splitext(os.path.basename(chm_path))[0]
     return COMPONENT_RE.sub("", stem).lower()
@@ -133,6 +141,7 @@ def extract_chm(seven_zip, chm_path, dest_dir, dry_run=False):
                   f"{tail[-1] if tail else 'no output'}", file=sys.stderr)
             return 0, 0
         pages = written_bytes = 0
+        skipped = collections.Counter()
         used_stems = set()
         for dirpath, dirnames, filenames in os.walk(tmp):
             dirnames.sort()
@@ -150,6 +159,10 @@ def extract_chm(seven_zip, chm_path, dest_dir, dry_run=False):
                 except OSError:
                     continue
                 if not body.strip():
+                    continue
+                if PLACEHOLDER_RE.search(body[:2048]) \
+                        or stem_matches_placeholder(lower):
+                    skipped["placeholder"] += 1
                     continue
                 body = to_utf8(body)
                 stem, ext = os.path.splitext(rel)

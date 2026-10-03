@@ -23,8 +23,8 @@ collection policy in the top-level `README.md`).
 | `windows-ce-1.0/` | CE 1.0 Desktop Emulation SDK CD: `PEGSDK.MVB`, `PEGDDK.MVB`, `RELNOTES.HLP`, `MSDNLIB.HLP`. | `corpus/mvb/windows-ce-1.0/` (2,104 pages, decoded with helpdeco + `tools/extract-mvb.py`). |
 | `windows-ce-2.0/` | CE 2.0 Technical Information CD (Windows CE Developer site mirror, 41 HTML pages). | Pages preserved as-is in `sources/`; no pending extraction. |
 | `windows-ce-3.0/` | `WindowsCE3.0_DocumentationArchive.zip` + `Important_ReadMe.txt` (Microsoft Download Center, id 41197). | `corpus/chm/windows-ce-3.0/` (8,962 pages). |
-| `windows-ce-4.2/` | CE .NET 4.2 Platform Builder Emulation Edition: `EMULATOR.CHM`, `REMTOOLS.CHM`, release notes. | Reference only — the 4.x API reference comes from Learn (`corpus/learn/windows-ce-net-4x/`). |
-| `windows-ce-5.0/` | CE 5.0 CD1: 98 component CHMs (`P302_wce*.chm` … `P407_*.chm`) + release notes. | Reference only — CE 5.0 pages in the corpus were harvested from Learn. |
+| `windows-ce-4.2/` | CE .NET 4.2 Platform Builder Emulation Edition: `EMULATOR.CHM`, `REMTOOLS.CHM`, release notes. | `corpus/chm/windows-ce-4.2/` (566 pages: the emulator board and remote-tools reference; the 4.x API reference comes from Learn, `corpus/learn/windows-ce-net-4x/`). |
+| `windows-ce-5.0/` | CE 5.0 CD1: 98 component CHMs (`P302_wce*.chm` … `P407_*.chm`) + release notes. | `corpus/chm/windows-ce-5.0/` (20,209 pages: the per-component guides and API reference). The Learn harvest (`corpus/learn/windows-ce-5.0/`) shares only 4 of its 20,141 titles, so this is complementary, not a duplicate. |
 | `windows-ce-6.0/` | CE 6.0 DVD: release notes (the DVD carries no documentation CHM/HTM set). | Reference only. |
 
 Extracted text is never edited in place; if a source turns out to be wrong,
