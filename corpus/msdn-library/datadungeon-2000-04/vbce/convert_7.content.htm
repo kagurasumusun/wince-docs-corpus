@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DesktopToDevice</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_adoce_desktoptodevice"></A>DesktopToDevice</H2>
+
+<P><B>DesktopToDevice</B> enables programmatic control over the conversion of .mdb files to ADOCE tables. Its behavior parallels that of the <B>Import from Database to Mobile Device</B> dialog box, except that the user-choice dialog boxes do not appear. All progress bars do appear, showing the transfer status. An error return does not cause the log file to automatically display. Instead, an error value, which is  <B>HRESULT</B>, is returned by the function. The calling application then can take appropriate action.</P>
+
+<H4>Syntax</H4>
+
+<P><B>DESKTOPTODEVICE</B> <B>(</B><I>DesktopLocn, TableList, Sync, Overwrite, DeviceLocn</I><B>)</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>DesktopLocn</I></DT>
+
+<DD>Specifies the file name and path of the .mdb file to be transferred, or the DSN name if ODBC support is enabled.</dd>
+
+<DT><I>TableList</I></DT>
+
+<DD>Specifies the list of tables and fields that is converted and copied to the device. It takes the following form:
+
+<PRE><CODE>[!]tablename[&lt;period&gt;fieldname]&lt;period&gt;&lt;period&gt;[[!]tablename[&lt;period&gt;fieldname]&lt;period&gt;&lt;period&gt;]
+</CODE></PRE>
+
+
+<P>A leading “!” marks this table as read-only on the device. If this is a zero-length string ("") or if the parameter is not provided, then the default copying of all tables and appropriate fields is performed. If a table is requested but no field list is provided, then the default fields are copied. 
+
+
+<P>The following code example shows how to copy the <B>Employees</B> table as read-only, how to copy the <B>Product ID</B> and <B>Product</B> <B>Name</B> fields from the <B>Products</B> table, and how to copy the <B>Order ID</B> field from the <B>Orders</B> table.
+
+
+<PRE><CODE>!Employees..Products.Product ID.Product Name..Orders.Order ID..
+</CODE></PRE>
+
+
+<P>The simplest form of <I>TableList </I>is
+
+
+<PRE><CODE>Employees..
+</CODE></PRE>
+
+
+<P>This code example shows how to copy the entire <B>Employees</B> table to the device and enable it to be updated.
+
+
+<P>Because neither a period (.) nor an exclamation mark (!) are valid in field or table names, there is no need to delimit table names. Delimited field or table names are not supported.
+</dd>
+
+<DT><I>Sync</I></DT>
+
+<DD>Optional. Always <B>False</B>. Provided for future compatibility.</dd>
+
+<DT><I>Overwrite</I></DT>
+
+<DD>Optional. Setting this parameter to <B>True</B> overwrites tables with the same name on the device. Setting this parameter to <B>False</B> generates new table names. <B>True</B> is the default.</dd>
+
+<DT><I>DeviceLocn</I></DT>
+
+<DD>Provided for future compatibility. Always a zero-length string (""). Database tables are copied to the object store  on the H/PC.
+</dd>
+</DL>
+
+<H4>Example</H4>
+
+<P>The following code example shows a simple Visual Basic application that copies a subset of the Northwind database to the device with no synchronization, but overwriting any existing Northwind tables. The <B>Employees</B> table is sent as a read-only table, while the <B>Products</B> table can be updated.</P>
+
+<PRE><CODE>Declare Function DESKTOPTODEVICE Lib "c:\program files\windows ce services\adofiltr.dll" _
+(ByVal desktoplocn As String, _
+        ByVal tablelist As String, _
+        ByVal sync As Boolean, _
+        ByVal overwrite As Integer, _
+ByVal devicelocn As String) As Long
+
+result = DESKTOPTODEVICE("c:\mydbs\nwind</CODE>.mdb<CODE>", _</CODE>
+<CODE>"!Employees..Products.ID.Name.Quantity..", False, True, "")</CODE>
+<CODE>If result &lt;&gt; 0 Then MsgBox "An error occurred transferring the data"</CODE>
+</PRE>
+<p>&nbsp;</p></body>
+</HTML>

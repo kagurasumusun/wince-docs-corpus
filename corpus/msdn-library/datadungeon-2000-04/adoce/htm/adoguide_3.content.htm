@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Converting Data to a Device</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+
+
+<H1><A NAME="_wceadoce_converting_data_to_a_device"></A>Converting Data to a Device</H1>
+
+<P>When you import an .mdb file to the device, it is converted to a format that ADOCE can read and manipulated. Because the internal Windows&nbsp;CE database system is less robust than Microsoft Access, this conversion sometimes results in a loss of information. This topic describes the conversion process in detail, including the types of information that are not converted to the ADOCE database format. The following table shows how data types are mapped from Microsoft Access to ADOCE.</P>
+
+<TABLE border=1 cellpadding=5 cols=4 frame=below rules=rows>
+
+<TR VALIGN="top">
+<TD class=blue width=16%><B>Access type</B></TD>
+<TD class=blue width=26%><B>ODBC type</B></TD>
+<TD class=blue width=18%><B>Device type</B></TD>
+<TD class=blue width=40%><B>Sent to device</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Text</TD>
+<TD width=26%>sql_varchar</TD>
+<TD width=18%><B>varchar</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Memo</TD>
+<TD width=26%>sql_longvarchar</TD>
+<TD width=18%><B>text</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>LongInt</TD>
+<TD width=26%>sql_integer</TD>
+<TD width=18%><B>Integer</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>&nbsp;</TD>
+<TD width=26%>sql_bigint</TD>
+<TD width=18%><B>Integer</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Byte</TD>
+<TD width=26%>sql_tinyint</TD>
+<TD width=18%><B>Smallint</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Int</TD>
+<TD width=26%>sql_smallint</TD>
+<TD width=18%><B>Smallint</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Single</TD>
+<TD width=26%>sql_real</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Double</TD>
+<TD width=26%>sql_double</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>&nbsp;</TD>
+<TD width=26%>sql_float</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>ReplID</TD>
+<TD width=26%>sql_varbinary</TD>
+<TD width=18%><B>Varbinary</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Date/Time</TD>
+<TD width=26%>sql_timestamp</TD>
+<TD width=18%><B>Datetime</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Currency</TD>
+<TD width=26%>sql_numeric</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>AutoNumber</TD>
+<TD width=26%>sql_integer</TD>
+<TD width=18%><B>Integer</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>YesNo</TD>
+<TD width=26%>sql_bit</TD>
+<TD width=18%><B>Boolean</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>OleObject</TD>
+<TD width=26%>sql_longvarbinary</TD>
+<TD width=18%><B>Varbinary</B></TD>
+<TD width=40%>Yes, if field is selected by user; default is unselected.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>HyperLink</TD>
+<TD width=26%>sql_longvarchar</TD>
+<TD width=18%><B>text</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Lookup</TD>
+<TD width=26%>sql_varchar</TD>
+<TD width=18%><B>varchar</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+</TABLE><BR>
+
+<H1>Table Conversion</H1>
+
+<P>A table is not converted or copied to the device if any of the following are true:
+
+<UL type=disc>
+	<LI>All its fields are unsupported data types—condition that causes the converted table to be empty.<BR><BR></LI>
+
+	<LI>The table is a system table. A system table is identified by the name <B>MSYS*</B>.</LI>
+</UL>
+
+<P>During conversion, table names are truncated to 31 characters. If you choose not to overwrite tables, and if a table already exists with the truncated name, the last character is deleted and replaced with the numeric character “0.” Values from 1 through 9 are attempted in turn. If all ten tables already exist, then the table is not copied.</P>
+
+<H1>Field Conversion</H1>
+
+<P>Field names map directly between Access and ADOCE databases because the supported length of 64 characters in .mdb files is the same on a Windows CE–based device.</P>
+
+<H1>Index Conversion</H1>
+
+<P>All index names are truncated to 64 characters. The only index attribute that is copied is <B>Ascending</B> or <B>Descending</B>. For example, extra Access index information, such as <B>Primary</B>, <B>Unique</B>, and <B>IgnoreNulls</B> is omitted. Index names are not case-sensitive. Only the first field of a multicolumn index is indexed on a device. Only three indexes are allowed. When you reach the limit of three indexes, the rest are skipped.</P>
+
+<P>Indexes are created on a device in three stages. The following table describes the three stages:</P>
+
+<TABLE border=1 cellpadding=5 cols=2 frame=below rules=rows>
+
+<TR VALIGN="top">
+<TD class=blue width=14%><B>Stage</B></TD>
+<TD class=blue width=86%><B>Event</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=14%><B>Stage 1</B></TD>
+<TD width=86%>Any unique index called PrimaryKey is processed first. If PrimaryKey is a single-field index and the field is being copied, then it is recreated on the device. If PrimaryKey consists of multiple fields, then an index is created for each field that exists on the device. These have 0, 1, and 2 appended to their names, replacing the 64<SUP>th</SUP> character of the name, if necessary. If this causes a naming conflict—unlikely because there should be only one PrimaryKey index—then that index is skipped. Boolean fields are not indexed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=14%><B>Stage 2</B></TD>
+<TD width=86%>Unique indexes are created next. Unique indexes are not created if any of the following are true:
+<UL type=disc>
+	<LI>The indexed field is not being copied to the device.<BR><BR></LI>
+
+	<LI>The index name, when truncated to 64 characters, matches an index name that is already present.<BR><BR></LI>
+
+	<LI>The field already has an index on the device.<BR><BR></LI>
+
+	<LI>The indexed field is Boolean.</LI>
+</UL>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=14%><B>Stage 3</B></TD>
+<TD width=86%>Nonunique indexes are created next. Nonunique indexes are not created if any of the following are true:
+<UL type=disc>
+	<LI>The indexed field contains more than one field.<BR><BR></LI>
+
+	<LI>The indexed field is not being copied to the device.<BR><BR></LI>
+
+	<LI>The index name, when truncated to 64 characters, matches an index name that is already present.<BR><BR></LI>
+
+	<LI>The field already has an index on the device.<BR><BR></LI>
+
+	<LI>The indexed field is Boolean.</LI>
+</UL>
+</TD>
+</TR>
+</TABLE><BR>
+
+<P>These rules are designed to create the most useful indexes on a device. However, because device use differs from desktop computer use, you should examine the resulting indexes and adjust them to suit a particular application.</P>
+
+<H1>Conversion Options</H1>
+
+<P>Windows&nbsp;CE filters may have user options. The following table shows the option that is provided for converting .mdb data.</P>
+
+<TABLE border=1 cellpadding=5 cols=3 frame=below rules=rows>
+
+<TR VALIGN="top">
+<TD class=blue width=31%><B>Option</B></TD>
+<TD class=blue width=13%><B>Default</B></TD>
+<TD class=blue width=56%><B>Comment</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Overwrite existing tables</TD>
+<TD width=13%><B>True</B></TD>
+<TD width=56%>If <B>False</B>, then tables are renamed. By default, they are replaced.</TD>
+</TR>
+</TABLE><BR>
+
+</BODY>
+</HTML>

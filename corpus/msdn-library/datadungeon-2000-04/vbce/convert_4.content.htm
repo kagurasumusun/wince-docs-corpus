@@ -1,0 +1,338 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Importing into the Device</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_adoce_importing_into_the_device"></A>Importing into the Device</H2>
+
+<P>When you move an .mdb file to the device, it has to be converted. Because the H/PC database system is generally less robust than Microsoft Access, this is a lossy conversion. This section describes the conversion process in detail. The following table shows how data types are mapped from Microsoft Access to ADOCE.</P>
+
+<TABLE cellspacing=4 cols=4>
+
+<TR VALIGN="top">
+<TD width=16%>
+<H5>Access type</H5>
+</TD>
+<TD width=26%>
+<H5>ODBC type</H5>
+</TD>
+<TD width=18%>
+<H5>Device type</H5>
+</TD>
+<TD width=40%>
+<H5>Sent to device</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Text</TD>
+<TD width=26%>sql_varchar</TD>
+<TD width=18%><B>varchar</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Memo</TD>
+<TD width=26%>sql_longvarchar</TD>
+<TD width=18%><B>text</B></TD>
+<TD width=40%>Yes, unless data is too long</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>LongInt</TD>
+<TD width=26%>sql_integer</TD>
+<TD width=18%><B>Integer</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>&nbsp;</TD>
+<TD width=26%>sql_bigint</TD>
+<TD width=18%><B>Integer</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Byte</TD>
+<TD width=26%>sql_tinyint</TD>
+<TD width=18%><B>Smallint</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Int</TD>
+<TD width=26%>sql_smallint</TD>
+<TD width=18%><B>Smallint</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Single</TD>
+<TD width=26%>sql_real</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Double</TD>
+<TD width=26%>sql_double</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>&nbsp;</TD>
+<TD width=26%>sql_float</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>ReplID</TD>
+<TD width=26%>sql_varbinary</TD>
+<TD width=18%><B>Varbinary</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Date/Time</TD>
+<TD width=26%>sql_timestamp</TD>
+<TD width=18%><B>Datetime</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Currency</TD>
+<TD width=26%>sql_numeric</TD>
+<TD width=18%><B>Double</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>AutoNumber</TD>
+<TD width=26%>sql_integer</TD>
+<TD width=18%><B>Integer</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>YesNo</TD>
+<TD width=26%>sql_bit</TD>
+<TD width=18%><B>Boolean</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>OleObject</TD>
+<TD width=26%>sql_longvarbinary</TD>
+<TD width=18%><B>Varbinary</B></TD>
+<TD width=40%>Yes, if field is selected by user; default is unselected.  </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>HyperLink</TD>
+<TD width=26%>sql_longvarchar</TD>
+<TD width=18%><B>text</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=16%>Lookup</TD>
+<TD width=26%>sql_varchar</TD>
+<TD width=18%><B>varchar</B></TD>
+<TD width=40%>Yes</TD>
+</TR>
+</TABLE><BR>
+
+<P><B>Table conversion</B></P>
+
+<P>A table is not converted or copied to the device if any of the following are true:
+
+<UL>
+	<LI>All its fields are unsupported data types — a condition that would cause the converted table to be empty.</li>
+
+	<LI>The table is a system table. A system table is identified by its name being of the form <B>MSYS*</B>.</li>
+</UL>
+
+<P>During conversion, table names are truncated to 31 characters. If you choose not to overwrite tables, and if a table already exists with the truncated name, then the last character is deleted and replaced with the numeric character “0.” Values from 1 through 9 are attempted in turn. If all ten tables already exist, then the table is not copied.</P>
+
+<P><B>Field conversion</B></P>
+
+<P>Field names map one-to-one because the supported length of 64 characters on .mdb files is the same on an H/PC.</P>
+
+<P><B>Index</B> <B>conversion</B></P>
+
+<P>All index names are truncated to 64 characters. The only index attribute that is copied is <B>Ascending</B> or <B>Descending</B>. For example, extra Access index information, such as <B>Primary</B>, <B>Unique</B>, and <B>IgnoreNulls</B> is omitted. Index names are not case-sensitive. Only the first field of a multicolumn index is indexed on an H/PC. Only three indexes are allowed. When you reach the limit of three indexes, the rest are skipped.</P>
+
+<P>Indexes are created on the device in three stages:
+
+<UL>
+	<LI>Stage 1
+<P>Any unique index called “PrimaryKey” is processed first. If the PrimaryKey is a single-field index and the field is being copied, then it is recreated on the device. If the PrimaryKey consists of multiple fields, then an index is created for each field that exists on the device. These have “0”..”2” appended to their names, replacing the 64th character, if necessary. If this causes a naming conflict — very unlikely because there should be only one PrimaryKey index — then that index is skipped. Boolean fields are not indexed. 
+</li>
+
+	<LI>Stage 2
+<P>Unique indexes are created next. Unique indexes are not created if any of the following are true:
+
+<UL>
+	<LI>The indexed field is not being copied to the device.</li>
+
+	<LI>The index name, when truncated to 64 characters, matches an index name that is already present.</li>
+
+	<LI>The field already has an index on the device.</li>
+
+	<LI>The indexed field is Boolean.</li>
+</UL>
+</li>
+
+	<LI>Stage 3
+<P>Non-unique indexes are created next. Non-unique indexes are not created if any of the following are true:
+
+<UL>
+	<LI>It contains more than one field.</li>
+
+	<LI>The indexed field is not being copied to the device.</li>
+
+	<LI>The index name, when truncated to 64 characters, matches an index name that is already present.</li>
+
+	<LI>The field already has an index on the device.</li>
+
+	<LI>The indexed field is Boolean.</li>
+</UL>
+</li>
+</UL>
+
+<P>These rules are designed to create the most useful indexes on a device. However, because device use is likely to be different from desktop computer use, users should examine the resulting indexes and adjust them to suit a particular application.</P>
+
+<P><B>Conversion options</B></P>
+
+<P>Windows CE filters may have user options. The following table shows the option that is provided for converting .mdb data.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Option</H5>
+</TD>
+<TD width=13%>
+<H5>Default</H5>
+</TD>
+<TD width=56%>
+<H5>Comment</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Overwrite existing tables</TD>
+<TD width=13%><B>True</B></TD>
+<TD width=56%>If <B>False</B>, then the tables are renamed. By default, they are replaced.</TD>
+</TR>
+</TABLE><BR>
+
+<P><B>Error Handling</B></P>
+
+<P>Errors can occur when you copy data to a device. Errors typically fall into the following categories:
+
+<UL>
+	<LI>Fatal
+<P>Cannot continue to copy data to the device. For example, a fatal error occurs if the device is out of memory or if the communications link is lost. Users can correct some fatal errors. 
+</li>
+
+	<LI>Informational
+<P>The error does not stop the conversion.
+</li>
+</UL>
+
+<P>The following process is used to handle the errors.</P>
+
+<P>A log file named Db2ce.txt is created in the user’s partner directory, obtained from the registry, with the format described in the following table. It contains general status as well as all informational and fatal errors. If the file already exists, it is overwritten. If it cannot overwrite, then it tries Db2ce&lt;<I>n</I>&gt;.txt where <I>n</I> is 1..9.</P>
+
+<P>If a fatal error occurs, an error is given to the user in the final dialog box, and the Db2ce.txt file is opened in the default .txt file editor. No attempt is made to clean up the H/PC, because it is not always possible.</P>
+
+<P>The purpose of the log is to give users as much information as possible about the transfer process. Although most users never need to view this information, the log enables advanced users to investigate problems.</P>
+
+<P>The following table shows the information that Db2ce.txt contains.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=25%>
+<H5>Section</H5>
+</TD>
+<TD width=75%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Startup statistics</TD>
+<TD width=75%>Shows the user name, the start date and time, and the options used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Desktop database</TD>
+<TD width=75%>Shows which .mdb file is being copied and where it came from. For ODBC data sources, it shows the connection string.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Options chosen</TD>
+<TD width=75%>Shows the sync or overwrite options chosen. Displays 1 for <B>True</B>, 0 for <B>False</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Index statistics</TD>
+<TD width=75%>Information about converted indexes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Table statistics</TD>
+<TD width=75%>The SQL statement that would be used to create the table in a form that can be copied and pasted. Shows the number of records copied.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>Closing statistics</TD>
+<TD width=75%>Time finished, and the number of tables, records, packets, and bytes copied. </TD>
+</TR>
+</TABLE><BR>
+
+<P>The following code example shows how the information is displayed in an ADOCE log file.</P>
+
+<PRE><CODE>Sunday, June 14, 1998 3:17:56 PM, User: username, started sync
+
+Database: C:\Program Files\Windows CE Services\Profiles\hpc2\db1</CODE>.mdb
+
+<CODE>option: 1 - Overwrite existing tables</CODE>
+<CODE>option: 0 - Keep this data base synchronized</CODE>
+
+<CODE>Sunday, June 14, 1998 3:18:08 PM, Database transfer begun.</CODE>
+
+
+<CODE>  Copying table Table1</CODE>
+
+<CODE>    Processing indexes:</CODE>
+<CODE>    Ignoring index for column 'Field5'. Not supported on the device.</CODE>
+<CODE>    Index processing ending: No more indexes available.</CODE>
+<CODE>    One or more index creations failed.</CODE>
+
+<CODE>    SQL: SELECT `Field1`,`Field2`,`Field3`,`Field4`,`Field5`,`Field6`,`Field7`,`Field8`,`Field9` FROM `Table1` </CODE>
+<CODE>    Completed copying of 13 record(s).</CODE>
+
+<CODE>Sunday, June 14, 1998 3:18:16 PM, Database transfer complete.</CODE>
+<CODE>Transfer Statistics:</CODE>
+<CODE>          1 Table(s)</CODE>
+<CODE>         13 Record(s)</CODE>
+<CODE>          4 Packet(s)</CODE>
+<CODE>       6054 Bytes</CODE>
+</PRE>
+
+<P>If an error occurs, then the error text is placed in the log with any ODBC driver error information, even if a subset has been presented to the user on the screen. Statistics and closing information are placed in the log after the error.</P>
+<p>&nbsp;</p></body>
+</HTML>

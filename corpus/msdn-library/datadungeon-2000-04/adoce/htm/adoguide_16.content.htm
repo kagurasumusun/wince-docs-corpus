@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DesktopToDevice</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+
+
+<H1><A NAME="_wceadoce_desktoptodevice"></A>DesktopToDevice</H1>
+
+<P><B>DesktopToDevice</B> enables programmatic control over the conversion of .mdb files to ADOCE tables. </P>
+
+<P><B>Syntax</B></P>
+
+<P><CODE><B>DESKTOPTODEVICE (</B><I>DesktopLocn</I>,<I> TableList</I>,<I> Sync</I>,<I> Overwrite</I>,<I> DeviceLocn</I><B>)</B></CODE></P>
+
+<P><B>Parameters</B></P>
+
+<P class=dt><I>DesktopLocn</I></P>
+
+<P class=indent>Specifies the file name and path of the .mdb file to be transferred, or the Data Source Name (DSN) if ODBC support is enabled.</P>
+
+<P class=dt><I>TableList</I></P>
+
+<P class=indent>Specifies the list of tables and fields that is converted and copied to the device. The following code example shows the form for <I>TableList</I> .</P>
+
+<PRE><CODE>[!]tablename[&lt;period&gt;fieldname]&lt;period&gt;&lt;period&gt;[[!]tablename[&lt;period&gt;fieldname]&lt;period&gt;&lt;period&gt;]
+</CODE></PRE>
+
+<P class=indent>A leading exclamation mark (!) marks this table as read-only on the device. If this is a zero-length string ("") or if the parameter is not provided, the default copying of all tables and appropriate fields is performed. If a table is requested but no field list is provided, then the default fields are copied. </P>
+
+<P class=indent>The following code example shows how to copy the Employees table as read-only, how to copy the <B>Product ID</B> and <B>Product Name</B> fields from the Products table, and how to copy the <B>Order ID</B> field from the <B>Orders</B> table.</P>
+
+<PRE><CODE>!Employees..Products.Product ID.Product Name..Orders.Order ID..
+</CODE></PRE>
+
+<P class=indent>The simplest form of <I>TableList</I> is</P>
+
+<PRE><CODE>Employees..
+</CODE></PRE>
+
+<P class=indent>This code example shows how to copy the entire <B>Employees</B> table to the device and enable it to be updated.</P>
+
+<P class=indent>Because neither a period (.) nor an exclamation mark (!) are valid in field or table names, table names do not need to be delimited. Delimited field or table names are not supported.</P>
+
+<P class=dt><I>Sync</I></P>
+
+<P class=indent>Optional. If <B>True</B>, enables ActiveSync. <B>False</B> disables active sync. This parameter is not available in ADOCE 1.0 or 2.0.</P>
+
+<P class=dt><I>Overwrite</I></P>
+
+<P class=indent>Optional. Setting this parameter to <B>True</B> overwrites tables with the same name on the device. Setting this parameter to <B>False</B> generates new table names. <B>True</B> is the default.</P>
+
+<P class=dt><I>DeviceLocn</I></P>
+
+<P class=indent>Optional. Specifies the .cdb file that tables are copied to on the device. Not supported in ADOCE 1.0 or 2.0.</P>
+
+<P><B>Remarks</B></P>
+
+<P>The behavior of <B>DesktopToDevice</B> parallels that of the <B>Import from Database to Mobile Device</B> dialog box, except that the user-choice dialog boxes do not appear. All progress bars appear, showing the transfer status. An error return does not cause the log file to automatically display. Instead, an error value, <B>HRESULT</B>, is returned by the function. The calling application can then take appropriate action.</P>
+
+<P><B>Example</B></P>
+
+<P>The following code example shows a simple Visual Basic application that copies a subset of the Northwind database to the device with no synchronization, but overwriting any existing Northwind tables. The <B>Employees</B> table is sent as a read-only table, while the <B>Products</B> table can be updated.</P>
+
+<PRE><CODE>Declare Function DESKTOPTODEVICE Lib "c:\program files\windows ce services\adofiltr.dll" _
+(ByVal desktoplocn As String, _
+        ByVal tablelist As String, _
+        ByVal sync As Boolean, _
+        ByVal overwrite As Integer, _
+        ByVal devicelocn As String) As Long
+
+result = DESKTOPTODEVICE("c:\mydbs\nwind.mdb", _
+"!Employees..Products.ID.Name.Quantity..", False, True, "")
+If result &lt;&gt; 0 Then MsgBox "An error occurred transferring the data"
+</CODE></PRE>
+
+</BODY>
+</HTML>

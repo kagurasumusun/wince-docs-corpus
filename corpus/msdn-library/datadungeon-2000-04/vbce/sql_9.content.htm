@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SELECT - Join</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_adoce_select___join"></A>SELECT – Join</H2>
+
+<P>This statement enables two tables to be combined using a join field common to both tables. ADOCE uses a subset of the fields in the combined database to build the recordset. </P>
+
+<H4>Syntax</H4>
+
+<P><B>SELECT</B> [<I>tablename</I>.]<I>fieldname</I> [,[<I>tablename</I>.]<I>fieldname</I> ...] <B>FROM</B> <I>tablename </I><B>INNER JOIN</B><I> tablename2</I><B> ON </B><I>tablename.fieldname </I><B>=</B><I> tablename2.fieldname2</I></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>fieldname</I></DT>
+
+<DD>Specifies the name of a field in the table to include in the recordset.</dd>
+
+<DT><I>tablename</I></DT>
+
+<DD>Specifies the name of the table from which to retrieve data.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>Because the tables being combined may have fields with the same name, it may be necessary to specify the table name with the fieldname. For example, if more than one table has the field <B>ProductID</B>, the table name is not optional and you will need to specify <B>Table1.ProductID</B> as the fieldname.</P>
+
+<P>You can use an <B>INNER JOIN</B> operation in any <B>FROM</B> clause. This is the only type of join supported in ADOCE. Inner joins combine records from two tables whenever there are matching values in a field common to both tables.</P>
+
+<P>If you try to join fields containing Memo or OLE Object data, an error occurs.  </P>
+
+<P>The following SQL statement shows how you could join the <B>Categories</B> and <B>Products</B> tables on the <B>CategoryID</B> field:</P>
+
+<PRE><CODE>SELECT CategoryName, ProductName
+FROM Categories INNER JOIN Products
+ON Categories.CategoryID = Products.CategoryID;
+</CODE></PRE>
+
+<P>In the preceding example, <B>CategoryID</B> is the joined field, but it is not included in the query output because it is not included in the <B>SELECT</B> statement. To include the joined field, include the field name in the <B>SELECT</B> statement. In this case, the field name is <B>Categories.CategoryID</B>. You must specify the table name when a field name is used in more than one table.</P>
+
+<P>You can join a maximum of four tables, and only inner joins on equality are supported. Joins are possible only with the above explicit <B>INNER JOIN</B> syntax. Implied joins using the <B>WHERE</B> clause are not supported.</P>
+
+<P>At least one of the tables in each join clause must be indexed on the joined field. </P>
+
+<P>Joins that return columns from only a single table, such as the project list following the <B>SELECT</B> clause, have results that can be updated. All other joins produce read-only result sets. <B>INNER JOIN </B>clauses can be nested to create complex queries. Brackets must be used to enclose table names that contain spaces. The following example shows a complex query using <B>INNER JOIN.</B></P>
+
+<H4>Example</H4>
+
+<PRE><CODE>SELECT Orders.ShippedDate, Shippers.CompanyName, Orders.ShipName, 
+       Products.ProductName, [Order Details].UnitPrice, 
+       [Order Details].Quantity, [Order Details].Discount
+FROM Shippers INNER JOIN
+       (Products INNER JOIN
+         (Orders INNER JOIN [Order Details] ON 
+          Orders.OrderID = [Order Details].OrderID) ON
+        Products.ProductID = [Order Details].ProductID) ON
+      Shippers.ShipperID = Orders.ShipVia
+WHERE (((Orders.ShippedDate) &gt;= #5/1/96# And
+        (Orders.ShippedDate) &lt;= #5/31/96#))
+ORDER BY Orders.ShippedDate
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

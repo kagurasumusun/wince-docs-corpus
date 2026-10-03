@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>GetRows</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_adoce_getrows"></A>GetRows</H2>
+
+<P>This method retrieves multiple records of a <B>Recordset</B> into an array.</P>
+
+<H4>Syntax</H4>
+
+<P><I>array</I> = <I>recordset</I>.<B>GetRows(</B><I>Rows, Start, Fields</I><B>)</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Array</I></DT>
+
+<DD><B>Variant</B> variable that contains returned data.</dd>
+
+<DT><I>Rows</I></DT>
+
+<DD>Optional. <B>Long</B> expression that indicates the number of records to retrieve. The default value is either <B>adGetRowsRest</B> or -1 .</dd>
+
+<DT><I>Start</I></DT>
+
+<DD>Optional. <B>String</B> or <B>Variant</B> that evaluates to the bookmark for the record from which the <B>GetRows</B> operation should begin.</dd>
+
+<DT><I>Fields</I></DT>
+
+<DD>Optional. <B>Variant</B> that represents a single field name or ordinal position or an array of field names or ordinal position numbers. ADOCE returns only the data in these fields.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>Use the <B>GetRows</B> method to copy records from a <B>Recordset</B> into a two-dimensional array. The first subscript identifies the field and the second identifies the record number. The array variable is automatically dimensioned to the correct size when the <B>GetRows</B> method returns the data.</P>
+
+<P>If you do not specify a value for the <B>Rows</B> parameter, the <B>GetRows</B> method automatically retrieves all the records in the <B>Recordset</B> object. If you request more records than are available, <B>GetRows</B> returns only the number of available records.</P>
+
+<P>If the <B>Recordset</B> object supports bookmarks, you can specify at which record the <B>GetRows</B> method should begin retrieving data by passing the value of that record’s <B>Bookmark</B> property.</P>
+
+<P>If you want to restrict the fields the <B>GetRows</B> call returns, you can pass either a single field name or number or an array of field names or numbers in the <I>Fields</I> parameter.</P>
+
+<P>After you call <B>GetRows</B>, the next unread record becomes the current record. If there are no more records, ADOCE sets the <B>EOF</B> property to <B>True</B>.</P>
+
+<H4>Example</H4>
+
+<PRE><CODE>Dim rstEmployees, strMessage
+Dim intRows, avarRecords
+Dim intRecord, intField
+Dim intRecCount, intFieldCount
+
+Set rstEmployees = CreateObject("adoce.recordset")
+rstEmployees.Open "mytable"
+
+strMessage = "Enter number of rows to retrieve."
+intRows = CInt(InputBox(strMessage))
+
+If intRows &lt;= 0 Then intRows = 1
+
+' If GetRowsOK is successful, print the results,
+' noting if the end of the file was reached.
+If GetRowsOK(rstEmployees, intRows, avarRecords) Then
+  If intRows &gt; UBound(avarRecords, 2) + 1 Then
+    MsgBox "Less than " &amp; intRows &amp; " rows in recordset."
+  End If
+  intRecCount = UBound(avarRecords, 2) + 1
+  intFieldCount = UBound(avarRecords, 1) + 1
+  MsgBox intRecCount &amp; " records found."
+  MsgBox intFieldCount &amp; " fields found."
+  For intRecord = 0 To intRecCount - 1
+    strMessage = ""
+    For intField = 0 To intFieldCount - 1
+      strMessage = strMessage &amp; _
+        avarRecords(intField, intRecord) &amp; vbCrLf
+    Next
+    MsgBox strMessage
+  Next
+Else
+  MsgBox "GetRows failed!"
+End If
+
+rstEmployees.Close
+Set rstEmployees = Nothing
+
+Public Function GetRowsOK(rstTemp, intNumber, avarData)
+  ' Store results of GetRows method in array.
+  avarData = rstTemp.GetRows(intNumber)
+  ' Return False only if fewer than the desired
+  ' number of rows were returned, but not because the
+  ' end of the Recordset was reached.
+  If intNumber &gt; UBound(avarData, 2) + 1 And Not rstTemp.EOF Then
+    GetRowsOK = False
+  Else
+    GetRowsOK = True
+  End If
+End Function
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>
