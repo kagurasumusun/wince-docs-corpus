@@ -233,6 +233,17 @@ def seven_zip():
     return None
 
 
+def _load_tool(name):
+    """Import a tools/ module by path (``extract-chm.py`` has a hyphen)."""
+    import importlib.util
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        name + ".py")
+    spec = importlib.util.spec_from_file_location(name.replace("-", "_"), path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def unpack(seven, source, dest):
     """Unpack an archive into dest; returns True when it worked."""
     os.makedirs(dest, exist_ok=True)
@@ -452,8 +463,7 @@ def extract_pages(root, out, label, dry_run=False, exclude=""):
             if dry_run:
                 imported += 1
                 continue
-            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-            import extract_chm  # noqa: E402  (local tool, same directory)
+            extract_chm = _load_tool("extract-chm")
             pages, _size = extract_chm.extract_chm(seven, path, components)
             imported += pages
         elif ext in HELP_EXT:

@@ -57,6 +57,17 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Restore the media cache
+        # A scratch medium is thrown away at the end of the run, and a run can
+        # fail after a 338 MB download; this keeps the image around for the
+        # retry.  Nothing here is ever committed - the cache is the runner's.
+        uses: actions/cache@v4
+        with:
+          path: .cache/media
+          key: media-${{ github.run_id }}
+          restore-keys: |
+            media-
+
       - name: Install 7-Zip and unshield
         run: |
           which 7z || sudo apt-get install -y p7zip-full
