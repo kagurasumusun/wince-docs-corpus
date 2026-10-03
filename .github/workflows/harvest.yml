@@ -10,6 +10,9 @@
 #   * --dry-run previews what a queue would fetch, without making a request
 #   * tools/check-corpus.py --report for
 #     data/reports/{duplicates,corpus-problems}.tsv
+#   * tools/check-policy.py: the corpus has to stay Windows CE documentation
+#     only (docs/COLLECTION-POLICY.md) - a harvested page that is not out of
+#     scope fails the run
 #   * data/reports/harvest-last.json records what the run did (counters, rate)
 #   * data/logs/ staged, corpus/ data/index/ data/reports/ committed
 #
@@ -151,8 +154,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           python3 tools/build-index.py
           python3 tools/build-index-sql.py
+          python3 tools/build-ce-api-names.py
           python3 tools/build-win32-map.py
           python3 tools/check-corpus.py --report || true
+          python3 tools/check-policy.py
           python3 tools/summarize-harvest.py || true
           git add data/index/ data/reports/ corpus/ data/logs/ || true
           if ! git diff --quiet || ! git diff --staged --quiet; then

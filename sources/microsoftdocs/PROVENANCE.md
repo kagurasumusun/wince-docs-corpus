@@ -19,21 +19,31 @@ with `nf` = function, `ns` = structure, `ne` = enumeration, `nc` = callback,
 
 ### What was extracted into the corpus
 
-`corpus/win32/api/<module>/<page>.md` — **17,095 pages** in two rings:
+`corpus/win32/api/<module>/<page>.md` — **5,279 pages**, the sdk-api pages
+whose API name (or, for an `A`/`W` variant, whose base name) is an API name
+Windows CE documents: 5,068 shared names. `CreateFileW` is included because
+Windows CE documents `CreateFile`; `IDirectDrawVideo::CanUseOverlayStretch`
+because CE 5.0 documents that interface method. Every page carries its CE
+evidence in `data/reports/win32-imported.tsv` (`ce_sets`, `ce_page_ids`).
 
-* **5,219 pages** for the **5,009 API names** that also appear in the Windows
-  CE catalogs (`data/catalogs/windows-ce-*.tsv`), including the `A`/`W`
-  variants of a shared base name (`CreateFileW` is included because Windows CE
-  documents `CreateFile`). This is the "Win32-common" API surface of CE.
-* **11,876 pages** that are the remaining content of the 183 modules those
-  shared names live in (`--scope modules`, the default), so the enums,
-  structs, callbacks and interfaces that accompany a shared function are
-  present. `data/reports/win32-imported.tsv` marks each page `ce_shared`.
+Nothing else is extracted. The 183-module "context ring" that an earlier
+revision imported (11,819 desktop-only pages: the Shell, Windows Media,
+DirectShow interfaces CE never had, WMI, …) is gone: those pages document
+desktop Windows, not the part of Win32 that Windows CE shares.
+`data/win32-exclude.tsv` lists the reviewed exceptions — the two name
+coincidences (CE's `Run (Windows Media Player)` vs. the printer-driver `RUN`
+structure; the CE 3.0 DDK's device-driver `Address` vs. the dbghelp `ADDRESS`
+structure) and the seven modules whose APIs CE never had (Windows Runtime,
+Direct2D, the shim `TAG` macro, Windows Contacts, the desktop Task Scheduler,
+Core Audio, display cloning). `tools/check-policy.py` fails if a page that CE does
+not document appears under `corpus/win32/`.
 
-Page-by-page extraction stops at those 183 modules on purpose: importing all
-65,911 sdk-api pages would more than double this repository with desktop-only
-material (DirectX, WMI, AD schema, …). The snapshot tarball next to this file
-*is* complete — unpack it with:
+The name list is built by `tools/ce_api_names.py` from `data/catalogs/*.tsv`
+plus the names mined from the CE sets without a catalog, and is printed for
+review in `data/reports/ce-api-names.tsv`.
+
+The snapshot tarball next to this file is **complete** (all 65,910 pages), so
+the corpus can be re-derived — or a wider extraction attempted — offline:
 
 ```bash
 python3 tools/fetch-upstream.py pack --source sdk-api   # rebuild the snapshot
@@ -48,18 +58,19 @@ Re-running `tools/fetch-upstream.py subset --source sdk-api` regenerates
 * Repository: <https://github.com/MicrosoftDocs/win32>
 * Commit: `e103fa4e8810bd8d42c4777e17081e24dbe62dbd` (2026-09-15, branch `docs`)
 * Upstream tree: 48,212 `.md` pages under `desktop-src/` (plus images).
+* **Not part of the corpus.** The guides describe desktop Windows (transactional
+  NTFS, change journals, the desktop service control manager, …), so they are
+  not Windows CE documentation. Only the `LICENSE` files are kept here, for
+  attribution.
+* For an offline copy of the guide folders of the subsystems CE implements
+  (`FileIO`, `Memory`, `Sync`, `ProcThread`, `ipc`, `Dlls`, `Debug`, `DevIO`,
+  `SysInfo`, `Power`, `Services`, `gdi`, `menurc`, `dlgbox`, `inputdev`,
+  `WinSock`, `NetMgmt`, `Bluetooth`, `SecCrypto`, `com` — see `GUIDE_FOLDERS`
+  in `tools/fetch-upstream.py`), extract them outside the repository:
 
-Only the guide folders for subsystems Windows CE also implements are
-extracted, into `corpus/win32/guide/<folder>/` — **3,357 pages** from
-`FileIO`, `Memory`, `Sync`, `ProcThread`, `ipc`, `Dlls`, `Debug`, `DevIO`,
-`SysInfo`, `Power`, `Services`, `gdi`, `menurc`, `dlgbox`, `inputdev`,
-`WinSock`, `NetMgmt`, `Bluetooth`, `SecCrypto` and `com`
-(see `GUIDE_FOLDERS` in `tools/fetch-upstream.py`).
-
-Desktop-only areas (DirectX, WMI/CIM, Active Directory schema, Hyper-V,
-MSI, Ribbon, ADSI, TAPI, printing, …) are deliberately not extracted:
-Windows CE has no counterpart, and their ~46,000 pages would dwarf the CE
-material. They remain one tarball away in the upstream repository.
+  ```bash
+  python3 tools/fetch-upstream.py guides --out .cache/win32-guides
+  ```
 
 ## License and attribution
 

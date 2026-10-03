@@ -1,0 +1,115 @@
+# Collection policy
+
+What this repository is, in one sentence: **the documentation Microsoft
+published for Windows CE and its derivatives, plus the part of the Win32
+documentation that Windows CE shares** — nothing else.
+
+The policy is executable: `tools/check-policy.py` fails (exit 1) when a page
+that does not belong appears in `corpus/`. Every collection workflow runs it.
+
+```
+python3 tools/check-policy.py
+corpus/            121,686 pages in 7 trees
+corpus/win32/api/  5,279 CE-shared API pages
+policy             OK - Windows CE documentation only
+```
+
+## In scope
+
+| Tree | What it holds |
+|------|---------------|
+| `corpus/learn/` | the `previous-versions/windows/embedded` documentation on Microsoft Learn: Windows CE 5.0, Windows CE .NET 4.x, Windows Embedded CE 6.0, Windows Embedded Compact 7, Windows Mobile topics, .NET Compact Framework, .NET Micro Framework, POS for .NET |
+| `corpus/chm/` | the product documentation shipped as CHMs: CE 3.0, the 98 CE 5.0 component CHMs, the CE .NET 4.2 emulator/remote-tools CHMs |
+| `corpus/mvb/` | the CE 1.0 Books Online and the CE 2.0 SDK (H/PC) disc documentation |
+| `corpus/msdn-library/` | the MSDN Library CE sets of the CE 1.0/2.0 era (techshelps), the April 2000 MSDN Library crawl (CE 2.12/3.0), the 2010-05 capture, Windows Mobile 6.5, and the CE 2.11/2.12 SDK documentation of the DevCon '99 disc |
+| `corpus/kb/` | the Windows CE KnowledgeBase articles |
+| `corpus/win32/api/` | the **Win32-common** half: sdk-api pages whose API name Windows CE also documents |
+
+## Out of scope (and how it is kept out)
+
+| Not collected | Kept out by |
+|---------------|-------------|
+| another product's documentation (desktop Win32 API reference, the Shell, DirectX, WMI, WinRT, Windows Media, the desktop programming guides, Commerce Server pages Microsoft itself misfiled in the embedded namespace) | the name rule below; `tools/check-policy.py` refuses any `corpus/win32/` page whose API name CE does not document |
+| source code, headers, samples, toolchains, OS images, installer payloads | `tools/import-media.py` counts and skips them; `tools/harvest.py` stores pages only; `tools/check-corpus.py`/`check-policy.py` report a `source or binary` count that must stay 0 |
+| a medium's shop window and leftovers: sponsor and vendor pages, sample trees and their readme pages, FrontPage metadata (`_vti_cnf/`, `_vti_pvt/`, `_derived/`) | per-medium exclude regexes in `queues/media.tsv` plus the built-in metadata-directory rule in `tools/import-media.py` |
+| help for a medium's own viewer/IDE (InfoViewer, the Visual C++ help) | per-medium exclude regexes in `queues/media.tsv` |
+| third-party mirrors, vendor knowledge bases, blog posts | `queues/third-party-sources.md` (the accepted mirrors for the CE 1.0/2.0 era are listed there explicitly) |
+
+## The Win32-common rule
+
+Windows CE implements a subset of Win32, so the corpus carries the Win32
+documentation **for exactly that subset**:
+
+* A page of `MicrosoftDocs/sdk-api` is imported into `corpus/win32/api/` when
+  its API name is an API name Windows CE documents
+  (`tools/ce_api_names.py`, evidence in `data/reports/ce-api-names.tsv`),
+  including the `A`/`W` variants of a shared base name: CE documents
+  `CreateFile`, so `CreateFileA` and `CreateFileW` come along.
+* Nothing else is imported. There is no "module context" ring: the desktop
+  siblings of a shared API (the Shell, WMP, DirectShow filters CE never had,
+  WMI, DirectX, WinRT, ...) are **not** CE documentation.
+* The Win32 *programming guides* (`MicrosoftDocs/win32`) are desktop
+  documentation — transactional NTFS, change journals, the desktop service
+  control manager — and are not part of the corpus either.
+  `tools/fetch-upstream.py guides --out DIR` extracts them as an offline extra
+  outside the repository for anyone who wants the desktop reading.
+* `data/win32-exclude.tsv` lists the reviewed exceptions: two name matches
+  where CE documents a *different* thing with the same name (CE's
+  `Run (Windows Media Player)` vs. the printer-driver `RUN` structure; the
+  device-driver `Address` of the CE 3.0 DDK vs. the dbghelp `ADDRESS`
+  structure) and seven modules that document an API family CE never had
+  (Windows Runtime `roapi`, Direct2D helpers, the shim-database `TAG` macro of
+  `exposeenums2managed`, Windows Contacts `icontact`, the desktop Task
+  Scheduler `mstask`, Core Audio device topology, display cloning).
+
+Every imported page carries its CE evidence:
+`data/reports/win32-imported.tsv` has `path / module / kind / name / ce_sets /
+ce_page_ids`, and `data/reports/win32-shared.tsv` maps each shared name to the
+CE page ids that document it.
+
+## Review 2026-10 (what was wrong, what changed)
+
+The corpus had grown by collecting whole Win32 *modules* instead of the shared
+surface, and by importing everything an older medium happened to contain. The
+review removed 16,228 pages (68 MB) and closed the doors that let them in.
+
+| Finding | Evidence | Action |
+|---------|----------|--------|
+| 11,819 desktop-only sdk-api pages ("module context" of 183 modules) filled `corpus/win32/api/` | `--scope modules` was the default of `tools/fetch-upstream.py` and `import-win32.yml` | default and only rule is now "CE documents the name"; 5,279 pages remain; `--scope modules` is gone |
+| 3,357 desktop Win32 programming guides in `corpus/win32/guide/` | headings like *Transactional NTFS*, *Change Journals*, *Service control manager* | tree removed, extraction moved behind `fetch-upstream.py guides --out DIR` (outside the corpus) |
+| the DevCon '99 import dragged in 839 pages of sponsor shop window, sample trees and their readmes, plus `_vti_cnf`/`_vti_pvt` FrontPage metadata (423 pages), `MPLAYER2/` (desktop Media Player 2 Books Online), `MPSUPP/` (generic product support pages), `ACCESSIB/` (general accessibility pages) and `Handhelds/` (a vendor's spec sheets) | `find corpus/msdn-library/wcedevcon-99 -path '*_vti_cnf*'` etc. | the medium's exclude regex in `queues/media.tsv` now refuses them; `tools/import-media.py` refuses metadata directories for every medium; 6,382 pages of CE 2.11/2.12 SDK documentation remain |
+| a Microsoft Commerce Server page sat in `learn/unclassified/` | `ms866183(v=msdn.10).html` (canonical URL in the embedded namespace, content about `Microsoft.CommerceServer`) | removed |
+| four pages survived the name rule although the *same name* documents another product: Windows Contacts (`icontact`), the desktop Task Scheduler (`mstask`), the shim-database `TAG` macro (`exposeenums2managed`) and the dbghelp `ADDRESS` structure | their upstream descriptions name the other product (`[Windows Contacts]`, `[Task Scheduler]`, "Identifies an entry in the shim database") while the CE page of that name documents the Pocket Outlook object, the Mobile Channels `TAG` or the device-driver `Address` | the four modules/pages are refused in `data/win32-exclude.tsv`; 5,279 pages remain, and every remaining page's CE evidence is one line in `data/reports/win32-imported.tsv` |
+| the mined Win32 name list was never looked at as a whole | — | `data/reports/ce-api-names.tsv` makes every name, its CE sets and its CE page ids reviewable; the two name-level and seven module-level exceptions live in `data/win32-exclude.tsv` |
+| `data/index/INDEX.tsv` had 6 ragged rows (page titles spanned several lines) | `awk -F'\t' 'NF!=4'` | `tools/build-index.py` folds whitespace in titles |
+
+Checked and found correct during the same review, so it stayed:
+
+* the CE sets themselves (`learn/` is 100 % the `previous-versions/windows/
+  embedded` namespace; the CHM/MVB/KB/MSDN-Library trees are CE releases);
+* pages whose text is mostly a code listing: they are documentation pages that
+  *quote* code (KnowledgeBase articles, sample chapters), not source files;
+* GDI+, TAPI, TSPI, UPnP, WSD, P2P, Smart Card, LDAP, WinInet, ICM, DirectShow
+  and Windows Media pages: Windows CE documents those APIs itself, so their
+  Win32 pages are genuinely part of the shared surface (each one is listed with
+  its CE page ids in `data/reports/win32-shared.tsv`).
+* the pairing itself: every imported page carries the CE page it was matched
+  against. The 149 pages whose CE side is a catalog entry or a CE SDK anchor
+  page were read one by one — the CE page has the same API name in all of them,
+  except for the `address` case above.
+* the 672 byte-for-byte duplicate groups of `data/reports/duplicates.tsv` are
+  the media's own structure, not import errors: 640 pages of the CE 2.12 SDK
+  reference appear both in the DevCon '99 capture and in the `datadungeon` MSDN
+  CD capture, 30 CE 5.0 pages sit in both the `wcemouse5` and the `wcestylus5`
+  component CHM, and 2 are one CE 1.0 book page that shipped twice on its CD.
+  (`corpus/msdn-library/2010-05/` keeps 161 wayback captures next to the Learn
+  pages they duplicate for the same reason: they are a different capture.)
+
+## Adding something new
+
+1. Collect it (a queue, a medium, an upstream repository).
+2. If it is Win32 material, it goes through `tools/ce_api_names.py` — do not
+   add a folder by hand.
+3. Run `tools/check-policy.py`, `tools/check-corpus.py --report`,
+   `tools/build-index.py`, `tools/build-index-sql.py` and
+   `tools/build-ce-api-names.py`, and commit the refreshed reports with it.

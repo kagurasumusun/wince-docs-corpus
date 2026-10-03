@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""tools/fetch-upstream.py -- import shared Win32 documentation from Microsoft.
+"""tools/fetch-upstream.py -- import the Win32-common documentation.
 
-Microsoft publishes the sources of the Win32 documentation on GitHub, and
-Windows CE implements a subset of that same Win32 API, so those pages are the
+Windows CE implements a subset of the Win32 API, and Microsoft publishes the
+sources of the Win32 documentation on GitHub.  Those pages are the
 authoritative reference for the "Win32-common" half of this corpus:
 
   MicrosoftDocs/sdk-api   Win32 API reference (function/structure/enum pages)
@@ -14,27 +14,43 @@ Both repositories are CC-BY-4.0 (LICENSE) with MIT-licensed tooling
 What this script can do
 -----------------------
 
-1. ``subset`` (default) -- extract the pages that Windows CE shares with Win32
-   into ``corpus/win32/``:
+1. ``subset`` (default) -- extract the CE-shared API reference pages into
+   ``corpus/win32/api/``::
 
-   * ``corpus/win32/api/<module>/<page>.md``
-     every sdk-api page whose API name also appears in one of the CE catalogs
-     (``data/catalogs/*.tsv``), including the ANSI/Unicode ``A``/``W``
-     variants of a shared base name (``CreateFileW`` -> ``CreateFile``).
-     ``--scope modules`` additionally takes *every* page of the modules that
-     contain at least one shared API name, so that the interfaces, enums and
-     structs used together with a shared function are present too
-     (183 modules, ~17k pages).
-   * ``corpus/win32/guide/<folder>/<page>.md``
-     the programming guides for CE-relevant subsystems (see ``GUIDE_FOLDERS``).
+       python3 tools/fetch-upstream.py subset --source sdk-api
 
-2. ``pack`` -- store a complete upstream snapshot as a single compressed
+   *Every* page of ``MicrosoftDocs/sdk-api`` whose API name Windows CE also
+   documents (``tools/ce_api_names.py``) is imported, including the ANSI and
+   Unicode variants of a shared base name (Windows CE documents ``CreateFile``,
+   so ``CreateFileA`` and ``CreateFileW`` both come along).  Nothing else is:
+   the desktop-only context of those modules (WMI, DirectX, the Shell, Windows
+   Media, WinRT, ...) is *not* CE documentation and stays out.  The importer
+   also refuses the modules named in ``data/win32-exclude.tsv``.
+
+   That is the whole rule, and it is checkable: every markdown file under
+   ``corpus/win32/`` carries a name that occurs in
+   ``data/reports/ce-api-names.tsv`` (``tools/check-policy.py`` enforces it).
+
+2. ``guides`` -- the programming guides of ``MicrosoftDocs/win32`` are desktop
+   documentation (they describe transactional NTFS, change journals, the
+   desktop service control manager, ...), so they are **not** part of the
+   corpus.  They can still be extracted as an offline extra, outside the
+   repository::
+
+       python3 tools/fetch-upstream.py guides --out .cache/win32-guides
+
+   ``--out`` defaults to ``.cache/win32-guides`` (git-ignored).  Do not point
+   it at ``corpus/`` -- ``tools/check-policy.py`` reports desktop material
+   there.
+
+3. ``pack`` -- store a complete upstream snapshot as a single compressed
    tarball under ``sources/microsoftdocs/`` (markdown only, no images), so the
    full set can be unpacked offline later::
 
        python3 tools/fetch-upstream.py pack --source sdk-api
 
-3. ``list`` -- show what a subset run would extract, without writing anything.
+4. ``list`` -- show what a ``subset`` run would extract, without writing
+   anything.
 
 Network access
 --------------
@@ -48,23 +64,26 @@ Usage
 
     python3 tools/fetch-upstream.py list
     python3 tools/fetch-upstream.py subset --source sdk-api
-    python3 tools/fetch-upstream.py subset --source win32
+    python3 tools/fetch-upstream.py guides --out .cache/win32-guides
     python3 tools/fetch-upstream.py pack --source sdk-api
     python3 tools/fetch-upstream.py subset --source sdk-api --tarball sdk-api.tar.gz
 """
+
 import argparse
 import collections
-import glob
 import io
 import os
 import re
 import shutil
-import subprocess
 import sys
 import tarfile
 import urllib.request
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import ce_api_names  # noqa: E402
+
+ROOT = ce_api_names.ROOT
 CORPUS = os.path.join(ROOT, "corpus")
 SOURCES = os.path.join(ROOT, "sources", "microsoftdocs")
 
@@ -89,13 +108,14 @@ UPSTREAM = {
     },
 }
 
-# sdk-api page kinds: nf=function ns=struct ne=enum nc=callback ni=interface
-# nn=namespace nl=library na=attribute
-SDK_PAGE = re.compile(r"^(nf|ns|ne|nc|ni|nn|nl|na)-([^-]+)-(.+)\.md$")
+# sdk-api page kinds; the pattern lives in tools/ce_api_names.py so that the
+# importer and tools/check-policy.py cannot drift apart.
+SDK_PAGE = ce_api_names.SDK_PAGE
 
-# Programming-guide folders from MicrosoftDocs/win32 (desktop-src/) that
-# document subsystems Windows CE also implements.  Keep this list in sync
-# with corpus/win32/README.md.
+# Programming-guide folders of MicrosoftDocs/win32 (desktop-src/) that document
+# subsystems Windows CE also implements.  Used by the `guides` mode only - see
+# the docstring: these pages are desktop documentation and not part of the
+# corpus.
 GUIDE_FOLDERS = (
     # core OS
     "FileIO", "Memory", "Sync", "ProcThread", "ipc", "Dlls", "Debug",
@@ -108,41 +128,23 @@ GUIDE_FOLDERS = (
     "SecCrypto", "com",
 )
 
-# Deliberately not extracted: ``lwef`` ("Legacy Windows Environment Features",
-# deprecated Windows Desktop Search 2.x), ``WES`` (Windows Embedded Standard,
-# a different product line), the DirectX/WMI/ADSchema/HyperV/... trees (no CE
-# counterpart) and ``windows-driver-docs`` (WDM/KMDF drivers, a different
-# driver model from CE).  All of them stay available in the upstream
-# repositories and in the sdk-api snapshot tarball.
+# Deliberately not extracted by `guides` either: ``lwef`` ("Legacy Windows
+# Environment Features", deprecated Windows Desktop Search 2.x), ``WES``
+# (Windows Embedded Standard, a different product line), the
+# DirectX/WMI/ADSchema/HyperV/... trees (no CE counterpart) and
+# ``windows-driver-docs`` (WDM/KMDF drivers, a different driver model from CE).
+
+GUIDE_OUT = os.path.join(ROOT, ".cache", "win32-guides")
 
 
 # ------------------------------------------------------------------ helpers
-def ep(text):
-    return text
-
-
 def load_catalogs():
-    """CE API names -> set of books, from data/catalogs/*.tsv."""
-    names = collections.defaultdict(set)
-    for path in sorted(glob.glob(os.path.join(ROOT, "data", "catalogs", "*.tsv"))):
-        book = os.path.basename(path)[:-4]
-        with open(path, encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                parts = line.rstrip("\n").split("\t")
-                if len(parts) < 2:
-                    continue
-                name = normalize(parts[1])
-                if name:
-                    names[name].add(book)
-    return names
+    """Kept for callers that predate tools/ce_api_names.py."""
+    return ce_api_names.load_catalogs()
 
 
 def normalize(text):
-    """'CreateFile (Windows CE 5.0)' -> 'createfile'"""
-    text = text.lower()
-    text = re.sub(r"\(.*?\)", "", text)
-    text = re.sub(r"\s+", "", text)
-    return re.sub(r"[^a-z0-9_]", "", text)
+    return ce_api_names.normalize(text)
 
 
 def download(source, dest):
@@ -162,18 +164,35 @@ def open_tarball(path):
     return tarfile.open(path, "r:*")
 
 
-def tarball_root(tar):
-    """The single top-level directory of a GitHub codeload tarball."""
-    tops = {name.split("/")[0] for name in tar.getnames() if name}
-    assert len(tops) == 1, tops
-    return tops.pop()
+def tarball_root(tar, subdir):
+    """The prefix that holds ``subdir`` in a codeload tarball or a snapshot.
+
+    A codeload tarball has one top-level directory (``sdk-api-<sha>/``), while
+    a snapshot written by ``pack`` has the repository prefix stripped
+    (``sdk-api-src/content/...``).  Both are accepted; the returned value is
+    ``""`` for a packed snapshot.
+    """
+    names = [name for name in tar.getnames() if name]
+    tops = {name.split("/")[0] for name in names}
+    if len(tops) == 1:
+        root = tops.pop()
+        if any(name.startswith(f"{root}/{subdir}/") for name in names):
+            return root
+    if any(name.startswith(f"{subdir}/") for name in names):
+        return ""
+    raise SystemExit(f"{subdir} not found in {getattr(tar, 'name', 'tarball')}")
+
+
+def join(root, *parts):
+    return "/".join(p for p in (root,) + parts if p)
 
 
 def iter_blobs(tar, root, prefix):
+    base = join(root, prefix) + "/"
     for member in tar:
         if not member.isfile():
             continue
-        if not member.name.startswith(f"{root}/{prefix}/"):
+        if not member.name.startswith(base):
             continue
         if not member.name.lower().endswith(".md"):
             continue
@@ -181,78 +200,78 @@ def iter_blobs(tar, root, prefix):
 
 
 # ------------------------------------------------------------------ subset
-def shared_api_names(tar, root, subdir, catalogs):
-    """Return {member_name: (kind, module, name)} for CE-shared API pages."""
+def shared_api_pages(tar, root, subdir, names, excluded):
+    """Return {member_name: page file name} for the CE-shared API pages.
+
+    A page belongs in the corpus when Windows CE documents its API name - or,
+    for an ``A``/``W`` variant, the base name (``CreateFileW`` -> the
+    CE-documented ``CreateFile``).  Pages of an excluded module
+    (``data/win32-exclude.tsv``) never do.
+    """
     pages = {}
-    names = collections.defaultdict(list)
+    skipped_module = collections.Counter()
     for member in iter_blobs(tar, root, subdir):
         fn = os.path.basename(member.name)
-        m = SDK_PAGE.match(fn)
-        if not m:
+        match = SDK_PAGE.match(fn)
+        if not match:
             continue
-        kind, module, name = m.groups()
-        names[normalize(name)].append((kind, module, member.name))
-
-    shared = set()
-    for name in names:
-        if name in catalogs:
-            shared.add(name)
-        elif name.endswith(("a", "w")) and name[:-1] in catalogs:
-            # CreateFileW / CreateFileA also document the CE CreateFile page
-            shared.add(name)
-
-    for name in shared:
-        for kind, module, member_name in names[name]:
-            pages[member_name] = (kind, module, os.path.basename(member_name))
-    return pages, names, shared
+        _kind, module, name = match.groups()
+        if ce_api_names.module_excluded(module, excluded):
+            skipped_module[module] += 1
+            continue
+        if ce_api_names.documented(ce_api_names.normalize(name), names):
+            pages[member.name] = fn
+    for module, count in skipped_module.most_common():
+        print(f"[subset] excluded module {module}: {count} page(s) "
+              f"(data/win32-exclude.tsv)")
+    return pages
 
 
-def extract_subset(source, tar_path, apply, pack=False, scope="shared"):
+def extract_subset(source, tar_path, apply, names):
     meta = UPSTREAM[source]
-    catalogs = load_catalogs() if source == "sdk-api" else {}
+    excluded = ce_api_names.load_excluded()
     written = []
     with open_tarball(tar_path) as tar:
-        root = tarball_root(tar)
-        if source == "sdk-api":
-            pages, names, shared = shared_api_names(
-                tar, root, meta["subdir"], catalogs)
-            if scope == "modules":
-                modules = {module for kind, module, _n in pages.values()}
-                extra = 0
-                for name, entries in names.items():
-                    for kind, module, member_name in entries:
-                        if module in modules and member_name not in pages:
-                            pages[member_name] = (kind, module,
-                                                  os.path.basename(
-                                                      member_name))
-                            extra += 1
-                print(f"[subset] sdk-api scope=modules: +{extra:,} pages from "
-                      f"{len(modules)} modules")
-            print(f"[subset] sdk-api pages: {len(pages):,} "
-                  f"(shared API names: {len(shared):,})")
-            for member_name, (kind, module, fn) in sorted(pages.items()):
-                dest = os.path.join(CORPUS, "win32", "api", module, fn)
-                if apply:
-                    extract_member(tar, member_name, dest)
-                written.append(dest)
-        else:
-            for member in iter_blobs(tar, root, meta["subdir"]):
-                rel = os.path.relpath(member.name,
-                                      f"{root}/{meta['subdir']}")
-                folder = rel.split(os.sep)[0]
-                if folder not in GUIDE_FOLDERS:
-                    continue
-                dest = os.path.join(CORPUS, "win32", "guide", rel)
-                if apply:
-                    extract_member(tar, member.name, dest)
-                written.append(dest)
-
+        root = tarball_root(tar, meta["subdir"])
+        if source != "sdk-api":
+            raise SystemExit(
+                "only --source sdk-api is imported; the win32 guides are "
+                "desktop material - use `guides --out <dir>` to extract them "
+                "outside the corpus")
+        pages = shared_api_pages(tar, root, meta["subdir"], names, excluded)
+        print(f"[subset] sdk-api: {len(pages):,} CE-shared pages of "
+              f"{len(names):,} CE-documented API names")
+        for member_name, fn in sorted(pages.items()):
+            module = SDK_PAGE.match(fn).group(2)
+            dest = os.path.join(CORPUS, "win32", "api", module, fn)
+            if apply:
+                extract_member(tar, member_name, dest)
+            written.append(dest)
         if apply:
             copy_licenses(tar, root, source)
 
     total = sum(os.path.getsize(p) for p in written if os.path.exists(p))
     print(f"[subset] {source}: {len(written):,} pages, "
-          f"{total / 1048576:.1f} MB -> corpus/win32/")
+          f"{total / 1048576:.1f} MB -> corpus/win32/api/")
+    return written
+
+
+def extract_guides(tar_path, out_dir):
+    meta = UPSTREAM["win32"]
+    written = []
+    with open_tarball(tar_path) as tar:
+        root = tarball_root(tar, meta["subdir"])
+        for member in iter_blobs(tar, root, meta["subdir"]):
+            rel = os.path.relpath(member.name, join(root, meta["subdir"]))
+            if rel.split(os.sep)[0] not in GUIDE_FOLDERS:
+                continue
+            dest = os.path.join(out_dir, rel)
+            extract_member(tar, member.name, dest)
+            written.append(dest)
+        copy_licenses(tar, root, "win32")
+    print(f"[guides] {len(written):,} desktop guide pages -> {out_dir}")
+    print("[guides] these describe desktop Windows, not Windows CE - keep them "
+          "out of corpus/")
     return written
 
 
@@ -261,7 +280,7 @@ def copy_licenses(tar, root, source):
     dest_dir = os.path.join(SOURCES, meta["repo"].split("/")[1])
     os.makedirs(dest_dir, exist_ok=True)
     for name in meta["license"]:
-        member_name = f"{root}/{name}"
+        member_name = join(root, name)
         try:
             member = tar.getmember(member_name)
         except KeyError:
@@ -285,11 +304,11 @@ def build_pack(source, tar_path):
                                  f"{meta['sha'][:12]}-md.tar.gz")
     count = 0
     with open_tarball(tar_path) as tar, tarfile.open(dest, "w:gz") as out:
-        root = tarball_root(tar)
+        root = tarball_root(tar, meta["subdir"])
         for member in iter_blobs(tar, root, meta["subdir"]):
             data = tar.extractfile(member).read()
             info = tarfile.TarInfo(
-                member.name[len(root) + 1:])          # drop the repo prefix
+                member.name[len(root) + 1:] if root else member.name)
             info.size = len(data)
             info.mtime = 0
             out.addfile(info, io.BytesIO(data))
@@ -303,56 +322,57 @@ def build_pack(source, tar_path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("mode", nargs="?", default="subset",
-                    choices=["subset", "pack", "list"])
-    ap.add_argument("--source", default="all",
-                    choices=["all", *UPSTREAM])
+                    choices=["subset", "guides", "pack", "list"])
+    ap.add_argument("--source", default="sdk-api",
+                    choices=["sdk-api", "win32"],
+                    help="sdk-api for the API reference (default); win32 is "
+                         "only used by pack/guides")
     ap.add_argument("--tarball", help="use a local snapshot instead of "
                                       "downloading (per --source)")
+    ap.add_argument("--out", default=GUIDE_OUT,
+                    help=f"guides: output directory (default {GUIDE_OUT})")
     ap.add_argument("--cache-dir", default=os.path.join(ROOT, ".cache",
                                                         "upstream"))
-    ap.add_argument("--scope", default="modules",
-                    choices=["shared", "modules"],
-                    help="sdk-api: shared API names only, or whole modules "
-                         "that contain them (default: modules)")
     args = ap.parse_args()
 
-    sources = list(UPSTREAM) if args.source == "all" else [args.source]
-    for source in sources:
-        tar_path = args.tarball or os.path.join(
-            args.cache_dir, f"{source}-{UPSTREAM[source]['sha'][:12]}.tar.gz")
-        if not args.tarball and not os.path.exists(tar_path):
-            download(source, tar_path)
-        if args.mode == "list":
-            with open_tarball(tar_path) as tar:
-                root = tarball_root(tar)
-                if source == "sdk-api":
-                    pages, names, shared = shared_api_names(
-                        tar, root, UPSTREAM[source]["subdir"], load_catalogs())
-                    if args.scope == "modules":
-                        modules = {mod for _k, mod, _n in pages.values()}
-                        for entries in names.values():
-                            for _k, mod, member in entries:
-                                if mod in modules:
-                                    pages.setdefault(member, None)
-                    print(f"{source}: would extract {len(pages):,} pages "
-                          f"({len(shared):,} shared API names, "
-                          f"scope={args.scope})")
-                else:
-                    n = 0
-                    for member in iter_blobs(tar, root,
-                                             UPSTREAM[source]["subdir"]):
-                        rel = os.path.relpath(
-                            member.name,
-                            f"{root}/{UPSTREAM[source]['subdir']}")
-                        if rel.split(os.sep)[0] in GUIDE_FOLDERS:
-                            n += 1
-                    print(f"{source}: would extract {n:,} guide pages "
-                          f"from {len(GUIDE_FOLDERS)} folders")
-            continue
-        if args.mode == "pack":
-            build_pack(source, tar_path)
-        else:
-            extract_subset(source, tar_path, apply=True, scope=args.scope)
+    if args.mode == "guides":
+        source = "win32"
+    else:
+        source = args.source
+
+    tar_path = args.tarball or os.path.join(
+        args.cache_dir, f"{source}-{UPSTREAM[source]['sha'][:12]}.tar.gz")
+    if not args.tarball and not os.path.exists(tar_path):
+        download(source, tar_path)
+
+    if args.mode == "list":
+        names = ce_api_names.load_names()
+        with open_tarball(tar_path) as tar:
+            root = tarball_root(tar, UPSTREAM[source]["subdir"])
+            if source == "sdk-api":
+                pages = shared_api_pages(tar, root, UPSTREAM[source]["subdir"],
+                                         names, ce_api_names.load_excluded())
+                print(f"{source}: would extract {len(pages):,} CE-shared pages "
+                      f"of {len(names):,} CE-documented API names")
+            else:
+                n = 0
+                root = tarball_root(tar, UPSTREAM[source]["subdir"])
+                for member in iter_blobs(tar, root, UPSTREAM[source]["subdir"]):
+                    rel = os.path.relpath(
+                        member.name, join(root, UPSTREAM[source]["subdir"]))
+                    if rel.split(os.sep)[0] in GUIDE_FOLDERS:
+                        n += 1
+                print(f"{source}: `guides` would extract {n:,} desktop pages "
+                      f"to {args.out} (not into the corpus)")
+        return 0
+
+    if args.mode == "pack":
+        build_pack(source, tar_path)
+    elif args.mode == "guides":
+        extract_guides(tar_path, args.out)
+    else:
+        extract_subset(source, tar_path, apply=True,
+                       names=ce_api_names.load_names())
     return 0
 
 

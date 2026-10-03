@@ -77,6 +77,12 @@ ARCHIVE_EXT = (".iso", ".zip", ".7z", ".rar", ".cab", ".exe", ".msi", ".img",
 # (item, exclude) pair has been imported where, and --force redoes it anyway.
 IMPORTED = os.path.join(ROOT, "data", "reports", "media-imported.tsv")
 PAGE_EXT = (".htm", ".html")
+# Leftovers that are never documentation of the product, whatever the medium:
+# the metadata directories FrontPage (and the IIS it published to) leaves in a
+# documentation tree.  A medium that carries a shop window or a sample tree
+# instead is handled with the per-medium exclude regex in queues/media.tsv.
+DEFAULT_EXCLUDE = r"(^|/)(_vti_cnf|_vti_pvt|_derived|_private)(/|\\)"
+
 HELP_EXT = (".hlp", ".mvb", ".mvw", ".gid")
 # Assets, binaries, toolchains and source code: counted, never imported.  A
 # medium is a carrier for its documentation; the code it ships stays where it
@@ -364,6 +370,15 @@ def walk_medium(root, seven, depth=0, unpacked=None, prefix=""):
                 yield path, "other", rel
 
 
+def excluder(exclude=""):
+    """The compiled refuser: the tool's defaults plus the medium's patterns."""
+    pattern = DEFAULT_EXCLUDE
+    if exclude:
+        # a medium's regex may carry its own (?i): fold it into the flags
+        pattern += "|(?:" + re.sub(r"^\(\?i\)", "", exclude) + ")"
+    return re.compile(pattern, re.I)
+
+
 def inventory(root, label, exclude=""):
     """Print (and return) what a medium holds, without importing anything."""
     seven = seven_zip()
@@ -382,7 +397,7 @@ def inventory(root, label, exclude=""):
         counts[ext] += 1
         if len(examples[ext]) < 3:
             examples[ext].append(rel)
-    refused = re.compile(exclude, re.I) if exclude else None
+    refused = excluder(exclude)
     log(f"[media] {label}: {sum(counts.values()):,} files "
         f"({pages:,} HTML pages, {help_files:,} WinHelp/MVB, {chms:,} CHM"
         f"{', import excludes ' + exclude if refused else ''})")
@@ -430,12 +445,12 @@ PLACEHOLDER = re.compile(rb"<title>\s*(Topic Not Found|Page Not Found)\s*"
 def extract_pages(root, out, label, dry_run=False, exclude=""):
     """Copy the documentation pages of a medium into the corpus."""
     seven = seven_zip()
-    refused = re.compile(exclude, re.I) if exclude else None
+    refused = excluder(exclude)
     imported = skipped = excluded = 0
     for path, kind, rel in walk_medium(root, seven):
         if kind != "documentation":
             continue
-        if refused and refused.search(rel):
+        if refused.search(rel):
             excluded += 1
             log(f"    {rel}: excluded by {exclude!r}")
             continue

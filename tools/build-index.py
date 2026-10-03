@@ -17,7 +17,8 @@ Walks every page under ``corpus/`` -- ``.html`` (harvested/extracted pages),
   path   repository-relative path of the HTML file.
   title  the page's ``<title>`` (HTML) or the ``title:`` field of its
          front matter (markdown), with the ``| Microsoft Learn`` suffix
-         stripped, falling back to the official TOC catalogs in
+         stripped and whitespace folded to single spaces (some titles span
+         several lines), falling back to the official TOC catalogs in
          ``data/catalogs/``.
 
 Regenerate with::
@@ -62,6 +63,11 @@ def cat_titles():
     return titles
 
 
+def one_line(text):
+    """A title is one line of the TSV: whitespace (newlines included) folds."""
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def page_title(path):
     # Some archived pages (the 2010-05 MSDN Library snapshot) carry the
     # Wayback Machine banner before the document, so <title> can sit far below
@@ -73,12 +79,12 @@ def page_title(path):
         return ""
     if path.endswith(".md"):
         match = MD_TITLE.search(head)
-        return match.group(1).strip() if match else ""
+        return one_line(match.group(1)) if match else ""
     match = TITLE.search(head)
     if not match:
         return ""
-    return re.sub(r"\s*\|\s*Microsoft Learn\s*$", "",
-                  match.group(1).strip())
+    return one_line(re.sub(r"\s*\|\s*Microsoft Learn\s*$", "",
+                           match.group(1)))
 
 
 def main():
