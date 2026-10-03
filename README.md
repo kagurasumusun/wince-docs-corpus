@@ -7,8 +7,9 @@ Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7, the
 documentation Windows CE shares**, so that an API question can be answered
 without breaking the offline copy.
 
-**137,911 pages** (2026-10-04 — `data/index/INDEX.tsv` is the live count):
-117,459 extracted/harvested/mirrored CE pages and 20,452 Win32 pages
+**138,572 pages** (2026-10-04 — the count moves while the crawl runs;
+`data/index/INDEX.tsv` is live): 118,120 extracted/harvested/mirrored CE pages
+and 20,452 Win32 pages
 (markdown, from Microsoft's public `MicrosoftDocs` repositories). The
 repository also carries the media the pages were extracted from, the URL
 queues used to harvest them, the complete upstream snapshots, and the derived
@@ -54,7 +55,7 @@ and support articles, one page per file. Nothing else is imported.
 | `corpus/mvb/windows-ce-1.0/` | 2,104 pages decoded from the CE 1.0 Books Online (Multimedia Viewer books + WinHelp release notes). |
 | `corpus/mvb/windows-ce-2.0-sdk/` | 293 pages of the Windows CE Platform SDK (H/PC) 2.0 disc (02/98): the CE debugger reference (`windbg.hlp`) and the disc ReadMe. The disc's InfoViewer Books Online has no decoder yet; the SDK's headers, libraries and samples are deliberately not imported. |
 | `corpus/msdn-library/techshelps/` | 5,165 pages of the MSDN Library's Windows CE 1.0/2.0 sets, from the techshelps mirror (CEGUIDE, WCEMFC, WCEATL, VBCE, WCEDDK, VCCE, DNEMBED). |
-| `corpus/msdn-library/datadungeon-2000-04/` | The Windows CE documentation of the MSDN Library April 2000 (CE 2.12/3.0 era), crawled page by page from library.thedatadungeon.com — 3,571 pages so far, the crawl continues twice a day. |
+| `corpus/msdn-library/datadungeon-2000-04/` | The Windows CE documentation of the MSDN Library April 2000 (CE 2.12/3.0 era), crawled page by page from library.thedatadungeon.com — 4,659 pages so far, the crawl continues twice a day. |
 | `corpus/msdn-library/wcedevcon-99/` | 7,437 pages from the Windows CE Developers Conference DevCon '99 CD (1999): the CE 3.0 SDK documentation in HTML (SDK Reference, Auto PC, DDK, SDK Guide, …), its component CHMs and the conference site. |
 | `corpus/kb/` | 257 Windows CE KnowledgeBase articles (CE 1.0/2.0/2.1x era, the CE toolkits, H/PC, Palm-size PC, Pocket PC). |
 | `corpus/win32/api/`, `corpus/win32/guide/` | 20,452 Win32 pages: 5,219 CE-shared API pages, 11,876 module-context pages, 3,357 subsystem guides (from `MicrosoftDocs/sdk-api` and `MicrosoftDocs/win32`, pinned by commit). `data/reports/win32-shared.tsv` maps the shared surface, `tools/find-api.py` looks a name up on both sides. |

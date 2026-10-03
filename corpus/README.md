@@ -23,7 +23,7 @@ corpus/
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 137,911 pages (117,459 in the CE trees + 20,452 Win32 pages, as of
+Total: 138,572 pages (118,120 in the CE trees + 20,452 Win32 pages, as of
 2026-10-04; the April 2000 crawl is still running) — see
 the per-tree READMEs for the provenance of each, and `../queues/
 third-party-sources.md` for the mirror policy.
