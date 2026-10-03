@@ -1,0 +1,99 @@
+# Fetch official media from the Internet Archive and extract its documentation.
+#
+# The working environment this corpus is maintained from cannot reach
+# archive.org, a runner can.  tools/import-media.py downloads the files of an
+# item into sources/<name>/ (verbatim, with a PROVENANCE.md that records the
+# item URL, size and md5 of every file), prints an inventory of what the
+# medium holds, and -- for entries whose action is `import` -- copies the
+# documentation pages (HTML, CHM, WinHelp/MVB) into the corpus.
+#
+# Runs on demand, and whenever queues/media.tsv changes (that is the quickest
+# way to start it: edit the file, or set an entry's action from `inventory` to
+# `import`).
+
+name: Import media
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Entry in queues/media.tsv (empty = every entry)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Preview only (no download, no corpus changes)'
+        required: false
+        type: boolean
+        default: false
+  push:
+    paths:
+      - queues/media.tsv
+
+concurrency:
+  group: import-media
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  media:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install 7-Zip
+        run: |
+          which 7z || sudo apt-get install -y p7zip-full
+          7z | head -3
+
+      - name: Build helpdeco (for WinHelp/MVB documentation)
+        continue-on-error: true
+        run: |
+          # MVB/HWP decompiler, pinned; the known patch is the reason this is
+          # built here rather than taken from a package (see tools/extract-mvb.py)
+          git clone --quiet https://github.com/pmachapman/helpdeco /tmp/helpdeco
+          cd /tmp/helpdeco
+          git checkout --quiet 785273788af17fde4fba7df7162d547f8645d7d8
+          # helpdeco aborts on some MVB files ("Allocation of 0 bytes failed"):
+          # a zero-length request must not reach malloc/realloc
+          sed -i 's/malloc((size_t)bytes)/malloc((size_t)(bytes ? bytes : 1))/g; s/realloc(\([^,]*\), (size_t)bytes)/realloc(\1, (size_t)(bytes ? bytes : 1))/g' src/helpdec1.c
+          cd gcc && make -s 2>&1 | tail -5
+          sudo cp helpdeco /usr/local/bin/ 2>/dev/null || true
+          helpdeco 2>&1 | head -3 || echo "helpdeco not built (MVB import will be skipped)"
+
+      - name: Fetch and import
+        run: |
+          set -o pipefail
+          NAME="${{ github.event.inputs.name }}"
+          ONLY=""
+          [ -n "$NAME" ] && ONLY="--only $NAME"
+          DRY=""
+          [ "${{ github.event.inputs.dry_run }}" = "true" ] && DRY="--dry-run"
+          python3 tools/import-media.py --config queues/media.tsv $ONLY $DRY
+
+      - name: Refresh indexes and commit
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          python3 tools/build-index.py
+          python3 tools/build-index-sql.py
+          python3 tools/check-corpus.py --report || true
+          git config user.name "wince-docs-corpus importer"
+          git config user.email "wince-corpus-harvester@users.noreply.github.com"
+          git add sources/ corpus/ data/index data/reports queues || true
+          if git diff --staged --quiet; then
+            echo "nothing new"
+            exit 0
+          fi
+          git commit -m "media: fetch and import + index refresh"
+          git pull --rebase
+          git push
