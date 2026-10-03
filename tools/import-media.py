@@ -341,7 +341,7 @@ def inventory(root, label):
     examples = collections.defaultdict(list)
     pages = help_files = chms = 0
     for path, kind, rel in walk_medium(root, seven):
-        ext = os.path.splitext(path)[1].lower()
+        ext = os.path.splitext(path)[1].lower() or "(none)"
         if kind == "documentation":
             if ext in PAGE_EXT:
                 pages += 1
@@ -349,13 +349,14 @@ def inventory(root, label):
                 help_files += 1
             elif ext == ".chm":
                 chms += 1
-        counts[ext or "(none)"] += 1
+        counts[ext] += 1
         if len(examples[ext]) < 3:
             examples[ext].append(rel)
     log(f"[media] {label}: {sum(counts.values()):,} files "
         f"({pages:,} HTML pages, {help_files:,} WinHelp/MVB, {chms:,} CHM)")
     for ext, number in counts.most_common(20):
-        log(f"    {ext:10s} {number:6,d}   e.g. {examples[ext][0][:70]}")
+        first = examples[ext][0][:70] if examples[ext] else ""
+        log(f"    {ext:10s} {number:6,d}   e.g. {first}")
     return counts
 
 
