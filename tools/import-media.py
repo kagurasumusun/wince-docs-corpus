@@ -302,7 +302,13 @@ def walk_medium(root, seven, depth=0, unpacked=None, prefix=""):
                     continue
                 stem = re.sub(r"\.(iso|zip|7z|rar|cab|exe|msi|img|bin|tar|gz|tgz)$",
                               "", name, flags=re.I)
-                inner_prefix = f"{prefix}{stem}/"
+                # A medium's file name becomes a directory name: keep it a
+                # path segment (a conference disc is "… CD (Microsoft
+                # Corporation)(1999).iso", which is not a directory name).
+                stem = re.sub(r"[^A-Za-z0-9._-]+", "_", stem).strip("_")
+                if len(stem) > 60:                 # cut at a word boundary
+                    stem = stem[:60].rsplit("_", 1)[0].rstrip("_")
+                inner_prefix = f"{prefix}{stem}/" if stem else prefix
                 if seven or lower.endswith(".iso") or lower.endswith(".cab"):
                     target = os.path.join(
                         tempfile.gettempdir(), "media-unpack", f"d{depth}",
@@ -557,7 +563,7 @@ def run_config(config, only, dry_run=False, force=False):
     for entry in entries:
         scratch = entry["action"] in ("import-scratch", "inventory-scratch")
         wanted = entry["action"] in ("import", "import-scratch")
-        if scratch and wanted and not force and not dry_run:
+        if scratch and wanted and not force:
             receipt = done.get(entry["name"])
             if receipt and receipt["item"] == entry["item"] \
                     and receipt["exclude"] == entry.get("exclude", "") \
