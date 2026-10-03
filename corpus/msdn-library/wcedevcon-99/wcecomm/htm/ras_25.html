@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating or Changing a Phone-Book Entry</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RasSetEntryProperties">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RasValidateEntryName">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RasGetEntryProperties">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RASENTRY_str">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_creating_or_changing_a_phone_book_entry"></A>Creating or Changing a Phone-Book Entry</H2>
+
+<P><A HREF="JavaScript:hhobj_1.Click()"><B>RasSetEntryProperties</B></A> creates or changes connection data for a phone-book entry.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use the RasSetEntryProperties function to create or change registry phone-book entries</H4>
+
+<OL>
+	<LI>Call <A HREF="JavaScript:hhobj_2.Click()"><B>RasValidateEntryName</B></A> to be sure that the name does not exist.</li>
+
+	<LI>If you are editing an existing entry, call <A HREF="JavaScript:hhobj_3.Click()"><B>RasGetEntryProperties</B></A> to retrieve the existing configuration.</li>
+
+	<LI>Call <B>RasSetEntryProperties</B> to set the new configuration. Parameters should be set as follows:
+<P>The <I>lpszName</I> parameter should point to the null-terminated string containing the entry name in the <I>lpszEntry </I>parameter<I>. </I>If the existing name matches an existing entry, <B>RasSetEntryProperties</B> modifies the entry properties. If the entry does not exist, the function creates a new entry.
+
+<P>The <I>lpszEntry </I>parameter should point to a <A HREF="JavaScript:hhobj_4.Click()"><B>RASENTRY</B></A> structure, which should be filled with data for the connection, including the telephone number, device type, and name.
+
+<P>The <I>lpbDeviceInfo</I> and <I>dwDeviceInfoSize</I> parameters can be used to set a Telephony API (TAPI) device configuration data.
+</li>
+</OL>
+
+<P>The following code example shows how to create a phone-book entry.</P>
+
+<PRE><CODE>int CreateRasEntry (LPTSTR lpszName)
+{
+  DWORD dwSize,
+        dwError;
+  TCHAR szError[100];
+  RASENTRY RasEntry;
+  RASDIALPARAMS  RasDialParams;
+
+  // Validate the format of a connection entry name.
+  if (dwError = RasValidateEntryName (NULL, lpszName))
+  {
+    wsprintf (szError, TEXT("Unable to validate entry name.")
+              TEXT(" Error %ld"), dwError);  
+
+    return FALSE;
+  }
+
+  // Initialize the RASENTRY structure.
+  memset (&amp;RasEntry, 0, sizeof (RASENTRY));
+
+  dwSize = sizeof (RASENTRY);
+  RasEntry.dwSize = dwSize;
+
+  // Retrieve the entry properties.
+  if (dwError = RasGetEntryProperties (NULL, TEXT(""),      
+                      (LPBYTE)&amp;RasEntry, &amp;dwSize, NULL, NULL))  
+  {
+    wsprintf (szError, TEXT("Unable to read default entry properties.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  // Insert code here to fill the RASENTRY structure.
+  // ...
+  
+  // Create a new phone-book entry.
+  if (dwError = RasSetEntryProperties (NULL, lpszName, 
+                      (LPBYTE)&amp;RasEntry, sizeof (RASENTRY), NULL, 0))
+  {
+    wsprintf (szError, TEXT("Unable to create the phonebook entry.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  // Initialize the RASDIALPARAMS structure.
+  memset (&amp;RasDialParams, 0, sizeof (RASDIALPARAMS));
+  RasDialParams.dwSize = sizeof (RASDIALPARAMS);
+  _tcscpy (RasDialParams.szEntryName, lpszName);
+  
+  // Insert code here to fill up the RASDIALPARAMS structure.
+  // ...
+
+  // Change the connection data.
+  if (dwError = RasSetEntryDialParams (NULL, &amp;RasDialParams, FALSE))
+  {
+    wsprintf (szError, TEXT("Unable to set the connection information.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

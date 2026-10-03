@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Reading Records and Properties</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_reading_records_and_properties"></A>Reading Records and Properties</H2>
+
+<P>After your application opens a Windows CE database, the seek pointer is positioned at the first record according to the selected sort order.</P>
+
+<P>The <B>CeReadRecordPropsEx </B>function reads properties from the record where the seek pointer is currently positioned. When calling <B>CeReadRecordPropsEx</B>, indicate the properties to be read by specifying an array of property identifiers. Also specify the buffer into which the function is to write the property information, and specify a value indicating the size of the buffer. If the buffer is too small to hold the property information when you specify the CEDB_ALLOWREALLOC flag, the system reallocates the buffer. By default, the system stores records in compressed format and must decompress records as they are read. For efficiency, your application should read all of the desired properties in a single call rather than in several separate calls.</P>
+
+<P>When the property is read successfully, the property information is copied into the specified buffer as an array of <B>CEPROPVAL</B> structures, and the function returns the record’s CEOID. All of the variable-size data, such as strings and BLOBs, is copied to the end of the buffer. The <B>CEPROPVAL</B> structures contain pointers to this data. If the system cannot find a requested property in the specified record, the <B>CEPROPVAL</B> structure for that property receives the CEDB_PROPNOTFOUND flag.</P>
+
+<P>If you specified the CEDB_AUTOINCREMENT flag when you opened the database, <B>CeReadRecordPropsEx</B> increments the seek pointer.</P>
+
+<P>The following code example shows how to read properties from the database using the auto-increment and reallocation flags.</P>
+
+<PRE><CODE>CEOID    CeOid;                // Object identifier of the record read
+PCEGUID    pceguid;                // Pointer to the mounted database volume
+WORD        wcPropID;            // Number of properties retrieved 
+DWORD    dwcbBuffer,            // Count of bytes of the *lpBuffer
+        dwError;                // Return value of the GetLastError function
+TCHAR    szMsg[100];            // String for displaying the error message 
+LPBYTE    lpBuffer = NULL;        // Pointer to a buffer that receives record
+                            //    property data
+HANDLE    hDataBase,            // Handle to a database to be opened
+        hHeap;                // Handle to the heap for allocating records
+
+// Assign to pceguid the GUID of the mounted volume
+// where the database resides.
+// ...
+
+// Create the heap by calling HeapCreate to allocate the database records.
+// ...
+
+// Open the database with the current seek position to be automatically
+// incremented with each call.
+
+hDataBase = CeOpenDatabaseEx( 
+            pceguid,                // Pointer to the mounted volume
+            &amp;CeOid,                // Location of the database identifier
+            TEXT("MyDBase"),        // Database name
+            0,                    // Sort order. 0 indicates to ignore.
+            CEDB_AUTOINCREMENT,    // Automatically increase seek pointer
+            NULL);                // Does not need to receive notification
+
+// Check for errors on the hDataBase handle before continuing.
+
+if (hDataBase == INVALID_HANDLE_VALUE)        
+{
+    // error handling omitted...uses GetLastError()
+    return;
+}
+
+while ((CeOid = CeReadRecordPropsEx(
+            hDataBase,            // Handle of the database
+            CEDB_ALLOWREALLOC,    // Use LocalAlloc to allocate the buffer
+            &amp;wcPropID,            // Number of properties retrieved 
+            NULL,                // NULL means retrieve all properties
+            &amp;lpBuffer,            // Buffer receives property data
+            &amp;dwcbBuffer,            // Count of bytes in *lpBuffer
+            hHeap)) !=0)            // Handle to the heap for allocating
+                                //    the record
+                                // when CEDB_ALLOWREALLOC is specified. 
+{  
+    // The record is now available in lpBuffer. Add code here to
+    // manipulate the properties in this record
+    // ...
+}
+
+// Error handling if CeReadRecordPropsEx fails
+
+dwError = GetLastError();
+
+if (dwError == ERROR_NO_MORE_ITEMS)
+{
+    wsprintf(szMsg, TEXT("Read through all records in the database."));
+}
+else if (dwError == ERROR_INSUFFICIENT_BUFFER)
+{
+    wsprintf(szMsg, TEXT("Re-allocation of database records failed."));
+}
+else 
+{
+    wsprintf(szMsg, TEXT("Other errors."));
+}
+
+// Close the database handle.
+
+CloseHandle(hDataBase);
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

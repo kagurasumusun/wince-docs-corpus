@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Profiling Display Driver Performance</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_profiling_display_driver_performance"></A>Profiling Display Driver Performance</H2>
+
+<P>The Platform Builder includes a sample profiling tool, DispPerf, that the display driver writer can use to profile the performance of a display driver. DispPerf builds a table that lists, for each ROP code that is profiled, the frequency count, elapsed time, in microseconds, and average elapsed time, in microseconds, for ROPs handled by the default GPE emulation, by the software emulation library, and by hardware accelerations. To measure these times accurately, DispPerf can be used only on Windows CE–based platforms that support the <B>QueryPerformanceCounter</B> and <B>QueryPerformanceFrequency</B> functions with a recommended resolution of 1 microsecond. </P>
+
+<P>The S3Virge driver demonstrates how to use the profiler for measuring performance of blits and line drawing. The display driver writer may extend the profiler to measure the performance of additional display functions. Source code for DispPerf is in the Platform\Cepc\Drivers\Display\S3virge\Dispperf directory.</P>
+
+<P>The driver starts profiling of blit operations during the call to the <B>BltPrepare</B> function when it calls the <B>DispPerfStart</B> function. The following code example shows how the driver initializes its display function pointer to use the default emulation provided by the GPE.</P>
+
+<PRE><CODE>SCODE 
+S3Virge::BltPrepare(GPEBltParms *pBltParms)
+{
+
+    DispPerfStart (pBltParms-&gt;rop4);        
+            
+    pBltParms-&gt;pBlt = EmulatedBlt; // Catch all.
+</CODE></PRE>
+
+<P>When the driver is able to handle the ROP with hardware acceleration or software emulation, it changes its display function pointer appropriately. The driver also calls the <B>DispPerfType</B> function to record which type of acceleration is used to handle the ROP. For example, the following code example demonstrates how the driver calls <B>DispPerfType</B> after the driver successfully sets the display function pointer to a hardware-accelerated function.</P>
+
+<PRE><CODE>// Performance Logging Type
+    if (pBltParms-&gt;pBlt != EmulatedBlt) {
+        DispPerfType(DISPPERF_ACCEL_HARDWARE);
+    }
+</CODE></PRE>
+
+<P>When the blit operation completes, the <B>BltComplete</B> function stops profiling with a call to the <B>DispPerfEnd</B> function.</P>
+
+<P>The DO_DISPPERF environment variable controls whether the code to support profiling is compiled into the display driver. Refer to the Sources file for the S3Virge driver to see how the environment variable causes the correct compiler directives to be set.</P>
+
+<P><B>DispPerf</B> can be invoked from the Command Shell on a Windows CE–based platform, or it can be launched remotely from the Windows CE Debug Shell. The following example shows the command syntax for <B>DispPerf</B>.</P>
+
+<PRE><CODE>dispperf [-c[w*]] [-d [&gt; <I>file</I>]]
+</CODE></PRE>
+
+<P>The <I>-c</I> option clears the profiler buffer. If the letter “w” appears one or more times following the <I>-c</I> option, <B>DispPerf</B> calls the <B>CreateWindow</B> function that number of times and profiles the resulting display driver operations. The <I>-d</I> option dumps the profiler buffer in tabular form. If the <I>-d</I> option is followed by “&gt;“ plus a file name, the output is written to the named file. Otherwise, it appears on the console where the command was issued.</P>
+
+<P>The following example shows how <B>DispPerf</B> clears its buffer of all profiling information.</P>
+
+<PRE><CODE>Dispperf </CODE>–<CODE>cwwwwwd
+</CODE></PRE>
+
+<P>It then calls the <B>CreateWindow</B> function five times, profiling the performance of the display functions. The following example shows how <B>DispPerf</B> outputs its table of profiling information to the console.</P>
+
+<PRE><CODE>Dispperf </CODE>–<CODE>c
+Pword stat_rpt.pwd
+Dispperf </CODE>–<CODE>d &gt; results.txt
+</CODE></PRE>
+
+<P>In this example, <B>DispPerf</B> clears its buffer of all profiling information. The Microsoft® Pocket Word application is launched and opens the document Stat_rpt.pwd. <B>DispPerf</B> tracks the profiled display functions called by Pocket Word. Finally, <B>DispPerf</B> writes its table of profiling information to the Results.txt file.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisOpenConfiguration</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisopenconfiguration"></A>NdisOpenConfiguration</H2>
+
+<P>This function returns a handle for an NDIS NIC driver’s <B>\<I>DriverName</I>\Parms</B> registry key.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>Header file:</TD>
+<TD width=70%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Windows CE versions:</TD>
+<TD width=70%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID</B> <B>NdisOpenConfiguration(OUT PNDIS_STATUS</B> <I>Status</I><B>,</B> <BR>
+<B>OUT PNDIS_HANDLE</B> <I>ConfigurationHandle</I><B>,</B> <BR>
+<B>IN NDIS_HANDLE</B> <I>WrapperConfigurationContext</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which this function returns the status of its attempt to open the registry key. Possible return values are the following:
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS</DT>
+
+<DD>The value at <I>ConfigurationHandle</I> is valid.</dd>
+
+<DT>NDIS_STATUS_FAILURE</DT>
+
+<DD>The key could not be opened.</dd>
+</DL>
+</dd>
+
+<DT><I>ConfigurationHandle</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which this function returns a handle to the registry <B>HKEY_LOCAL_MACHINE\System\CurrentControlSet<BR>
+\Services\<I>DriverName</I>\Parameters</B> key. Value entries under this key are provided by the driver’s installation script.</dd>
+
+<DT><I>WrapperConfigurationContext</I></DT>
+
+<DD>Handle input to the <B>MiniportInitialize</B> function.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>With the handle returned by this function, an NDIS miniport can call the <B>NdisReadConfiguration</B> function one or more times to extract configuration information about its NIC from the registry. A miniport can also call <B>NdisReadNetworkAddress</B> with this handle to retrieve software-configurable network address information that was stored in the registry when its NIC was installed in the current computer.</P>
+
+<P>A miniport’s installation script must store at least the following configuration information in the registry:
+
+<UL>
+	<LI>The NIC’s I/O bus interface type.</li>
+
+	<LI>If it is not on an ISA bus, the bus number.</li>
+
+	<LI>The NIC’s adapter ID value, which, depending on the I/O bus interface type, is equivalent to the following bus-type-specific configuration data value:
+<P>If the NIC is on a PCI bus, the value of the PCI <B>DeviceId</B>
+</li>
+</UL>
+
+<P>Drivers of NICs on ISA buses usually get bus-relative configuration parameters for an NIC from the registry with the <B>NdisReadConfiguration</B> function. Drivers of NICs on other types of I/O buses can also call <B>Ndis</B><I>XXX</I> bus-type-specific configuration functions to get bus-relative NIC-specific configuration parameters suitable for calling functions, such as <B>NdisMRegisterInterrupt</B>, <B>NdisMMapIoSpace</B>, and/or <B>NdisMRegisterIoPortRange</B>.</P>
+
+<P>An NIC driver calls the <B>NdisMSetAttributes</B> or the <B>NdisMSetAttributesEx</B> function to identify the type of I/O bus on which its NIC is likely to be found before that driver calls any of the bus-type-specific configuration functions.</P>
+
+<P>After a driver has consumed and, possibly, modified the registry configuration information, the driver must call the <B>NdisCloseConfiguration</B> function to release the handle obtained from this function and to free any temporary storage that NDIS allocated in the driver’s calls to <B>NdisReadConfiguration</B>, <B>NdisReadNetworkAddress</B>, and/or <B>NdisWriteConfiguration</B>.</P>
+
+<P>A driver that calls this function runs at IRQL PASSIVE_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_224.htm"><B>NdisMMapIoSpace</B></A>, <A HREF="funct_1_232.htm"><B>NdisMRegisterInterrupt</B></A>, <A HREF="funct_1_233.htm"><B>NdisMRegisterIoPortRange</B></A>, <A HREF="funct_1_234.htm"><B>NdisMRegisterMiniport</B></A>, <A HREF="funct_1_238.htm"><B>NdisMSetAttributes</B></A>, <A HREF="funct_1_239.htm"><B>NdisMSetAttributesEx</B></A>, <A HREF="funct_1_250.htm"><B>NdisOpenProtocolConfiguration</B></A>, <A HREF="funct_1_269.htm"><B>NdisReadNetworkAddress</B></A>, <A HREF="funct_1_270.htm"><B>NdisReadPciSlotInformation</B></A>, <A HREF="funct_1_272.htm"><B>NdisRegisterProtocol</B></A>, <A HREF="funct_1_289.htm"><B>NdisWriteConfiguration</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

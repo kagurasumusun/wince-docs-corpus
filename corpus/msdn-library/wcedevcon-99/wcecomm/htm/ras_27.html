@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enumerating Phone-Book Entries</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RasEnumEntries">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_enumerating_phone_book_entries"></A>Enumerating Phone-Book Entries</H2>
+
+<P>The <A HREF="JavaScript:hhobj_1.Click()"><B>RasEnumEntries</B></A> function is used to enumerate a list of phone-book entries. Using this list, a user can select a RAS connection.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To enumerate phone-book entries</H4>
+
+<OL>
+	<LI>Allocate an array for the <B>RASENTRYNAME</B> structure.</li>
+
+	<LI>Call <B>RasEnumEntries</B> to list the names in the phone book.</li>
+
+	<LI>Display the list for a user.</li>
+</OL>
+
+<P>The following code example shows how to dial and connect to a phone-book entry in the registry.</P>
+
+<PRE><CODE>BOOL GetPhonebookEntries (HWND hDlgWnd)
+{
+  int index;
+  DWORD dwSize, 
+        dwEntries;
+  HWND hWndListBox;
+
+  // Allocate an array of RASENTRYNAME structures. Assume 
+  // no more than 20 entries to be configured on the 
+  // Windows CE-based device.
+
+  if (!(lpRasEntryName = new RASENTRYNAME [20]))
+  {
+    MessageBox (hDlgWnd, TEXT("Not enough memory"), szTitle, MB_OK);
+    return FALSE;
+  }
+
+  // Initialize the dwSize member of the first RASENTRYNAME structure
+  // in the array to the size of the structure to identify 
+  // the version of the structure being passed.
+  lpRasEntryName[0].dwSize = sizeof (RASENTRYNAME);
+
+  // Size of the array, in bytes
+  dwSize = sizeof (RASENTRYNAME) * 20;
+
+  // List all entry names in a remote access phone book.
+  if ((RasEnumEntries (
+          NULL,               // Reserved, must be NULL
+          NULL,               // Phone book is stored in the Windows CE
+                              // registry.
+          lpRasEntryName,     // Pointer to structure to receive entries
+          &amp;dwSize,            // Size of lpRasEntryName, in bytes
+          &amp;dwEntries)) != 0)  // Number of entries placed in array
+  {
+    MessageBox (hDlgWnd, TEXT("Could not obtain RAS entries"), szTitle,
+                MB_OK);
+    return FALSE;
+  }
+
+  // Get the HWND of the list box control.
+  hWndListBox = GetDlgItem (hDlgWnd, IDC_RASNAMES);
+
+  // Remove all items from a list box.
+  SendMessage (hWndListBox, LB_RESETCONTENT, 0, 0);
+
+  // Add the names of each RAS connection to the list box.
+  for (index = 0; index &lt; (int)dwEntries; ++index)
+  {
+    SendMessage (hWndListBox, LB_INSERTSTRING, index, 
+                 (LPARAM)lpRasEntryName[index].szEntryName);
+  }
+
+  return TRUE;
+}</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

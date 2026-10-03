@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Searching for Files and Changing File Attributes</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_searching_for_files_and_changing_file_attributes"></A>Searching for Files and Changing File Attributes</H2>
+
+<P>An application can use <B>FindFirstFile</B>, <B>FindNextFile</B>, and <B>FindClose</B> to search for file names that match a specified pattern. The pattern must be a valid file name and may include wildcard characters.</P>
+
+<P><B>FindFirstFile</B> creates a handle that <B>FindNextFile</B> uses to search for other files with the same pattern. Both functions return information about the found file. This information includes the file name, alternate file name, size, CEOID, attributes, creation time, last access time, and last write time.<B> FindClose</B> destroys the handle created by <B>FindFirstFile</B>.</P>
+
+<P>The following code example shows how to copy all text files to a new directory of read-only files named Textro. If necessary, files in the new directory are changed to read-only.</P>
+
+<P>The application uses <B>FindFirstFile</B> and <B>FindNextFile</B> to search the root directory for all .txt files. Each .txt file is copied to Textro. If the file is not read-only, the application changes directories to Textro and uses <B>SetFileAttributes</B> to convert the copied file to read-only.</P>
+
+<P>After all .txt files have been copied, the application uses <B>FindClose</B> to close the search handle.</P>
+
+<PRE><CODE>WIN32_FIND_DATA FileData;    // Data structure describes the file found
+HANDLE hSearch;                // Search handle returned by FindFirstFile
+TCHAR szMsg[100];            // String to store the error message
+TCHAR szNewPath[MAX_PATH];    // Name and path of the file copied
+TCHAR szDirPath[] = TEXT("TEXTRO"); 
+ 
+BOOL bFinished = FALSE; 
+ 
+// Create a new directory.
+ 
+if (!CreateDirectory(szDirPath, NULL)) 
+{ 
+    wsprintf(szMsg, TEXT("Unable to create new directory."));
+    return;
+} 
+
+// Start searching for .txt files in the root directory.
+ 
+hSearch = FindFirstFile(TEXT("*.txt"), &amp;FileData); 
+if (hSearch == INVALID_HANDLE_VALUE) 
+{ 
+    wsprintf(szMsg, TEXT("No .TXT files found.")); 
+    return;
+} 
+ 
+// Copy each .txt file to the new directory and change it to read-only, 
+// if it is not already read-only.
+ 
+while (!bFinished) 
+{ 
+    lstrcpy(szNewPath, szDirPath); 
+    lstrcat(szNewPath, TEXT("\\")); 
+    lstrcat(szNewPath, FileData.cFileName); 
+    if (CopyFile(FileData.cFileName, szNewPath, FALSE))
+    { 
+        if (!(FileData.dwFileAttributes &amp; FILE_ATTRIBUTE_READONLY)) 
+        { 
+            SetFileAttributes(szNewPath, 
+                FileData.dwFileAttributes | FILE_ATTRIBUTE_READONLY); 
+        } 
+    } 
+    else 
+    { 
+        wsprintf(szMsg, TEXT("Unable to copy file."));
+    } 
+ 
+    if (!FindNextFile(hSearch, &amp;FileData)) 
+    {
+        bFinished = TRUE;
+
+        if (GetLastError() == ERROR_NO_MORE_FILES) 
+        { 
+            wsprintf(szMsg, TEXT("Found all of the files.")); 
+        } 
+        else 
+        { 
+            wsprintf(szMsg, TEXT("Unable to find next file."));
+        } 
+    }
+} 
+ 
+// Close the search handle.
+ 
+if (!FindClose(hSearch)) 
+{ 
+    wsprintf(szMsg, TEXT("Unable to close search handle."));
+} 
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

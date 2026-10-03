@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Communicating with a GPS Device</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_communicating_with_a_gps_device"></A>Communicating with a GPS Device</H2>
+
+<P>You can use the methods of the <B>IPosNav</B> interface to communicate with a GPS device.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To communicate with a GPS device</H4>
+
+<OL>
+	<LI>Initialize COM and obtain a handle to an <B>IPosNav</B> interface.
+<P>The following code example shows how to do this:
+
+<PRE><CODE>HRESULT hResult = CoCreateInstance(CLSID_PosNav, NULL,
+                                   CLSCTX_INPROC_SERVER, IID_IPosNav, 
+                                   (LPLPVOID) &amp;pPosNav);
+</CODE></PRE>
+</li>
+
+	<LI>Call <B>FindDevices</B> to obtain a list of installed GPS devices, then select a device to use.
+<P>The following code example shows how to do this:
+
+<PRE><CODE>hres = pPosNav-&gt;FindDevices(&amp;pDevice, &amp;dwNumDev);
+if(FAILED (hres) || dwNumDev == 0)
+  {
+  pPosNav-&gt;Release();
+  // Insert error handling here.
+  }
+
+// Call your selection function to choose one device.
+PNDEVICE *pDeviceOfChoice = MySelectDevice(pDevice);
+</CODE></PRE>
+</li>
+
+	<LI>Call <B>OpenDevice</B> to open the selected device for communication. 
+<P>The following code example shows how to do this:
+
+<PRE><CODE>hres = pPosNav-&gt;OpenDevice(&amp;hPNAPI, pDeviceOfChoice);
+</CODE></PRE>
+</li>
+
+	<LI>Call <B>DeleteDeviceList</B> to delete the device list after the selected device is open.
+<P>The following code example shows how to do this:
+
+<PRE><CODE>pPosNav-&gt;DeleteDeviceList(pDevice);
+if(FAILED (hres))
+  {
+  g_pPosNav-&gt;Release();
+  // Insert error handling here.
+  }
+</CODE></PRE>
+</li>
+
+	<LI>Call <B>StartCall</B> to retrieve data from the device.</li>
+
+	<LI>Call <B>CloseDevice</B> to close the device.
+<P>The following code example shows how to do this:
+
+<PRE><CODE>hres = pPosNav-&gt;CloseDevice(hPNAPI);
+// Release the interface.
+pPosNav-&gt;Release();
+</CODE></PRE>
+</li>
+</OL>
+<p>&nbsp;</p></body>
+</HTML>

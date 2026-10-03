@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Joining and Leaving a Multicast Group</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_joining_and_leaving_a_multicast_group"></A>Joining and Leaving a Multicast Group</H2>
+
+<P>Before a host can receive IP multicast datagrams, it must become a member of one or more IP multicast groups. The following code example shows how a process requests to join a multicast group by using the <B>setsockopt</B> function.</P>
+
+<PRE><CODE>struct ip_mreq mreq;
+// mreq is the ip_mreqstructure
+{
+  struct in_addr imr_multiaddr;  //The multicast group to join 
+  struct in_addr imr_interface;  //The interface to join on
+}
+
+#define RECV_IP_ADDR  "225.6.7.8" // An arbitrary multicast address
+
+mreq.imr_multiaddr.s_addr = inet_addr(RECV_IP_ADDR);
+mreq.imr_interface.s_addr = INADDR_ANY;
+err = setsockopt(
+                    sock, 
+                    IPPROTO_IP,
+                    IP_ADD_MEMBERSHIP,
+                    (char*)&amp;mreq, 
+                    sizeof(mreq));
+</CODE></PRE>
+
+<P>A socket must bind to an address before calling <B>setsockopt</B>.</P>
+
+<P>Every multicast group membership is associated with a single interface. It is possible to join the same group on more than one interface. To choose the default multicast interface, use INADDR_ANY as the address for <I>imr_interface</I>. To choose a specific interface capable of multicasting, use one of the host’s local addresses.</P>
+
+<P>The following code example shows how to leave a multicast group.</P>
+
+<PRE><CODE>struct ip_mreq mreq;
+setsockopt(    
+            sock, 
+            IPPROTO_IP, 
+            IP_DROP_MEMBERSHIP,
+            (char*)&amp;mreq,
+            sizeof(mreq));
+</CODE></PRE>
+
+<P>The memberships associated with a socket are dropped when the socket is closed, or the process holding the socket is terminated. However, more than one socket may claim a membership in a particular group, and the host remains a member of that group until the last membership is dropped.</P>
+<p>&nbsp;</p></body>
+</HTML>

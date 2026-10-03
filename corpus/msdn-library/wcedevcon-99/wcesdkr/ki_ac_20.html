@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IClassFactory::CreateInstance</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_iclassfactory_createinstance"></A>IClassFactory::CreateInstance</H2>
+
+<P>This method creates an uninitialized object of a specified class identifier (CLSID).</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Objbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT CreateInstance( IUnknown *</B><I>pUnkOuter, </I><B>REFIID</B> <I>iid,</I> <BR>
+<B>void</B> <B>**</B> <I>ppvObj </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pUnkOuter</I></DT>
+
+<DD>[in] If the object is being created as part of an aggregate, pointer to the controlling <B>IUnknown</B> interface of the aggregate. Otherwise, <I>pUnkOuter</I> must be NULL. </dd>
+
+<DT><I>riid</I></DT>
+
+<DD>[in] Reference to the identifier of the interface to be used to communicate with the newly created object. If <I>pUnkOuter</I> is NULL, this parameter is frequently the IID of the initializing interface; if <I>pUnkOuter</I> is non-NULL, <I>riid</I> must be <B>IID_IUnknown</B> (defined in the header as the IID for <B>IUnknown</B>).</dd>
+
+<DT><I>ppvObject</I></DT>
+
+<DD>[out] Pointer to a pointer variable that receives the interface pointer requested in <I>riid</I>. Upon successful return, *<I>ppvObject</I> contains the requested interface pointer. If the object does not support the interface specified in <I>riid</I>, the implementation must set *<I>ppvObject</I> to NULL.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>This method supports the standard return values E_UNEXPECTED, E_OUTOFMEMORY, and E_INVALIDARG, as well as the values described in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=37%>
+<H5>Value</H5>
+</TD>
+<TD width=63%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>S_OK</TD>
+<TD width=63%>The specified object was created.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>CLASS_E_NOAGGREGATION</TD>
+<TD width=63%>The <I>pUnkOuter</I> parameter was non-NULL and the object does not support aggregation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_NOINTERFACE</TD>
+<TD width=63%>The object that <I>ppvObject</I> points to does not support the interface identified by <I>riid</I>.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The <B>IClassFactory</B> interface is always on a class object. The <B>CreateInstance</B> method creates an uninitialized object of the class identified with the specified CLSID. When an object is created in this way, the CLSID must be registered in the system registry with <B>CoRegisterClassObject</B>.</P>
+
+<P>The <I>pUnkOuter</I> parameter indicates whether the object is being created as part of an aggregate. Object definitions are not required to support aggregation—they must be specifically designed and implemented to support it. </P>
+
+<P>The <I>riid</I> parameter specifies the interface identifier (IID) of the interface through which you will communicate with the new object. If <I>pUnkOuter</I> is non-NULL (that indicates aggregation), the value of the <I>riid</I> parameter must be <B>IID_IUnknown</B>. If the object is not part of an aggregate, <I>riid</I> often specifies the interface though which the object will be initialized. </P>
+
+<P>For OLE embeddings, the initialization interface is <A HREF="ki_pr_13.htm"><B>IPersistStorage</B></A>, but in other situations, other interfaces are used. To initialize the object, there must be a subsequent call to an appropriate method in the initializing interface. Common initialization functions include <A HREF="ki_pr_15.htm"><B>IPersistStorage::InitNew</B></A> (for new, blank embeddable components), <A HREF="ki_pr_17.htm"><B>IPersistStorage::Load</B></A> (for reloaded embeddable components),</P>
+
+<P>In general, if an application supports only one class of objects, and the class object is registered for single use, only one object can be created. The application must not create other objects, and a request to do so should return an error from <B>IClassFactory::CreateInstance</B>. The same is true for applications that support multiple classes, each with a class object registered for single use; a <B>CreateInstance</B> for one class followed by a <B>CreateInstance</B> for any of the classes should return an error.</P>
+<p>&nbsp;</p></body>
+</HTML>

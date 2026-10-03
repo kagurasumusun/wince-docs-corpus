@@ -1,0 +1,225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating Dialog Boxes</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_creating_dialog_boxes"></A>Creating Dialog Boxes</H2>
+
+<P>A <I>dialog box</I> is a temporary window that contains controls. A dialog box is used to display status information and to prompt the user for input. Windows CE supports two types of dialog boxes: <I>modal</I> and <I>modeless</I>. A modal dialog box requires the user to supply information or dismiss the dialog box before enabling the application to continue. Applications use modal dialog boxes in conjunction with commands that require additional information before they can proceed. A modeless dialog box enables the user to supply information and return to a previous task without closing the dialog box. Modal dialog boxes are simpler to manage than their modeless counterparts because they are created and destroyed by calling a single function.</P>
+
+<P>To create either a modal or modeless dialog box, you must define a <I>dialog box template</I> to describe the dialog box style and content. The dialog box template is a binary description of the dialog box and the controls that it contains. You must also supply a dialog box procedure to execute tasks. You can create this template as a resource that you can load from your executable file.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To define a dialog box template</H4>
+
+<OL>
+	<LI>Define an identifier for the dialog box in a header file.</li>
+
+	<LI>Define a dialog box in the application resource file using the <B>DIALOG</B> statement. The statement defines the position and dimensions of the dialog box on the screen as well as the dialog box style, and has the following parameters.</li>
+</OL>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=24%>
+<H5>Parameter</H5>
+</TD>
+<TD width=27%>
+<H5>Description</H5>
+</TD>
+<TD width=49%>
+<H5>Use</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>nameID</I></TD>
+<TD width=27%>Dialog box name</TD>
+<TD width=49%>Specifies a unique identifier for the dialog box</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>x</I></TD>
+<TD width=27%><I>x</I> coordinate</TD>
+<TD width=49%>Specifies the <I>x</I> coordinate of the upper-left corner of the dialog box</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>y</I></TD>
+<TD width=27%><I>y</I> coordinate</TD>
+<TD width=49%>Specifies the <I>y</I> coordinate of the upper-left corner of the dialog box</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>Width</I></TD>
+<TD width=27%>Dialog width</TD>
+<TD width=49%>Specifies the width of the dialog box</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>Height</I></TD>
+<TD width=27%>Dialog height</TD>
+<TD width=49%>Specifies the height of the dialog box</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>Option statements</I></TD>
+<TD width=27%>Dialog box options</TD>
+<TD width=49%>Specifies one or more features of the dialog box.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><I>Control statements</I></TD>
+<TD width=27%>Controls associated with the dialog box</TD>
+<TD width=49%>Specifies one or more controls using the appropriate <B>control</B> statement. </TD>
+</TR>
+</TABLE><BR>
+
+<P>For a listing of option statements, see the <B>DIALOG</B> statement in the Windows CE Reference. For a listing of <B>control</B> statements, see “Common Control Parameters” in the Windows CE Reference.</P>
+
+<P>The following code example demonstrates how to use the <B>DIALOG</B> statement to define a dialog box template.</P>
+
+<PRE><CODE>#include &lt;windows.h&gt;
+
+#define IDD_REPLACE                     106
+#define IDC_FINDWHAT                    1000
+#define IDC_REPLACE                     1001
+#define IDC_BTNREPLACE                  1008
+#define IDC_BTNREPLACEALL               1009
+#define IDC_BTNFINDNEXT                 1010
+#define IDC_STATIC1                     1011
+#define IDC_STATIC2                     1012
+
+IDD_REPLACE DIALOG DISCARDABLE  0, 0, 191, 73
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Replace"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_FINDWHAT,55,4,128,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_REPLACE,55,21,128,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&amp;Find Next",IDC_BTNFINDNEXT,18,38,71,14
+    PUSHBUTTON      "&amp;Replace",IDC_BTNREPLACE,18,55,71,14
+    PUSHBUTTON      "Replace &amp;All",IDC_BTNREPLACEALL,101,38,71,14
+    PUSHBUTTON      "Cancel",IDCANCEL,101,55,71,14
+    LTEXT           "Fi&amp;nd what:",IDC_STATIC1,7,4,43,8
+    LTEXT           "Re&amp;place with:",IDC_STATIC2,7,21,43,8
+END
+</CODE></PRE>
+
+<P>The <I>dialog box procedure</I> is an application-defined callback function that the system calls when it has input for the dialog box or tasks for the dialog box to execute. A dialog box procedure is similar to a window procedure in that the system sends messages to the procedure when it has data or tasks to execute. Although a dialog box procedure is similar to a window procedure, it does not have the same responsibilities. Unlike a window procedure, a dialog box procedure never calls the <B>DefWindowProc</B> function. Rather, it returns TRUE if it processes a message or FALSE if it does not.</P>
+
+<P>The following code example shows the form of a dialog box procedure.</P>
+
+<PRE><CODE>BOOL CALLBACK ReplaceDialogProc (
+                    HWND hwndDlg,   // Handle to dialog box.
+                    UINT uMsg,      // Message.
+                    WPARAM wParam,  // First message parameter.
+                    LPARAM lParam)  // Second message parameter.
+{
+  switch(uMsg)
+  {
+    case WM_INITDIALOG:
+      // Insert code here to put the string (to find and replace with)
+      // into the their edit controls.
+      // ...
+      return TRUE;  
+
+    case WM_COMMAND:
+      switch (LOWORD(wParam))
+      {
+        case IDC_BTNFINDNEXT:
+          // Insert code here to handle the case of pushing
+          // "Find Next" button.
+          // ...
+          break;
+
+        case IDC_BTNREPLACE:
+          // Insert code here to handle the case of pushing
+          // "Replace" button.
+          // ...
+          break;
+
+        case IDC_BTNREPLACEALL:
+          // Insert code here to handle the case of pushing
+          // "Replace All" button.
+          // ...
+          break;
+
+        case IDCANCEL:
+          EndDialog(hwndDlg, 0);
+          break;
+      }
+      return TRUE;
+  }
+  return FALSE;
+}
+</CODE></PRE>
+
+<P>Here, the <I>hwndDlg</I> parameter receives the window handle of the dialog box. </P>
+
+<P>Most dialog box procedures process the WM_INITDIALOG message and the WM_COMMAND messages sent by the controls, but process few if any other messages. If a dialog box procedure does not process a message, it must return FALSE to direct the system to process the messages internally. The only exception to this rule is the WM_INITDIALOG message. Typically, you initialize the dialog box and its contents while processing the WM_INITDIALOG message. The most common task you perform using the WM_INITDIALOG message is to initialize the controls to reflect the current dialog box settings. Another common task is to center a dialog box on the screen or within its owner window. A useful task for some dialog boxes is to set the input focus to a given control rather than accept the default input focus. The dialog box procedure must return TRUE to direct the system to process the WM_INITDIALOG message.</P>
+
+<P>Typically, you create a dialog box by calling either the <B>DialogBox</B> or <B>CreateDialog</B> function. <B>DialogBox</B> creates a modal dialog box; <B>CreateDialog</B> creates a modeless dialog box. When calling these functions, you must specify the identifier or name of a dialog box template resource and the address of the dialog box procedure. The <B>DialogBox</B> and <B>CreateDialog</B> functions load the specified dialog box template, display the dialog box, and process all user input until the user closes the dialog box.</P>
+
+<P>The following code example shows how to create a modal dialog box.</P>
+
+<PRE><CODE>DialogBox (
+      g_hInst,                        // Handle to application instance
+      MAKEINTRESOURCE (IDD_REPLACE),  // Identifies dialog box template
+      g_hwndMain,                     // Handle to owner window
+      (DLGPROC) ReplaceDialogProc);   // Pointer to dialog box procedure
+</CODE></PRE>
+
+<P>The following code example shows how to create a modeless dialog box.</P>
+
+<PRE><CODE>CreateDialog (
+      g_hInst,                        // Handle to application instance
+      MAKEINTRESOURCE (IDD_REPLACE),  // Identifies dialog box template
+      g_hwndMain,                     // Handle to owner window
+      (DLGPROC) ReplaceDialogProc);   // Pointer to dialog box procedure
+</CODE></PRE>
+
+<P>Dialog boxes usually belong to a predefined, exclusive window class. The system uses this window class and its corresponding window procedure for both modal and modeless dialog boxes. When the function is called, it creates the window for the dialog box, as well as the windows for the controls in the dialog box, and then sends selected messages to the dialog box procedure. While the dialog box is visible, the predefined window procedure manages all messages, processing some messages and passing others to the dialog box procedure so that the procedure can execute tasks. You do not have direct access to the predefined window class or window procedure, but you can use the dialog box template and dialog box procedure to modify the style and behavior of a dialog box. </P>
+
+<P>The following table shows dialog box types.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=37%>
+<H5>Dialog box type</H5>
+</TD>
+<TD width=63%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>Application-defined dialog box</TD>
+<TD width=63%>Helps a user perform application-specific tasks</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>Common dialog box</TD>
+<TD width=63%>Provides a familiar way for users to perform common application tasks</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>Message box</TD>
+<TD width=63%>Notifies a user of an event or situation and offers limited responses</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>Property sheet, a collection of tabbed dialog boxes</TD>
+<TD width=63%>Provides a convenient way to view and modify object properties</TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

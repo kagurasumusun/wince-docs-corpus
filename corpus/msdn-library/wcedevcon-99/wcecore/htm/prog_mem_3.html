@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using a Separate Heap</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_using_a_separate_heap"></A>Using a Separate Heap</H2>
+
+<P>Instead of adding more size to the local heap, you might need to create a series of separate heaps. For example, a word processor might have a separate heap associated with each text file. Because you can delete separate heaps, fragmentation is not as much of an issue.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To allocate and deallocate memory on a separate heap</H4>
+
+<OL>
+	<LI>Call the <B>HeapCreate </B>function.
+<P><B>HeapCreate</B> returns a handle. Use this handle to reference which heap you are using in the following steps.
+</li>
+
+	<LI>Call <B>HeapAlloc</B> to allocate memory from the heap to your application.
+<P>Windows CE does not place any limits on the size of a separate heap. As long as you have virtual and physical memory addresses available, you can allocate memory from the separate heap.
+</li>
+
+	<LI>Use the memory that is allocated to your application.</li>
+
+	<LI>If necessary, call <B>HeapSize</B> and <B>HeapReAlloc</B> to reallocate the separate heap memory.
+<P>If you need to increase the size of a block, call <B>HeapSize</B> to determine if the block contains enough space. Then, call <B>HeapReAlloc</B> to either add memory to the top of the allocation or to move the block to a larger area.
+</li>
+
+	<LI>Once you are done, call the <B>HeapFree</B> function to deallocate the memory back to Windows CE.
+<P>Like the local heap, Windows CE deallocates a page only if all of the blocks within that page are also deallocated. This may result in fragmentation within the separate heap.
+</li>
+
+	<LI>Once you are done with the heap, call the <B>HeapDestroy</B> function to return all of the heap memory to Windows CE.
+<P>You do not have to call <B>HeapFree</B> on all blocks within the separate heap before you call <B>HeapDestroy</B>. 
+</li>
+</OL>
+
+<P>The following code example shows how to create a new heap.</P>
+
+<PRE><CODE>LPBYTE pbMyPointer = NULL;
+HANDLE hMyNewHeap = NULL;
+LPVOID lpHeapMemory = NULL;
+LPVOID lpHeapMem2 = NULL;
+UINT uiSize;
+BOOL bResult;
+
+hMyNewHeap = HeapCreate (0,     // *do* serialize
+                         35000, // 35,000 bytes wanted
+                         0);    // Unsupported in Windows CE
+</CODE></PRE>
+
+<P>The following code example shows how to allocate memory from the heap even when the heap is very small, by using <B>HeapAlloc</B>.</P>
+
+<PRE><CODE>lpHeapMemory = HeapAlloc (hMyNewHeap,       // Specify which heap
+                          HEAP_ZERO_MEMORY, // Zero the memory
+                          42);              // Number of bytes
+if (lpHeapMemory == NULL)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// The return value is actually the address of the memory.
+pbMyPointer = (LPBYTE)lpHeapMemory;
+
+// Your code to use the memory goes here.
+// SomeFunctionCall (pbMyPointer, and so on)
+// . . .
+</CODE></PRE>
+
+<P>The following code example shows how to check the size of part of the heap by using <B>HeapSize</B>.</P>
+
+<PRE><CODE>uiSize = HeapSize (hMyNewHeap,    // Specify the heap
+                   0,             // No flags
+                   lpHeapMemory); // Specify which memory
+if (uiSize == 0)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+</CODE></PRE>
+
+<P>The following code example shows how to change the size of part of the heap by using <B>HeapReAlloc</B>. </P>
+
+<PRE><CODE>lpHeapMem2 = HeapReAlloc (hMyNewHeap,   // Specify which heap
+                          0,            // Options (none)
+                          lpHeapMemory, // Existing memory
+                          100);         // New size, in bytes
+if (lpHeapMem2 == NULL)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// The return value is actually the address of the memory.
+pbMyPointer = (LPBYTE)lpHeapMem2;
+</CODE></PRE>
+
+<P>The following code example shows how to free memory from the heap by using <B>HeapFree</B>.</P>
+
+<PRE><CODE>bResult = HeapFree (hMyNewHeap,       // Specify which heap
+                    0,                // Options (none)
+                    lpHeapMem2);      // Specify what to free
+if (!bResult)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// Always zero the caller’s pointer after freeing memory.
+lpHeapMem2 = NULL;
+</CODE></PRE>
+
+<P>The following code example shows how to destroy the heap by using <B>HeapDestroy</B>. </P>
+
+<PRE><CODE>bResult = HeapDestroy (hMyNewHeap);
+
+if (!bResult)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

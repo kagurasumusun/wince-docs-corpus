@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisSend</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndissend"></A>NdisSend</H2>
+
+<P>This function forwards a send request to the underlying driver.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisSend(OUT PNDIS_STATUS </B><I>Status</I><B>, <BR>
+IN NDIS_HANDLE </B><I>NdisBindingHandle</I><B>, IN PNDIS_PACKET </B><I>Packet</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable that is set on return from this function. The underlying driver determines which NDIS_STATUS_<I>XXX</I> is returned, but it is usually one of the following values:
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS</DT>
+
+<DD>The specified packet is being transmitted over the network.</dd>
+
+<DT>NDIS_STATUS_PENDING</DT>
+
+<DD>The request is being handled asynchronously, and the caller’s <B>ProtocolSendComplete</B> function will be called when it is completed.</dd>
+
+<DT>NDIS_STATUS_INVALID_PACKET</DT>
+
+<DD>The size of the requested transfer is too large for the NIC, or possibly the NIC indicated an erroneous packet transmission to its driver.</dd>
+
+<DT>NDIS_STATUS_CLOSING</DT>
+
+<DD>The underlying driver is closing.</dd>
+
+<DT>NDIS_STATUS_RESET_IN_PROGRESS</DT>
+
+<DD>The underlying driver is currently resetting the NIC. The caller’s <B>ProtocolStatus</B> function was or will be called with NDIS_STATUS_RESET_START to indicate that a reset is in progress.</dd>
+
+<DT>NDIS_STATUS_FAILURE</DT>
+
+<DD>This value is usually a nonspecific default returned when none of the more specific NDIS_STATUS_<I>XXX</I> caused the underlying driver to fail the request.</dd>
+</DL>
+
+
+<P>The specific NDIS_STATUS_<I>XXX</I> returned for device I/O errors that occur during a transmit operation depends on the nature of the NIC and the discretion of the NIC driver writer. For example, a miniport might return NDIS_STATUS_NO_CABLE if its NIC indicates this condition to the driver.
+</dd>
+
+<DT><I>NdisBindingHandle</I></DT>
+
+<DD>Handle returned by the <B>NdisOpenAdapter</B> function that identifies the target NIC or the virtual adapter of the next-lower driver to which the caller is bound.</dd>
+
+<DT><I>Packet</I></DT>
+
+<DD>Pointer to the caller-supplied packet descriptor, allocated with the <B>NdisAllocatePacket</B> function, with chained buffer descriptors mapping buffers containing the data that the underlying NIC driver should transmit over the wire.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>Before calling this function, a protocol driver can call the <B>NdisSetPacketFlags</B> function to set the flags in the private header, reserved for use by NDIS, of the packet descriptor that it allocated. These flags specify caller-determined information about the requested send operation that is not contained in the packet data. The underlying NIC driver’s <B>MiniportSend</B> function is given the send flags as an input parameter. The meaning of the packet flags bits is medium-specific and defined by the pair of collaborating drivers.</P>
+
+<P>However, such a pair of collaborating drivers can use the <B>NDIS_PACKET_OOB_DATA</B> structure associated with each packet descriptor to communicate far more information than the packet flags can convey. Before calling this function, a protocol can use the <B>NDIS_SET_PACKET_TIME_TO_SEND</B> and/or <B>NDIS_SET_PACKET_MEDIA_SPECIFIC_INFO</B> macros to set up out-of-band information, if any, relevant to the underlying driver in the <B>NDIS_PACKET_OOB_DATA</B> structure associated with the protocol-allocated packet descriptor.</P>
+
+<P>When an underlying driver has insufficient resources to transmit a valid send packet, the driver has two alternatives:
+
+<UL>
+	<LI>Its <B>MiniportSend</B> function can insert the packet into an internal queue and return NDIS_STATUS_PENDING.
+<P>The driver holds the packet queued until resources become available and sends the packet when they are.
+</li>
+
+	<LI>Its <B>MiniportSend</B> function can return control with NDIS_STATUS_RESOURCES.
+<P>The NDIS library holds such a returned packet in an internal queue for resubmission to the miniport. The miniport indicates its readiness to accept send packets later by calling <B>NdisMSendResourcesAvailable</B> or <B>NdisMSendComplete</B>, whichever call occurs first.
+</li>
+</UL>
+
+<P>In either of the preceding situations, this function returns NDIS_STATUS_PENDING to the caller, and the driver’s <B>ProtocolSendComplete</B> function is called when the packet is transmitted.</P>
+
+<P>As soon as a protocol calls this function, it relinquishes ownership of the packet descriptor at <I>Packet</I> of all buffers mapped by buffer descriptors that it chained to the packet and of any out-of-band information that it supplied with the packet descriptor. The protocol regains ownership of these resources when the packet is completed with a status other than NDIS_STATUS_PENDING or when its <B>ProtocolSendComplete</B> function is called.</P>
+
+<P>When either occurs, the protocol can call the <B>NdisReinitializePacket</B> function to prepare the packet for reuse after saving the buffer descriptors chained to the packet descriptor with calls to an <B>NdisUnchainBufferAt</B><I>XXX</I> function. Reusing such a packet descriptor yields better performance than returning the packet to driver-allocated packet pool with the <B>NdisFreePacket </B>function, and then reallocating it for another send later.</P>
+
+<P>An NDIS intermediate driver must repackage incoming sends from still higher level protocols in fresh packet descriptors before passing such a send request to the underlying miniport with this function.</P>
+
+<P>A driver that calls this function runs at IRQL &lt;= DISPATCH_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_173.htm"><B>NdisAllocateBuffer</B></A>, <A HREF="funct_1_176.htm"><B>NdisAllocatePacket</B></A>, <A HREF="funct_1_193.htm"><B>NdisFreePacket</B></A>, <A HREF="funct_1_199.htm"><B>NdisGetPacketFlags</B></A>, <A HREF="funct_1_237.htm"><B>NdisMSendResourcesAvailable</B></A>, <A HREF="funct_1_273.htm"><B>NdisReinitializePacket</B></A>, <A HREF="funct_1_286.htm"><B>NdisUnchainBufferAtBack</B></A>, <A HREF="funct_1_287.htm"><B>NdisUnchainBufferAtFront</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

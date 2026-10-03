@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing Persistent Storage With a Flash Card</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_accessing_persistent_storage_with_a_flash_card"></A>Accessing Persistent Storage With a Flash Card</H2>
+
+<P>A flash card allows a user to transfer files and add storage to a Palm-size PC. A user accesses files on a flash card through a connected desktop computer or through a Palm-size PC application. After connecting a Palm-size PC with a desktop computer, a user who clicks the Storage Card icon on the desktop computer brings up the root directory of the flash card. The user can then create, copy, and delete directories and files on the flash card. This section describes how you create and access files on a flash card. </P>
+
+<P>To find out if your device has a flash card, call the <B>FindFirstFlashCard</B> and <B>FindNextFlashCard</B> functions. <B>FindFirstFlashCard</B> returns a search handle that <B>FindNextFlashCard</B> uses. It also returns a pointer to the first flash card, if any. <B>FindNextFlashCard</B> returns a pointer to the next flash card and a BOOL value indicating if the find was successful. The following code example shows how to use <B>FindFirstFlashCard</B> and <B>FindNextFlashCard</B> to locate up to 10 flash cards on a device.</P>
+
+<PRE><CODE>int index;
+int iNumOfFlashCard = 0;            // tTotal number of storage cards
+BOOL bContinue = TRUE;              // If TRUE, continue searching
+                                    // If FALSE, stop searching
+TCHAR szRootDirPath[MAX_PATH];      // Root directory path of 
+                                    // storage cards
+TCHAR szSCName[1000];            // String for storing the storage 
+                                    // card name with the full path
+HANDLE hFlashCard;               // Search handle for storage cards
+WIN32_FIND_DATA *lpwfdFlashCard;    // Structure for storing storage
+                                    // card information
+WIN32_FIND_DATA *lpwfdFlashCardTmp; // Structure for storing storage
+                                    // card information temporarily
+lpwfdFlashCardTmp = (WIN32_FIND_DATA *) LocalAlloc (LPTR, 10 * sizeof (WIN32_FIND_DATA));
+if (lpwfdFlashCardTmp == NULL)      // Failed allocate memory return;
+hFlashCard = FindFirstFlashCard (&amp;lpwfdFlashCardTmp [0]);
+if (hFlashCard == INVALID_HANDLE_VALUE)
+{
+    LocalFree (lpwfdFlashCardTmp);   // Free the memory
+    return;
+}
+while (bContinue) 
+{
+    iNumOfFlashCard += 1;
+    // Create a "My Documents" directory on the card, if it does not 
+    // exist.
+    wcscpy (szRootDirPath, TEXT("\\"));
+    wcscat (szRootDirPath, lpwfdFlashCardTmp[iNumOfFlashCard 
+    1].cFileName);
+    wcscat (szRootDirPath, TEXT("\\My Documents"));
+    CreateDirectory (szRootDirPath, NULL);
+    // Search for the next storage card.
+    bContinue = FindNextFlashCard (hFlashCard, &amp;lpwfdFlashCardTmp 
+                [iNumOfFlashCard]);
+}
+FindClose (hFlashCard);                    // Close the search handle.
+if (iNumOfFlashCard &gt; 0)
+{
+    // Allocate memory for lpwfdFlashCard.
+    lpwfdFlashCard = (WIN32_FIND_DATA *) LocalAlloc (LPTR, 
+                    iNumOfFlashCard * sizeof (WIN32_FIND_DATA));
+    if (lpwfdFlashCard == NULL)            // Failed allocate memory
+        return;
+    // Assign lpwfdFlashCardTmp to lpwfdFlashCard
+    for (index=0; index &lt; iNumOfFlashCard; ++index)
+    {
+        lpwfdFlashCard [index] = lpwfdFlashCardTmp [index];
+    }
+    LocalFree (lpwfdFlashCardTmp);    // Free the memory.
+}
+</CODE></PRE>
+
+<P>Once the flash cards are located, use the <B>EnumProjects</B> and <B>EnumProjectFiles</B> functions to enumerate all folders and files on your flash cards. Use <B>FindFirstProjectFile</B> and <B>FindNextProjectFile</B> to locate particular files. Finally, use the <B>GetOpenFileNames</B> and <B>GetSaveFileName</B> functions to create system-defined dialog boxes for opening and saving files, respectively. The following code example shows how to use <B>EnumProjects</B> to retrieve information from files on flash cards.</P>
+
+<PRE><CODE>for (index = 0; index &lt; iNumOfFlashCard; ++index)
+{
+    // Store the directory name in szName.
+    wsprintf(szSCName, lpwfdFlashCard[index].cFileName); 
+    EnumProjects (EnumProjProc, lpwfdFlashCard[index].dwOID, PRJ_ENUM_FLASH, 0);
+}
+</CODE></PRE>
+
+<P><B>EnumProjProc</B> is a user-defined callback function. Windows CE calls <B>EnumProjProc</B> on each directory <B>EnumProjects</B> encounters. Use <B>EnumProjProc</B> to perform any operations within the enumerated directory. The following code example shows how to use <B>EnumProjProc</B> to find directories and files on flash cards.</P>
+
+<PRE><CODE>BOOL CALLBACK  EnumProjProc (DWORD dwOID, LPARAM lParam)
+{
+    HANDLE hSearch;      // Search handle for files under each
+                         // directory
+    CEOIDINFO OidInfo;   // Structure for storing the storage card 
+                         // information retrieved by CeOidGetInfo
+    WIN32_FIND_DATA fd;  // Structure for storing file information
+    TCHAR szName[1000];  // String for storing the file or directory 
+                         // name on every storage card.
+    TCHAR szErrorMsg[1000];        // String for storing the error 
+                                   // message
+    TCHAR szFilePath[MAX_PATH];    // Wildcard file names with full 
+                                   // path for searching that type of 
+                                   // files
+    BOOLEAN bFinished = FALSE;  // If TRUE, finished searching for files
+                                // If FALSE, continue searching for 
+                                // files
+    // Get storage card information by using its Object identifier.
+    if (!CeOidGetInfo (dwOID, &amp;OidInfo))  
+    {
+        return FALSE;                // Stop enumeration.
+    }
+    // Store the directory name in szName.
+    wsprintf(szName, OidInfo.infDirectory.szDirName); 
+    // Construct the wildcard file name with the full path for searching 
+    // that type of file.
+    wcscpy (szFilePath, OidInfo.infDirectory.szDirName);
+    wcscat (szFilePath, TEXT("\\*.*"));
+    // Search for the first file under the current directory. An 
+    //alternative way to do this is to use FindFirstProjectFile.
+    hSearch = FindFirstFile( szFilePath, &amp;fd);
+    if (hSearch == INVALID_HANDLE_VALUE) 
+    { 
+        wsprintf(szErrorMsg, TEXT("No files found.")); 
+        bFinished = TRUE;            
+    } 
+    // Find all of the files and retrieve the file names.
+    while (!bFinished) 
+    { 
+        // Store the file name in szName.
+        wsprintf(szName, fd.cFileName); 
+        if (!FindNextProjectFile(hSearch, &amp;fd)) 
+        {
+            bFinished = TRUE;        // Finihsed.
+            if (GetLastError() == ERROR_NO_MORE_FILES) 
+            { 
+                wsprintf(szErrorMsg, TEXT("Found all of the files.")); 
+            } 
+            else 
+            { 
+                wsprintf(szErrorMsg, TEXT("Couldn't find next file.")); 
+            } 
+        }
+    } 
+    // Close the search handle. 
+    if (!FindClose(hSearch)) 
+    { 
+        wsprintf(szErrorMsg, TEXT("Couldn't close search handle.")); 
+    } 
+    return TRUE;
+}
+</CODE></PRE>
+
+<P>To create a document on a flash card with an application, you must first create a directory called My Documents on the flash card. This directory mimics the file structure on a Palm-size PC. Creating the My Documents directory should be transparent to the user. You do not need to create a My Documents directory if one already exists on the flash card. You can create files directly in the My Documents directory or in its immediate subdirectories. The path of the flash card is \Storage Card. After you create the My Documents directory, you can create files and subdirectories using the <B>CreateDirectory</B> and <B>CreateFile</B>.functions. The following code example shows how to create a file named test.txt in the testdir directory at \Storage Card\My Documents\testdir.</P>
+
+<PRE><CODE>HANDLE   hFile;
+DWORD    dwFileLen;
+char         szText[]="This is a test file.";
+
+if (CreateDirectory(TEXT("\\Storage Card\\My Documents\\testdir"), NULL))
+{
+   hFile = CreateFile(TEXT("\\Storage Card\\My Documents\\testdir \\test.txt"),
+      GENERIC_WRITE|GENERIC_READ,      //Need read and write access
+      FILE_SHARE_READ,                 //Allow read-access for others.
+      NULL,                            //Security attributes
+      CREATE_ALWAYS,                   //Always create a new file.
+      0,                                   //File attribute
+      NULL);
+   WriteFile(hFile, szText, strlen(szText), &amp;dwFileLen, 0);
+   CloseHandle(hFile);
+}
+</CODE></PRE>
+
+<P><B>Note</B>  A user can insert or remove a flash card at any time. For example, a user can insert a flash card, access a file on it, and then remove the card. When the user attempts to save a file to a flash card that has been removed, the OS will not be able to find the card. Be sure your application searches for the flash card before it attempts to access the flash card.</P>
+
+<P>For a description of the mountable file system, see <A HREF="ppc_samp.htm">Sample Code for a Palm-size PC</A>. For more information about mountable hardware, see the CompactFlash Association Web site at <A HREF="http://www.compactflash.org">http://www.compactflash.org</A>.  </P>
+<p>&nbsp;</p></body>
+</HTML>

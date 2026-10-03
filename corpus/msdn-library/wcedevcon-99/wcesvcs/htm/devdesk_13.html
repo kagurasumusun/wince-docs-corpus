@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Implementing and Using a File Filter</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_implementing_and_using_a_file_filter"></A>Implementing and Using a File Filter</H2>
+
+<P>The CD-ROM that accompanies this documentation includes a sample file filter named Copyfilt that imports a binary file (.bin) from a desktop computer to a binary file (.pbn) on a Windows CE–based device. The Copyfilt sample file filter demonstrates basic operations for implementing a file filter, which are described in the following procedure. </P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To implement a file filter</H4>
+
+<OL>
+	<LI>Register the file filter DLL. 
+<P>For a description of how to register a file filter, see “Registering a File Filter.” 
+</li>
+
+	<LI>Implement the <B>ICeFileFilter </B>interface and methods. </li>
+
+	<LI>Windows CE Services calls the <B>QueryInterface</B> method for the file filter’s <B>ICeFileFilterOptions</B> interface. 
+<UL>
+	<LI>If this interface is available, Windows CE then calls the <B>ICeFileFilterOptions::SetFilterOptions</B> method with a correctly initialized <B>CFF_CONVERTOPTIONS</B> structure. The <I>bNoModalUI</I> member specifies whether the converter is allowed to bring up modal UI while performing the conversion.
+<P>For a file filter that includes selectable conversion options, implement the <B>ICeFileFilter::FilterOptions</B> method to allow users to select among the conversion options supported by the file filter.
+</li>
+</UL>
+</li>
+</OL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use a file filter</H4>
+
+<OL>
+	<LI>The user transfers a file by dragging it between Windows Explorer on the desktop computer and Windows CE Explorer on the device.</li>
+
+	<LI>Windows CE Services prompts the user for a conversion type, using the <B>File Conversion Properties</B> dialog box.</li>
+
+	<LI>Windows CE Services calls the <B>ICeFileFilter::NextConvertFile</B> method for the file filter to perform the custom file conversion. </li>
+
+	<LI>Information about the file conversion and about the source and destination files is passed by pointers to the <B>CFF_CONVERTINFO</B>, <B>CFF_DESTINATIONFILE</B>, and <B>CFF_SOURCEFILE</B> structures. </li>
+</OL>
+
+<P>Within the <B>ICeFileFilter::NextConvertFile</B> method: 
+
+<OL>
+	<LI>Call <B>ICeFileFilterSite::OpenSourceFile</B> to open the source file.</li>
+
+	<LI>Call <B>ICeFileFilterSite::OpenDestinationFile</B> to open the destination file. </li>
+
+	<LI>Use the <B>OpenSourceFile</B> method to read data from the stream file that was opened.</li>
+
+	<LI>Convert the data. 
+<P class=indent1>This can include independent software vendor (ISV)-developed code and RAPI calls.</p>
+</li>
+
+	<LI>Check the status of the <B>NextConvertFile pbCancel</B> parameter occasionally to ensure that the user has not stopped the conversion process. 
+<P class=indent1>If the conversion has been stopped, perform all cleanup operations, and then exit.</p>
+</li>
+
+	<LI>Use the <B>OpenDestinationFile</B> method to write the converted data to the stream file that was opened.</li>
+
+	<LI>Call the <B>ICeFileFilterSite::ReportProgress</B> method occasionally to report the progress of the file conversion. 
+<P class=indent1>Windows CE Services uses this information to update a status bar that shows the percentage of the conversion that is complete. You should limit your use of this method because it can add substantially to the conversion time.</p>
+</li>
+
+	<LI>Call the <B>ICeFileFilterSite::ReportLoss</B> method to report data that is intentionally discarded during conversion. 
+<P class=indent1>Windows CE Services displays a message with this information when the file conversion is complete. Depending on the error format passed in the call, Windows CE Services may call the <B>ICeFileFilter::FormatMessage</B> method for the file filter, in order to properly format the message.</p>
+</li>
+
+	<LI>Use the <B>ICeFileFilterSite::CloseSourceFile</B> method to close the source file, and then use the <B>ICeFileFilterSite::CloseDestinationFile</B> method to close the destination file.</li>
+</OL>
+<p>&nbsp;</p></body>
+</HTML>

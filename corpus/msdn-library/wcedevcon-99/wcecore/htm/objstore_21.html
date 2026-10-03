@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Opening a Database</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_opening_a_database"></A>Opening a Database</H2>
+
+<P>Once you create a database, use the <B>CeOpenDatabaseEx</B> function to open it. <B>CeOpenDatabaseEx</B> specifies the sort order you use on the database during a given session in the <I>propid</I> parameter. To use a different sort order, you must close the database and open it up again with a different sort order. You can also pass a handle to a window in the <I>hwndNotify</I> member of the <B>CENOTIFYREQUEST</B> structure. Windows CE sends messages to the specified window when other processes or other threads modify the open database. When a change occurs, Windows CE sends a WM_DBNOTIFICATION message with the <I>lParam</I> set to <B>CENOTIFICATION</B>. The following table describes the possible values of the <I>uType</I> parameter in the <B>CENOTIFICATION</B> structure. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Message</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>DB_CEIOD_CHANGED</TD>
+<TD width=52%>Record changed</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>DB_CEIOD_CREATED</TD>
+<TD width=52%>Record created</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>DB_CEIOD_RECORD_DELETED</TD>
+<TD width=52%>Record deleted</TD>
+</TR>
+</TABLE><BR>
+
+<P>Remember that you must mount the volume with <B>CEMountDBVol</B> before opening the database. In addition, <B>CeOpenDatabaseEx</B> lets you receive additional data regarding other processes and threads through <B>CENOTIFYREQUEST</B>. <B>CENOTIFYREQUEST</B> lets you choose either the original Windows CE messages for database changes or the WM_DBNOTIFICATION message. The <I>lParam</I> of WM_DBNOTIFICATION points to a <B>CENOTIFICATION</B> structure. The following table describes the different parameters of the <B>CENOTIFICATION</B> structure. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=22%>
+<H5>Parameter</H5>
+</TD>
+<TD width=78%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><I>dwSize</I></TD>
+<TD width=78%><B>CENOTIFICATION</B> size</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><I>dwParam</I></TD>
+<TD width=78%>Application-defined value</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><I>uType</I></TD>
+<TD width=78%>Why the message was sent</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><I>guid</I></TD>
+<TD width=78%>GUID of the relevant database volume</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><I>oid</I></TD>
+<TD width=78%>Object identifier of the relevant database record</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><I>oidParent</I></TD>
+<TD width=78%>Object identifier of the parent of the database record</TD>
+</TR>
+</TABLE><BR>
+
+<P>Windows CE places <B>CENOTIFICATION</B> in a heap that you define in <B>CENOTIFYREQUEST</B>. If you do not specify a heap in <B>CENOTIFYREQUEST</B>, Windows CE creates the heap in your default process heap. Once finished, free memory is allocated to <B>CENOTIFICATION</B> with a call to the <B>CeFreeNotification</B> function. You must delete the <B>CENOTIFICATION</B> structure each time you receive a WM_DBNOTIFICATION message.</P>
+
+<P>The following code example attempts to open a database of addressees by calling <B>CeOpenDatabaseEx</B>. If the database does not exist, the code example calls <B>CeCreateDatabaseEx</B> to create a new address database with three different sort orders. After creating the database, the example attempts to open the database again.</P>
+
+<PRE><CODE>HANDLE OpenDatabase (
+      HWND hwndNotify,  // Handle to the window to which
+                        // notification messages are posted
+      PCEGUID pceguid,  // Pointer to the mounted database
+                        // volume where the database to
+                        // be opened resides
+      CEOID CeOid)      // Object identifier of the database
+                        // to be opened
+{
+  int index;
+  DWORD dwError;              // Return value from GetLastError
+  HANDLE hDataBase;           // Open handle to the address database
+  CENOTIFYREQUEST *pRequest;  // CENOTIFYREQUEST structure
+  CEDBASEINFO CEDBInfo;       // Structure containing the 
+                              // database data
+  TCHAR szError[100];         // String to use with error messages
+
+  // Allocate memory for pRequest.
+  pRequest = (CENOTIFYREQUEST *) LocalAlloc (LPTR,
+                                        sizeof (CENOTIFYREQUEST));
+
+  pRequest-&gt;dwSize = sizeof (CENOTIFYREQUEST);
+  pRequest-&gt;hwnd = hwndNotify;
+  pRequest-&gt;hHeap = NULL; // Let system allocate memory properly.
+  pRequest-&gt;dwFlags = 0;  // Notifications are handled as they
+                          // were in Windows CE version 1.0.
+
+  hDataBase = CeOpenDatabaseEx (
+          pceguid,            // Pointer to the mounted volume
+          &amp;CeOid,             // Location for the database identifier
+          TEXT("MyDBase"),    // Database name
+          0,                  // Sort order; 0 indicates to ignore
+          CEDB_AUTOINCREMENT, // Automatically increase seek pointer
+          pRequest);          // Pointer to a CENOTIFYREQUEST
+                              // structure
+
+  if (hDataBase == INVALID_HANDLE_VALUE)
+  {
+    dwError = GetLastError ();
+
+    if (dwError == ERROR_NOT_ENOUGH_MEMORY)
+    {
+      wsprintf (szError, TEXT("Not enough memory"));
+    }
+    else
+    {
+      // Possibility of nonexisting database; create it.
+
+      // Initialize structure CEDBInfo
+      memset (&amp;CEDBInfo, 0, sizeof(CEDBInfo));
+
+      // Create the database with the following specified flags.
+      // Create the database as uncompressed.
+      // You can use CeSetDataBaseInfoEx to compress the database.
+      CEDBInfo.dwFlags =
+          CEDB_VALIDNAME        // szDbaseName is valid
+          | CEDB_VALIDTYPE      // dwDbaseType is valid
+          | CEDB_VALIDDBFLAGS   // HIWORD of dwFlag is valid
+          | CEDB_VALIDSORTSPEC  // rgSortSpecs is valid
+          | CEDB_NOCOMPRESS;    // The database is not compressed.
+
+      // Assign the database name as MyDBase.
+      wcscpy (CEDBInfo.szDbaseName, TEXT("MyDBase"));
+
+      // Assign the database type.
+      CEDBInfo.dwDbaseType = 0;
+
+      // Set the number of active sort orders to 4.
+      // This is the maximum number allowed.
+      CEDBInfo.wNumSortOrder = 4;
+
+      // Initialize the array of sort order descriptions.
+      for (index = 0; index &lt; CEDBInfo.wNumSortOrder; ++index)
+      {
+        // Sort in descending order.
+        CEDBInfo.rgSortSpecs[index].dwFlags = CEDB_SORT_DESCENDING;
+
+        // Assign the identifier of the properties to sort by.
+        // CEDBInfo.rgSortSpecs[index].propid = ...;
+      }
+
+      // Create database "MyDBase".
+      CeOid = CeCreateDatabaseEx (pceguid, &amp;CEDBInfo);
+
+      if (CeOid == NULL)
+      {
+        wsprintf (szError,
+                  TEXT("ERROR: CeCreateDatabaseEx failed (%ld)"),
+                  GetLastError ());
+      }
+      else  // Succeeded in creating the database; open it.
+      {
+        hDataBase = CeOpenDatabaseEx (pceguid, &amp;CeOid,
+                          TEXT("MyDBase"), 0, 0, pRequest);
+      }
+    }
+  }
+
+  // Return the database handle.
+  return hDataBase;
+
+} // End of OpenDatabase example code
+
+/*
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

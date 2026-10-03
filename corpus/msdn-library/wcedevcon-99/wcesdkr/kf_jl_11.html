@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>LoadLibrary</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_loadlibrary"></A>LoadLibrary </H2>
+
+<P>This function maps the specified .DLL file into the address space of the calling process. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HINSTANCE</B> <B>LoadLibrary( LPCTSTR</B> <I>lpLibFileName </I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>lpLibFileName</I></DT>
+
+<DD>Pointer to a null-terminated string that names the .DLL file. The name specified is the filename of the module and is not related to the name stored in the library module itself, as specified by the <B>LIBRARY</B> keyword in the module-definition (.DEF) file. 
+
+<P>If the string specifies a path but the file does not exist in the specified directory, the function fails. When specifying a path, be sure to use backslashes (\), not forward slashes (/). 
+
+
+<P>If the string does not specify a path, the function uses a standard search strategy to find the file. See the <B>Remarks</B> for more information.
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A handle to the module indicates success. NULL indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. </P>
+
+<H4>Windows CE Remarks</H4>
+
+<P>Two different modules cannot have the same filename, given that the extensions are different. These effectively have the same “module” name. For example, if <B>LoadLibrary</B> is made on “Sample.cpl”, the operating system will not load Sample.cpl, but instead will again load Sample.dll. A similar limitation exists for modules with the same name but residing in different directories. For example, if <B>LoadLibrary</B> is called on “\\Windows\Sample.dll”, and then <B>LoadLibrary</B> is called on “\\MyDir\Sample.dll”, “\\Windows\Sample.dll” will simply be reloaded.</P>
+
+<P>A search path to the executable module cannot be specified. Unless the full path to the module is specified, Windows CE versions 2.10 and later search the following path for the module:
+
+<OL>
+	<LI>The absolute path specified by the <I>lpLibFileName</I> parameter</li>
+
+	<LI>ROM for statically-linked .DDL files</li>
+
+	<LI>The .EXE launch directory</li>
+
+	<LI>The windows (\windows) directory</li>
+
+	<LI>The root (\) directory </li>
+
+	<LI>An OEM-dependent directory</li>
+
+	<LI>The OEM-defined shell (\ppshell) directory—Embedded Toolkit users only</li>
+</OL>
+
+<P>Windows CE versions 1.0 through 2.01 search the following path for the module:
+
+<OL>
+	<LI>The root directory of the PC Card RAM expansion card, if one exists.</li>
+
+	<LI>The windows directory (\Windows).</li>
+
+	<LI>The root directory (\).</li>
+</OL>
+
+<H4>Remarks</H4>
+
+<P><B>LoadLibrary</B> can be used to map a DLL module and return a handle that can be used in <A HREF="kf_g_27.htm"><B>GetProcAddress</B></A> to get the address of a DLL function. Do not use <B>LoadLibrary</B> to load or "run" a .exe file. </P>
+
+<P>If the module is a DLL not already mapped for the calling process, the system calls the DLL’s <B>DllMain</B> function with the DLL_PROCESS_ATTACH value. In Windows CE, a DLL is loaded once, but then it is mapped into each processes address space when a process implicitly or explicitly loads the library with the <B>LoadLibrary</B> function. When Windows CE loads a DLL, all path information is ignored when determining if the DLL is already loaded. This means that a DLL with the same name but a different path can only be loaded once. In addition, a module ending with the extension ".CPL" is treated as if the extension if ".DLL". </P>
+
+<P>It is not safe to call <B>LoadLibrary</B> from <B>DllMain</B>. </P>
+
+<P>Module handles are not global or inheritable. A call to <B>LoadLibrary</B> by one process does not produce a handle that another process can use—for example, in calling <B>GetProcAddress</B>. The other process must make its own call to <B>LoadLibrary</B> for the module before calling <B>GetProcAddress</B>. </P>
+
+<P>If no filename extension is specified in the <I>lpLibFileName</I> parameter, the default library extension .DLL is appended. However, the filename string can include a trailing point character (.) to indicate that the module name has no extension. </P>
+
+<P>When no path is specified, the function searches for loaded modules whose base name matches the base name of the module to be loaded. If the name matches, the load succeeds. Otherwise, the function searches for the file in the following sequence: 
+
+<OL>
+	<LI>The absolute path specified by the <I>lpLibFileName</I> parameter</li>
+
+	<LI>ROM for statically-linked .DDL files</li>
+
+	<LI>The .EXE launch directory</li>
+
+	<LI>The windows (\windows) directory</li>
+
+	<LI>The root (\) directory </li>
+
+	<LI>An OEM-dependent directory</li>
+
+	<LI>The OEM-defined shell (\ppshell) directory—Embedded Toolkit users only</li>
+</OL>
+
+<P>Windows CE versions 1.0 through 2.01 search the following path for the module:
+
+<OL>
+	<LI>The root directory of the PC Card RAM expansion card, if one exists.</li>
+
+	<LI>The windows directory (\Windows).</li>
+
+	<LI>The root directory (\).</li>
+</OL>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_f_5.htm"><B>FindResource</B></A>, <A HREF="kf_f_11.htm"><B>FreeLibrary</B></A>, <A HREF="kf_g_27.htm"><B>GetProcAddress</B></A>, <A HREF="kf_jl_13.htm"><B>LoadResource</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

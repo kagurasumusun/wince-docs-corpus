@@ -1,0 +1,311 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Writing a Message Handler</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_writing_a_message_handler"></A>Writing a Message Handler</H2>
+
+<P>In addition to the <B>Iunknown</B> interface, which must be implemented by all COM objects, message handlers must implement the <B>ITranslate</B> interface in an in-process COM object. The following table shows the <B>ITranslate</B> methods.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=40%>
+<H5>Method</H5>
+</TD>
+<TD width=60%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>ProcessMSG(LPMSGINFO)</B></TD>
+<TD width=60%>This method must accept a pointer to a <B>MSGINFO</B> structure from the router. It must return one of the following values:
+<P class=indent1>&bull;TRANS_S_STOP, if the handler completes successfully.</p>
+
+<P class=indent1>&bull;TRANS_E_STOP, if the handler fails.</p>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>GetLastError(pszBuffer</B>, <B>dwSize)</B></TD>
+<TD width=60%>This method takes a pointer to a buffer into which to copy the last error message, and a <B>DWORD</B> giving the maximum length of the string that can be copied into the buffer. The length includes one byte for the null terminator. This method returns S_OK.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><B>GetInfo(LPMODULE_INFO)</B></TD>
+<TD width=60%>This method takes a pointer to a <B>MODULE_INFO</B> structure, which it fills with handler data. It returns an HRESULT.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following code example shows the <B>ITranslate</B> interface members of a message handler that writes a printable copy of the received message to a file. The file name to which it writes the message is the first string of the message.</P>
+
+<PRE><CODE>#include &lt;windows.h&gt;
+#include &lt;string.h&gt;
+#include &lt;TCHAR.H&gt;
+
+#include &lt;wis.h&gt;
+
+#include "main.h"
+#include "trans.h"
+#include "resource.h"
+
+STDMETHODIMP CTrans::GetLastError (LPWSTR pszError, DWORD dwSize) 
+{
+    if (pszError &amp;&amp; dwSize)  {
+        --dwSize;
+        if (m_dwLastError &gt;= TRANS_LAST_ERRCODE)  {
+            m_dwLastError = TRANS_LAST_ERRCODE;
+        }
+    }    
+    wcsncpy(pszError, TRANS_ERROR_STRINGS[m_dwLastError], dwSize);
+    pszError[dwSize] = 0;
+    return (S_OK);
+}
+
+STDMETHODIMP CTrans::GetInfo(LPMODULE_INFO lpInfo)
+{   
+    int i;
+    // Read the resources into the buffers.
+    if ((i = LoadStringW(g_hInst, IDS_TYPE, m_szType, MAX_INFOSTRING)))
+    {
+        m_szType[i] = 0;
+        if ((i = LoadStringW(g_hInst, IDS_FRIENDLY_NAME,
+                             m_szFriendlyName, MAX_INFOSTRING)))
+        {
+            m_szFriendlyName[i] = 0;
+            if ((i = LoadStringW(g_hInst, IDS_DISCRIPTION,
+                                 m_szDiscription, MAX_DISSTRING)))
+            {
+                m_szDescription[i] = 0;
+                if ((i = LoadStringW(g_hInst, IDS_VERSION,
+                                     m_szVersion, MAX_DISSTRING)))
+                {
+                    m_szVersion[i] = 0;
+                    if ((i = LoadStringW(g_hInst, IDS_MANUFACTURER,
+                                     m_szManufacturer, MAX_DISSTRING)))
+                    {
+                       m_szManufacturer[i] = 0;
+                       *lpInfo = m_ti;
+                       return(S_OK);
+                    }
+                }
+            }
+        }
+    }
+    return(E_FAIL);
+}
+
+
+STDMETHODIMP
+CTrans::ProcessMSG ( LPMSGINFO pMSG )
+{
+    WCHAR   szDummy[] = L"\\testmsgs.txt";
+    BOOL bOperationComplete = FALSE;
+    HRESULT hr =  TRANS_E_CONTINUE;
+    HANDLE htmp;
+
+    // Validate the file name.
+    if (pMSG-&gt;pszFileName == NULL || (lstrlenW(pMSG-&gt;pszFileName) == 0))
+    {    // The method should have received a valid file name.
+        m_dwLastError = TRANS_INVALID_IN_FILENAME;
+        return(TRANS_E_STOP);
+    }
+    // Ensure that the input and output file handles are NULL.
+    if (  m_hInput != INVALID_HANDLE_VALUE
+       || m_hOutput != INVALID_HANDLE_VALUE)
+    {
+        m_dwLastError = TRANS_FILES_ALREADY_OPEN;
+        return(hr);
+    }
+
+    // Open the input file.
+    htmp = CreateFileW(pMSG-&gt;pszFileName, GENERIC_READ, FILE_SHARE_READ,
+                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                        NULL ); 
+    if (htmp == INVALID_HANDLE_VALUE)
+    {
+        // The input file does not exist or cannot be opened.
+        m_dwLastError = TRANS_CANT_OPEN_IN_FILE;
+        return(hr);
+    }
+    else
+    {
+        m_hInput = htmp;
+    }
+
+    // Open the output file.
+    htmp = CreateFileW(szDummy, GENERIC_WRITE, FILE_SHARE_READ,
+                        NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                        NULL ); 
+    if (htmp == INVALID_HANDLE_VALUE)
+    {
+        // The output file cannot be opened or created.
+        // Close the input file.
+        CloseHandle(m_hInput);
+        m_hInput = INVALID_HANDLE_VALUE;
+        m_dwLastError = TRANS_CANT_OPEN_OUT_FILE;
+        return(hr);
+    }
+    else
+    {
+        m_hOutput = htmp;
+    }
+    
+    
+    // Both the input and output files are ready.
+    if (pMSG-&gt;pRL-&gt;Dir == DIR_RECEIVE)
+    {
+        // Perform Untranslation on the message.
+        // TODO -- Replace this If statement with your call.
+        if (Untranslate(pMSG))
+        {
+            bOperationComplete = TRUE;
+        }
+    }
+    else // The other valid value is DIR_TRANSMIT.
+    {
+        // Perform translation on the message.
+        // TODO -- Replace this If statement with your call.
+        if (Translate(pMSG))
+        {
+            bOperationComplete = TRUE;
+        }
+    }
+
+    // Close the files.
+    CloseHandle(m_hInput);
+    CloseHandle(m_hOutput);
+    m_hInput = INVALID_HANDLE_VALUE;
+    m_hOutput = INVALID_HANDLE_VALUE;
+    if (bOperationComplete)  {
+        hr = TRANS_S_STOP;
+    }
+    return (hr);
+}
+
+
+//
+// Dump the MSGINFO structure and the data into a text file.
+BOOL DumpToFile(HANDLE hOutFile, LPTSTR Str, ...)
+{
+    DWORD dwBytesToWrite, dwBytesWritten;
+    va_list val;
+    WCHAR byBuf[BUFF_SIZE];
+    
+    // Create the output string and send it to the
+    // debugger’s output window, if requested.
+    va_start(val,Str);
+    wvsprintf(byBuf, Str, val);
+    va_end(val);
+    dwBytesToWrite = lstrlen(byBuf) * sizeof(WCHAR);
+    if (!WriteFile(hOutFile, byBuf, dwBytesToWrite,
+                             &amp;dwBytesWritten, NULL)
+        || (dwBytesToWrite != dwBytesWritten))
+    {
+        return FALSE;
+    }
+    return TRUE;    
+}    
+
+BOOL
+CTrans::Translate( LPMSGINFO pMSG )
+{
+    BYTE byBuf[BUFF_SIZE];
+    DWORD dwBytesWritten;
+    DWORD dwBytesRead;
+    SYSTEMTIME stLocalTime;
+    BOOL fRetValue = TRUE;
+
+#if defined(DEBUG) &amp;&amp; defined(DEBUG_BREAK)
+        DebugBreak();
+#endif        
+
+    // Append the message to the end of the output file.
+    // First, move the file pointer to the end of the output file.
+    if (SetFilePointer(m_hOutput, 0, NULL, FILE_END) == 0xFFFFFFFF)  {
+        m_dwLastError = TRANS_FILE_SEEK_ERROR;
+        return FALSE;
+    }
+    
+    // Write the message separator to the output file.
+    GetLocalTime(&amp;stLocalTime);
+    fRetValue &amp;= DumpToFile(m_hOutput,
+                        L"==0--==--== Msg Log %d/%d/%d %d:%d.%d\r\n",
+                        stLocalTime.wYear,
+                        stLocalTime.wMonth,
+                        stLocalTime.wDay, 
+                        stLocalTime.wHour,
+                        stLocalTime.wMinute,
+                        stLocalTime.wSecond);
+    
+    // Write out MSGINFO structure members.
+    fRetValue &amp;= DumpToFile(m_hOutput, L"Size            =%d\r\n",
+                                 pMSG-&gt;cbSize);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"FileName        =%s\r\n",
+                                 pMSG-&gt;pszFileName);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"ErrFileName     =%s\r\n",
+                                 pMSG-&gt;pszErrFileName);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"ResponseFileName=%s\r\n",
+                                 pMSG-&gt;pszResponseFileName);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"OEMFileName     =%s\r\n",
+                                 pMSG-&gt;pszOEMFileName);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"FolderName      =%s\r\n",
+                                 pMSG-&gt;pszFolderName);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"Source          =%d\r\n",
+                                 pMSG-&gt;Source);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"Device          =%d\r\n",
+                                 pMSG-&gt;Device);
+    fRetValue &amp;= DumpToFile(m_hOutput,
+                            L"Systemtime      =%d/%d/%d %d:%d.%d\r\n",
+                                  pMSG-&gt;DateTime.wYear, 
+                                  pMSG-&gt;DateTime.wMonth, 
+                                  pMSG-&gt;DateTime.wDay, 
+                                  pMSG-&gt;DateTime.wHour, 
+                                  pMSG-&gt;DateTime.wMinute, 
+                                  pMSG-&gt;DateTime.wSecond);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"MsgType         =%d\r\n",
+                                 pMSG-&gt;pXtraMsgInfo-&gt;MsgType);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"MsgPriority     =%d\r\n",
+                                 pMSG-&gt;pXtraMsgInfo-&gt;MsgPriority);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"MsgFlags        =0x%X\r\n",
+                                 pMSG-&gt;pXtraMsgInfo-&gt;MsgFlags);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"NumParts        =%d\r\n",
+                                 pMSG-&gt;pXtraMsgInfo-&gt;NumParts);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"ErrorFlags      =0x%X\r\n",
+                                 pMSG-&gt;pXtraMsgInfo-&gt;wErrorFlags);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"MsgSeqNum       =%d\r\n",
+                                pMSG-&gt;pXtraMsgInfo-&gt;wMsgSequenceNumber);
+    fRetValue &amp;= DumpToFile(m_hOutput, L"==1-------==\r\n");
+    
+    while ( ReadFile(m_hInput, byBuf, BUFF_SIZE, &amp;dwBytesRead, NULL)
+            &amp;&amp; dwBytesRead )
+    {
+        if (!WriteFile(m_hOutput, byBuf, dwBytesRead,
+                         &amp;dwBytesWritten, NULL)
+             || (dwBytesRead != dwBytesWritten))
+        {
+            fRetValue = FALSE;
+            break;
+        }
+    }
+    fRetValue &amp;= DumpToFile(m_hOutput, L"\r\n==*-------==\r\n");
+    return fRetValue;
+}
+
+// Make the untranslate function the same as the translate function.
+BOOL CTrans::Untranslate( LPMSGINFO pMSG )
+{
+    return Translate(pMSG);
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

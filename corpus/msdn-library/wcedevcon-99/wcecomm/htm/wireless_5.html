@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Writing a Parser Routine</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_writing_a_parser_routine"></A>Writing a Parser Routine</H2>
+
+<P>When you write a parser routine for <B>MSDefault</B>, use standard MAPI function calls to set the necessary e-mail message headers. At a minimum, set the <B>Subject</B>, <B>Type</B>, and <B>From</B> fields. You must include the Wis.h header file to obtain the interface definition and link to Wisuuid.lib to obtain the necessary universally unique identifier (UUID). The following code example shows the default parser that <B>MSDefault</B> uses when no parser is defined for a device or address. </P>
+
+<PRE><CODE>#include &lt;wis.h&gt;
+#include &lt;msgstore.h&gt;
+
+LPWSTR ParseEmailHeaders (MailMsg *pMsg, LPCWSTR pText)
+{
+#define MAX_FROM_TEXT_LEN       80    // Maximum number of characters in
+                                    // the From field in PMail
+#define MAX_SUBJECT_TEXT_LEN    80    // Maximum number of characters in
+                                    // the Subject field in PMail
+    TCHAR   szFromText[MAX_FROM_TEXT_LEN + 1];
+    TCHAR   szSubjectText[MAX_SUBJECT_TEXT_LEN + 1];
+    DWORD   ii, iNum, iIndece;
+
+    ULONG       ulcch;
+    LPWSTR      pwszKeyWord;
+    ULONG       ulKeyWordsFound;
+    MAILHDRS    mhEMail[] =     {{L"Fr:", 3, -1},
+                             {L"|Re:", 4, -1},
+                             {L"|Msg:", 5, -1},
+                             {NULL, 0, -1}};
+    MAILHDRS    mhWebMail[]     = {{L"Msg:", 4, 0},
+                               {NULL, 0, 0}};
+
+    // Search for e-mail signatures.
+    // The three are Fr:, Re:, and Msg:.
+    iNum = 0;
+    ulKeyWordsFound = 0;
+    while (TRUE)
+    {
+        pwszKeyWord = mhEMail[iNum].pwszHeader;
+        ulcch = mhEMail[iNum].cchwszHeader;
+        DEBUGCHK(pMsg-&gt;dwMsgLen &gt;= ulcch);
+        for (ii = 0; ii &lt; pMsg-&gt;dwMsgLen - ulcch; ii++)
+        {
+            if (!memcmp (pwszKeyWord, (LPWSTR)&amp;pText[ii], ulcch))
+            {
+                mhEMail[iNum].ulPosFound = ii;
+                ulKeyWordsFound++;
+                break;
+            }
+        }
+        iNum++;
+        if (!mhEMail[iNum].cchwszHeader)
+            break;
+    }
+
+    if (ulKeyWordsFound &gt;= 1)
+    {
+        // Assume it is an e-mail-type message and process.
+
+        if ( (mhEMail[0].ulPosFound != -1) &amp;&amp;
+            (mhEMail[2].ulPosFound != -1) )
+        {
+            if (mhEMail[1].ulPosFound == -1)
+            {
+                // The delimiters Fr: and Msg: were found.
+                iIndece = 2;
+            } else {
+                // All three delimeters were found.
+                iIndece = 1;
+            }
+            if (mhEMail[iIndece].ulPosFound
+                    &gt; (mhEMail[0].ulPosFound + mhEMail[0].cchwszHeader))
+            {
+                ULONG   ulFrPos = mhEMail[0].ulPosFound
+                                 + mhEMail[0].cchwszHeader;
+                ulcch = mhEMail[iIndece].ulPosFound
+                      - mhEMail[0].ulPosFound - mhEMail[0].cchwszHeader;
+                if (pText[ulFrPos] == '\"')
+                {
+                    ulFrPos++;
+                    ulcch--;
+                }
+                if (ulcch)
+                {
+                    DEBUGCHK(!(ulcch &lt; 0 || ulcch &gt; MAX_FROM_TEXT_LEN));
+                    if (ulcch &gt; MAX_FROM_TEXT_LEN)
+                        ulcch = MAX_FROM_TEXT_LEN ;
+                    _tcsncpy(szFromText, &amp;pText[ulFrPos], ulcch);
+                    szFromText[ulcch] = (TCHAR)'\0';
+                    MailSetField(pMsg, L"From", szFromText);
+                    goto SetSubject;
+                }
+            }
+            // $REVIEW must be in a localized file.
+            MailSetField(pMsg, L"From", L"Unknown Sender Name"); 
+
+SetSubject:
+            if ( (mhEMail[1].ulPosFound != -1) &amp;&amp;
+                 (mhEMail[2].ulPosFound
+                  &gt; (mhEMail[1].ulPosFound + mhEMail[1].cchwszHeader)) )
+            {
+                ulcch = mhEMail[2].ulPosFound
+                      - mhEMail[1].ulPosFound - mhEMail[1].cchwszHeader;
+                DEBUGCHK(!(ulcch &lt; 0 || ulcch &gt; MAX_SUBJECT_TEXT_LEN));
+                if (ulcch &gt; MAX_SUBJECT_TEXT_LEN)
+                        ulcch = MAX_SUBJECT_TEXT_LEN;
+                _tcsncpy(szSubjectText, &amp;pText[mhEMail[1].ulPosFound
+                                     + mhEMail[1].cchwszHeader], ulcch);
+                szSubjectText[ulcch] = (TCHAR)'\0';
+                MailSetField(pMsg, L"Subject", szSubjectText);
+            }
+            else
+            {
+                // $REVIEW must be in a localized file.
+                MailSetField(pMsg, L"Subject", L"N/A");
+            }
+
+            pText = pText + mhEMail[2].ulPosFound
+                                             + mhEMail[2].cchwszHeader;
+        }
+        else
+        {
+            // Only one field was found,
+            // or only Fr: and Re:
+            // or only Re: and Msg:
+            // $REVIEW must be in a localized file.
+            MailSetField(pMsg, L"From", L"Scrambled EMail message");
+            // $REVIEW must be in a localized file.
+            MailSetField(pMsg, L"Subject", L"N/A");
+        }
+        return (LPWSTR)pText;
+    }
+
+    //  Search for the WebMail signature.
+    // "Msg:" should be at the start of the string.
+    iNum = 0;
+    ulKeyWordsFound = 0;
+    ii = 0;
+    pwszKeyWord = mhWebMail[iNum].pwszHeader;
+    ulcch = mhWebMail[iNum].cchwszHeader;
+    DEBUGCHK(pMsg-&gt;dwMsgLen &gt;= ulcch);
+    if (   (ulcch &lt;= pMsg-&gt;dwMsgLen)
+        &amp;&amp; (!memcmp (pwszKeyWord, (LPWSTR)&amp;pText[0], ulcch)) )
+    {
+        MailSetField(pMsg, L"Type",L"Page" );
+        pText = pText + 4;
+        return (LPWSTR)pText;
+    }
+
+    // Numeric pages that become alpha pages, due to the
+    // configuration of the CUE Receiver, will
+    // fall through to here. Change the type.
+    MailSetField(pMsg, L"Type",L"Page" );
+    return (LPWSTR)pText;
+
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

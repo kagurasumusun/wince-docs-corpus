@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MyFSD_SetFileAttributesW</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_myfsd_setfileattributesw"></A><I>MyFSD</I>_SetFileAttributesW</H2>
+
+<P>This function sets the attributes of a file that resides in an installable file system. The application does not call this function directly. Instead, use the corresponding standard Win32 function <B>SetFileAttributes</B>. The file system driver (FSD) Manager determines the file system type and calls the <B><I>MyFSD</I>_SetFileAttributesW </B>implementation of the function.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Fsdmgr.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL</B> <B><I>MyFSD</I>_SetFileAttributesW( PVOLUME</B> <I>pVolume</I>,<B>PCWSTR</B> <I>pwsFileName</I>,<B><BR>
+DWORD</B> <I>dwFileAttributes</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pVolume</I></DT>
+
+<DD>Pointer to the value that the file system driver (FSD) defines in its DLL and passes to the <B>FSDMGR_RegisterVolume</B> function when registering the volume. The definition of <I>pVolume</I> can point to private structures.</dd>
+
+<DT><I>pwsFileName</I></DT>
+
+<DD>Pointer to a string that specifies the name of the file whose attributes are to be set. 
+
+<P><B>Windows 95:</B> This string must not exceed MAX_PATH characters.
+
+
+<P><B>Windows NT:</B> There is a default string size limit for paths of MAX_PATH characters. This limit is related to how the <B>SetFileAttributes </B>function parses paths. An application can transcend this limit and send in paths longer than MAX_PATH characters by calling the wide (W) implementation of <B>SetFileAttributes</B> and prepending “<CODE>\\?\</CODE>” to the path. However, each component in the path cannot be more than MAX_PATH characters long. The “<CODE>\\?\</CODE>” tells the function to turn off path parsing; it lets paths longer than MAX_PATH be used with <B>SetFileAttributesW</B>. However, each component in the path cannot be more than MAX_PATH characters long. This also works with UNC names. The “<CODE>\\?\</CODE>” is ignored as part of the path. For example, “<CODE>\\?\C:\myworld\private</CODE>” is seen as “<CODE>C:\myworld\private</CODE>”, and “<CODE>\\?\UNC\wow\hotstuff\coolapps</CODE>” is seen as “<CODE>\\wow\hotstuff\coolapps</CODE>”.
+</dd>
+
+<DT><I>dwFileAttributes</I></DT>
+
+<DD>Specifies the file attributes to set for the file. This parameter can be a combination of the following values. However, all other values override FILE_ATTRIBUTE_NORMAL. 
+
+<DL>
+<DT>FILE_ATTRIBUTE_ARCHIVE</DT>
+
+<DD>The file is an archive file. Applications use this attribute to mark files for backup or removal.</dd>
+
+<DT>FILE_ATTRIBUTE_HIDDEN</DT>
+
+<DD>The file is hidden. It is not included in an ordinary directory listing.</dd>
+
+<DT>FILE_ATTRIBUTE_NORMAL</DT>
+
+<DD>The file has no other attributes set. This attribute is valid only if used alone.</dd>
+
+<DT>FILE_ATTRIBUTE_OFFLINE</DT>
+
+<DD>The data of the file is not immediately available. Indicates that the file data has been physically moved to offline storage.</dd>
+
+<DT>FILE_ATTRIBUTE_READONLY</DT>
+
+<DD>The file is read-only. Applications can read the file but cannot write to it or delete it.</dd>
+
+<DT>FILE_ATTRIBUTE_SYSTEM</DT>
+
+<DD>The file is part of the operating system or is used exclusively by it.</dd>
+
+<DT>FILE_ATTRIBUTE_TEMPORARY</DT>
+
+<DD>The file is being used for temporary storage. File systems attempt to keep all of the data in memory for quicker access rather than flushing the data back to mass storage. A temporary file should be deleted by the application as soon as it is no longer needed.
+</dd>
+</DL>
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Nonzero indicates success. Zero indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>.</P>
+
+<H4>Remarks</H4>
+
+<P>The Fsdmgr component is a dynamic-link library (DLL) that manages all operating system interaction with installable files systems. Each installable file system requires an FSD, which is a DLL that exports an API needed to support an installable file system. The name of the DLL and the names of the functions it exports start with the name of the associated installable file system. For example, if the name of file system is MyFSD, then its DLL is MyFSD.dll and its exported functions are prefaced with MyFSD_*. </P>
+
+<P>Fsdmgr provides services to FSDs. The <B>FSDMGR_RegisterVolume</B>,<B> FSDMGR_CreateFileHandle</B>, and<B> FSDMGR_CreateSearchHandle</B> functions record a <B>DWORD</B> of volume-specific data the FSD needs to keep associated with volume. This volume-specific data is passed as the first parameter of these three functions.</P>
+
+<P>Applications that access an installable file system use standard Win32 functions. For example, when an application wants to create a folder on a device that contains an installable file system, it calls <B>CreateDirectory</B>. Fsdmgr recognizes that the path is to a device containing an installable file system and calls the appropriate function, which in the case of the FAT file system is <B>FATFSD_CreateDirectoryW</B>. That is, the application calls <B>CreateDirectory</B>, causing Fsdmgr to call <B>FATFSD_CreateDirectoryW</B>.</P>
+
+<P>The following table describes how to set the attributes that cannot be set using <B>SetFileAttributes</B>.
+
+<DL>
+<DT>FILE_ATTRIBUTE_COMPRESSED</DT>
+
+<DD>To set a file's compression state, use the <A HREF="kf_de_6.htm"><B>DeviceIoControl</B></A> function with the <B>FSCTL_SET_COMPRESSION</B> operation. </dd>
+
+<DT>FILE_ATTRIBUTE_DIRECTORY</DT>
+
+<DD>Files cannot be converted into directories. To create a directory, use the <A HREF="kf_c_28.htm"><B>CreateDirectory</B></A> or <B>CreateDirectoryEx</B> function. </dd>
+
+<DT>FILE_ATTRIBUTE_ENCRYPTED</DT>
+
+<DD>To encrypt a file, use the <B>EncryptFile</B> function. </dd>
+
+<DT>FILE_ATTRIBUTE_REPARSE_POINT</DT>
+
+<DD>To associate a reparse point with a file, use the <A HREF="kf_de_6.htm"><B>DeviceIoControl</B></A> function with the <B>FSCTL_SET_REPARSE_POINT</B> operation. </dd>
+
+<DT>FILE_ATTRIBUTE_SPARSE_FILE</DT>
+
+<DD>To set a file's sparse attribute, use the <A HREF="kf_de_6.htm"><B>DeviceIoControl</B></A> function with the <B>FSCTL_SET_SPARSE</B> operation.</dd>
+
+<DT>FILE_ATTRIBUTE_SYSTEM</DT>
+
+<DD>This attribute cannot be set.
+</dd>
+</DL>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_f_21.htm"><B>FDMGR_RegisterVolume</B></A>, <A HREF="kf_mn_43.htm"><B><I>MyFSD</I>_GetFileAttributesW</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

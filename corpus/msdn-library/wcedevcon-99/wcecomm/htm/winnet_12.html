@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Establishing a Network Connection</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_WnetAddConnection3">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_WNetConnectionDialog1">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_NETRESOURCE_str">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_establishing_a_network_connection"></A>Establishing a Network Connection</H2>
+
+<P>To establish a network connection, the user must know something about the network to be connected to. At a minimum, the user must know the local name or UNC of the network. For more information on functions you can use to retrieve network data, see <A HREF="winnet_14.htm">Retrieving Network Data</A>. An application can use one of two functions to establish network connections: <A HREF="JavaScript:hhobj_1.Click()"><B>WNetAddConnection3</B></A> and <A HREF="JavaScript:hhobj_2.Click()"><B>WNetConnectionDialog1</B></A>. Network connections are not automatically restored in Windows CE when a user logs on.</P>
+
+<P>If a user knows the data needed to identify the network resource, an application can call <B>WNetAddConnection3</B>. The following code example shows how <B>WNetAddConnection3</B> is used to establish a connection with a network resource described by a <A HREF="JavaScript:hhobj_3.Click()"><B>NETRESOURCE</B></A> structure.</P>
+
+<PRE><CODE>DWORD dwResult;
+
+// Make a connection to the network resource.
+dwResult = WNetAddConnection3 (
+                hwnd,                     // Handle to the owner window
+                &amp;nr,                      // Retrieved from enumeration
+                NULL,                     // No password
+                NULL,                     // Logged-in user
+                CONNECT_UPDATE_PROFILE);  // Update profile with
+                                          // connection data.
+if (dwResult == ERROR_ALREADY_ASSIGNED)
+{
+  MessageBox (hwnd, TEXT("Already connected to specified resource."), 
+              TEXT("Info"), MB_OK);
+  return FALSE;
+}
+
+else if (dwResult == ERROR_DEVICE_ALREADY_REMEMBERED)
+{
+  MessageBox (hwnd, TEXT("Attempted reassignment of remembered device"), 
+              TEXT("Info"), MB_OK);
+  return FALSE;
+}
+else if (dwResult != ERROR_SUCCESS)
+{
+  ErrorHandler (hwnd, dwResult, TEXT("WNetAddConnection3"));
+  return FALSE;
+}
+
+MessageBox (hwnd, TEXT("Connected to specified resource."), 
+            TEXT("Info"), MB_OK);
+</CODE></PRE>
+
+<P>The <B>WNetConnectionDialog1</B> function creates a dialog box that enables a user to browse and connect to network resources. This function prompts the user to choose a local name or UNC in a dialog box. The following code example shows how <B>WNetConnectionDialog1</B> is called to create a dialog box that displays all disk resources on a network.</P>
+
+<PRE><CODE>DWORD dwResult = WNetConnectionDialog1 (lpConnectDlgStruc);
+
+if (dwResult != ERROR_SUCCESS)
+{
+  ErrorHandler (hwnd, dwResult, TEXT("WNetConnectionDialog1"));
+  return FALSE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

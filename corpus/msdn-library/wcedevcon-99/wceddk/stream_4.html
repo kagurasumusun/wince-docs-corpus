@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Loading Stream Interface Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_loading_stream_interface_drivers"></A>Loading Stream Interface Drivers</H2>
+
+<P>There are three ways of loading stream interface drivers. Two of them involve the Device Manager, but the third is specific to applications.</P>
+
+<P>The first type of loading occurs at startup. When a Windows CE–based platform starts up, it starts the Device Manager. In turn, the Device Manager reads the contents of the <B>HKEY_LOCAL_MACHINE\Drivers\Builtin</B> registry key and loads any stream interface drivers listed there. For example, on many Windows CE–based platforms the Device Manager loads the driver for built-in serial ports (Serial.dll) through this mechanism.</P>
+
+<P>The second type of loading occurs when the Device Manager automatically detects the connection of a peripheral device to a platform. A PC Card is the most common type of automatically detectable device because the PC Card socket controller notifies Windows CE when a user inserts a PC Card. When a user inserts a PC Card into a socket, the Device Manager calls the socket driver, which is a native device driver, to find the Plug and Play identifier. The Device Manager then checks the <B>HKEY_LOCAL_MACHINE\Drivers\PCMCIA\</B> key for a subkey matching the Plug and Play identifier. If one exists, it loads the driver listed within that key. If there is no match, the Device Manager calls all the detection functions listed within the <B>HKEY_LOCAL_MACHINE\Drivers\PCMCIA\Detect</B> key. If one of the detection functions returns a value indicating that it can handle the PC Card, the Device Manager loads and initializes that stream interface driver.</P>
+
+<P>In the first and second types of loading, the Device Manager calls the <B>RegisterDevice</B> function for the stream interface driver and creates a numbered subkey within the <B>HKEY_LOCAL_MACHINE\Drivers\Active\</B> key to track the driver. <B>RegisterDevice</B> also locks the stream interface driver into working RAM. This prevents the driver from being swapped out and prevents any paging activity that would slow driver operation when servicing interrupts.</P>
+
+<P>The third type of loading occurs when the Device Manager cannot automatically detect the connection of a peripheral to a platform. Unrecognized devices are often serial devices because there is no automatic way for Windows CE to detect the connection of a serial device to a serial port. If the Device Manager cannot automatically recognize a peripheral, the application that needs to use the peripheral must load the peripheral’s driver. The following is the standard sequence of actions for this type of loading:
+
+<OL>
+	<LI>A user starts the application.</li>
+
+	<LI>The application determines that the device driver is not loaded, either by inspecting the file system or by receiving a failure return value from the <B>CreateFile</B> function when it tries to open the device file name of the peripheral. For more information, see <A HREF="stream_6.htm">Device File Names</A>.</li>
+
+	<LI>The application calls <B>RegisterDevice</B> to load the stream interface driver and lock it into memory.</li>
+
+	<LI>The application continues with its usual operation.</li>
+</OL>
+<p>&nbsp;</p></body>
+</HTML>

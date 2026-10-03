@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::InitFromData</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ioleobject_initfromdata"></A>IOleObject::InitFromData</H2>
+
+<P>This<B> </B>method initializes a newly created object with data from a specified data object, which can reside either in the same container or on the clipboard.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT InitFromData( IDataObject * </B><I>pDataObject</I><B>, BOOL </B><I>fCreation</I><B>, <BR>
+DWORD </B><I>dwReserved </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pDataObject</I></DT>
+
+<DD>[in] Pointer to the <B>IDataObject</B> interface on the data object from which the initialization data is to be obtained. This parameter can be NULL, which indicates that the caller wants to know if it is worthwhile trying to send data; that is,<I> </I>whether the container is capable of initializing an object from data passed to it. The data object to be passed can be based on either the current selection within the container document or on data transferred to the container from an external source.</dd>
+
+<DT><I>fCreation</I></DT>
+
+<DD>[in] Boolean value that is set to TRUE if the container is inserting a new object inside itself and initializing that object with data from the current selection, or to FALSE if a more general programmatic data transfer, most likely from a source other than the current selection.</dd>
+
+<DT><I>dwReserved</I></DT>
+
+<DD>[in] Reserved for future use; set to zero.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%>
+<H5>Value</H5>
+</TD>
+<TD width=72%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_OK</TD>
+<TD width=72%>If <I>pDataObject </I>is not NULL, the object successfully attempted to initialize itself from the provided data; if <I>pDataObject</I> is NULL, the object is able to attempt a successful initialization.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_FALSE</TD>
+<TD width=72%>If <I>pDataObject</I> is not NULL, the object made no attempt to initialize itself; if <I>pDataObject</I> is NULL, the object cannot attempt to initialize itself from the data provided.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>E_NOTIMPL</TD>
+<TD width=72%>The object does not support <B>InitFromData</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>OLE_E_NOTRUNNING</TD>
+<TD width=72%>The object is not running and therefore cannot perform the operation.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>This method enables a container document to insert within itself a new object whose content is based on a current data selection within the container. For example, a spreadsheet document may want to create a graph object based on data in a selected range of cells.</P>
+
+<P>Using this method, a container can also replace the contents of an embedded object with data transferred from another source. This provides a convenient way of updating an embedded object.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>Following initialization, the container should call <B>IOleObject::GetMiscStatus</B> to check the value of the <B>OLEMISC_INSERTNOTREPLACE</B> bit. If the bit is on, the new object inserts itself following the selected data. If the bit is off, the new object replaces the selected data.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>A container specifies whether to base a new object on the current selection by passing either TRUE or FALSE to the <I>fCreation</I> parameter.</P>
+
+<P>If <I>fCreation</I> is TRUE, the container is attempting to create a <I>new</I> instance of an object, initializing it with the selected data specified by the data object.</P>
+
+<P>If <I>fCreation</I> is FALSE, the caller is attempting to replace the object’s current contents with that pointed to by <I>pDataObject</I>. The usual constraints that apply to an object during a paste operation should be applied here. For example, if the type of the data provided is unacceptable, the object should fail to initialize and return S_FALSE.</P>
+
+<P>If the object returns S_FALSE, it cannot initialize itself from the provided data.</P>
+<p>&nbsp;</p></body>
+</HTML>

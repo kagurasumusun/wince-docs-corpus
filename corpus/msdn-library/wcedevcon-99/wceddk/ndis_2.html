@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Compiling a Miniport Driver for Windows CE</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_compiling_a_miniport_driver_for_windows_ce"></A>Compiling a Miniport Driver for Windows CE</H2>
+
+<P>The source code for miniport drivers on Windows NT is largely compatible with Windows CE. As long as a miniport driver uses NDIS functions supported by Windows CE, the process of porting a miniport driver to Windows CE is straightforward.</P>
+
+<P>The most significant difference between Windows CE and Windows NT is that Windows CE does not support .sys or .inf files. This reduces the complexity and size of the Windows CE loader. Therefore, a miniport driver for Windows CE is compiled as a DLL that exports the <B>DriverEntry</B> function. <B>DriverEntry</B> typically performs any general or platform-specific initializations. It also registers the miniport driver with the NDIS system by calling <A HREF="funct_1_234.htm"><B>NdisMRegisterMiniport</B></A>. <B>DriverEntry</B> must have the following prototype.</P>
+
+<P><B>NTSTATUS DriverEntry(IN PDRIVER_OBJECT </B><I>pDriverObject</I><B>, <BR>
+IN PUNICODE_STRING </B><I>pRegistryPath</I><B>);</B></P>
+
+<P>For sample <B>DriverEntry</B> implementations, see the source code for the sample miniport drivers.</P>
+
+<P>Because Windows CE does not support the Common Network .inf file format for installing a device driver, you must ensure that the proper registry keys are created for the miniport driver, typically through a setup application or through the driver’s <B>Install_Driver</B> function. For more information, see <A HREF="ndis_6.htm">Registry Keys for Miniport Drivers</A>.</P>
+
+<P>As well as those general issues related to the structure of miniport drivers themselves, there are issues relating to pointers, as well. I/O port addresses for miniport drivers are 32-bit virtual addresses that are mapped to the miniport driver’s process address space. Do not cast I/O port addresses to non-32-bit types, such as <B>USHORT</B>.</P>
+
+<P>A miniport driver should be installed in the \Windows directory on a target Windows CE–based platform. Miniport drivers need certain system DLLs in order to load and function correctly. Ethernet miniport drivers require the Ndis.dll, Arp.dll, and Dhcp.dll files. IrDA miniport drivers require the Ndis.dll and Irdastk.dll files. OEMs can omit some of these files if their platforms do not have the hardware used by a particular type of driver. For example, platforms without a built-in infrared port do not require Irdastk.dll.</P>
+
+<P>Miniport drivers for PC Card–based NICs can be loaded and unloaded dynamically when the NICs are inserted or removed. This is because PC Cards are detected automatically by the Plug and Play support in Windows CE. However, other types of NIC hardware that cannot be detected automatically by Windows CE require that a platform be restarted after the miniport driver is installed in order for Windows CE to use the driver. After a platform is restarted, the NDIS component loads all drivers that have an <B>HKEY_LOCAL_MACHINE\Comm\<I>Miniport</I>\Group</B> value of NDIS listed in the registry.</P>
+<p>&nbsp;</p></body>
+</HTML>

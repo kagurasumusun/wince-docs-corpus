@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing the FTP Protocol</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_InternetOpen">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_InternetConnect">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_FtpGetFile">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_FtpFindFirstFile">
+</OBJECT>
+<OBJECT ID="hhobj_5" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="wcesdk_win32_InternetFindNextFile">
+</OBJECT>
+<OBJECT ID="hhobj_6" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_InternetCloseHandle">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_accessing_the_ftp_protocol"></A>Accessing the FTP Protocol</H2>
+
+<P>Wininet.dll and the corresponding Wininet.lib do not include the FTP APIs. To develop FTP applications on a version of the Windows CE OS that does not export FTP APIs from the Wininet.dll, you can use Winsock.. FTP APIs are included in the emulation library, Wininetm.lib, and will work in the emulation environment. You can use the FTP APIs with Windows CE version 2.12 which is included in Wininet.dll and Wininet.lib.</P>
+
+<P>The following illustration shows the FTP functions dependent on the FTP session HINTERNET returned by <B>InternetConnect</B>. The shaded boxes represent functions that return HINTERNETs and the plain boxes represent functions that use the HINTERNET created by the function on which they depend.</P>
+
+<P><IMG SRC="ftphand1.gif" ALT="" BORDER=0></P>
+
+<P>The <B>FtpCreateDirectory</B>, <B>FtpDeleteFile</B>, <B>FtpGetCurrentDirectory</B>, <B>FtpGetFile</B>, <B>FtpPutFile</B>, <B>FtpRemoveDirectory</B>, <B>FtpRenameFile</B>, and <B>FtpSetCurrentDirectory</B> functions use the HINTERNET handle created by <B>InternetConnect</B>. </P>
+
+<P>The following illustration shows the two FTP functions that return HINTERNET handles and the functions dependent on the HINTERNET handles created by them. The shaded boxes represent functions that return HINTERNET handles, while the plain boxes represent functions that use the HINTERNET handle created by the function on which they depend. </P>
+
+<P><IMG SRC="ftphand2.gif" ALT="" BORDER=0></P>
+
+<P><B>InternetFindNextFile</B> is dependent on the HINTERNET handle created by <B>FtpFindFirstFile</B>, and <B>InternetReadFile</B> uses the HINTERNET handle created by <B>FtpOpenFile</B>.</P>
+
+<P>Use WinInet to perform the following tasks on an FTP server: 
+
+<UL>
+	<LI>Navigating directories </li>
+
+	<LI>Enumerating, creating, removing, and renaming directories </li>
+
+	<LI>Renaming, uploading, downloading, and deleting files </li>
+</UL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To access an FTP server with WinInet</H4>
+
+<OL>
+	<LI>Call <A HREF="JavaScript:hhobj_1.Click()"><B>InternetOpen</B></A> to initialize an Internet handle. 
+<P><B>InternetOpen</B> creates the root HINTERNET handle that is used to establish the FTP session. The HINTERNET Internet handle is used by all subsequent functions.
+</li>
+
+	<LI>Call <A HREF="JavaScript:hhobj_2.Click()"><B>InternetConnect</B></A>  to create an FTP session. 
+<P>When calling <B>InternetConnect</B> specify INTERNET_DEFAULT_FTP_PORT for the <I>nServerPort</I> parameter and INTERNET_SERVICE_FTP for the <I>dwService</I> parameter.
+
+<P>This function uses the handle returned by <B>InternetOpen</B> to create a specific FTP session. <B>InternetConnect</B> initializes an FTP session for the specified site, using the arguments passed to it and creates HINTERNET that is a branch off the root handle. In the case of an FTP session,<B> InternetConnect</B> attempts to establish a connection to the specified site.
+</li>
+
+	<LI>Call <A HREF="JavaScript:hhobj_3.Click()"><B>FtpGetFile</B></A> or <A HREF="JavaScript:hhobj_4.Click()"><B>FtpFindFirstFile</B></A>.
+<P><B>InternetConnect</B> returns a handle that subsequent functions can use, such as <B>FtpGetFile</B> or <B>FtpFindFirstFile</B>. 
+
+<P>Use the <A HREF="JavaScript:hhobj_5.Click()"><B>InternetFindNextFile</B></A> function with <B>FtpFindFirstFile</B> to find the next file in a file search, using the search parameters and HINTERNET handle from <B>FtpFindFirstFile</B>.
+
+<P>To complete a file search, continue to call <B>InternetFindNextFile</B> using the HINTERNET handle returned by <B>FtpFindFirstFile</B> until function fails with the extended error message ERROR_NO_MORE_FILES. To get the extended error data, call the <B>GetLastError</B> function.
+</li>
+
+	<LI>Call <A HREF="JavaScript:hhobj_6.Click()"><B>InternetCloseHandle</B></A> to close the FTP session created by<B> </B>calling <B>InternetConnect</B>. </li>
+
+	<LI>Call <B>InternetCloseHandle</B> to close the handle created by calling <B>InternetOpen</B>. </li>
+</OL>
+
+<P><B>Note</B>  Applications must specify a directory relative to the current directory or include the full directory path.</P>
+<p>&nbsp;</p></body>
+</HTML>

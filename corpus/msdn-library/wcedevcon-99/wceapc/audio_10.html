@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Getting Disc Information</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_getting_disc_information"></A>Getting Disc Information</H2>
+
+<P>Once you get a CD device handle, call <B>CDROM_IOCTL_DISC_INFO</B> to get the table of contents for the disc. The table of contents (TOC) is contained in the Q-channel data on the lead-in track. It provides the starting and ending track numbers and the starting address of the lead-out track. The starting and ending track numbers are binary values, not binary-coded decimals. Read and cache TOC information when you initialize the drive, so that when <B>CDROM_IOCTL_DISC_INFO</B> is called, the application will not interrupt play to get this information. The first and last track numbers do not include the lead-in and lead-out tracks of the session.</P>
+
+<P>After getting the disc TOC, call the <B>CDROM_IOCTL_TRACK_INFO</B> function to find out the track starting address and control information. This function takes a binary track number in the range specified by the first and last track number for the disc. It returns the Red Book address for the starting point and control information for the track. The <I>Red Book address</I>, one of two formats used to specify an address, specifies the data location in minutes, seconds, and frames (MSF). The other address format is the High Sierra Specification format, which displays data as a logical block address.</P>
+
+<P><B>Note</B>  MSF contains 75 frames per second. To convert address data from one format to the other, use the following formula:</P>
+
+<P>Sector = (((Minute*60) + Second)*75) + Frame</P>
+
+<P>The control information for the track is contained in the four most significant bits of the control information byte. The following table shows the bit field definitions.</P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=12%>
+<H5>Bit</H5>
+</TD>
+<TD width=88%>
+<H5>Definition</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%>0–3</TD>
+<TD width=88%>Automatic dialog replacement (ADR) information</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%>4</TD>
+<TD width=88%>0  No pre-emphasis on audio channels<BR>
+1  Pre-emphasis on audio channels</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%>5</TD>
+<TD width=88%>0  Digital copy prohibited<BR>
+1  Digital copy enabled</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%>6</TD>
+<TD width=88%>0  Audio track<BR>
+1  Data track</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%>7</TD>
+<TD width=88%>0  Two audio channels<BR>
+1  Four audio channels</TD>
+</TR>
+</TABLE><BR>
+
+<P><I>Pre-emphasis</I>, increases the magnitude of the higher signal frequencies, improving the signal-to-noise ratio. <I>De-emphasis</I> resets the signal magnitude. When verifying track information, if pre-emphasis is specified, you can turn it off by calling <B>AAM_EQPreset</B> and setting AAM_FLAG_DEEMPHASIS. </P>
+
+<P>The following code example shows how to use <B>CDROM_IOCTL_DISC_INFO</B> and <B>CDROM_IOCTL_TRACK_INFO</B> to obtain information about a CD player.</P>
+
+<PRE><CODE>BOOL cdGetDiskInfo( void)
+{
+    DWORD                           RetDataLen;
+    WORD                            wTrackIdx;
+    CDROM_TRACKINFO         TrackInfo;
+
+    g_DiskValid = FALSE;              // Assume no disc information.
+
+    g_DiscInfo.Reserved = 0;
+    g_DiscInfo.ReqSession = 0xff;     // Do you want the last session?
+
+    if (DeviceIoControl(g_hDev,       // Obtains the disc TOC
+            CDROM_IOCTL_DISC_INFO,
+            &amp;g_DiscInfo, 
+            sizeof(g_DiscInfo),
+            NULL, 0,
+            &amp;RetDataLen, NULL) == FALSE)
+    {
+         return( FALSE);
+    } 
+   
+    g_nTracks = (WORD)g_DiscInfo.LastTrack + 1 - g_DiscInfo.FirstTrack;
+    
+    for( wTrackIdx = 0; wTrackIdx &lt; g_nTracks; wTrackIdx++)
+    {               
+        TrackInfo.TrackNumber = g_DiscInfo.FirstTrack + wTrackIdx;
+
+        if (DeviceIoControl(g_hDev,
+                CDROM_IOCTL_TRACK_INFO, // Obtains the track starting
+                                        // address and control
+                                        // information
+                &amp;TrackInfo, 
+                sizeof(TrackInfo),
+                NULL, 0,
+                &amp;RetDataLen, NULL) == FALSE)
+    {    
+        return( FALSE);
+        } 
+        
+        g_Tracks[wTrackIdx].ti_msfaddr = TrackInfo.TrackAddr;
+        g_Tracks[wTrackIdx].ti_ctl = TrackInfo.TrackControl;
+    }
+    g_DiskValid = TRUE;     // Assume no disc information.
+    return(TRUE);
+}    
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

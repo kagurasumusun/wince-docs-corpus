@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a TCP Stream Socket Application</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_socket_2">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_bind_2">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_SOCKADDR_str_IN">
+</OBJECT>
+<OBJECT ID="hhobj_4" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_listen_2">
+</OBJECT>
+<OBJECT ID="hhobj_5" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_accept_2">
+</OBJECT>
+<OBJECT ID="hhobj_6" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_send_2">
+</OBJECT>
+<OBJECT ID="hhobj_7" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_recv_2">
+</OBJECT>
+<OBJECT ID="hhobj_8" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_closesocket_2">
+</OBJECT>
+<OBJECT ID="hhobj_9" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_shutdown_2">
+</OBJECT>
+<OBJECT ID="hhobj_10" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_connect_2">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_creating_a_tcp_stream_socket_application"></A>Creating a TCP Stream Socket Application</H2>
+
+<P>Use TCP to provide sequenced, reliable two-way connection-based byte streams. A TCP stream socket server application listens on the network for incoming client request packets. A TCP stream socket client application initiates communication with the server by sending a request packet. When the server receives the request, it processes it and responds. After this initial sequenced message exchange, client and server can exchange data. The following illustration shows the interaction between the TCP stream socket server and TCP stream socket client.</P>
+
+<P><IMG SRC="tcpflow.gif" ALT="" BORDER=0></P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a TCP stream socket server application</H4>
+
+<OL>
+	<LI>Open a stream socket with the <A HREF="JavaScript:hhobj_1.Click()"><B>socket</B></A> function.
+<P>Use AF_INET for the <I>address format</I> parameter and SOCK_STREAM for the <I>type </I>parameter.
+
+<P>The following code example shows how to open a socket.
+
+<PRE><CODE>if ((WinSocket = socket (AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) 
+{
+  wsprintf (szError, TEXT("Allocating socket failed. Error: %d"), 
+            WSAGetLastError ());
+  MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+  return FALSE;
+}
+</CODE></PRE>
+</li>
+
+	<LI>Name the socket with the <A HREF="JavaScript:hhobj_2.Click()"><B>bind</B></A> function using a <A HREF="JavaScript:hhobj_3.Click()"><B>SOCKADDR_IN</B></A> structure for the <I>address</I> parameter.
+<P>When you open a socket with <B>socket</B>, the socket has no name assigned to it. However, a descriptor for the socket is allocated in an address family name space. To assign a name to the server socket, call <B>bind</B>. To be identified by the client socket, a TCP stream socket server application must name its socket. However, it is unnecessary to give a client socket a name, using <B>bind</B>.
+
+<P>The <B>bind</B> function establishes the local socket association by assigning a local socket name to an unnamed socket. A socket name consists of three address fields when in the TCP/IP address family, known as the Internet address family: the address family protocol, a host address, and a port number that identifies the application. These address fields, <I>sin_family</I>, <I>sin_addr</I>, <I>sin_port</I>, are members of the <B>SOCKADDR_IN</B> structure. You must initialize <B>SOCKADDR_IN</B> before calling <B>bind</B>.
+
+<P>The following code example shows how to initialize <B>SOCKADDR_IN, </B>and then use <B>bind</B>.
+
+<PRE><CODE>// Fill out the local socket address data.
+local_sin.sin_family = AF_INET;
+local_sin.sin_port = htons (PORTNUM);
+local_sin.sin_addr.s_addr = htonl (INADDR_ANY);
+
+// Associate the local address with WinSocket.
+if (bind (WinSocket, 
+          (struct sockaddr *) &amp;local_sin, 
+          sizeof (local_sin)) == SOCKET_ERROR) 
+{
+  wsprintf (szError, TEXT("Binding socket failed. Error: %d"), 
+            WSAGetLastError ());
+  MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+  closesocket (WinSocket);
+  return FALSE;
+}
+</CODE></PRE>
+</li>
+
+	<LI>Listen for incoming client connections with <A HREF="JavaScript:hhobj_4.Click()"><B>listen</B></A>.
+<P>To prepare for a name association the TCP stream server must first listen for connection requests from the TCP client with the <B>listen</B> function. 
+
+<P>The following code example shows how to use <B>listen</B>.
+
+<PRE><CODE>if (listen (WinSocket, MAX_PENDING_CONNECTS) == SOCKET_ERROR) 
+{
+  wsprintf (szError, 
+            TEXT("Listening to the client failed. Error: %d"),
+            WSAGetLastError ());
+  MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+  closesocket (WinSocket);
+  return FALSE;
+}
+</CODE></PRE>
+</li>
+
+	<LI>Accept a client connection with the <A HREF="JavaScript:hhobj_5.Click()"><B>accept</B></A> function.
+<P>The TCP stream server socket uses <B>accept</B> to accept the client connection that completes the name association between client and server.
+
+<P>The <B>accept</B> function creates a new socket. The original socket opened by the server continues to listen and can be used to accept more connections until closed. Server applications must close the listening socket, in addition to any sockets created, by accepting a client connection.
+
+<P>The following code example shows how to use <B>accept</B>.
+
+<PRE><CODE>accept_sin_len = sizeof (accept_sin);
+
+// Accept an incoming connection attempt on WinSocket.
+ClientSock = accept (WinSocket, 
+                     (struct sockaddr *) &amp;accept_sin, 
+                     (int *) &amp;accept_sin_len);
+
+// Stop listening for connections from clients.
+closesocket (WinSocket);
+
+if (ClientSock == INVALID_SOCKET) 
+{
+  wsprintf (szError, TEXT("Accepting connection with client
+             failed.") TEXT(" Error: %d"), WSAGetLastError ());
+  MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+  return FALSE;
+}
+</CODE></PRE>
+</li>
+
+	<LI>Send and receive data with a client using the <A HREF="JavaScript:hhobj_6.Click()"><B>send</B></A> and <A HREF="JavaScript:hhobj_7.Click()"><B>recv</B></A> functions.
+<P>Once client and server sockets are connected, you can use the <B>send</B> and <B>recv</B> functions to exchange data.
+
+<P>The <B>send</B> function writes outgoing data on a connected socket. The <B>recv</B> function reads incoming data on connection-oriented sockets. The <B>recv</B> function can also be used with connectionless sockets. When using a TCP connection-oriented stream, a socket must be connected before calling <B>recv</B>. 
+
+<P>The following code shows an example of using the <B>send</B> and <B>recv</B> functions.
+
+<PRE><CODE>for (;;)
+{
+  // Receive data from the client.
+  iReturn = recv (ClientSock, szServerA, sizeof (szServerA), 0);
+
+  // Verify that data was received. If yes, display it.
+  if (iReturn == SOCKET_ERROR)
+  {
+    wsprintf (szError, TEXT("No data is received, receive failed.")
+              TEXT(" Error: %d"), WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Server"), MB_OK);
+    break;
+  }
+  else if (iReturn == 0)
+  {
+    MessageBox (NULL, TEXT("Finished receiving data"), 
+                TEXT("Server"), MB_OK);
+    break;
+  }
+  else
+  {
+    // Convert the ASCII string to Unicode.
+    for (index = 0; index &lt;= sizeof (szServerA); index++)
+      szServerW[index] = szServerA[index];
+
+    // Display the string received from the client.
+    MessageBox (NULL, szServerW, TEXT("Received From Client"), 
+                MB_OK);
+  }
+} 
+
+// Send a string from the server to the client.
+if (send (ClientSock, "To Client.", strlen ("To Client.") + 1, 0)
+         == SOCKET_ERROR) 
+{
+  wsprintf (szError, 
+            TEXT("Sending data to the client failed. Error: %d"),
+            WSAGetLastError ());
+  MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+}
+</CODE></PRE>
+
+<P>Successfully completing a call to <B>send</B> does not confirm that data was successfully delivered.
+</li>
+
+	<LI>Close the connection with the <A HREF="JavaScript:hhobj_8.Click()"><B>closesocket</B></A> function.
+<P>When data exchange between the server and client ends, close the socket with <B>closesocket</B>. To ensure that all data is exchanged on a TCP connection, an application should call <A HREF="JavaScript:hhobj_9.Click()"><B>shutdown</B></A> before calling <B>closesocket</B>. 
+
+<P>An application should always have a matching call to <B>closesocket</B> for each successful call to <B>socket</B> to return any socket resources to the system. For TCP stream sockets, when a socket connection ends the server closes the socket created by <B>accept</B>. The server does not close the socket originally returned by the first call to <B>socket</B>. That socket continues to listen for clients. When the server disconnects or is out of service it should call <B>closesocket</B> to close the listening socket.
+</li>
+</OL>
+
+<P>For an example of a TCP stream socket server application, see <A HREF="winsock_39.htm">TCP Stream Socket Server</A>.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a TCP stream socket client application</H4>
+
+<OL>
+	<LI>Open a stream socket with <B>socket</B>. 
+<P>Use AF_INET for the <I>address format</I> parameter and SOCK_STREAM for the <I>type </I>parameter.
+</li>
+
+	<LI>Connect to the server with the <A HREF="JavaScript:hhobj_10.Click()"><B>connect</B></A> function using a<B> SOCKADDR_IN</B> structure for the <I>name</I> parameter.
+<P>The TCP stream client associates socket names by connecting to the stream server with <B>connect</B>.
+
+<P>The <B>SOCKADDR_IN</B> structure must be initialized before calling <B>connect</B>. This is similar to using <B>bind</B>, but <I>sin_port</I> and <I>sin_addr</I> are initialized with the remote socket name, not the local socket name used for <B>bind</B>.
+
+<P>The following code example shows the TCP client connecting with the server.
+
+<PRE><CODE>// Establish a connection to the server socket.
+if (connect (ServerSock, 
+             (PSOCKADDR) &amp;destination_sin, 
+             sizeof (destination_sin)) == SOCKET_ERROR) 
+{
+  wsprintf (szError, 
+            TEXT("Connecting to the server failed. Error: %d"),
+            WSAGetLastError ());
+  MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+  closesocket (ServerSock);
+  return FALSE;
+}
+</CODE></PRE>
+</li>
+
+	<LI>Exchange data with a server, using the <B>send</B> and <B>recv </B>functions.</li>
+
+	<LI>Close the connection with <B>closesocket</B>.</li>
+</OL>
+
+<P>For an example of a TCP stream socket client application, see <A HREF="winsock_40.htm">TCP Stream Socket Client</A>.</P>
+<p>&nbsp;</p></body>
+</HTML>

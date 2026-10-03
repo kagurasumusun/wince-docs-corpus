@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing Folders</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_accessing_folders"></A>Accessing Folders</H2>
+
+<P>For the service manager to access a folder, you must implement HREPLFLD, which is a handle that identifies a folder. This handle contains the filter for the object type and other object-specific information. </P>
+
+<P>The service manager calls <B>IReplStore::GetFolderInfo</B> to obtain the folder handle. The service manager also calls <B>IReplStore::IsFolderChanged</B>, <B>IReplStore::CopyObject</B>, <B>IReplStore::IsValidObject</B>, and <B>IReplStore::FreeObject</B> to manipulate folder and item handles. </P>
+
+<P>Because the service manager saves the data that is stored in the HREPLITEM or HREPLFLD handles to Repl.dat, which is a file that the service manager creates and maintains, you must also implement <B>IReplStore::ObjectToBytes</B> and <B>IReplStore::ObjectToBytes</B>.</P>
+
+<P>The following code example shows how to implement <B>IReplStore::GetFolderInfo</B>.</P>
+
+<PRE><CODE>STDMETHODIMP CStore::GetFolderInfo
+(
+    LPSTR lpszName,            // Name of the object type taken from 
+                            // the registry
+    HREPLFLD *phFolder,        // Output pointers to the handle of the 
+                            // new folder 
+    IUnknown **ppObjHandler    // Output pointers to the pointer of 
+                            // the IReplObjHandler interface
+)
+{
+    // Check if phFolder points to a handle that has NULL value.
+    CFolder *pFolder = (CFolder *)*phFolder;
+    BOOL fNew = (pFolder == NULL);
+
+    // Create a new handle for the specific folder.
+    if ( fNew )
+        pFolder = new CFolder;
+
+    // Either set up the new CFolder class (when fNew is TRUE) or 
+    // reinitialize the class (when fNew is FALSE).
+    // ...
+
+
+    *phFolder = (HREPLFLD)pFolder;
+    *ppObjHandler = m_pObjHandler;
+
+    return NOERROR;
+}
+</CODE></PRE>
+
+<P>To determine if any object contained in a folder has changed, the service manager calls <B>IReplStore::IsFolderChanged</B>. The service manager also can call the following methods to manipulate folder or item handles: 
+
+<UL>
+	<LI><B>IReplStore::CopyObject</B> to copy the data from one handle to another handle that represents the same object.</li>
+
+	<LI><B>IReplStore::IsValidObject</B> to ensure that the handle still represents a valid object, not a deleted object.</li>
+
+	<LI><B>IReplStore::FreeObject</B> to remove a handle from memory, thereby allowing the desktop provider module to free the memory resources that are used by the handle. </li>
+</UL>
+
+<P>The following code examples show how to implement each of these methods.</P>
+
+<PRE><CODE>STDMETHODIMP_(BOOL) CStore::CopyObject
+(
+    HREPLOBJ    hObjSrc,    // Handle to the source object
+    HREPLOBJ    hObjDst     // Handle to the destination object
+)
+{
+    CReplObject *pObjSrc = (CReplObject *)hObjSrc;
+    CReplObject *pObjDst = (CReplObject *)hObjDst;
+
+    // Check to see if the source and destination types are the same.
+    if ( pObjSrc-&gt;m_uType != pObjDst-&gt;m_uType )
+        return FALSE;
+
+    switch( pObjSrc-&gt;m_uType )
+    {
+    case OT_ITEM:            // If the source object is an item
+        ((CItem *)pObjDst)-&gt;m_uid = ((CItem *)pObjSrc)-&gt;m_uid;
+        ((CItem *)pObjDst)-&gt;m_ftModified = 
+                            ((CItem *)pObjSrc)-&gt;m_ftModified;
+        break;
+
+    case OT_FOLDER:            // If the source object is a folder
+        break;
+    }
+    return TRUE;
+}
+
+STDMETHODIMP CStore::IsValidObject
+( 
+    HREPLFLD hFolder,    // Handle of the folder where this 
+                        // item belongs.
+    HREPLITEM hItem,        // Handle of the object; could be NULL.
+    UINT uFlags            // Reserved; must be 0.
+)
+{
+    CFolder *pFolder = (CFolder *)hFolder;
+    CItem   *pItem = (CItem *)hItem;
+
+    if ( pFolder )
+    {
+        // Check whether hFolder is a valid folder handle.
+        if ( pFolder-&gt;m_uType != OT_FOLDER )
+            return HRESULT_FROM_WIN32( ERROR_INVALID_HANDLE );
+    }
+
+    if ( pItem )
+    {
+        // Check whether hItem is a valid item handle.
+        if ( pFolder-&gt;m_uType != OT_ITEM )
+            return HRESULT_FROM_WIN32( ERROR_INVALID_HANDLE );
+
+         // Search for the item. If the item is not found, return 
+        // to HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND ).
+        // ...
+    }
+
+    return NOERROR;
+}
+
+STDMETHODIMP_(void) CStore::FreeObject
+(
+    HREPLOBJ        hObject        // Handle of the object whose contents 
+                            // need to be freed.
+)
+{
+    delete (CReplObject *)hObject;
+}
+</CODE></PRE>
+
+<P>The service manager saves the data stored in the HREPLITEM or HREPLFLD handles to Repl.dat. The desktop provider module must implement <B>IReplStore::ObjectToBytes</B> to convert an HREPLITEM object or HREPLFLD object into a series of bytes so that the service manager can save the data. The desktop provider module also must implement <B>IReplStore::BytesToObject </B>to convert the same series of bytes back to an object. </P>
+
+<P>When a user connects a device to a desktop, the service manager reads Repl.dat and restores all handles that were used in the previous synchronization. As long as a device is connected, the service manager continues to save handles into Repl.dat. </P>
+
+<P>The following code examples show how to implement <B>IReplStore::ObjectToBytes</B> and <B>IReplStore::BytesToObject</B>.</P>
+
+<PRE><CODE>STDMETHODIMP_(UINT) CStore::ObjectToBytes
+(
+    HREPLOBJ    hObject,        // Handle to the object.
+    LPBYTE      lpb           // Points to a buffer where the array of 
+                            // bytes should be stored; could be NULL.
+)
+{
+    LPBYTE      lpbStart = lpb;
+    CReplObject *pObject = (CReplObject *)hObject;
+    CFolder     *pFolder = (CFolder *)pObject;
+    CItem       *pItem = (CItem *)pObject;
+
+    if ( lpbStart )
+        *lpb = OBJECT_VERSION;
+    lpb++;
+
+    if ( lpbStart )
+        *(PUINT)lpb = pObject-&gt;m_uType;
+    lpb += sizeof( pObject-&gt;m_uType );
+
+    switch( pObject-&gt;m_uType )
+    {
+    case OT_FOLDER:            // If the object is a folder
+        break;
+
+    case OT_ITEM:            // If the object is an item
+        if ( lpbStart )
+            *(PUINT)lpb = pItem-&gt;m_uid;
+        lpb += sizeof( pItem-&gt;m_uid );
+
+        if ( lpbStart )
+            *(FILETIME *)lpb = pItem-&gt;m_ftModified;
+        lpb += sizeof( pItem-&gt;m_ftModified );
+        break;
+    }
+    return lpb - lpbStart;
+}
+
+STDMETHODIMP_(HREPLOBJ) CStore::BytesToObject
+(
+    LPBYTE  lpb,        // Points to a buffer where the array of bytes 
+                        // should be stored; could be NULL.
+    UINT    cb          // The size of the buffer.
+)
+{
+     CReplObject *pObject = NULL;
+    CFolder *pFolder;
+    CItem *pItem;
+
+    BYTE bVersion = *lpb++;
+    UINT uType = *(PUINT)lpb;
+
+    lpb += sizeof( uType );
+
+    if ( bVersion != OBJECT_VERSION )
+    {
+        // Convert the data based on bVersion.
+    }
+
+    switch( uType )
+    {
+    case OT_FOLDER:        // If the object is a folder
+        pObject = pFolder = new CFolder;
+        break;
+
+    case OT_ITEM:        // If the object is an item
+        pObject = pItem = new CItem;
+
+        pItem-&gt;m_uid = *(PUINT)lpb;
+        lpb += sizeof( pItem-&gt;m_uid );
+
+        pItem-&gt;m_ftModified = *(FILETIME *)lpb;
+        lpb += sizeof( pItem-&gt;m_ftModified );
+
+        break;
+    }
+
+    return (HREPLOBJ)pObject;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>USBD Interface Functions</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_usb_driver_interface_functions"></A>USBD Interface Functions</H2>
+
+<P>USB device drivers interact with the peripherals that they control by using the USBD interface functions. These functions, which are provided by the USBD module, constitute the core of a USB device driver’s functionality. There are several categories of USBD interface functions, each related to a different aspect of interacting with a USB device, including transfer, pipe, frame, and configuration functions, as well as functions for performing other miscellaneous tasks.</P>
+
+<P>Transfer functions are the most important category because they handle sending data to and receiving data from a USB device. There are four basic types of transfer: control, bulk, interrupt, and isochronous. For convenience, there are several special transfer functions that provide common types of control transfer, such as device configuration and setup requests. All transfer functions have an optional callback parameter. If a callback function is provided, the transfer functions return immediately, or asynchronously, without waiting for the transfer request to complete. When the transfer request finishes, the transfer function calls the function pointed to by the callback parameter. Additionally, a USB device driver can use the USB_NO_WAIT flag to cause the transfer functions to return asynchronously, even if no callback is specified. USB device drivers typically do this in situations when they queue several requests to the device and wait for only the last one to finish. In such cases, the device driver is still responsible for closing all transfer handles. If the USB device driver provides no callback function and does not use the USB_NO_WAIT flag, the transfer function blocks until the transfer is complete.</P>
+
+<P>The USBD module calls the callback function in a context that may block other USB operations. Therefore, these callback functions should perform very minimal processing, preferably just setting some state variables and signaling an event so that any substantial post-processing can be handled by another thread. In particular, such callback functions cannot call any USBD interface functions. See the HID and mouse sample drivers for examples of using callback functions.</P>
+
+<P>Internally, the USB system is optimized for a page size of 4 KB. If a platform has a different page size, the USB system allocates an internal, contiguous 4-KB buffer to use for data transfers. However, copying data into and out of this buffer may impose an unacceptable limit on the performance of a USB device driver. In such cases, the driver may pass an optional physical memory address that the USB system uses directly for data transfers. A driver-specific buffer used in this way must be contiguous within 4-KB segments and must not be accessed by the USB device driver during transfer operations. The <B>LockPages</B> function can be used to obtain physical address information. </P>
+
+<P class=indent1>The following table shows the transfer functions.</p>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="funct_1_2.htm"><B>AbortTransfer</B></A></TD>
+<TD width=72%><A HREF="funct_1_143.htm"><B>IssueControlTransfer</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="funct_1_44.htm"><B>CloseTransfer</B></A></TD>
+<TD width=72%><A HREF="funct_1_144.htm"><B>IssueInterruptTransfer</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="funct_1_100.htm"><B>GetIsochResults</B></A></TD>
+<TD width=72%><A HREF="funct_1_145.htm"><B>IssueIsochTransfer</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="funct_1_105.htm"><B>GetTransferStatus</B></A></TD>
+<TD width=72%><A HREF="funct_1_147.htm"><B>IsTransferComplete</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%><A HREF="funct_1_142.htm"><B>IssueBulkTransfer</B></A></TD>
+<TD width=72%><A HREF="funct_1_146.htm"><B>IssueVendorTransfer</B></A></TD>
+</TR>
+</TABLE><BR>
+
+<UL>
+	<LI>The following table shows the pipe functions that open and close communication channels between a USBD and a USB device. </li>
+</UL>
+
+<TABLE cellspacing=4 cols=1>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_1.htm"><B>AbortPipeTransfers</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_43.htm"><B>ClosePipe</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_139.htm"><B>IsDefaultPipeHalted</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_141.htm"><B>IsPipeHalted</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_318.htm"><B>OpenPipe</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_352.htm"><B>ResetDefaultPipe</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_353.htm"><B>ResetPipe</B></A></TD>
+</TR>
+</TABLE><BR>
+
+<UL>
+	<LI>The following table shows the frame functions that control how the USBD module packages data into frames for transmission on the bus.</li>
+</UL>
+
+<TABLE cellspacing=4 cols=1>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_97.htm"><B>GetFrameLength</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_98.htm"><B>GetFrameNumber</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_347.htm"><B>ReleaseFrameLengthControl</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_356.htm"><B>SetFrameLength</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_359.htm"><B>TakeFrameLengthControl</B></A></TD>
+</TR>
+</TABLE><BR>
+
+<UL>
+	<LI>The following table shows device configuration functions for specific kinds of data transfers defined in the <I>Universal Serial Bus Specification</I>. </li>
+</UL>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_42.htm"><B>ClearFeature</B></A></TD>
+<TD width=60%><A HREF="funct_1_354.htm"><B>SetDescriptor</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_95.htm"><B>GetDescriptor</B></A></TD>
+<TD width=60%><A HREF="funct_1_355.htm"><B>SetFeature</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_99.htm"><B>GetInterface</B></A></TD>
+<TD width=60%><A HREF="funct_1_357.htm"><B>SetInterface</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_103.htm"><B>GetStatus</B></A></TD>
+<TD width=60%><A HREF="funct_1_358.htm"><B>SyncFrame</B></A></TD>
+</TR>
+</TABLE><BR>
+
+<UL>
+	<LI>The following table shows miscellaneous functions for tasks related to interacting with USB implementation. </li>
+</UL>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_94.htm"><B>FindInterface</B></A></TD>
+<TD width=60%><A HREF="funct_1_343.htm"><B>RegisterClientDriverId</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_96.htm"><B>GetDeviceInfo</B></A></TD>
+<TD width=60%><A HREF="funct_1_344.htm"><B>RegisterClientSettings</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_106.htm"><B>GetUSBDVersion</B></A></TD>
+<TD width=60%><A HREF="funct_1_346.htm"><B>RegisterNotificationRoutine</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_161.htm"><B>LoadGenericInterfaceDriver</B></A></TD>
+<TD width=60%><A HREF="funct_1_369.htm"><B>TranslateStringDescr</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_317.htm"><B>OpenClientRegistryKey</B></A></TD>
+<TD width=60%><A HREF="funct_1_371.htm"><B>UnRegisterNotificationRoutine</B></A></TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

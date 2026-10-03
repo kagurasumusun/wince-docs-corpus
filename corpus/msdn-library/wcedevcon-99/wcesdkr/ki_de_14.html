@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IDispatch::GetIDsOfNames</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_oa96_idispatch_getidsofnames"></A>IDispatch::GetIDsOfNames</H2>
+
+<P>This method maps a single member name and an optional set of parameter names to a corresponding set of integer dispatch identifiers (DISPIDs), which can then be used on subsequent calls to <B>IDispatch::Invoke</B>.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT GetIDsOfNames( REFIID</B> <I>riid</I><B>,</B>  <BR>
+<B>OLECHAR FAR* FAR*</B> <I>rgszNames</I><B>, unsigned int</B> <I>cNames</I><B>, LCID</B> <I>lcid</I><B>, <BR>
+DISPID FAR*</B> <I>rgDispId </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>riid</I></DT>
+
+<DD>Reserved for future use; set to IID_NULL.</dd>
+
+<DT><I>rgszNames</I></DT>
+
+<DD>Passed-in array of names to be mapped.</dd>
+
+<DT><I>cNames</I></DT>
+
+<DD>Count of the names to be mapped.</dd>
+
+<DT><I>lcid</I></DT>
+
+<DD>Locale context in which to interpret the names.</dd>
+
+<DT><I>rgDispId</I></DT>
+
+<DD>Caller-allocated array, each element of which contains an identifier that corresponds to one of the names passed in the <I>rgszNames</I> array. The first element represents the member name. The subsequent elements represent each of the member<B>’</B>s parameters.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=34%>
+<H5>Value</H5>
+</TD>
+<TD width=66%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>S_OK</TD>
+<TD width=66%>Success.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>E_OUTOFMEMORY</TD>
+<TD width=66%>Out of memory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>DISP_E_UNKNOWNNAME</TD>
+<TD width=66%>One or more of the names were not known. The returned array of DISPIDs contains DISPID_UNKNOWN for each entry that corresponds to an unknown name.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>DISP_E_UNKNOWNLCID</TD>
+<TD width=66%>The locale identifier (LCID) was not recognized.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>An <B>IDispatch</B> implementation can associate any positive integer identifier value with a given name. Zero is reserved for the default, or <B>Value</B> property; –1 is reserved to indicate an unknown name; and other negative values are defined for other purposes. For example, if <B>GetIDsOfNames</B> is called, and the implementation does not recognize one or more of the names, it returns DISP_E_UNKNOWNNAME, and the <I>rgDispId</I> array contains DISPID_UNKNOWN for the entries that correspond to the unknown names.</P>
+
+<P>The member and parameter DISPIDs must remain constant for the lifetime of the object. This allows a client to obtain the DISPIDs once, and cache them for later use.</P>
+
+<P>When <B>GetIDsOfNames</B> is called with more than one name, the first name (<I>rgszNames</I>[0]) corresponds to the member name, and subsequent names correspond to the names of the member<B>’</B>s parameters.</P>
+
+<P>The same name may map to different DISPIDs, depending on context. For example, a name may have a DISPID when it is used as a member name with a particular interface, a different identifier as a member of a different interface, and different mapping for each time it appears as a parameter.</P>
+
+<P>The <B>IDispatch </B>interface binds to names at run time. To bind at compile time instead, an <B>IDispatch</B> client can<B> </B>map names to DISPIDs by using the <B>ITypeLib</B>, <B>ITypeLib2</B>, <B>ITypeType</B>, <B>ITypeType2</B>, and <B>ITypeComp</B> the type information interfaces. This allows a client to bind to members at compile time and avoid calling <B>GetIDsOfNames</B> at run time. </P>
+
+<P>The implementation of <B>GetIDsOfNames</B> is case insensitive. Users that need case-sensitive name mapping should use type information interfaces to map names to DISPIDs, rather than call <B>GetIDsOfNames</B>.</P>
+
+<H4>Example</H4>
+
+<P>The following code from the Lines sample file Lines.cpp implements the <B>GetIDsOfNames</B> member function for the <B>CLine</B> class. The ActiveX or OLE object uses the standard implementation, <A HREF="kf_de_8.htm"><B>DispGetIDsOfNames</B></A>.</P>
+
+<PRE><CODE>STDMETHODIMP 
+CLine::GetIDsOfNames(
+        REFIID riid,
+        OLECHAR FAR* FAR* rgszNames,
+        UINT cNames,
+        LCID lcid,
+        DISPID FAR* rgDispId)
+{
+        return DispGetIDsOfNames(m_ptinfo, rgszNames, cNames, rgDispId);
+}
+</CODE></PRE>
+
+<P>The following code might appear in an ActiveX client that calls <B>GetIDsOfNames</B> to get the DISPID of the <B>CLine Color </B>property.</P>
+
+<PRE><CODE>HRESULT hresult;
+IDispatch FAR* pdisp = (IDispatch FAR*)NULL;
+DISPID dispid;
+OLECHAR FAR* szMember = </CODE>“<CODE>color</CODE>”<CODE>;</CODE>
+
+<CODE>// Code that sets a pointer to the dispatch (pdisp) is omitted.</CODE>
+
+<CODE>hresult = pdisp-&gt;GetIDsOfNames(</CODE>
+<CODE>    IID_NULL,</CODE>
+<CODE>    &amp;szMember,</CODE>
+<CODE>    1, LOCALE_SYSTEM_DEFAULT,</CODE>
+<CODE>    &amp;dispid);</CODE>
+</PRE>
+<p>&nbsp;</p></body>
+</HTML>

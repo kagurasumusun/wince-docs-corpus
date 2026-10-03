@@ -1,0 +1,20 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Playing and Recording</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_playing_and_recording"></A>Playing and Recording</H2>
+
+<P>The basic operation for playing involves an interrupt and two direct memory access (DMA) buffers for output data. The Wave API Manager prepares the data blocks and sends them to the audio driver’s MDD layer. The MDD checks to see if the block has data to be played. If so, it calls the <B>PDD_WaveProc</B> function by using the WPDM_START message. The PDD is responsible for copying data from the block to the temporary DMA buffers. Then, the DMA is started to play the data. When the first of the two buffers is finished playing, an interrupt occurs. The PDD should report the interrupt to be of type AUDIO_STATE_OUT_PLAYING. If there is more data to be played, the MDD sends the message WPDM_CONTINUE. Otherwise, it sends WPDM_ENDOFDATA. As data blocks finish playing, the MDD marks them as done and sends them back to the Wave API Manager.</P>
+
+<P>The PDD should alternate between the two DMA buffers, filling one buffer as the other is playing. If the reserve buffer is not full before the first buffer’s data is finished playing, the PDD layer should report this with the return value AUDIO_STATE_OUT_UNDERFLOW. This gives the MDD layer an opportunity to synchronize and continue playing.</P>
+
+<P>Recording uses a mechanism that is similar to that used by playing, but in reverse order. Recording starts with the PDD message WPDM_START as before, but no data is copied until the first DMA buffer is full. Then, the PDD copies the data from the DMA buffer into the user block. Again, as blocks are filled, the MDD returns them to the Wave API Manager. Recording continues until the user application requests a stop and sends the WPDM_STOP message.</P>
+<p>&nbsp;</p></body>
+</HTML>

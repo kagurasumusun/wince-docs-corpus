@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SafeArrayGetElement</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_oa96_safearraygetelement"></A>SafeArrayGetElement</H2>
+
+<P>This function retrieves a single element of the array.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleauto.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT SafeArrayGetElement(SAFEARRAY FAR</B>* <I>psa</I>, <B>long FAR</B>* <I>rgIndices</I>, <B>void FAR</B>* <I>pv</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>psa</I></DT>
+
+<DD>Pointer to an array descriptor created by <A HREF="kf_s_5.htm"><B>SafeArrayCreate</B></A>.</dd>
+
+<DT><I>rgIndices</I></DT>
+
+<DD>Pointer to a vector of indexes for each dimension of the array. The right-most (least significant) dimension is <I>rgIndices</I>[0]. The left-most dimension is stored at <I>rgIndices</I>[<I>psa</I>-&gt;<I>cDims</I> –1].</dd>
+
+<DT><I>pv</I></DT>
+
+<DD>Void pointer to the location to place the element of the array.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values obtained from the returned <B>HRESULT </B>and described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%>
+<H5>Value</H5>
+</TD>
+<TD width=72%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_OK</TD>
+<TD width=72%>Success.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>DISP_E_BADINDEX</TD>
+<TD width=72%>The specified index is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>E_INVALIDARG </TD>
+<TD width=72%>One of the arguments is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>E_OUTOFMEMORY </TD>
+<TD width=72%>Memory could not be allocated for the element.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>This function calls <A HREF="kf_s_15.htm"><B>SafeArrayLock</B></A> and <A HREF="kf_s_20.htm"><B>SafeArrayUnlock</B></A> automatically, before and after retrieving the element.<B> </B>The caller must provide a storage area of the correct size to receive the data.<B> </B>If the data element is a string, object, or variant, the function copies the element in the correct way. Passing into this function any invalid and, under some circumstances, NULL pointers will result in unexpected termination of the application.</P>
+
+<H4>Example</H4>
+
+<PRE><CODE>STDMETHODIMP CEnumPoint::Next(
+    ULONG celt,
+    VARIANT FAR rgvar[],
+    ULONG FAR* pceltFetched)
+{
+    unsigned int i;
+    long ix;
+    HRESULT hresult;
+
+    for(i = 0; i &lt; celt; ++i)
+        VariantInit(&amp;rgvar[i]);
+
+    for(i = 0; i &lt; celt; ++i){
+        if(m_iCurrent == m_celts){
+        HRESULT = ReportResult(0, S_FALSE, 0, 0);
+            goto LDone;
+    }
+
+        ix = m_iCurrent++;
+        HRESULT = SafeArrayGetElement(m_psa, &amp;ix, &amp;rgvar[i]);
+        if(FAILED(hresult))
+            goto LError0;
+    }
+    HRESULT = NOERROR;
+
+LDone:;
+    *pceltFetched = i;
+    return hresult;
+
+LError0:;
+    for(i = 0; i &lt; celt; ++i)
+        VariantClear(&amp;rgvar[i]);
+    return hresult;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

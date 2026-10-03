@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Additional Accelerated Sample Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_additional_accelerated_sample_drivers"></A>Additional Accelerated Sample Drivers</H2>
+
+<P>Like the S3Virge display driver, other display drivers provided in the Platform Builder demonstrate how to invoke hardware accelerations and how to make use of the emulation library. </P>
+
+<P>The S3Trio64 driver is in the Platform\CEPC\Drivers\Display\S3Trio64 directory. The S3Trio64 driver demonstrates support for hardware accelerations and use of the emulation library. The driver also supports blit handling for both 8-bpp and 16-bpp destination surfaces. For example, in the case of a mask PATCOPY text blit with a 1-bpp mask, the driver uses the emulation library’s <B>BltText16</B> function to handle the blit. With a 4-bpp mask, the driver uses the emulation library’s <B>BltalphaText16</B> function.</P>
+
+<PRE><CODE>if (pBltParms-&gt;pBlt == EmulatedBlt) {
+#ifdef FB16BPP
+    switch (pBltParms-&gt;rop4)
+    {
+        case 0xAAF0: 
+// Special PATCOPY ROP for text output--fill where mask is set.
+            // If the brush is not a pattern brush
+            if( (pBltParms-&gt;solidColor != -1) &amp;&amp;
+                (pBltParms-&gt;pDst-&gt;Format() == gpe16Bpp) )
+            {
+                WaitForNotBusy();
+                if (pBltParms-&gt;pMask-&gt;Format() == gpe1Bpp)
+                {
+                    pBltParms-&gt;pBlt = 
+FUNCNAME(BltText16);
+                    return S_OK;
+                }
+                else   // Antialiased text
+                {
+                    pBltParms-&gt;pBlt = 
+FUNCNAME(BltAlphaText16);
+                    return S_OK;
+                }
+            }
+            break;
+        default:  // Other ROP4s
+            ;
+    }
+</CODE></PRE>
+
+<P>For hardware accelerations and use of the emulation library, see the Citizen driver under Platform\ODO\Drivers\Display\Citizen.</P>
+<p>&nbsp;</p></body>
+</HTML>

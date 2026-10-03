@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ACMDM_STREAM_CONVERT</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_acmdm_stream_convert"></A>ACMDM_STREAM_CONVERT</H2>
+
+<P>This message requests an ACM driver to perform a conversion operation on a specified conversion stream.</P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwDriverID</I></DT>
+
+<DD>Specifies a driver instance identifier. The driver returns this value in response to the <B>ACM_Open</B> function.</dd>
+
+<DT><I>hDriver</I></DT>
+
+<DD>Handle to a driver.</dd>
+
+<DT><I>uMsg</I></DT>
+
+<DD>Specifies this message.</dd>
+
+<DT><I>lParam1</I></DT>
+
+<DD>Pointer to an <B>ACMDRVSTREAMINSTANCE </B>structure.</dd>
+
+<DT><I>lParam2</I></DT>
+
+<DD>Pointer to an <B>ACMDRVSTREAMHEADER </B>structure.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>MMSYSERR_NOERROR indicates success. Otherwise, the driver returns one of the MMSYSERR error values declared in the Mmsystem.h header file or one of the ACMERR error values declared in the Msacm.h header file.</P>
+
+<H4>Remarks</H4>
+
+<P>The ACM (Waveapi.dll) sends this message by calling the ACM driver’s <B>ACM_IOControl</B> entry point through the <B>DeviceIoControl</B> function. The ACM sends this message when an application calls the <B>acmStreamConvert</B> function.</P>
+
+<P>All ACM drivers that provide stream conversions must support this message. For more information about stream conversions, see the Windows NT DDK.</P>
+
+<P>The <B>ACMDRVSTREAMINSTANCE</B> structure received with this message is the same structure received with a previous ACMDM_STREAM_OPEN message. The driver does not need to validate the structure’s contents again.</P>
+
+<P><B>ACMDRVSTREAMHEADER </B>identifies the source and destination data buffers. The source buffer contains the data to be converted. The driver places converted data into the destination buffer.</P>
+
+<P>The driver must check the flags in the <I>fdwConvert</I> member<B> </B>of <B>ACMDRVSTREAMHEADER</B>. These flags indicate how converted data should be returned.</P>
+
+<P>Because stream conversions are time-critical operations, ACMDM_STREAM_CONVERT messages must be processed efficiently. The driver should perform as much processing as possible in response to the ACMDM_STREAM_OPEN message.</P>
+
+<P>If the driver supports asynchronous operations and the client has specified the ACM_STREAMOPENF_ASYNC flag, which is contained in the <I>fdwOpen</I> member<B> </B>of <B>ACMDRVSTREAMINSTANCE</B>, the driver must take the following actions when it has finished converting the data in the source buffer: 
+
+<UL>
+	<LI>Set the ACMSTREAMHEADER_STATUSF_DONE flag<B> </B>of <B>ACMDRVSTREAMHEADER</B>.</li>
+
+	<LI>Send the client an MM_ACM_DONE callback message by calling the <B>PostThreadMessage</B> function.</li>
+</UL>
+
+<P>Along with the <I>padshNext</I> member of <B>ACMDRVSTREAMHEADER</B>, asynchronous drivers can use the ACMSTREAMHEADER_STATUSF_INQUEUE flag of the structure to maintain a conversion queue of stream header structures.</P>
+
+<P>Before calling the driver’s <B>ACM_IOControl</B> function, the ACM should verify the following conditions:
+
+<UL>
+	<LI>The structure is readable, writable, and properly sized.</li>
+
+	<LI>The <I>fdwConvert</I> member of the structure contains valid flag values.</li>
+
+	<LI>The structure’s buffers have been prepared, and the specified buffer sizes are not larger than their prepared sizes. </li>
+
+	<LI>The structure is not currently in an asynchronous driver’s conversion queue; that is, the structure’s ACMSTREAMHEADER_STATUSF_INQUEUE flag is not set.</li>
+</UL>
+
+<H4>See Also</H4>
+
+<P><A HREF="mess_1_14.htm">ACMDM_STREAM_PREPARE</A></P>
+<p>&nbsp;</p></body>
+</HTML>

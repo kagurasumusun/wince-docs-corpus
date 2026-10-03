@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisAllocateBufferPool</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisallocatebufferpool"></A>NdisAllocateBufferPool</H2>
+
+<P>This function returns a handle with which the caller can allocate buffer descriptors by calling the <B>NdisAllocateBuffer</B> function.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisAllocateBufferPool(OUT PNDIS_STATUS</B> <I>Status</I><B>,</B> <BR>
+<B>OUT PNDIS_HANDLE</B> <I>PoolHandle</I><B>,</B> <B>IN UINT</B> <I>NumberOfDescriptors</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which this function returns the final status of the buffer pool allocation.</dd>
+
+<DT><I>PoolHandle</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which this function returns a handle to the buffer pool. This handle is a required parameter to the NDIS buffer functions that the driver calls subsequently.</dd>
+
+<DT><I>NumberOfDescriptors</I></DT>
+
+<DD>Specifies the number of buffer descriptors that the caller expects to allocate from the buffer pool without releasing any allocated buffer descriptors back to the pool.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Always returns NDIS_STATUS_SUCCESS.</P>
+
+<H4>Remarks</H4>
+
+<P>After this function returns, the driver calls the <B>NdisAllocateBuffer</B> function one or more times to allocate the buffer descriptors that it requires. A driver should call this function during initialization.</P>
+
+<P>The <I>NumberOfDescriptors</I> parameter specified by an NIC driver usually depends on the features of the NIC. For example, the driver of a busmaster DMA NIC with ring buffers would specify at least a large enough <I>NumberOfDescriptors</I> to map the full ring.</P>
+
+<P>The <I>NumberOfDescriptors</I> specified in the call to this function is the effective limit on how many times the driver can call <B>NdisAllocateBuffer</B> before it must call the <B>NdisFreeBuffer</B> function to return a buffer descriptor to the free list for the buffer pool.</P>
+
+<P>When a driver no longer needs the buffer pool that it allocated, it calls the <B>NdisFreeBufferPool</B> function to release the buffer pool handle.</P>
+
+<P>The driver must release any spin lock that it is holding before calling this function.</P>
+
+<P>All lower-level NDIS drivers must allocate all buffer descriptors that they chain to packets from a buffer pool. Only highest-level protocol drivers can be given OS-dependent descriptors mapping virtual memory ranges. If these memory descriptors are equivalent to NDIS buffer descriptors, a highest-level protocol can pass such descriptors as parameters to NDIS functions.</P>
+
+<P>A driver that calls this function runs at IRQL &lt;=DISPATCH_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_172.htm"><B>NdisAdjustBufferLength</B></A>, <A HREF="funct_1_173.htm"><B>NdisAllocateBuffer</B></A>, <A HREF="funct_1_180.htm"><B>NdisChainBufferAtBack</B></A>, <A HREF="funct_1_181.htm"><B>NdisChainBufferAtFront</B></A>, <A HREF="funct_1_190.htm"><B>NdisFreeBuffer</B></A>, <A HREF="funct_1_191.htm"><B>NdisFreeBufferPool</B></A>, <A HREF="funct_1_252.htm"><B>NdisQueryBuffer</B></A>, <A HREF="funct_1_274.htm"><B>NdisReleaseSpinLock</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

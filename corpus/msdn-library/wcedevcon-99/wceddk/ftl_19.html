@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample ATADISK Driver</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_sample_atadisk_driver"></A>Sample ATADISK Driver</H2>
+
+<P>In addition to the standard stream device driver functions, the ATADISK driver also exports a PC Card Plug and Play detection function, <B>DetectATADisk</B>. The detection function only reads the attribute space of the PC card; no other data is read, and no write operations are performed on the PC card. The function looks for disk device type 4 in the PC Card’s <B>CISTPL_FUNCID</B> tuple and for ATA device type 1 in the type 1 <B>CISTPL_FUNCE</B> tuple.</P>
+
+<P>The presence of the <B>\Drivers\PCMCIA\ATADisk\</B> key causes the Device Manager to call the driver’s <B>DetectATADisk</B> function when a PC Card is inserted and there is no driver associated with the card’s Plug and Play ID. The following example shows how this takes place.</P>
+
+<PRE><CODE>HKEY_LOCAL_MACHINE
+    [Drivers]
+        [PCMCIA]
+            [Detect]
+                [50]
+                    SZ: Dll = ATADisk.DLL
+                    SZ: Entry = DetectATADisk
+</CODE></PRE>
+
+<P>When <B>DetectATADisk</B> detects an ATA-compatible PC Card, it causes the Device Manager to load the driver listed in the <B>\Drivers\PCMCIA\AtaDisk\</B> registry key. The following example shows how this done.</P>
+
+<PRE><CODE>HKEY_LOCAL_MACHINE
+    [Drivers]
+        [PCMCIA]
+            [ATADISK]
+                SZ: Prefix = DSK
+                SZ: Dll = AtaDisk.DLL
+                SZ: IOCTL = (DWORD)4
+                SZ: FSD = FATFS.DLL
+</CODE></PRE>
+
+<P>The four values shown are required.</P>
+
+<P>The following values within the <B>ATADISK</B> key are optional. If present, these values affect all devices that the ATADISK driver operates on. Some of the following values are supported so that the ATADISK driver can work with some older ATA disk devices.
+
+<DL>
+<DT>Folder</DT>
+
+<DD>“Storage Card” causes ATADISK to report a default volume name of “Storage Card” in response to a DISK_IOCTL_GETNAME <B>DeviceIOControl</B>. You can use a different name than “Storage Card”, if desired.</dd>
+
+<DT>Cylinders</DT>
+
+<DD><I>xxx</I> causes the ATADISK driver to not rely on the number of cylinders reported by the ATA device in response to the ATA IDENTIFY command. The number specified by the <B>Cylinders</B> registry value is used instead.</dd>
+
+<DT>Heads</DT>
+
+<DD><I>hh</I> causes the ATADISK driver to not rely on the number of heads reported by the ATA device in response to the ATA IDENTIFY command. The number specified by the <B>Heads</B> registry value is used instead.</dd>
+
+<DT>Sectors</DT>
+
+<DD><I>ss</I> causes the ATADISK driver to not rely on the number of sectors per track reported by the ATA device in response to the ATA IDENTIFY command. The number specified by the <B>Sectors</B> registry value is used instead.</dd>
+
+<DT>CHSMode</DT>
+
+<DD>1 forces the ATADISK driver to use Cylinder/Head/Sector (CHS) addressing mode. If the <B>CHSMode</B> value is 0 or the value is not present, the ATADISK driver uses the addressing mode reported by the ATA device in response to the ATA IDENTIFY command. The ATADISK driver uses Logical Block Address (LBA) mode, when available.</dd>
+</DL>
+<p>&nbsp;</p></body>
+</HTML>

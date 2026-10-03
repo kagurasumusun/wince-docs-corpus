@@ -1,0 +1,20 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Interrupt Handling in Audio Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_interrupt_handling_in_audio_drivers"></A>Interrupt Handling in Audio Drivers</H2>
+
+<P>The MDD layer is responsible for interrupt handling. It creates and manages the audio driver’s interrupt service thread (IST). The IST calls the <B>PDD_AudioGetInterruptType</B> function to determine the cause of the audio interrupt. Based on the interrupt type, the MDD either performs a callback to the Wave API Manager or sends more data or buffer space to the PDD to be played or recorded.</P>
+
+<P>The PDD layer can support simultaneous playing and recording with one interrupt by merging the recording and playing status in the AUDIO_STATE return value for <B>PDD_AudioGetInterruptType</B>. The value can represent a state change of either the playing or recording hardware, or both. The lower 4 bits of the return code represent the input status, and the upper 4 bits represent the output status. If the current interrupt is for both recording and playing, the values can be combined using the logical <B>OR</B> operator. However, if the interrupt requires only one operation, the other 4 bits should remain 0; otherwise, the MDD interprets this as a change or update in the hardware’s status.</P>
+
+<P>If your audio device uses more than one hardware interrupt—typically, one for playing and one for recording—the driver’s interrupt service routines (ISRs) should both return the interrupt ID specified by the PDD layer. When <B>PDD_AudioGetInterruptType</B> is called to determine the cause of the interrupt, the function can access the hardware to determine the actual playing or recording status for each interrupt event. If this mechanism is not suitable for your audio device, you must modify the sample MDD layer to handle multiple virtual interrupts and multiple ISTs.</P>
+<p>&nbsp;</p></body>
+</HTML>

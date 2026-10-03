@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>HwxSetAbort</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_hwxsetabort"></A>HwxSetAbort</H2>
+
+<P>This function sets an address that the handwriting recognition engine checks to determine if more user input, or ink, is available. If the address, which is the number of stokes collected for a character, indicates more ink is available, the handwriting recognition engine aborts. It can then be called again to include the new ink in its processing. If the stroke counter indicates that no new ink is available, the handwriting recognition engine continues processing.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Recog.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL</B> <B>HwxSetAbort( HRC </B><I>hrc</I>, <B>UINT</B> * <I>pnumstrokes </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hrc</I></DT>
+
+<DD>[in] Handle of the handwriting recognition context (HRC) object.</dd>
+
+<DT><I>pnumstrokes</I></DT>
+
+<DD>[in] Pointer to the number of strokes<B> </B>currently in the handwriting recognition context (HRC). A stroke consists of stylus down, stylus movement, and stylus lift.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>.</P>
+
+<H4>Remarks</H4>
+
+<P>Use this function after a call to the <B>HwxSetPartial </B>function. Partial recognition processing works best in a multithreaded operating environment. This enables a single application process to have one thread collecting user input, or ink, and another thread processing ink, with both threads sharing the same memory address space. The thread that processes ink, or the recognition thread, uses the address pointed to by <I>pnumstrokes</I> as a signal to stop recognition processing when the collection thread has more ink for the recognition thread to work with. If the contents of that address do not match the number of strokes that the handwriting recognition engine—the recognition thread—is currently processing, then processing stops As long as <I>pnumstrokes</I> matches the number of strokes that the handwriting recognition engine is processing, processing continues.</P>
+
+<P>To resume processing after an abort, the recognition thread calls the <B>HwxProcess </B>function.</P>
+
+<P>Two stroke counters<B> </B> are maintained for the current character or glyph. One is in your application and the other is an internal stroke count. The application counter must be incremented when the stylus touches the input box, because it is starting a new stroke. When the stroke is done—that is, when the stylus is raised from the input box—<B>HwxInput</B> is called. <B>HwxInput</B> adds the stroke information to the character or glyph data and increments the internal stroke count for the character or glyph. While the user is putting the stroke information in the input box, the two counters are different..</P>
+
+<P>Set <I>pnumstrokes</I> to point to the application stroke count. When <B>HwxSetPartial</B> has been called for this character or glyph and there is a new stroke in the input box, calling <B>HwxSetAbort</B> causes the partial recognition process to stop. The application then includes the new data in the information it is using for recognition. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="uif_h_9.htm"><B>HwxInput</B></A>, <A HREF="uif_h_10.htm"><B>HwxProcess</B></A>, <A HREF="uif_h_15.htm"><B>HwxSetPartial</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

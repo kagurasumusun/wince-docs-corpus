@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>connect</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_connect_2"></A>connect </H2>
+
+<P>This function establishes a connection to a peer. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winsock.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int</B> <B>connect</B> <B>(SOCKET</B> <I>s</I><B>, const</B> <B>struct</B> <B>sockaddr</B> <I>*name</I><B>, int</B> <I>namelen</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>s</I></DT>
+
+<DD>[in] Descriptor that identifies an unconnected socket.</dd>
+
+<DT><I>name</I></DT>
+
+<DD>[in] Name of the socket to connect to.</dd>
+
+<DT><I>namelen</I></DT>
+
+<DD>[in] Length of the <I>name </I>parameter.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates that no error occurred. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<P>Windows CE does not support the WSAEINTR error value.</P>
+
+<P>On a blocking socket, the return value indicates success or failure of the connection attempt.</P>
+
+<P>With a nonblocking socket, the connection attempt cannot be completed immediately. In this case, <B>connect</B> will return SOCKET_ERROR, and <B>WSAGetLastError</B> will return WSAEWOULDBLOCK. In this case, use the <A HREF="cf_sw.htm"><B>select</B></A> function to determine the completion of the connection request by checking to see if the socket is writeable.</P>
+
+<P>Until the connection attempt completes on a nonblocking socket, all subsequent calls to <B>connect</B> on the same socket will fail with the error value WSAEALREADY, and WSAEISCONN when the connection completes successfully. Due to ambiguities the Windows Sockets Specification 1.1, error values returned from <B>connect</B> while a connection is already pending may vary among implementations. As a result, it is not recommended that applications use multiple calls to connect to detect connection completion. If they do, they must be prepared to handle WSAEINVAL and WSAEWOULDBLOCK error values the same way that they handle WSAEALREADY, to assure robust execution.</P>
+
+<P>If the error value returned indicates the connection attempt failed (that is, WSAECONNREFUSED, WSAENETUNREACH, WSAETIMEDOUT) the application can call <B>connect</B> again for the same socket.</P>
+
+<H4>Remarks</H4>
+
+<P>For Infrared Sockets (IrSock), this function has the following additional requirements and behaviors:
+
+<UL>
+	<LI>The Af_irda.h file must be explicitly included.</li>
+
+	<LI>If WSAENETDOWN is returned, an existing IrDA connection was detected at the media access level.</li>
+
+	<LI>If WSAEADDRINUSE is returned, active connections to a device with a different address exist.</li>
+
+	<LI>If WSAEINPROGRESS is returned, IAS name resolution failed because another IAS query is in progress. Retry the operation at one second intervals.</li>
+
+	<LI>If WSAEISCONN is returned, the socket is already connected or an exclusive/multiplexed mode change failed.</li>
+</UL>
+
+<P>IrSock implements the <B>connect</B> function with addresses of the form <B>sockaddr_irda</B>. Typically, a client application will create a socket with the socket function, scan the immediate vicinity for IrDA devices with the IRLMP_ENUMDEVICES socket option, choose a device from the returned list, form an address, and call <B>connect</B>. There is no difference in blocking and non-blocking semantics.</P>
+
+<P>The <B>connect</B> function is used to create a connection to the specified destination. If the socket, <I>s</I>, is unbound, unique values are assigned to the local association by the system, and the socket is marked as bound.</P>
+
+<P>For connection-oriented sockets (for example, type SOCK_STREAM), an active connection is initiated to the foreign host using <I>name</I> (an address in the name space of the socket; for a detailed description, please see <A HREF="cf_ac_4.htm"><B>bind</B></A> and <A HREF="cs_az_37.htm"><B>SOCKADDR</B></A>). When the socket call completes successfully, the socket is ready to send and receive data. If the address member of the structure specified by the <I>name</I> parameter is all zeroes, <B>connect</B> will return the error WSAEADDRNOTAVAIL. Any attempt to re-connect an active connection will fail with the error value WSAEISCONN.</P>
+
+<P>For connection-oriented, nonblocking sockets, it is often not possible to complete the connection immediately. In such a case, this function returns the error WSAEWOULDBLOCK. However, the operation proceeds. When the success or failure outcome becomes known and the client uses the <B>select</B> function, success is reported in the writefds set and failure is reported in the exceptfds set. </P>
+
+<P>For a connectionless socket (for example, type SOCK_DGRAM), the operation performed by <B>connect</B> is merely to establish a default destination address that can be used on subsequent <A HREF="cf_sw_1.htm"><B>send</B></A> and <A HREF="cf_mr_19.htm"><B>recv</B></A> calls. Any datagrams received from an address other than the destination address specified will be discarded. If the address member of the structure specifed by <I>name </I>is all zeroes, the socket will be disconnected. Then, the default remote address will be indeterminate, so <B>send</B> and <B>recv</B> calls will return the error value WSAENOTCONN. However, <A HREF="cf_sw_2.htm"><B>sendto</B></A> and <A HREF="cf_mr_20.htm"><B>recvfrom</B></A> can still be used. The default destination can be changed by simply calling <B>connect</B> again, even if the socket is already connected. Any datagrams queued for receipt are discarded if <I>name</I> is different from the previous <B>connect</B>.</P>
+
+<P>For connectionless sockets, <I>name</I> can indicate any valid address, including a broadcast address. However, to connect to a broadcast address, a socket must use <A HREF="cf_sw_7.htm"><B>setsockopt</B></A> to enable the SO_BROADCAST option. Otherwise, <B>connect</B> will fail with the error value WSAEACCES.</P>
+
+<P>When a connection between sockets is broken, the sockets should be discarded and recreated. When a problem develops on a connected socket, the application must discard and recreate the needed sockets in order to return to a stable point.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_ac.htm"><B>accept</B></A>, <A HREF="cf_ac_4.htm"><B>bind</B></A>, <A HREF="cf_dg_32.htm"><B>getsockname</B></A>, <A HREF="cf_mr_19.htm"><B>recv</B></A>, <A HREF="cf_sw_12.htm"><B>socket</B></A>, <A HREF="cf_sw.htm"><B>select</B></A>, <A HREF="cf_sw_1.htm"><B>send</B></A> </P>
+<p>&nbsp;</p></body>
+</HTML>

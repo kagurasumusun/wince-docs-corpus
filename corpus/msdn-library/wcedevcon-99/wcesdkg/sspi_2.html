@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AAuthenticating aing a Connection</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_aauthenticating_aing_a_connection"></A>Authenticating a Connection</H2>
+
+<P>In a typical client/server application protocol, the server waits for the client to connect and request service. Upon connection, the server must be able to authenticate the client and the client must be able to authenticate the server. The protocol used to establish an authenticated connection involves the exchange of one or more security tokens between the client’s security provider and the server’s security provider. The tokens are sent as opaque messages by the client and the server along with any other protocol-specific information. When a message is received, the application protocol strips the token out of the message and gives it to its security provider to make sure the authentication is complete or if further exchange of tokens is required. In general, the client and the server continue to exchange messages until either the authentication is successfully established, or an error occurs.</P>
+
+<P>To begin the authentication process, the client needs to obtain an outbound credentials handle so that it can send an authentication request to the server. This is accomplished by calling the <B>AcquireCredentialsHandle </B>function.</P>
+
+<P>Using a reference to the <B>SecurityFunctionTable</B> initialized during the SSPI initialization procedure, the following code example shows how the client obtains a credentials handle.</P>
+
+<PRE><CODE>//
+// Acquire an out-bound Credentials handle using the chosen security //package.
+SecurityStatus = (*SecurityInterface-&gt;AcquireCredentialsHandle)(
+                    0,
+                    SecurityPackages[PkgToUseIndex].Name,
+                    SECPKG_CRED_OUTBOUND,
+                    0,
+                    0,
+                    0,
+                    0,
+                    &amp;Credentials,
+                    &amp;TimeStamp
+                    );
+</CODE></PRE>
+
+<P>Once the client accesses credential information, it starts the authentication protocol to establish a connection with the server. The client calls the <B>InitializeSecurityContext</B> function to obtain a security token to send in its connection request message to the server.</P>
+
+<P>The following code example shows how the client calls the <B>InitializeSecurityContext </B>function.</P>
+
+<PRE><CODE>//
+// Set up the Buffer Descriptor.
+//
+OutBufferDesc.ulVersion = 0;
+OutBufferDesc.cBuffers = 1;
+OutBufferDesc.pBuffers = &amp;OutSecBuffer;
+OutSecBuffer.cbBuffer = BufferLen;
+OutSecBuffer.BufferType = SECBUFFER_TOKEN;
+OutSecBuffer.pvBuffer = Buffer;
+//
+// Get the authentication token from the security package
+// to send to the server to request an authenticated connection.
+//
+SecurityStatus = (*SecurityInterface-&gt;InitializeSecurityContext(
+                Credentials,
+                0,
+                ServerPrincipalName,
+                ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE |
+                ISC_REQ_MUTUAL_AUTH |ISC_REQ_REPLAY_DETECT |
+                ISC_REQ_SEQUENCE_DETECT |ISC_REQ_CONFIDENTIALITY |
+                ISC_REQ_CONNECTION,
+                0,
+                0,
+                0,
+                0,
+                &amp;SecurityContext,
+                BufferDescriptor,
+                &amp;ContextAttributes,
+                &amp;TimeStamp
+                );
+</CODE></PRE>
+
+<P>The client uses the security token information received in the output buffer descriptor to generate a message to send to the server. The construction of the message, in terms of placement of various buffers, is decided by the application protocol and is adhered to by the two parties. </P>
+
+<P>Most SSPI functions have variable length arguments that allow an application to provide message data to a security package and allow a security package to return security data, such as a token, to the application. These functions use a parameter type, called a buffer descriptor, to define the size and location of the variable length data. <B> </B>For more information on buffers, see <A HREF="sspi_5.htm">Memory Use and Buffers</A>. </P>
+
+<P>Once the client sends its message to the server, it checks the return status from the call to <B>InitializeSecurityContext</B> to see if authentication is complete. If not, it expects to receive an authentication token from the server in a response message to continue the security protocol. The return status SEC_I_CONTINUE_NEEDED, indicates that the security protocol requires additional authentication messages. </P>
+
+<P>To establish an authenticated connection, the server must also obtain a handle to its credentials by calling the <B>AcquireCredentialsHandle</B> function. Once received, you should assign a global variable to the handle to use for the lifetime of the server process. </P>
+
+<P>When the server recives a connection request from the client, it calls the <B>AcceptSecurityContext</B> function., passing as input the data that it received from the client. The server initializes the security buffer descriptors to refer to specifc sections of the data, rather than copying the data to an alternate buffer. </P>
+
+<P>The following code example shows how to implement the <B>AcceptSecurityContext</B> function.</P>
+
+<PRE><CODE>//
+// Set up the Input and OutputBuffer Descriptor using the information 
+// from message received from the client.
+//
+OutBufferDesc.ulVersion = 0;
+OutBufferDesc.cBuffers = 1;
+OutBufferDesc.pBuffers = &amp;OutSecBuffer;
+
+OutSecBuffer.cbBuffer = BufferLen;
+OutSecBuffer.BufferType = SECBUFFER_TOKEN;
+OutSecBuffer.pvBuffer = Buffer;
+
+InBufferDesc.ulVersion = 0;
+InBufferDesc.cBuffers = 1;
+InBufferDesc.pBuffers = &amp;InSecBuffer;
+
+InSecBuffer.cbBuffer = InBufferLen;
+InSecBuffer.BufferType = SECBUFFER_TOKEN;
+InSecBuffer.pvBuffer = InBuffer;
+//
+// Initialize the client's context from the SSP and see if 
+// you need to send anything back to the client
+//
+SecurityStatus = (*SecurityInterface-&gt;AcceptSecurityContext(
+                Credentials,
+                0,
+                InputBufferDescriptor,
+                ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE |
+                ISC_REQ_MUTUAL_AUTH |ISC_REQ_REPLAY_DETECT |
+                ISC_REQ_SEQUENCE_DETECT |ISC_REQ_CONFIDENTIALITY |
+                ISC_REQ_CONNECTION,
+                DataRepresentation,
+                &amp;SecurityContext,
+                OutputBufferDescriptor,
+                &amp;ContextAttributes,
+                &amp;TimeStamp
+                );
+</CODE></PRE>
+
+<P>The server checks the return status and output buffer descriptor to ensure that there are no errors. If errors exist, it rejects the connection request. If no errors exist, it checks the output buffer for information. If information is present in the buffer, the server bundles the information according to the  application protocol and places it into a response message to the client.</P>
+
+<P>If the return status is SEC_I_CONTINUE_NEEDED or SEC_I_COMPLETE_AND_CONTINUE, another message exchange with the client is required. Otherwise, authentication is complete. If authentication must continue, the server waits for the client to respond with another message. You should place a timeout on this waiting period in case the client does not respond with a message. This will avoid the possibility of hanging this, and subsequently all, server threads.</P>
+
+<P>Once the client receives a reply from the server, it deconstructs the message and calls <B>InitializeSecurityContext </B>again, making sure to use the continue status from the previous call. The server responds to the client’s message by repeating its call to the <B>AcceptSecurityContext </B>function. Depending on the security package and the context requirements, the transmission of messages between the client and the server can go on indefinitely, but is usually limited to three attempts</P>
+<p>&nbsp;</p></body>
+</HTML>

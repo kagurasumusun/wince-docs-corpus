@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MyFSD_RegisterFileSystemFunction</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_myfsd_registerfilesystemfunction"></A><I>MyFSD</I>_RegisterFileSystemFunction</H2>
+
+<P>This function is called by the file system driver manager (FSDMGR) to register a file or folder change notification function with the FSD to insure that the shell maintains an accurate view of the file system.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Fsdmgr.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL <I>MyFSD</I>_RegisterFileSystemFunction( PVOLUME</B> <I>pVolume</I><BR>
+<B>SHELLFILECHANGEFUNC_t</B> <I>pfn </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pVolume</I></DT>
+
+<DD>Pointer to the value that the file system driver (FSD) defines in its DLL and passes to the <B>FSDMGR_RegisterVolume</B> function when registering the volume. The definition of <I>pVolume</I> can point to private structures.</dd>
+
+<DT><I>pfn</I></DT>
+
+<DD>Pointer to the function used for file or folder change notifications.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure.</P>
+
+<H4>Remarks</H4>
+
+<P>When a non-NULL <B>SHELLFILECHANGEFUNC</B> address is registered, the FSD needs to fill in a <B>FILECHANGEINFO</B> structure with all the appropriate information every time a file or folder change occurs. At a minimum, fill <B>FILECHANGEINFO</B> for the following functions, assuming they succeed:
+
+<UL>
+	<LI><B><I>MyFSD</I>_CreateDirectoryW</B></li>
+
+	<LI><B><I>MyFSD</I>_RemoveDirectoryW</B></li>
+
+	<LI><B><I>MyFSD</I>_SetFileAttributesW</B></li>
+
+	<LI><B><I>MyFSD</I>_DeleteFileW</B></li>
+
+	<LI><B><I>MyFSD</I>_MoveFileW</B></li>
+</UL>
+
+<P>Also register a file information change after the following calls:
+
+<UL>
+	<LI><B><I>MyFSD</I>_CreateFileW</B> to create or truncate a file. </li>
+
+	<LI><B><I>MyFSD</I>_FlushFileBuffers </B>or<B> <I>MyFSD</I>_CloseFile</B> and a file’s attributes, times, or other information changes.</li>
+</UL>
+
+<P><B>SHELLFILECHANGEFUNC</B> and <B>FILECHANGEINFO</B> are defined in Extfile.h.</P>
+
+<P>The Fsdmgr component is a dynamic-link library (DLL) that manages all operating system interaction with installable files systems. Each installable file system requires an FSD, which is a DLL that exports an API needed to support an installable file system. The name of the DLL and the names of the functions it exports start with the name of the associated installable file system. For example, if the name of file system is MyFSD, then its DLL is MyFSD.dll and its exported functions are prefaced with MyFSD_*.</P>
+
+<P>Fsdmgr provides services to FSDs. The <B>FSDMGR_RegisterVolume</B>,<B> FSDMGR_CreateFileHandle</B>, and<B> FSDMGR_CreateSearchHandle</B> functions record a <B>DWORD</B> of volume-specific data the FSD needs to keep associated with volume. This volume-specific data is passed as the first parameter of these three functions.</P>
+
+<P>Applications that access an installable file system use standard Win32 functions. For example, when an application wants to create a folder on a device that contains an installable file system, it calls <B>CreateDirectory</B>. Fsdmgr recognizes that the path is to a device containing an installable file system and calls the appropriate function, which in the case of the FAT file system is <B>FATFSD_CreateDirectoryW</B>. That is, the application calls <B>CreateDirectory</B>, causing Fsdmgr to call <B>FATFSD_CreateDirectoryW</B>.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_mn_31.htm"><B><I>MyFSD</I>_CloseFile</B></A>, <A HREF="kf_mn_33.htm"><B><I>MyFSD</I>_CreateDirectoryW</B></A>, <A HREF="kf_mn_34.htm"><B><I>MyFSD</I>_CreateFileW</B></A>, <A HREF="kf_mn_36.htm"><B><I>MyFSD</I>_DeleteFileW</B></A>, <A HREF="kf_mn_41.htm"><B><I>MyFSD</I>_FlushFileBuffers</B></A>, <A HREF="kf_mn_48.htm"><B><I>MyFSD</I>_MoveFileW</B></A>,<B> <A HREF="kf_mn_52.htm"><I>MyFSD</I>_RemoveDirectoryW</A></B>,<B> <A HREF="kf_mn_54.htm"><I>MyFSD</I>_SetFileAttributesW</A> </B></P>
+<p>&nbsp;</p></body>
+</HTML>

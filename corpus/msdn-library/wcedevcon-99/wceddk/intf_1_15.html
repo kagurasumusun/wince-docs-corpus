@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>GPE::BltPrepare</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_gpe_bltprepare"></A>GPE::BltPrepare</H2>
+
+<P>This method, which is called prior to a sequence of clipped blit operations, identifies the appropriate functions needed to perform individual blits. </P>
+
+<H4>Syntax</H4>
+
+<P><B>SCODE GPE::BltPrepare(GPEBltParms *</B><I>pBltParms</I><B> );</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pBltParms</I></DT>
+
+<DD>Pointer to a <B>GPEBltParms</B> structure containing parameters for the blit operation.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>S_OK indicates success.</P>
+
+<H4>Remarks</H4>
+
+<P>The following code example shows the simplest acceptable implementation for <B>GPE::BltPrepare</B>. </P>
+
+<PRE><CODE>pBltParms-&gt;pBlt = EmulatedBlt;
+return S_OK;
+</CODE></PRE>
+
+<P>This action causes the emulated blit function provided with GPE to be used for blit operations.</P>
+
+<P>For improved performance, the <B>BltPrepare</B> method can examine the characteristics of the blit and the associated surfaces defined in <B>GPEBltParms</B> to determine whether an accelerated form of the blit is used. The following code example shows how to determine the operations that are likely to be implemented in hardware.</P>
+
+<PRE><CODE>if( pBltParms-&gt;pDst-&gt;InVideoMemory() &amp;&amp; pBltParms-&gt;rop4 == 0x0000 )
+    // This is a fill of BLACKNESS in video memory.
+if( pBltParms-&gt;pDst-&gt;InVideoMemory() &amp;&amp; pBltParms-&gt;rop4 == 0xFFFF )
+    // This is a fill of WHITENESS in video memory.
+if( pBltParms-&gt;pDst-&gt;InVideoMemory()
+&amp;&amp; pBltParms-&gt;rop4 == 0xF0F0
+&amp;&amp; pBltParms-&gt;solidColor != 0xFFFFFFFF )
+    // This is a fill of a solid color in video memory.
+if( pBltParms-&gt;pDst-&gt;InVideoMemory()
+&amp;&amp; pBltParms-&gt;pSrc-&gt;InVideoMemory()
+&amp;&amp; pBltParms-&gt;rop4 == 0xCCCC
+&amp;&amp; !pBltParms-&gt;pLookup
+&amp;&amp; !pBltParms-&gt;pConvert )
+    // This is a source copy (SRCCOPY) between two surfaces, both in
+    // video memory, with no color translation.
+</CODE></PRE>
+
+<P>To accelerate these types of blit, <B>BltPrepare</B> places the address of the accelerated function in the <I>pBlt</I> member of the <B>GPEBltParms</B> structure, instead of in the pointer to the <B>EmulatedBlt</B> function. For operations such as solid color fills, the driver can prepare the hardware. For example, the driver can place a solid color into the appropriate register of the hardware. This eliminates the need to repeat the same action in every call to the accelerated blit handler.</P>
+<p>&nbsp;</p></body>
+</HTML>

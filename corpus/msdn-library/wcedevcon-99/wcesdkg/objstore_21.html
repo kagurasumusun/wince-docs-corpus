@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enumerating Databases</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_enumerating_databases"></A>Enumerating Databases</H2>
+
+<P>Enumerating databases is the process of sequentially accessing each database in a group. The group can either include all databases in the object store, only those of a specified type, or mounted volumes. Enumeration can be used when a change needs to be made to all databases of a certain type, or when synchronizing data between a desktop computer and a Windows CE-based device. </P>
+
+<P>To enumerate databases, call the <B>CeFindFirstDatabaseEx</B> and <B>CeFindNextDatabaseEx</B> functions. <B>CeFindFirstDatabaseEx</B> establishes and returns a handle to the enumeration context for the type identifier specified. If the type identifier is zero, the context includes all the databases. Note that <B>CeFindFirstDatabaseEx</B> does not take the CEOID for the first database. Use the handle to the enumeration context to call <B>CeFindNextDatabaseEx</B> repeatedly to obtain the CEOIDs for each database in turn. <B>CeFindNextDatabaseEx</B> returns the value zero when there are no more databases in the enumeration context. To ensure that there was no problem with the enumeration, call <B>GetLastError</B> and check for the ERROR_NO_MORE_ITEMS value.</P>
+
+<P>When the application is finished enumerating databases, it uses <B>CloseHandle</B> to close the handle to the enumeration.</P>
+
+<P>The following code example shows how to enumerate all databases and retrieve information about every database: </P>
+
+<PRE><CODE>DWORD        dwError;            // Return value of GetLastError function
+TCHAR        szMsg[100];        // String to display error message
+                            //    and database information
+HANDLE        hEnumDB;            // Handle to a database enumerator
+CEOID        CeOid;            // Object identifier of a database
+CEOIDINFO    CeObjectInfo;    // Structure that contains
+                            //    database information
+PCEGUID        pceguid = NULL;    // Pointer to the mounted volume identifier.
+                            //   NULL means all mounted database volumes
+                            //   are to be searched.
+
+// Find the first database. Set the database type to 0, so all types of 
+// databases are enumerated. If pceguid is set to NULL or an invalid 
+// GUID is created by CREATE_INVALIDGUID, all mounted database volumes
+// are searched.
+
+hEnumDB = CeFindFirstDatabaseEx (pceguid, 0);    
+
+if (hEnumDB == INVALID_HANDLE_VALUE) 
+{
+    if (GetLastError() == ERROR_OUTOFMEMORY)
+        wsprintf(szMsg, TEXT("Out of memory."));
+    else
+        wsprintf(szMsg, TEXT("Unknown error."));
+
+    return;                
+}
+
+while ((CeOid = CeFindNextDatabaseEx(hEnumDB, pceguid)) != 0)
+{
+    // Retrieve database information.
+    if (!CeOidGetInfoEx (pceguid, CeOid, &amp;CeObjectInfo)) 
+    {
+        // Error handling is omitted.  Uses GetLastError.
+
+        CloseHandle(hEnumDB);    // Close the search handle.
+
+        return;           
+    }
+    else 
+    {
+        wsprintf(szMsg, TEXT("The name of the database is: %s"), 
+                CeObjectInfo.infDatabase.szDbaseName);  
+    }
+}
+
+// Error handling if CeFindNextDatabaseEx fails
+dwError = GetLastError ();
+
+if (dwError == ERROR_KEY_DELETED)
+{
+    // A database has been deleted during enumeration. You must 
+    // restart the enumeration process again.
+    wsprintf(szMsg, TEXT("a database was deleted during enumeration."));
+}
+else if (dwError == ERROR_NO_MORE_ITEMS)
+{
+    wsprintf(szMsg, TEXT("No more item to enumerates."));
+}
+else
+{
+    wsprintf(szMsg, TEXT("Unknown error."));
+}
+
+// Close the search handle.
+CloseHandle(hEnumDB);
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

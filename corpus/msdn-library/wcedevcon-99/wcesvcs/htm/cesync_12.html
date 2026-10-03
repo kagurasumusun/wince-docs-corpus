@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Developing the Device Provider Module</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_developing_the_device_provider_module"></A>Developing the Device Provider Module </H2>
+
+<P>The service manager interfaces with the device provider module to access data. To facilitate this interaction, a device provider module must implement the same <B>IReplObjHandler</B> interface that you use for the desktop provider module. It also must implement the <B>InitObjType</B>, <B>GetObjTypeInfo</B>, <B>ObjectNotify</B> functions. The device provider module can also implement the <B>ReportStatus</B> function, which is optional.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To implement the device provider module</H4>
+
+<OL>
+	<LI>Create one GUID for the store, by using the Visual C++ GUID generator tool, Guidgen.exe.</li>
+
+	<LI>Initialize the device store.</li>
+
+	<LI>Enumerate device objects.</li>
+
+	<LI>Detect device object changes and send and receive device data.</li>
+</OL>
+
+<H2>Initializing the Device Store</H2>
+
+<P>To initialize the device provider module, call <B>InitObjType</B>. If the device provider module supports synchronization of multiple object types, it calls <B>InitObjType</B> for each object type whose <I>lpszObjType</I> is not NULL. When an ActiveSync service terminates, the <I>lpszObjType</I> of its objects are set to NULL, thereby allowing the device provider module to free any resources it may have allocated.</P>
+
+<P>The following code example shows how to implement <B>InitObjType</B>.</P>
+
+<PRE><CODE>EXTERN_C BOOL InitObjType
+( 
+    LPWSTR lpszObjType, 
+    IReplObjHandler **ppObjHandler, 
+    UINT uPartnerBit 
+)
+{
+    if ( lpszObjType == NULL )
+    {
+        // Terminates the device provider module and frees all
+        // allocated resources.
+        // ...
+
+        return TRUE;
+    }
+
+    // Allocates a new IReplObjHandler. 
+    *ppObjHandler = new CDataHandler;
+
+    // Saves the uPartnerBit so that you can use it later in 
+    // ObjectNotify. 
+
+    // Initializing the module.
+    // ...
+
+    return TRUE;
+}
+</CODE></PRE>
+
+<P>ActiveSync supports the synchronization of two desktop computers with a Windows CE–based device. To differentiate between two computers, the service manager passes a partner bit into <B>InitObjType</B> when initializing the device provider module. This bit is set to 1 if the connected desktop computer is the first partner and 2 if it is the second partner. The device provider module must use this partner bit when setting and resetting dirty bits of an object.</P>
+<p>&nbsp;</p></body>
+</HTML>

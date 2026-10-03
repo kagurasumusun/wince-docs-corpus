@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using the Callback Function</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_lineCallbackFunc">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_using_the_callback_function"></A>Using the Callback Function</H2>
+
+<P>The callback function processes messages or notifications that TAPI sends to the application. Various information is available from the LINE_CALLSTATE message, such as that the call is receiving a dial tone from the switch or the call is receiving a busy signal, as well as other data sent by the network. A phone call passes through different stages during a session, and the application can display the result from the LINE_CALLSTATE message in a dialog box.</P>
+
+<P>The following code example shows how to process LINE_CALLSTATE messages in the <A HREF="JavaScript:hhobj_1.Click()"><B>lineCallbackFunc</B></A> function.</P>
+
+<PRE><CODE>// This code sample shows only part of the callback function.
+
+LPTSTR lpszStatus;
+
+case LINE_CALLSTATE:
+
+  // If the CALLSTATE does not apply to the call in progress, return.
+  if (g_hCall != (HCALL) hDevice)
+    return;
+
+  // dwParam1 is the specific CALLSTATE change occurring
+  switch (dwParam1) 
+  {
+    case LINECALLSTATE_DIALTONE:
+      lpszStatus = TEXT("Dial tone");
+      break;
+
+    case LINECALLSTATE_DIALING:
+      lpszStatus = TEXT("Dialing");
+      break;
+
+    case LINECALLSTATE_PROCEEDING:
+      lpszStatus = TEXT("Dialing has completed and the call ")
+                   TEXT("is in proceeding");
+      break;
+
+    case LINECALLSTATE_RINGBACK:
+      lpszStatus = TEXT("Ring back");
+      break;
+
+    case LINECALLSTATE_CONNECTED:
+      lpszStatus = TEXT("Connected");
+      break;
+    .
+    .
+    .
+
+    case LINECALLSTATE_DISCONNECTED:
+    {
+      LPTSTR lpszDisconnected;
+
+      switch (dwParam2)
+      {
+        case LINEDISCONNECTMODE_NORMAL:
+          lpszDisconnected = TEXT("Remote party disconnected");
+          break;
+
+        case LINEDISCONNECTMODE_UNKNOWN:
+          lpszDisconnected = TEXT("Disconnected: Unknown reason");
+          break;
+
+        case LINEDISCONNECTMODE_REJECT:
+          lpszDisconnected = TEXT("Remote Party rejected call");
+          break;
+        .
+        .
+        .
+
+        default:
+          lpszDisconnected = TEXT("Disconnected: Unknown reason");
+          break;
+      }
+
+      ErrorBox (lpszDisconnected);
+      // Insert code here to close the current open line device.
+      // ...
+      break;
+    } 
+  }
+  break; 
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

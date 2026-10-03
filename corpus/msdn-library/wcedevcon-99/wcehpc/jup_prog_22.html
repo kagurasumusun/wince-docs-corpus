@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creatingan HTML Viewer Control</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_creatingan_html_viewer_control"></A>Creatingan HTML Viewer Control</H2>
+
+<P>Before you can create an HTML viewer control, you must register it by calling the <B>InitHTMLControl</B> function. You create an HTML Viewer control by specifying DISPLAYNAME in the <I>lpClassName</I> parameter to the <B>CreateWindow</B> function.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create the HTML Viewer control</H4>
+
+<OL>
+	<LI>Load the HTML Viewer DLL by calling the <B>LoadLibrary</B> function.
+<P>Specify Htmlview.dll in the <I>lpLibFileName</I> parameter.
+</li>
+
+	<LI>Register the HTML Viewer control class by calling the <B>InitHTMLControl</B> function. </li>
+
+	<LI>Create a window for the HTML Viewer control by calling the <B>CreateWindow</B> function.
+<P>Specify DISPLAYNAME in the <I>lpClassName</I> parameter.
+</li>
+</OL>
+
+<P><B>Note</B>  When you call the <B>LoadLibrary</B> and <B>CreateWindow</B> functions, the library or class name has to be a Unicode string. Use the <B>TEXT</B> macro to cast a string as Unicode, for example, <B>TEXT </B>(“Htmlview.dll”).</P>
+
+<P>The following code example shows how to create an HTML Viewer control.</P>
+
+<PRE><CODE>#define DISPLAYCLASS  TEXT("DISPLAYCLASS")
+
+BOOL g_bMakeFit = TRUE;          // DTM_ENABLESHRINK Shrink-enable flag
+TCHAR const c_szHTMLControlLibrary[] = TEXT("htmlview.dll");
+HINSTANCE g_hInstHTMLCtrl;       // HTML Control Viewer instance
+HINSTANCE hInstance;             // Application instance
+HWND m_hwndHtml;                 // Handle to HTML DISPLAYCLASS window
+
+g_hInstHTMLCtrl = LoadLibrary (c_szHTMLControlLibrary);
+
+InitHTMLControl (hInstance);
+
+LRESULT WndProc (HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) 
+{
+  switch (message) 
+  {
+    case WM_CREATE: 
+    {
+      DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_VSCROLL | 
+                      WS_CLIPSIBLINGS;
+
+      m_hwndHtml = CreateWindow (DISPLAYCLASS, 
+                                 NULL,
+                                 dwStyle,
+                                 rc.left, 
+                                 rc.top, 
+                                 rc.right - rc.left, 
+                                 rc.bottom - rc.top,
+                                 hWnd, 
+                                 (HMENU)IDC_HTMLVIEW, 
+                                 g_hInst, 
+                                 NULL);
+
+      SetFocus (m_hwndHtml);
+      PostMessage (m_hwndHtml, DTM_ENABLESHRINK, 0, g_bMakeFit);
+      break;
+    }
+    .
+    .
+    .
+  }
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

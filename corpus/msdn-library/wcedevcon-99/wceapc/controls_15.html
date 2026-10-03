@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Constraint-Based Layout</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_using_constraint_based_layout"></A>Using Constraint-Based Layout</H2>
+
+<P>A <I>constraint</I> is the relationship between a control and its parent form or its sibling controls. When you define a control using constraints, you avoid reprogramming the UI to accommodate differences in faceplate sizes. Additionally, when you specify a constraint for a control, the layout engine determines the control geometry, which reduces the need to change values and recompile.</P>
+
+<P>Each control on a form has a position and a size. With constraint-based layout, you specify the size of a control, then position one or more of its edges in relation to the parent form or another control. </P>
+
+<P>When you include a title bar, the top of the form is directly under the title bar. If you do not specify enough constraints to determine each edge , the natural size of the control is used. The <I>natural </I>size of a control is the size necessary to display its contents. For example, the natural width of a label control is the width required to display its caption fully.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To specify a constraint</H4>
+
+<OL>
+	<LI>Use the <B>BEGIN</B>..<B>END</B> constructs supported by the <B>DIALOGEX</B> resource type to specify the constraints. </li>
+
+	<LI>Create a resource file that defines the form.</li>
+
+	<LI>After you have created the resource file, call the <B>LoadFormResource</B> function to load the resource. 
+<P>Use the hInstance cast to an OLE handle and the identifier of the main form.
+</li>
+</OL>
+
+<P>The following code example shows how to define a label control that fills a form.</P>
+
+<PRE><CODE>IDF_MAIN DIALOGEX DISCARDABLE 0,0,0,0 //Full display
+CAPTION “My Form”
+STYLE WS_VISIBLE
+BEGIN
+    // The position and dimensions are left as 0 because they
+    // will be specified by constraints.
+    CONTROL “Hello”, IDC_CTRL, “APC_Label”, ASFC_ALIGN_LEFT, 0,0,0,0
+    BEGIN
+        // These are the constraints.
+        FA_TOP_OF_FORM,        // Attach the top edge of the control to the
+                            // top edge of the form.
+        FA_LEFT_OF_FORM        // Attach the left edge of the control to 
+                            // the left edge of the form.
+        FA_RIGHT_OF_FORM        // Attach the right edge of the control to 
+                            // the right edge of the form.
+        FA_BOTTOM_OF_FORM    // Attach the bottom edge of the control
+                            // to the bottom edge of the form.
+    END
+END
+</CODE></PRE>
+
+<P>The following code example shows a meal order application that uses constraint-based resource scripts. It is part of a complete sample application, FormRC.dsp, is included in the SDK. This resource script defines a dinner order form with a navigational arrows control on the right and a menu control implemented as a power list box. The power list box uses a spin box control to display food selections.</P>
+
+<PRE><CODE>//////
+//
+// Forms
+//
+ID_MAINFORM DIALOGEX DISCARDABLE  0, 0, 0, 0
+STYLE  WS_VISIBLE
+CAPTION "Dinner Order"
+// Attaches a navigational arrows control to the right side of the form
+// The control is centered vertically and has a five-pixel offset
+// on the right and left sides.
+BEGIN
+    CONTROL         "Nav Arrows", IDC_NAVARROWS, "APC_NavArrows",
+                    WS_VISIBLE, 0, 0, 0, 0
+    BEGIN
+        FA_VERTICAL_CENTER, FA_RIGHT_OF_FORM,
+        FA_RIGHT_OFFSET, -5, FA_LEFT_OFFSET, -5
+    END
+
+// Defines the power list box
+    CONTROL         "Menu", IDC_LIST,"APC_PwrListBox", WS_VISIBLE,
+                    0,0,0,0
+    BEGIN
+        FA_TOP_OF_FORM,
+        FA_LEFT_OF_FORM,
+// Aligns the right side of the power list box control to the left
+//side of the navigational arrows control
+        FA_RIGHT_TO_LEFT_OF_CONTROL, IDC_NAVARROWS
+        FA_BOTTOM_OF_FORM
+    END
+END
+</CODE></PRE>
+
+<P>The following code example shows how to call <B>LoadFormResource</B> to load a resource.</P>
+
+<PRE><CODE>hr = g_pManage-&gt;LoadFormResource((OLE_HANDLE)g_hInst, 
+        ID_MAINFORM,             // Identifier for form in 
+                                 // RC file
+        (IDispatch**)&amp;g_pForm,   // Form 
+        (IASEventSink*)g_pSink); // Sink
+    if(FAILED(hr)) goto LReturn;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample Keyboard Driver</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_sample_keyboard_driver"></A>Sample Keyboard Driver</H2>
+
+<P>The keyboard driver converts input from the keyboard hardware into keyboard events entered into the input system. Next, the driver generates the proper Unicode characters from these keyboard events. Platform Builder includes a keyboard driver that is divided into blocks, which facilitates development of keyboard drivers for international keyboard layouts. This driver can be found under \Platform\ODO\Drivers\Keybd2.</P>
+
+<P>The keyboard driver contains two functions, <B>ScanCodeToVKeyEx</B> and <B>KeybdDriverVKeyToUnicode</B>, that control how keyboard scan codes are translated into virtual keys and Unicode characters. These functions are based on translation tables, which can be customized for different languages. For translation tables for Brazilian Portuguese, Dutch, French, German, Italian, Japanese, Portuguese, Spanish, Swedish, UK English, and US English, see <A HREF="app_b.htm">Keyboard Mapping</A>. You can create your own translation tables or customize the existing tables, if necessary.</P>
+
+<P>The sample code shows a design that works for the standard Windows CE–based keyboard layout. By replacing the PDD layer, developers have implemented drivers for hardware that uses software scanning, hardware scanning, and a dedicated keyboard controller. Unusual hardware or nonstandard keyboard layouts might require modification of both the MDD and PDD layers. You can change the MDD layer to build a custom Keybdmdd.lib. Source code for the MDD layer is located under \Public\Common\Oak\Drivers.</P>
+
+<P>The Windows CE input system loads the keyboard driver at startup time. When the input system starts, it retrieves the name of the keyboard driver DLL from the <B>HKEY_LOCAL_MACHINE\Hardware\DeviceMap\KEYBD\Drivername</B> registry key. If no entry is found, the input system uses the default name, Keybddr.dll. It then loads the DLL and verifies that all required entry points exist.</P>
+
+<P>Next, the input system calls the <B>KeybdDriverInitialize</B> function to perform a one-time initialization. In this function, the MDD saves a local copy of the input system callback function. The MDD also calls the <B>KeybdPdd_InitializeDriver </B>function, which starts a thread to handle keyboard interrupts, and then returns to the input system.</P>
+
+<P>In the sample MDD, the IST of the keyboard driver is named <I>KeybdDriverThread</I>. This thread calls the <B>InterruptInitialize</B> function to register for the SYSINTR_KEYBOARD interrupt, and then waits for the system to issue SYSINTR_KEYBOARD signals. When it receives those signals, the interrupt handler calls the <B>KeybdPdd_GetEvent </B>function. The interrupt handler sends the key events returned from the PDD to the input system, which queues them for distribution to applications.</P>
+
+<P>When the input system pulls the keyboard event from the queue, it invokes a callback to the driver’s <B>KeybdDriverVKeyToUnicode</B> routine. The driver analyzes the specified key event and the virtual key state and generates the corresponding characters. The input system then sends the virtual key and the characters to the appropriate application.</P>
+
+<P>The <B>KeybdDriverGetInfo</B> and <B>KeybdDriverSetMode</B> functions get and set information about the keyboard. When the main input thread processes a keyboard-connection event, the thread calls the <B>KeybdDriverGetInfo</B> function to get the virtual-key-to-Unicode data supplied by the driver. The thread also allocates the required memory for the virtual key state data and any extra data required by the driver. Next, it calls the <B>KeybdDriverInitStates</B> function to initialize the memory.</P>
+
+<P>The following table shows the DDI functions for the keyboard driver.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_150.htm"><B>KeybdDriverGetInfo</B></A></TD>
+<TD width=60%><A HREF="funct_1_154.htm"><B>KeybdDriverSetMode</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_151.htm"><B>KeybdDriverInitialize</B></A></TD>
+<TD width=60%><A HREF="funct_1_155.htm"><B>KeybdDriverVKeyToUnicode</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_152.htm"><B>KeybdDriverInitStates</B></A></TD>
+<TD width=60%><A HREF="funct_1_156.htm"><B>KeybdEventCallback</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%><A HREF="funct_1_153.htm"><B>KeybdDriverPowerHandler</B></A></TD>
+<TD width=60%>&nbsp;</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following table shows the DDSI functions for the keyboard driver.</P>
+
+<TABLE cellspacing=4 cols=1>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_157.htm"><B>KeybdPdd_DllEntry</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_158.htm"><B>KeybdPdd_GetEvent</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_159.htm"><B>KeybdPdd_InitializeDriver</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_160.htm"><B>KeybdPdd_PowerHandler</B></A></TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

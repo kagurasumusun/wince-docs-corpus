@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NDIS_PACKET</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndis_packet"></A>NDIS_PACKET</H2>
+
+<P>This structure defines the packet descriptors with chained buffer descriptors for which pointers are passed to many <B>Ndis</B><I>XXX</I>, <B>Miniport</B><I>XXX</I>, and <B>Protocol</B><I>XXX</I> functions.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>typedef struct _NDIS_PACKET {<BR>
+</B> <B>NDIS_PACKET_PRIVATE</B> <I>Private</I>;<BR>
+<B> union {<BR>
+ struct {<BR>
+</B> <B>UCHAR</B> <I>MiniportReserved</I>[8];<BR>
+ <B>UCHAR</B> <I>WrapperReserved</I>[8];<BR>
+<B> }; struct {<BR>
+</B> <B>UCHAR</B> <I>MacReserved</I>[16];<BR>
+<B> };<BR>
+ };<BR>
+</B> <B>UCHAR</B> <I>ProtocolReserved</I>[1];<BR>
+<B>} NDIS_PACKET, *PNDIS_PACKET, **PPNDIS_PACKET;</B></P>
+
+<H4>Members</H4>
+
+<DL>
+<DT><I>Private</I></DT>
+
+<DD>Reserved for use exclusively by NDIS. Drivers must call the appropriate <B>Ndis</B><I>XXX</I> functions or NDIS-supplied macros to affect the contents of this area.</dd>
+
+<DT><I>MiniportReserved</I></DT>
+
+<DD>NIC miniport drivers and NDIS intermediate drivers can use this 8-byte area for their own purposes, as long as each driver is given a fresh packet descriptor.</dd>
+
+<DT><I>WrapperReserved</I></DT>
+
+<DD>Reserved for use exclusively by NDIS.</dd>
+
+<DT><I>MacReserved</I></DT>
+
+<DD>Reserved for use by legacy full-NIC drivers.</dd>
+
+<DT><I>ProtocolReserved</I></DT>
+
+<DD>Highest-level protocol drivers and NDIS intermediate drivers can use this variable-sized area for their own purposes as long as each such driver is given a fresh packet descriptor.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>NDIS drivers must call the <B>NdisAllocatePacket</B> function to allocate all packet descriptors that they use to indicate receives to higher-level drivers with the <B>NdisMIndicateReceivePacket</B> function. NDIS drivers must call <B>NdisAllocatePacket</B> to allocate all packet descriptors that they use for sends to underlying drivers with the <B>NdisSend</B> function, as well as packet descriptors that they pass to the <B>NdisTransferData</B> function.</P>
+
+<P>Chained to each packet descriptor are one or more buffer descriptors mapping buffers that contain network packet data, either received or to be transmitted. NIC drivers and intermediate drivers can allocate packet descriptors with, at most, 16 bytes of <I>ProtocolReserved</I> space for receive indications.</P>
+
+<P>Any buffers allocated by lower-level NDIS drivers must be mapped by buffer descriptors that were allocated from a buffer pool with the <B>NdisAllocateBuffer</B> function. Only highest-level protocols can use MDLs set up by still higher-level drivers as substitutes for NDIS_BUFFER-type descriptors.</P>
+
+<P>NDIS drivers typically use their respective <I>XXXReserved</I> areas to maintain per-packet state about outstanding transfers. For example, a protocol might store a pointer to a protocol-allocated buffer containing look-ahead data, which its <B>ProtocolReceive</B> function has already copied, in the <I>ProtocolReserved</I> area of a packet descriptor that the protocol allocates for a call to <B>NdisTransferData</B>.</P>
+
+<P>While a particular packet descriptor is being used in a transfer operation, a single driver can use the <I>MiniportReserved</I> area and a single driver can use the <I>ProtocolReserved</I>. Consequently, NDIS intermediate drivers, which have both <B>Miniport</B><I>XXX</I> and <B>Protocol</B><I>XXX</I> functions, cannot use these areas in incoming packet descriptors for their own purposes.</P>
+
+<P>Instead, NDIS intermediate drivers must repackage each incoming packet in a fresh packet descriptor before it passes the transfer request down to an underlying driver or up to a higher-level driver.</P>
+
+<P>This strategy ensures that the NDIS intermediate driver and the underlying driver each have a <I>MiniportReserved</I> area to use, that the intermediate driver and overlying protocol each have a <I>ProtocolReserved</I> area to use, and that the intermediate driver has a convenient and economical way to maintain per-packet state information about all current transfers. This also ensures that NDIS has correct information in the <I>Private</I> portion of each packet descriptor.</P>
+
+<P>Drivers that supply and consume out-of-band data on network transfers and drivers that support multipacket receives and/or sends must use the member-specific <B>NDIS_GET/SET_</B><I>XXX</I> macros or the <B>NDIS_OOB_DATA_FROM_PACKET</B> macro to access the <B>NDIS_PACKET_OOB_DATA</B> structure associated with each packet descriptor.</P>
+
+<P>When a protocol driver calls the <B>NdisSend</B> function with a packet descriptor, it relinquishes ownership of the following until that packet descriptor is returned to its <B>ProtocolSendComplete</B> function:
+
+<UL>
+	<LI>The protocol-allocated packet descriptor(s)</li>
+
+	<LI>All data buffers mapped by buffer descriptors chained to the packet descriptor(s)</li>
+
+	<LI>All <B>NDIS_PACKET_OOB_DATA</B> structures associated with each protocol-allocated packet descriptor</li>
+
+	<LI>Any out-of-band data buffer specified in an <B>NDIS_PACKET_OOB_DATA</B> structure for an associated buffer descriptor</li>
+</UL>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_173.htm"><B>NdisAllocateBuffer</B></A>, <A HREF="funct_1_176.htm"><B>NdisAllocatePacket</B></A>, <A HREF="funct_1_180.htm"><B>NdisChainBufferAtBack</B></A>, <A HREF="funct_1_181.htm"><B>NdisChainBufferAtFront</B></A>, <A HREF="funct_1_184.htm"><B>NdisCopyFromPacketToPacket</B></A>, <A HREF="funct_1_193.htm"><B>NdisFreePacket</B></A>, <A HREF="funct_1_197.htm"><B>NdisGetFirstBufferFromPacket</B></A>, <A HREF="funct_1_199.htm"><B>NdisGetPacketFlags</B></A>, <A HREF="funct_1_236.htm"><B>NdisMSendComplete</B></A>, <A HREF="funct_1_245.htm"><B>NdisMTransferDataComplete</B></A>, <A HREF="struct_1_28.htm"><B>NDIS_PACKET_OOB_DATA</B></A>, <A HREF="funct_1_255.htm"><B>NdisQueryPacket</B></A>, <A HREF="funct_1_271.htm"><B>NdisRecalculatePacketCounts</B></A>, <A HREF="funct_1_273.htm"><B>NdisReinitializePacket</B></A>, <A HREF="funct_1_278.htm"><B>NdisReturnPackets</B></A>, <A HREF="funct_1_279.htm"><B>NdisSend</B></A>, <A HREF="funct_1_280.htm"><B>NdisSetPacketFlags</B></A>, <A HREF="funct_1_285.htm"><B>NdisTransferData</B></A>, <A HREF="funct_1_286.htm"><B>NdisUnchainBufferAtBack</B></A>, <A HREF="funct_1_287.htm"><B>NdisUnchainBufferAtFront</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

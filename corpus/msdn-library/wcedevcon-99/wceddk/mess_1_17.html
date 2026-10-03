@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ACMDM_STREAM_UNPREPARE</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_acmdm_stream_unprepare"></A>ACMDM_STREAM_UNPREPARE</H2>
+
+<P>This message requests an ACM driver to clear the preparation of the buffers associated with an <B>ACMDRVSTREAMHEADER</B> structure.</P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwDriverID</I></DT>
+
+<DD>Specifies a driver instance identifier. The driver returns this value in response to the <B>ACM_Open</B> function.</dd>
+
+<DT><I>hDriver</I></DT>
+
+<DD>Handle to a driver.</dd>
+
+<DT><I>uMsg</I></DT>
+
+<DD>Specifies this message.</dd>
+
+<DT><I>lParam1</I></DT>
+
+<DD>Pointer to an <B>ACMDRVSTREAMINSTANCE</B> structure.</dd>
+
+<DT><I>lParam2</I></DT>
+
+<DD>Pointer to an <B>ACMDRVSTREAMHEADER</B> structure.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>MMSYSERR_NOERROR indicates success. Otherwise, the driver returns one of the MMSYSERR error values declared in the Mmsystem.h header file or one of the ACMERR error values declared in the Msacm.h header file.</P>
+
+<H4>Remarks</H4>
+
+<P>The ACM (Waveapi.dll) sends this message by calling the ACM driver’s <B>ACM_IOControl</B> entry point through the <B>DeviceIoControl</B> function. The ACM sends this message when an application calls the <B>acmStreamUnprepareHeader</B> function.</P>
+
+<P>Support for this message is optional. However, if a driver supports ACMDM_STREAM_PREPARE, it must support this message.</P>
+
+<P>If the driver returns MMSYSERR_NOTSUPPORTED, the ACM clears the buffer preparation. For most drivers, this behavior is sufficient. If the driver does clear buffer preparation, it returns MMSYSERR_NOERROR. In either case, the ACM clears ACMSTREAMHEADER_STATUSF_PREPARED in the <I>fdwStatus</I> member<B> </B>of <B>ACMDRVSTREAMHEADER</B>. The driver never modifies this flag. If you want both your driver and the ACM to clear buffer preparations, the driver returns MMSYSERR_NOTSUPPORTED after clearing its preparation. The ACM can then clear its preparation.</P>
+
+<P>Before calling the driver’s <B>ACM_IOControl</B> function, the ACM verifies the following conditions:
+
+<UL>
+	<LI><B>ACMDRVSTREAMHEADER</B> is readable and writable.</li>
+
+	<LI>The <I>cbStruct</I> member of the structure contains a size value that is at least as large as the structure’s defined size.</li>
+
+	<LI>The buffers have been previously prepared.</li>
+
+	<LI>The buffer addresses and sizes match those specified when the buffers were prepared.</li>
+
+	<LI>The buffers are not currently in use by an asynchronous driver, based on the ACMSTREAMHEADER_STATUSF_INQUEUE flag value of the structure.</li>
+</UL>
+
+<P>For more information, see the Windows NT DDK. </P>
+<p>&nbsp;</p></body>
+</HTML>

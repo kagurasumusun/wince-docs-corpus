@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating an Instance of a Control</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_an_instance_of_a_control"></A>Creating an Instance of a Control</H2>
+
+<P>You can add a standard control by creating an instance of a control using <B>CoCreateInstance</B>.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To add a standard control using CoCreateInstance</H4>
+
+<OL>
+	<LI>Create an instance of a control with <B>CoCreateInstance</B>, and get a pointer to <B>IASControl</B>.
+<P>Because Windows CE for the Auto PC supports only <B>InProc</B> servers, the <I>dwClsContext</I> parameter of <B>CoCreateInstance</B> must<I> </I>be CLSCTX_INPROC_SERVER.
+
+<P>The following code example shows how to create a power list box control.
+
+<PRE><CODE>hr = CoCreateInstance(CLSID_ASPOWERLISTBOX, NULL,
+                      CLSCTX_INPROC_SERVER, IID_ASPOWERLISTBOX,
+                      (PVOID *) &amp;pPLB);
+if (FAILED(hr))    goto LReturn;
+</CODE></PRE>
+</li>
+
+	<LI>Use the <B>IASControl</B> property methods to configure such parameters as color, size, and position.
+<P>The following code example shows how to size and align an IASControl control.
+
+<PRE><CODE>pPLB-&gt;SetBounds(0,18,225,45);
+pPLB-&gt;put_Alignment(ASFC_ALIGN_CENTER);
+</CODE></PRE>
+
+<P>This code example uses an <B>IASControl</B> method, <B>SetBounds</B>, to specify the dimensions of the control in relation to its form. The values passed to <B>SetBounds</B> describe a control whose x-coordinate begins at the left edge of the form and whose y-coordinate begins 18 pixels from the top of the form. The control is 225 x 45 pixels. To specify that the power list box should be centered, the code example uses <B>put_Alignment</B>, which is a method in the <B>IASPowerListBox</B> interface.
+</li>
+
+	<LI>Use the form’s <B>IASControl::put_ClassMsgSink</B>, with the sink object’s pointer as a parameter, to assign a class message sink to the form.
+<P>When an action occurs, such as a keystroke or focus change, the form notifies the active control by calling one of several messages, such as <B>IASClassMsgSink::HandleGotFocus</B> or <B>IASClassMsgSink::HandleKeyPress</B>. These notifications are handled by the control, and are not passed to the application. If your application needs to handle such actions, you must implement a class message sink. To assign a class message sink to a form, use <B>IASControl::put_ClassMsgSink</B>. 
+
+<P>The following code example shows how to add a class message sink. 
+
+<PRE><CODE>hr = m_pForm-&gt;put_ClassMsgSink((IASClassMsgSink *)this);
+</CODE></PRE>
+</li>
+
+	<LI>Add the standard control to the form with <B>IASForm::Add</B>.
+<P>The following code example shows how to use the <B>Add</B> method.
+
+<PRE><CODE>g_pForm-&gt;Add(pPLB, IDC_PLB);
+</CODE></PRE>
+</li>
+</OL>
+<p>&nbsp;</p></body>
+</HTML>

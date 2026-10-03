@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ReleaseStgMedium</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_releasestgmedium"></A>ReleaseStgMedium</H2>
+
+<P>This function frees the specified storage medium.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Ole2.h </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>void ReleaseStgMedium ( STGMEDIUM</B> * <I>pmedium</I>, <B>);</B></P>
+
+<H4>Parameter</H4>
+
+<DL>
+<DT><I>pmedium</I></DT>
+
+<DD>[in] Pointer to the storage medium that is to be freed.
+</dd>
+</DL>
+
+<H4>Return Value</H4>
+
+<P>None.</P>
+
+<H4>Remarks</H4>
+
+<P>The<B> ReleaseStgMedium</B> function calls the appropriate method or function to release the specified storage medium. Use this function during data transfer operations where storage medium structures are parameters. In addition to identifying the type of the storage medium, this structure specifies the appropriate <A HREF="ki_uw_3.htm"><B>IUnknown::Release</B></A> method for releasing the storage medium when it is no longer needed. </P>
+
+<P>It is common to pass a STGMEDIUM from one body of code to another, in which the one called can allocate a medium and return it to the caller. <B>ReleaseStgMedium</B> permits flexibility in whether the receiving body of code owns the medium, or whether the original provider of the medium still owns it, in which case the receiving code needs to inform the provider that it can free the medium.</P>
+
+<P>When the original provider of the medium is responsible for freeing the medium, the provider calls <B>ReleaseStgMedium</B>, specifying the medium and the appropriate <B>IUnknown</B> pointer as the <I>punkForRelease</I> structure member. Depending on the type of storage medium being freed, one of the following actions is taken, followed by a call to the <B>Release</B> method on the specified <B>IUnknown</B> pointer:</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>
+<H5>Medium</H5>
+</TD>
+<TD width=70%>
+<H5>ReleaseStgMedium Action</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_HGLOBAL</TD>
+<TD width=70%>None.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_GDI</TD>
+<TD width=70%>None.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_ENHMF</TD>
+<TD width=70%>None.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_MFPICT</TD>
+<TD width=70%>None.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_FILE</TD>
+<TD width=70%>Frees the file name string using standard memory management mechanisms.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_ISTREAM</TD>
+<TD width=70%>Calls <B>IStream::Release</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_ISTORAGE</TD>
+<TD width=70%>Calls <B>IStorage::Release</B>.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The provider indicates that the receiver of the medium is responsible for freeing the medium by specifying NULL for the <I>punkForRelease</I> structure member. Then the receiver calls <B>ReleaseStgMedium</B>, which makes a call as described in the following table depending on the type of storage medium being freed:</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>
+<H5>Medium</H5>
+</TD>
+<TD width=70%>
+<H5>ReleaseStgMedium Action</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_HGLOBAL</TD>
+<TD width=70%>Calls the <B>LocalFree</B> function on the handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_GDI</TD>
+<TD width=70%>Calls the Win32 <B>DeleteObject</B> function on the handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_ENHMF</TD>
+<TD width=70%>Deletes the enhanced metafile.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_FILE</TD>
+<TD width=70%>Frees the disk file by deleting it. Frees the file name string by using the standard memory management paradigm.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_ISTREAM</TD>
+<TD width=70%><B>Calls IStream::Release</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TYMED_ISTORAGE</TD>
+<TD width=70%><B>Calls IStorage::Release</B>.</TD>
+</TR>
+</TABLE><BR>
+
+<P>In either case, after the call to <B>ReleaseStgMedium</B>, the specified storage medium is invalid and can no longer be used.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="ks_qs_12.htm"><B>STGMEDIUM</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

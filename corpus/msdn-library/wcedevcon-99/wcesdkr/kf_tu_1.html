@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TerminateThread</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_terminatethread"></A>TerminateThread</H2>
+
+<P>This function stops the specified thread.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>Header file:</TD>
+<TD width=52%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Windows CE versions:</TD>
+<TD width=52%>1.01 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL TerminateThread( HANDLE</B> <I>hThread</I>, <B>DWORD</B> <I>dwExitCode</I> <B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hThread</I></DT>
+
+<DD>Handle to the thread to terminate. </dd>
+
+<DT><I>dwExitCode</I></DT>
+
+<DD>Specifies the exit code for the thread. Use the <A HREF="kf_g_14.htm"><B>GetExitCodeThread</B></A> function to retrieve a thread’s exit value. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Nonzero indicates success. Zero indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>.</P>
+
+<H4>Remarks</H4>
+
+<P><B>TerminateThread</B> is used to cause a thread to exit. When this occurs, the target thread has no chance to execute any user-mode code and its initial stack is not deallocated. DLLs attached to the thread are not notified that the thread is terminating. </P>
+
+<P>This function reduces memory leaks by clearing the stack before exiting. It also terminates the thread process only if the thread in question is the main or primary thread.</P>
+
+<P><B>TerminateThread</B> is a dangerous function that should only be used in the most extreme cases. You should call <B>TerminateThread</B> only if you know exactly what the target thread is doing, and you control all of the code that the target thread could possibly be running at the time of the termination. For example, <B>TerminateThread</B> can result in the following problems:
+
+<UL>
+	<LI>If the target thread owns a critical section, the critical section will not be released. </li>
+
+	<LI>If the target thread is executing certain kernel32 calls when it is terminated, the kernel32 state for the thread’s process could be inconsistent. </li>
+
+	<LI>If the target thread is manipulating the global state of a shared DLL, the state of the DLL could be destroyed, affecting other users of the DLL.</li>
+</UL>
+
+<P>A thread cannot protect itself against <B>TerminateThread</B>, other than by controlling access to its handles. The thread handle returned by the <B>CreateThread</B> and <B>CreateProcess</B> functions has THREAD_TERMINATE access, so any caller holding one of these handles can terminate your thread.</P>
+
+<P>If the target thread is the last thread of a process when this function is called, the thread’s process is also terminated. </P>
+
+<P>The state of the thread object becomes signaled, releasing any other threads that had been waiting for the thread to terminate. The thread’s termination status changes from STILL_ACTIVE to the value of the <I>dwExitCode</I> parameter. </P>
+
+<P>Terminating a thread does not necessarily remove the thread object from the system. A thread object is deleted when the last thread handle is closed. </P>
+<p>&nbsp;</p></body>
+</HTML>

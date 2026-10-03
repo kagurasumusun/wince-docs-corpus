@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Securing the Message Exchange</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_securing_the_message_exchange"></A>Securing the Message Exchange</H2>
+
+<P>After a security context is established, the application can use the SSPI message support functions to transmit signed messages. The process of signing a message ensures that the message cannot be tampered with.</P>
+
+<P>If an application wants to generate signed messages, the client must set the ISC_REQ_REPLAY_DETECT or ISC_REQ_SEQUENCE_DETECT flag of the context attribute argument when first calling the <B>InitializeSecurityContext</B> function.</P>
+
+<P>Signing messages requires that the client and the server service providers establish a common session key used to sign messages on the sender side of the communication and verify messages on the receiver side of the communication. Algorithms used in message signatures are known only to the security package.</P>
+
+<P>After an authenticated connection has been established, the client or server can pass the security context and a message to the <B>MakeSignature</B> function to generate a secure signature. <B>MakeSignature</B> generates a <I>checksum</I> of the message and also provides sequencing data to prevent the message from being modified in transit. A checksum is a calculated value used to test data for the presence of errors that can occur when data is transmitted.</P>
+
+<P>The following code example shows how to implement <B>MakeSignature</B> and how to append the signature to the message so that the receiver can extract it when the message is received.</P>
+
+<PRE><CODE>SecBuffer OutSecBuffer[2];
+SecBufferDesc OutBufferDesc;
+
+// Set up the buffer descriptors.
+OutBufferDesc.ulVersion = 0;
+OutBufferDesc.cBuffers = 2;
+OutBufferDesc.pBuffers = &amp;OutSecBuffer[0];
+
+OutSecBuffer[0].cbBuffer = MessageLen;
+OutSecBuffer[0].BufferType = SECBUFFER_DATA | SECBUFFER_READONLY;
+OutSecBuffer[0].pvBuffer = pMessage;
+
+OutSecBuffer[1].cbBuffer = SignatureLen;
+OutSecBuffer[1].BufferType = SECBUFFER_EMPTY;
+OutSecBuffer[1].pvBuffer = (pMessage + MessageLen); 
+
+// Call MakeSignature to get it signed.
+status = (*pSecurityInterface-&gt;MakeSignature) (&amp;hContext,
+                                               0,
+                                               &amp;BufferDesc,
+                                               ulMessageSeqNum);
+</CODE></PRE>
+
+<P>The sender then uses the buffer descriptor, including the signature, to construct a message to send to the receiver. The receiver takes the message and disassembles it to recreate the buffer descriptor. The receiver then calls the <B>VerifySignature</B> function to verify that the message received is correct according to the data in the signature.</P>
+
+<P>The following code example shows how to implement <B>VerifySignature</B>.</P>
+
+<PRE><CODE>SecBuffer InSecBuffer[2];
+SecBufferDesc InBufferDesc;
+
+// Set up the buffer descriptors.
+InBufferDesc.ulVersion = 0;
+InBufferDesc.cBuffers = 2;
+InBufferDesc.pBuffers = &amp;InSecBuffer[0];
+
+InSecBuffer[0].cbBuffer = MessageLen;
+InSecBuffer[0].BufferType = SECBUFFER_DATA | SECBUFFER_READONLY;
+InSecBuffer[0].pvBuffer = pMessage;
+
+InSecBuffer[1].cbBuffer = SignatureLen;
+InSecBuffer[1].BufferType = SECBUFFER_TOKEN;
+InSecBuffer[1].pvBuffer = (pMessage + MessageLen); 
+
+// Call VerifySignature to verify the message signature.
+status = (*pSecurityInterface-&gt;VerifySignature) (&amp;hContext,
+                                                 &amp;BufferDesc,
+                                                 ulMessageSeqNum,
+                                                 &amp;ulQualityProtection);
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

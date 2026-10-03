@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Working with Text</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_working_with_text"></A>Working with Text</H2>
+
+<P>After selecting an edit control, the user can select text in the control by using a pointing device or keyboard keys. You can retrieve the starting and ending character positions of the current selection in an edit control by sending the control an EM_GETSEL message. </P>
+
+<P>You can also select text in an edit control by sending the control an EM_SETSEL message with the starting and ending character indexes for the selection. For example, you can use EM_SETSEL with EM_REPLACESEL to delete text from an edit control. These three messages apply to both single-line and multiline edit controls. </P>
+
+<P>You can replace selected text in an edit control by sending the control an EM_REPLACESEL message with a pointer to the replacement text. If there is no current selection, EM_REPLACESEL inserts the replacement text at the insertion point. You might receive an EN_ERRSPACE notification message if the replacement text exceeds the available memory. This message applies to both single-line and multiline edit controls. You can use EM_REPLACESEL to replace part of an edit control’s text or the <B>SetDlgItemText</B> function to replace all of it. </P>
+
+<H2>Manipulating Text</H2>
+
+<P>Windows CE provides four messages for moving text between an edit control and the clipboard. These four messages apply to both single-line and multiline edit controls. The following table describes these messages.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=21%>
+<H5>Message</H5>
+</TD>
+<TD width=79%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>WM_COPY</TD>
+<TD width=79%>Copies the current selection, if any, from an edit control to the clipboard without deleting it from the edit control</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>WM_CUT</TD>
+<TD width=79%>Deletes the current selection, if any, in the edit control and copies the deleted text to the clipboard</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>WM_CLEAR</TD>
+<TD width=79%>Deletes the current selection, if any, from an edit control, but does not copy it to the clipboard unless the user presses the SHIFT key</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>WM_PASTE</TD>
+<TD width=79%>Copies text from the clipboard into an edit control at the insertion point</TD>
+</TR>
+</TABLE><BR>
+
+<P>When the user selects, deletes, or moves text in an edit control, Windows CE maintains an internal flag for each edit control indicating whether the content of the control has been modified. Windows CE clears this flag when it creates the control and sets the flag when the text in the control is modified. You can retrieve the modification flag by sending the control an EM_GETMODIFY message and set or clear the modification flag by sending the control an EM_SETMODIFY message. These messages apply to both single-line and multiline edit controls. </P>
+
+<P>The default limit of text a user can type in an edit control is 30,000 characters. You can change the amount of text the user can type by sending the control an EM_SETLIMITTEXT message. This message sets a hard limit to the number of bytes the user can type into an edit control, but affects neither text already in the control when the message is sent nor text copied to the control by the <B>SetDlgItemText</B> function or the WM_SETTEXT message. For example, suppose you use the <B>SetDlgItemText</B> function to place 500 characters in an edit control, and the user also types 500 characters in the edit control, creating a total of 1,000 characters. If you send an EM_SETLIMITTEXT message limiting user-entered text to 300 characters, the 1,000 characters already in the edit control remain there, and the user cannot add any more text. On the other hand, if you send an EM_SETLIMITTEXT message limiting user-entered text to 1,300 characters, the 1,000 characters remain, but the user can add 300 more characters.</P>
+
+<P>When the user reaches the character limit of an edit control, Windows CE sends the application a WM_COMMAND message containing an EN_MAXTEXT notification message. This notification message does not mean that memory has been exhausted, but that the limit for user-entered text has been reached; the user cannot type any more text. To change this limit, you must send the control a new EM_SETLIMITTEXT message with a higher limit. </P>
+
+<H2>Working with Wordwrap Functions</H2>
+
+<P>You may direct a multiline edit control to add or remove a soft line break character—two carriage returns and a linefeed—automatically at the end of wrapped text lines. An application can turn this feature on or off by sending the edit control an EM_FMTLINES message. This message applies only to multiline edit controls and does not affect a line that ends with a hard line break—one carriage return and a linefeed typed by the user.</P>
+
+<H2>Retrieving Points and Characters</H2>
+
+<P>To determine which character is closest to the specified point in an edit control by sending the EM_CHARFROMPOS message. The message returns the character index and line index of the character nearest the point. Similarly, you can determine the client coordinates of the specified character in an edit control by sending the EM_POSFROMCHAR message. You specify the index of a character and the message returns the x- and y-coordinates of the upper-left corner of the character.</P>
+
+<H2>Undoing Text Operations</H2>
+
+<P>Every edit control maintains an undo flag that indicates whether an application can reverse, or undo, the most recent operation on the edit control; for example, to undo a text deletion. The edit control sets the undo flag to indicate that the operation can be undone and resets it to indicate that the operation cannot be undone. You can determine the setting of the undo flag by sending the control an EM_CANUNDO message. </P>
+
+<P>To undo the most recent operation by sending the control an EM_UNDO message. An operation can be undone provided no other edit control operation occurs first. For example, the user can delete text; replace the text or undo the deletion; and then delete the text again or undo the replacement. The EM_UNDO message applies to both single-line and multiline edit controls and always works for single-line edit controls.</P>
+<p>&nbsp;</p></body>
+</HTML>

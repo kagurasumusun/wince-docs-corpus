@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>HeapReAlloc</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_heaprealloc"></A>HeapReAlloc </H2>
+
+<P>This function reallocates a block of memory from a heap. The allocated memory is not movable. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>LPVOID</B> <B>HeapReAlloc(HANDLE</B> <I>hHeap, </I><B>DWORD</B> <I>dwFlags, <BR>
+</I><B>LPVOID</B> <I>lpMem, </I><B>DWORD</B> <I>dwBytes<B>)</B></I><B>;</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hHeap</I></DT>
+
+<DD>[in] Heap from which the memory will be reallocated. This is a handle returned by the <A HREF="kf_hi_5.htm"><B>HeapCreate</B></A> or <A HREF="kf_g_28.htm"><B>GetProcessHeap</B></A> function. </dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Specifies several controllable aspects of heap reallocation. Specifying any of these flags overrides the corresponding flag specified in the <I>flOptions</I> parameter when the heap was created by using the <A HREF="kf_hi_5.htm"><B>HeapCreate</B></A> function. You can specify one or more of the following flags: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>HEAP_NO_SERIALIZE</TD>
+<TD width=52%>Specifies that mutual exclusion is not used while <B>HeapReAlloc</B> is accessing the heap.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>&nbsp;</TD>
+<TD width=52%>This flag should not be specified when accessing the process heap. The system may create additional threads within the application’s process that simultaneously access the process heap.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>HEAP_REALLOC_IN_PLACE_ONLY</TD>
+<TD width=52%>Specifies that there can be no movement when reallocating a memory block to a larger size. If this flag is not specified and the reallocation request is for a larger size, the function may move the block to a new location. If this flag is specified and the block cannot be enlarged without moving, the function fails, leaving the original memory block unchanged.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>HEAP_ZERO_MEMORY</TD>
+<TD width=52%>If the reallocation request is for a larger size, this flag specifies that the additional region of memory beyond the original size be initialized to zero. The contents of the memory block up to its original size are unaffected.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>lpMem</I></DT>
+
+<DD>[in] Pointer to the block of memory that the function reallocates. This pointer is returned by an earlier call to the <A HREF="kf_hi_4.htm"><B>HeapAlloc</B></A> or <A HREF="#_wcesdk_win32_heaprealloc"><B>HeapReAlloc</B></A> function. </dd>
+
+<DT><I>dwBytes</I></DT>
+
+<DD>[in] Specifies the new size of the memory block, in bytes. A memory block’s size can be increased or decreased by using this function. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>If the function fails, it calls <A HREF="kf_s_28.htm"><B>SetLastError</B></A>. An application can call <A HREF="kf_g_19.htm"><B>GetLastError</B></A> for extended error information.</P>
+
+<H4>Remarks</H4>
+
+<P>If <B>HeapReAlloc</B> succeeds, it allocates at least the amount of memory requested. If the actual amount allocated is greater than the amount requested, the process can use the entire amount. To determine the actual size of the reallocated block, use the <A HREF="kf_hi_9.htm"><B>HeapSize</B></A> function. </P>
+
+<P>If <B>HeapReAlloc</B> fails, the original memory is not freed, and the original handle and pointer are still valid.</P>
+
+<P>To free a block of memory allocated by <B>HeapReAlloc</B>, use the <A HREF="kf_hi_7.htm"><B>HeapFree</B></A> function. </P>
+
+<P>Serialization ensures mutual exclusion when two or more threads attempt to simultaneously allocate or free blocks from the same heap. There is a small performance cost to serialization, but it must be used whenever multiple threads allocate and free memory from the same heap. Setting the HEAP_NO_SERIALIZE flag eliminates mutual exclusion on the heap. Without serialization, two or more threads that use the same heap handle might attempt to allocate or free memory simultaneously, likely causing corruption in the heap. The HEAP_NO_SERIALIZE flag can, therefore, be safely used only in the following situations: 
+
+<UL>
+	<LI>The process has only one thread. </li>
+
+	<LI>The process has multiple threads, but only one thread calls the heap functions for a specific heap. </li>
+
+	<LI>The process has multiple threads, and the application provides its own mechanism for mutual exclusion to a specific heap.</li>
+</UL>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_hi_4.htm"><B>HeapAlloc</B></A>, <A HREF="kf_hi_5.htm"><B>HeapCreate</B></A>, <A HREF="kf_hi_6.htm"><B>HeapDestroy</B></A>, <A HREF="kf_hi_7.htm"><B>HeapFree</B></A>, <A HREF="kf_hi_9.htm"><B>HeapSize</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Restrictions on Native Device Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_restrictions_on_native_drivers"></A>Restrictions on Native Device Drivers</H2>
+
+<P>Device drivers are user-level processes, which means that the driver code can call Microsoft® Win32® APIs and access any resources available to user-level processes. For the most part, though, device drivers need only a limited number of simple APIs, such as memory allocators. Drivers do occasionally perform more complex tasks, including creating threads or windows. For example, on many Windows CE–based platforms, the battery driver presents a dialog box to users when the batteries drop below a threshold voltage, thus notifying users to replace the batteries.</P>
+
+<P>The only time a driver cannot call Win32 APIs is when the driver processes a notification that the device is shutting down. In this situation, the device driver must not perform any operations that might cause a context switch. For example, if the driver attempts to open a file during this time, the kernel might need to access the file system, swap pages out of memory, and use other system resources that might depend on separate execution contexts. To avoid these problems, restrict the device driver to the following actions when shutting down:
+
+<UL>
+	<LI>Saving the device state in pre allocated storage</li>
+
+	<LI>Issuing any commands to the device pertinent to shutting down</li>
+
+	<LI>Setting a flag within the driver to note that it has been shut down</li>
+</UL>
+
+<P>When power returns, the driver can restore the device state from the saved data.</P>
+
+<P>The driver can also use the <B>SetInterruptEvent</B> function to generate an artificial interrupt event. By calling <B>SetInterruptEvent</B>, a driver can force release of the interrupt thread to continue any necessary processing. For examples of using <B>SetInterruptEvent</B>, see the <B>HWPowerOn</B> and <B>HWGetIntrType</B> functions in the P2io.c file. Drivers should call these functions only during powwer cycling.</P>
+<p>&nbsp;</p></body>
+</HTML>

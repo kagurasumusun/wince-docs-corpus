@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating an Installation CD</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_an_installation_cd"></A>Creating an Installation CD</H2>
+
+<P>To create an installation compact disc (CD) for your application, you must copy the following files to the CD:
+
+<UL>
+	<LI>An Autorun.inf file that opens the .cei file.</li>
+
+	<LI>A .cei file containing your application files.</li>
+</UL>
+
+<H2>Writing an Autorun script</H2>
+
+<P>The syntax of the AutoRun.inf file is similar to win32 desktop systems, but uses an Auto PC-specific section header to allow one piece of installation media to contain autorun components for both desktop operating systems and the Auto PC. To include desktop support, use the standard desktop sections like [autorun].</P>
+
+<P>You need to place an Autorun.inf file in the root of the installation media (CD or CompactFlash™ card). Microsoft® Windows® CE for the Auto PC looks at the following section names of the autorun.inf file:</P>
+
+<PRE><CODE>[AutoPC]
+[AutoPC.shx]
+[AutoPC.intel]
+[AutoPC.mips]
+[AutoPC.ppc]
+[AutoPC.arm]
+</CODE></PRE>
+
+<P>The [AutoPC]and [AutoPC.shx] section names are only supported for version 1.0, because all Auto PCs contain a Hitachi SH3 processor for version 1.0.</P>
+
+<P>If a section for the specific Auto PC device processor can be found, it is used and all others are ignored. If there isn't a matching section for the specific processor family, the generic [AutoPC] section is used.</P>
+
+<P>For example, the Clarion Auto PC uses a Hitachi SH3 processor which is part of the SHx processor family. If present, the [AutoPC.shx] section is used when installing to Clarion's Auto PC.</P>
+
+<P>You can include the following items within each section:</P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=36%>
+<H5>Function</H5>
+</TD>
+<TD width=64%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>open=</B><I>command line with arguments</I></TD>
+<TD width=64%>If you include the <B>open</B> command line, it is passed to the <B>ShellExecute</B> function and all other lines are ignored. If the command line contains an absolute path to a file to be executed — that is, the command line begins with a backslash — the command line is passed unchanged to the <B>ShellExecuteEx</B> function. If not, the path to the autorun.inf is prepended onto the command line before passing it to <B>ShellExecuteEx</B>. This behavior allows you to execute documents located on your media without having to know whether the media is named "\storage card" or "\storage card2" or "\cd dash". If you try to run an EXE or a shortcut, the user is presented with a security warning dialog asking the user to confirm that they want to run it.
+<P>If you do not include an <B>open </B>command line, a menu is built with the remaining lines.</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>title=</B><I>menu caption</I></TD>
+<TD width=64%>Optional. Specifies the title for the menu.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>Item</B><I>X</I>=<I>menu display text</I></TD>
+<TD width=64%>* Optional. Displays a text string for the menu selection. If <B>item</B><I>X</I> is not provided, the <B>open</B><I>X</I> line is displayed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>Open</B><I>X</I>=<I>menu command line with arguments</I></TD>
+<TD width=64%>* Specifies which file to open when the menu item is selected.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=100%>*  <I>X can be any number greater than or equal to one, but for memory efficiency reasons X should be kept as small as possible.</I></TD>
+</TR>
+</TABLE><BR>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To install your application .cei file</H4>
+
+<OL>
+	<LI>Place your application’s .cei file in the root directory on your installation media.</li>
+
+	<LI>Create an Autorun.inf file.</li>
+
+	<LI>Under the appropriate autorun sections, include an <B>open</B> command line containing a pointer to your application’s .cei file.</li>
+</OL>
+
+<P>The following example shows an Autorun.inf file that automatically starts the installation of a CEI file:</P>
+
+<PRE><CODE>[AutoPC.shx]
+open=example1.cei
+</CODE></PRE>
+
+<P>The following example shows how to put more than one .cei file installation file on the same installation media:</P>
+
+<PRE><CODE>[AutoPC.shx]
+title=MS Arcade
+item1=Blackjack
+open1=blackjack.cei
+item2=Roulette
+open2=roulette.cei
+item3=Crazy Eights
+open3=crazy8.cei
+</CODE></PRE>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create nested menus </H4>
+
+<OL>
+	<LI>Place your application .cei files in subdirectories on your installation media.</li>
+
+	<LI>Place an Autorun.inf file for each application in each subdirectory on your installation media.</li>
+
+	<LI>Create a root Autorun.inf file that creates a menu to the other autorun.inf files.</li>
+</OL>
+
+<P>The following example shows an Autorun.inf file that calls another Autorun.inf file.</P>
+
+<PRE><CODE>[AutoPC]
+title=Microsoft Sampler
+item1=Arcade
+open1=arcade\autorun.inf
+item2=Return of Arcade
+open2=retarcade\autorun.inf
+</CODE></PRE>
+
+<P>The following example shows the Autorun.inf file that is located in the \arcade sub-directory of the installation media: It also shows how to provide multiple processor support on your installation media and have autorun automatically install the correct CEI for the user’s Auto PC device. The autorun code checks for SHx, Intel®, Mips and ARM processor types.</P>
+
+<PRE><CODE>[AutoPC.shx]
+title=Arcade
+item1=Blackjack
+open1=shx\blackjack.cei
+item2=Roulette
+open2=shx\roulette.cei
+
+[Auto PC.intel]
+title=Arcade
+item1=Blackjack
+open1=intel\blackjack.cei
+item2=Roulette
+open2=intel\roulette.cei
+</CODE></PRE>
+
+<P>This autorun.inf file presents the user with a menu where they can go to the Arcade or Return of Arcade menu. If they choose <B>Arcade</B>, the arcade\autorun.inf is run and they see its menu. The user can press the BACK key to return to the main menu.</P>
+<p>&nbsp;</p></body>
+</HTML>

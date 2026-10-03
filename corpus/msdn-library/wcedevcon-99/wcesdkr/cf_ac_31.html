@@ -1,0 +1,442 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptGetProvParam</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_crypto2_cryptgetprovparam"></A>CryptGetProvParam</H2>
+
+<P>This function lets applications retrieve parameters that govern the operations of a cryptographic service provider (CSP).</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Wincrypt.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL WINAPI CryptGetProvParam( HCRYPTPROV</B> <I>hProv</I>,<BR>
+<B>DWORD</B> <I>dwParam</I>, <B>BYTE</B> <I>*pbData</I>, <B>DWORD</B> <I>*pdwDataLen</I>, <BR>
+<B>DWORD</B> <I>dwFlags </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hProv</I></DT>
+
+<DD>[in] Handle to the CSP on which to query parameters.</dd>
+
+<DT><I>dwParam</I></DT>
+
+<DD>[in] Specifies the parameter number. See the "Remarks" section for a list of valid parameters.</dd>
+
+<DT><I>pbData</I></DT>
+
+<DD>[out] Pointer to a buffer that receives the specified parameter data. The form of this data will vary, depending on the parameter number.
+
+<P>This parameter can be NULL to set the size of this information for memory allocation purposes.
+</dd>
+
+<DT><I>pdwDataLen</I></DT>
+
+<DD>[in/out] Pointer to a variable that specifies the size, in bytes, of the buffer pointed to by the <I>pbData </I>parameter. When the function returns, the variable pointed to by the <I>pdwDataLen </I>parameter contains the number of bytes stored in the buffer.
+
+
+<P><B>Note</B>  When processing the data returned in the buffer, applications need to use the actual size of the data returned. The actual size may be slightly smaller than the size of the buffer specified on input. (On input, buffer sizes are usually specified large enough to ensure that the largest possible output data will fit in the buffer.) On output, the variable pointed to by this parameter is updated to reflect the actual size of the data copied to the buffer.
+
+
+
+
+<P><B>Note</B>  When one of the enumeration parameters (PP_ENUMALGS or PP_ENUMCONTAINERS) is set, the <I>pdwDataLen </I>parameter works somewhat differently. If <I>pbData</I> is NULL or the value pointed to by <I>pdwDataLen </I>is too small, the value returned in this parameter is the size of the largest item in the enumeration list instead of the size of the item currently being read.
+
+
+<P>When one of the enumeration parameters is read and the <I>pbData</I> parameter is NULL, the CRYPT_FIRST flag must be specified in order for the size information to be correctly retrieved.
+
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Specifies a bitmask of flags.
+
+<P>When one of the enumeration parameters (PP_ENUMALGS or PP_ENUMCONTAINERS) is set, then the CRYPT_FIRST flag can be specified. When this flag is set, the first item in the enumeration list is returned. If this flag is not set, then the next item in the list is returned.
+
+
+<P>When the enumeration parameter PP_ENUMCONTAINERS is set, then the CRYPT_MACHINE_KEYSET flag can be specified. This flag can be set to enumerate the key containers associated with a computer rather than the key containers associated with the current user.
+
+
+<P>When the <I>dwParam</I> is PP_KEYSET_SEC_DESCR, the security descriptor on the key container where the keys are stored is retrieved. For this case, <I>dwFlags</I> is used to pass in the SECURITY_INFORMATION bit flags (can be combined with a bitwise OR operation).
+
+
+<PRE><CODE>typedef DWORD SECURITY_INFORMATION;
+</CODE></PRE>
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>OWNER_SECURITY_INFORMATION</TD>
+<TD width=50%>Indicates the owner identifier of the object is being referenced.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>GROUP_SECURITY_INFORMATION</TD>
+<TD width=50%>Indicates the primary group identifier of the object is being referenced.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>DACL_SECURITY_INFORMATION</TD>
+<TD width=50%>Indicates the discretionary ACL of the object is being referenced.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>SACL_SECURITY_INFORMATION</TD>
+<TD width=50%>Indicates the system ACL of the object is being referenced.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. Common values for <B>GetLastError</B> are described in the following table. The error values prefaced by "NTE" are generated by the particular CSP you are using.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=41%>
+<H5>Value</H5>
+</TD>
+<TD width=59%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_INVALID_HANDLE</TD>
+<TD width=59%>One of the parameters specifies an invalid handle. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_INVALID_PARAMETER</TD>
+<TD width=59%>One of the parameters contains an invalid value. This is most often an illegal pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_MORE_DATA</TD>
+<TD width=59%>If the buffer specified by the <I>pbData </I>parameter is not large enough to hold the returned data, the function sets the ERROR_MORE_DATA code, and stores the required buffer size, in bytes, into the variable pointed to by <I>pdwDataLen</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_NO_MORE_ITEMS</TD>
+<TD width=59%>The end of the enumeration list has been reached. No valid data has been placed in the <I>pbData</I> buffer. This error is returned only when <I>dwParam</I> equals PP_ENUMALGS or PP_ENUMCONTAINERS.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_FLAGS</TD>
+<TD width=59%>The <I>dwFlags</I> parameter specifies an invalid flag.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_TYPE</TD>
+<TD width=59%>The <I>dwParam</I> parameter specifies an unknown parameter number.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_UID</TD>
+<TD width=59%>The CSP context specified by <I>hProv</I> is invalid.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The parameter number contained in the <I>dwParam</I> parameter can be set to one of the following values:
+
+<DL>
+<DT>PP_CONTAINER</DT>
+
+<DD>The key container name. When this parameter is specified, the function fills the <I>pbData</I> buffer with the name of the current key container. This name is in the form of a zero-terminated CHAR string.
+
+<P>This string is exactly the same as the one passed in the <I>pszContainer</I> parameter of the <A HREF="cf_ac_13.htm"><B>CryptAcquireContext</B></A> function in order to specify that the current key container be used. This parameter is often read in order to determine the name of the default key container.
+</dd>
+
+<DT>PP_ENUMALGS</DT>
+
+<DD>The algorithm information. When this parameter is specified, the function fills the <I>pbData</I> buffer with information about one of the algorithms supported by the CSP. The PP_ENUMALGS parameter must be read repeatedly to enumerate all the supported algorithms. The algorithms are not enumerated in any particular order.
+
+<P>The first time that the PP_ENUMALGS parameter is read, the CRYPT_FIRST flag should be specified. This will ensure that information about the first algorithm in the enumeration list is returned. The PP_ENUMALGS parameter can then be repeatedly read in order to retrieve the information about the rest of the algorithms. When the <B>CryptGetProvParam</B> function fails with ERROR_NO_MORE_ITEMS, then the end of the enumeration list has been reached. A code sample illustrating this is located in the "Example" section.
+
+
+<P>When calling <B>CryptGetProvParam</B> with the PP_ENUMALGS flag in the <I>dwParam </I>parameter the <I>dwBits</I> field should be changed to the length of the default key sizes.
+
+
+<P>The following code fragment indicates the format of the data that the function returns in the <I>pbData</I> buffer:
+
+
+<PRE><CODE>ALG_ID aiAlgid;
+DWORD dwBits;
+DWORD dwNameLen;
+CHAR szName[dwNameLen];
+ </CODE></PRE>
+
+
+<P>The following list defines each of these fields.
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=18%>
+<H5>Field</H5>
+</TD>
+<TD width=82%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><I>aiAlgid</I></TD>
+<TD width=82%>Algorithm identifier. This is the value that is passed to the <A HREF="cf_ac_26.htm"><B>CryptGenKey</B></A>, <A HREF="cf_ac_17.htm"><B>CryptDeriveKey</B></A>, or <A HREF="cf_ac_15.htm"><B>CryptCreateHash</B></A><B> </B>functions in order to specify that a particular algorithm be used.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><I>DwBits</I></TD>
+<TD width=82%>Specifies the number of bits in the keys used by the algorithm. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><I> </I></TD>
+<TD width=82%>If this is a hash algorithm, this value indicates the number of bits in the hash values generated by this algorithm.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><I>DwNameLen</I></TD>
+<TD width=82%>Specifies the number of characters in the algorithm name, including the terminating zero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><I>SzName</I></TD>
+<TD width=82%>Null-terminated string that contains the name of the algorithm.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT>PP_ENUMCONTAINERS</DT>
+
+<DD>The key container names. When this parameter is specified, the function fills the <I>pbData</I> buffer with the name of one of the key containers maintained by the CSP. This name is in the form of a zero-terminated <B>CHAR</B> string. The PP_ENUMCONTAINERS parameter must be read repeatedly to enumerate all the container names.
+
+<P>These container names are enumerated in the same way as are the CSP's supported algorithms. Refer to the PP_ENUMALGS entry for more information.
+</dd>
+
+<DT>PP_IMPTYPE</DT>
+
+<DD>The CSP implementation type. The <I>pbData</I> buffer will contain a DWORD value that indicates how the CSP is implemented. Common values are:
+
+<UL>
+	<LI>CRYPT_IMPL_HARDWARE</li>
+
+	<LI>CRYPT_IMPL_SOFTWARE</li>
+
+	<LI>CRYPT_IMPL_MIXED</li>
+
+	<LI>CRYPT_IMPL_UNKNOWN </li>
+</UL>
+</dd>
+
+<DT>PP_NAME</DT>
+
+<DD>The CSP name. When this parameter is specified, the function fills the <I>pbData</I> buffer with the name of the CSP. This name is in the form of a zero-terminated CHAR string.
+
+<P>This string is identical to the one passed in the <I>pszProvider</I> parameter of the <A HREF="cf_ac_13.htm"><B>CryptAcquireContext</B></A> function in order to specify that the current CSP be used. For example, the Microsoft Base Cryptographic Provider will return "Microsoft Base Cryptographic Provider v1.0" when this parameter is read.
+</dd>
+
+<DT>PP_VERSION</DT>
+
+<DD>The CSP version number. The <I>pbData</I> buffer will contain a DWORD value that indicates the version number of the CSP. The least significant byte contains the minor version number and the next most significant byte the major version number. For example, version 1.0 would be represented here as 0x00000100. 
+
+<P>To maintain backward compatibility with earlier versions of these providers, the name retains the "v1.0" designation in later versions. This can be seen in the wincrypt.h header file. Version 2.0 of this provider is currently shipping. To see which version of the provider you have, make a call to <B>CryptGetProvParam</B> with the <I>dwParam</I> argument set to PP_VERSION. For example, if 0x00000200 is returned in <I>pbData</I>, then you have version 2.0.
+
+</dd>
+</DL>
+
+<H4>Algorithm Identifiers</H4>
+
+<P>When enumerating algorithms (<I>dwParam</I> == PP_ENUMALGS), your application may need to determine the class of a particular algorithm. For example, you may want to display a list of encryption algorithms to the user and disregard the rest. This can be done with the <B>GET_ALG_CLASS(</B><I>x</I><B>)</B> macro. This macro takes an algorithm identifier as an argument and returns a code indicating the general class of algorithm that the identifier belongs to. Common return values include:
+
+<UL>
+	<LI>ALG_CLASS_DATA_ENCRYPT</li>
+
+	<LI>ALG_CLASS_HASH</li>
+
+	<LI>ALG_CLASS_KEY_EXCHANGE</li>
+
+	<LI>ALG_CLASS_SIGNATURE</li>
+</UL>
+
+<P>The following table lists the algorithms supported by the Microsoft Base Cryptographic Provider along with the class of each algorithm.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=24%>
+<H5>Name</H5>
+</TD>
+<TD width=30%>
+<H5>Identifier</H5>
+</TD>
+<TD width=46%>
+<H5>Class</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"MD2"</TD>
+<TD width=30%>CALG_MD2</TD>
+<TD width=46%>ALG_CLASS_HASH</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"MD5"</TD>
+<TD width=30%>CALG_MD5</TD>
+<TD width=46%>ALG_CLASS_HASH</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"SHA"</TD>
+<TD width=30%>CALG_SHA</TD>
+<TD width=46%>ALG_CLASS_HASH</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"MAC"</TD>
+<TD width=30%>CALG_MAC</TD>
+<TD width=46%>ALG_CLASS_HASH</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"RSA_SIGN"</TD>
+<TD width=30%>CALG_RSA_SIGN</TD>
+<TD width=46%>ALG_CLASS_SIGNATURE</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"RSA_KEYX"</TD>
+<TD width=30%>CALG_RSA_KEYX</TD>
+<TD width=46%>ALG_CLASS_KEY_EXCHANGE</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"RC2"</TD>
+<TD width=30%>CALG_RC2</TD>
+<TD width=46%>ALG_CLASS_DATA_ENCRYPT</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>"RC4"</TD>
+<TD width=30%>CALG_RC4</TD>
+<TD width=46%>ALG_CLASS_DATA_ENCRYPT</TD>
+</TR>
+</TABLE><BR>
+
+<P>If your application does not recognize an algorithm identifier, it is not recommended that you use the algorithm. Making use of an unknown cryptographic algorithm can sometimes produce unpredictable results.</P>
+
+<H4>Example</H4>
+
+<P>This example shows how the list of algorithms supported by a particular CSP is accessed by an application:</P>
+
+<PRE><CODE>HCRYPTPROV hProv; // Handle to CSP
+DWORD dwAlgCount;
+BYTE *ptr = NULL;
+DWORD i;
+ALG_ID aiAlgid;
+DWORD dwBits;
+DWORD dwNameLen;
+CHAR szName[100]; // Often allocated dynamically
+BYTE pbData[1000]; // Often allocated dynamically
+DWORD cbData;
+DWORD dwFlags;
+CHAR *pszAlgType = NULL;
+
+// Enumerate the supported algorithms.
+for(i=0 ; ; i++) {
+ // Set the CRYPT_FIRST flag the first time through the loop.
+ if(i == 0) {
+ dwFlags = CRYPT_FIRST;
+ } else {
+ dwFlags = 0;
+ }
+
+// Retrieve information about an algorithm.
+ cbData = 1000;
+ if(!CryptGetProvParam(hProv, PP_ENUMALGS, pbData, &amp;cbData, dwFlags)) {
+ if(GetLastError() == ERROR_NO_MORE_ITEMS) {
+ // Exit the loop.
+ break;
+ } else {
+ printf("Error %x reading algorithm!\n", GetLastError());
+ return;
+ }
+ }
+
+ // Extract algorithm information from the 'pbData' buffer.
+ ptr = pbData;
+ aiAlgid = *(ALG_ID *)ptr;
+ ptr += sizeof(ALG_ID);
+ dwBits = *(DWORD *)ptr;
+ ptr += sizeof(DWORD);
+ dwNameLen = *(DWORD *)ptr;
+ ptr += sizeof(DWORD);
+ strncpy(szName, ptr, dwNameLen);
+
+ // Determine the algorithm type.
+ switch(GET_ALG_CLASS(aiAlgid)) {
+ case ALG_CLASS_DATA_ENCRYPT: pszAlgType = "Encrypt ";
+  break;
+ case ALG_CLASS_HASH: pszAlgType = "Hash ";
+  break;
+ case ALG_CLASS_KEY_EXCHANGE: pszAlgType = "Exchange ";
+  break;
+ case ALG_CLASS_SIGNATURE: pszAlgType = "Signature";
+  break;
+ default: pszAlgType = "Unknown ";
+ }
+
+ // Print information about the algorithm.
+ printf("Algid:%8.8xh, Bits:%-4d, Type:%s, NameLen:%-2d, Name:%s\n",
+ aiAlgid, dwBits, pszAlgType, dwNameLen, szName
+ );
+}
+</CODE></PRE>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_ac_13.htm"><B>CryptAcquireContext</B></A>, <A HREF="cf_ac_15.htm"><B>CryptCreateHash</B></A>, <A HREF="cf_ac_17.htm"><B>CryptDeriveKey</B></A>, <A HREF="cf_ac_26.htm"><B>CryptGenKey</B></A>, <A HREF="cf_ac_30.htm"><B>CryptGetKeyParam</B></A>, <A HREF="cf_ac_41.htm"><B>CryptSetProvParam</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>InternetErrorDlg</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_interneterrordlg"></A>InternetErrorDlg</H2>
+
+<P>This function displays a dialog box for the error that is passed to it, if an appropriate dialog box exists. If the FLAGS_ERROR_UI_FILTER_FOR_ERRORS flag is used, the function also checks the headers for any hidden errors and displays a dialog box if needed.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Wininet.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.12 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>DWORD InternetErrorDlg (HWND </B><I>hWnd</I><B>, HINTERNET </B><I>hRequest,<BR>
+</I><B>DWORD</B><I> dwError</I>, <B>DWORD</B><I> dwFlags</I>, <B>LPVOID</B><I> *lppvData</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hWnd</I></DT>
+
+<DD>[in] Handle to the parent window for any needed dialog box. This parameter can be NULL if no dialog box is needed.</dd>
+
+<DT><I>hRequest</I></DT>
+
+<DD>[in] [out] HINTERNET handle to the Internet connection used in the call to <B>HttpSendRequest</B>.</dd>
+
+<DT><I>dwError</I></DT>
+
+<DD>[in] Error value for which to display a dialog box. Can be one of the following values:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=65%>
+<H5>Value</H5>
+</TD>
+<TD width=35%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR</TD>
+<TD width=35%>Notifies the user of the zone crossing to and from a secure site.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>ERROR_INTERNET_INCORRECT_PASSWORD</TD>
+<TD width=35%>Displays a dialog box for obtaining the user's name and password. (On Microsoft Windows® 95, the function first attempts to use any cached authentication information for the server being accessed, before displaying a dialog box.)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>ERROR_INTERNET_INVALID_CA</TD>
+<TD width=35%>Notifies the user that the Win32® Internet function does not recognize the certificate authority that generated the certificate for this Secure Sockets Layer (SSL) site.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>ERROR_INTERNET_POST_IS_NON_SECURE</TD>
+<TD width=35%>Displays a warning about posting data to the server through a nonsecure connection.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>ERROR_INTERNET_SEC_CERT_CN_INVALID</TD>
+<TD width=35%>Indicates that the SSL certificate Common Name (hostname field) is incorrect. Displays an Invalid SSL Common Name dialog box, and lets the user view the incorrect certificate. Also allows the user to select a certificate in response to a server request.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>ERROR_INTERNET_SEC_CERT_DATE_INVALID</TD>
+<TD width=35%>Tells the user that the SSL certificate has expired.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Unsigned long integer value that contains the action flags. Can be a combination of these values:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=65%>
+<H5>Value</H5>
+</TD>
+<TD width=35%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>FLAGS_ERROR_UI_FILTER_FOR_ERRORS</TD>
+<TD width=35%>Scans the returned headers for errors. Call after using <B>HttpSendRequest</B>. This option detects any hidden errors, such as an authentication error.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS</TD>
+<TD width=35%>If the function succeeds, stores the results of the dialog box in the Internet handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>FLAGS_ERROR_UI_FLAGS_GENERATE_DATA</TD>
+<TD width=35%>Queries the Internet handle for needed information. The function constructs the appropriate data structure for the error. (For example, for Cert CN failures, the function grabs the certificate.)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=65%>FLAGS_ERROR_UI_SERIALIZE_DIALOGS</TD>
+<TD width=35%>Serializes authentication dialog boxes for concurrent requests on a password cache entry. The <I>lppvData</I> parameter should contain the address of a pointer to an INTERNET_AUTH_NOTIFY_DATA structure, and the client should implement a thread-safe, nonblocking callback function.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>lppvData</I></DT>
+
+<DD>[in] [out] Address of a data structure. The structure can be different for each error that needs to be handled.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Returns one of the following values:
+
+<DL>
+<DT>ERROR_SUCCESS</DT>
+
+<DD>The function completed successfully.</dd>
+
+<DT>ERROR_CANCELLED</DT>
+
+<DD>The function was cancelled by the user.</dd>
+
+<DT>ERROR_INTERNET_FORCE_RETRY</DT>
+
+<DD>The function needs to redo its request.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>Authentication errors are hidden, since the call to <B>HttpSendRequest</B> will complete successfully, but the status code would indicate that the proxy or server requires authentication. The FLAGS_ERROR_UI_FILTER_FOR_ERRORS flag causes the function to search the headers for status codes that indicate user input is needed.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_hk_6.htm"><B>HttpSendRequest</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

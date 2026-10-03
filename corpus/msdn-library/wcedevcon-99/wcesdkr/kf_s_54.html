@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SplInit</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_splinit"></A>SplInit</H2>
+
+<P>This function is called by an application to initialize a spelling session.<B> SplInit</B> generates a handle for a spelling session, allocates buffer memory, loads the main dictionary and external user dictionaries, and creates the internal user dictionaries.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Splapi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int SplInit( HSPL</B> * <I>phspl</I>, <B>int</B> <I>clex</I>, <B>WCHAR</B> ** <I>ppwsz </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>phspl</I></DT>
+
+<DD>Pointer to the handle of the new spelling session. The <B>SplInt</B> function creates this handle and places it at the location pointed to by this parameter. Subsequent calls by an application must include this handle to associate a call to a particular spelling session. </dd>
+
+<DT><I>clex</I></DT>
+
+<DD>Number of user<B> </B>dictionaries that are defined. If <I>clex</I> is 0, the <B>SplCheck</B> function uses only the main dictionary.</dd>
+
+<DT><I>ppwsz</I></DT>
+
+<DD>Pointer to a list of pointers, each of which point to a null-terminated string that contains the path and file name for an external user dictionary. If <I>clex </I>is 0, this parameter must be NULL.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>1 indicates success. 0 indicates failure.</P>
+
+<H4>Remarks</H4>
+
+<P>Windows CE supplies a read-only main spelling dictionary on the device. By default, this dictionary is used during<B> </B>every spelling session. Currently, Windows CE does not support replacing this main dictionary with a dictionary supplied by the application. </P>
+
+<P>In addition to loading the main dictionary, <B>SplInit</B> creates the following three internal user dictionaries:
+
+<DL>
+<DT>SPL_IGNORE_LEX</DT>
+
+<DD>Contains words that the spelling checker finds, but the user does not want to change. The spelling checker ignores words in this list for the remainder of the spelling session.</dd>
+
+<DT>SPL_CHANGE_ALWAYS_LEX</DT>
+
+<DD>Contains words that the spelling checker finds, paired with words that replace subsequent occurrences of the found words. </dd>
+
+<DT>SPL_CHANGE_ONCE</DT>
+
+<DD>Contains words that the spelling checker finds and the user changes. The spelling checker continues to find subsequent occurrences of the words.
+</dd>
+</DL>
+
+<P>These internal dictionaries are empty at initialization and removed by the <B>SplQuit</B> function when the spelling session is over.</P>
+
+<P>The application can also specify external user dictionaries to load. The <I>ppwsz</I> parameter points to a list of pointers, each of specify the path and file name of an external user dictionary. If you load one external user dictionary, <I>ppwsz</I> is a pointer to a single pointer. Use the <I>clex</I> parameter to indicate how many external user dictionaries to load. There is no limit to the number of external user dictionaries the application can define.</P>
+
+<P>External user dictionaries are typically created by the user and saved for use during future spelling sessions when an application calls the <B>SplQuit</B> function. During a spelling session, applications can add words to an external user dictionary using <B>SplAddUserDict</B>, remove words using <B>SplRemUserDict</B>, and clear the contents of an external user dictionary using <B>SplClrUserDict</B>. </P>
+
+<P><B>SplInit</B> assigns identifiers to the internal user dictionaries and to any external user dictionaries pointed to by <I>ppwsz</I>. Use these identifiers in other spelling functions to specify a dictionary. The parameter that identifies a dictionary is <I>nID</I>. Values that <B>SplInit</B> assigns to <I>nID</I> are listed in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=9%>
+<H5>Value</H5>
+</TD>
+<TD width=91%>
+<H5>Dictionary</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>–3</TD>
+<TD width=91%>SPL_IGNORE_LEX</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>–2</TD>
+<TD width=91%>SPL_CHANGE_ALWAYS_LEX</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>–1</TD>
+<TD width=91%>SPL_CHANGE_ONCE</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>0</TD>
+<TD width=91%>External user dictionary 1</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%>1</TD>
+<TD width=91%>External user dictionary 2</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=9%><I>clex</I>–1</TD>
+<TD width=91%>External user dictionary <I>clex</I></TD>
+</TR>
+</TABLE><BR>
+
+<P>To determine the value of the <I>nID</I> parameter for an external user dictionary, subtract one from its position in the dictionary list that the <I>ppwsz</I> parameter points to. For example, if there are three external user dictionaries to load, <I>clex</I> equals 3. The <I>nID</I> of the last dictionary loaded is <I>clex</I>–1, which equals 2.</P>
+
+<P>Because initializing a spelling session is time-consuming, consider doing it when the calling application starts and keeping the spelling session active until the calling application ends. Remember, however, that a spelling session has exclusive access to external user dictionaries until the calling application exits. This means that a second application cannot load external user dictionaries that are already in use.</P>
+
+<P>If it is possible for a user to simultaneously run multiple applications that can use the spelling checker, it might be best to initialize the spelling checker when the user requests it instead of initializing it when the calling application starts. When the application is done with the spelling checker, it calls the <B>SplQuit</B> function and the external user dictionary or dictionaries are available for use by another spelling session.</P>
+
+<P>The main dictionary is available for multiple spelling sessions because it is read-only. The internal user dictionaries are created for each spelling session and removed at the end of each session; therefore, access to them by multiple spelling sessions is not an issue. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_s_50.htm"><B>SplAddUserDict</B></A>, <A HREF="kf_s_52.htm"><B>SplClrUserDict</B></A>, <A HREF="kf_s_59.htm"><B>SplQuit</B></A>, <A HREF="kf_s_60.htm"><B>SplRemUserDict</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

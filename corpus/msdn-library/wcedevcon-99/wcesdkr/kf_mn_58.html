@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MyFSD_WriteFile</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_myfsd_writefile"></A><I>MyFSD</I>_WriteFile</H2>
+
+<P>This function writes data to a file in an installable file system. The function starts writing data to the file at the position indicated by the file pointer. After the write operation has been completed, the file pointer is adjusted by the number of bytes actually written. The application does not call this function directly. Instead, use the corresponding standard Win32 function <B>WriteFile</B>. The file system driver (FSD) Manager determines the file system type and calls the <B><I>MyFSD</I>_WriteFile </B>implementation of the function.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Fsdmgr.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL</B> <B><I>MyFSD</I>_WriteFile( PFILE</B> <I>pFile</I>, <B>PCVOID</B> <I>pBuffer</I>,<B> DWORD</B> <I>cbWrite</I>,<B> <BR>
+PDWORD</B> <I>pcbWritten</I>,<B> OVERLAPPED</B> *<I>pOverlapped</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pFile</I></DT>
+
+<DD>Pointer to the value that the file system driver (FSD) passes to the <B>FSDMGR_CreateFileHandle</B> function when creating the file handle.</dd>
+
+<DT><I>pBuffer</I></DT>
+
+<DD>Pointer to the buffer containing the data to be written to the file. </dd>
+
+<DT><I>cbWrite</I></DT>
+
+<DD>Number of bytes to write to the file. 
+
+<P>A value of zero specifies a null write operation. A null write operation does not write any bytes but does cause the time stamp to change. 
+
+
+<P>Named pipe write operations across a network are limited to 65,535 bytes.
+</dd>
+
+<DT><I>pcbWritten</I></DT>
+
+<DD>Pointer to the number of bytes written by this function call. <B>WriteFile</B> sets this value to zero before doing any work or error checking. 
+
+<P><B>Windows NT:</B> If <I>lpOverlapped</I> is NULL, <I>lpNumberOfBytesWritten</I> cannot be NULL.
+
+
+<P><B>Windows NT:</B> If <I>lpOverlapped</I> is not NULL, <I>lpNumberOfBytesWritten</I> can be NULL. If this is an overlapped write operation, you can get the number of bytes written by calling <B>GetOverlappedResult</B>. If <I>hFile</I> is associated with an I/O completion port, you can get the number of bytes written by calling <B>GetQueuedCompletionStatus</B>.
+
+
+<P><B>Windows 95 and Windows 98:</B> This parameter cannot be NULL.
+</dd>
+
+<DT><I>pOverlapped</I></DT>
+
+<DD>Pointer to an <B>OVERLAPPED</B> structure. This structure is required if <I>hFile</I> was opened with FILE_FLAG_OVERLAPPED.
+
+<P>If <I>hFile</I> was opened with FILE_FLAG_OVERLAPPED, the <I>lpOverlapped</I> parameter must not be NULL. It must point to a valid <B>OVERLAPPED</B> structure. If <I>hFile</I> was opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is NULL, the function can incorrectly report that the write operation is complete.
+
+
+<P>If <I>hFile</I> was opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is not NULL, the write operation starts at the offset specified in the <B>OVERLAPPED</B> structure and <B>WriteFile</B> may return before the write operation has been completed. In this case, <B>WriteFile</B> returns FALSE and the <B>GetLastError</B> function returns ERROR_IO_PENDING. This allows the calling process to continue processing while the write operation is being completed. The event specified in the <B>OVERLAPPED</B> structure is set to the signaled state upon completion of the write operation. 
+
+
+<P>If <I>hFile</I> was not opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is NULL, the write operation starts at the current file position and <B>WriteFile</B> does not return until the operation has been completed. 
+
+
+<P>If <I>hFile</I> was not opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is not NULL, the write operation starts at the offset specified in the <B>OVERLAPPED</B> structure and <B>WriteFile</B> does not return until the write operation has been completed. 
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Nonzero indicates success. Zero indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. </P>
+
+<H4>Remarks</H4>
+
+<P>Windows CE does not support asynchronous write operations. The <I>lpOverlapped</I> parameter is ignored and should be set to NULL before calling <B>WriteFile</B>.</P>
+
+<P>Unlike the MS-DOS operating system, Windows CE interprets zero bytes to write as specifying a null write operation and <B>WriteFile</B> does not truncate or extend the file. To truncate or extend a file, use the <A HREF="kf_s_22.htm"><B>SetEndOfFile</B></A> function.</P>
+
+<P>The Fsdmgr component is a dynamic-link library (DLL) that manages all operating system interaction with installable files systems. Each installable file system requires an FSD, which is a DLL that exports an API needed to support an installable file system. The name of the DLL and the names of the functions it exports start with the name of the associated installable file system. For example, if the name of file system is MyFSD, then its DLL is MyFSD.dll and its exported functions are prefaced with MyFSD_*. </P>
+
+<P>Fsdmgr provides services to FSDs. The <B>FSDMGR_RegisterVolume</B>,<B> FSDMGR_CreateFileHandle</B>, and<B> FSDMGR_CreateSearchHandle</B> functions record a <B>DWORD </B>of volume-specific data the FSD needs to keep associated with volume. This volume-specific data is passed as the first parameter of these three functions.</P>
+
+<P>Applications that access an installable file system use standard Win32 functions. For example, when an application wants to create a folder on a device that contains an installable file system, it calls <B>CreateDirectory</B>. Fsdmgr recognizes that the path is to a device containing an installable file system and calls the appropriate function, which in the case of the FAT file system is <B>FATFSD_CreateDirectoryW</B>. That is, the application calls <B>CreateDirectory</B>, causing Fsdmgr to call <B>FATFSD_CreateDirectoryW</B>.</P>
+
+<P>An application must meet certain requirements when working with files opened with FILE_FLAG_NO_BUFFERING:
+
+<UL>
+	<LI>File access must begin at byte offsets within the file that are integer multiples of the volume’s sector size. To determine a volume’s sector size, call the <B>GetDiskFreeSpace</B> function. </li>
+
+	<LI>File access must be for numbers of bytes that are integer multiples of the volume’s sector size. For example, if the sector size is 512 bytes, an application can request reads and writes of 512, 1024, or 2048 bytes, but not of 335, 981, or 7171 bytes. </li>
+
+	<LI>Buffer addresses for read and write operations must be sector aligned (aligned on addresses in memory that are integer multiples of the volume’s sector size). One way to sector align buffers is to use the <A HREF="kf_v_181.htm"><B>VirtualAlloc</B></A> function to allocate the buffers. This function allocates memory that is aligned on addresses that are integer multiples of the system's page size. Because both page and volume sector sizes are powers of 2, memory aligned by multiples of the system's page size is also aligned by multiples of the volume’s sector size. </li>
+</UL>
+
+<P>If part of the file is locked by another process and the write operation overlaps the locked portion, this function fails. </P>
+
+<P>Accessing the output buffer while a write operation is using the buffer may lead to corruption of the data written from that buffer. Applications must not read from, write to, reallocate, or free the output buffer that a write operation is using until the write operation completes.</P>
+
+<P>Characters can be written to the screen buffer using <B>WriteFile</B> with a handle to console output. The exact behavior of the function is determined by the console mode. The data is written to the current cursor position. The cursor position is updated after the write operation. </P>
+
+<P>The system interprets zero bytes to write as specifying a null write operation and <B>WriteFile</B> does not truncate or extend the file. To truncate or extend a file, use the <B>SetEndOfFile</B> function. </P>
+
+<P>When writing to a nonblocking, byte-mode pipe handle with insufficient buffer space, <B>WriteFile</B> returns TRUE with <I>*lpNumberOfBytesWritten</I> &lt; <I>nNumberOfBytesToWrite</I>. </P>
+
+<P>When an application uses the <B>WriteFile</B> function to write to a pipe, the write operation may not finish if the pipe buffer is full. The write operation is completed when a read operation (using the <B>ReadFile</B> function) makes more buffer space available. </P>
+
+<P>If the anonymous read pipe handle has been closed and <B>WriteFile</B> attempts to write using the corresponding anonymous write pipe handle, the function returns FALSE and <A HREF="kf_g_19.htm"><B>GetLastError</B></A> returns ERROR_BROKEN_PIPE. </P>
+
+<P>The <B>WriteFile</B> function may fail with ERROR_INVALID_USER_BUFFER or ERROR_NOT_ENOUGH_MEMORY whenever there are too many outstanding asynchronous I/O requests. </P>
+
+<P>To cancel all pending asynchronous I/O operations, use the <B>CancelIo</B> function. This function only cancels operations issued by the calling thread for the specified file handle. I/O operations that are canceled complete with the error ERROR_OPERATION_ABORTED. </P>
+
+<P>If you are attempting to write to a floppy drive that does not have a floppy disk, the system displays a message box prompting the user to retry the operation. To prevent the system from displaying this message box, call the <B>SetErrorMode</B> function with SEM_NOOPENFILEERRORBOX. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_c_31.htm"><B>CreateFile</B></A>, <A HREF="kf_g_19.htm"><B>GetLastError</B></A>, <A HREF="kf_r_5.htm"><B>ReadFile</B></A>, <A HREF="kf_s_22.htm"><B>SetEndOfFile</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

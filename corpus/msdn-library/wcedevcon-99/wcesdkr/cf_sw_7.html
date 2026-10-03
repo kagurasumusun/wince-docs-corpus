@@ -1,0 +1,379 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>setsockopt</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_setsockopt_2"></A>setsockopt </H2>
+
+<P>This function sets a socket option.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winsock.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int</B> <B>setsockopt</B> <B>(SOCKET</B> <I>s</I><B>, int</B> <I>level</I><B>, int</B> <I>optname</I><B>, const</B> <B>char</B> <I>*optval</I><B>, int</B> <I>optlen</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>s</I></DT>
+
+<DD>[in] Descriptor that identifies a socket.</dd>
+
+<DT><I>level</I></DT>
+
+<DD>[in] Level at which the option is defined; the supported levels include SOL_SOCKET, IPPROTO_TCP, and IPPROTO_IP. When the level is IPPROTO_IP, the following IP_OPTIONS values are available:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=34%>
+<H5>Value</H5>
+</TD>
+<TD width=66%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>IP_MULTICAST_TTL</TD>
+<TD width=66%>Time-to-live for a multicast packet. Specifies the maximum number of hops for which a multicast message survives before it is discarded. Use <B>int</B> for <I>optval</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>IP_MULTICAST_IF</TD>
+<TD width=66%>Address of the outgoing multicast-capable interface. This address is used for subsequent multicasts. Use <B>unsigned long</B> for <I>optval</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>IP_ADD_MEMBERSHIP</TD>
+<TD width=66%>The membership request structure used to request a particular multicast group's membership. Use <B>struct ip_mreq</B> for <I>optval</I>. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>IP_DROP_MEMBERSHIP</TD>
+<TD width=66%>The group whose membership is to be used. Use <B>struct ip_mreq</B> for <I>optval</I>.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>optname</I></DT>
+
+<DD>[in] Socket option for which the value is to be set.</dd>
+
+<DT><I>optval</I></DT>
+
+<DD>[in] Pointer to the buffer in which the value for the requested option is supplied.</dd>
+
+<DT><I>optlen</I></DT>
+
+<DD>[in] Size of the <I>optval</I> buffer.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates that no error occurred. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<P>The <B>setsockopt</B> function can also return the following error values:
+
+<DL>
+<DT>WSAENOBUFS</DT>
+
+<DD>No buffer space available. An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full.</dd>
+
+<DT>WSAEOPNOTSUPP</DT>
+
+<DD>The option is not supported.</dd>
+
+<DT>WSANOTINITIALISED </DT>
+
+<DD>A successful <B>WSAStartup</B> call must occur before using this function. </dd>
+
+<DT>WSAENETDOWN </DT>
+
+<DD>The network subsystem has failed. This value is not supported for <B>IrSockets</B>.</dd>
+
+<DT>WSAEFAULT </DT>
+
+<DD>The <I>optval</I> parameter is not in a valid part of the process address space or the <I>optlen </I>parameter is too small. </dd>
+
+<DT>WSAEISCONN </DT>
+
+<DD>The socket could not switch to secure mode when it connected.</dd>
+
+<DT>WSAEINPROGRESS </DT>
+
+<DD>A blocking Windows Sockets 1.1 call is in progress, or the service provider is still processing a callback function. </dd>
+
+<DT>WSAEINVAL </DT>
+
+<DD>The <I>level</I> parameter is not valid, or the information in <I>optval</I> is not valid. </dd>
+
+<DT>WSAENETRESET</DT>
+
+<DD> The connection has timed out when SO_KEEPALIVE is set. </dd>
+
+<DT>WSAENOPROTOOPT </DT>
+
+<DD>The option is unknown or unsupported for the specified provider or socket (see SO_GROUP_PRIORITY limitations). When used in the context of SSL, this error value indicates that the option level is not equal to SO_SOCKET.</dd>
+
+<DT>WSAENOTCONN </DT>
+
+<DD>The connection has been reset when SO_KEEPALIVE is set. </dd>
+
+<DT>WSAENOTSOCK </DT>
+
+<DD>The descriptor is not a socket.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>The <B>setsockopt</B> function sets the current value for a socket option associated with a socket of any type, in any state. Although options can exist at multiple protocol levels, they are always present at the uppermost “socket” level. Options affect socket operations, such as whether expedited data (OOB data for example) is received in the normal data stream, and whether broadcast messages can be sent on the socket.</P>
+
+<P>There are two types of socket options: Boolean options that enable or disable a feature or behavior, and options that require an integer value or structure. To enable a Boolean option, <I>optval</I> points to a nonzero integer. To disable the option <I>optval</I> points to an integer equal to zero. The <I>optlen</I> parameter should be equal to <B>sizeof(int)</B> for Boolean options. For other options, <I>optval</I> points to the an integer or structure that contains the desired value for the option, and <I>optlen</I> is the length of the integer or structure.</P>
+
+<P>The following options are supported for <B>setsockopt</B>. For default values of these options, see the description. The Type identifies the type of data addressed by <I>optval</I>.</P>
+
+<P><B><I>level = </I>SOL_SOCKET</B></P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Value</H5>
+</TD>
+<TD width=26%>
+<H5>Type</H5>
+</TD>
+<TD width=43%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_BROADCAST</TD>
+<TD width=26%>BOOL</TD>
+<TD width=43%>Allow transmission of broadcast messages on the socket.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_DONTLINGER</TD>
+<TD width=26%>BOOL</TD>
+<TD width=43%>Do not block close waiting for unsent data to be sent. Setting this option is equivalent to setting SO_LINGER with <I>l_onoff</I> set to zero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_DONTROUTE</TD>
+<TD width=26%>BOOL</TD>
+<TD width=43%>Do not route: send directly to interface.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_GROUP_PRIORITY</TD>
+<TD width=26%>int</TD>
+<TD width=43%>Reserved for future use with socket groups. Specify the relative priority to be established for sockets that are part of a socket group.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_KEEPALIVE</TD>
+<TD width=26%>BOOL</TD>
+<TD width=43%>Send keepalives</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_LINGER</TD>
+<TD width=26%>struct <A HREF="cs_az_16.htm">LINGER</A> </TD>
+<TD width=43%>Linger on close if unsent data is present.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_REUSEADDR</TD>
+<TD width=26%>BOOL</TD>
+<TD width=43%>Allow the socket to be bound to an address that is already in use. (See <A HREF="cf_ac_4.htm"><B>bind</B></A>.) </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_SNDBUF</TD>
+<TD width=26%>int</TD>
+<TD width=43%>Specify the total per-socket buffer space reserved for sends. This is unrelated to SO_MAX_MSG_SIZE or the size of a TCP window.</TD>
+</TR>
+</TABLE><BR>
+
+<P><B><I>level =</I> IPPROTO_TCP</B></P>
+
+<TABLE border=1 cellspacing=4 cols=3 frame=void rules=rows>
+
+<TR VALIGN="top">
+<TD width=30%>
+<H5>Value</H5>
+</TD>
+<TD width=26%>
+<H5>Type</H5>
+</TD>
+<TD width=44%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>TCP_NODELAY</TD>
+<TD width=26%>BOOL</TD>
+<TD width=44%>Disables the Nagle algorithm for send coalescing.</TD>
+</TR>
+</TABLE><BR>
+
+<P>BSD options not supported for <B>setsockopt</B> are:</P>
+
+<TABLE cellspacing=4 cols=4>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Value</H5>
+</TD>
+<TD colspan=2 width=14%>
+<H5>Type</H5>
+</TD>
+<TD width=55%>
+<H5>Meaning</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=31%>SO_ACCEPTCONN</TD>
+<TD width=14%>BOOL</TD>
+<TD width=55%>Socket is listening</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=31%>SO_RCVLOWAT</TD>
+<TD width=14%>int</TD>
+<TD width=55%>Receive low water mark</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=31%>SO_SNDLOWAT</TD>
+<TD width=14%>int</TD>
+<TD width=55%>Send low water mark</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=31%>SO_SNDTIMEO</TD>
+<TD width=14%>int</TD>
+<TD width=55%>Send time-out </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=31%>SO_TYPE</TD>
+<TD width=14%>int</TD>
+<TD width=55%>Type of the socket</TD>
+</TR>
+</TABLE><BR>
+
+<DL>
+<DT>SO_GROUP_PRIORITY</DT>
+
+<DD>Reserved for future use with socket groups. Group priority indicates the relative priority of the specified socket relative to other sockets within the socket group. Values are non-negative integers, with zero corresponding to the highest priority. Priority values represent a hint to the underlying service provider about how potentially scarce resources should be allocated. For example, whenever two or more sockets are both ready to transmit data, the highest priority socket (lowest value for SO_GROUP_PRIORITY) should be serviced first with the remainder serviced in turn according to their relative priorities.
+
+<P>The WSAENOPROTOOPT error is indicated for nongroup sockets or for service providers that do not support group sockets.
+</dd>
+
+<DT>SO_KEEPALIVE</DT>
+
+<DD>An application can request that a TCP/IP provider enable the use of "keep-alive" packets on TCP connections by turning on the SO_KEEPALIVE socket option. A Windows Sockets provider need not support the use of keep-alives. If it does, the precise semantics are implementation-specific but should conform to section 4.2.3.6 of RFC 1122: <I>Requirements for Internet Hosts—Communication Layers</I>. If a connection is dropped as the result of "keep-alives" the error value WSAENETRESET is returned to any calls in progress on the socket, and any subsequent calls will fail with WSAENOTCONN.</dd>
+
+<DT>SO_LINGER</DT>
+
+<DD>The SO_LINGER option controls the action taken when unsent data is queued on a socket and a <B>closesocket</B> is performed. See <A HREF="cf_ac_7.htm"><B>closesocket</B></A> for a description of the way in which the SO_LINGER settings affect the semantics of <B>closesocket</B>. The application sets the desired behavior by creating a <A HREF="cs_az_16.htm"><B>LINGER</B></A> structure (pointed to by the <I>optval</I> parameter) with these members <B>l_onoff</B> and <B>l_linger </B>set appropriately.</dd>
+
+<DT>SO_REUSEADDR</DT>
+
+<DD>By default, a socket cannot be bound (see <A HREF="cf_ac_4.htm"><B>bind</B></A>) to a local address that is already in use. On occasion, however, it can be necessary to "re-use" an address in this way. Since every connection is uniquely identified by the combination of local and remote addresses, there is no problem with having two sockets bound to the same local address as long as the remote addresses are different. To inform the Windows Sockets provider that a <B>bind</B> on a socket should not be disallowed because the desired address is already in use by another socket, the application should set the SO_REUSEADDR socket option for the socket before issuing the <B>bind</B>. The option is interpreted only at the time of the <A HREF="cf_ac_4.htm"><B>bind</B></A>. It is therefore unnecessary and harmless to set the option on a socket that is not to be bound to an existing address. Setting or resetting the option after the <B>bind</B> has no effect on this or any other socket.</dd>
+
+<DT>SO_SNDBUF</DT>
+
+<DD>When a Windows Sockets implementation supports the SO_SNDBUF option, an application can request different buffer sizes (larger or smaller). The call to <B>setsockopt</B> can succeed even when the implementation did not provide the whole amount requested. An application must call <A HREF="cf_dg_33.htm"><B>getsockopt</B></A> with the same option to check the buffer size actually provided.</dd>
+
+<DT>TCP_NODELAY</DT>
+
+<DD>The TCP_NODELAY option is specific to TCP/IP service providers. The Nagle algorithm is disabled if the TCP_NODELAY option is enabled (and vice versa). The process involves buffering send data when there is unacknowledged data already "in flight" or buffering send data until a full-size packet can be sent. It is highly recommended that TCP/IP service providers enable the Nagle Algorithm by default, and for the vast majority of application protocols the Nagle Algorithm can deliver significant performance enhancements. However, for some applications this algorithm can impede performance, and TCP_NODELAY can be used to turn it off. These are applications where many small messages are sent, and the time delays between the messages are maintained. Application writers should not set TCP_NODELAY unless the impact of doing so is well-understood and desired because setting TCP_NODELAY can have a significant negative impact on network and application performance.
+</dd>
+</DL>
+
+<P>To set a socket to secure mode, the option level parameter, <I>level,</I> must set to SO_SOCKET, the option name, <I>optname</I> to SO_SECURE, and the option value, <I>optval</I>, must be a pointer to a DWORD containing SO_SEC_SSL. These settings ensure that the Unified Secure Sockets Layer (SSL) package be used. The following code example shows how to set a socket to secure mode. </P>
+
+<PRE><CODE>DWORD optval = SO_SEC_SSL;
+err = setsockopt(
+    Socket,
+    SOL_SOCKET,
+    SO_SECURE,
+    &amp;optval,
+    sizeof(optval)
+    );.
+</CODE></PRE>
+
+<P>For Infrared Sockets (IrSock), Af_irda.h must be explicitly included.</P>
+
+<P>IrSock provides two settable socket options:</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Value</H5>
+</TD>
+<TD width=22%>
+<H5>Type</H5>
+</TD>
+<TD width=47%>
+<H5>Meaning</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>IRLMP_IAS_SET</TD>
+<TD width=22%>* IAS_SET</TD>
+<TD width=47%>Sets IAS attributes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>IRLMP_IRLPT_MODE</TD>
+<TD width=22%>* int</TD>
+<TD width=47%>In non-zero, enables IrLPT mode for printing to IrDA printers.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The IRLMP_IAS_SET socket option allows the application to set a single attribute of a single class in the local IAS. The application specifies the class to set and the attribute and attribute type. The maximum length of an attribute name is 60 characters however, regardless of the set value for characters beyond the 60<SUP>th</SUP>, Windows CE will set these to NULL. That is, these two arrays will be truncated at 60 characters.</P>
+
+<P>The IRLMP_RAW_MODE socket option allows the application to switch between TinyTP mode and unreliable IrLMP mode. If it is not set, <B>IrSockets</B> are assumed to use TinyTP. This option is only available after issuing the socket function and before issuing any other Windows Sockets function.</P>
+
+<P>Many SO_ level socket options are not meaningful to <B>IrSockets</B>. Only SO_LINGER is specifically supported.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_ac_4.htm"><B>bind</B></A>, <A HREF="cf_dg_33.htm"><B>getsockopt</B></A>, <A HREF="cf_hk_40.htm"><B>ioctlsocket</B></A>, <A HREF="cf_sw_12.htm"><B>socket</B></A>, <A HREF="cf_sw_32.htm"><B>WSAStartup</B></A> </P>
+<p>&nbsp;</p></body>
+</HTML>

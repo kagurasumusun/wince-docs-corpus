@@ -1,0 +1,298 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MailMsg</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_mailmsg"></A>MailMsg</H2>
+
+<P>This structure is used by the <B>Mail</B> and <B>Transport</B> functions to store the contents of messages being sent and received.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Msgstore.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>typedef struct MailMsg {<BR>
+ DWORD </B><I>dwMsgId</I><B>;<BR>
+ DWORD </B><I>dwFlags</I><B>;<BR>
+ DWORD </B><I>dwMsgLen</I><B>;<BR>
+ WORD </B><I>wBodyLen</I><B>;<BR>
+ FILETIME </B><I>ftDate</I><B>;<BR>
+ LPWSTR </B><I>szSvcId</I><B>;<BR>
+ LPWSTR </B><I>szSvcNam</I><B>;<BR>
+ WCHAR </B><I>*pwcHeaders</I><B>;<BR>
+ LPWSTR </B><I>szBody</I><B>;<BR>
+ CEOID </B><I>oid</I><B>;<BR>
+ HANDLE </B><I>hHeap</I><B><BR>
+} MailMsg;</B></P>
+
+<H4>Members</H4>
+
+<DL>
+<DT><I>dwMsgId</I></DT>
+
+<DD>Specifies an internal identification number maintained by the system. This identification number is used by library routines to access messages in the message store. Applications should not attempt to change the value stored in this member.</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>Specifies the folder that contains the message, the status of the message, and how the message is handled. These mail flags are divided into three categories: folder flags, status flags, and message flags. The flags and a brief description of their meanings are listed below.
+
+<P>Folder flags determine which folder to locate or store the message in. Use only one of the following folder flags in combination with status and message flags:
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_ALL</TD>
+<TD width=52%>Folder flag mask</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_FIRST</TD>
+<TD width=52%>Start of user-defined folders</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_LAST</TD>
+<TD width=52%>End of user-defined folders</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_SENT</TD>
+<TD width=52%>Copy of sent mail</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_OUTBOX</TD>
+<TD width=52%>Local OUTBOX (last local folder)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_INBOX</TD>
+<TD width=52%>Universal INBOX</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_ANY</TD>
+<TD width=52%>Search for any folder during “Get”</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FOLDER_TARGET</TD>
+<TD width=52%>Target folder for MAIL_COPY</TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>Status flags verify the status of the message being stored or retrieved, or whether the message has attachment. Status flags can be used to determine what type of messages to search for when calling <B>MailFirst</B> and <B>MailNext</B> functions. These flags can be any combination of the following values:
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_ALL</TD>
+<TD width=50%>Status flag mask.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_FREE</TD>
+<TD width=50%>Message deleted - free slot.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_DELETE</TD>
+<TD width=50%>Message set to be deleted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_COPY</TD>
+<TD width=50%>Message set to be copied to local target.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_READ</TD>
+<TD width=50%>Message marked as having been read.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_SERVICE</TD>
+<TD width=50%>INBOX Message exists on a service.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_COMPOSED</TD>
+<TD width=50%>Set for outgoing messages (newly composed, replied, or forwarded). In Windows CE version 2.0, an outgoing message can be saved and later re-edited using the outgoing dialog box that includes the <B>SEND</B> button.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_REMOTE</TD>
+<TD width=50%>INBOX body exists only<I> </I>on service.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_NOT</TD>
+<TD width=50%>Look for invert of status bits (GET).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_ANY</TD>
+<TD width=50%>(MAIL_STATUS_NOT | MAIL_STATUS_FREE).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_ALIVE</TD>
+<TD width=50%>(MAIL_STATUS_ANY | MAIL_STATUS_DELETE).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_LOCAL</TD>
+<TD width=50%>(MAIL_STATUS_ALIVE | MAIL_STATUS_SERVICE).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_BODY</TD>
+<TD width=50%>(MAIL_STATUS_ALIVE | MAIL_STATUS_REMOTE).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_UNREAD</TD>
+<TD width=50%>(MAIL_STATUS_ALIVE | MAIL_STATUS_READ).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_ATTACHMENTS</TD>
+<TD width=50%>The message has attachments.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>MAIL_STATUS_ATT_REQ</TD>
+<TD width=50%>The message’s attachment is marked for download.</TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>Message flags determine how the message will be handled and how much of the message is retrieved on a mail get. If none of the message flags are set, all members but the body are retrieved. Of the following flags, use any combination of the first two flags with one of the remaining flags.
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FLAGS_ALL</TD>
+<TD width=52%>Message flag mask.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_KEEP</TD>
+<TD width=52%>Move from OUTBOX to FILE after sent. In Windows CE version 2.0, this flag is no longer used. Instead, the client application checks the current registry settings to determine whether it does or does not save a message in the Sent Item folder.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_GET_BODY</TD>
+<TD width=52%>Get body (during a <B>MailGet</B>).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_GET_FLAGS</TD>
+<TD width=52%>Get <I>only </I>flags member (during a get).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MAIL_FULL</TD>
+<TD width=52%>Get full body when copying.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwMsgLen</I></DT>
+
+<DD>Specifies the size, in bytes, of the entire message on the service.</dd>
+
+<DT><I>wBodyLen</I></DT>
+
+<DD>Specifies the size, in bytes, of the message as maintained in the message store.</dd>
+
+<DT><I>ftDate</I></DT>
+
+<DD>Specifies the date and time the message was received by the service.</dd>
+
+<DT><I>szSvcId</I></DT>
+
+<DD>Null-terminated string that contains a unique identification number assigned by the service. The service uses this identification number to access the desired message.</dd>
+
+<DT><I>szSvcNam</I></DT>
+
+<DD>Null-terminated string that contains the name of the service. Applications can use this name to link messages to a particular service.</dd>
+
+<DT><I>pwcHeaders</I></DT>
+
+<DD>Pointer to the header members. The header consists of entries made up of two members, a name and an associated value. The name members are separated from the value members by a NULL character, and the entries are separated from each other by a NULL character. The header string is terminated with two consecutive NULL characters.</dd>
+
+<DT><I>szBody</I></DT>
+
+<DD>Null-terminated string that contains the body of the message.</dd>
+
+<DT><I>oid</I></DT>
+
+<DD>Object identifier. The object identifier is assigned by the system and can be used as a key for storing and receiving messages. The object identifier is set when the message is inserted in the message store using the <B>MailPut</B> function and returned in this member when the <B>MailFirst</B> or <B>MailNext</B> functions are called.</dd>
+
+<DT><I>hHeap</I></DT>
+
+<DD>Handle to the private heap used for all storage related to this message. Any storage allocated to this heap is freed when the <B>MailFree</B> function is called.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>A mail message can be either local or linked to a service. Local messages exist only the device. User-composed messages fall into this category. Service-lined messages, on the other hand, exist on a service somewhere, but are referenced locally. Messages that are synchronized and retrieved by means of the SMTP/POP3 transport fall into this category.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>HeapAlloc</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_heapalloc"></A>HeapAlloc </H2>
+
+<P>This function allocates a block of memory from a heap. The allocated memory is not movable. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>LPVOID HeapAlloc(HANDLE</B> <I>hHeap</I>, <B>DWORD</B> <I>dwFlags</I>, <BR>
+<B>DWORD</B> <I>dwBytes<B>)</B></I><B>;</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hHeap</I></DT>
+
+<DD>[in] Handle to the heap from which the memory will be allocated. This parameter is a handle returned by the <A HREF="kf_hi_5.htm"><B>HeapCreate</B></A> or <A HREF="kf_g_28.htm"><B>GetProcessHeap</B></A> function. </dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Specifies several controllable aspects of heap allocation. Specifying any of these flags will override the corresponding flag specified when the heap was created with <B>HeapCreate</B>. You can specify one or more of the following flags: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>HEAP_NO_SERIALIZE</TD>
+<TD width=52%>Specifies that mutual exclusion will not be used while the <B>HeapAlloc</B> function is accessing the heap.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>&nbsp;</TD>
+<TD width=52%>This flag should not be specified when accessing the process heap. The system may create additional threads within the application’s process that simultaneously access the process heap.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>HEAP_ZERO_MEMORY</TD>
+<TD width=52%>Specifies that the allocated memory will be initialized to zero. Otherwise, the memory is not initialized to zero.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwBytes</I></DT>
+
+<DD>[in] Specifies the number of bytes to be allocated. 
+
+<P>If the heap specified by the <I>hHeap</I> parameter is a “nongrowable” heap, <I>dwBytes</I> must be less than 0x7FFF8. You create a nongrowable heap by calling the <B>HeapCreate</B> function with a nonzero value.
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A pointer to the allocated memory block indicates success. NULL indicates failure. </P>
+
+<P>If the function fails, it does not call <B>SetLastError</B>. An application cannot call <B>GetLastError</B> for extended error information.</P>
+
+<H4>Remarks</H4>
+
+<P>If <B>HeapAlloc</B> succeeds, it allocates at least the amount of memory requested. If the actual amount allocated is greater than the amount requested, the process can use the entire amount. To determine the actual size of the allocated block, use the <B>HeapSize</B> function. </P>
+
+<P>To free a block of memory allocated by <B>HeapAlloc</B>, use the <B>HeapFree</B> function. </P>
+
+<P>Memory allocated by <B>HeapAlloc</B> is not movable. Since the memory is not movable, it is possible for the heap to become fragmented. </P>
+
+<P>Serialization ensures mutual exclusion when two or more threads attempt to simultaneously allocate or free blocks from the same heap. There is a small performance cost to serialization, but it must be used whenever multiple threads allocate and free memory from the same heap. Setting the HEAP_NO_SERIALIZE flag eliminates mutual exclusion on the heap. Without serialization, two or more threads that use the same heap handle might attempt to allocate or free memory simultaneously, likely causing corruption in the heap. The HEAP_NO_SERIALIZE flag can, therefore, be safely used only in the following situations: 
+
+<UL>
+	<LI>The process has only one thread. </li>
+
+	<LI>The process has multiple threads, but only one thread calls the heap functions for a specific heap. </li>
+
+	<LI>The process has multiple threads, and the application provides its own mechanism for mutual exclusion to a specific heap. </li>
+</UL>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_hi_5.htm"><B>HeapCreate</B></A>, <A HREF="kf_hi_6.htm"><B>HeapDestroy</B></A>, <A HREF="kf_hi_7.htm"><B>HeapFree</B></A>, <A HREF="kf_hi_8.htm"><B>HeapReAlloc</B></A>, <A HREF="kf_hi_9.htm"><B>HeapSize</B></A> </P>
+<p>&nbsp;</p></body>
+</HTML>

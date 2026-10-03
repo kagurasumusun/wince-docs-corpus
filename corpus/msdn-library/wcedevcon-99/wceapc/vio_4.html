@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Obtaining Operating Condition Data</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_obtaining_operating_condition_data"></A>Obtaining Operating Condition Data</H2>
+
+<P>Vehicle status data is obtained from the <B>IVIO_Device</B> interface to two types of vehicle devices: <I>polled devices</I> and <I>streaming devices</I>. Polled devices provide relatively static data, such as coolant temperature. Streaming devices provide dynamic data, such as RPM.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To retrieve data from a polled device</H4>
+
+<OL>
+	<LI>Obtain a reference to the interface for the device with <B>CoCreateInstance</B>.</li>
+
+	<LI>Retrieve the data by calling the appropriate method calls for the device, such as <B>GetData</B>.</li>
+
+	<LI>Release the reference to the device interface.</li>
+</OL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To set up data retrieval from a streaming device</H4>
+
+<OL>
+	<LI>Write a callback object for the device to invoke.</li>
+
+	<LI>Obtain a reference to the interface for the device using <B>CoCreateInstance</B>.</li>
+
+	<LI>Obtain a reference to an instance of the callback object’s <B>IUnknown</B> interface.</li>
+
+	<LI>Obtain a reference to the callback object’s <B>IVioEventSink</B> inteface.</li>
+
+	<LI>Release the reference to the callback object’s <B>IUnknown</B> interface.</li>
+
+	<LI>Set the device’s notification routine to be the callback object’s <B>IVioEventSink</B> interface.</li>
+</OL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To terminate data retrieval from a streaming device</H4>
+
+<OL>
+	<LI>Set the device’s notification routine to NULL.</li>
+
+	<LI>Release the reference to the callback object’s <B>IVioEventSink</B> interface.</li>
+
+	<LI>Release the reference to the device.</li>
+</OL>
+
+<P>The following code example shows how to obtain a polled device interface and how to retrieve data from that device.</P>
+
+<PRE><CODE>IVIO_Device          *pDevice;
+VARIANT              vCoolantTemp;
+LONG                     lCoolantTemp;
+
+hr = CoCreateInstance(CLSID_VIO_COOLANT_TEMP, NULL,
+                      CLSCTX_INPROC_SERVER, IID_VIODEVICE, 
+                      (PVOID *) &amp;pDevice);
+VariantInit(&amp;vCoolantTemp);
+// Read the coolant temperature from the vehicle.
+hr = pDevice-&gt;GetData(&amp;vCoolantTemp, 2000);
+// If you read the coolant temperature successfully, save it.
+lCoolantTemp = V_I4(&amp;vCoolantTemp);
+// Free the resources of the VARIANT<B>.</B>
+VariantClear(&amp;vCoolantTemp);
+// Release the reference to the device.
+pDevice-&gt;Release();
+</CODE></PRE>
+
+<P>If you need data from a device that provides streaming data, you must not only obtain an interface to the device, but also create a callback object. The following code example shows how to obtain the necessary interface and how to invoke the callback object.</P>
+
+<PRE><CODE>IVIO_Device         *pDevice;
+IVIO_EventSink      *pEventSink;
+
+hr = CoCreateInstance(CLSID_VIO_VEHICLE_SPEED, NULL,
+                      CLSCTX_INPROC_SERVER, IID_VIODEVICE,
+                      (PVOID *) &amp;pDevice);
+
+CVioSpeedCallBack *pCallback = new CVioSpeedCallback;
+pCallback-&gt;QueryInterface(IID_VIOEVENTSINK, (PVOID *) &amp;pEventSink);
+// Release the callback object.
+pCallback-&gt;Release();
+// Start the streaming vehicle speedometer device.
+hr = pDevice-&gt;SetNotify(NULL, pEventSink, 0);
+
+// Other code
+
+// Before exiting the application, turn off the streaming device.
+hr = pDevice-&gt;SetNotify(NULL, NULL, 0);
+// Release the reference to the event sink object.
+pEventSink-&gt;Release();
+// Release the reference to the device.
+pDevice-&gt;Release();
+</CODE></PRE>
+
+<P>The following code example shows how to create a callback object.</P>
+
+<PRE><CODE>class CVioSpeedCallBack : public IVIO_EventSink
+{
+public:
+  CVioSpeedCallback();
+  virtual ~CVioSpeedCallback();
+// Standard IUnknown methods.
+// IVIO_EventSink method.
+  STDMETHOD (ReceiveMsg) (LPVARIANT pData, LPARAM lParam);
+};
+// Note: The callback function returns  on its own thread.
+STDMETHODIMP CVioSpeedCallback::ReceiveMsg(LPVARIANT pData, LPARAM
+                                           lParam)
+  {
+  USHORT usVehicleSpeed;
+  // Get the speed from the VARIANT<B>.</B>
+  usVehicleSpeed = V_UI2(pData);
+  return S_OK;
+  }
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

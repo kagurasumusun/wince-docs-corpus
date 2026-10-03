@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>TrueFFS Driver Customization</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_trueffs_driver_customization"></A>TrueFFS Driver Customization</H2>
+
+<P>The Platform Builder contains a core library, Tffscore.lib, and a single source file, Flcustom.c, which together compose the TrueFFS driver. Flcustom.c contains translation layers, socket interfaces, and MTDs. All three of these components can be modified to conform to individual design features of a Windows CE–based platform.</P>
+
+<P>However, to integrate any of these three components into the TrueFFS driver, the component’s registration routine must be called during initialization of the driver. This task is performed by the <B>flRegisterComponents</B> function, which is defined in Flcustom.c. Prototypes for all the components’ registration routines are provided in the Stdcomp.h header file.</P>
+
+<P>OEMs can modify <B>flRegisterComponents</B><I> </I>to include the desired subset of components for the application. The <B>flRegisterComponents</B> function takes no parameters and has no return value. It simply<I> </I>consists of calls to each component’s registration routine.</P>
+
+<P>The following sections provide additional information about the components—MTDs, translation layers, and socket interfaces—and their registration routines.
+
+<DL>
+<DT>Memory Technology Drivers</DT>
+
+<DD>The TrueFFS driver accesses various types of linear flash memory hardware through MTDs. Each type of linear flash memory requires its own MTD because individual MTDs are tailored to interact with specific linear flash memory chips. For this reason, OEMs can omit any MTDs that are superflous. For example, if a platform supports only built-in DiskOnChip hardware, an OEM can omit the MTDs for Intel linear flash memory chips. By extension, however, OEMs who need to support new types of linear flash memory hardware must create MTDs for that hardware.</dd>
+</DL>
+
+<P>The following table shows existing MTDs and their corresponding registration routines. </P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=18%>
+<H5>Manufacturer</H5>
+</TD>
+<TD width=44%>
+<H5>Product</H5>
+</TD>
+<TD width=38%>
+<H5>Registration routine to be <BR>
+called in Flcustom.c</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%>M-Systems, Inc.</TD>
+<TD width=44%>DiskOnChip</TD>
+<TD width=38%>flRegisterDOC2000</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD rowspan=3 width=18%>&nbsp;</TD>
+<TD width=44%>Series 2000</TD>
+<TD width=38%>flRegisterCDSN</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>FlashLite (8-bit mode)</TD>
+<TD width=38%>flRegisterI28F008</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>FlashLite (16-bit mode)</TD>
+<TD width=38%>flRegisterI28F016</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%>Intel</TD>
+<TD width=44%>Series II (8-bit mode)</TD>
+<TD width=38%>flRegisterI28F008</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD rowspan=9 width=18%>&nbsp;</TD>
+<TD width=44%>Series II (16-bit mode)</TD>
+<TD width=38%>flRegisterI28F016</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Series II+</TD>
+<TD width=38%>flRegisterI28F016</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Series 100 MiniCard (8-bit mode)</TD>
+<TD width=38%>flRegisterI28F008</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Series 100 MiniCard (16-bit mode)</TD>
+<TD width=38%>flRegisterI28F016</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Series 200 MiniCard</TD>
+<TD width=38%>flRegisterCFISCS</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Value Series 100 (8-bit mode)</TD>
+<TD width=38%>flRegisterI28F008</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Value Series 100 (16-bit mode)</TD>
+<TD width=38%>flRegisterI28F016</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Value Series 200 (8-bit mode)</TD>
+<TD width=38%>flRegisterCFISCS</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>Value Series 200 (16-bit mode)</TD>
+<TD width=38%>flRegisterCFISCS</TD>
+</TR>
+</TABLE><BR>
+
+<DL>
+<DT>Translation Layers</DT>
+
+<DD>Translation layers provide the necessary mapping between FAT file system data structures and the underlying data format on the linear flash memory hardware. The most widely known and used translation layer is the flash translation layer (FTL), a PC Card industry standard for <B>NOR</B>-based linear flash memory hardware. A separate implementation of the FTL for <B>NAND</B>-based linear flash memory is called the NFTL translation layer. DiskOnChip and other Series-2000 products are <B>NAND</B>-based products.
+
+<P>OEMs can omit unnecessary translation layers. For example, an OEM who wants to use only built-in DiskOnChip hardware can omit the FTL and keep the NTFL. However, TrueFFS supports storage of both FAT16 and FAT32 data structures.
+</dd>
+</DL>
+
+<P>The following table shows the registration routines of existing translation layers. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>
+<H5>Registration routine</H5>
+</TD>
+<TD width=70%>
+<H5>Hardware</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>flRegisterFTL</B></TD>
+<TD width=70%><B>NOR</B>-based linear flash memory hardware</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>flRegisterNFTL</B></TD>
+<TD width=70%><B>NAND</B>-based linear flash memory hardware</TD>
+</TR>
+</TABLE><BR>
+
+<DL>
+<DT>Socket Interfaces</DT>
+
+<DD>Socket interface components control the access of the TrueFFS driver to sockets in which linear flash memory hardware resides. For PC Cards, the interface components consist of the PC Card socket API. For built-in DiskOnChip devices, the socket interface is a custom software component. An OEM who provides DiskOnChip hardware but not PC Card sockets needs only the DiskOnChip socket layer.</dd>
+</DL>
+
+<P>The following table shows the registration routines for existing socket layers. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>
+<H5>Registration routine</H5>
+</TD>
+<TD width=70%>
+<H5>Hardware</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>flRegisterFixedFlash</B></TD>
+<TD width=70%>Built-in DiskOnChip hardware</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><B>flRegisterCS</B></TD>
+<TD width=70%>PC Card–based linear flash memory hardware</TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

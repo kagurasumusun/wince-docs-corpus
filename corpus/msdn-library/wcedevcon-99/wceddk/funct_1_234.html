@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisMRegisterMiniport</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndismregisterminiport"></A>NdisMRegisterMiniport</H2>
+
+<P>This function registers an NIC or intermediate driver’s <B>Miniport</B>_* entry points and name with the NDIS library when the driver initializes.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>Header file:</TD>
+<TD width=70%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Windows CE versions:</TD>
+<TD width=70%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>NDIS_STATUS NdisMRegisterMiniport(<BR>
+IN NDIS_HANDLE </B><I>NdisWrapperHandle</I><B>, <BR>
+IN PNDIS_MINIPORT_CHARACTERISTICS </B><I>MiniportCharacteristics</I><B>, <BR>
+IN UINT </B><I>CharacteristicsLength</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>NdisWrapperHandle</I></DT>
+
+<DD>Handle returned by the <B>NdisMInitializeWrapper</B> function.</dd>
+
+<DT><I>MiniportCharacteristics</I></DT>
+
+<DD>Pointer to an <B>NDIS_MINIPORT_CHARACTERISTICS</B> structure set up by the caller.
+
+<P>The driver should initialize this structure with 0s before setting up any its members.
+</dd>
+
+<DT><I>CharacteristicsLength</I></DT>
+
+<DD>Specifies the length, in bytes, of the caller-supplied characteristics buffer. Depending on the value of the <I>MajorNdisVersion</I> member of <B>NDIS_MINIPORT_CHARACTERISTICS</B>, this parameter must be either <B>sizeof(</B>NDIS40_MINIPORT_CHARACTERISTICS<B>)</B> or <B>sizeof(</B>NDIS30_MINIPORT_CHARACTERISTICS<B>)</B>.
+
+<P>The driver includes the build instruction NDIS40_MINIPORT or NDIS30_MINIPORT, as appropriate, in its sources; if the driver writer uses the -DNDIS40_MINIPORT or ..30.. compiler switch, this parameter is set when the driver is built.
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>NDIS_STATUS_SUCCESS indicates success. One of the following status values indicates failure:
+
+<DL>
+<DT>NDIS_STATUS_BAD_CHARACTERISTICS</DT>
+
+<DD>The <I>CharacteristicsLength</I> is too small for the <I>MajorNdisVersion</I> specified in the buffer at <I>MiniportCharacteristics</I>.</dd>
+
+<DT>NDIS_STATUS_BAD_VERSION</DT>
+
+<DD>The <I>MajorNdisVersion</I> or <I>MinorNdisVersion</I> specified in the characteristics structure is invalid.</dd>
+
+<DT>NDIS_STATUS_RESOURCES</DT>
+
+<DD>A shortage of resources, possibly memory, prevented the NDIS library from registering the caller.</dd>
+
+<DT>NDIS_STATUS_FAILURE</DT>
+
+<DD>This is a default error status, returned when none of the preceding errors caused the registration to fail. For example, if the NDIS library cannot load the driver’s image and lock it into system memory, it returns this error.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>An NIC driver calls this function from its <B>DriverEntry</B> function after <B>DriverEntry</B> calls the <B>NdisMInitializeWrapper</B> function.</P>
+
+<P>Every NIC driver that exports only <B>Miniport</B><I>XXX</I> functions must set up a characteristics structure and call this function. This structure is copied in the request to the NDIS library’s internal storage. Thus, once it has registered, a miniport driver cannot change its handler functions.</P>
+
+<P>The NDIS library currently does not call <B>MiniportReconfigure</B> functions, so such a function in an existing miniport driver does nothing unless the miniport makes internal calls to its <B>MiniportReconfigure</B> function from <B>MiniportInitialize</B>.</P>
+
+<P>After the driver has called this function, it should be prepared to be called back at the <B>MiniportInitialize</B> entry point specified in the characteristics structure.</P>
+
+<P>NDIS intermediate drivers, which export both <B>Miniport</B><I>XXX</I> and <B>Protocol</B><I>XXX</I> functions, usually call the <B>NdisIMRegisterLayeredMiniport</B> function, instead of this function. Intermediate drivers that export only a set of <B>Miniport</B><I>XXX</I> functions usually call this function.</P>
+
+<P>A driver that calls this function runs at IRQL PASSIVE_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_293.htm"><B>NdisZeroMemory</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

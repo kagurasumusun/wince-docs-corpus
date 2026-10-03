@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Power Management</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<TABLE ALIGN=right WIDTH=0 BORDER=0><TR><TD>
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_CeRunAppAtTime">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_WaitCommEvent">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_Sleep">
+</OBJECT>
+</TD></TR></TABLE>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_power_management"></A>Power Management</H2>
+
+<P>The primary function of power management is to increase the battery life of an H/PC. Power management is accomplished by providing accurate estimates of remaining battery life and notifying a user when batteries are nearly depleted. Power management for an H/PC is based on the following assumptions:
+
+<UL>
+	<LI>The H/PC is used less than two hours per day in bursts from five minutes to one hour.</li>
+
+	<LI>The display is powered 100 percent of the time during use.</li>
+
+	<LI>The device runs less than 10 percent of the time during typical use.</li>
+
+	<LI>The device uses both main batteries and a backup battery.</li>
+
+	<LI>The device has no nonvolatile, writable memory.</li>
+
+	<LI>Maximum battery life is obtained without PC Card or flash storage devices or those that require very little power from the device batteries. Storage devices that draw appreciable power from internal batteries significantly reduce battery life.</li>
+</UL>
+
+<H2>Power Management States</H2>
+
+<P>An H/PC manages power by allowing the operating system to automatically select one of three operating states, based on user and programming activities. These states are dead, suspend, and on.</P>
+
+<H2>Dead State</H2>
+
+<P>In the dead state, an H/PC uses no power. It has no batteries, or the batteries have no power. All contents of RAM are lost. The user purchases a device in this state.</P>
+
+<H2>Suspend State</H2>
+
+<P>In the suspend state, an H/PC uses minimal power to maintain its clock, its applications, and the persistent data stored in RAM. To reduce power requirements, an H/PC removes power from unneeded circuits and devices, such as the keyboard decoder, display, scratch-pad memory, and processor. A PC Card storage device driver determines the power that it uses when the device is in the suspend state. The processor might take as long as 100 milliseconds to wake up from this state.</P>
+
+<P>An H/PC switches to the suspend state when the following events occur:
+
+<UL>
+	<LI>The user selects the <B>Suspend</B> command.</li>
+
+	<LI>The device detects a critical-power condition.</li>
+
+	<LI>The activity timer performs a time-out.</li>
+</UL>
+
+<P>Windows CE uses an activity timer to gauge whether a user is actively using a device. The timer counts down while the device is in the on state. When the timer reaches zero, the H/PC switches to the suspend state. The user can set the maximum value of this timer, in seconds. Two events reset the timer to its maximum value: a key press or release or a touch event. When the timer reaches five seconds, the H/PC sounds a warning to alert the user that it is about to suspend operation. The operating system does not notify applications when it enters the suspend state because most applications are not affected by this transition. When the device resumes operation, applications also resume operation as if they had been continuously running.</P>
+
+<H2>Programming the Suspend State</H2>
+
+<P>Applications generally do not run while an H/PC is in the suspend state. However, several functions can alter the time at which an H/PC suspends itself. The following table shows functions that you can use to reset activity times or to set timers and events that can switch an H/PC from the suspend state to the on state.</P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=37%>
+<H5>Function</H5>
+</TD>
+<TD width=63%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><A HREF="JavaScript:hhobj_1.Click()"><B>CeRunAppAtTime</B></A></TD>
+<TD width=63%>Sets a timer or runs an application at a specified time.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%><A HREF="JavaScript:hhobj_2.Click()"><B>WaitCommEvent</B></A></TD>
+<TD width=63%>Waits for a communications event to occur. Serial, Infrared Data Association (IrDA), or PC Card storage devices can return EV_POWER when the device resumes operation. </TD>
+</TR>
+</TABLE><BR>
+
+<P>If an application uses the <A HREF="JavaScript:hhobj_3.Click()"><B>Sleep</B></A><B> </B>function, it does not increment the elapsed time counter while the H/PC is in suspend state. It starts counting again when the H/PC resumes operation. The internal clock is not affected when the H/PC suspends operation. Though an application is not notified when a device enters the suspend state, the operating system does notify a device driver by calling a power-handler function. A device driver might use this notification to suspend operation of the device it controls, which may cause a device not to be available immediately after the device switches to the on state. For example, when a file stored on a PC Card storage device is open and the user tries to save the file before the PC Card is turned on, the system returns an error message.</P>
+
+<H2>On State</H2>
+
+<P>In the on state, an H/PC uses more power than in the dead or suspend states. Any time the display, keyboard, or touch screen are active, an H/PC is in the on state. When in the on state, an H/PC can switch between two processor modes: full speed and idle. In full-speed mode, the processor runs at normal operating frequency. In idle mode, the internal processor clock stops, and the processor uses little power. Peripherals and DRAM may be on or off. The processor can enter and exit this state in approximately 10 milliseconds. An H/PC switches to the on state when one of the following events take place: 
+
+<UL>
+	<LI>A user presses the <B>On</B> button.</li>
+
+	<LI>A user triggers an alarm event.</li>
+
+	<LI>A user performs a warm or cold boot.</li>
+
+	<LI>A user changes the battery.</li>
+</UL>
+
+<P>In the on state, the default mode is full speed. An H/PC switches from full-speed mode to idle mode when all processes are idle. Switching to idle mode is transparent to the user and most applications because the system continues to process interrupts, including the time-slice interrupt.</P>
+
+<H2>Programming in the On State</H2>
+
+<P>When an H/PC is in the on state, some applications may prevent the operating system from switching an H/PC to the idle mode. These applications retain control by using idle loops or by using functions that do not let the operating system block operation. All applications can enhance power management by using functions that let the operating system block a return to the application. To accomplish this, use the <B>GetMessage</B> function, rather than the <B>PeekMessage </B>function, because <B>GetMessage</B> lets the system block a return to the application, and <B>PeekMessage</B> does not. Letting the operating system retain control allows it to determine when the system is inactive so that it can select the most efficient operating state for the H/PC.</P>
+
+<P>If you are programming a power-critical application, use the <B>GetPowerStatusEx</B> function to determine the amount of power remaining on an H/PC. This function returns a variety of information regarding power status, including the amount of remaining power, how long the current charge will last, and recharging status.</P>
+
+<H2>Resuming Operation, Rebooting, and Resetting</H2>
+
+<P>Resuming device operation from the on-state idle mode or the suspend state does not alter the memory of an H/PC or change application settings. In contrast, rebooting or resetting an H/PC does alter memory and affect application operation. The following table shows the differences between these transitions. </P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=23%>
+<H5>Transition</H5>
+</TD>
+<TD width=77%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>Wake up <BR>
+or resume</TD>
+<TD width=77%>Transitions from the suspend state to the on-state full-speed mode. Wake up does not change memory or application settings.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>Cold boot <BR>
+or cold reset</TD>
+<TD width=77%>Resets an H/PC. All applications are terminated, the working memory is cleared, and the object store is cleared.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>Power-on reset</TD>
+<TD width=77%>Transitions from a dead state to an on state. Power-on reset has the same consequences as a cold boot.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>Warm boot <BR>
+or warm reset</TD>
+<TD width=77%>Terminates all applications and clears working memory. The integrity of the object store is maintained.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The cold boot and power-on reset transitions occur when power is first applied to an H/PC or when all power is removed from an H/PC and then reapplied after one minute. Unless an H/PC uses nonvolatile memory, a user will have to load or reload applications after a power-on reset. Object store data is lost after a cold boot.</P>
+
+<P>A warm boot occurs when the user presses the reset button on an H/PC. This button is placed in a pin-hole recess or under the battery cover to protect it from accidental activation. Users perform a warm boot only when the H/PC has stopped responding or has become unstable. A warm boot stops applications that are running and clears the memory used to execute applications. Memory used by the object store and file system is preserved.</P>
+<p>&nbsp;</p></body>
+</HTML>

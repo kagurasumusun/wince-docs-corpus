@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CEDevice</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_cedevice"></A>CEDevice</H2>
+
+<P>The [CEDevice] section is optional and describes the platform for which your application is targeted. All keys in this section are optional. If a key is nonexistent, Windows CE does not perform any checking. Windows CE also does not perform any checking if a key has no data. The exception is <B>UnsupportedPlatforms</B>; if this key exists but there is no data, the previous value is not overridden.</P>
+
+<PRE><CODE>[CEDevice]
+[ProcessorType =[<I>processor_type</I>]]
+[UnsupportedPlatforms = <I>platform_family_name</I>[,<I>platform_family_name</I>]]
+[VersionMin = [<I>major_version.minor_version</I>]]
+[VersionMax = [<I>major_version.minor_version</I>]]
+[BuildMin = [<I>build_number</I>]]
+[BuildMax = [<I>build_number</I>]]
+</CODE></PRE>
+
+<DL>
+<DT><I>processor_type</I></DT>
+
+<DD>Value that is returned by <B>SYSTEMINFO.</B><I>dwProcessorType</I>. For example, the value for the SH3 CPU is 10003 and the MIPS CPU is 4000.</dd>
+
+<DT><I>platform_family_name</I></DT>
+
+<DD>List of platform family names that are known to be unsupported. If the name specified in the [CEDevice.<I>xxx</I>] section is different from that in the [CEDevice] section, both <I>platform_family_name</I> values are unsupported for the microprocessor that is specified by <I>xxx</I>. That is, the list of specific unsupported platform family names is appended to the previous list of unsupported platform family names. Application Manager will not display the application for an unsupported platform. Also, a user will be warned during the setup process if the .cab file is copied to an unsupported device. For example:
+
+<PRE><CODE>[CEDevice]
+UnsupportedPlatforms = <I>pltfrm1</I>      ; <I>pltfrm1</I> is unsupported
+[CEDevice.SH3]
+UnsupportedPlatforms =              ; <I>pltfrm1</I> is still unsupported
+</CODE></PRE>
+</dd>
+
+<DT><I>major_version</I> and <I>minor_version</I></DT>
+
+<DD>Numeric value that is returned by <B>OSVERSIONINFO.</B><I>dwVersionMinor</I> and <B>OSVERSIONINFO.</B><I>dwVersionMajor</I>. The .cab file is valid for the currently connected device if the version of the currently connected device is less than or equal to <I>VersionMax</I> and also greater than or equal to <I>VersionMin</I>. For Windows CE Japanese-language devices, set <I>VersionMin</I> and <I>VersionMax</I> to 2.01.
+
+
+<P><B>Note</B>  The supported Windows CE OS versions include 1.0, 1.01, 2.0, 2.01, and 2.10. When you use these numbers, be sure to include all significant digits.
+
+</dd>
+
+<DT><I>build_number</I></DT>
+
+<DD>Numeric value returned by <B>OSVERSIONINFO.</B><I>dwBuildNumber</I>. The .cab file is valid for the currently connected device if the version of the currently connected device is less than or equal to <I>BuildMax</I> and also greater than or equal to <I>BuildMin</I>.
+</dd>
+</DL>
+
+<P>The following code example shows three [CEDevice] sections: one that gives basic information for any CPU and two that are specific to the SH3 and the MIPS microprocessors.</P>
+
+<PRE><CODE>[CEDevice]                           ; A "template" for all platforms
+UnsupportedPlatforms = <I>pltfrm1</I>       ; Does not support <I>pltfrm1</I>
+; The following specifies version 1.0 devices only.
+VersionMin = 1.0
+VersionMax = 1.0
+
+[CEDevice.SH3]                  ; Inherits all [CEDevice] settings
+; This will create a .cab file specific to SH3 devices.
+ProcessorType = 10003           ; The SH3 .cab file is only valid 
+                                ; for the SH3 microprocessors.
+UnsupportedPlatforms =          ;<I> pltfrm1</I> is still unsupported
+; The following overrides the version settings so that no version
+; checking is performed.
+VersionMin =
+VersionMax =
+
+[CEDevice.MIPS]                  ; Inherits all [CEDevice] settings
+; This will create a .cab file specific to "MIPS" devices.
+ProcessorType = 4000             ; The MIPS .cab file is only valid 
+                                 ; for the MIPS microprocessor.
+UnsupportedPlatforms =<I>pltfrm2</I>    ;<I> pltfrm1 and pltfrm2</I> are 
+                                 ; unsupported for the “MIPs" .cab file.
+</CODE></PRE>
+
+<P><B>Note</B>  To create the two CPU-specific .cab files for the setup .inf file in the previous example, you must run the CAB Wizard with the <B>/cpu&nbsp; sh3&nbsp; mips</B> parameter.</P>
+<p>&nbsp;</p></body>
+</HTML>

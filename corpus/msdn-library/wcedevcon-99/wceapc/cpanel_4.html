@@ -1,0 +1,259 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Adding a Control Panel Application</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_adding_a_control_panel_application"></A>Adding a Control Panel Application</H2>
+
+<P>This section describes how you can add an application to the Control Panel either as a stand-alone application, or as an extension of another application.</P>
+
+<P>The code examples are part of a complete sample application, Sysinfo.dsp, included in the SDK. Sysinfo.dsp creates a display-only Control Panel application that provides information about system memory.</P>
+
+<P>In Sysinfo.dsp, the three .cpp files are:</P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=23%>
+<H5>C++ files</H5>
+</TD>
+<TD width=77%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>Syssink.cpp</TD>
+<TD width=77%>Implements the application message sink</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>Sysapp.cpp</TD>
+<TD width=77%>Implements the application CSysInfoApp class</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%>Sysmain.cpp</TD>
+<TD width=77%>Provides the entry point into the application</TD>
+</TR>
+</TABLE><BR>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a Control Panel application</H4>
+
+<OL>
+	<LI>Call <B>CoCreateInstance</B> to create an instance of a Forms Manager.</li>
+
+	<LI>Call <B>LoadFormResource</B> to load a form from a resource file.</li>
+
+	<LI>Create a message sink.
+<UL>
+	<LI>Implement a COM object with <B>IASEventSink</B>, <B>IASClassMsgSink</B>, <B>IUnknown</B> and <B>IDispatch</B> interfaces.</li>
+
+	<LI>Create a function to handle VK_ESCAPE key messages.</li>
+</UL>
+</li>
+
+	<LI>Call <B>DllMain</B> to create a DLL that is the entry point to the application and handles all Control Panel messages.</li>
+
+	<LI>Use the <B>CALLBACK</B> CplApplet prototype to create a callback function.</li>
+
+	<LI>Compile your application as a .cpl file instead of a .dll file.
+<P>Design your application install program to copy your .cpl file into the Windows directory.
+</li>
+</OL>
+
+<P>The following table show the messages the application callback function must process.</P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=25%>
+<H5>Message</H5>
+</TD>
+<TD width=75%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CPL_INIT</TD>
+<TD width=75%>Sent to a Control Panel application to prompt it to perform global initialization, especially memory allocation. Returns 1 when it succeeds.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CPL_GETCOUNT</TD>
+<TD width=75%>Sent to a Control Panel application to retrieve the number of applications supported by the application. Returns the number of applications.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CPL_NEWINQUIRE</TD>
+<TD width=75%>Sent to a Control Panel application to request information about a dialog box that the application supports</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CPL_APCINQUIRE</TD>
+<TD width=75%>Requests data from the application</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CPL_DBLCLK</TD>
+<TD width=75%>Sent to a Control Panel application when the user double-clicks an icon in the Control Panel</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CPL_STOP</TD>
+<TD width=75%>Sent once for each application when the application that controls the Control Panel closes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>CPL_EXIT</TD>
+<TD width=75%>Sent once to a Control Panel application before the controlling application releases the DLL that contains the application</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following code example shows how to create a message sink that handles VK_ESCAPE messages.</P>
+
+<PRE><CODE>STDMETHODIMP 
+CSysInfoSink::HandleKeyPress(IDispatch *pdispControl, long lKeyDown)
+{
+   switch(lKeyDown)
+   {
+    case VK_ESCAPE:
+       // Send a quit message to the current thread.
+       PostThreadMessage(GetCurrentThreadId(), WM_QUIT, 0, 0);
+       return S_OK; // Returns S_OK if message should stop here
+   }
+
+   return S_FALSE; // Returns S_FALSE, if the message should continue 
+                   // down the message path
+}
+</CODE></PRE>
+
+<P>The following code example shows how to create a callback function that processes Control Panel messages for Sysinfo.dsp.</P>
+
+<PRE><CODE>LONG CALLBACK CPlApplication(HWND hwndCPL, UINT uMsg, LONG lParam1, LONG
+                             lParam2)
+{
+    DEBUGMSG(ZONE_FUNCTION,(TEXT("+CPlApplication(0x%x, 0x%x, 0x%x,
+             0x%x)\r\n"), hwndCPL, uMsg, lParam1, lParam2));
+
+   int iStringLen;
+   NEWCPLINFO* pCPLInfo;
+   APCCPLINFO* pAPCInfo;
+
+    switch (uMsg) 
+    {
+    case CPL_INIT:              // The first message received from
+                                // Control Panel.exe is sent once.
+        return TRUE;                // Return success
+
+    case CPL_GETCOUNT:          // The second message is sent once.
+        return 1;               // Only one application is in this DLL.
+
+    case CPL_NEWINQUIRE:           // Query for information on the
+                               // application.
+        pCPLInfo = (NEWCPLINFO*) lParam2;            // Where to
+                                                     // put inquiry
+                                                     // information
+        memset(pCPLInfo, NULL, sizeof(NEWCPLINFO));  // Clear out
+                                                     // inquiry
+                                                     // structure 
+
+        // Fill NEWCPLINFO with required information
+        pCPLInfo-&gt;dwSize  = (DWORD) sizeof(NEWCPLINFO);
+
+        // The display cpl supports a faceplate, but not a VGA screen.
+        pCPLInfo-&gt;dwFlags = CPL_DISPLAY_FACEPLATE | CPL_DISPLAY_NOVGA;
+
+        // Load the icon that Control Panel uses.
+        pCPLInfo-&gt;hIcon   = LoadIcon(g_hInst,
+        (LPWSTR)MAKEINTRESOURCE(ICON_APP_SHELL));
+        
+        // Load the application name into NEWCPLINFO.szName 
+        // with a maximum of 32 characters.
+        iStringLen = 32;  
+        LoadString(g_hInst, STR_APP_SHELL_NAME, pCPLInfo-&gt;szName,
+                   iStringLen );
+
+        if( pCPLInfo-&gt;hIcon == NULL || pCPLInfo-&gt;szName == NULL ) 
+          {
+            DEBUGCHK(0);
+            return E_FAIL;    //Return Error.
+          }
+          return NOERROR;
+
+    case CPL_APCINQUIRE:
+        pAPCInfo = (APCCPLINFO*) lParam2;
+        memset(pAPCInfo, NULL, sizeof(APCCPLINFO));
+
+        // Fill APCINQUIRE with the required data.
+        pAPCInfo-&gt;dwSize = (DWORD) sizeof(APCCPLINFO);
+
+        // Load the application name into APCCPLINFO.szTTSName with a 
+        // maximum of 32 characters.
+        iStringLen = 32;  
+        LoadString(g_hInst, STR_APP_SHELL_NAME, pAPCInfo-&gt;szTTSName,
+                   iStringLen );
+        return NOERROR;
+
+/***********************************************************************
+*CPL_DBLCLK message
+*   This application should act just as it would in a WinMain.
+*   Create a message loop, a Forms Manager, a form, and so on.
+----------------------------------------------------------------------*/
+    case CPL_DBLCLK:    
+        MSG     msg;
+
+        // Create a new application class instance.
+        g_pApp = new CSysInfoApp(g_hInst);
+        if( g_pApp == NULL ) 
+          {
+            DEBUGCHK(0);
+            return FALSE;    
+          }
+
+        if(FAILED(g_pApp-&gt;Init())) 
+          {
+            DEBUGCHK(0);
+            delete g_pApp;    
+            return FALSE;
+          }
+
+    // Start a message loop.
+        while (GetMessage(&amp;msg, NULL, 0, 0)) 
+        {
+            if (msg.hwnd) 
+            {
+                DispatchMessage(&amp;msg);
+            }
+        }
+        
+        delete g_pApp;
+        return TRUE;
+
+    case CPL_STOP:              // Sent once per application before
+                                // CPL_EXIT
+    break;
+
+    case CPL_EXIT:             // Sent once before FreeLibrary called
+    break;
+
+    default:
+    break;
+    }
+
+    DEBUGMSG(ZONE_FUNCTION,(TEXT("-CPlApplication(0x%x)\r\n")));
+
+    return TRUE;
+}
+</CODE></PRE>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

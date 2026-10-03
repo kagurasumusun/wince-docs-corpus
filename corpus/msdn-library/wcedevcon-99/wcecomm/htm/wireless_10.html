@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Installing a Message Handler</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_installing_a_message_handler"></A>Installing a Message Handler</H2>
+
+<P>Message handlers must be registered before they can be used. The following registry key example shows the four registry keys that you must set in order to install and register a message handler.</P>
+
+<PRE><CODE>[HKEY_CLASSES_ROOT\CLSID\{14EF11D0-3EC7-11d2-90BF-0000F80272E4}]
+Default="stock translator"
+[HKEY_CLASSES_ROOT\CLSID\{14EF11D0-3EC7-11d2-90BF-0000F80272E4}\InprocServer32]
+Default="\\windows\\stock.dll"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WIS\Routers\{14EF11D0-3EC7-11d2-90BF-0000F80272E4}]
+"Type"="Translator"
+Default=hex:60,2C,2A,2A,20,53,74,6F,63,6B,73,20,2A,2A
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WIS\Control\Device1\Stocks]
+"PredefinedRouter"=hex:21,60,2C,2A,2A,3,74,6F,63,6B,73,20,2A,2A
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WIS\Control\Device1\News]
+"MaxMsgs"=dword:10
+</CODE></PRE>
+
+<P>The first two keys are COM object registry entries.</P>
+
+<P>The third key registers the handler as a translator and sets the tag to be used by the router to refer to the handler. The first hexadecimal value is the constant 0x60, the second hexadecimal value is 0x20 plus the number of bytes for the tag name, and the rest of the values make up a unique ASCII name. Because the tag in this example is 12 bytes long, the second value is 0x2c.</P>
+
+<P>The fourth key defines how the router routes messages through the handler. Because the first hexadecimal value is 0x20 plus the number of handlers, which is always 1, this value is 0x21. The rest of the values are the tag from the third key.</P>
+
+<P>This example shows a fifth, optional, registry entry that places a limit on the number of messages held in a PMail folder for messages that arrive on this address.</P>
+
+<P>This information is provided in case you need to search the registry for a problem. Wireless Services provides two functions, <B>RegisterHandler</B> and <B>UnregisterHandler</B>, that simplify the process of registering and deregistering message handlers. <B>RegisterHandler</B> enables you to register a message handler in any of the following ways:
+
+<UL>
+	<LI>As the handler for messages received by a specific radio device and address</li>
+
+	<LI>As the default handler for messages received by a radio device, but that do not have an address-level handler</li>
+
+	<LI>As the overall default handler for any messages that do not have message handlers specified at either the radio device or the device-and-address levels</li>
+</UL>
+
+<P>To use these functions in your program, include the Riohlp.h header file.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To register a message handler</H4>
+
+<OL>
+	<LI>Specify the device for which the handler is to be registered.</li>
+
+	<LI>Specify the address for which the handler is to be registered.
+<P>If this value is NULL, the handler is assigned as the default handler for the device.
+</li>
+
+	<LI>Specify a string containing the name of the DLL in which the handler is stored.</li>
+
+	<LI>Call <B>RegisterHandler</B>, and check the return value for success.</li>
+</OL>
+
+<P>If you want a message handler to stop handling messages received for an address or device, use <B>UnregisterHandler</B>. You can deregister a message handler for a specific device and address or for all device addresses.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To deregister a message handler</H4>
+
+<OL>
+	<LI>Specify the device for which the handler is to be deregistered.</li>
+
+	<LI>Specify the address for which the handler is to be deregistered.
+<P>If this value is NULL, the handler is deregistered for all addresses on this device.
+</li>
+
+	<LI>Specify the handler class identifier (CLSID).</li>
+
+	<LI>Call <B>UnregisterHandler</B>, and check the return value for success.</li>
+</OL>
+<p>&nbsp;</p></body>
+</HTML>

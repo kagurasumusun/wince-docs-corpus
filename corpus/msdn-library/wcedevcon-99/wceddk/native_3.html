@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Interrupt Handling in Native Device Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_interrupt_handling_in_native_drivers"></A>Interrupt Handling in Native Device Drivers</H2>
+
+<P>Like many other computer architectures, Windows CE–based platforms use interrupts to signal the operating system when devices need servicing by their drivers. For example, when a user presses a key or taps a screen, the keyboard hardware or the touch screen generates an interrupt.</P>
+
+<P>However, Windows CE does not support nested interrupts, meaning that interrupts cannot occur simultaneously. Processing of one interrupt must finish before another begins. Although this limits the real-time scheduling capabilities of Windows CE, it vastly simplifies the process of writing interrupt handlers.</P>
+
+<P>Windows CE balances performance and ease of implementation by breaking interrupt processing into two parts, a kernel-mode part and a user-mode part. The kernel-mode part is called the interrupt service routine (ISR), and the user-mode part is called the interrupt service thread (IST). The ISR is the part that cannot be nested; therefore, keep your ISRs short and fast so that interrupts are disabled as little as possible. The ISR resides in the OEM adaptation layer (OAL) and has direct access to hardware registers. Its sole job is to determine which interrupt identifier, such as SYSINTR_SERIAL, to return to the kernel interrupt handler. Essentially, ISRs map physical interrupts onto logical interrupts. Platform-independent interrupt identifiers are declared in the Nkintr.h header file, and platform-specific interrupt identifiers are declared in platform header files, such as Platform\Cepc\Inc\Oalintr.h.</P>
+
+<P>Because an ISR is small and does very little processing, the interrupt handler calls an IST to perform the bulk of processing required to handle an interrupt. The IST remains idle until it receives a signal from the <B>WaitForSingleObject</B> function that an interrupt has occurred. When an IST receives the signal, it calls subroutines in the PDD layer of the native device driver; these routines in turn access the hardware to retrieve information or to set the hardware state. The IST is a standard secondary thread that can be pre-empted and scheduled by the operating system. However, to enhance real-time performance, Windows CE uses the two highest thread-priority levels, THREAD_PRIORITY_HIGHEST and THREAD_PRIORITY_TIME_CRITICAL, for ISTs. These priority levels are not reserved for ISTs; any secondary thread can also have those priority levels.</P>
+
+<P>On a Windows CE–based reference platform, which uses the Hitachi SH3 microprocessor, the system can start an ISR in 2 to 5 microseconds. The system can start the corresponding IST in 90 to 170 microseconds. Many actual Windows CE–based platforms have better response times than these, depending on factors such as CPU type, clock speed, bus speed, and so on. Aside from hardware performance, the IST start times vary from one interrupt event to the next due to unpredictable factors, such as the state of the processor cache and whether the IST happens to be the currently running thread.</P>
+
+<P>If your platform is not meeting your real-time performance requirements, you have the following options:
+
+<UL>
+	<LI>Putting more processing into the ISR. This is strongly discouraged because when an ISR is running, no other threads are scheduled, and interrupts are masked. A user might experience poor performance of the device or missed input if an ISR takes too long.</li>
+
+	<LI>Adding buffering hardware that can store data relevant to several interrupt events and modifying the IST so that it gathers the data from several interrupt events in the buffering hardware. This enables the IST to process interrupts in batches, resulting in a reduction of real-time requirements.</li>
+
+	<LI>Using a higher clock frequency on the CPU, on the data bus, or on both</li>
+
+	<LI>Adjusting the priorities of the platform ISTs</li>
+</UL>
+
+<P>The following illustration shows the interaction of components during the interrupt process.</P>
+
+<P><IMG SRC="intrrupt.gif" ALT="" BORDER=0></P>
+
+<P>The exception handler is the primary target of all interrupts. When an interrupt occurs, the kernel jumps directly to the exception handler. The exception handler then calls whichever ISR is registered to handle the current interrupt.</P>
+
+<P>OEMs register their ISRs with the exception handler at startup time. First, the kernel calls the <B>OEMInit</B> function in the OAL. Next, <B>OEMInit</B> calls the <B>HookInterrupt</B> function to inform the exception handler of which ISRs correspond to individual physical interrupt lines. A few subroutines in the OAL, such as the <B>OEMInterruptEnable</B>, <B>OEMInterruptDisable</B>, and <B>OEMInterruptDone</B> functions, are also used in interrupt processing.</P>
+
+<P>The interrupt handler manages the details of registering a driver for a particular interrupt and deregistering it later. It also maintains communication among the ISR, the IST, and subroutines within the OAL.</P>
+
+<P>Monolithic drivers can use the Interrupt Event Handler Support interface provided by the kernel. This interface is a lightweight process-synchronization model based on standard Win32 events. The interface consists of event-related functions, such as <B>CreateEvent</B>, <B>SetEvent</B>, <B>ResetEvent</B>, and <B>WaitForSingleObject</B>, and the Windows CE kernel <B>InterruptDone</B>,<B> InterruptDisable</B>, <B>InterruptEnable</B>, and <B>InterruptInitialize </B>functions. Layered drivers use the same functions to process interrupts, but you need not use these functions to port layered drivers because the MDD layer—which does not require modification—already contains the proper calls to these functions.</P>
+
+<P>The following sections discuss in greater detail how to register an interrupt handler, process it, and deregister it.</P>
+<p>&nbsp;</p></body>
+</HTML>

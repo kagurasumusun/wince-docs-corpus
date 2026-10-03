@@ -1,0 +1,318 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CryptGenKey</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_crypto2_cryptgenkey"></A>CryptGenKey</H2>
+
+<P>This function generates random cryptographic keys for use with the cryptographic service provider (CSP) module. A handle to the key is returned in <I>phKey</I>. This handle can then be used as needed with any of the other CryptoAPI functions requiring key handles. </P>
+
+<P>When calling this function, the application is required to specify the algorithm. Because this algorithm type is kept bundled with the key, the application does not need to specify the algorithm later when the actual cryptographic operations are performed.</P>
+
+<P>The maximum size of an RSA signature is 16,384 bits.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Wincrypt.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL CRYPTFUN CryptGenKey( HCRYPTPROV</B> <I>hProv</I>, <B>ALG_ID</B> <I>Algid</I>,<BR>
+<B>DWORD</B> <I>dwFlags</I>, <B>HCRYPTKEY</B> <I>*phKey </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hProv</I></DT>
+
+<DD>[in] Handle to the application's CSP. An application obtains this handle by using the <A HREF="cf_ac_13.htm"><B>CryptAcquireContext</B></A> function.</dd>
+
+<DT><I>Algid</I></DT>
+
+<DD>[in] Identifier for the algorithm for which the key is to be generated.
+
+<P>The valid values for this parameter will vary, depending on the CSP that is used. See the "Remarks" section for a list of common algorithm identifiers.
+</dd>
+
+<DT><I>dwFlags</I></DT>
+
+<DD>[in] Specifies the type of key generated. 
+
+<P>The sizes of RSA signature and key exchange keys may be set when the key is generated. The key size is set with the upper 16 bits of the <I>dwFlags</I> parameter and these 16 bits represent the length of the key (modulus) in bits. So if a 2048 bit RSA signature key is to be generated then the value 0x08000000 would be combined together with the <I>dwFlags</I> parameter in bitwise OR operation. Notice that the upper 16 bits of 0x08000000 is 0x0800, or 2048 in decimal notation. If none of the upper 16 bits are set, then the default key size is generated. If a key larger than the max (16,384 signature, 512 key exchange) or smaller than the min (384 sig and key exchange) is given, the call fails with ERROR_INVALID_PARAMETER. 
+
+
+<P>This parameter can be zero, or you can specify one or more of the following flags by using the bitwise OR operator to combine them:
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=37%>
+<H5>Flag</H5>
+</TD>
+<TD width=63%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>CRYPT_EXPORTABLE. </TD>
+<TD width=63%>If this flag is set, then the key can be transferred out of the CSP into a key BLOB by using the <A HREF="cf_ac_25.htm"><B>CryptExportKey</B></A> function. Because session keys generally must be exportable, this flag should usually be set when they are created.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%> </TD>
+<TD width=63%>If this flag is not set, then the key will <I>not</I> be exportable. For a session key, this means that the key will be available only within the current session and only the application that created it will be able to use it. For a public/private key pair, this means that the private key cannot be transported or backed up.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%> </TD>
+<TD width=63%>This flag applies only to session key and private key BLOBs. It does not apply to public keys, which are always exportable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>CRYPT_CREATE_SALT. </TD>
+<TD width=63%>If this flag is set, then the key will be assigned a random salt value automatically. You can retrieve this salt value by using the <A HREF="cf_ac_30.htm"><B>CryptGetKeyParam</B></A> function with the <I>dwParam</I> parameter set to KP_SALT.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%> </TD>
+<TD width=63%>If this flag is not set, then the key will be given a salt value of zero.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%> </TD>
+<TD width=63%>When keys with nonzero salt values are exported (through <A HREF="cf_ac_25.htm"><B>CryptExportKey</B></A>), then the salt value must also be obtained and kept with the key BLOB.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>CRYPT_NO_SALT. </TD>
+<TD width=63%>Specifies that a no salt value gets allocated for a 40-bit symmetric key. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>CRYPT_USER_PROTECTED. </TD>
+<TD width=63%>The Microsoft Windows CE Cryptographic Providers ignore this flag.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>CRYPT_PREGEN. </TD>
+<TD width=63%>Specifies an initial Diffie-Hellman or DSS key generation. Useful only with Diffie-Hellman/DSS CSPs.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>phKey</I></DT>
+
+<DD>[out] Address to which the function copies the handle of the newly generated key.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. Common values for <B>GetLastError</B> are described in the following table. The error values prefaced by "NTE" are generated by the particular CSP you are using.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=41%>
+<H5>Value</H5>
+</TD>
+<TD width=59%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_INVALID_HANDLE</TD>
+<TD width=59%>One of the parameters specifies an invalid handle. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>ERROR_INVALID_PARAMETER</TD>
+<TD width=59%>One of the parameters contains an invalid value. This is most often an illegal pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_ALGID</TD>
+<TD width=59%>The <I>Algid</I> parameter specifies an algorithm that this CSP does not support.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_FLAGS</TD>
+<TD width=59%>The <I>dwFlags</I> parameter contains an invalid value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_BAD_UID</TD>
+<TD width=59%>The <I>hProv</I> parameter does not contain a valid context handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>NTE_FAIL</TD>
+<TD width=59%>The function failed in some unexpected way.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>To generate a key to be used with a symmetric encryption algorithm (that is, a session key), use the <I>Algid</I> parameter to specify the algorithm. The algorithms available will most likely be different for each CSP. If you are using the Microsoft Base Cryptographic Provider, one of the following values can be used to specify the algorithm.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Value</H5>
+</TD>
+<TD width=69%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>CALG_RC2</TD>
+<TD width=69%>RC2 block cipher</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>CALG_RC4</TD>
+<TD width=69%>RC4 stream cipher</TD>
+</TR>
+</TABLE><BR>
+
+<P>If you are using the Microsoft Enhanced Cryptographic Provider, you can additionally use the following values</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Value</H5>
+</TD>
+<TD width=69%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>CALG_DES</TD>
+<TD width=69%>DES block cipher</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>CALG_3DES</TD>
+<TD width=69%>Triple DES block cipher</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>CALG_3DES_112</TD>
+<TD width=69%>Triple DES two key block cipher</TD>
+</TR>
+</TABLE><BR>
+
+<P>If you are using a Diffie-Hellman CSP, use one of the following values.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Value</H5>
+</TD>
+<TD width=69%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>CALG_DH_SF</TD>
+<TD width=69%>Specifies a "Store and Forward" Diffie-Hellman key.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>CALG_DH_EPHEM</TD>
+<TD width=69%>Specifies an "Ephemeral" Diffie-Hellman key.</TD>
+</TR>
+</TABLE><BR>
+
+<P>When keys are generated for symmetric block ciphers, the key by default will be set up in cipher block chaining (CBC) mode with an initialization vector of zero. This cipher mode provides a good default method for bulk encrypting data. To change these parameters, use the <A HREF="cf_ac_38.htm"><B>CryptSetKeyParam</B></A> function.</P>
+
+<P>In addition to generating keys for symmetric algorithms, the <B>CryptGenKey</B> function can also generate keys for public-key algorithms. The use of public-key algorithms is restricted to key exchange and digital signatures. Each CryptoAPI client generally possesses one key pair for each of these operations. To generate one of these key pairs, set the <I>Algid</I> parameter to one of the following values.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>
+<H5>Value</H5>
+</TD>
+<TD width=67%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>AT_KEYEXCHANGE</TD>
+<TD width=67%>Key exchange</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>AT_SIGNATURE</TD>
+<TD width=67%>Digital signature</TD>
+</TR>
+</TABLE><BR>
+
+<P><B>Note</B>  When key specifications AT_KEYEXCHANGE and AT_SIGNATURE are specified for the <I>Algid</I> parameter, the algorithm identifiers that are used to generate the key depend on the provider used. As a result, for these key specifications, the values returned from <A HREF="cf_ac_30.htm"><B>CryptGetKeyParam</B></A> (when the KP_ALGID parameter is specified) depend on the provider used. </P>
+
+<H4>Example</H4>
+
+<PRE><CODE>#include &lt;wincrypt.h&gt;
+
+HCRYPTPROV hProv = 0;
+HCRYPTKEY hKey = 0;
+
+// Get a handle to user default provider.
+if(!CryptAcquireContext(&amp;hProv, NULL, NULL, PROV_RSA_FULL, 0)) {
+ printf("Error %x during CryptAcquireContext!\n", GetLastError());
+ goto done;
+}
+
+// Create a block cipher session key.
+if(!CryptGenKey(hProv, CALG_RC2, CRYPT_EXPORTABLE, &amp;hKey)) {
+ printf("Error %x during CryptGenKey!\n", GetLastError());
+ goto done;
+}
+
+// Use 'hKey' to encrypt or decrypt a message.
+...
+
+done:
+
+// Destroy the session key.
+if(hKey != 0) CryptDestroyKey(hKey);
+// Release the provider handle.
+if(hProv != 0) CryptReleaseContext(hProv, 0);
+ </CODE></PRE>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_ac_13.htm"><B>CryptAcquireContext</B></A>, <A HREF="cf_ac_19.htm"><B>CryptDestroyKey</B></A>, <A HREF="cf_ac_25.htm"><B>CryptExportKey</B></A>, <A HREF="cf_ac_30.htm"><B>CryptGetKeyParam</B></A>, <A HREF="cf_ac_35.htm"><B>CryptImportKey</B></A>, <A HREF="cf_ac_38.htm"><B>CryptSetKeyParam</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Initializing TAPI</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_initializing_tapi"></A>Initializing TAPI</H2>
+
+<P>When initializing TAPI, the application must establish a way to communicate between a Windows CE–based application and TAPI. An application tells TAPI the address of the callback function in the call to the <B><U>lineInitialize </U></B>function.</P>
+
+<P>The <B>lineInitialize</B> function initializes the application’s use of Tapi.dll for subsequent use. It registers the application-specific notification mechanism and returns the number of line devices available to the application.</P>
+
+<P>The following code example shows how to initialize Tapi.dll.</P>
+
+<PRE><CODE>DWORD InitializeTAPI ()
+{
+  DWORD dwLineID,
+        dwReturn,
+        dwTimeCount = GetTickCount ();
+
+  TCHAR szWarning[] = TEXT("Cannot initialize the application's use\n") 
+                      TEXT("of tapi.dll. Quit all other telephony\n")
+                      TEXT("programs, and then try again.");
+
+  // Initialize the application's use of Tapi.dll. Keep trying until the
+  // user cancels or the application stops returning LINEERR_REINIT.
+  while ( (dwReturn = lineInitialize (&amp;g_hLineApp, 
+                                      g_hInst, 
+                                      (LINECALLBACK) lineCallbackFunc, 
+                                      g_szAppName, 
+                                      &amp;g_dwNumDevs)) == LINEERR_REINIT)
+  {
+    // Display the message box if five seconds have passed.
+    if (GetTickCount () &gt; 5000 + dwTimeCount)
+    {
+      if (MessageBox (g_hwndMain, szWarning, TEXT("Warning"), 
+                      MB_OKCANCEL) == IDOK)
+        break;
+      
+      // Reset the time counter.
+      dwTimeCount = GetTickCount ();      
+    }  
+  }
+
+  // If the lineInitialize function fails, then return.
+  if (dwReturn)
+    return dwReturn;
+
+  // If there is no device, then return.
+  if (g_dwNumDevs == 0)
+  {
+    ErrorBox (TEXT("There are no line devices available."));
+    return LINEERR_NODEVICE;
+  }
+
+  // Allocate buffer for storing LINEINFO for all the available lines.
+  if (! (g_lpLineInfo = (LPLINEINFO) LocalAlloc (
+                                      LPTR, 
+                                      sizeof (LINEINFO) * g_dwNumDevs)))
+  {
+    return LINEERR_NOMEM;
+  }
+
+  // Get the line data such as line name, permanent identifier,
+  // and number of available addresses on the line by calling 
+  // GetLineInfo discussed later in this chapter.
+  for (dwLineID = 0; dwLineID &lt; g_dwNumDevs; ++dwLineID)
+  {  
+    GetLineInfo (dwLineID, &amp;g_lpLineInfo [dwLineID]);
+  }
+
+  return ERR_NONE;
+}
+</CODE></PRE>
+
+<P>The following are the variables used in the previous function, and in code examples that follow.</P>
+
+<PRE><CODE>HINSTANCE g_hInst = NULL;       // hInstance of the application
+HWND g_hwndMain = NULL;         // Handle to the main window
+HWND g_hwndDial = NULL;         // Handle to the dialing window
+
+TCHAR g_szTitle[] = TEXT("CeDialer");
+                                // CeDialer application window name
+TCHAR g_szAppName[] = TEXT("CeDialer Application");
+                                // Main window class name
+HLINEAPP g_hLineApp = NULL;     // Application's use handle for TAPI
+                                // (lineInitialize)
+HCALL g_hCall = NULL;           // Handle to the open line device on 
+                                // which the call is to be originated 
+                                // (lineMakeCall)
+LONG g_MakeCallRequestID = 0;   // Request identifier returned by 
+                                // lineMakeCall.
+LONG g_DropCallRequestID = 0;   // Request identifier returned by 
+                                // lineDrop.
+BOOL g_bCurrentLineAvail = TRUE;// Indicates line availability
+
+TCHAR g_szCurrentNum[TAPIMAXDESTADDRESSSIZE + 1]; 
+                                // Current phone number
+TCHAR g_szLastNum[TAPIMAXDESTADDRESSSIZE + 1];         
+                                // Last called phone number
+DWORD g_dwNumDevs = 0;          // Number of line devices available
+DWORD g_dwCurrentLineID = -1;   // Current line device identifier
+DWORD g_dwCurrentLineAddr = -1; // Current line address
+
+LINEINFO g_CurrentLineInfo;     // Contains the current line information
+LINEINFO *g_lpLineInfo = NULL;  // Array that contains all the lines' 
+                                // information
+
+#define InfoBox(_s)  MessageBox (g_hwndMain, _s, TEXT("Info"), MB_OK)
+#define ErrorBox(_s) MessageBox (g_hwndMain, _s, TEXT("Error"), MB_OK)
+
+#define ERR_NONE              0
+#define TAPI_VERSION_1_0      0x00010003
+#define TAPI_VERSION_1_4      0x00010004
+#define TAPI_VERSION_2_0      0x00020000
+#define TAPI_CURRENT_VERSION  TAPI_VERSION_2_0
+
+typedef struct tagLINEINFO
+{
+  HLINE hLine;              // Line handle returned by lineOpen
+  BOOL  bVoiceLine;         // Indicates if the line is a voice line
+  DWORD dwAPIVersion;       // API version that the line supports
+  DWORD dwNumOfAddress;     // Number of available addresses on the line
+  DWORD dwPermanentLineID;  // Permanent line identifier
+  TCHAR szLineName[256];    // Name of the line
+} LINEINFO, *LPLINEINFO;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

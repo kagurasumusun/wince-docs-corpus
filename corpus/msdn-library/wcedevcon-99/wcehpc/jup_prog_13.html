@@ -1,0 +1,278 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using the TNEF API</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_using_the_tnef_api"></A>Using the TNEF API</H2>
+
+<P>Windows CE 2.10 contains several encoding and decoding options, including the ability to package and parse meeting request information to and from the Transport-Neutral Encapsulation Format (TNEF).TNEF is a Mail API –defined format that encapsulates MAPI message properties inside a single binary stream. To preserve MAPI properties, a sending application uses <A HREF="jup_tnef_2.htm"><B>TnefBuildInfo</B></A> to encode a MAPI message into a TNEF stream. A receiving application uses <A HREF="jup_tnef_8.htm"><B>TnefGetInfo</B></A> to decode the stream and reconstruct the original MAPI message. Currently, the transport DLL that ships with  allows applications to retrieve attachments and meeting-request properties.</P>
+
+<P>The TNEF API also provides a variety of functions to package messages, files, and other information for transfer over the Internet. The following table shows the function you can use to…</P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=32%>
+<H5>Function</H5>
+</TD>
+<TD width=68%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=100%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="jup_tnef_6.htm"><B>TnefEncodeBuffer</B></A></TD>
+<TD width=68%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="jup_tnef_7.htm"><B>TnefEncodeFile</B></A></TD>
+<TD width=68%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="jup_tnef_4.htm"><B>TnefDecodeBuffer</B></A></TD>
+<TD width=68%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="jup_tnef_5.htm"><B>TnefDecodeFile</B></A></TD>
+<TD width=68%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="jup_tnef_3.htm"><B>TnefConvertToUnicode</B></A></TD>
+<TD width=68%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="jup_tnef_1.htm"><B>ModifiedUTF7ToUnicode</B></A></TD>
+<TD width=68%>&nbsp;</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%><A HREF="jup_tnef_9.htm"><B>UnicodeToModifiedUTF7</B></A></TD>
+<TD width=68%>&nbsp;</TD>
+</TR>
+</TABLE><BR>
+
+<P><A HREF="jup_tnef_6.htm"><B>TnefEncodeBuffer</B></A> and <A HREF="jup_tnef_7.htm"><B>TnefEncodeFile</B></A> functions take binary data and translate it into 7-bit data. A server can then send this information over the Internet, and the receiving application can decode this information, using <A HREF="jup_tnef_4.htm"><B>TnefDecodeBuffer</B></A> and <A HREF="jup_tnef_5.htm"><B>TnefDecodeFile</B></A>. These functions translate to and from Base64, Quoted-Printable, and UUENCODE formats. Once you decode the buffer or file, you can translate the data into Unicode using <A HREF="jup_tnef_3.htm"><B>TnefConvertToUnicode</B></A>. To translate directly between Modified UTF7 format and Unicode, use <A HREF="jup_tnef_1.htm"><B>ModifiedUTF7ToUnicode</B></A> and <A HREF="jup_tnef_9.htm"><B>UnicodeToModifiedUTF7</B></A>. </P>
+
+<P><B>Note</B>  These functions begin with the letters TNEF because they appear in the TNEF API; they are not directly related to the TNEF format.</P>
+
+<P>The following code example shows how to use <B>TnefEncodeFile</B>.</P>
+
+<PRE><CODE>BOOL SendAttFile (HANDLE hMail, MailMsg mm)
+{
+  MailAtt mAtt;                       // The MailAtt structure
+  
+  // Check if there are any attachments to the mail.
+  if (!(mm.dwFlags &amp; MAIL_STATUS_ATTACHMENTS))
+    return FALSE;
+
+  mAtt.uiAttachmentNumber = 1;
+
+  while (MailGetAttachment(hMail, &amp;mm, &amp;mAtt) != -1 )
+  {
+    if (mAtt.szLocalName)
+    {
+      HANDLE hFile;                   // Handle to the encoded file
+      LPTSTR lpszEncodedFile = NULL;  // Pointer to the encoded file 
+                                      //name
+      
+      // Encodes the attachment file
+      if (!(lpszEncodedFile = TnefEncodeFile (
+                                              mAtt.szLocalName, 
+                                              CODE_B64)))
+      {
+        return FALSE;
+      }
+
+      // Open the encoded file for reading.
+      if ((hFile = CreateFile (
+                              lpszEncodedFile, 
+                              GENERIC_READ, 
+                              FILE_SHARE_READ, 
+                              (LPSECURITY_ATTRIBUTES)0, 
+                              OPEN_EXISTING, 
+                              FILE_ATTRIBUTE_NORMAL, 
+                              (HANDLE)0)) != INVALID_HANDLE_VALUE)
+      {
+        // Insert code here for reading data from the encoded file and
+        // then sending the data out.
+        // ...
+// Once the reading and sending data are done, close the file.
+        CloseHandle(hFile);
+      }
+      
+      // Delete the encoded file, and free the resource associated with 
+      // lpszEncodedFile.
+      DeleteFile (lpszEncodedFile);
+      LocalFree (lpszEncodedFile);
+    }
+
+    // Go to the next attached file.
+    mAtt.uiAttachmentNumber++;
+  }   
+
+  return TRUE;
+}
+</CODE></PRE>
+
+<P>The <B>SendAttFile</B> function checks to see if there are any attached files in the specified mail message. <B>SendAttFile</B> then encodes the attached files. <B>SendAttFile</B> also contains an area for implementing your own code to mail the encoded data to another application.</P>
+
+<P>The following code example shows how to use <B>TnefBuildInfo</B>. </P>
+
+<PRE><CODE>BOOL SendTNEFile (HANDLE hMail, MailMsg mm)
+{
+  HANDLE hFile;                     // Handle to the TNEF file
+  
+  TCHAR szTnefCorrelator[200];      // The szTnefCorrelator of the TNEF
+                                    // structure
+  LPWSTR lpszMsgType = NULL;        // Pointer to the message type
+
+  TNEFINFO ti;                      // Pointer to the TNEFINFO structure
+  MailNonIpmInfo* lpnii;            // Describes non-IPM data
+  
+  // Get mail message type.
+  if (!(lpszMsgType = MailGetField (&amp;mm, _T("Type"), FALSE)))
+    return FALSE;
+
+    // Check if the message contains schedule plus data.
+    if (lstrcmp(lpszMsgType, _T("IPM.Schedule.Meeting")) != 0 &amp;&amp;
+      lstrcmp(lpszMsgType, _T("IPM.Microsoft Schedu")) != 0)
+  {
+    LocalFree (lpszMsgType);
+    return FALSE;
+  }
+  
+  LocalFree (lpszMsgType);
+  
+  if (lpnii = HeapAlloc (mm.hHeap, 0, 
+              sizeof (MailNonIpmInfo) + 30 * sizeof (CEPROPVAL)))
+  {
+    DWORD dwIndex = 0,            
+          dwBufLen = 0;         
+    LPBYTE lpbBuf = NULL;       
+    
+    int iPropIDs = 30;          // The number of property identifiers
+
+    CEOID CeOid,                // The object identifier of the parent
+                                   database 
+          CeOidMailMsg;         // Object identifier of the mail message
+    CEOIDINFO OidInfo;          // Contains the mail message information
+    CEPROPID rgPropId[30];      // The identifiers of the property value
+
+    HANDLE hDataBase = INVALID_HANDLE_VALUE;
+                                // The handle to the database that 
+                                // contains the mail message
+    // Retrieves information about the mail message in the object store 
+    if (!CeOidGetInfo (mm.oid, &amp;OidInfo)) 
+      return FALSE;
+
+    CeOid = OidInfo.infRecord.oidParent;
+
+    // Insert code here to open the database that contains the mail 
+    // message.
+    // hDataBase = ...
+  
+    lpnii-&gt;uiPropCount = iPropIDs;
+    lpnii-&gt;szMessageClass = lpszMsgType;
+
+    // Seeks the mail message record in the database 
+    if ((CeOidMailMsg = CeSeekDatabase (
+                                        hDataBase, 
+                                        CEDB_SEEK_CEOID, 
+                                        mm.oid, 
+                                        &amp;dwIndex)) != mm.oid) 
+    {
+      return FALSE;
+    }
+    else
+    {
+      // Assign identifiers of the property value to rgPropId.
+      // rgPropId = {...}
+
+      // Reads properties from the current mail record
+      CeOidMailMsg = CeReadRecordProps (
+                                    hDataBase,
+                                    CEDB_ALLOWREALLOC,
+                                    &amp;(USHORT)lpnii-&gt;uiPropCount,
+                                    rgPropId,
+                                    &amp;lpbBuf,
+                                    &amp;dwBufLen);
+    }
+
+    // Close the database.
+    CloseHandle (hDataBase);
+  
+    // Copy propvals into lpnii.
+    memcpy (&amp;(lpnii-&gt;propArray), lpbBuf, iPropIDs * sizeof (CEPROPVAL));
+
+    LocalFree (lpbBuf);
+  }
+  else
+    return FALSE;
+    
+
+  // Constructing szTnefCorrelator by using an object identifier
+  wsprintf (szTnefCorrelator, _T("WCETnefCorrelator%lx"), mm.oid);
+
+  if (GetTempPath (MAX_PATH, (LPWSTR)&amp;ti.szTnefFileName) == 0)
+    lstrcpy((LPWSTR)&amp;ti.szTnefFileName, _T("\\"));
+
+  lstrcat ((LPWSTR)&amp;ti.szTnefFileName, _T("WCEMail.Tnef"));
+
+  // Fill the TNEFINFO structure.
+  ti.szTnefCorrelator = szTnefCorrelator;
+  ti.wContentEncoding = CODE_B64;
+
+  // Create the encoded TNEF file.
+  if (!TnefBuildInfo (&amp;ti, MailGetField (&amp;mm, _T("Subject"), FALSE), 
+                     lpnii, NULL))
+  {
+    return FALSE;
+  }
+ 
+  // Open the TNEF file for reading.
+  if ( (hFile = CreateFile (
+                            (LPWSTR)&amp;ti.szTnefFileName, 
+                            GENERIC_READ, 
+                            FILE_SHARE_READ,
+                            (LPSECURITY_ATTRIBUTES)0, 
+                            OPEN_EXISTING,
+                            FILE_ATTRIBUTE_NORMAL, 
+                            (HANDLE)0)) != INVALID_HANDLE_VALUE)
+  {
+    // Insert code here for reading data from the TNEF file, and then 
+    // sending the data out.
+    // ...
+
+    // Once reading and sending the data are done, close the file.
+    CloseHandle(hFile);
+  }
+
+  // Delete the TNEF file.
+  DeleteFile ((LPWSTR) &amp;ti.szTnefFileName);
+
+  return TRUE;
+}
+</CODE></PRE>
+
+<P>The <B>SendTNEFile</B> function checks whether a mail message contains non-IPM data from Schedule+. If the mail message does contain this information, <B>SendTNEFile</B> encodes the mail message and sends out the encoded file. </P>
+
+<P>You can use both of these samples in your implementation of the <B>TransportSend</B> function in Transport.dll. <B>›</B></P>
+<p>&nbsp;</p></body>
+</HTML>

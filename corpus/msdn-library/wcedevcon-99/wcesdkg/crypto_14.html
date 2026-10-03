@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Exchanging Session Keys</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<TABLE ALIGN=right WIDTH=0 BORDER=0><TR><TD>
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink,MENU">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptGenKey">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink,MENU">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptExportKey">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink,MENU">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptImportKey">
+</OBJECT>
+</TD></TR></TABLE>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_exchanging_session_keys"></A>Exchanging Session Keys</H2>
+
+<P>To send another user an encrypted message, the sender must send the receiver the session key that was used to perform the encryption. There are two approaches to doing this:
+
+<UL>
+	<LI>The sender and receiver can mutually agree on a session key by exchanging several messages back and forth. The users can then use this session key to send encrypted messages back and forth. For a description of this approach and sample code for a three-phase key exchange protocol, see the Microsoft Platform SDK. Because successfully designing one of these protocols is difficult, consider it only if you are an experienced cryptographer.</li>
+
+	<LI>The sender can send an encrypted session key along with the encrypted message. The sender creates a random session key, encrypts it using the receiver’s public key, and sends the key BLOB to the receiver along with the message. The receiver then decrypts the session key with his or her public key in order to decrypt the message.</li>
+</UL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To send an encrypted session key</H4>
+
+<OL>
+	<LI>Create a random session key using the <A HREF="JavaScript:hhobj_1.Click()"><B>CryptGenKey</B></A> function.</li>
+
+	<LI>Encrypt the message using the session key.
+<P><B></B>For information on encrypting a message using a session key, see <A HREF="crypto_15.htm">Encrypting and Decrypting Data</A>.
+</li>
+
+	<LI>Export the session key into a key BLOB with the <A HREF="JavaScript:hhobj_2.Click()"><B>CryptExportKey</B></A> function.
+<P>Specify that the key be encrypted with the destination user’s key exchange public key, which is the receiver’s public key.
+</li>
+
+	<LI>Send both the encrypted message and the encrypted key BLOB to the destination user.</li>
+
+	<LI>The receiver then imports the key BLOB into the CSP using the <A HREF="JavaScript:hhobj_3.Click()"><B>CryptImportKey</B></A> function.
+<P>This automatically decrypts the session key, provided the destination user’s key exchange public key was specified in step 3.
+</li>
+
+	<LI>The receiver can then decrypt the message using the session key, following the procedure discussed in <A HREF="crypto_15.htm">Encrypting and Decrypting Data</A>.</li>
+</OL>
+
+<P>The following illustration shows how to send an encrypted message using this procedure:</P>
+
+<P><IMG SRC="blob.gif" ALT="" BORDER=0></P>
+
+<P><B>Sending an encrypted message together with a key BLOB</B></P>
+
+<P>This approach is vulnerable in at least one way. An eavesdropper can acquire copies of one of more encrypted messages and the encrypted keys. Then, at some later time, the eavesdropper can send one of these messages to the receiver and the receiver will have no way of knowing that the message did not come directly from the original sender. This risk can be reduced by <I>timestamping</I> all messages or by using serial numbers. Timestamping involves attaching the date/time to each message. Using a three-phase key exchange protocol will eliminate this problem entirely. For information on using this protocol, see the Microsoft Platform SDK.</P>
+<p>&nbsp;</p></body>
+</HTML>

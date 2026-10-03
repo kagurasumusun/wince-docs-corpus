@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IRootStorage::SwitchToFile</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_irootstorage_switchtofile"></A>IRootStorage::SwitchToFile</H2>
+
+<P>This method copies the current file associated with the storage object to a new file, which is then used for the storage object and any uncommitted changes.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT SwitchTofFile( LPOLESTR </B><I>pszFile</I><B>, );</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pszFile</I></DT>
+
+<DD>Pointer to the null-terminated string that contains the name for the new file. It cannot be the name of an existing file. If NULL, this method creates a temporary file with a unique name, and you can call <A HREF="ki_s_15.htm"><B>IStorage::Stat</B></A> to retrieve the name of the temporary file.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=38%>
+<H5>Value</H5>
+</TD>
+<TD width=62%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>S_OK</TD>
+<TD width=62%>The file was successfully copied.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>STG_E_MEDIUMFULL</TD>
+<TD width=62%>The file was not copied because of insufficient space on the storage device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>STG_E_ACCESSDENIED</TD>
+<TD width=62%>The file was not copied because the caller does not have permission to access storage device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>STG_E_INVALIDPOINTER</TD>
+<TD width=62%>The file was not copied because the <I>pszFile</I> pointer is invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>STG_E_FILEALREADYEXISTS</TD>
+<TD width=62%>The file was not copied because the new filename (<I>pszFile</I>) points to an existing file.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The <B>IRootStorage::SwitchToFile</B> method copies the file associated with the storage object. A COM container calls <B>SwitchToFile</B> to perform a full save on a file in a low-memory situation. Typically, this is done only after a normal full save operation—save to temporary file, delete original file, and rename temporary file—has failed with an E_OUTOFMEMORY error.</P>
+
+<P>It is illegal to call <B>SwitchToFile</B> if the storage object or anything contained within it has been marshalled to another process. As a consequence, before calling <B>SwitchToFile</B>, the container must call the <A HREF="ki_pr_14.htm"><B>IPersistStorage::HandsOffStorage</B></A> method for any element within the storage object that is loaded or running. The <B>HandsOffStorage</B> method forces the element to release its storage pointers and enter the hands-off storage mode. The container must also release all pointers to streams or storages that are contained in this root storage. After the full save operation is completed, the container returns the contained elements to normal storage mode.</P>
+
+<P>When storing storage objects on NTFS systems in native structured storage format, the files are automatically converted for all non-NTFS partitions, for example FAT partitions. The <B>IRootStorage::SwitchToFile</B> method is not supported for NTFS native structured storage files.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>If you are implementing your own storage objects, the <A HREF="ki_pr_58.htm"><B>IRootStorage</B></A> methods (including <B>QueryInterface</B>, <B>AddRef</B>, and <B>Release</B>) must not consume additional memory or file handles.</P>
+<p>&nbsp;</p></body>
+</HTML>

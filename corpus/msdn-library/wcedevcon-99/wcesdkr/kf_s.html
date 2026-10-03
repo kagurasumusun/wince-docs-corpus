@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SafeArrayAccessData</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_oa96_safearrayaccessdata"></A>SafeArrayAccessData</H2>
+
+<P>This function increments the lock count of an array, and retrieves a pointer to the array data.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleauto.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>SeeHRESULT SafeArrayAccessData( SAFEARRAY FAR *</B> <I>psa</I><B>,</B> <BR>
+<B>void HUGEP * FAR *</B> <I>ppvData<B>)</B></I><B>;</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>psa</I></DT>
+
+<DD>[in] Pointer to an array descriptor created by <A HREF="kf_s_5.htm"><B>SafeArrayCreate</B></A>.</dd>
+
+<DT><I>ppvData</I></DT>
+
+<DD>[in] On exit, pointer to a pointer to the array data. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values obtained from the returned <B>HRESULT </B>and described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=24%>
+<H5>Value</H5>
+</TD>
+<TD width=76%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>S_OK</TD>
+<TD width=76%>Success.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>E_INVALIDARG</TD>
+<TD width=76%>The <I>psa</I> parameter was not a valid safe array descriptor.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>E_UNEXPECTED</TD>
+<TD width=76%>The array could not be locked. </TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>Passing into this function any invalid and, under some circumstances, NULL pointers will result in unexpected termination of the application. </P>
+
+<H4>Example</H4>
+
+<P>The following code example sorts a safe array of one dimension that contains <B>BSTR</B>s by accessing the array elements directly. This approach is faster than using <A HREF="kf_s_11.htm"><B>SafeArrayGetElement</B></A> and <A HREF="kf_s_17.htm"><B>SafeArrayPutElement</B></A>.</P>
+
+<PRE><CODE>long i, j, min; 
+BSTR BSTRTemp;
+BSTR HUGEP *pBSTR;
+HRESULT hr;
+
+// Get a pointer to the elements of the array.
+hr = SafeArrayAccessData(psa, (void HUGEP* FAR*)&amp;pBSTR);
+if (FAILED(hr))
+goto error;
+
+// Bubble sort.
+cElements = lUBound</CODE>–<CODE>lLBound+1; 
+for (i = 0; i &lt; cElements</CODE>–<CODE>1; i++)
+{
+    min = i;
+    for (j = i+1; j &lt; cElements; j++)
+    {
+        if (wcscmp(pBSTR[j], pBSTR[min]) &lt; 0)
+            min = j; 
+    }
+
+    // Swap array[min] and array[i].
+    BSTRTemp = pBSTR[min];
+    pBSTR[min] = pBSTR[i];
+    pBSTR[i] = BSTRTemp;
+
+}
+
+SafeArrayUnaccessData(psa);
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

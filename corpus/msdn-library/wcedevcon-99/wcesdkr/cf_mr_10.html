@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>RasEnumEntries</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_rasenumentries"></A>RasEnumEntries </H2>
+
+<P>This function lists all entry names in a remote access phone book. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Ras.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>DWORD</B> <B>RasEnumEntries(LPWSTR</B> <I>Reserved</I><B>, LPWSTR</B> <I>lpszPhoneBookPath</I><B>, LPRASENTRYNAME</B> <I>lprasentryname</I><B>, LPDWORD</B> <I>lpcb</I><B>, LPDWORD</B> <I>lpcEntries</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Reserved</I></DT>
+
+<DD>Reserved; set to NULL. </dd>
+
+<DT><I>lpszPhonebook</I></DT>
+
+<DD><B>Windows CE: </B>This parameter is ignored. Dial-up networking stores phone-book entries in the registry rather than in a phone-book file.</dd>
+
+<DT><I>lprasentryname</I></DT>
+
+<DD>Pointer to a buffer that receives an array of <A HREF="cs_az_23.htm"><B>RASENTRYNAME</B></A> structures, one for each phone-book entry. Before calling the function, an application must set the <I>dwSize</I> member of the first <B>RASENTRYNAME</B> structure in the buffer to <B>sizeof(RASENTRYNAME)</B> in order to identify the version of the structure being passed. </dd>
+
+<DT><I>lpcb</I></DT>
+
+<DD>Pointer to a variable that that contains the size, in bytes, of the buffer specified by <I>lprasentryname</I>. On return, the function sets this variable to the number of bytes required to successfully complete the call. </dd>
+
+<DT><I>lpcEntries</I></DT>
+
+<DD>Pointer to a variable that the function, if successful, sets to the number of phone-book entries written to the buffer specified by <I>lprasentryname</I>. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates success. A nonzero error value listed in the RAS header file, ERROR_BUFFER_TOO_SMALL, or ERROR_NOT_ENOUGH_MEMORY indicates failure. </P>
+
+<H4>Remarks</H4>
+
+<P>The following sample code enumerates the RAS phonebook entries on the current machine. The code initially calls <B>RasEnumEntries</B> to obtain the size of the buffer to pass in. The code then calls <B>RasEnumEntries</B> again, to enumerate the entries. Note that for both calls, the code sets the <I>dwSize</I> member of the first <B>RASENTRY</B> structure in the buffer to <B>sizeof</B>(<B>RASENTRY</B>) to specify the structure version.</P>
+
+<PRE><CODE>lprasentryname = (LPRASENTRYNAME)LocalAlloc(GPTR,, sizeof(RASENTRYNAME));
+lprasentryname-&gt;dwSize = sizeof(RASENTRYNAME);
+if ((nRet = RasEnumEntries(NULL, NULL, lprasentryname, &amp;cb, &amp;cEntries)) 
+    == ERROR_BUFFER_TOO_SMALL)
+{
+    lprasentryname = (LPRASENTRYNAME)GlobalAlloc(GPTR, cb);
+    lprasentryname-&gt;dwSize = sizeof(RASENTRYNAME);
+}
+
+// Calling RasEnumEntries to enumerate the phonebook entries    
+nRet = RasEnumEntries(NULL, NULL, lprasentryname, &amp;cb, &amp;cEntries);
+
+if (nRet != ERROR_SUCCESS)
+{
+    printf("RasEnumEntries failed: Error %d\n", nRet);
+}
+else
+{
+    printf("Phone book entries in the default phonebook:\n\n");
+    for(i=0;i &lt; cEntries;i++)
+    {
+        printf("%s\n",lprasentryname-&gt;szEntryName);
+        lprasentryname++;
+    }
+}
+</CODE></PRE>
+
+<H4>See Also</H4>
+
+<P><A HREF="cs_az_23.htm"><B>RASENTRYNAME</B></A>, <A HREF="cf_mr_9.htm"><B>RasEnumConnections</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

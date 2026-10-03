@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SHSipInfo</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_GetLastError">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_SIPINFO_str">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_WM_SETTINGCHANGE">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_shsipinfo"></A>SHSipInfo</H2>
+
+<P>This function queries the shell for information about the input panel and input methods (IM). It can also set system-wide parameters regarding the input panel and IM. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=35%>Header file:</TD>
+<TD width=65%>Aygshell.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>Windows CE Versions:</TD>
+<TD width=65%>2.01 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL WINAPI SHSipInfo(</B> <B>UINT </B><I>uiAction</I>, <B>UINT </B><I>uiParam</I>, <BR>
+<B>PVOID </B><I>pvParam</I>, <B>UINT </B><I>fWinIni</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>uiAction</I></DT>
+
+<DD>Unsigned integer containing a system-wide parameter to query or set. It is one of the following flags:
+
+<DL>
+<DT>SPI_GETSIPINFO</DT>
+
+<DD>The <I>pvParam</I> parameter points to a <B>SIPINFO</B> structure. The <B>cbSize</B>, <B>dwImDataSize</B>, and <B>pvImData</B> members of the <B>SIPINFO</B> structure should be filled in with default values before calling <B>SHSipInfo</B>. When called, <B>SHSipInfo</B> fills in the <B>SIPINFO</B> structure with the current input panel size, state, and visible desktop rectangle. The <I>dwImDataSize</I> parameter is usually set to zero and <I>pvImData</I> is usually set to NULL. However, if both <I>dwImDataSize</I> and <I>pvImData</I> are nonzero, <B>SHSipInfo</B> sends these values to the IM. The IM fills the buffer pointed to by <I>pvImData</I> with information specific to that IM. <B>SHSipInfo</B> returns a zero if the IM cannot process the data contained within <I>dwImDataSize</I> or <I>pvImData</I>. </dd>
+
+<DT>SPI_SETSIPINFO</DT>
+
+<DD>The <I>pvParam</I> parameter points to a <B>SIPINFO</B> structure. The input panel size and state are set to the values specified in the <B>SIPINFO</B> structure. First, get the current input panel state by calling <B>SHSipInfo</B> with SPI_GETSIPINFO. Then, change the desired input panel state values in the <B>SIPINFO</B> structure. Use the resulting <B>SIPINFO</B> structure in a <B>SHSipInfo</B> call using SPI_SETSIPINFO. To use SPI_SETSIPINFO, the <I>cbSize</I> member of the <B>SIPINFO</B> structure must be set to the size of the <B>SIPINFO</B> structure. If both <I>dwImDataSize</I> and <I>pvImData</I> are nonzero, <B>SHSipInfo</B> passes the data size and the pointer on to the IM. The <B>SHSipInfo</B> call fails if the IM does not allow the shell to set IM-specific data, or if the IM does not recognize the format of the data passed in by <I>dwImDataSize</I> or <I>pvImData</I>. If the IM supports the data size and format, the IM uses the data to set IM-specific information. The <I>dwImDataSize</I> parameter is usually set to zero and <I>pvImData</I> is usually set to NULL. Depending on the type of Palm-size PC, some aspects of the input panel state may not be set by applications.</dd>
+
+<DT>SPI_SETCURRENTIM</DT>
+
+<DD>The <I>pvParam</I> parameter points to a <B>CLSID</B> structure that specifies the class identifier (CLSID) of the IM to switch to. If the CLSID is invalid, or the specified IM could not be loaded, the return value is zero and the default IM is loaded. </dd>
+
+<DT>SPI_GETCURRENTIM</DT>
+
+<DD>The <I>pvParam</I> parameter points to a <B>CLSID</B> structure that receives the CLSID of the current IM.</dd>
+</DL>
+</dd>
+
+<DT><I>uiParam</I></DT>
+
+<DD>Unsigned integer that is set to zero for the SPI_SETSIPINFO, SPI_GETSIPINFO, SPI_SETCURRENTIM, and SPI_GETCURRENTIM actions. To improve the response time of <B>SHSipInfo</B>, set <I>uiParam</I> to the <I>lParam</I> of WM_SETTINGCHANGE. </dd>
+
+<DT><I>pvParam</I></DT>
+
+<DD>Void pointer to a <B>SIPINFO</B> structure when <I>uiAction</I> is SPI_SETSIPINFO or SPI_GETSIPINFO. Pointer to a <B>CLSID</B> structure when <I>uiAction</I> is SPI_SETCURRENTIM or SPI_GETCURRENTIM.</dd>
+
+<DT><I>fWinIni</I></DT>
+
+<DD>Reserved; set to zero. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>TRUE indicates success. FALSE indicates failure. To get extended error information, call <A HREF="JavaScript:hhobj_1.Click()"><B>GetLastError</B></A>.</P>
+
+<H4>Remarks</H4>
+
+<P>This function is called by an application to determine the size and state of the input panel at startup or in response to a WM_ACTIVATE message. To avoid changing the input panel state too often, use the SPI_SETSIPINFO value sparingly.</P>
+
+<P>When called in response to a WM_SETTINGCHANGE message, <B>SHSipInfo</B> makes a PSL call to Device.exe. In doing so, it also makes a call to the input panel thread. Because this call can take up to 100 milliseconds, WM_SETTINGCHANGE is sent to all running applications. Therefore, a WM_SETTINGCHANGE message can freeze the system for up to a second as all the running applications respond to the message by calling <B>SHSipInfo</B>. To avoid this delay, pass the <I>lParam</I> of the WM_SETTINGCHANGE in to the <I>uiParam</I> of <B>SHSipInfo</B>. The <I>lParam</I> contains a code that lets <B>SHSipInfo</B> get information directly from the input panel instead of going through the input panel thread.</P>
+
+<P>Be careful when using <B>SHSipInfo</B> to set the input panel or IM in response to a WM_SETTINGCHANGE message. Setting the input panel or IM with <B>SHSipInfo</B> causes the shell to send out a WM_SETTINGCHANGE message, therefore entering an infinite loop.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="JavaScript:hhobj_2.Click()"><B>SIPINFO</B></A>,<B> </B><A HREF="JavaScript:hhobj_3.Click()">WM_SETTINGCHANGE</A></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sending an IP Multicast Datagram Sample</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_sending_an_ip_multicast_datagram_sample"></A>Sending an IP Multicast Datagram Sample</H2>
+
+<P>The following sample application shows how to send an IP multicast datagram.</P>
+
+<PRE><CODE>#include &lt;windows.h&gt; 
+#include &lt;winsock.h&gt;
+
+#define DEST_MCAST        "234.5.6.7"     
+#define DESTINATION_PORT  4567            
+#define SOURCE_PORT       0               
+
+int WINAPI WinMain (
+              HINSTANCE hInstance,    // Handle to the current instance
+              HINSTANCE hPrevInstance,// Handle to the previous instance
+              LPTSTR lpCmdLine,       // Pointer to the command line
+              int nCmdShow)           // Show window state. 
+{
+  int iOptVal = 64;                   
+  char szMessage[] = "Multicasting message!";                      
+                                    // Sent message string
+  TCHAR szError[100];               // Error message string
+  SOCKET Sock = INVALID_SOCKET;     // Datagram window socket
+
+  SOCKADDR_IN source_sin,           // Source socket address
+              dest_sin;             // Destination socket address
+
+  WSADATA WSAData;                  // Contains details of the 
+                                    // Winsock implementation
+    
+  // Initialize Winsock. 
+  if (WSAStartup (MAKEWORD(1,1), &amp;WSAData) != 0) 
+  {
+    wsprintf (szError, TEXT("WSAStartup failed! Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    return FALSE;
+  }
+
+  // Create a datagram window socket, Sock.
+  if ((Sock = socket (AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) 
+  {
+    wsprintf (szError, TEXT("Allocating socket failed! Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    return FALSE;
+  }
+
+  // Fill out source socket's address information.
+  source_sin.sin_family = AF_INET;
+  source_sin.sin_port = htons (SOURCE_PORT);  
+  source_sin.sin_addr.s_addr = htonl (INADDR_ANY);
+
+  // Associate the source socket's address with the socket, Sock.
+  if (bind (Sock, 
+            (struct sockaddr FAR *) &amp;source_sin, 
+            sizeof (source_sin)) == SOCKET_ERROR) 
+  {
+    wsprintf (szError, TEXT("Binding socket failed! Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    closesocket (Sock);
+    return FALSE;
+  }
+  
+  // Set the Time-to-Live of the multicast.
+  if (setsockopt (Sock, 
+                  IPPROTO_IP, 
+                  IP_MULTICAST_TTL, 
+                  (char FAR *)&amp;iOptVal, 
+                  sizeof (int)) == SOCKET_ERROR)
+  {
+    wsprintf (szError, TEXT("setsockopt failed! Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    closesocket (Sock);
+    return FALSE;
+  }
+  
+  // Fill out the desination socket's address information.
+  dest_sin.sin_family = AF_INET;
+  dest_sin.sin_port = htons (DESTINATION_PORT);  
+  dest_sin.sin_addr.s_addr = inet_addr (DEST_MCAST);
+  
+  // Send a message to the multicasting address.
+  if (sendto (Sock, 
+              szMessage,
+              strlen (szMessage) + 1,
+              0,
+              (struct sockaddr FAR *) &amp;dest_sin,
+              sizeof (dest_sin)) == SOCKET_ERROR)
+  {
+    wsprintf (szError, TEXT("sendto failed! Error: %d"), 
+              WSAGetLastError ());
+    MessageBox (NULL, szError, TEXT("Error"), MB_OK);
+    closesocket (Sock);
+    return FALSE;
+  }
+  else
+    MessageBox (NULL, TEXT("Sending data succeeded!"), TEXT("Info"), 
+                MB_OK);
+
+  // Disable sending on Sock before closing it.
+  shutdown (Sock, 0x01);
+
+  // Close Sock.
+  closesocket (Sock);
+
+  WSACleanup ();
+
+  return TRUE;
+}
+</CODE></PRE>
+
+<P></P>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

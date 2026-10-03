@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Supporting ClearType</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_supporting_cleartype"></A>Supporting ClearType</H2>
+
+<P>Windows CE versions 2.12 and later support Microsoft ClearType font technology. ClearType dramatically improves font sharpness on color LCD displays. If the display driver supports ClearType, it must notify the GDI of this capability at system startup by returning GCAPS_CLEARTYPE in the call to the <B>GetGraphicsCaps</B> function. The Citizen sample display driver demonstrates how to support ClearType. The driver source code is located in the Platform\Odo\Drivers\Display\Citizen directory.</P>
+
+<P>The display driver invokes a software emulation to render a ClearType glyph. For example, in the Citizen driver, text output with a solid brush is usually routed to the <B>BltText08</B> emulation function. For the edge pixels on the glyph, the display function pointer is set to a special <B>BltCleartype</B> emulation for the 3-3-2 palette and the Halftone palette.</P>
+
+<PRE><CODE>case 0xAAF0:    // Special PATCOPY ROP for text output--fill where mask 
+         //is 1.
+        // Not a pattern brush?
+        if( pBltParms-&gt;solidColor != -1 )
+        {
+            if (pBltParms-&gt;pMask-&gt;Format() == gpe1Bpp)
+            {
+                DEBUGMSG(GPE_ZONE_BLT_LO,(TEXT("CITIZEN::Blt - 0xAAF0\r\n")));
+                pBltParms-&gt;pBlt = FUNCNAME(BltText08);
+                return S_OK;
+            }
+            else if (pBltParms-&gt;pMask-&gt;Format() == gpe8Bpp)  // ClearType
+            {
+                DEBUGMSG(GPE_ZONE_BLT_LO,(TEXT("CITIZEN::Blt ClearType - 0xAAF0\r\n")));
+                pBltParms-&gt;pBlt = FUNCNAME(BltCleartypeHalftoneText08);
+//                pBltParms-&gt;pBlt = FUNCNAME(BltCleartype332Text08);
+                return S_OK;
+            }
+        }
+        break;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

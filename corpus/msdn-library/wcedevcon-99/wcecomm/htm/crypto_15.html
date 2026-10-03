@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Exchanging Session Keys</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptGenKey">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptExportKey">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptImportKey">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_exchanging_session_keys"></A>Exchanging Session Keys</H2>
+
+<P>To send another user an encrypted message, the sender must send the receiver the session key used to perform the encryption. There are two ways of doing this:
+
+<UL>
+	<LI>The sender and receiver can mutually agree on a session key by exchanging several messages. The users can then use this session key to exchange encrypted messages. Because successfully designing one of these protocols is difficult, it is recommended only for experienced cryptographers.</li>
+
+	<LI>The sender can send an encrypted session key with the encrypted message. The sender creates a random session key, encrypts it using the receiver’s public key, and sends the key BLOB to the receiver with the message. The receiver then decodes the session key with a private key to decode the message.</li>
+</UL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To send an encrypted session key</H4>
+
+<OL>
+	<LI>Create a random session key, using the <A HREF="JavaScript:hhobj_1.Click()"><B>CryptGenKey</B></A> function.</li>
+
+	<LI>Encode the message, using the session key.
+<P>For more information on encoding a message using a session key, see <A HREF="crypto_16.htm">Encrypting and Decrypting Data</A>.
+</li>
+
+	<LI>Export the session key into a key BLOB with the <A HREF="JavaScript:hhobj_2.Click()"><B>CryptExportKey</B></A> function.
+<P>Specify that the key be encoded with the destination user’s key exchange public key, which is the receiver’s public key.
+</li>
+
+	<LI>Send the encoded message and the encoded key BLOB to the destination user.</li>
+
+	<LI>The receiver then imports the key BLOB into the CSP, using the <A HREF="JavaScript:hhobj_3.Click()"><B>CryptImportKey</B></A> function.
+<P>This automatically decodes the session key, provided that the destination user’s key exchange private key was specified in step three.
+</li>
+
+	<LI>The receiver can then decode the message, using the session key, following the procedure discussed in <A HREF="crypto_16.htm">Encrypting and Decrypting Data</A>.</li>
+</OL>
+
+<P>The following illustration shows how to send an encoded message, using this procedure.</P>
+
+<P><IMG SRC="blob.gif" ALT="" BORDER=0></P>
+
+<P>This approach is vulnerable in at least one way. A hacker can acquire copies of one of more encrypted messages and the encoded keys. Then, at some later time, the hacker can send one of these messages to the receiver and the receiver has no way of knowing that the message did not come directly from the original sender. This risk can be reduced by <I>timestamping</I> all messages or by using serial numbers. Timestamping involves attaching the date and time to each message. Using a three-phase key exchange protocol eliminates this problem entirely. For more information on using this protocol, see the Microsoft Platform SDK.</P>
+<p>&nbsp;</p></body>
+</HTML>

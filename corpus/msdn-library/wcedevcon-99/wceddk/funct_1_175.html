@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisAllocateMemory</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisallocatememory"></A>NdisAllocateMemory</H2>
+
+<P>This function allocates resident (nonpaged) system-space memory. The memory can be allocated within a specified address limit and, if necessary, can be uncached as well.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>NDIS_STATUS</B> <B>NdisAllocateMemory(OUT PVOID</B> <B>*</B><I>VirtualAddress</I><B>,</B> <BR>
+<B>IN UINT</B> <I>Length</I><B>,</B> <B>IN UINT</B> <I>MemoryFlags</I><B>,</B> <BR>
+<B>IN NDIS_PHYSICAL_ADDRESS</B> <I>HighestAcceptableAddress</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>VirtualAddress</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which this function returns the base virtual address of the allocated memory or NULL if memory of the specified type is unavailable.</dd>
+
+<DT><I>Length</I></DT>
+
+<DD>Specifies the size, in bytes, to be allocated.</dd>
+
+<DT><I>MemoryFlags</I></DT>
+
+<DD>Specifies 0 or a bitmask designating the type(s) of memory to allocate. One of the following values:
+
+<DL>
+<DT>0</DT>
+
+<DD>Allocate nonpaged system-space memory.</dd>
+
+<DT>NDIS_MEMORY_CONTIGUOUS</DT>
+
+<DD>Not supported.</dd>
+
+<DT>NDIS_MEMORY_NONCACHED</DT>
+
+<DD>Allocate noncached memory.</dd>
+</DL>
+</dd>
+
+<DT><I>HighestAcceptableAddress</I></DT>
+
+<DD>Specifies –1.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>NDIS_STATUS_SUCCESS indicates that the caller can use the allocated memory range starting at the value returned at the <I>VirtualAddress</I> parameter. NDIS_STATUS_FAILURE indicates that the attempt to allocate the requested memory failed. This does not necessarily mean that a subsequent call will fail.</P>
+
+<H4>Remarks</H4>
+
+<P>If the NDIS_MEMORY_NONCACHED flag is specified, Windows CE NDIS uses the <B>VirtualAlloc</B> function to allocate the memory; otherwise, it uses the <B>LocalAlloc</B> function.</P>
+
+<P>Any NDIS driver might call this function with the <I>MemoryFlags</I> set to 0. for example, NDIS drivers that export a set of NDIS upper-edge (miniport) functions can call this function to allocate a context area in which the driver maintains per-NIC or per-virtual-NIC run-time state information and pass the pointer returned at <I>VirtualAddress</I> to the <B>NdisMSetAttributes</B> or the <B>NdisMSetAttributesEx</B> function. NDIS drivers that export a set of NDIS lower-edge (protocol) functions can also call this function whenever such a driver needs to allocate buffer space.</P>
+
+<P>Only NIC miniports set the <I>MemoryFlags</I> with either or both of the flags when they make initialization-time calls to this function. During initialization, miniport drivers allocate these types of memory to be shared with their NICs.</P>
+
+<P>If such a miniport specifies physically contiguous memory in a call to this function, the virtual memory allocation maps to a single physically contiguous region. If a miniport specifies noncached memory, the allocated virtual range is not cached. An NIC driver can access noncached memory without flushing cache buffers during DMA operations.</P>
+
+<P>Whatever the value of the input <I>MemoryFlags</I>, a successful caller to this function uses a range of virtual addresses to access the allocated memory. Depending on the size of the allocation and on the type of memory requested, one or more physical memory ranges (pages) back this single virtual range.</P>
+
+<P>An NIC driver should never request more noncached memory than it needs.</P>
+
+<P>If an initialization-time call fails, an NIC driver can attempt to allocate one or more smaller blocks of noncached memory, rather than failing to initialize if it cannot allocate a large block.</P>
+
+<P>A driver that calls this function can run at IRQL &lt;=DISPATCH_LEVEL to allocate memory from a nonpaged pool. NIC drivers that allocate noncached memory must be running at IRQL PASSIVE_LEVEL during initialization.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_192.htm"><B>NdisFreeMemory</B></A>, <A HREF="funct_1_238.htm"><B>NdisMSetAttributes</B></A>, <A HREF="funct_1_239.htm"><B>NdisMSetAttributesEx</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

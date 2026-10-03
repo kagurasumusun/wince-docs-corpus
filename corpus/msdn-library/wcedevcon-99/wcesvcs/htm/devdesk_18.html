@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Examples of CEUTIL Functions</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_examples_of_ceutil_functions"></A>Examples of CEUTIL Functions</H2>
+
+<P>The following code example shows how to enumerate device partnerships and get the path for the file synchronization folder.</P>
+
+<PRE><CODE>#include "ceutil.h"
+
+void Example1 (void)
+{
+  // Note that this code runs on the desktop (or host) computer, 
+  // and not on the Windows CE</CODE>–<CODE>based device, so set 
+  // your project settings accordingly.
+
+  HCESVC   hsvc            = NULL;
+  HCESVC   hsvcSync        = NULL;
+  HCESVC   hsvcProfile     = NULL;
+  DWORD    cProfilesEnum   = 0;
+  DWORD    nProfileID      = 0;
+
+  while (SUCCEEDED (CeSvcEnumProfiles (&amp;hsvc,
+                                       cProfilesEnum,
+                                       &amp;nProfileID)))
+  {
+    if (nProfileID != (DWORD)-1)
+    {
+      if (SUCCEEDED (CeSvcOpenEx (hsvcProfile,
+                                  TEXT("Services\\Synchronization"),
+                                  FALSE, &amp;hsvcSync)))
+      {
+        TCHAR szPath[MAX_PATH];
+
+        if (SUCCEEDED (CeSvcGetString (hsvcSync,
+                                       TEXT("Briefcase Path"),
+                                       szPath,
+                                       sizeof(szPath)/sizeof(TCHAR))))
+        {
+          // Found a path to use.
+
+          // Your code to complete tasks goes here.
+        }
+
+        CeSvcClose (hsvcSync);
+      }
+
+      CeSvcClose (hsvcProfile);
+    }
+  }
+
+  cProfilesEnum++;
+}
+</CODE></PRE>
+
+<P>The following code example shows how to add a custom menu.</P>
+
+<PRE><CODE>{
+  HCESVC hsvcMyMenu = NULL;
+
+  if (SUCCEEDED (CeSvcOpen (CESVC_CUSTOM_MENUS,
+                            TEXT("MyApp"), TRUE, &amp;hsvcMyMenu)))
+  {
+    CeSvcSetString (hsvcMyMenu, TEXT("DisplayName"),
+                    TEXT("&amp;My Calculator"));
+
+    CeSvcSetString (hsvcMyMenu, TEXT("Command"), TEXT("calc.exe"));
+
+    CeSvcSetString (hsvcMyMenu, TEXT("StatusHelp"),
+                    TEXT("Displays calculator"));
+
+    CeSvcSetDword (hsvcMyMenu, TEXT("Version"), 0x00020000);
+
+    CeSvcClose (hsvcMyMenu);
+  }
+}
+</CODE></PRE>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

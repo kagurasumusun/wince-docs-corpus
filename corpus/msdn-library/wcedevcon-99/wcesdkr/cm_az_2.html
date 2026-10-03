@@ -1,0 +1,471 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>LINE_CALLSTATE</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_line_callstate"></A>LINE_CALLSTATE </H2>
+
+<P>This message is sent when the status of the specified call has changed. Several such messages will typically be received during the lifetime of a call. Applications are notified of new incoming calls with this message; the new call will be in the <I>offering</I> state. The application can use <B>lineGetCallStatus</B> to retrieve more detailed information about the current status of the call. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Tapi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>LINE_CALLSTATE </B><I>dwDevice</I> =<B> (DWORD) </B><I>hCall</I>;<BR>
+<I>dwCallbackInstance</I> = <B>(DWORD)</B> <I>hCallback</I>; <BR>
+<I>dwParam1</I> =<B> (DWORD)</B> <I>CallState</I>; <I>dwParam2</I> =<B> (DWORD)</B> <I>CallStateDetail</I>; <BR>
+<I>dwParam3</I> =<B> (DWORD)</B> <I>CallPrivilege</I>;</P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwDevice</I> </DT>
+
+<DD>Specifies a handle to the call. </dd>
+
+<DT><I>dwCallbackInstance</I> </DT>
+
+<DD>Specifies the callback instance supplied when opening the call’s line. </dd>
+
+<DT><I>dwParam1</I> </DT>
+
+<DD>Specifies the new call state. It is only one of the following LINECALLSTATE_ values: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_IDLE </TD>
+<TD width=50%>The call is idle—no call actually exists. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_OFFERING </TD>
+<TD width=50%>The call is being offered to the station, signaling the arrival of a new call. In some environments, a call in the offering state does not automatically alert the user. Alerting is done by the switch instructing the line to ring; it does not affect any call states. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_ACCEPTED </TD>
+<TD width=50%>The call was offering and has been accepted. This indicates to other (monitoring) applications that the current owner application has claimed responsibility for answering the call. In ISDN, this also indicates that alerting to both parties has started. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_DIALTONE </TD>
+<TD width=50%>The call is receiving a dial tone from the switch, which means that the switch is ready to receive a dialed number. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_DIALING </TD>
+<TD width=50%>Destination address information (a phone number) is being sent to the switch over the call. Note that <B>lineGenerateDigits</B> does not place the line into the <I>dialing</I> state. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_RINGBACK </TD>
+<TD width=50%>The call is receiving ringback from the called address. Ringback indicates that the other station has been reached and is being alerted. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_BUSY </TD>
+<TD width=50%>The call is receiving a busy tone. Busy tone indicates that the call cannot be completed—either a circuit (trunk) or the remote party’s station are in use. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_SPECIALINFO </TD>
+<TD width=50%>Special information is sent by the network. Special information is typically sent when the destination cannot be reached. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_CONNECTED </TD>
+<TD width=50%>The call has been established and the connection is made. Information is able to flow over the call between the originating address and the destination address. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_PROCEEDING </TD>
+<TD width=50%>Dialing has completed and the call is proceeding through the switch or telephone network. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_ONHOLD </TD>
+<TD width=50%>The call is on hold by the switch. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_CONFERENCED </TD>
+<TD width=50%>The call is currently a member of a multiparty conference call. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_ONHOLDPENDCONF </TD>
+<TD width=50%>The call is currently on hold while it is being added to a conference. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_ONHOLDPENTRANSFER </TD>
+<TD width=50%>The call is currently on hold awaiting transfer to another number. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_DISCONNECTED </TD>
+<TD width=50%>The remote party has disconnected from the call. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLSTATE_UNKNOWN </TD>
+<TD width=50%>The state of the call is not known. This may be due to limitations of the call-progress detection implementation. </TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwParam2</I> </DT>
+
+<DD>Specifies call-state-dependent information. 
+
+<P>If <I>dwParam1</I> is LINECALLSTATE_BUSY, <I>dwParam2</I> contains details about the busy mode. This parameter uses the following LINEBUSYMODE_ constants: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=41%>
+<H5>Value</H5>
+</TD>
+<TD width=59%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>LINEBUSYMODE_STATION </TD>
+<TD width=59%>The busy signal indicates that the called party’s station is busy. This is usually signaled by means of a “normal” busy tone. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>LINEBUSYMODE_TRUNK </TD>
+<TD width=59%>The busy signal indicates that a trunk or circuit is busy. This is usually signaled with a “long” busy tone. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>LINEBUSYMODE_UNKNOWN </TD>
+<TD width=59%>The busy signal’s specific mode is currently unknown, but may become known later. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=41%>LINEBUSYMODE_UNAVAIL </TD>
+<TD width=59%>The busy signal’s specific mode is unavailable and cannot become known. </TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>If <I>dwParam1</I> is LINECALLSTATE_CONNECTED, <I>dwParam2</I> contains details about the connected mode. This parameter uses the following LINECONNECTEDMODE_ constants: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECONNECTEDMODE_ACTIVE </TD>
+<TD width=50%>Indicates that the call is connected at the current station (the current station is a participant in the call). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECONNECTEDMODE_INACTIVE </TD>
+<TD width=50%>Indicates that the call is active at one or more other stations, but the current station is not a participant in the call. </TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>If <I>dwParam1</I> is LINECALLSTATE_DIALTONE, <I>dwParam2</I> contains the details about the dial tone mode. This parameter uses the following LINEDIALTONEMODE_ constants: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDIALTONEMODE_NORMAL </TD>
+<TD width=50%>This is a “normal” dial tone, which typically is a continuous tone. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDIALTONEMODE_SPECIAL </TD>
+<TD width=50%>This is a special dial tone indicating that a certain condition is currently in effect. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDIALTONEMODE_INTERNAL </TD>
+<TD width=50%>This is an internal dial tone, as within a PBX. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDIALTONEMODE_EXTERNAL </TD>
+<TD width=50%>This is an external (public network) dial tone. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDIALTONEMODE_UNKNOWN </TD>
+<TD width=50%>The dial tone mode is currently unknown, but may become known later. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDIALTONEMODE_UNAVAIL </TD>
+<TD width=50%>The dial tone mode is unavailable and cannot become known. </TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>If <I>dwParam1</I> is LINECALLSTATE_OFFERING, <I>dwParam2</I> contains details about the connected mode. This parameter uses the following LINEOFFERINGMODE_ constants: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEOFFERINGMODE_ACTIVE </TD>
+<TD width=50%>Indicates that the call is alerting at the current station (is accompanied by LINEDEVSTATE_RINGING messages), and if any application is set up to automatically answer, it may do so. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEOFFERINGMODE_INACTIVE </TD>
+<TD width=50%>Indicates that the call is being offered at more than one station, but the current station is not alerting (for example, it may be an attendant station where the offering status is advisory, such as blinking a light). </TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>If <I>dwParam1</I> is LINECALLSTATE_SPECIALINFO, <I>dwParam2</I> contains the details about the special information mode. This parameter uses the following LINESPECIALINFO_ constants: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINESPECIALINFO_NOCIRCUIT </TD>
+<TD width=50%>This special information tone precedes a “no circuit” or emergency announcement (trunk blockage category). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINESPECIALINFO_CUSTIRREG </TD>
+<TD width=50%>This special information tone precedes a vacant number, AIS, Centrex number change and nonworking station, access code not dialed or dialed in error, or manual intercept operator message (customer irregularity category). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINESPECIALINFO_REORDER </TD>
+<TD width=50%>This special information tone precedes a reorder announcement (equipment irregularity category). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINESPECIALINFO_UNKNOWN </TD>
+<TD width=50%>Specifics about the special information tone are currently unknown but may become known later. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINESPECIALINFO_UNAVAIL </TD>
+<TD width=50%>Specifics about the special information tone are unavailable and cannot become known. </TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>If <I>dwParam1</I> is LINECALLSTATE_DISCONNECTED, <I>dwParam2</I> contains details about the disconnect mode. This parameter uses the following LINEDISCONNECTMODE_ constants: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_NORMAL </TD>
+<TD width=50%>This is a “normal” disconnect request by the remote party, the call was terminated normally. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_UNKNOWN</TD>
+<TD width=50%>The reason for the disconnect request is unknown. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_REJECT </TD>
+<TD width=50%>The remote user has rejected the call. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_PICKUP </TD>
+<TD width=50%>The call was picked up from elsewhere. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_FORWARDED </TD>
+<TD width=50%>The call was forwarded by the switch. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_BUSY </TD>
+<TD width=50%>The remote user’s station is busy. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_NOANSWER </TD>
+<TD width=50%>The remote user’s station does not answer. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_NODIALTONE </TD>
+<TD width=50%>A dial tone was not detected within a service-provider defined timeout, at a point during dialing when one was expected (such as at a “W” in the dialable string). </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_BADADDRESS </TD>
+<TD width=50%>The destination address in invalid. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_UNREACHABLE </TD>
+<TD width=50%>The remote user could not be reached. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_CONGESTION </TD>
+<TD width=50%>The network is congested. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_INCOMPATIBLE </TD>
+<TD width=50%>The remote user’s station equipment is incompatible for the type of call requested. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEDISCONNECTMODE_UNAVAIL </TD>
+<TD width=50%>The reason for the disconnect is unavailable and cannot become known later. </TD>
+</TR>
+</TABLE><BR>
+
+
+
+
+<P><B>Note</B>  In circumstances where a <I>delayed</I> response is appropriate, use LINEDISCONNECTMODE_TEMPFAILURE. Where a <I>blacklisted</I> response is appropriate, use LINEDISCONNECT_BLOCKED. 
+
+
+
+<P>If <I>dwParam1</I> is LINECALLSTATE_CONFERENCED, <I>dwParam2</I> contains the <I>hConfCall</I> parameter of the parent call of the conference of which the subject <I>hCall</I> is a member. If the call specified in <I>dwParam2</I> was not previously considered by the application to be a parent conference call (<I>hConfCall)</I>, the application must do so as a result of this message. If the application does not have a handle to the parent call of the conference (because it has previously called <A HREF="cf_l_4.htm"><B>lineDeallocateCall</B></A> on that handle) <I>dwParam2</I> is set to NULL. 
+</dd>
+
+<DT><I>dwParam3</I> </DT>
+
+<DD>If zero, this parameter specifies that there has been no change in the application’s privilege for the call. 
+
+<P>If nonzero, it specifies the application’s privilege to the call. This occurs in the following situations: (1) The first time that the application is given a handle to this call; (2) When the application is the target of a call handoff (even if the application already was an owner of the call). This parameter uses the following LINECALLPRIVILEGE_ constants: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLPRIVILEGE_MONITOR </TD>
+<TD width=50%>The application has monitor privilege. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINECALLPRIVILEGE_OWNER </TD>
+<TD width=50%>The application has owner privilege. </TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>None.</P>
+
+<H4>Remarks</H4>
+
+<P>This message is sent to any application that has a handle for the call. The LINE_CALLSTATE message also notifies applications that monitor calls on a line about the existence and state of outbound calls established by other applications or manually by the user (for example, on an attached phone device). The call state of such calls reflects the actual state of the call, which is not <I>offering</I>. By examining the call state, the application can determine whether the call is an inbound call that needs to be answered or not. </P>
+
+<P>A LINE_CALLSTATE message with an unknown call state can be sent to a monitoring application as the result of a successful <A HREF="cf_l_11.htm"><B>lineMakeCall</B></A> function that has been requested by another application. At the same time that the requesting application is sent a <A HREF="cm_az_8.htm">LINE_REPLY</A> (success) for the requested operation, any monitoring applications on the line are sent the LINE_CALLSTATE (unknown) message. A LINE_CALLSTATE message indicating the “real” call state of the newly generated call is sent (using information provided by the service provider) to the requesting and monitoring applications shortly thereafter. </P>
+
+<P>A LINE_CALLSTATE (unknown) message is sent to monitoring applications only if <B>lineCompleteTransfer</B> causes calls to be resolved into a three-way conference. </P>
+
+<P>For backward compatibility, older applications are not expecting any particular value in <I>dwParam2</I> of a LINECALLSTATE_CONFERENCED message. TAPI therefore passes the parent call <I>hConfCall</I> in <I>dwParam2</I> regardless of the API version of the application receiving the message. In the case of a conference call initiated by the service provider, the older application is not aware that the parent call has become a conference call unless it happens to spontaneously examine other information (for example, call <B>lineGetConfRelatedCalls</B>) </P>
+
+<P>This message cannot be disabled. </P>
+<p>&nbsp;</p></body>
+</HTML>

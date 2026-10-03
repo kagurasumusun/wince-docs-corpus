@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateBindCtx</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_createbindctx"></A>CreateBindCtx</H2>
+
+<P>This function supplies a pointer to an implementation of <B>IBindCtx</B>, an object that stores information about a particular moniker-binding operation. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Objbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>WINOLEAPI CreateBindCtx ( DWORD</B> <I>reserved</I>, <B>LPBC FAR * </B><I>ppbc</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>reserved</I></DT>
+
+<DD>[in] Reserved for future use; set to zero.</dd>
+
+<DT><I>ppbc</I></DT>
+
+<DD>[out] Address of <B>IBindCtx</B>* pointer variable that receives the interface pointer to the new bind context object. When the function is successful, the caller is responsible for calling <A HREF="ki_uw_3.htm"><B>IUnknown::Release</B></A> on the bind context. A NULL value for the bind context indicates that an error occurred.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>S_OK indicates that the bind context was allocated and initialized successfully. The standard return value E_OUTOFMEMORY is also supported.</P>
+
+<H4>Remarks</H4>
+
+<P><B>CreateBindCtx</B> is most commonly used in the process of binding a moniker (locating and getting a pointer to an interface by identifying it through a moniker), as in the following steps:
+
+<OL>
+	<LI>Get a pointer to a bind context by calling the <B>CreateBindCtx</B> function.</li>
+
+	<LI>Call the <A HREF="ki_m_1.htm"><B>IMoniker::BindToObject</B></A> method on the moniker, retrieving an interface pointer to the object to which the moniker refers. </li>
+
+	<LI>Release the bind context.</li>
+
+	<LI>Use the interface pointer. </li>
+
+	<LI>Release the interface pointer. </li>
+</OL>
+
+<P>The following code example shows these steps.</P>
+
+<PRE><CODE>// pMnk is an IMoniker * that points to a previously acquired moniker 
+IFoo *pFoo; 
+IBindCtx *pbc; 
+ 
+CreateBindCtx( 0, &amp;pbc ); 
+pMnk-&gt;BindToObject( pbc, NULL, IID_IFoo, &amp;pFoo ); 
+pbc-&gt;Release(); 
+// pFoo now points to the object; safe to use pFoo 
+pFoo-&gt;Release(); 
+ </CODE></PRE>
+
+<P>Bind contexts are also used in other methods of the <A HREF="ki_m.htm"><B>IMoniker</B></A> interface besides <A HREF="ki_m_1.htm"><B>IMoniker::BindToObject</B></A>. </P>
+
+<P>A bind context retains references to the objects that are bound during the binding operation, causing the bound objects to remain active (keeping the object's server running) until the bind context is released. Reusing a bind context when subsequent operations bind to the same object can improve performance. You should, however, release the bind context as soon as possible, because you could be keeping the objects activated unnecessarily. </P>
+
+<P>A bind context contains a <B>BIND_OPTS</B> structure, which contains parameters that apply to all steps in a binding operation. When you create a bind context using <B>CreateBindCtx</B>, the fields of the <B>BIND_OPTS</B> structure are initialized to the following values:</P>
+
+<PRE><CODE>cbStruct = sizeof(BIND_OPTS) 
+grfFlags = 0 
+grfMode = STGM_READWRITE 
+dwTickCountDeadline = 0. 
+ </CODE></PRE>
+
+<P>You can call the <B>IBindCtx::SetBindOptions</B> method to modify these default values.</P>
+<p>&nbsp;</p></body>
+</HTML>

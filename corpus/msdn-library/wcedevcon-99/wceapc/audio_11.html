@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Starting and Stopping a CD Player</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_starting_and_stopping_a_cd_player"></A>Starting and Stopping a CD Player</H2>
+
+<P>You can start, stop, pause, and resume playing the CD Player. Calling the <B>CDROM_IOCTL_AUDIO_PLAY</B> and <B>CDROM_IOCTL_AUDIO_STOP</B> functions automatically sets or clears the CDAUDSTAT_PAUSED flag returned by the <B>CDROM_IOCTL_GET_AUDIO_STATE</B> function and the CDDEVSTAT_PLAYING_AUDIO flag returned by the <B>CDROM_IOCTL_GET_DEVICE_STATUS</B> function.</P>
+
+<P>If the drive does not support audio, ERROR_UNKNOWN_COMMAND is returned. If the starting or ending addresses are outside of the track play area, ERROR_INVALID_PARAMETER is returned.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To start and stop a CD Player</H4>
+
+<OL>
+	<LI>Call <B>CDROM_IOCTL_AUDIO_PLAY</B> to play selected audio tracks until the requested sectors have finished or until play is interrupted.
+<P>The following code example shows how to start a CD player.
+
+<PRE><CODE>if (DeviceIoControl(g_hDev,
+            CDROM_IOCTL_AUDIO_PLAY,
+            &amp;PlayInfo, 
+            sizeof(PlayInfo),
+            NULL, 0,
+            &amp;RetDataLen, NULL) == FALSE)
+    {
+         return( FALSE);
+    }
+</CODE></PRE>
+</li>
+
+	<LI>Call <B>CDROM_IOCTL_AUDIO_STOP</B> to stop playing audio tracks.
+<P>This function either pauses or stops the CD drive. If the CD player is playing, the function pauses the CD drive and updates the starting and ending addresses for the <B>CDROM_IOCTL_AUDIO_RESUME</B> function. If the CD player is paused, the function resets the starting and ending addresses for the <B>CDROM_IOCTL_AUDIO_RESUME</B> function.
+
+<P>The following code example shows how to stop a CD player.
+
+<PRE><CODE>BOOL    cdStop( void)
+{
+    DWORD                   RetDataLen;
+
+    if( !g_DiskValid)
+        return( FALSE);
+
+    if (DeviceIoControl(g_hDev,
+            CDROM_IOCTL_AUDIO_STOP,
+            NULL, 0,
+            NULL, 0,
+            &amp;RetDataLen, NULL) == FALSE)
+    {
+         return( FALSE);
+    } 
+    
+    return( TRUE);
+}
+</CODE></PRE>
+
+<P>The following code example shows how to resume play on a CD device a user has stopped.
+
+<PRE><CODE>BOOL    cdResume( void)
+{
+    DWORD                   RetDataLen;
+
+    if( !g_DiskValid)
+        return( FALSE);
+
+    if (DeviceIoControl(g_hDev,
+            CDROM_IOCTL_AUDIO_RESUME,
+            NULL, 0,
+            NULL, 0,
+            &amp;RetDataLen, NULL) == FALSE)
+    {
+         return( FALSE);
+    } 
+    g_Playing = 1;
+    return( TRUE);
+}
+</CODE></PRE>
+</li>
+</OL>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

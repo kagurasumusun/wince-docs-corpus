@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accelerating Line Drawing</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_accelerating_line_drawing"></A>Accelerating Line Drawing</H2>
+
+<P>Windows CE 2.0 and later include support for accelerating line drawing. The levels of accelerated line drawing are largely the same as for accelerated blit operations. The discussion of <A HREF="display_9.htm">Accelerating Bit Block Transfers</A> in the previous sections is relevant for line drawing as well, except that the emulation library provided in the Platform Builder does not provide software-accelerated line drawing. Developers can add software-accelerated line drawing functions, if necessary.</P>
+
+<P>Display drivers route line drawing to the GPE, to custom software acceleration routines, or directly to the hardware. The following code example from the S3Virge display driver sample shows how these methods are invoked. This source code is very similar in design to the acceleration processing performed for blit operations.</P>
+
+<PRE><CODE>SCODE 
+S3Virge::Line(GPELineParms *pLineParms, EGPEPhase phase)
+{
+
+#ifdef ENABLE_ACCELERATION
+    if (phase == gpeSingle || phase == gpePrepare)
+    {
+        DispPerfStart (ROP_LINE);
+        pLineParms-&gt;pLine = EmulatedLine;
+        if (pLineParms-&gt;pDst-&gt;InVideoMemory() &amp;&amp; pLineParms-&gt;mix == 0x0d0d)
+        {
+#if VIRGE_VERBOSE_MSGS
+            switch (phase)
+            {
+            case gpeSingle:
+                RETAILMSG(VIRGE_VERBOSE_MSGS, (TEXT("in single\n\r")));
+                break;
+            case gpePrepare:
+                RETAILMSG(VIRGE_VERBOSE_MSGS, (TEXT("in prepare\n\r")));
+                break;
+            }
+#endif
+            SelectSolidColor(pLineParms-&gt;solidColor);
+            pLineParms-&gt;pLine = (SCODE (GPE::*)(struct GPELineParms *)) AcceleratedSolidLine;
+        }
+    } else if (phase == gpeComplete) {
+        DispPerfEnd (0);
+    }
+#else
+    pLineParms-&gt;pLine = EmulatedLine;
+#endif
+    return S_OK;
+}
+</CODE></PRE>
+
+<P>The S3Virge driver conditionally compiles the hardware acceleration code with the <B>ENABLE_ACCELERATION</B> preprocessor directive. Line drawing begins with a call to the driver’s <B>Line</B> function. For improved performance, the driver’s <B>Line</B> function can examine the characteristics of the line drawing and the associated surfaces to determine whether an accelerated form of line drawing is appropriate. The default line drawing function is set to the <B>EmulatedLine</B> function of the GPE. The driver checks for a destination surface in video memory and checks the line drawing parameters. If the parameters are valid for acceleration, the line drawing function is set to the driver’s <B>AcceleratedSolidLine</B> function.</P>
+<p>&nbsp;</p></body>
+</HTML>

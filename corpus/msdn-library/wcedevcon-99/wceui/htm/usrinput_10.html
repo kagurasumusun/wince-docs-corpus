@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Programming an Input Panel</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_programming_an_input_panel"></A>Programming an Input Panel</H2>
+
+<P>When a user accesses the input panel, Windows CE creates a dedicated input panel thread. The thread creates an input panel window and initializes the input panel. Then, the thread enters a message loop. Within the message loop, the thread responds to messages and user interface (UI) requests from the input panel window. The thread also calls into the IM object. This enables the IM to create child windows in the input panel window. The content of the input panel window is determined by the current IM.</P>
+
+<P>The input panel thread has a special status with the OS. Any window that the input panel thread creates will not be obscured by other windows. Because some UI elements save and clear themselves when they lose focus, the input panel and its children do not receive the focus, even if a user is currently using the input panel.</P>
+
+<P>The input panel queries the IM for data through the <B>IInputMethod</B> interface. The input panel can remove the current IM and replace it with a new IM. The following table shows the UI queries that an input panel sends to an IM, listed in the order received.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=23%>
+<H5>Method </H5>
+</TD>
+<TD width=77%>
+<H5>Description </H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%><B>Deselect</B></TD>
+<TD width=77%>Destroys its window and performs IM-specific cleanup procedures </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%><B>Select</B></TD>
+<TD width=77%>Creates the IM window and image list </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%><B>GetInfo</B></TD>
+<TD width=77%>Requests data regarding the new IM, including property flags and the preferred IM size </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%><B>ReceiveSipInfo</B></TD>
+<TD width=77%>Sends the IM data about the size, placement, and docked status that the IM should use </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=23%><B>RegisterCallback</B></TD>
+<TD width=77%>Provides the IM with a pointer to the <B>IIMCallback</B> interface </TD>
+</TR>
+</TABLE><BR>
+
+<P>After the input panel calls these methods, the IM should render the input panel window space and respond to user actions. For more information about programming the IM, see <A HREF="usrinput_11.htm">Programming Input Methods</A>. </P>
+
+<P>An application that uses the input panel should know the input panel state—whether the panel is visible, whether it is docked, or floating, and its size and position. This data is stored in the <B>SIPINFO</B> structure, which is accessed through the <B>SHSipInfo</B> function. The following code example shows how to use the <B>SHSipInfo</B> function to access and modify the <B>SIPINFO</B> structure.</P>
+
+<PRE><CODE>BOOL LowerSip( void )
+{
+  BOOL fRes = FALSE;
+  SIPINFO si;
+
+  memset (&amp;si, 0, sizeof (si));
+  si.cbSize = sizeof (si);
+
+  if (SHSipInfo (SPI_GETSIPINFO, 0, &amp;si, 0)) 
+  {
+    si.fdwFlags &amp;= ~SIPF_ON;
+    fRes = SHSipInfo (SPI_SETSIPINFO, 0, &amp;si, 0);
+  }
+
+  return fRes;
+}
+</CODE></PRE>
+
+<P>When the user changes the input panel state, the OS sends out a WM_SETTINGCHANGE message to all active applications. This message has SPI_SETSIPINFO in its <I>wParam</I> parameter. The following code example shows how you can use the <B>SHSipInfo</B> function to move the input panel on the screen in response to a WM_SETTINGCHANGE message.</P>
+
+<PRE><CODE>WndProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    SIPINFO si;
+
+    switch (msg) 
+    {
+        case WM_SETTINGCHANGE:
+            switch (wParam) 
+            {
+                case SPI_SETSIPINFO:
+                    memset (&amp;si, 0, sizeof (si));
+                    si.cbSize = sizeof (si);
+
+                    if (SHSipInfo (SPI_GETSIPINFO, 0, &amp;si, 0)) 
+                    {
+                        MoveWindow (
+                  hwnd,
+                  si.rcVisibleDesktop.left,
+                  si.rcVisibleDesktop.top,
+                  si.rcVisibleDesktop.right - si.rcVisibleDesktop.left,
+                  si.rcVisibleDesktop.bottom - si.rcVisibleDesktop.top,
+                  TRUE);
+                    }
+                    break;
+            }
+            break;
+    }
+  return 0;
+}
+</CODE></PRE>
+
+<P>A change in the active IM sends messages to all top-level applications that are registered to receive IM notifications. Typically, the messages go to an application that controls a display, such as a taskbar. The following table shows the messages.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=25%>
+<H5>Event</H5>
+</TD>
+<TD width=31%>
+<H5>Windows CE message</H5>
+</TD>
+<TD width=44%>
+<H5>Application action</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>IM size or position changes </TD>
+<TD width=31%>WM_IM_INFO </TD>
+<TD width=44%>Return 0 if the application processes the message </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>IM has a new icon to associate with its current state </TD>
+<TD width=31%>WM_IM_INFO </TD>
+<TD width=44%>Return 0 if the application processes the message </TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

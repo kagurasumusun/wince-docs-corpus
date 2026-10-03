@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Redrawing the Screen</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_redrawing_the_screen"></A>Redrawing the Screen</H2>
+
+<P>The simplest way for a control to redraw the screen is by invalidating the relevant region with <B>IASForm::Invalidate</B> or <B>IASForm::InvalidateAll</B>. If a control needs more flexible and efficient drawing capability, it must obtain a pointer to an <B>IFMDraw</B> interface from its form. This interface provides access to the device context, along with a number of related methods.</P>
+
+<P>Only a control with its form is in the foreground can create a drawing that appears on the screen. If a form is not in the foreground, any attempt to draw to the screen is ignored and drawing is rendered to a default bitmap associated with the device context. Although the code executes properly, the image does not appear on the screen.</P>
+
+<P>To draw, a control must have a device context. When all or part of a form is repainted, the form obtains the device context. It then passes the device context to a control when it invokes the control’s <B>IASControl::Draw</B> method. A control can obtain a device context directly by obtaining a pointer to an <B>IFMDraw</B> interface and invoking the <B>IFMDraw::GetDC</B> method. </P>
+
+<P>If a control has invoked <B>IFMDraw::GetDC</B>, it should release it when it is finished by invoking <B>IFMDraw::ReleaseDC</B>. </P>
+
+<P>When a control’s <B>IASControl::Draw</B> method is invoked by a form, it should update its screen image. When the <B>DeferDraw</B> property is set to TRUE, no redrawing can take place. When it is set to FALSE, the screen updates immediately. In the case of a form, drawing is deferred for all controls on the form. This permits an application to complete all drawing before updating the screen. This approach is much faster than repeatedly updating the screen as individual elements are redrawn.</P>
+
+<P>The coordinates of an Auto PC control are defined relative to the x- and y-coordinates of its form, not the screen coordinates. A control’s screen size is defined by its <B>Top</B>, <B>Left</B>, <B>Height</B>, and <B>Width</B> properties. A control with its <B>Top</B> and <B>Left</B> properties both set to 0 is drawn in the upper-left corner of the form. The on-screen location of the control depends on the location of the form.</P>
+
+<P><B>Note</B>  Every <B>IFMDraw::GetDC</B> method must be matched by an <B>IFMDraw::ReleaseDC</B> method. If the device context is not released, subsequent calls to <B>IFMDraw::GetDC</B> will fail.</P>
+
+<H2>Blitting Images to the Screen</H2>
+
+<P>Blitting images to the screen requires an <B>IFMDraw</B> pointer. Drawing is rendered to the system’s off-screen bitmap. To transfer the contents of the bitmap to the screen, a control invokes <B>IFMDraw::Commit</B>. To blit to only a portion of the screen, define a clipping rectangle and invoke <B>IFMDraw::ClipAndCommit</B>. To blit only a portion of the bitmap, use <B>IASCanvas::CommitFrom</B> or <B>IASCanvas::CommitAt</B>.</P>
+
+<P><B>Note</B>  The <B>IFMDraw</B> and <B>IASCanvas</B> methods succeed only if the form has focus. If it does not, no errors are generated, but nothing appears on the screen.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Voice Menu</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_a_voice_menu"></A>Creating a Voice Menu</H2>
+
+<P>When you create a voice menu, you initialize your application grammar to let the speech recognition engine know what words your application handles for each device context.</P>
+
+<P>The code examples used in this section are part of a complete sample application, SRapp.dsp, included in the SDK. SRapp.dsp demonstrates how to use speech recognition to input user commands into an application. It contains the C++ file App.cpp, which contains the code for setting up a voice menu for an application, and Appsink.cpp, which programs a message sink. Like all Auto PC applications, SRapp.dsp creates a forms manager and forms using <B>GetFormsManager</B> and <B>CreateForms</B>.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a voice menu</H4>
+
+<OL>
+	<LI>Call <B>CreateVMenu</B> with your application name and the menu name.</li>
+
+	<LI>Add words to your applications’s menu in one of the following ways:
+<UL>
+	<LI>Pass a resource identifier table directly when calling <B>CreateVMenu</B>.</li>
+
+	<LI>Call <B>AddVMenuCommand</B> to add words individually.</li>
+
+	<LI>Call <B>AddVMenuCommandFromResource</B> to add words from a resource file.</li>
+</UL>
+</li>
+
+	<LI>Call <B>put_VoiceMenu</B> to associate the voice menu with a form in your application.</li>
+
+	<LI>Be sure to handle the WM_SPCH_RECOG message in the <B>HandleMessage</B> attached to your form or WM_COMMAND messages in the form’s event sink (<B>IASEventSink::ReceiveMsg</B>).</li>
+</OL>
+
+<P>If you want to access other interfaces on the voice command object, call <B>IAPCSpeech::QuerySpeechInterface</B> to get the <B>IVoiceCmd</B>, <B>IVCmdAttributes</B>, and <B>IVCmdUserWord</B> interfaces. </P>
+
+<P>The following code example shows how to create a voice menu from a resouce file using <B>CreateColorsVoiceMenu</B>.</P>
+
+<PRE><CODE>HRESULT
+CSRApp::CreateColorsVoiceMenu()
+{
+    HRESULT hr;
+
+    if(!IsColorWordsTrained()) return E_FAIL;
+
+    VCMDNAME vnColors;
+    memset(&amp;vnColors, NULL, sizeof(VCMDNAME));
+    lstrcpy(vnColors.szApplication, L"SR App");
+    lstrcpy(vnColors.szState, L"SR App - Colors");
+
+// Creates the color menu
+    hr = m_pSpeech-&gt;CreateVMenu(
+        NULL,
+        &amp;vnColors,
+        m_hInst,
+        0,
+        NULL,
+        APCSPCH_VM_USEEXISTING,
+        &amp;m_pVMColorsForm);
+    if(FAILED(hr))
+        return E_FAIL;
+
+// Adds names of colors to the menu from a resource file
+    hr = m_pSpeech-&gt;AddVMenuCommandsFromResource(
+        m_pVMColorsForm,
+        m_hInst,
+        MAKEINTRESOURCE(IDVM_COLORS),
+        0,
+        APCSPCH_VM_USEEXISTING);
+    if(FAILED(hr))
+        return E_FAIL;
+
+    hr = m_pSpeech-&gt;AddVMenuCommandsFromResource(
+        m_pVMColorsForm,
+        m_hInst,
+        MAKEINTRESOURCE(IDVM_COLORS_END),
+        0,
+        APCSPCH_VM_USEEXISTING);
+    if(FAILED(hr))
+        return E_FAIL;
+</CODE></PRE>
+
+<P>The following code example shows how to associate a voice menu with a form.</P>
+
+<PRE><CODE>    hr = m_pColorsForm-&gt;put_VoiceMenu(m_pVMColorsForm);
+    if(FAILED(hr))
+        return E_FAIL;
+
+    return NOERROR;
+</CODE></PRE>
+
+<P>The following code example shows the message handler for SRapp.dsp, contained in Appsink.cpp.</P>
+
+<PRE><CODE>STDMETHODIMP CAppMessageSink::HandleMessage(IDispatch* pdispControl,
+LONG uMsg, LONG wParam, LONG lParam)
+{
+    switch (uMsg)
+    {
+    default:
+        break;
+
+    case WM_SPCH_RECOG: 
+        switch (lParam)
+        {
+        default:
+            break;
+
+        case IDVMI_BLACK:
+            g_pApp-&gt;m_pColorsForm-&gt;put_BackColor(BLACK);
+            break;
+        case IDVMI_RED:
+            g_pApp-&gt;m_pColorsForm-&gt;put_BackColor(RED);
+            break;
+        case IDVMI_GREEN:
+            g_pApp-&gt;m_pColorsForm-&gt;put_BackColor(GREEN);
+            break;
+...
+        case IDVMI_WHITE:
+            g_pApp-&gt;m_pColorsForm-&gt;put_BackColor(WHITE);
+            break;
+
+        case IDVMI_ZERO:
+        case IDVMI_ONE:
+...
+        case IDVMI_NINE:
+            g_pApp-&gt;AddNumber(lParam - IDVMI_NUMBERS_BASE);
+            break;
+
+        case IDVMI_NUMBERS_END:
+            g_pApp-&gt;m_pActiveForms-&gt;SetFocus(g_pApp-&gt;m_pMainForm);
+            break;
+
+        case IDVMI_COLORS_END:
+            g_pApp-&gt;m_pActiveForms-&gt;SetFocus(g_pApp-&gt;m_pMainForm);
+            break;
+
+        }
+        break;
+    }
+
+    return S_FALSE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

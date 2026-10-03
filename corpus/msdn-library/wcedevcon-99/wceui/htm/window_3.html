@@ -1,0 +1,289 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Receiving and Dispatching Messages</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_receiving_and_dispatching_messages"></A>Receiving and Dispatching Messages</H2>
+
+<P>To receive messages, call the <B>GetMessage</B> function. When a thread calls <B>GetMessage</B>, Windows CE examines the thread message queue for incoming messages. Windows CE processes messages in the following order:
+
+<OL>
+	<LI>Windows CE checks for messages placed on the queue by the <B>SendMessage</B> function. After the system removes the message from the queue, it dispatches the message to the appropriate window procedure from within the <B>GetMessage</B> function. This guarantees that the sender and receiver message queues remain synchronized. The receiver must call <B>GetMessage</B> for the sent messages to be processed.</li>
+
+	<LI>If no sent message is found, Windows CE checks for messages placed on the queue by a call to <B>PostMessage</B>.</li>
+
+	<LI>If no posted message is found, Windows CE checks the queue for messages posted by the user input system.
+<P>By processing user input messages at a lower priority, the system guarantees that each input message and any posted messages that result from it are processed completely before moving on to the next input message.
+</li>
+
+	<LI>If no posted input messages are found, Windows CE checks the queue for WM_QUIT messages placed on the queue by a call to the <B>PostQuitMessage </B>function.</li>
+
+	<LI>If no posted quit messages are found, Windows CE checks the queue for WM_PAINT messages placed on the queue by the windowing system.</li>
+
+	<LI>If no paint messages are found, Windows CE checks the queue for WM_TIMER messages placed on the queue by the timer system.</li>
+</OL>
+
+<P>When <B>GetMessage</B> receives any of the previous messages, it returns the message content. The thread must call the <B>DispatchMessage</B> function to dispatch the message to the correct window procedure. If the message is a WM_QUIT message, the return value of <B>GetMessage</B> is zero, which causes the thread to end its message loop. </P>
+
+<P>The system dispatches messages in the <B>GetMessage</B> call of the message loop, and the application dispatches messages by calling the <B>DispatchMessage</B> function in the message loop. </P>
+
+<P>You might need to process messages you receive from <B>GetMessage</B> before you send them out using <B>DispatchMessage</B>. The most common processing routines are the <B>TranslateMessage </B>function, <B>TranslateAccelerator</B>, and <B>IsDialogMessage</B>. Some of these routines can dispatch messages internally because the application no longer needs to call <B>DispatchMessage</B> in the main message loop.</P>
+
+<P>You usually call <B>TranslateMessage</B> before <B>DispatchMessage</B>. <B>TranslateMessage</B> determines which characters go with keyboard messages. <B>TranslateMessage</B> posts the characters to the message queue to be picked up on the next pass of the message loop.</P>
+
+<P>To intercept keyboard messages and generate menu commands, call the <B>TranslateAccelerator</B> function. Call the <B>IsDialogMessage</B> function to ensure the proper operation of modeless dialog boxes. </P>
+
+<P>You can remove a message from its queue with the <B>GetMessage</B> function. Call the <B>PeekMessage</B> function to examine a message without removing it from its queue. This function fills an <B>MSG</B> structure with information about the message. Use the <B>PeekMessage</B> function carefully because it does not block the waiting for a message event, which enables an application to continue processing regardless of messages in the queue. In a Windows CE–based application, if an application does not block the waiting for a message or some other event, the kernel cannot shift the CPU into low-power mode; this can quickly drain the device batteries. </P>
+
+<P>When processing messages, Windows CE supports both system-defined messages and application-defined messages. System-defined messages have message identifiers ranging from 0 through 0x3ff. Messages with message identifiers ranging from 0x400 through 0x7fff are available for application-defined messages. </P>
+
+<P>There are two types of system-defined messages: general window messages, which are used for all windows, and special purpose messages, which apply to a particular class of windows. General window messages cover a wide range of information and requests, including messages for input device and keyboard input, as well as window creation and management. </P>
+
+<P>The prefix of the symbolic constant for the message generally identifies the category to which the message belongs. For example, general window messages all start with WM, whereas messages that apply only to button controls start with BM. </P>
+
+<P>The following table shows Windows CE message types.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=21%>
+<H5>Message type</H5>
+</TD>
+<TD width=79%>
+<H5>Description </H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>BM</TD>
+<TD width=79%>Button message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>BN</TD>
+<TD width=79%>Button notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>CB</TD>
+<TD width=79%>Combo box message </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>CBN</TD>
+<TD width=79%>Combo box notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>CDM</TD>
+<TD width=79%>Common dialog box message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>CDN</TD>
+<TD width=79%>Common dialog box notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>CPL</TD>
+<TD width=79%>Control panel message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>DB</TD>
+<TD width=79%>Object store message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>DM</TD>
+<TD width=79%>Dialog box default push button message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>DTM</TD>
+<TD width=79%>Date time picker and Hypertext Markup Language (HTML) viewer messages</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>DTN</TD>
+<TD width=79%>Date time picker notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>EM</TD>
+<TD width=79%>Edit control message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>EN</TD>
+<TD width=79%>Edit control notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>HDM</TD>
+<TD width=79%>Header control message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>HDN</TD>
+<TD width=79%>Header control notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>IMN</TD>
+<TD width=79%>Input context message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>LB</TD>
+<TD width=79%>List box control message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>LBN</TD>
+<TD width=79%>List box notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>LINE</TD>
+<TD width=79%>Line device message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>LVM</TD>
+<TD width=79%>List view message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>LVN</TD>
+<TD width=79%>List view notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>MCM</TD>
+<TD width=79%>Month calendar message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>MCN</TD>
+<TD width=79%>Month calendar notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>NM</TD>
+<TD width=79%>Messages sent by a variety of controls</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>PBM</TD>
+<TD width=79%>Progress bar message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>PSM</TD>
+<TD width=79%>Property sheet message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>PSN</TD>
+<TD width=79%>Property sheet notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>RB</TD>
+<TD width=79%>Rebar message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>RBN</TD>
+<TD width=79%>Rebar notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>SB</TD>
+<TD width=79%>Status bar window message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>SBM</TD>
+<TD width=79%>Scroll bar message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>STM</TD>
+<TD width=79%>Static bar message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>STN</TD>
+<TD width=79%>Static bar notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>TB</TD>
+<TD width=79%>Toolbar message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>TBM</TD>
+<TD width=79%>Trackbar message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>TBN</TD>
+<TD width=79%>Trackbar notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>TCM</TD>
+<TD width=79%>Tab control message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>TCN</TD>
+<TD width=79%>Tab control notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>TVM</TD>
+<TD width=79%>Tree view message </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>TVN</TD>
+<TD width=79%>Tree view notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>UDM</TD>
+<TD width=79%>Up-down control message</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>UDN</TD>
+<TD width=79%>Up-down control notification</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>WM</TD>
+<TD width=79%>General window messages </TD>
+</TR>
+</TABLE><BR>
+
+<P>You can define messages for use by your own application’s window. If you create messages, be sure that the window procedure that receives them interprets and processes them correctly. The operating system (OS) does not interpret application-defined messages.</P>
+
+<P>In some situations, you need to use messages to communicate with windows that are controlled by other processes. In this situation, call the <B>RegisterWindowMessage</B> function to register a message identifier. The message number returned is guaranteed to be unique throughout the system. By using this function, you prevent the conflicts that can arise if different applications use the same message identifier for different purposes. </P>
+
+<P>Windows CE does not support hooking messages because the extra processing required by hooks can impair the performance of Windows CE–based devices.</P>
+
+<P>When handling messages in your application, be aware of the WM_HIBERNATE message. Windows CE defines a WM_HIBERNATE message to notify an application when system resources run low. When an application receives this message, it should attempt to release as many resources as possible. The system checks memory status at five-second intervals. Every Windows CE–based application that uses even moderate amounts of system resources should implement a handler for the WM_HIBERNATE message. If an application window is not visible, it cannot receive a WM_HIBERNATE message. This is because the WM_HIBERNATE message is sent only to applications that have a button on the taskbar, which only visible windows do. A hidden window will not get this message, even if it is a top-level, overlapped window.</P>
+<p>&nbsp;</p></body>
+</HTML>

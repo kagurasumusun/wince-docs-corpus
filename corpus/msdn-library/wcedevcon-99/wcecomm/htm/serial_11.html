@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Writing to a Serial Port</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_WriteFile">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_WaitCommEvent">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_CreateFile">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_writing_to_a_serial_port"></A>Writing to a Serial Port</H2>
+
+<P>The <A HREF="JavaScript:hhobj_1.Click()"><B>WriteFile</B></A> function transfers data through the serial connection to another device. Before calling this function, an application must open and configure a serial port.</P>
+
+<P>Because Windows CE does not support overlapped I/O—also called asynchronous I/O—the primary <I>thread</I> or any thread that creates a window should not try to write a large amount of data to a serial port. Such threads are blocked and cannot manage message queues. An application can simulate overlapped I/O by creating multiple threads to handle read/write operations. To coordinate threads, an application calls the <A HREF="JavaScript:hhobj_2.Click()"><B>WaitCommEvent</B></A> function to block threads until specific communication events occur. For more information about communication events, see <A HREF="serial_13.htm">Using Communication Events</A>.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To write to a serial port</H4>
+
+<OL>
+	<LI>Pass the port handle to the <B>WriteFile</B> function in the <I>hFile</I> parameter. The <A HREF="JavaScript:hhobj_3.Click()"><B>CreateFile</B></A> function returns this handle when an application opens a port.</li>
+
+	<LI>Specify a pointer to the data to be written in <I>lpBuffer</I>. Often this data is binary data or a character array.</li>
+
+	<LI>Specify the number of characters to write in <I>nNumberOfBytesToWrite</I>. For Windows CE–based devices, usually one character is written because an application must convert Unicode characters to ASCII characters to enable text transfer to a device at the opposite end of a serial connection.</li>
+
+	<LI>Specify in <I>lpNumberOfBytesWritten</I> a pointer to the number of bytes actually written. <B>WriteFile</B> fills this variable so that an application can determine if the data transferred.</li>
+
+	<LI>Be sure that <I>lpOverlapped</I> is NULL.</li>
+</OL>
+
+<P>The following code example shows how to transfer data using the <B>WriteFile</B> function.</P>
+
+<PRE><CODE>DWORD dwError,
+      dwNumBytesWritten;
+
+WriteFile (hPort,              // Port handle
+           &amp;Byte,              // Pointer to the data to write 
+           1,                  // Number of bytes to write
+           &amp;dwNumBytesWritten, // Pointer to the number of bytes 
+                               // written
+           NULL                // Must be NULL for Windows CE
+);
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

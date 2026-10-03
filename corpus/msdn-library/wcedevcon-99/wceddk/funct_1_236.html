@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisMSendComplete</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndismsendcomplete"></A>NdisMSendComplete</H2>
+
+<P>This function returns the packet and final status of a completed send request for which the driver previously returned NDIS_STATUS_PENDING.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisMSendComplete(IN NDIS_HANDLE </B><I>MiniportAdapterHandle</I><B>, <BR>
+IN PNDIS_PACKET </B><I>Packet</I><B>, IN NDIS_STATUS </B><I>Status</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>MiniportAdapterHandle</I></DT>
+
+<DD>Handle originally input to the <B>MiniportInitialize</B> function.</dd>
+
+<DT><I>Packet</I></DT>
+
+<DD>Pointer to the protocol-allocated packet originally input to the <B>MiniportSend</B> function.</dd>
+
+<DT><I>Status</I></DT>
+
+<DD>Specifies the final status of the transmit request that has just been completed.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>The NDIS library queues incoming send packets on behalf of miniports so that each NIC driver can deal with one device-transmit operation at a time, although a miniport can transmit several packets per operation, depending on the capabilities of its NIC. NDIS serializes the submission of incoming packet arrays to each miniport’s <B>MiniportSendPackets</B> function, and it serializes the submission of packets to each miniport’s <B>MiniportSend</B> function. NDIS queues incoming send requests in first-in, first-out (FIFO) order when it cannot pass on each such request immediately because the underlying NIC driver is already busy.</P>
+
+<P>If <B>MiniportSendPackets </B>sets the <I>Status</I> in the out-of-band data block for a packet to NDIS_STATUS_PENDING or if <B>MiniportSend</B> returns NDIS_STATUS_PENDING for an incoming packet, the miniport must eventually call this function with the original packet to indicate which send request it has completed. While the status of such a send packet is pending, the miniport retains ownership of that packet.</P>
+
+<P>A call to this function causes NDIS to call the <B>ProtocolSendComplete</B> function of the driver that initiated the request with its call to <B>NdisSend</B>. The miniport’s call to this function releases ownership of the specified packet to the protocol driver that originally allocated it.</P>
+
+<P>If <B>MiniportSend</B> returns a status other than NDIS_STATUS_PENDING for a specified packet, the miniport never calls this function with that packet. The return from <B>MiniportSend</B> releases ownership of such a packet.</P>
+
+<P>Consequently, a miniport must not call this function with any packet for which its <B>MiniportSend</B> function did not return NDIS_STATUS_PENDING. Any send packet for which an NIC driver returns something other than NDIS_STATUS_PENDING should be considered inaccessible by that miniport as soon as its <B>MiniportSend</B> function returns control.</P>
+
+<P>A miniport’s call to this function does not necessarily mean that a particular packet has been transmitted over the wire. Usually, such a packet has been transmitted except, possibly, by the driver of an NIC in which packets can be queued in the hardware.</P>
+
+<P>Miniport drivers that declared their devices of type NdisMediumWan in response to a preceding OID_GEN_MEDIA_SUPPORTED or OID_GEN_MEDIA_IN_USE request call <B>NdisMWanSendComplete</B>, rather than this function.</P>
+
+<P>A driver that calls this function runs at IRQL DISPATCH_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_237.htm"><B>NdisMSendResourcesAvailable</B></A>, <A HREF="funct_1_279.htm"><B>NdisSend</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

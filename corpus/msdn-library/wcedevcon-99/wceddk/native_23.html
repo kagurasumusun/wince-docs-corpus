@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Writing an HCD Module</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_writing_an_hcd_module"></A>Writing an HCD Module</H2>
+
+<P>To support USB on a Windows CE–based platform, OEMs must customize the HCD module included with the Platform Builder. Microsoft provides a sample HCD module that works with OHCD-compliant USB host controllers. The sample OHCD is designed for a Windows CE–based platform. OEMs must port the sample OHCD to their platforms as part of their OAL implementations.</P>
+
+<P>To ease the porting effort, the OHCD is divided into two parts: a platform-independent MDD and a small PDD. This is similar to the MDD/PDD device driver model used by Windows CE–based native device drivers. As with the native device driver model, OEMs need to port only the PDD part. Furthermore, because the specifications for OHC interface and UHC interface hardware explicitly define the behavior of such hardware, the PDD layer does very little. The PDD layer for most HCD modules merely has to locate the hardware address of the host controller within memory and provide the MDD layer with the hardware address and a pointer to a shared memory area.</P>
+
+<P>However, the MDD and PDD layers in the HCD module interact more than the MDD and PDD layers in most native device drivers. For example, in the majority of native device drivers, the MDD layer calls DDSI functions exposed by the PDD layer. In the HCD module, the MDD layer not only calls the DDSI functions, but also exposes a set of functions that the PDD layer must call at specific times during initialization.</P>
+
+<P>OEMs must create a registry key within <B>HKEY_LOCAL_MACHINE\Drivers\Builtin\</B> so that the Device Manager loads the HCD module when the platform starts. Device drivers that the Device Manager loads must expose some of the stream interface functions. Therefore, the PDD layer is required to include some additional DDSI functions, such as <B>OhcdPdd_Open</B> and <B>OhcdPdd_IoControl</B>, even though the HCD module is not a stream interface driver. The benefit of this approach is that the Device Manager calls the HCD module’s <B>OhcdPdd_Init</B> function, which in turn enables the HCD module to call the required MDD functions. The following example shows the registry key for the HCD module; it should contain the same values as other stream interface driver keys.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Drivers\Builtin\OHCI]
+  “Prefix”=“HCD”
+  “Dll”=“ohci.dll”
+  “Index”=dword:1
+  “Order”=dword:1
+</CODE></PRE>
+
+<P>The following table shows the MDD functions that the PDD layer must call.</P>
+
+<TABLE cellspacing=4 cols=1>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_299.htm"><B>OhcdMdd_CreateMemoryObject</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_301.htm"><B>OhcdMdd_DestroyMemoryObject</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_300.htm"><B>OhcdMdd_CreateOhcdObject</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_302.htm"><B>OhcdMdd_DestroyOhcdObject</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_304.htm"><B>OhcdMdd_PowerUp</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=100%><A HREF="funct_1_303.htm"><B>OhcdMdd_PowerDown</B></A></TD>
+</TR>
+</TABLE><BR>
+
+<P>The following table shows the DDSI functions exposed by the PDD layer.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=39%><A HREF="funct_1_305.htm"><B>OhcdPdd_CheckConfigPower</B></A></TD>
+<TD width=61%><A HREF="funct_1_311.htm"><B>OhcdPdd_Open</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%><A HREF="funct_1_306.htm"><B>OhcdPdd_Close</B></A></TD>
+<TD width=61%><A HREF="funct_1_312.htm"><B>OhcdPdd_PowerDown</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%><A HREF="funct_1_307.htm"><B>OhcdPdd_Deinit</B></A></TD>
+<TD width=61%><A HREF="funct_1_313.htm"><B>OhcdPdd_PowerUp</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%><A HREF="funct_1_308.htm"><B>OhcdPdd_DllMain</B></A></TD>
+<TD width=61%><A HREF="funct_1_314.htm"><B>OhcdPdd_Read</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%><A HREF="funct_1_309.htm"><B>OhcdPdd_Init</B></A></TD>
+<TD width=61%><A HREF="funct_1_315.htm"><B>OhcdPdd_Seek</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=39%><A HREF="funct_1_310.htm"><B>OhcdPdd_IoControl</B></A></TD>
+<TD width=61%><A HREF="funct_1_316.htm"><B>OhcdPdd_Write</B></A></TD>
+</TR>
+</TABLE><BR>
+
+<P>OEMs must write their own HCD modules if their platforms contain universal host controller driver (UHCD)–compliant host controllers, instead of OHCD-compliant host controllers. An HCD module for UHCD hardware must expose the same interface to the USB driver module as the sample HCD module. The OHCD sample is suitable to use as a model while developing an HCD module for UHCD hardware.</P>
+<p>&nbsp;</p></body>
+</HTML>

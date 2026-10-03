@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MyFSD_CreateFileW</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_myfsd_createfilew"></A><I>MyFSD</I>_CreateFileW</H2>
+
+<P>This function creates, opens, or truncates a file, pipe, communications resource, disk device, or console in an installable file system. It returns a handle that can be used to access the object. It can also open and return a handle to a directory. The application does not call this function directly. Instead, use the corresponding standard Win32 function <B>CreateFile</B>. The file system driver (FSD) Manager determines the file system type and calls the <B><I>MyFSD</I>_CreateFileW </B>implementation of the function.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Fsdmgr.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HANDLE</B> <B><I>MyFSD</I>_CreateFileW( PVOLUME</B> <I>pVolume</I>, <B>HANDLE</B> <I>hProc</I>, <B>PCWSTR</B> <I>pwsFileName</I>, <B>DWORD</B> <I>dwAccess</I>, <B>DWORD</B> <I>dwShareMode</I>,<B><BR>
+PSECURITY_ATTRIBUTES</B> <I>pSecurityAttributes</I>, <B>DWORD </B><I>dwCreate</I>,<B><BR>
+DWORD</B> <I>dwFlagsAndAttributes</I>, <B>HANDLE</B> <I>hTemplateFile </I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pVolume</I></DT>
+
+<DD>Pointer to the value that the file system driver (FSD) defines in its DLL and passes to the <B>FSDMGR_RegisterVolume</B> function when registering the volume. The definition of <I>pVolume</I> can point to private structures.</dd>
+
+<DT><I>hProc</I></DT>
+
+<DD>Handle to the process that is calling <B>CreateFile</B>. This parameter is the same value that the FSD must pass to the<B> FSDMGR_CreateFileHandle</B> function when creating the handle to return to the application.</dd>
+
+<DT><I>pwsFileName</I></DT>
+
+<DD>Pointer to a null-terminated string that specifies the name of the object (file, pipe, mailslot, communications resource, disk device, console, or directory) to create or open. </dd>
+
+<DT><I>dwAccess</I></DT>
+
+<DD>Specifies the type of access to the object. An application can obtain read access, write access, read-write access, or device query access. It can be any combination of the following values:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>0</TD>
+<TD width=52%>Specifies device query access to the object. An application can query device attributes without accessing the device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>GENERIC_READ</TD>
+<TD width=52%>Specifies read access to the object. Data can be read from the file and the file pointer can be moved. Combine with GENERIC_WRITE for read-write access.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>GENERIC_WRITE</TD>
+<TD width=52%>Specifies write access to the object. Data can be written to the file and the file pointer can be moved. Combine with GENERIC_READ for read-write access.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwShareMode</I></DT>
+
+<DD>Set of bit flags that specifies how the object can be shared. If <I>dwShareMode</I> is 0, the object cannot be shared. Subsequent open operations on the object will fail, until the handle is closed. 
+
+<P>To share the object, use a combination of one or more of the following values: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_SHARE_READ</TD>
+<TD width=52%>Subsequent open operations on the object will succeed only if read access is requested.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_SHARE_WRITE</TD>
+<TD width=52%>Subsequent open operations on the object will succeed only if write access is requested.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>pSecurityAttributes</I></DT>
+
+<DD>Ignored; set to NULL. </dd>
+
+<DT><I>dwCreate</I></DT>
+
+<DD>Specifies which action to take on files that exist, and which action to take when files do not exist. For more information about this parameter, see the Remarks section. It is one of the following values:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CREATE_NEW</TD>
+<TD width=52%>Creates a new file. The function fails if the specified file already exists.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CREATE_ALWAYS</TD>
+<TD width=52%>Creates a new file. If the file exists, the function overwrites the file and clears the existing attributes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>OPEN_EXISTING</TD>
+<TD width=52%>Opens the file. The function fails if the file does not exist.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>&nbsp;</TD>
+<TD width=52%>See the Remarks section for a discussion of why you should use the OPEN_EXISTING flag if you are using the <B>CreateFile</B> function for devices, including the console.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>OPEN_ALWAYS</TD>
+<TD width=52%>Opens the file, if it exists. If the file does not exist, the function creates the file as if <I>dwCreate</I> were CREATE_NEW.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>TRUNCATE_EXISTING</TD>
+<TD width=52%>Opens the file. Once opened, the file is truncated so that its size is zero bytes. The calling process must open the file with at least GENERIC_WRITE access. The function fails if the file does not exist.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwFlagsAndAttributes</I></DT>
+
+<DD>Specifies the file attributes and flags for the file. </dd>
+
+<DT><I>hTemplateFile</I></DT>
+
+<DD>Ignored; as a result, <B>CreateFile</B> does not copy the extended attributes to the new file.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>An open handle to the specified file indicates success. If the specified file exists before the function call and <I>dwCreationDisposition</I> is CREATE_ALWAYS or OPEN_ALWAYS, a call to <A HREF="kf_g_19.htm"><B>GetLastError</B></A> returns ERROR_ALREADY_EXISTS, even though the function has succeeded. If the file does not exist before the call, <B>GetLastError</B> returns zero. </P>
+
+<P>INVALID_HANDLE_VALUE indicates failure. To get extended error information, call <B>GetLastError</B>. </P>
+
+<H4>Remarks</H4>
+
+<P>The Fsdmgr component is a dynamic-link library (DLL) that manages all operating system interaction with installable files systems. Each installable file system requires an FSD, which is a DLL that exports an API needed to support an installable file system. The name of the DLL for the FSD and the names of the functions it exports start with the name of the associated installable file system. For example, if the name of file system is MyFSD, then its DLL is MyFSD.dll and its exported functions are prefaced with MyFSD_*. </P>
+
+<P>Fsdmgr provides service functions to FSDs. The <B>FSDMGR_RegisterVolume</B>,<B> FSDMGR_CreateFileHandle</B>, and<B> FSDMGR_CreateSearchHandle</B> functions record a <B>DWORD</B> of volume-specific data the FSD needs to keep associated with volume. This volume-specific data is passed as the first parameter of these three functions.</P>
+
+<P>Applications that access an installable file system use standard Win32 functions. For example, when an application wants to create a folder on a device that contains an installable file system, it calls <B>CreateDirectory</B>. Fsdmgr recognizes that the path is to a device containing an installable file system and calls the appropriate function, which in the case of the MyFSD file system is <B>MyFSD_CreateDirectoryW</B>. That is, the application calls <B>CreateDirectory</B>, causing Fsdmgr to call <B>MyFSD_CreateDirectoryW</B>.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_c_31.htm"><B>CreateFile</B></A>, <A HREF="kf_mn_31.htm"><B><I>MyFSD</I>_CloseFile</B></A>, <A HREF="kf_f_21.htm"><B>FSDMGR_RegisterVolume</B></A>, <A HREF="kf_v_181.htm"><B>VirtualAlloc</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

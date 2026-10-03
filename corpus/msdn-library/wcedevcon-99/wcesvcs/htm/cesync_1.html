@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating an ActiveSync Service Provider</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_an_activesync_service_provider"></A>Creating an ActiveSync Service Provider</H2>
+
+<P>The synchronization process transfers only data that has changed. For this reason, the service provider  must track data changes as efficiently as possible to ensure that the least amount of data is transferred during synchronization. </P>
+
+<P>To create an efficient ActiveSync service provider for an application, you first must analyze the data to be synchronized by defining the <I>object</I>, the <I>object type</I>, and the <I>object identifier</I>, as well as the folder and the store to hold the objects. You also must decide on a method to compare objects and a method to indicate that an object has changed. As you do this, keep in mind the following terminology and requirements, which are specific to the synchronization process:
+
+<UL>
+	<LI>An object is a logical unit of data, such as a single appointment. The object definition depends on your application. The definition can be an appointment, an address, or some other item.</li>
+
+	<LI>An object type is a name for a particular group of objects contained in a folder. For example, appointment is an object type naming all appointments in a Microsoft Schedule+ folder. </li>
+
+	<LI>An object identifier is a value that uniquely identifies an object. The object identifier must satisfy the following criteria: 
+<UL>
+	<LI>It cannot change once it is created.</li>
+
+	<LI>It cannot be reused for any other object.</li>
+
+	<LI>It must be ordered, so that you can determine which object comes first.</li>
+
+	<LI>It must signify changes since the last synchronization. </li>
+</UL>
+
+<P>For example, globally unique identifiers (GUIDs) satisfy the criteria. The criteria allow the service manager to compare object identifiers to aid in synchronization. 
+</li>
+
+	<LI>The store is a database that holds the data, or objects, to be synchronized. The store must accommodate the objects, but its format can vary. The store can be a flat file, a database, or some other custom format. </li>
+</UL>
+
+<P>Once you have analyzed the data, you are ready to create a service provider by developing the <I>desktop provider module</I> and the <I>device provider module</I>:
+
+<UL>
+	<LI>The desktop provider module handles the bulk of communication with the service manager and implements two Component Object Model (COM) interfaces: <B>IReplStore</B> and <B>IReplObjHandler</B>: </li>
+</UL>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=22%>
+<H5>COM interface</H5>
+</TD>
+<TD width=78%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><B>IReplStore</B> </TD>
+<TD width=78%>Enumerates objects in a store, checks for changes in an object, and displays a UI so that the user can set synchronization options and resolve conflicts. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><B>IReplObjHandler</B></TD>
+<TD width=78%>Serializes data and deletes objects.</TD>
+</TR>
+</TABLE><BR>
+
+<UL>
+	<LI>The device provider module must implement the same <B>IReplObjHandler</B> interface as the desktop provider module, as well as the following functions: </li>
+</UL>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=22%>
+<H5>Function</H5>
+</TD>
+<TD width=78%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><B>InitObjType</B></TD>
+<TD width=78%>Initializes data and returns a pointer to the <B>IReplObjHandler</B> interface when the device provider module loads and, when the device provider module terminates, frees allocated resources.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><B>ObjectNotify</B></TD>
+<TD width=78%>Calls the service manager when an object in the object store for a device is changed or deleted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><B>GetObjNotify</B></TD>
+<TD width=78%>Returns the type of the specified object.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=22%><B>ReportStatus</B></TD>
+<TD width=78%>Optional; gets status for synchronization objects. </TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

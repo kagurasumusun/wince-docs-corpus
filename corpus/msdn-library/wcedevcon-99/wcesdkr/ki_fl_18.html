@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ILockBytes::LockRegion</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ilockbytes_lockregion"></A>ILockBytes::LockRegion</H2>
+
+<P>This method restricts access to a specified range of bytes in the array.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Objbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT LockRegion( ULARGE_INTEGER </B><I>libOffset</I><B>, <BR>
+ULARGE_INTEGER </B><I>cb</I><B>, DWORD </B><I>dwLockType </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>libOffset</I></DT>
+
+<DD>[in] Specifies the byte offset for the beginning of the range.</dd>
+
+<DT><I>cb</I></DT>
+
+<DD>[in] Specifies, in bytes, the length of the range to be restricted.</dd>
+
+<DT><I>dwLockType</I></DT>
+
+<DD>[in] Specifies the type of restrictions being requested on accessing the range. This parameter uses one of the values from the <B>LOCKTYPE</B> enumeration.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=35%>
+<H5>Value</H5>
+</TD>
+<TD width=65%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK</TD>
+<TD width=65%>The specified range of bytes was locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>STG_E_INVALIDFUNCTION</TD>
+<TD width=65%>Locking is not supported at all or the specific type of lock requested is not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>STG_E_ACCESSDENIED</TD>
+<TD width=65%>Access denied because the caller has insufficient permission, or another caller has the file open and locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>STG_E_LOCKVIOLATION</TD>
+<TD width=65%>Access denied because another caller has the file open and locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>STG_E_INVALIDHANDLE</TD>
+<TD width=65%>An underlying file has been prematurely closed, or the correct floppy disk has been replaced by an invalid one.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P><B>ILockBytes::LockRegion</B> restricts access to the specified range of bytes. Once a region is locked, attempts by others to gain access to the restricted range must fail with the STG_E_ACCESSDENIED error.</P>
+
+<P>The byte range can extend past the current end of the byte array. Locking beyond the end of an array is useful as a method of communication between different instances of the byte array object without changing data that is actually part of the byte array. For example, an implementation of <B>ILockBytes</B> for compound files could rely on locking past the current end of the array as a means of access control, using specific locked regions to indicate permissions currently granted.</P>
+
+<P>The <I>dwLockType</I> parameter specifies one of three types of locking, using values from the <B>LOCKTYPE</B> enumeration. The types are as follows: locking to exclude other writers, locking to exclude other readers or writers, and locking that allows only one requestor to obtain a lock on the given range. This third type of locking is usually an alias for one of the other two lock types, and permits an Implementer to add other behavior as well. A given byte array might support either of the first two types, or both.</P>
+
+<P>To determine the lock types supported by a particular <A HREF="ki_fl_16.htm"><B>ILockBytes</B></A> implementation, you can examine the <I>grfLocksSupported</I> member of the <A HREF="ks_qs_11.htm"><B>STATSTG</B></A> structure returned by a call to <A HREF="ki_fl_21.htm"><B>ILockBytes::Stat</B></A>. </P>
+
+<P>Any region locked with <B>ILockBytes::LockRegion</B> must later be explicitly unlocked by calling <A HREF="ki_fl_22.htm"><B>ILockBytes::UnlockRegion</B></A><B> </B>with exactly the same values for the <I>libOffset</I>, <I>cb</I>, and <I>dwLockTyp</I>e parameters. The region must be unlocked before the stream is released. Two adjacent regions cannot be locked separately and then unlocked with a single unlock call.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>Since the type of locking supported is optional and can vary in different implementations of <A HREF="ki_fl_16.htm"><B>ILockBytes</B></A>, you must provide code to deal with the STG_E_INVALIDFUNCTION error.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>Support for this method depends on how the storage object built on top of the <A HREF="ki_fl_16.htm"><B>ILockBytes</B></A> implementation is used. If you know that only one storage object at any given time can be opened on the storage device that underlies the byte array, then your <B>ILockBytes</B> implementation does not need to support locking. However, if multiple simultaneous openings of a storage object are possible, then region locking is needed to coordinate them.</P>
+
+<P>A <B>LockRegion</B> implementation can choose to support all, some, or none of the lock types. For unsupported lock types, the implementation should return STG_E_INVALIDFUNCTION.</P>
+<p>&nbsp;</p></body>
+</HTML>

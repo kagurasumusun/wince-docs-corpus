@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CoCreateInstance</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_cocreateinstance"></A>CoCreateInstance</H2>
+
+<P>This<B> </B>function creates on the local system a single uninitialized object of the class associated with a specified class identifier </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Objbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>STDAPI</B> <B>CoCreateInstance(REFCLSID</B> <I>rclsid</I><B>,</B> <B>LPUNKNOWN</B> <I>pUnkOuter</I><B>,</B> <B>DWORD</B> <I>dwClsContext</I><B>,</B> <B>REFIID</B> <I>riid</I><B>,</B> <B>LPVOID</B> <B>*</B> <I>ppv</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>rclsid</I></DT>
+
+<DD>[in] Class identifier associated with the data and code that are used to create the object. </dd>
+
+<DT><I>pUnkOuter</I></DT>
+
+<DD>[in] If NULL, indicates that the object is not being created as part of an aggregate. If non-NULL, pointer to the aggregate object’s <B>IUnknown</B> interface (the controlling <B>IUnknown</B>). </dd>
+
+<DT><I>dwClsContext</I></DT>
+
+<DD>[in] Specifies the context in which the code that manages the newly created object will run. The only valid value for this parameter is CLSCTX_INPROC_SERVER, which is from the enumeration <B>CLSCTX</B>. Any other value results in a return value of E_NOTIMPL.</dd>
+
+<DT><I>riid</I></DT>
+
+<DD>[in] Reference to the identifier of the interface to be used to communicate with the object.</dd>
+
+<DT><I>ppv</I></DT>
+
+<DD>[out] Address of pointer variable that receives the interface pointer requested in <I>riid</I>. Upon successful return, <I>ppv</I> contains the requested interface pointer.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=40%>
+<H5>Value</H5>
+</TD>
+<TD width=60%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>S_OK</TD>
+<TD width=60%>An instance of the specified object class was successfully created.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>REGDB_E_CLASSNOTREG</TD>
+<TD width=60%>A specified class is not registered in the registration database. Also can indicate that the type of server you requested in the <B>CLSCTX</B> enumeration is not registered or the values for the server types in the registry are corrupt.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>CLASS_E_NOAGGREGATION</TD>
+<TD width=60%>This class cannot be created as part of an aggregate.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The <B>CoCreateInstance</B> helper function provides a convenient shortcut by connecting to the class object associated with the specified class identifier, creating an uninitialized instance, and releasing the class object. As such, it encapsulates the following functionality:</P>
+
+<PRE><CODE>CoGetClassObject(rclsid, dwClsContext, NULL, IID_IClassFactory, &amp;pCF); 
+hresult = pCF-&gt;CreateInstance(pUnkOuter, riid, ppvObj) 
+pCF-&gt;Release(); 
+ </CODE></PRE>
+
+<P>It is convenient to use <B>CoCreateInstance</B> when you need to create only a single instance of an object on the local machine. When you are creating multiple instances, it is more efficient to obtain a pointer to the class object's <B>IClassFactory</B> interface and use its methods as needed. In the latter case, you should use the <A HREF="kf_c_14.htm"><B>CoGetClassObject</B></A> function.</P>
+
+<P>In the <B>CLSCTX</B> enumeration, you can specify the type of server used to manage the object. The constants can be CLSCTX_INPROC_SERVER, CLSCTX_INPROC_HANDLER, CLSCTX_LOCAL_SERVER, or any combination of these values. The constant CLSCTX_ALL is defined as the combination of all three. For more information about the use of one or a combination of these constants, refer to <B>CLSCTX</B>.</P>
+
+<P>Passing into this function any invalid and, under some circumstances, NULL pointers result in unexpected termination of the application. </P>
+<p>&nbsp;</p></body>
+</HTML>

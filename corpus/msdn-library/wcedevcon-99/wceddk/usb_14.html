@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>USB Device Driver Installation</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_usb_device_driver_installation"></A>USB Device Driver Installation</H2>
+
+<P>The <B>HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients</B> registry key must be set up correctly so that the USBD module can load the appropriate driver for a device when a device is attached to the bus. Each installed USB device driver must have a subkey within the <B>LoadClients</B> key for the USBD module to load it.</P>
+
+<P>For a USB device driver supplied by an OEM, the OEM should configure the <B>LoadClients</B> registry key in a platform’s .reg file to include keys for the driver. For third-party peripherals, however, the driver does not have appropriate registry keys when it is first connected to the platform. In this case, the USBD module fails to locate an appropriate USB device driver when the peripheral is attached to the bus. The USBD module instead displays a dialog box prompting a user to enter the name of the appropriate USB device driver dynamic-link library (DLL). The USBD then loads the specified driver to control the peripheral and calls the driver’s <A HREF="funct_1_373.htm"><B>USBInstallDriver</B></A> function.</P>
+
+<P>The USB device driver’s <B>USBInstallDriver</B> function sets up the driver’s subkey correctly within the <B>LoadClients\</B> registry key so that the USBD module can load the driver the next time that the peripheral is attached to the bus. The driver does this by creating a <B>USB_driver_SETTINGS</B> structure and passing it to the <A HREF="funct_1_344.htm"><B>RegisterClientSettings</B></A> function. The format of the USB_DRIVER_SETTINGS structure parallels that of the <B>LoadClients</B> registry key. If all the fields in a group have <B>USB_NO_INFO</B> value, the corresponding <B>Group<I>X</I>_ID</B> is set to <B>Default</B> in the registry. For example, the following example shows the USB_DRIVER_SETTINGS for the HID class sample driver.</P>
+
+<PRE><CODE>USB_DRIVER_SETTINGS DriverSettings;
+DriverSettings-&gt;dwVendorId          = USB_NO_INFO;
+DriverSettings-&gt;dwProductId         = USB_NO_INFO;
+DriverSettings-&gt;dwReleaseNumber     = USB_NO_INFO;
+
+DriverSettings-&gt;dwDeviceClass       = USB_NO_INFO;
+DriverSettings-&gt;dwDeviceSubClass    = USB_NO_INFO;
+DriverSettings-&gt;dwDeviceProtocol    = USB_NO_INFO;
+
+DriverSettings-&gt;dwInterfaceClass    = USB_DEVICE_CLASS_HUMAN_INTERFACE;
+DriverSettings-&gt;dwInterfaceSubClass = USB_NO_INFO;
+DriverSettings-&gt;dwInterfaceProtocol = USB_NO_INFO;
+</CODE></PRE>
+
+<P>The following example shows how calling <A HREF="funct_1_344.htm"><B>RegisterClientSettings</B></A> with this <B>DriverSettings</B> structure is equivalent to having set up this registry key.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients]
+  [Default]
+    [Default]
+      [3]
+         [Generic_Sample_Hid_Class_Driver]
+           “DLL”=“USBHID.dll”
+</CODE></PRE>
+
+<P>In general, the client driver performs the following operations in <B>USBInstallDriver</B>:
+
+<UL>
+	<LI>Registers a unique client driver identifier string by calling the <A HREF="funct_1_343.htm"><B>RegisterClientDriverId</B></A> function.</li>
+
+	<LI>Sets up the <B>LoadClients</B> registry key correctly by calling the <B>RegisterClientDriverSettings</B> function.</li>
+
+	<LI>Creates any driver-specific registry keys under the registry key returned by the <B>OpenClientRegistryKey</B> function. This is optional because many client drivers may not have any driver-specific registry settings. The registry key for driver-specific settings is <B>HKEY_LOCAL_MACHINE\Drivers\USB\ClientDrivers\<I>Client Driver Id String</I></B>.</li>
+</UL>
+
+<P>This location for driver-specific keys may change in future versions of Windows CE, so USB device drivers should always use <B>OpenClientRegistryKey</B> to manipulate the settings, rather than opening the registry key directly.</P>
+
+<P>After <B>USBInstallDriver</B> completes these actions, it returns control to the USBD module. The USBD module once again attempts to load a client driver for the device, using the algorithm described in <A HREF="usb_13.htm">USB Device Driver Load Process</A>. At this time, the USBD module calls the USB device driver’s attach routine. </P>
+<p>&nbsp;</p></body>
+</HTML>

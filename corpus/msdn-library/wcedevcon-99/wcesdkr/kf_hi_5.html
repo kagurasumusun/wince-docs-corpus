@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>HeapCreate</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_heapcreate"></A>HeapCreate </H2>
+
+<P>This function creates a heap object that is private to the calling process. This reserves a contiguous block of the process's virtual address space and allocates physical storage for a specified initial portion of this block.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HANDLE</B> <B>HeapCreate(DWORD</B> <I>flOptions</I><B>, DWORD</B> <I>dwInitialSize, <BR>
+</I><B>DWORD</B> <I>dwMaximumSize<B>)</B></I><B>;</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>flOptions</I></DT>
+
+<DD>[in] Specifies optional attributes for the new heap. These flags will affect subsequent access to the new heap through calls to the heap functions (<B>HeapAlloc</B>, <B>HeapFree</B>, <B>HeapReAlloc</B>, and <B>HeapSize</B>). You can specify the following flag: 
+
+<TABLE border=1 cellspacing=4 cols=2 frame=void rules=rows>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>HEAP_NO_SERIALIZE</TD>
+<TD width=52%>Specifies that mutual exclusion will not be used when the heap functions allocate and free memory from this heap. The default, when the HEAP_NO_SERIALIZE flag is not specified, is to serialize access to the heap. Serialization of heap access allows two or more threads to simultaneously allocate and free memory from the same heap.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwInitialSize</I></DT>
+
+<DD>[in] Specifies the initial size, in bytes, of the heap. This value determines the initial amount of physical storage that is allocated for the heap. The value is rounded up to the next page boundary. To determine the size of a page on the host computer, use the <A HREF="kf_g_35.htm"><B>GetSystemInfo</B></A> function. </dd>
+
+<DT><I>dwMaximumSize</I></DT>
+
+<DD>Unsupported.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A handle to the newly created heap indicates success. NULL indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>.</P>
+
+<H4>Remarks</H4>
+
+<P>The <B>HeapCreate</B> function creates a private heap object from which the calling process can allocate memory blocks by using the <A HREF="kf_hi_4.htm"><B>HeapAlloc</B></A> function. The initial size determines the number of committed pages that are initially allocated for the heap. These pages create a block in the process’s virtual address space into which the heap can grow. If requests by <B>HeapAlloc</B> exceed the current size of committed pages, additional pages are automatically committed from this reserved space, assuming that the physical storage is available. </P>
+
+<P>The memory of a private heap object is accessible only to the process that created it. If a dynamic-link library (DLL) creates a private heap, the heap is created in the address space of the process that called the DLL, and it is accessible only to that process. </P>
+
+<P>The system uses memory from the private heap to store heap support structures, so not all of the specified heap size is available to the process. For example, if the <A HREF="kf_hi_4.htm"><B>HeapAlloc</B></A> function requests 64 kilobytes (K) from a heap with a maximum size of 64K, the request may fail because of system overhead. </P>
+
+<P>If the HEAP_NO_SERIALIZE flag is not specified (the simple default), the heap will serialize access within the calling process. Serialization ensures mutual exclusion when two or more threads attempt to simultaneously allocate or free blocks from the same heap. There is a small performance cost to serialization, but it must be used whenever multiple threads allocate and free memory from the same heap. </P>
+
+<P>Setting the HEAP_NO_SERIALIZE flag eliminates mutual exclusion on the heap. Without serialization, two or more threads that use the same heap handle might attempt to allocate or free memory simultaneously, likely causing corruption in the heap. The HEAP_NO_SERIALIZE flag can, therefore, be safely used only in the following situations: 
+
+<UL>
+	<LI>The process has only one thread. </li>
+
+	<LI>The process has multiple threads, but only one thread calls the heap functions for a specific heap. </li>
+
+	<LI>The process has multiple threads, and the application provides its own mechanism for mutual exclusion to a specific heap. </li>
+</UL>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_hi_4.htm"><B>HeapAlloc</B></A>, <A HREF="kf_hi_6.htm"><B>HeapDestroy</B></A>, <A HREF="kf_hi_7.htm"><B>HeapFree</B></A>, <A HREF="kf_hi_8.htm"><B>HeapReAlloc</B></A>, <A HREF="kf_hi_9.htm"><B>HeapSize</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

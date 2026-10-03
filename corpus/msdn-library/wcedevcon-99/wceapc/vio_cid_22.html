@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CLSID_VIO_O2_SENSOR</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_clsid_vio_o2_sensor"></A>CLSID_VIO_O2_SENSOR</H2>
+
+<P>This CLSID returns the voltage of the oxygen sensors in the vehicle.</P>
+
+<H4>Name</H4>
+
+<P>Oxygen sensor</P>
+
+<H4>Access</H4>
+
+<P>Read, shareable or exclusive</P>
+
+<H4>Range</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>VT_UI4</B> (unsigned long)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Low:</TD>
+<TD width=79%>Low-order word: 0.000, High-order word: Number of supported banks</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>High:</TD>
+<TD width=79%>Low-order word: 4.095, High-order word: Number of sensors per supported bank</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Input</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>VT_UI4</B> (unsigned long)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Low-order word: </TD>
+<TD width=79%>Sensor number</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>High-order word:</TD>
+<TD width=79%>Cylinder bank number (range 0-n)</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Output</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>VT_UI2</B> (unsigned short fixed point decimal)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Measurement:</TD>
+<TD width=79%>VIOMEASUREMENT_VOLTAGE</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Units:</TD>
+<TD width=79%>VIOUNITS_VOLTS</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The information from this CLSID is used by the engine controller to optimize fuel flow for emissions purposes. </P>
+
+<P>API device objects expect the following data types and sizes when sending data to and from the mini-drivers:</P>
+
+<H4>Mini-driver input</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>DWORD *</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Size:</TD>
+<TD width=79%>4 bytes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Low-order word:</TD>
+<TD width=79%>Oxygen sensor number</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>High-order word:</TD>
+<TD width=79%>Cylinder bank number</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Mini-driver output</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>USHORT *</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Size:</TD>
+<TD width=79%>2 bytes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Low-order word:</TD>
+<TD width=79%>Oxygen sensor voltage in 0.001 volt increments</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>High-order word:</TD>
+<TD width=79%>Number of supported sensors per bank</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Example</H4>
+
+<PRE><CODE>HRESULT hr;
+VIODEVICEMETRICS dmO2Sensor;
+IVIO_Device *pFuelTrim;
+VARIANT vDeviceData;
+float fO2SensorVoltage;
+WORD j, k;
+//Create an instance of the oxygen sensor device and get its 
+//IVIO_Device interface.
+hr = CoCreateInstance(CLSID_VIO_O2_SENSOR, NULL,
+                     CLSCTX_INPROC_SERVER, IID_VIODEVICE,
+                     &amp;pO2Sensor);
+for(j = 0; j &lt; HIWORD(dmO2Sensor.vRangeLow.ulVal); j++)
+{//Iterate through each bank.
+   for(k = 0; k &lt; HIWORD(dmO2Sensor.vRangeLow.ulVal); k++)
+      {//Iterate through each sensor in the bank.
+      //Initialize the VARIANT for the input value.
+      VariantInit(&amp;vDeviceData);
+      vDeviceData.vt = VT_UI4;
+      //Set input data for the current bank and sensor.
+      vDeviceData.ulVal = MAKELONG(k, j);
+      //Ask the device for the O2Sensor voltage.
+      pO2Sensor-&gt;GetData(&amp;vDeviceData, 3000);
+      //Convert the fixed-point percentage to a floating point value.
+      fO2SensorVoltage = ((float) vDeviceData.usVal) * (10.0 ^ 
+                         dmO2Sensor.lExponent);
+      }//End for each sensor
+}//End for each bank
+//Release the reference to the interface.
+pO2Sensor-&gt;Release();
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

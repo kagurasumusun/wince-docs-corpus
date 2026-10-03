@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>OleCreate</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Programming_Considerations">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_com_olecreate"></A>OleCreate</H2>
+
+<P>This<B> </B>function creates an embedded object identified by a CLSID. It is typically used to implement a menu item that allows the end user to insert a new object. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Ole2.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>WINOLEAPI OleCreate( REFCLSID</B> <I>rclsid</I>, <B>REFIID</B> <I>riid</I>, <BR>
+<B>DWORD</B> <I>renderopt</I>, <B>FORMATETC</B> * <I>pFormatEtc</I>, <BR>
+<B>IOleClientSite</B> * <I>pClientSite</I>, <B>IStorage</B> * <I>pStg</I>, <B>void</B> ** <I>ppvObject</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>rclsid</I></DT>
+
+<DD>[in] CLSID of the embedded object that is to be created.</dd>
+
+<DT><I>riid</I></DT>
+
+<DD>[in] Reference to the identifier of the interface, usually <B>IID_IOleObject</B> (defined in the OLE headers as the interface identifier for <B>IOleObject</B>), through which the caller will communicate with the new object.</dd>
+
+<DT><I>renderopt</I></DT>
+
+<DD>[in] Value from the enumeration <B>OLERENDER</B>, indicating the locally cached drawing capabilities the newly created object is to have. The <B>OLERENDER</B> value chosen affects the possible values for the <I>pFormatEtc</I> parameter.</dd>
+
+<DT><I>pFormatEtc</I></DT>
+
+<DD>[in] Depending on which of the <B>OLERENDER</B> flags is used as the value of <I>renderopt</I>, pointer to one of the <A HREF="ks_fh_2.htm"><B>FORMATETC</B></A> enumeration values. Refer to the <B>OLERENDER</B> enumeration for restrictions. This parameter, along with the <I>renderopt</I> parameter, specifies what the new object can cache initially.</dd>
+
+<DT><I>pClientSite</I></DT>
+
+<DD>[in] If you want <B>OleCreate</B> to call <A HREF="ki_no_29.htm"><B>IOleObject::SetClientSite</B></A>, <I>pClientSite</I> is the pointer to the <B>IOleClientSite</B> interface on the container. The value can be NULL, in which case you must specifically call <B>IOleClientSite::SetClientSite</B> before attempting operations.</dd>
+
+<DT><I>pStg</I></DT>
+
+<DD>[in] Pointer to an instance of the <A HREF="ki_s.htm"><B>IStorage</B></A> interface on the storage object. This parameter cannot be NULL.</dd>
+
+<DT><I>ppvObject</I></DT>
+
+<DD>[out] Pointer to the pointer variable that receives the interface pointer requested in <I>riid</I>. Upon successful return, *<I>ppvObject</I> contains the requested interface pointer.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>This function supports the standard return value E_OUTOFMEMORY, as well as the following: </P>
+
+<TABLE border=1 cellspacing=4 cols=2 frame=void rules=rows>
+
+<TR VALIGN="top">
+<TD width=15%>
+<H5>Value</H5>
+</TD>
+<TD width=85%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>S_OK</TD>
+<TD width=85%>Embedded object created successfully.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>Passing into this function any invalid and, under some circumstances, NULL pointers will result in unexpected termination of the application. For more information about handling exceptions, see <A HREF="JavaScript:hhobj_1.Click()">Programming Considerations</A>.</P>
+
+<P>The<B> OleCreate</B> function creates a new embedded object, and is typically called to implement the menu item Insert New Object. When <B>OleCreate</B> returns, the object it has created is blank (contains no data), unless <I>renderopt</I> is OLERENDER_DRAW or OLERENDER_FORMAT, and is loaded. Containers typically then call the <A HREF="kf_oq_5.htm"><B>OleRun</B></A> function or <B>IOleObject::DoVerb</B> to show the object for initial editing.</P>
+
+<P>The <I>rclsid</I> parameter specifies the CLSID of the requested object. CLSIDs of registered objects are stored in the system registry. When an application user selects Insert Object, a selection box allows the user to select the type of object desired from those in the registry. When <B>OleCreate</B> is used to implement the Insert Object menu item, the CLSID associated with the selected item is assigned to the <I>rclsid</I> parameter of <B>OleCreate</B>.</P>
+
+<P>The <I>riid</I> parameter specifies the interface the client will use to communicate with the new object. Upon successful return, the <I>ppvObject</I> parameter holds a pointer to the requested interface.</P>
+
+<P>The created object's cache contains information that allows a presentation of a contained object when the container is opened. Information about what should be cached is passed in the <I>renderopt </I>and<I> pFormatetc</I> values. When <B>OleCreate</B> returns, the created object's cache is not necessarily filled. Instead, the cache is filled the first time the object enters the running state. The caller can add additional cache control with a call to <B>IOleCache::Cache</B> after the return of <B>OleCreate</B> and before the object is run. If <I>renderopt</I> is OLERENDER_DRAW or OLERENDER_FORMAT, <B>OleCreate</B> requires that the object support the <B>IOleCache</B> interface. There is no such requirement for any other value of <I>renderopt</I>.</P>
+
+<P>If <I>pClientSite</I> is non-NULL, <B>OleCreate</B> calls <A HREF="ki_no_29.htm"><B>IOleObject::SetClientSite</B></A> through the <I>pClientSite</I> pointer. <B>IOleClientSite</B> is the primary interface by which an object requests services from its container. If <I>pClientSite</I> is NULL, you must make a specific call to <B>IOleObject::SetClientSite</B> before attempting any operations. </P>
+<p>&nbsp;</p></body>
+</HTML>

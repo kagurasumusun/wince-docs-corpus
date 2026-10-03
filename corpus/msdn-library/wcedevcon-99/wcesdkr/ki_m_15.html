@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::RelativePathTo</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_imoniker_relativepathto"></A>IMoniker::RelativePathTo</H2>
+
+<P>This<B> </B>method constructs a relative moniker between the specified moniker and another.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT RelativePathTo( IMoniker *</B><I>pmkOther</I><B>, IMoniker **</B><I>ppmkRelPath </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pmkOther</I></DT>
+
+<DD>[in] Pointer to the <B>IMoniker</B> interface on the moniker to which a relative path should be taken.</dd>
+
+<DT><I>ppmkRelPath</I></DT>
+
+<DD>[out] Address of <B>IMoniker</B>* pointer variable that receives the interface pointer to the relative moniker. When successful, the implementation must call <A HREF="ki_uw_1.htm"><B>IUnknown::AddRef</B></A> on the new moniker; it is the caller’s responsibility to call <A HREF="ki_uw_3.htm"><B>IUnknown::Release</B></A>. If an error occurs, the implementation sets *<I>ppmkRelPath</I> to NULL. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The method supports the standard return values E_OUTOFMEMORY and E_UNEXPECTED, as well as the values described in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>
+<H5>Value</H5>
+</TD>
+<TD width=70%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>S_OK</TD>
+<TD width=70%>A meaningful relative path has been returned.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>MK_S_HIM</TD>
+<TD width=70%>No common prefix is shared by the two monikers and the moniker returned in <I>ppmkRelPath</I> is <I>pmkOther</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>MK_E_NOTBINDABLE</TD>
+<TD width=70%>This moniker is a relative moniker, such as an item moniker. This moniker must be composed with the moniker of its container before a relative path can be determined.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>A relative moniker is analogous to a relative path (such as “..\backup”). For example, suppose you have one moniker that represents the path “c:\projects\secret\art\pict1.bmp” and another moniker that represents the path “c:\projects\secret\docs\chap1.txt.” Calling <B>IMoniker::RelativePathTo</B> on the first moniker, passing the second one as the <I>pmkOther</I> parameter, would create a relative moniker representing the path “..\docs\chap1.txt.” </P>
+
+<H4>Notes to Callers</H4>
+
+<P>Moniker clients typically do not need to call <B>IMoniker::RelativePathTo</B>. This method is primarily called by the default handler for linked objects. Linked objects contain both an absolute and a relative moniker to identify the link source (this enables link tracking if the user moves a directory tree that contains both the container and source files). The default handler calls this method to create a relative moniker from the container document to the link source (that is, it calls <B>IMoniker::RelativePathTo</B> on the moniker identifying the container document, passing the moniker identifying the link source as the <I>pmkOther</I> parameter).</P>
+
+<P>If you do call <B>IMoniker::RelativePathTo</B>, call it only on absolute monikers; for example, a file moniker or a composite moniker whose leftmost component is a file moniker, where the file moniker represents an absolute path. Do not call this method on relative monikers.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>Your implementation of <B>IMoniker::RelativePathTo</B> should first determine whether <I>pmkOther</I> is a moniker of a class that you recognize and for which you can provide special handling (for example, if it is of the same class as this moniker). If so, your implementation should determine the relative path. Otherwise, it should pass both monikers in a call to the <B>MonikerRelativePathTo</B> function, which correctly handles the generic case.</P>
+
+<P>The first step in determining a relative path is determining the common prefix of this moniker and <I>pmkOther</I>. The next step is to break this moniker and <I>pmkOther</I> into two parts each, say (P, myTail) and (P, otherTail) respectively, where P is the common prefix. The correct relative path is then the inverse of myTail composed with otherTail:</P>
+
+<P>Comp( Inv( myTail ), otherTail )</P>
+
+<P>Where <B>Comp()</B> represents the composition operation and Inv() represents the inverse operation. </P>
+
+<P>Note that for certain types of monikers, you cannot use your <A HREF="ki_m_9.htm"><B>IMoniker::Inverse</B></A> method to construct the inverse of myTail. For example, a file moniker returns an anti-moniker as an inverse, while its <B>IMoniker::RelativePathTo</B> method must use one or more file monikers that each represent the path “..” to construct the inverse of myTail. </P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>closesocket</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_closesocket_2"></A>closesocket </H2>
+
+<P>This function closes a socket. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winsock.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int</B> <B>closesocket</B> <B>(SOCKET</B> <I>s<B>)</B></I><B>;</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>s</I></DT>
+
+<DD>[in] Descriptor that identifies a socket to close.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates that no error occurred. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<P>Windows CE does not support the WSAEINTR error value.</P>
+
+<H4>Remarks</H4>
+
+<P>For Infrared Sockets (IrSock), this function has the following additional requirements and behaviors:
+
+<UL>
+	<LI>The Af_irda.h file must be explicitly included.</li>
+
+	<LI>The WSAENETDOWN error value is not supported.</li>
+
+	<LI>The standard linger options are supported.
+<P>Although IrDA does not provide a graceful close, IrSock defers closing until the receive queues are purged. Thus, an application can send data and immediately call the <B>closesocket</B> function confident that the receiver will copy the data before receiving an FD_CLOSE message.
+</li>
+</UL>
+
+<P>The <B>closesocket</B> function closes a socket. Use it to release the socket descriptor <I>s</I> so that further references to <I>s</I> will fail with the error WSAENOTSOCK. Any pending blocking or asynchronous calls issued by any thread in this process are canceled without posting any notification messages. </P>
+
+<P>An application should always have a matching call to <B>closesocket</B> for each successful call to <A HREF="cf_sw_12.htm"><B>socket</B></A> to return any socket resources to the system.</P>
+
+<P>The semantics of <B>closesocket</B> are affected by the socket options SO_LINGER and SO_DONTLINGER as follows (SO_DONTLINGER is enabled by default; SO_LINGER is disabled).</P>
+
+<TABLE cellspacing=4 cols=4>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Option</H5>
+</TD>
+<TD width=18%>
+<H5>Interval</H5>
+</TD>
+<TD width=24%>
+<H5>Type of close</H5>
+</TD>
+<TD width=27%>
+<H5>Wait for close?</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%> SO_DONTLINGER</TD>
+<TD width=18%>Do not care</TD>
+<TD width=24%>Graceful</TD>
+<TD width=27%>No</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_LINGER</TD>
+<TD width=18%>Zero</TD>
+<TD width=24%>Hard</TD>
+<TD width=27%>No</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>SO_LINGER</TD>
+<TD width=18%>Nonzero</TD>
+<TD width=24%>Graceful</TD>
+<TD width=27%>Yes</TD>
+</TR>
+</TABLE><BR>
+
+<P>If SO_LINGER is set with a zero time-out interval (that is, the <A HREF="cs_az_16.htm"><B>LINGER</B></A> structure members <I>l_onoff</I> is not zero and <I>l_linger</I><B> </B>is zero), <B>closesocket</B> is not blocked even if queued data has not yet been sent or acknowledged. This is called a hard or abortive close, because the socket's virtual circuit is reset immediately, and any unsent data is lost. Any <B>recv</B> call on the remote side of the circuit will fail with WSAECONNRESET.</P>
+
+<P>If SO_LINGER is set with a nonzero time-out interval on a blocking socket, the <B>closesocket</B> call blocks on a blocking socket until the remaining data has been sent or until the time-out expires. This is called a graceful disconnect. If the time-out expires before all data has been sent, the Windows Sockets implementation terminates the connection before <B>closesocket</B> returns.</P>
+
+<P>Enabling SO_LINGER with a nonzero time-out interval on a nonblocking socket is not recommended. In this case, the call to <B>closesocket</B> will fail with an error of WSAEWOULDBLOCK if the close operation cannot be completed immediately. If <B>closesocket</B> fails with WSAEWOULDBLOCK the socket handle is still valid, and a disconnect is not initiated. The application must call <B>closesocket</B> again to close the socket. If SO_DONTLINGER is set on a stream socket by setting the <B>l_onoff </B>member of the <A HREF="cs_az_16.htm"><B>LINGER</B></A> structure to zero, the <B>closesocket</B> call will return immediately and does not receive WSAWOULDBLOCK whether the socket is blocking or nonblocking. However, any data queued for transmission will be sent, if possible, before the underlying socket is closed. This is also called a graceful disconnect. In this case, the Windows Sockets provider cannot release the socket and other resources for an arbitrary period, thus affecting applications that expect to use all available sockets. This is the default behavior (SO_DONTLINGER is set by default).</P>
+
+<P><B>Note</B>  To assure that all data is sent and received on a connection, an application should call <A HREF="cf_sw_11.htm"><B>shutdown</B></A> before calling <B>closesocket</B>. Also note, an FD_CLOSE network event is<I> not</I> posted after <B>closesocket</B> is called.</P>
+
+<P>Here is a summary of <B>closesocket</B> behavior:
+
+<UL>
+	<LI>If SO_DONTLINGER enabled (the default setting) it always returns immediately – connection is gracefully closed in the background.</li>
+
+	<LI>If SO_LINGER enabled with a zero time-out: it always returns immediately - connection is reset/terminated.</li>
+
+	<LI>If SO_LINGER enabled with nonzero time-out:
+<UL>
+	<LI>with blocking socket it blocks until all data sent or time-out expires.</li>
+
+	<LI>with nonblocking socket it returns immediately that indicates failure.</li>
+</UL>
+</li>
+</UL>
+
+<P>For additional information please see Graceful shutdown, linger options, and socket closure for more information.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_ac.htm"><B>accept</B></A>, <A HREF="cf_sw_12.htm"><B>socket</B></A>, <A HREF="cf_hk_40.htm"><B>ioctlsocket</B></A>, <A HREF="cf_sw_7.htm"><B>setsockopt</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Application Hibernation</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_application_hibernation"></A>Application Hibernation</H2>
+
+<P>Windows CE uses the WM_HIBERNATE message as its primary mechanism for asking applications to free memory. When freeing memory is required, the system posts the message to one or more applications, beginning with the application that has been inactive the longest. It requests memory from the active application last and does not send WM_HIBERNATE messages to invisible windows.</P>
+
+<P><B>Note</B>  Hibernating is vital for applications running on an H/PC. All H/PC applications must have a handler for WM_HIBERNATE.</P>
+
+<P>When the system brings an application to the foreground, it sends an WM_ACTIVATE message. If the hibernating application has previously released memory, the system does not restore its memory resources to the prehibernation state. Applications should have a WM_ACTIVATE handler that can restore memory resources following hibernation.</P>
+
+<P>An application must take the following actions when it receives a WM_HIBERNATE message: 
+
+<UL>
+	<LI>Free any large blocks of memory that were allocated by <B>VirtualAlloc</B>, for example, a cache.</li>
+
+	<LI>Free as many Graphics, Windowing, and Events Subsystem (GWES) objects as possible, including windows, bitmaps, and device contexts, because they use large amounts of memory.</li>
+
+	<LI>Save the state of the heap in order to restore it later, and then free the entire heap.</li>
+</UL>
+
+<P>As the amount of available memory drops, the system posts WM_HIBERNATE messages at an increasing rate. If the system reaches a situation where a call to <B>VirtualAlloc</B> is about to fail, it tries to free pages by shrinking stacks. The system shrinks stacks in random order to minimize the risk of a stack fault, which causes an application to fail. The system also frees memory by discarding read-only pageable pages. If the system cannot free any stack pages, <B>VirtualAlloc</B> fails, and the function is returned to the application as a failed function call. </P>
+<p>&nbsp;</p></body>
+</HTML>

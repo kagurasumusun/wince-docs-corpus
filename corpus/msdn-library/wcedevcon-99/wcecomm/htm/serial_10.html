@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Configuring Time-Outs</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_COMMTIMEOUTS_str">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_GetCommTimeouts">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_SetCommTimeouts">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_configuring_time_outs"></A>Configuring Time-Outs</H2>
+
+<P>An application must always set communication time-outs using the <A HREF="JavaScript:hhobj_1.Click()"><B>COMMTIMEOUTS</B></A> structure each time it opens a communication port. If this structure is not configured, the port uses default time-outs supplied by the driver, or time-outs from a previous communication application. By assuming specific time-out settings when the settings are actually different, an application can have read/write operations that never complete or complete too often.</P>
+
+<P>When read/write operations time out, the operations complete with no error values returned to the <B>ReadFile</B> and <B>WriteFile</B> functions. To determine if an operation has timed out, verify that the number of bytes actually transferred is fewer than the number of bytes requested. For example, if the <B>ReadFile</B> function returns TRUE, but fewer bytes were read than requested, the operation has timed out.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To configure time-outs for a serial port</H4>
+
+<OL>
+	<LI>Initialize the <B>COMMITEMEOUTS</B> structure either by calling the <A HREF="JavaScript:hhobj_2.Click()"><B>GetCommTimeouts</B></A> function or by setting the members manually.</li>
+
+	<LI>Specify the maximum number of milliseconds that can elapse between two characters without a time-out occurring with the <I>ReadIntervalTimeout</I> member.</li>
+
+	<LI>Specify the read time-out multiplier with the <I>ReadTotalTimeoutMultiplier</I> member. For each read operation, this number is multiplied by the number of bytes that the read operation expects to receive.</li>
+
+	<LI>Specify the read time-out constant with the <I>ReadTotalTimeoutConstant</I> member. This member is the number of milliseconds added to the result of multiplying the total number of bytes to read by <I>ReadTotalTimeoutMultiplier</I>. The result is the number of milliseconds that must elapse before a time-out for the read operation occurs.</li>
+
+	<LI>Specify the write time-out multiplier with the <I>WriteTotalTimeoutMultiplier</I> member. For each write operation, this number is multiplied by the number of bytes that the write operation expects to receive.</li>
+
+	<LI>Specify the write time-out constant with the <I>WriteTotalTimeoutConstant</I> member. This member is the number of milliseconds added to the result of multiplying the total number of bytes to write by <I>WriteTotalTimeoutMultiplier</I>. The result is the number of milliseconds that must elapse before a time-out for the write operation occurs.</li>
+
+	<LI>Call the <A HREF="JavaScript:hhobj_3.Click()"><B>SetCommTimeouts</B></A> function to activate port time-out settings.</li>
+</OL>
+
+<P>To assist with multitasking, it is common to configure <B>COMMTIMEOUT</B> so that <B>ReadFile</B> immediately returns with the characters to be read. To do this, set <I>ReadIntervalTimeout</I> to MAXWORD and set both <I>ReadTotalTimeoutMultiplier</I> and <I>ReadTotalTimeoutMultiplier</I> to zero.</P>
+
+<P>The following code example shows how to configure time-outs for a serial port.</P>
+
+<PRE><CODE>// Retrieve the time-out parameters for all read and write operations
+// on the port. 
+COMMTIMEOUTS CommTimeouts;
+GetCommTimeouts (hPort, &amp;CommTimeouts);
+
+// Change the COMMTIMEOUTS structure settings.
+CommTimeouts.ReadIntervalTimeout = MAXDWORD;  
+CommTimeouts.ReadTotalTimeoutMultiplier = 0;  
+CommTimeouts.ReadTotalTimeoutConstant = 0;    
+CommTimeouts.WriteTotalTimeoutMultiplier = 10;  
+CommTimeouts.WriteTotalTimeoutConstant = 1000;    
+
+// Set the time-out parameters for all read and write operations
+// on the port. 
+if (!SetCommTimeouts (hPort, &amp;CommTimeouts))
+{
+  // Could not create the read thread.
+  MessageBox (hMainWnd, TEXT("Unable to set the time-out parameters"), 
+              TEXT("Error"), MB_OK);
+  dwError = GetLastError ();
+  return FALSE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

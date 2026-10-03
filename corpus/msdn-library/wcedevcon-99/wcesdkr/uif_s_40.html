@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SetWindowLong</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_setwindowlong"></A>SetWindowLong </H2>
+
+<P>This function changes an attribute of the specified window. <B>SetWindowLong</B> also sets a 32-bit (<B>LONG</B>) value at the specified offset into the extra window memory of a window.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winuser.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>LONG</B> <B>SetWindowLong( HWND</B> <I>hWnd</I><B>, int</B> <I>nIndex</I><B>, LONG</B> <I>dwNewLong </I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hWnd</I></DT>
+
+<DD>Handle to the window and, indirectly, the class to which the window belongs. </dd>
+
+<DT><I>nIndex</I></DT>
+
+<DD>Specifies the zero-based offset to the value to be set. Valid values are in the range zero through the number of bytes of extra window memory, minus 4; for example, if you specified 12 or more bytes of extra memory, a value of 8 would be an index to the third 32-bit integer. Windows CE, the byte offset but must be a multiple of 4 bytes. 
+
+<P>To set any other value, specify one of the following values: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=25%>
+<H5>Value</H5>
+</TD>
+<TD width=75%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>GWL_EXSTYLE</TD>
+<TD width=75%>Sets a new extended window style.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>GWL_STYLE</TD>
+<TD width=75%>Sets a new window style.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>GWL_ID</TD>
+<TD width=75%>Sets a new identifier of the window.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>GWL_USERDATA</TD>
+<TD width=75%>Sets the 32-bit value associated with the window. Each window has a corresponding 32-bit value intended for use by the application that created the window. Windows CE versions 2.0 and later support the this value, but Windows CE versions 1.0  and 1.01 do not.</TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>The following values are also available when the <I>hWnd</I> parameter identifies a dialog box: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=27%>
+<H5>Value</H5>
+</TD>
+<TD width=73%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>DWL_DLGPROC</TD>
+<TD width=73%>Sets the new address of the dialog box procedure. Windows CE versions 2.0 and later support the this value, but Windows CE versions 1.0  and 1.01 do not.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>DWL_MSGRESULT</TD>
+<TD width=73%>Sets the return value of a message processed in the dialog box procedure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>DWL_USER</TD>
+<TD width=73%>Sets new extra information that is private to the application, such as handles or pointers.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwNewLong</I></DT>
+
+<DD>Specifies the replacement value. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The previous value of the specified 32-bit integer indicates success. Zero indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. </P>
+
+<P>If the previous value of the specified 32-bit integer is zero, and the function succeeds, the return value is zero, but the function does not clear the last error information. This makes it difficult to determine success or failure. To deal with this, you should clear the last error information by calling <A HREF="kf_s_28.htm"><B>SetLastError</B></A>(0) before calling <B>SetWindowLong</B>. Then, function failure is indicated by a return value of zero and a <B>GetLastError</B> result that is nonzero.</P>
+
+<H4>Remarks</H4>
+
+<P>The <B>SetWindowLong</B> function fails if the window specified by the <I>hWnd</I> parameter does not belong to the same process as the calling thread.</P>
+
+<P>Unaligned access is not supported. </P>
+
+<P>Certain window data is cached, so changes you make using <B>SetWindowLong</B> will not take effect until you call the <A HREF="uif_s_41.htm"><B>SetWindowPos</B></A> function.</P>
+
+<P>If you use <B>SetWindowLong</B> with the GWL_WNDPROC index to replace the window procedure, the window procedure must conform to the guidelines specified in the description of the <A HREF="kf_w_4.htm"><B>WindowProc</B></A> callback function. </P>
+
+<P>If you use <B>SetWindowLong</B> with the DWL_MSGRESULT index to set the return value for a message processed by a dialog procedure, you should return TRUE directly afterwards. Otherwise, if you call any function that results in your dialog procedure receiving a window message, the nested window message could overwrite the return value you set using DWL_MSGRESULT. </P>
+
+<P>Calling <B>SetWindowLong</B> with the GWL_WNDPROC index creates a subclass of the window class used to create the window. An application can subclass a system class, but should not subclass a window class created by another process. The <B>SetWindowLong</B> function creates the window subclass by changing the window procedure associated with a particular window class, causing the system to call the new window procedure instead of the previous one. An application must pass any messages not processed by the new window procedure to the previous window procedure by calling <A HREF="uif_ac_9.htm"><B>CallWindowProc</B></A>. This allows the application to create a chain of window procedures. </P>
+
+<P>You must not call <B>SetWindowLong</B> with the GWL_HWNDPARENT index to change the parent of a child window. Instead, use the <B>SetParent</B> function. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="uif_ac_9.htm"><B>CallWindowProc</B></A>, <A HREF="uif_fg_77.htm"><B>GetWindowLong</B></A>, <A HREF="uif_pr_22.htm"><B>RegisterClass</B></A>, <A HREF="uif_s_29.htm"><B>SetParent</B></A>, <A HREF="kf_w_4.htm"><B>WindowProc</B></A>, <A HREF="uis_qw_34.htm"><B>WNDCLASS</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

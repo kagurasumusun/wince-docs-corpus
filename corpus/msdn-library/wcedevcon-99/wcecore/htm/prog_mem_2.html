@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using the Local Heap</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_using_the_local_heap"></A>Using the Local Heap</H2>
+
+<P>A <I>heap</I> is a region of reserved virtual memory space that Windows CE manages for your application. The original heap is called the local heap. Unlike <B>VirtualAlloc</B>, you can allocate memory on a heap in 4-byte or 8-byte units, depending on your CPU type. In addition to being more efficient for small sizes, the heap can be used to avoid having to deal with the different sizes of memory pages that different microprocessors support. The heap also has no set limit. However, any heap allocations greater than 192 KB are fulfilled with a call to <B>VirtualAlloc</B>. If you attempt to allocate more memory than Windows CE originally set aside for a heap, the system attempts to find unreserved memory. Like virtual memory mapping, this memory might not be physically located next to the original heap. Also, because Windows CE allocates memory in fixed blocks, the heap might become fragmented over time. </P>
+
+<P>Use the local heap when you need to allocate specific sizes of memory on a regular basis. Because Windows CE reclaims a memory page only if that page is totally free, be sure that you deallocate memory blocks correctly when you are using the heap. This becomes an issue with applications that run for a long time, such as applications that are designed for the Palm-size PC device category.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To allocate and deallocate memory using the local heap</H4>
+
+<OL>
+	<LI>Call the <B>LocalAlloc</B> function with the size of the memory block passed in the <I>uBytes</I> parameter.
+<P><B>LocalAlloc</B> returns a handle to the virtual memory block that is allocated to your application. Windows CE also maps the virtual memory block to a physical memory block at this time.
+</li>
+
+	<LI>Use the memory allocated to your application.</li>
+
+	<LI>If necessary, call the <B>LocalSize</B> and <B>LocalReAlloc</B> functions to reallocate the local heap memory.
+<P>If you need to increase the size of a block, call <B>LocalSize</B> to determine that the block contains enough space. Then, call <B>LocalReAlloc</B> to either add memory to the top of the allocation or to move the block to a larger area.
+</li>
+
+	<LI>Call the <B>LocalFree</B> function to return the memory to Windows CE.</li>
+</OL>
+
+<P><B>Note</B>  The <B>HeapAlloc</B> function can also allocate memory outside of the local heap by using the handle that is returned by the <B>GetProcessHeap</B> function.</P>
+
+<P>The following code example shows how to allocate a set number of bytes from the local heap.</P>
+
+<PRE><CODE>LPBYTE pbMyPointer = NULL;
+HLOCAL hlHeapMemory = NULL;
+HLOCAL hlHeapMem2 = NULL;
+UINT uiSize;
+
+hlHeapMemory = LocalAlloc (LPTR,    // FIXED and ZEROINIT
+                           42);     // Number of bytes 
+
+if (hlHeapMemory == NULL)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// The return value is actually the address of the memory.
+pbMyPointer = (LPBYTE)hlHeapMemory;
+
+// Your code to use the memory goes here.
+// SomeFunctionCall (pbMyPointer, and so on)
+// . . .
+</CODE></PRE>
+
+<P>The following code example shows how to check the size of a piece of the local heap by using <B>LocalSize</B>. </P>
+
+<PRE><CODE>uiSize = LocalSize (hlHeapMemory);
+if (uiSize == 0)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+</CODE></PRE>
+
+<P>The following code example shows how to change the size of a piece of local heap by using <B>LocalReAlloc</B>.</P>
+
+<PRE><CODE>hlHeapMem2 = LocalReAlloc (hlHeapMemory,  // Existing handle
+                           100,           // New size, in bytes
+                           0);            // Options (none)
+
+if (hlHeapMem2 == NULL)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+
+// The return value is actually the address of the memory.
+pbMyPointer = (LPBYTE)hlHeapMem2;
+</CODE></PRE>
+
+<P>The following code example shows how to free memory from the local heap.</P>
+
+<PRE><CODE>hlHeapMem2 = LocalFree (hlHeapMem2);
+
+// The pointer returned should be NULL.
+if (hlHeapMem2 != NULL)
+{
+  // Your error-handling code goes here. You can use
+  // the GetLastError function to obtain more information.
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

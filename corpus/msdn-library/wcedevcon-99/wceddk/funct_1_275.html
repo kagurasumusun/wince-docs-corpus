@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisRequest</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisrequest"></A>NdisRequest</H2>
+
+<P>This function forwards a request to the underlying driver that it query the capabilities or status of its NIC or that it set the state of its NIC.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>Header file:</TD>
+<TD width=70%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Windows CE versions:</TD>
+<TD width=70%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisRequest(OUT PNDIS_STATUS </B><I>Status</I><B>, <BR>
+IN NDIS_HANDLE </B><I>NdisBindingHandle</I><B>, IN PNDIS_REQUEST </B><I>NdisRequest</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable that is set on return from this function. The underlying driver determines which NDIS_STATUS_<I>XXX</I> is returned, but it is usually one of the following values:
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS</DT>
+
+<DD>The requested operation completed successfully.</dd>
+
+<DT>NDIS_STATUS_PENDING</DT>
+
+<DD>The request is being handled asynchronously, and the caller’s <B>ProtocolRequestComplete</B> function will be called when it is completed.</dd>
+
+<DT>NDIS_STATUS_INVALID_OID</DT>
+
+<DD>The OID_<I>XXX</I> code specified in the <I>Oid</I> member of the <B>NDIS_REQUEST</B>-structured buffer at <I>NdisRequest</I> is invalid or unsupported by the underlying driver.</dd>
+
+<DT>NDIS_STATUS_INVALID_LENGTH or NDIS_STATUS_BUFFER_TOO_SHORT</DT>
+
+<DD>The value specified in the <I>InformationBufferLength</I> member of the <B>NDIS_REQUEST</B>-structured buffer at <I>NdisRequest</I> does not match the requirements for the given OID_<I>XXX</I> code. If the information buffer is too small, the <I>BytesNeeded</I> member contains the correct value for <I>InformationBufferLength</I> on return from this function.</dd>
+
+<DT>NDIS_STATUS_INVALID_DATA</DT>
+
+<DD>The data supplied at <I>InformationBuffer</I> in the specified <B>NDIS_REQUEST</B> structure is invalid for the given OID_<I>XXX</I> code.</dd>
+
+<DT>NDIS_STATUS_NOT_SUPPORTED or NDIS_STATUS_NOT_RECOGNIZED</DT>
+
+<DD>The underlying driver does not support the requested operation.</dd>
+
+<DT>NDIS_STATUS_RESOURCES</DT>
+
+<DD>The request could not be satisfied due to a resource shortage. Usually, this return indicates that an attempt to allocate memory was unsuccessful, but it does not necessarily indicate that the same request, submitted later, will fail for the same reason.</dd>
+
+<DT>NDIS_STATUS_NOT_ACCEPTED</DT>
+
+<DD>The underlying driver attempted the requested operation, usually a set, on its NIC but it was failed by the netcard. For example, an attempt to set too many multicast addresses might cause the return of this value.</dd>
+
+<DT>NDIS_STATUS_CLOSING or NDIS_STATUS_CLOSING_INDICATING</DT>
+
+<DD>The underlying driver failed the requested operation because a close is in progress.</dd>
+
+<DT>NDIS_STATUS_RESET_IN_PROGRESS</DT>
+
+<DD>The underlying NIC driver cannot satisfy the request at this time because it is currently resetting the netcard. The caller’s <B>ProtocolStatus</B> function was or will be called with NDIS_STATUS_RESET_START to indicate that a reset is in progress. This return value does not necessarily indicate that the same request, submitted later, will fail for the same reason.</dd>
+
+<DT>NDIS_STATUS_FAILURE</DT>
+
+<DD>This value is usually a nonspecific default, returned when none of the more specific NDIS_STATUS_<I>XXX</I> caused the underlying driver to fail the request.</dd>
+</DL>
+</dd>
+
+<DT><I>NdisBindingHandle</I></DT>
+
+<DD>Handle returned by the <B>NdisOpenAdapter</B> function that identifies the target NIC or the virtual adapter of the next-lower driver to which the caller is bound.</dd>
+
+<DT><I>NdisRequest</I></DT>
+
+<DD>Pointer to a buffered structure specifying the operation requested with a specified OID_<I>XXX</I> code for either a query or a set.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>The Windows CE version of this function does not handle statistics requests in which <I>NdisRequest </I>== <B>NdisRequestQueryStatistics</B>. For query and set requests, this function intercepts <B>OID_GEN_CURRENT_PACKET_FILTER</B>, <B>OID_GEN_CURRENT_LOOKAHEAD</B>, <B>OID_GEN_PROTOCOL_OPTIONS</B>, and <B>OID_802_3_MULTICAST_LIST</B>. All others are passed to the miniport driver.</P>
+
+<P>A protocol driver must allocate sufficient memory for the information buffer associated with the OID_<I>XXX</I> of the operation it requests. The driver also must allocate and set up the buffer at <I>NdisRequest</I> before it calls this function. Both buffers must be allocated from a nonpaged pool because the underlying driver runs at raised IRQL while processing the request.</P>
+
+<P>For callers layered above an intermediate NDIS driver, this function forwards a request to the next-lower driver that it return information about its own capabilities or directs that driver to handle specific functionality in a caller-determined manner. If the next-lower driver is an NDIS intermediate driver, it can call this function with an OID-specific request of its own before completing the request originally submitted by the higher-level protocol.</P>
+
+<P>Some errors returned at <I>Status</I> are recoverable, including the following:
+
+<UL>
+	<LI>NDIS_STATUS_INVALID_OID</li>
+
+	<LI>NDIS_STATUS_INVALID_LENGTH</li>
+
+	<LI>NDIS_STATUS_BUFFER_TOO_SHORT</li>
+
+	<LI>NDIS_STATUS_INVALID_DATA</li>
+
+	<LI>NDIS_STATUS_RESOURCES</li>
+
+	<LI>NDIS_STATUS_RESET_IN_PROGRESS</li>
+</UL>
+
+<P>This means that a driver can modify the packet at <I>NdisRequest</I> appropriately to correct the OID_<I>XXX</I> code and/or the size or contents of the buffer at <I>InformationBuffer</I> and resubmit the request packet to this function. The same packet might be satisfied on resubmission to this function if the original call indicated a reset in progress or that a resource shortage, which might be temporary, prevented that request from being carried out.</P>
+
+<P>The NDIS library maintains bindings for underlying miniport drivers. NDIS can return information for binding-specific queries if a specified object identifier is associated with a system-defined medium type for which the system provides a filter library.</P>
+
+<P>A driver that calls this function can be running at IRQL &lt;= DISPATCH_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_248.htm"><B>NdisOpenAdapter</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

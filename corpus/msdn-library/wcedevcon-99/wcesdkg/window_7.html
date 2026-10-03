@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sizing and Positioning a Window</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_sizing_and_positioning_a_window"></A>Sizing and Positioning a Window</H2>
+
+<P>A window’s size and position are expressed as a bounding rectangle specified in coordinates relative to the screen or to the parent window. Typically, window dimensions and coordinates are measured in pixels.</P>
+
+<P>When you create a window, you can set the initial size and position of the window directly or instruct the system to calculate the initial size and position by specifying CW_USEDEFAULT in the <B>CreateWindow </B>or<B> CreateWindowEx </B>function. After creating a window, set the window size or position by calling the <B>MoveWindow</B> or <B>SetWindowPos</B> function.</P>
+
+<P>If you need to create a window with a client area of a specified size, call the <B>AdjustWindowRectEx</B> function to calculate the required size of a window based on the desired size of the client area. Pass the resulting size values to the <B>CreateWindowEx</B> function.</P>
+
+<P>Although you can create a window of any size, it should not exceed the screen size of the target device. Before setting a window size, check the width and height of the screen by using <B>GetSystemMetrics</B> with the SM_CXSCREEN and SM_CYSCREEN flags.</P>
+
+<P>You can call the <B>GetWindowRect</B> function to retrieve the coordinates of a window’s bounding rectangle. <B>GetWindowRect</B> fills a <B>RECT</B> structure with the coordinates of the window’s upper-left and lower-right corners. The coordinates are relative to the upper-left corner of the screen, even for a child window. The <B>ScreenToClient</B> or <B>MapWindowPoints</B> function maps the screen coordinates of a child window’s bounding rectangle to coordinates relative to the parent window’s client area.</P>
+
+<P>The <B>GetClientRect</B> function retrieves the position and size of a window client area; because coordinates are relative to the client area itself, the client area’s upper-left corner is always at coordinates (0, 0) and the coordinates of the lower-right corner are the width and height of the client area. Furthermore, because the command bar is part of the client area in Windows CE, it is included in the dimensions returned by the <B>GetClientRect</B> function.</P>
+
+<P>To retrieve the handle to the window that occupies a particular point on the screen, call the <B>WindowFromPoint</B> function. Call the <B>ChildWindowFromPoint</B> function to retrieve the handle to the child window that occupies a specified point in the parent window client area. To convert the client coordinates of a specified point to screen coordinates, call the <B>ClientToScreen</B> function. To convert the screen coordinates of a specified point into client coordinates, call the <B>ScreentoClient</B> function.</P>
+
+<P>To change a window’s position in the z-order, call the <B>SetWindowPos</B> function. This function is used to create a topmost window. A <I>topmost window</I> is a window that has the WS_EX_TOPMOST style. Do not confuse topmost with top-level. Top-level refers to whether or not a window has a parent, whereas topmost refers to a specific style that controls the z-order for the window. Topmost windows are above all non-topmost sibling windows in the z-order. To create a topmost window, specify the WS_EX_TOPMOST style when you create the window, or call <B>SetWindowPos</B> and set the <I>hWndInsertAfter</I> parameter to HWND_TOPMOST. </P>
+
+<P>A window may lose its topmost style by calling <B>SetWindowPos</B> and setting the <I>hWndInsertAfter</I> parameter to HWND_NOTOPMOST. If a window is positioned directly after a non-topmost window, then that window loses its WS_EX_TOPMOST style. You can set the <B>SetWindowLong</B> function to give a window the WS_EX_TOPMOST style; however, this function does not change the window’s z-order.</P>
+
+<P>The Defer Window API, which consists of <B>DeferWindowPos</B>, <B>BeginDeferWindow</B>, and <B>EndDeferWindowPos</B>, is an alternative to making repeated calls to <B>SetWindowPos</B>. These functions enable you to queue up several window position changes and execute them simultaneously.</P>
+
+<P>Occasionally, topmost windows can disappear behind the desktop. This typically occurs when one of the following rules governing the use of topmost windows is broken:
+
+<UL>
+	<LI>When creating an owned window, if the owner of the window is designated WS_EX_TOPMOST, then the owned window must be a topmost window as well.</li>
+
+	<LI>When calling <B>SetWindowPos</B> to change the topmost attribute of a window, you must change the topmost attribute of all of its owned windows. </li>
+
+	<LI>When changing the topmost attribute of a window, do not call <B>SetWindowLong</B>. </li>
+
+	<LI>When changing the z-order of a member of an owned group of windows, you must respect the topmost attribute of other windows.</li>
+</UL>
+<p>&nbsp;</p></body>
+</HTML>

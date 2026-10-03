@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Message Sink</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_a_message_sink"></A>Creating a Message Sink</H2>
+
+<P>To handle messages and events, the Forms Manager delivers a control’s event and message data through a sink attached to an object when the application initializes. Many applications create an event sink as part of the initialization process. An <I>event sink</I> is an ActiveX object that exposes methods called by an OS to notify an application that an event has occurred. When an application thread calls <B>DispatchMessage</B>, the Forms Manager processes the message, and then routes the message through the appropriate application sink to the target control.</P>
+
+<P>Microsoft® Windows® CE for the Auto PC contains two sink interfaces: <B>IASEventSink</B> and <B>IASClassMsgSink</B>. The <B>IASEventSink</B> interface delivers control commands, such as a WM_COMMAND message. The <B>IASClassMsgSink</B> interface delivers status messages, such as WM_ACTIVATE. A message sink must be placed on any object in a Forms Manager that requires a message. When you add a control to a form, the control inherits the form’s <B>IASEventSink</B> interface. </P>
+
+<P>The Forms Manager first calls an application sink, then a control sink, and finally a form sink. By calling sinks in this order, the Forms Manager enables you to make controls into a subclass and override some OS default behavior. For example, if you must handle a prolonged keystroke at the application level, but you want to enable a short keystroke to pass to the control, you can process the keydown message at the application sink level.</P>
+
+<P>An application implements one or more event or notification sinks to handle most messages. The following table shows the sinks that an application can implement.</P>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=33%>
+<H5>Sink</H5>
+</TD>
+<TD width=67%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Primary event sink</TD>
+<TD width=67%>Handles most messages. It performs the same tasks that a <B>WndProc</B> function performs in a Windows-based application. Most applications require a primary event sink.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Optional class message sink </TD>
+<TD width=67%>Provides a way to receive messages, such as keystroke notifications, that are not sent to the primary event sink.</TD>
+</TR>
+</TABLE><BR>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create an event sink class</H4>
+
+<OL>
+	<LI>Create a class inheriting from <B>IASEventSink</B>.</li>
+
+	<LI>Implement COM methods in the <B>IUnknown</B> interface.</li>
+
+	<LI>Create a token implementation of <B>IDispatch</B>. <B>IDispatch</B> methods are required for compilation.</li>
+
+	<LI>Implement <B>IASEventSink</B>::<B>ReceiveMsg</B> for application-specific message handling.</li>
+</OL>
+
+<P>The following code example shows how to create an event sink class.</P>
+
+<PRE><CODE>class CAppEventSink : public IASEventSink
+{
+public:
+
+  CAppEventSink() { m_cRef = 0; }        // Constructor initializes
+                                         // reference count
+    ~CAppEventSink(void) {}              // Destructor does nothing
+
+    // IUnknown implementation
+    // Standard COM QueryInterface. This application supports 
+    // Iunknown, Idispatch, and IASEventSink.
+   STDMETHODIMP QueryInterface(REFIID riid, PVOID *ppv)
+      {
+       if (!ppv) return E_INVALIDARG;  // Incoming pointer invalid
+
+        // Return an interface pointer, if the requested interface is
+        // implemented.
+        if (riid == IID_ASEVENTSINK) *ppv = (PVOID) (IASEventSink *)
+            this; 
+        else if (riid == IID_IUnknown) *ppv = (PVOID) (IUnknown *) this;
+        else if (riid == IID_IDispatch) *ppv = (PVOID) (IDispatch *)
+            this;
+        else return E_NOINTERFACE;
+
+        AddRef(); //Add to reference count.
+
+        return NOERROR;
+     }
+
+    // Increment the object reference count.
+    STDMETHODIMP_(ULONG) AddRef(void)
+    {
+     InterlockedIncrement(&amp;m_cRef);
+     return m_cRef;         
+    }
+
+   // Decrease reference count. Delete this object, if necessary.
+   STDMETHODIMP_(ULONG) Release(void)
+   {
+    if (InterlockedDecrement(&amp;m_cRef) &gt; 0)
+    return m_cRef;
+
+    delete this;
+    return 0; 
+   }            
+
+ // IASEventSink
+ // This method is invoked when an event is fired.
+ // In this case, the application exits when it receives
+ // the ID_EXIT command.
+ STDMETHODIMP ReceiveMsg(long uMsg, long wParam, long lParam)
+ {
+     if(uMsg != WM_COMMAND) return S_FALSE; // Only WM_COMMAND
+           // messages are processed.
+  
+  switch(HIWORD(lParam))
+  {
+   case ID_EXIT:
+    PostThreadMessage(g_idThread, WM_QUIT, 0, 0);// Send the quit
+                                                 // message to this
+                                                 // application
+                                                 // thread.
+break;
+     
+   default:
+    break;
+  }
+  return S_FALSE;
+ }
+
+ // IDispatch token implementation. All functions return E_NOTIMPL.
+ STDMETHODIMP GetTypeInfoCount(UINT *pctInfo)   
+  { return E_NOTIMPL; }           
+
+ STDMETHODIMP GetTypeInfo(UINT itinfo, LCID lcid, ITypeInfo
+    **pptinfo)   
+  { return E_NOTIMPL; }           
+
+ STDMETHODIMP GetIDsOfNames(REFIID riid, OLECHAR **rgszNames, UINT
+       cNames, LCID lcid, DISPID *rgdispids)
+  { return E_NOTIMPL; }           
+
+ STDMETHODIMP Invoke(DISPID dispid, REFIID riid, LCID lcid, WORD
+      wFlags, DISPPARAMS *pdispparams,   
+      VARIANT *pVarResult, EXCEPINFO *pei, UINT
+      *puArgErr)      
+  { return E_NOTIMPL; }           
+
+protected:
+    long  m_cRef; // This object's reference count
+};
+</CODE></PRE>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create an event sink object</H4>
+
+<OL>
+	<LI>Use the <B>new</B> operator to create an event sink object.</li>
+
+	<LI>Call <B>QueryInterface</B> to get an interface.</li>
+</OL>
+
+<P>The following code example shows how to create an event sink object.</P>
+
+<PRE><CODE>HRESULT CreateEventSink(void)
+{
+    HRESULT hr;
+    CAppEventSink *pSink;
+
+    pSink = new CAppEventSink();  // Create an event sink object.
+    if (!pSink) return E_OUTOFMEMORY;
+    
+    // Get an interface to keep
+    hr = pSink-&gt;QueryInterface(IID_ASEVENTSINK, (PVOID *) &amp;g_pSink);
+    if (FAILED(hr)) delete pSink;
+    
+    return hr;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

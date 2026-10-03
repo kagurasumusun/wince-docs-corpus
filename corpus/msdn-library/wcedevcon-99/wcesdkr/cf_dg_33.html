@@ -1,0 +1,407 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>getsockopt</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_getsockopt_2"></A>getsockopt</H2>
+
+<P>This function retrieves a socket option.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winsock.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int</B> <B>getsockopt</B> <B>(SOCKET</B> <I>s</I><B>, int</B> <I>level</I><B>, int</B> <I>optname</I><B>, char</B> <I>*optval</I><B>, int</B> <I>*optlen</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>s</I></DT>
+
+<DD>[in] Descriptor that identifies a socket.</dd>
+
+<DT><I>level</I></DT>
+
+<DD>[in] Level at which the option is defined; the supported levels include SOL_SOCKET, IPPROTO_TCP, and IPPROTO_IP.
+
+<P>In Windows CE, the following <I>level</I> values are available when the level is IPPROTO_IP:
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=32%>
+<H5>Value</H5>
+</TD>
+<TD width=68%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>IP_MULTICAST_TTL</TD>
+<TD width=68%>Time to Live for a multicast packet. Retrieves the number of hops for which a multicast message survives before it is discarded. Use <B>int</B> for <I>optval</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>IP_MULTICAST_IF</TD>
+<TD width=68%>Address of the outgoing multicast-capable interface. This address is used for subsequent multicasts. Use <B>unsigned long</B> for <I>optval</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=32%>IP_MULTICAST_LOOP</TD>
+<TD width=68%>Status of the socket’s loop behavior during multicast. Use <B>unsigned</B> <B>long</B> for <I>optval</I>.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>optname</I></DT>
+
+<DD>[in] Socket option for which the value is to be retrieved.</dd>
+
+<DT><I>optval</I></DT>
+
+<DD>[out] Pointer to the buffer in which the value for the requested option is to be returned.</dd>
+
+<DT><I>optlen</I></DT>
+
+<DD>[in/out] Pointer to the <I>optval</I> buffer size.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates no error occurred. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<H4>Windows CE Remarks</H4>
+
+<P>For IrSockets implementation:
+
+<UL>
+	<LI>The Af_irda.h file must be included.</li>
+
+	<LI>The WSAENETDOWN return value is not supported.</li>
+</UL>
+
+<P>IrSockets supports several special socket options:</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=30%>
+<H5>Value</H5>
+</TD>
+<TD width=26%>
+<H5>Type</H5>
+</TD>
+<TD width=44%>
+<H5>Meaning</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>IRLMP_ENUMDEVICES</TD>
+<TD width=26%>* DEVICELIST</TD>
+<TD width=44%>Describes devices in range.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>IRLMP_IAS_QUERY</TD>
+<TD width=26%>* IAS_QUERY</TD>
+<TD width=44%>Retrieve IAS attributes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>IRLMP_SEND_PDU_LEN</TD>
+<TD width=26%>* int</TD>
+<TD width=44%>Retrieves the maximum number of bytes that can be sent in any one send() call while in IRLMP_IRLPT_MODE (printing). This value should be retrieved after the connect() completes, but before data is sent.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The <B>DEVICELIST</B> structure is an extendible array of device descriptions. IrSockets fills in as many device descriptions as can fit in the supplied buffer and returns in the <I>optlen</I> result parameter the required size if the buffer is of insufficient size. The device description consists of a device identifier necessary to form a <B>sockaddr_irda</B> structure and a displayable string describing the device.</P>
+
+<P>The <B>IAS_QUERY</B> structure is used to retrieve a single attribute of a single class. The application specifies the device and class to query and the attribute and attribute type. It is expected that the application allocates a buffer of the necessary size for the returned parameters.</P>
+
+<P>Many SO level socket options are meaningless to IrSockets. Only SO_LINGER and SO_DONTLINGER are specifically supported.</P>
+
+<H4>Remarks</H4>
+
+<P>The <B>getsockopt</B> function retrieves the current value for a socket option associated with a socket of any type, in any state, and stores the result in <I>optval</I>. Options can exist at multiple protocol levels, but they are always present at the uppermost socket level. Options affect socket operations, such as the packet routing and out-of-band data transfer.</P>
+
+<P>The value associated with the selected option is returned in the buffer <I>optval</I>. The integer pointed to by <I>optlen</I> should originally contain the size of this buffer; on return, it will be set to the size of the value returned. For SO_LINGER, this will be the size of a <A HREF="cs_az_16.htm"><B>LINGER</B></A> structure. For most other options, it will be the size of an integer.</P>
+
+<P>The application is responsible for allocating memory space pointed to directly, or indirectly by any parameters it specified.</P>
+
+<P>If the option was never set with <A HREF="cf_sw_7.htm"><B>setsockopt</B></A>, then <B>getsockopt</B> returns the default value for the option.</P>
+
+<P>The following options are supported for <B>getsockopt</B>. The Type column identifies the type of data addressed by <I>optval</I>.</P>
+
+<P><B><I>level</I> = SOL_SOCKET</B></P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=35%>
+<H5>Value</H5>
+</TD>
+<TD width=33%>
+<H5>Type</H5>
+</TD>
+<TD width=32%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_ACCEPTCONN</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>Socket is listening.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_BROADCAST</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>Socket is configured for the transmission of broadcast messages.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_DEBUG</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>Debugging is enabled. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_DONTLINGER</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>If TRUE, the <B>SO_LINGER</B> option is disabled.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_DONTROUTE</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>Routing is disabled.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_ERROR</B></TD>
+<TD width=33%>int</TD>
+<TD width=32%>Retrieves error status and clear.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_GROUP_ID</B></TD>
+<TD width=33%>GROUP</TD>
+<TD width=32%>The group identifier to which this socket belongs.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_GROUP_PRIORITY</B></TD>
+<TD width=33%>int</TD>
+<TD width=32%>The relative priority for sockets that are part of a socket group.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_KEEPALIVE</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>Keepalives are being sent.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_LINGER</B></TD>
+<TD width=33%>struct <A HREF="cs_az_16.htm"><B>LINGER</B></A> </TD>
+<TD width=32%>Returns the current linger options.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_MAX_MSG_SIZE</B></TD>
+<TD width=33%>unsigned int</TD>
+<TD width=32%>Maximum size of a message for message-oriented socket types (for example, SOCK_DGRAM). Has no meaning for stream oriented sockets.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_OOBINLINE</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>Out-of-band data is being received in the normal data stream.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_RCVBUF</B></TD>
+<TD width=33%>int</TD>
+<TD width=32%>Buffer size for receives.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_REUSEADDR</B></TD>
+<TD width=33%>BOOL</TD>
+<TD width=32%>The socket can be bound to an address which is already in use.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_SNDBUF</B></TD>
+<TD width=33%>int</TD>
+<TD width=32%>Buffer size for sends.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>SO_TYPE</B></TD>
+<TD width=33%>int</TD>
+<TD width=32%>The socket type (for example, SOCK_STREAM).</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%><B>PVD_CONFIG</B></TD>
+<TD width=33%>Service Provider Dependent</TD>
+<TD width=32%>An opaque data structure object from the service provider associated with socket <I>s</I>. This object stores the current service provider configuration data. The exact format of this data structure is service provider specific.</TD>
+</TR>
+</TABLE><BR>
+
+<P><B><I>level</I> = IPPROTO_TCP</B></P>
+
+<TABLE border=1 cellspacing=4 cols=3 frame=void rules=rows>
+
+<TR VALIGN="top">
+<TD width=35%>
+<H5>Value</H5>
+</TD>
+<TD width=16%>
+<H5>Type</H5>
+</TD>
+<TD width=49%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>TCP_NODELAY</TD>
+<TD width=16%>BOOL</TD>
+<TD width=49%>Disables the Nagle algorithm for send coalescing.</TD>
+</TR>
+</TABLE><BR>
+
+<P>BSD options not supported for <B>getsockopt</B> are as follows.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=36%>
+<H5>Value</H5>
+</TD>
+<TD width=15%>
+<H5>Type</H5>
+</TD>
+<TD width=49%>
+<H5>Meaning</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>SO_RCVLOWAT</B></TD>
+<TD width=15%>int</TD>
+<TD width=49%>Receive low water mark.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>SO_RCVTIMEO</B></TD>
+<TD width=15%>int</TD>
+<TD width=49%>Receive time-out.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>SO_SNDLOWAT</B></TD>
+<TD width=15%>int</TD>
+<TD width=49%>Send low water mark.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>SO_SNDTIMEO</B></TD>
+<TD width=15%>int</TD>
+<TD width=49%>Send time-out.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=36%><B>TCP_MAXSEG</B></TD>
+<TD width=15%>int</TD>
+<TD width=49%>Get TCP maximum segment size.</TD>
+</TR>
+</TABLE><BR>
+
+<P>Calling <B>getsockopt</B> with an unsupported option will result in an error value of WSAENOPROTOOPT being returned by <A HREF="cf_sw_29.htm"><B>WSAGetLastError</B></A>.
+
+<DL>
+<DT><B>SO_DEBUG</B></DT>
+
+<DD>Windows Sockets service providers are encouraged, but not required, to supply output debug data if the <B>SO_DEBUG</B> option is set by an application. The mechanism for generating the debug data and the form it takes are beyond the scope of this document.</dd>
+
+<DT><B>SO_ERROR</B></DT>
+
+<DD>The <B>SO_ERROR</B> option returns and resets the per socket based error value, which is different from the per thread based error value that is handled using the <A HREF="cf_sw_29.htm"><B>WSAGetLastError</B></A> and <A HREF="cf_sw_31.htm"><B>WSASetLastError</B></A> function calls. A successful call using the socket does not reset the socket based error value returned by the <B>SO_ERROR</B> option.</dd>
+
+<DT><B>SO_GROUP_ID</B></DT>
+
+<DD>This option is reserved for future use with socket groups. This option is also exclusive to <B>getsockopt</B>. It indicates the group identifier to which this socket belongs. Socket group identifiers are unique across all processes for a given service provider. If this socket is not a group socket, the value is NULL.</dd>
+
+<DT><B>SO_GROUP_PRIORITY</B></DT>
+
+<DD>This option is reserved for future use with socket groups. Group priority indicates the priority of the specified socket relative to other sockets within the socket group. Values are non-negative integers, with zero corresponding to the highest priority. Priority values represent a hint to the underlying service provider about how potentially scarce resources should be allocated. For example, when two or more sockets are ready to transmit data, the highest priority socket (lowest value for <B>SO_GROUP_PRIORITY</B>) should be serviced first, with the remainder serviced in turn according to their relative priorities.
+
+<P>The WSAENOPROTOOPT error value is indicated for non group sockets or for service providers that do not support group sockets.
+</dd>
+
+<DT><B>SO_KEEPALIVE</B></DT>
+
+<DD>An application can request that a TCP/IP service provider enable the use of keep-alive packets on TCP connections by turning on the <B>SO_KEEPALIVE</B> socket option. A Windows Sockets provider need not support the use of keep-alive: if it does, the precise semantics are implementation-specific but should conform to section 4.2.3.6 of RFC 1122: <I>Requirements for Internet Host—Communication Layers</I>. If a connection is dropped as the result of keep-alives, the error value WSAENETRESET is returned to calls in progress on the socket, and subsequent calls will fail with WSAENOTCONN.</dd>
+
+<DT><B>SO_LINGER</B></DT>
+
+<DD>SO_LINGER controls the action taken when unsent data is queued on a socket and a <B>closesocket</B> is performed. See <A HREF="cf_ac_7.htm"><B>closesocket</B></A> for a description of the way in which the SO_LINGER settings affect the semantics of <B>closesocket</B>. The application gets the current behavior by retrieving a <A HREF="cs_az_16.htm"><B>LINGER</B></A> structure (pointed to by the <I>optval</I> parameter).</dd>
+
+<DT><B>SO_MAX_MSG_SIZE</B></DT>
+
+<DD>This is a get-only socket option that indicates the maximum outbound (send) size of a message for message-oriented socket types (for example, SOCK_DGRAM) as implemented by a particular service provider. It has no meaning for byte stream oriented sockets. There is no provision to find out the maximum inbound message size.</dd>
+
+<DT><B>SO_SNDBUF</B></DT>
+
+<DD>When a Windows Sockets implementation supports the SO_RCVBUF and <B>SO_SNDBUF</B> options, an application can request different buffer sizes (larger or smaller). The call to <A HREF="cf_sw_7.htm"><B>setsockopt</B></A> can succeed even if the implementation did not provide the whole amount requested. An application must call this function with the same option to check the buffer size actually provided.</dd>
+
+<DT><B>SO_REUSEADDR</B></DT>
+
+<DD>By default, a socket cannot be bound (see <A HREF="cf_ac_4.htm"><B>bind</B></A>) to a local address already in use. On occasion, however, it can be necessary to re-use an address in this way. Because every connection is uniquely identified by the combination of local and remote addresses, there is no problem with having two sockets bound to the same local address as long as the remote addresses are different. To inform the Windows Sockets provider that a <A HREF="cf_ac_4.htm"><B>bind</B></A> on a socket should not be rejected because the desired address is already in use by another socket, the application should set the <B>SO_REUSEADDR</B> socket option for the socket before issuing the <B>bind</B>. The option is interpreted only at the time of the <B>bind</B>. It is therefore unnecessary, but harmless, to set the option on a socket that is not to be bound to an existing address, and setting or resetting the option after the <B>bind</B> has no effect on this or any other socket.</dd>
+
+<DT><B>PVD_CONFIG</B></DT>
+
+<DD>This option retrieves an opaque data structure object from the service provider associated with socket <I>s</I>. This object stores the current service provider configuration data. The exact data structure format is service provider-specific.</dd>
+
+<DT><B>TCP_NODELAY</B></DT>
+
+<DD></dd>
+</DL>
+
+<P>The <B>TCP_NODELAY</B> option is specific to TCP/IP service providers. The Nagle algorithm is disabled if the <B>TCP_NODELAY</B> option is enabled, and vice versa. The Nagle algorithm, as described in <I>RFC 896</I>, is very effective in reducing the number of small packets sent by a host. The process involves buffering send data when there is unacknowledged data already in route or buffering send data until a full-size packet can be sent. It is highly recommended that Windows Sockets implementations enable the Nagle Algorithm by default because, for the majority of application protocols, the Nagle Algorithm can deliver significant performance enhancements. However, for some applications this algorithm can impede performance, and <A HREF="cf_sw_7.htm"><B>setsockopt</B></A> with the same option can be used to turn it off. These are applications where many small messages are sent, and the time delays between the messages are maintained.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_sw_7.htm"><B>setsockopt</B></A>, <A HREF="cf_sw_12.htm"><B>socket</B></A>, <A HREF="cf_sw_32.htm"><B>WSAStartup</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

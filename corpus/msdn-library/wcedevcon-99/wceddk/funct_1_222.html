@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisMInitializeTimer</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisminitializetimer"></A>NdisMInitializeTimer</H2>
+
+<P>This function initializes a timer object associated with a driver’s <B>MiniportTimer</B> function.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisMInitializeTimer(IN OUT PNDIS_MINIPORT_TIMER</B> <I>Timer</I><B>,</B> <B>IN NDIS_HANDLE</B> <I>MiniportAdapterHandle</I><B>,</B> <BR>
+<B>IN PNDIS_TIMER_FUNCTION</B> <I>TimerFunction</I><B>,</B> <BR>
+<B>IN PVOID</B> <I>FunctionContext</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Timer</I></DT>
+
+<DD>Pointer to caller-supplied resident storage for a timer object. The timer object is opaque to the caller, but, when it has been initialized, this pointer is a required parameter to the NDIS timer functions.</dd>
+
+<DT><I>MiniportAdapterHandle</I></DT>
+
+<DD>Handle input to the <B>MiniportInitialize</B> function.</dd>
+
+<DT><I>TimerFunction</I></DT>
+
+<DD>Specifies the entry point of a caller-supplied <B>MiniportTimer</B> function.</dd>
+
+<DT><I>FunctionContext</I></DT>
+
+<DD>Pointer to a caller-supplied context area to be passed to the given <B>MiniportTimer</B> function when it is called.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P><B>MiniportInitialize</B> must call this function to set up the driver’s <B>MiniportTimer</B> function(s), if any. <B>MiniportInitialize</B> must call this function before the driver passes the <I>MiniportTimer</I> pointer to any other NDIS timer function.</P>
+
+<P>Drivers of NICs that do not generate interrupts initialize at least one timer object for a polling <B>MiniportTimer</B> function that monitors the NIC state for incoming receives and for send completions.</P>
+
+<P>Calls to the NDIS timer functions insert the timer object in the system timer queue. Calls to the <B>NdisMCancelTimer</B> function dequeue the timer object if it is currently queued. Only one instantiation of a particular timer object can be queued at any given moment.</P>
+
+<P>When a driver calls the <B>NdisMSetTimer</B> function, the timer object at <I>Timer</I> is queued until the interval specified in the call expires. When it does, the timer object is dequeued, and the caller-supplied <I>TimerFunction</I> is run once at IRQL DISPATCH_LEVEL as soon as a processor becomes available. When a driver calls the <B>NdisMSetPeriodicTimer</B> function, the timer object is dequeued and the caller-supplied <I>TimerFunction</I> is run when the given interval expires. However, the timer object is automatically requeued for the same fixed interval, so <B>MiniportTimer</B> runs periodically, also at IRQL DISPATCH_LEVEL.</P>
+
+<P><B>MiniportInitialize </B>can call this function more than once to initialize more than one timer object, each associated with a distinct <B>MiniportTimer</B> function. For example, an NIC driver might have one <B>MiniportTimer</B> function that polls the NIC state periodically and another that the miniport uses only to time-out a particular operation on its NIC. Each such <B>MiniportTimer</B> function has different functionality should be associated with a different timer object by calling this function from <B>MiniportInitialize</B>.</P>
+
+<P>A driver that calls this function runs at IRQL PASSIVE_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_212.htm"><B>NdisMCancelTimer</B></A>, <A HREF="funct_1_241.htm"><B>NdisMSetPeriodicTimer</B></A>, <A HREF="funct_1_242.htm"><B>NdisMSetTimer</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

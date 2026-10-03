@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DispGetParam</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_oa96_dispgetparam"></A>DispGetParam</H2>
+
+<P>This function retrieves a parameter from the <B>DISPPARAMS</B> structure, checks both named parameters and positional parameters, and coerces the parameter to the specified type.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleauto.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT DispGetParam(DISPPARAMS FAR</B>* <I>pdispparams</I>, <B>unsigned int</B> <I>position</I>, <B>VARTYPE</B> <I>vtTarg</I>, <B>VARIANT FAR</B>* <I>pvarResult</I>, <B>unsigned int</B> <B>FAR</B>* <I>puArgErr</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pdispparams</I></DT>
+
+<DD>Pointer to the parameters passed to <A HREF="ki_de_17.htm"><B>IDispatch::Invoke</B></A>.</dd>
+
+<DT><I>position</I></DT>
+
+<DD>Position of the parameter in the parameter list. <B>DispGetParam</B> starts at the end of the array, so if p<I>osition</I> is 0, the last parameter in the array is returned.</dd>
+
+<DT><I>vtTarg</I></DT>
+
+<DD>Type the argument should be coerced to.</dd>
+
+<DT><I>pvarResult</I></DT>
+
+<DD>Pointer to the variant to pass the parameter into.</dd>
+
+<DT><I>puArgErr</I></DT>
+
+<DD>On return, pointer to the index of the argument that caused a DISP_E_TYPEMISMATCH error. This pointer is returned to <B>Invoke</B> to indicate the position of the argument in DISPPARAMS that caused the error.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values obtained from the returned <B>HRESULT </B>and described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=37%>
+<H5>Value</H5>
+</TD>
+<TD width=63%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>S_OK</TD>
+<TD width=63%>Success.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>DISP_E_BADVARTYPE</TD>
+<TD width=63%>The variant type <I>vtTarg</I> is not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>DISP_E_OVERFLOW</TD>
+<TD width=63%>The retrieved parameter could not be coerced to the specified type.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>DISP_E_PARAMNOTFOUND</TD>
+<TD width=63%>The parameter indicated by <I>position</I> could not be found.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>DISP_E_TYPEMISMATCH</TD>
+<TD width=63%>The argument could not be coerced to the specified type.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_INVALIDARG</TD>
+<TD width=63%>One of the arguments was invalid.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_OUTOFMEMORY</TD>
+<TD width=63%>Insufficient memory to complete operation.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The output parameter <I>pvarResult </I>must be a valid variant. Any existing contents are released in the standard way. The contents of the variant are freed with <B>VariantFree</B>.</P>
+
+<P>Passing into this function any invalid and, under some circumstances, NULL pointers will result in unexpected termination of the application. </P>
+
+<P>If you have used <B>DispGetParam </B>to get the right side of a property put operation, the second parameter should be DISPID_PROPERTYPUT. For example:</P>
+
+<PRE><CODE>DispGetParam(&amp;dispparams, DISPID_PROPERTYPUT, VT_BOOL, &amp;varResult)
+</CODE></PRE>
+
+<P>Named parameters cannot be accessed positionally, and vice versa.</P>
+
+<H4>Example</H4>
+
+<P>The following code example uses <B>DispGetParam</B> to set <CODE>X</CODE> and <CODE>Y</CODE> properties:</P>
+
+<PRE><CODE>STDMETHODIMP
+CPoint::Invoke(
+    DISPID dispidMember,
+    REFIID riid,
+    LCID lcid,
+    unsigned short wFlags,
+    DISPPARAMS FAR* pdispparams,
+    VARIANT FAR* pvarResult,
+    EXCEPINFO FAR* pExcepInfo,
+    unsigned int FAR* puArgErr)
+{
+    unsigned int uArgErr;
+    HRESULT hresult;
+    VARIANTARG varg0;
+    VARIANT varResultDummy;
+
+    UNUSED(lcid);
+    UNUSED(pExcepInfo);
+
+    // Make sure the wFlags are valid.
+    if(wFlags &amp; ~(DISPATCH_METHOD | DISPATCH_PROPERTYGET |
+        DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF))
+        return ResultFromScode(E_INVALIDARG);
+
+    // This object only exposes a "default" interface.
+    if(!IsEqualIID(riid, IID_NULL))
+        return ResultFromScode(DISP_E_UNKNOWNINTERFACE);
+
+    // It simplifies the following code if the caller
+    // ignores the return value.
+    if(puArgErr == NULL)
+        puArgErr = &amp;uArgErr;
+    if(pvarResult == NULL)
+        pvarResult = &amp;varResultDummy;
+
+    VariantInit(&amp;varg0);
+
+    // Assume the return type is void, unless otherwise is found.
+    VariantInit(pvarResult);
+
+    switch(dispidMember){
+    case IDMEMBER_CPOINT_GETX:
+        V_VT(pvarResult) = VT_I2;
+        V_I2(pvarResult) = GetX();
+        break;
+
+    case IDMEMBER_CPOINT_SETX:
+        HRESULT = DispGetParam(pdispparams, 0, VT_I2, &amp;varg0, puArgErr);
+        if(HRESULT != NOERROR)
+            return hresult;
+        SetX(V_I2(&amp;varg0));
+        break;
+
+    case IDMEMBER_CPOINT_GETY:
+        V_VT(pvarResult) = VT_I2;
+        V_I2(pvarResult) = GetY();
+        break;
+
+    case IDMEMBER_CPOINT_SETY:
+        HRESULT = DispGetParam(pdispparams, 0, VT_I2, &amp;varg0, puArgErr);
+        if(HRESULT != NOERROR)
+            return hresult;
+        SetY(V_I2(&amp;varg0));
+        break;
+
+    default:
+        return ResultFromScode(DISP_E_MEMBERNOTFOUND);
+    }
+    return NOERROR;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

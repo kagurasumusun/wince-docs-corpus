@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Working with Database Records</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_working_with_database_records"></A>Working with Database Records</H2>
+
+<P>Several functions allow you to create, modify, and delete database records and their properties.</P>
+
+<P>You can create new records or modify existing records using the <B>CeWriteRecordProps</B> function. The function parameters include the handle to the database and the CEOID of the record to add. If the CEOID is zero, <B>CeWriteRecordProps</B> creates a new record. On a mounted database volume, all write operations are cached. The database subsystem will periodically request a cache flush after a series of operations. If memory is low, the cache is flushed to permanent storage. Unlike the file system that can choose to flush only part of the cache, on a database flush, all blocks are flushed.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To write properties to a record</H4>
+
+<OL>
+	<LI>Create an array of <B>CEPROPVAL</B> structures.</li>
+
+	<LI>Call the <B>CeWriteRecordProps</B> function.</li>
+
+	<LI>Pass the handle of the database in the function’s <B>HANDLE</B> parameter.</li>
+
+	<LI>Pass the <B>CEOID</B> of the record in the function’s <B>CEOID</B> parameter.
+<P>If the passed <B>CEOID</B> is zero, a new record will be created.
+</li>
+
+	<LI>Pass the number of properties being set in the function’s property-count parameter.</li>
+
+	<LI>Pass the address of the array of property values in the function’s <B>CEPROPVAL</B> parameter.
+<P>You must pass at least one property value. You can delete a property by setting the <B>CEDB_PROPDELETE</B> flag for a particular property. <B>CeWriteRecordProps</B> returns the <B>CEOID</B> of the record to indicate success, or zero to indicate failure.
+</li>
+</OL>
+
+<P>Use the <B>CeDeleteRecord</B> function to delete a record from a database, supplying the CEOID of the record and the handle to the open database that contains the record. </P>
+
+<P>The following code example shows how to create and write four properties: a 16-bit signed integer, a 32-bit signed integer, a null-terminated string, and a binary large object (BLOB) to the new record. </P>
+
+<PRE><CODE>TCHAR szError[50];            // String for displaying an<B> </B>error message
+HANDLE hDataBase;            // Database handle returned by CeOpenDatabase            
+CEOID CeOid;                    // Object identifier of the written record
+CEPROPVAL NewRecProps[4];    // New property to be written to a record
+LPBYTE lpBlob;                // Pointer to the BLOB data
+LPWSTR lpwStr;                // Pointer to a null-terminated Unicode 
+                            // character string 
+
+// Assign values to the properties to be written.
+
+// A 16-bit signed integer
+NewRecProps[0].propid = CEVT_I2;
+NewRecProps[0].wLenData = 0;
+NewRecProps[0].wFlags = 0;
+NewRecProps[0].val.iVal = </CODE>–<CODE>1;
+
+// A 32-bit signed integer
+NewRecProps[1].propid = CEVT_I4;
+NewRecProps[1].wLenData = 0;
+NewRecProps[1].wFlags = 0;
+NewRecProps[1].val.lVal = 0xffffffff;
+
+// A null-terminated string
+lpwStr = (LPWSTR) LocalAlloc (LMEM_FIXED, 50 * sizeof(TCHAR));
+if ( lpwStr )
+    _tcscpy(lpwStr, TEXT("This is a string property"));
+
+NewRecProps[2].propid = CEVT_LPWSTR;
+NewRecProps[2].wLenData = 0;
+NewRecProps[2].wFlags = 0;
+NewRecProps[2].val.lpwstr = lpwStr;
+
+// A CEBLOB structure
+lpBlob = (LPBYTE) LocalAlloc(LMEM_FIXED, 50  * sizeof(TCHAR));
+if ( lpBlob )
+    _tcscpy((LPWSTR) lpBlob, TEXT("This is a blob property"));
+
+NewRecProps[3].propid = CEVT_BLOB;
+NewRecProps[3].wLenData = 0;
+NewRecProps[3].wFlags = 0;
+NewRecProps[3].val.blob.dwCount = 50  * sizeof(TCHAR);
+NewRecProps[3].val.blob.lpb  = lpBlob;
+
+// Call function CeOpenDatabaseEx to open the database 
+// hDataBase = CeOpenDatabaseEx {...}
+
+// Write the properties to a new record.
+if (!(CeOid = CeWriteRecordProps(
+            hDataBase,        // Handle of the database
+            0,                // Write a new record.
+            4,                // Four properties
+            NewRecProps        // Pointer to the new properties
+            )))
+{
+    wsprintf(szError, TEXT("ERR: CeWriteRecordProps failed (%ld)"),
+            GetLastError());
+}
+
+// Free local memory lpBlob 
+if( lpBlob )
+    LocalFree(lpBlob);
+
+// Free local memory lpwStr 
+if( lpwStr )
+    LocalFree(lpwStr);
+
+// Close database handle
+CloseHandle(hDataBase);
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

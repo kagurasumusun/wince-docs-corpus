@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>select</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_select_2"></A>select </H2>
+
+<P>This function determines the status of one or more sockets, waiting if necessary. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winsock.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int</B> <B>select</B> <B>(int</B> <I>nfds</I><B>, fd_set</B> <I>*readfds</I><B>, fd_set</B> <I>*writefds</I><B>, fd_set</B> <I>*exceptfds</I><B>, <BR>
+const</B> <B>struct</B> <B>timeval</B> <I>*timeout</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>nfds</I></DT>
+
+<DD>[in] Ignored; included only for compatibility with Berkeley sockets.</dd>
+
+<DT><I>readfds</I></DT>
+
+<DD>[in/out] Optional pointer to a set of sockets to be checked for readability.</dd>
+
+<DT><I>writefds</I></DT>
+
+<DD>[in/out] Optional pointer to a set of sockets to be checked for writability</dd>
+
+<DT><I>exceptfds</I></DT>
+
+<DD>[in/out] Optional pointer to a set of sockets to be checked for errors.</dd>
+
+<DT><I>timeout</I></DT>
+
+<DD>[in] Maximum time for <B>select</B> to wait. NULL blocks indefinitely. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates that the time limit expired. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<H4>Remarks</H4>
+
+<P>The <B>select</B> function is used to determine the status of one or more sockets. For each socket, the caller can request information on read, write, or error status. The set of sockets for which a given status is requested is indicated by an <B>FD_SET</B> structure. The sockets contained within the <B>FD_SET</B> structures must be associated with a single service provider. The <B>select</B> function returns the number of sockets meeting the conditions. A set of macros is provided for manipulating an <B>FD_SET </B>structure. These macros are compatible with those used in the Berkeley software, but the underlying representation is completely different.</P>
+
+<P>The parameter <I>readfds</I> identifies the sockets that are to be checked for readability. If the socket is currently in the <A HREF="cf_l_20.htm"><B>listen</B></A> state, it will be marked as readable if an incoming connection request has been received such that an <A HREF="cf_ac.htm"><B>accept</B></A> is guaranteed to complete without blocking. For other sockets, readability means that queued data is available for reading such that a call to <A HREF="cf_mr_19.htm"><B>recv</B></A> or <A HREF="cf_mr_20.htm"><B>recvfrom</B></A> is guaranteed not to block.</P>
+
+<P>For connection-oriented sockets, readability can also indicate that a request to close the socket has been received from the peer. If the virtual circuit was closed gracefully, and all data was received, then a <A HREF="cf_mr_19.htm"><B>recv</B></A> will return immediately with zero bytes read. If the virtual circuit was reset, then a <B>recv</B> will complete immediately with an error value such as WSAECONNRESET. </P>
+
+<P>The parameter <I>writefds</I> identifies the sockets that are to be checked for writability. If a socket is processing a <A HREF="cf_ac_10.htm"><B>connect</B></A> call (nonblocking), a socket is writable if the connection establishment successfully completes. If the socket is not processing a <A HREF="cf_ac_10.htm"><B>connect</B></A> call, writability means a <A HREF="cf_sw_1.htm"><B>send</B></A> or <A HREF="cf_sw_2.htm"><B>sendto</B></A> are guaranteed to succeed. However, they can block on a blocking socket if the <I>len</I> parameter exceeds the amount of outgoing system buffer space available. It is not specified how long these guarantees can be assumed to be valid, particularly in a multithreaded environment.</P>
+
+<P>The parameter <I>exceptfds</I> identifies the sockets that are to be checked for the presence of any exceptional error conditions. </P>
+
+<P>Any two of the parameters, <I>readfds</I>, <I>writefds</I>, or <I>exceptfds</I>, can be given as NULL. At least one must be non-NULL, and any non-NULL descriptor set must contain at least one handle to a socket.</P>
+
+<P>Summary: A socket will be identified in a particular set when <B>select</B> returns if:</P>
+
+<P><I>readfds</I>:
+
+<UL>
+	<LI>If <B>listen</B> has been called and a connection is pending, <B>accept</B> will succeed</li>
+
+	<LI>Connection has been closed/reset/terminated</li>
+</UL>
+
+<P><I>writefds</I>:
+
+<UL>
+	<LI>If processing a <B>connect</B> call (nonblocking), connection has succeeded</li>
+
+	<LI>Data can be sent</li>
+</UL>
+
+<P><I>exceptfds</I>:
+
+<UL>
+	<LI>If processing a <B>connect</B> call (nonblocking), connection attempt failed</li>
+</UL>
+
+<P>Four macros are defined in the header file Winsock.h for manipulating and checking the descriptor sets. The variable <I>FD_SETSIZE</I> determines the maximum number of descriptors in a set. (The default value of <I>FD_SETSIZE</I> is 64, which can be modified by defining FD_SETSIZE to another value before including Winsock.h.) Internally, socket handles in an <B>FD_SET</B> structure are not represented as bit flags as in Berkeley Unix. Their data representation is opaque. Use of these macros will maintain software portability between different socket environments. The macros to manipulate and check <B>FD_SET</B> contents are:
+
+<DL>
+<DT><B>FD_CLR(</B><I>s</I><B>, *</B><I>set</I><B>)</B></DT>
+
+<DD>Removes the descriptor <I>s</I> from <I>set</I>.</dd>
+
+<DT><B>FD_ISSET(</B><I>s</I><B>, *</B><I>set</I><B>)</B></DT>
+
+<DD>Nonzero if <I>s</I> is a member of the <I>set</I>. Otherwise, zero.</dd>
+
+<DT><B>FD_SET(</B><I>s</I><B>, *</B><I>set</I><B>)</B></DT>
+
+<DD>Adds descriptor <I>s</I> to <I>set</I>.</dd>
+
+<DT><B>FD_ZERO(*</B><I>set</I><B>)</B></DT>
+
+<DD>Initializes the <I>set</I> to the NULL set.
+</dd>
+</DL>
+
+<P>The parameter <I>time-out</I> controls how long the <B>select</B> can take to complete. If <I>time-out</I> is a null pointer, <B>select</B> will block indefinitely until at least one descriptor meets the specified criteria. Otherwise, <I>time-out</I> points to a <B>TIMEVAL</B> structure that specifies the maximum time that <B>select</B> should wait before returning. When <B>select</B> returns, the contents of the <B>TIMEVAL</B> structure are not altered. If <B>TIMEVAL</B> is initialized to {0, 0}, <B>select</B> will return immediately; this is used to poll the state of the selected sockets. If <B>select</B> returns immediately, then the <B>select</B> call is considered nonblocking and the standard assumptions for nonblocking calls apply. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_ac.htm"><B>accept</B></A>, <A HREF="cf_ac_10.htm"><B>connect</B></A>, <A HREF="cf_mr_19.htm"><B>recv</B></A>, <A HREF="cf_mr_20.htm"><B>recvfrom</B></A>, <A HREF="cf_sw_1.htm"><B>send</B></A>, <A HREF="cf_sw_2.htm"><B>sendto</B></A>, <A HREF="cf_sw_7.htm"><B>setsockopt</B></A>, <A HREF="cf_sw_32.htm"><B>WSAStartup</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

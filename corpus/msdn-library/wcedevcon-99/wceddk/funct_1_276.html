@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisReset</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisreset"></A>NdisReset</H2>
+
+<P>This function forwards a reset request to an underlying driver.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisReset(OUT PNDIS_STATUS </B><I>Status</I><B>, <BR>
+IN NDIS_HANDLE </B><I>NdisBindingHandle</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable that is set on return from this function. The underlying driver determines which NDIS_STATUS_<I>XXX</I> is returned, but it is usually one of the following values:
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS</DT>
+
+<DD>The underlying driver reset its NIC or virtual NIC to its initial state.</dd>
+
+<DT>NDIS_STATUS_PENDING</DT>
+
+<DD>The request is being handled asynchronously, and the caller’s <B>ProtocolResetComplete</B> function will be called when it is completed.</dd>
+
+<DT>NDIS_STATUS_RESET_IN_PROGRESS</DT>
+
+<DD>The underlying driver is currently resetting its NIC, so this request is superfluous. Moreover, the caller’s <B>ProtocolStatus</B> function was or will be called with NDIS_STATUS_RESET_START to indicate that a reset is in progress.</dd>
+
+<DT>NDIS_STATUS_NOT_RESETTABLE</DT>
+
+<DD>The underlying NIC cannot be reset by software commands.</dd>
+
+<DT>NDIS_STATUS_ADAPTER_REMOVED or NDIS_STATUS_FAILURE</DT>
+
+<DD>The caller’s binding is already closed, so no reset will be attempted for this caller.</dd>
+
+<DT>NDIS_STATUS_CLOSING</DT>
+
+<DD>The caller’s binding is currently being closed, so no reset will be attempted for this caller.</dd>
+
+<DT>NDIS_STATUS_SOFT_ERRORS</DT>
+
+<DD>The underlying NIC driver reset the netcard, but one or more recoverable hardware errors occurred during this operation. The NIC driver has logged the error(s).</dd>
+
+<DT>NDIS_STATUS_HARD_ERRORS</DT>
+
+<DD>The underlying NIC driver attempted to reset the netcard, but one or more unrecoverable hardware errors occurred during this operation. The NIC driver has logged the error(s).</dd>
+
+<DT>NDIS_STATUS_NOT_ACCEPTED</DT>
+
+<DD>This value usually is a nonspecific default, returned when none of the more specific NDIS_STATUS_<I>XXX</I> caused NDIS or the underlying NIC driver to fail the request.</dd>
+</DL>
+</dd>
+
+<DT><I>NdisBindingHandle</I></DT>
+
+<DD>Handle returned by the <B>NdisOpenAdapter</B> function that identifies the target NIC or the virtual adapter of the next-lower driver to which the caller is bound.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>The Windows CE version of this function always forwards reset requests to the underlying driver without waiting until the driver’s internal queues have been cleared.</P>
+
+<P>A driver that calls this function runs at IRQL &lt;= DISPATCH_LEVEL.</P>
+<p>&nbsp;</p></body>
+</HTML>

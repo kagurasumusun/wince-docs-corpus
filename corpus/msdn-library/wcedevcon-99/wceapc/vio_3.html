@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Obtaining Vehicle Attributes</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_obtaining_vehicle_attributes"></A>Obtaining Vehicle Attributes</H2>
+
+<P>The <B>IVIO_EnumMetrics</B> interface, which<B> </B>you obtain from a <B>IVIO_Vehicle </B>interface, enumerates vehicle attributes, such as manufacturer, model number, number of cylinders, and transmission type. The following code example shows how to create an instance of a vehicle interface and how to get an enumeration interface from the vehicle interface. You then use <B>IVIO_DataValue</B> methods to obtain vehicle attributes.</P>
+
+<PRE><CODE>IVIO_Vehicle            *pVehicle;
+IVIO_EnumMetrics        *pVehicleMetrics;
+IVIO_DataValue        *pDataValue[1];
+VARIANT                vAttributeValue;
+
+// Create an instance of an IVIO_Vehicle interface.
+hr = CoCreateInstance (CLSID_VIOVEHICLE, NULL, CLSCTX_INPROC_SERVER,
+                       IID_VIOVEHICLE, (PVOID *) &amp;pVehicle);
+// Retrieve a IVIO_EnumMetrics interface from the IVIO_Vehicle interface.
+hrMetrics = pVehicle-&gt;get_Metrics (&amp;pVehicleMetrics);
+VariantInt(&amp;vAttributeValue);
+// Get the first element of the metrics list. This may be a loop to 
+// access all attributes.
+hrMetrics = pVehicleMetrics-&gt;Next(1, pDataValue, NULL);
+if (hrMetrics == S_OK)
+  {
+  // Read the next vehicle attribute.
+  pDataValue[0]-&gt;get_ItemID(&amp;dwAttributeID);
+  // Copy the attribute data.
+  pDataValue[0]-&gt;get_DataValue(&amp;vAttributeValue);
+
+  // Process the attribute.
+
+  // Release the reference that was returned.
+  pDataValue[0]-&gt;Release();
+  }
+// Clear the VARIANT buffer.
+VariantClear(&amp;vAttributeValue);
+// Release the metrics enumerator.
+pVehicleMetrics-&gt;Release;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

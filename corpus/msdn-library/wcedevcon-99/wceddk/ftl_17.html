@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Power-Cycle Processing by Block Device Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_power.2d.cycle_processing_by_block_device_drivers"></A>Power-Cycle Processing by Block Device Drivers</H2>
+
+<P>The Windows CE power management protocol supports power cycles that are transparent to applications. Therefore, it is important that block device drivers handle the POWER_DOWN and POWER_UP system messages efficiently.</P>
+
+<P>Like all device drivers, block device drivers must limit themselves to minimal, very fast processing of the POWER_DOWN message. To accomplish this, they should save any volatile state information in RAM, set a flag to indicate that power is about to be turned off, and exit. POWER_ON processing is exactly like the processing for a regular card removal that is followed by an insertion. When power resumes, the PC Card Socket driver issues a card-removal notification for all sockets with inserted cards. Next, it checks the socket status and issues card-insertion notices for each socket with a card. Finally, the Device Manager launches its detection sequence and loads the appropriate driver for each card.</P>
+
+<P>Block device drivers must detect whether they are being loaded either in response to a POWER_ON message or because a block device was disconnected from, and then reconnected to the system. This is important because the driver should preserve state information for any handles held by applications to files stored in the linear flash memory device across simple power cycles. However, if the block device is removed and replaced with a different card, any open file handles should be closed.</P>
+
+<P>The following table shows how open file handles should be treated during POWER_UP processing.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Transition</H5>
+</TD>
+<TD width=52%>
+<H5>Preserve open file handles</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Simple power cycle</TD>
+<TD width=52%>Yes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Block device removed and subsequently re-inserted</TD>
+<TD width=52%>Yes, if it is possible to detect that the contents of the device have not changed</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>Block device removed and replaced with a different device</TD>
+<TD width=52%>No</TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

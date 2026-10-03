@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateEvent</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_createevent"></A>CreateEvent</H2>
+
+<P>This function creates a named or an unnamed event object. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HANDLE</B> <B>CreateEvent( LPSECURITY_ATTRIBUTES</B> <I>lpEventAttributes</I><B>, <BR>
+BOOL</B> <I>bManualReset</I><B>, BOOL</B> <I>bInitialState</I><B>, LPTSTR </B><I>lpname </I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>lpEventAttributes</I></DT>
+
+<DD>Ignored. Must be NULL. </dd>
+
+<DT><I>bManualReset</I></DT>
+
+<DD>Boolean that specifies whether a manual-reset or auto-reset event object is created. If TRUE, then you must use the <A HREF="kf_r_24.htm"><B>ResetEvent</B></A> function to manually reset the state to nonsignaled. If FALSE, the system automatically resets the state to nonsignaled after a single waiting thread has been released. </dd>
+
+<DT><I>bInitialState</I></DT>
+
+<DD>Boolean that specifies the initial state of the event object. If TRUE, the initial state is signaled; otherwise, it is nonsignaled. </dd>
+
+<DT><I>lpName</I></DT>
+
+<DD>Pointer to a null-terminated string that specifies the name of the event object. The name is limited to MAX_PATH characters and can contain any character except the backslash path-separator character (\). Name comparison is case sensitive. 
+
+<P>If <I>lpName</I> matches the name of an existing named event object, the <I>bManualReset</I> and <I>bInitialState</I> parameters are ignored because they have already been set by the creating process. 
+
+
+<P>If <I>lpName</I> is NULL, the event object is created without a name. 
+
+
+<P>If <I>lpName</I> matches the name of an existing semaphore, mutex, waitable timer, job, or file-mapping object, the function fails and the <A HREF="kf_g_19.htm"><B>GetLastError</B></A> function returns ERROR_INVALID_HANDLE. This occurs because these objects share the same name space. 
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A handle to the event object indicates success. If the named event object existed before the function call, the function returns a handle to the existing object and <A HREF="kf_g_19.htm"><B>GetLastError</B></A> returns ERROR_ALREADY_EXISTS. NULL indicates failure. To get extended error information, call <B>GetLastError</B>. </P>
+
+<H4>Remarks</H4>
+
+<P>The handle returned by <B>CreateEvent</B> has EVENT_ALL_ACCESS access to the new event object and can be used in any function that requires a handle to an event object. </P>
+
+<P>Any thread of the calling process can specify the event-object handle in a call to one of the wait functions. The single-object wait functions return when the state of the specified object is signaled. The multiple-object wait functions can be instructed to return either when any one of the specified objects are signaled. When a wait function returns, the waiting thread is released to continue its execution. </P>
+
+<P>The initial state of the event object is specified by the <I>bInitialState</I> parameter. Use the <A HREF="kf_s_24.htm"><B>SetEvent</B></A> function to set the state of an event object to signaled. Use the <A HREF="kf_r_24.htm"><B>ResetEvent</B></A> function to reset the state of an event object to nonsignaled. </P>
+
+<P>When the state of a manual-reset event object is signaled, it remains signaled until it is explicitly reset to nonsignaled by the <B>ResetEvent</B> function. Any number of waiting threads, or threads that subsequently begin wait operations for the specified event object, can be released while the object’s state is signaled. </P>
+
+<P>When the state of an auto-reset event object is signaled, it remains signaled until a single waiting thread is released; the system then automatically resets the state to nonsignaled. If no threads are waiting, the event object’s state remains signaled. </P>
+
+<P>Multiple processes can have handles of the same event object, enabling use of the object for interprocess synchronization. The following object-sharing mechanism is available: a process can specify the name of an event object in a call to the <B>CreateEvent</B> function.</P>
+
+<P>Use the <B>CloseHandle</B> function to close the handle. The system closes the handle automatically when the process terminates. The event object is destroyed when its last handle has been closed. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_c_7.htm"><B>CloseHandle</B></A>, <A HREF="kf_r_24.htm"><B>ResetEvent</B></A>, <A HREF="kf_s_24.htm"><B>SetEvent</B></A>, <A HREF="kf_w_2.htm"><B>WaitForSingleObject</B></A>  </P>
+<p>&nbsp;</p></body>
+</HTML>

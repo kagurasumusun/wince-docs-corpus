@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisAllocatePacketPool</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisallocatepacketpool"></A>NdisAllocatePacketPool</H2>
+
+<P>This function allocates and initializes a block of storage for a pool of packet descriptors.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>Header file:</TD>
+<TD width=70%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Windows CE versions:</TD>
+<TD width=70%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisAllocatePacketPool(OUT PNDIS_STATUS</B> <I>Status</I><B>,</B> <BR>
+<B>OUT PNDIS_HANDLE</B> <I>PoolHandle</I><B>,</B> <B>IN UINT</B> <I>NumberOfDescriptors</I><B>,</B> <BR>
+<B>IN UINT</B> <I>ProtocolReservedLength</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which this function returns the status of the packet pool allocation; one of the following:
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS</DT>
+
+<DD>The driver can make calls to the <B>NdisAllocatePacket</B> function when it needs packet descriptors to make indications up to higher-level drivers or to send packets down to lower-level drivers.</dd>
+
+<DT>NDIS_STATUS_RESOURCES</DT>
+
+<DD>The attempt to allocate a packet pool failed, possibly due to a shortage of memory. However, the caller might attempt to decrease the <I>NumberOfDescriptors</I> parameter and call again immediately.</dd>
+</DL>
+</dd>
+
+<DT><I>PoolHandle</I></DT>
+
+<DD>Handle to the packet pool. This handle is a required parameter to the NDIS packet functions that the driver calls subsequently.</dd>
+
+<DT><I>NumberOfDescriptors</I></DT>
+
+<DD>Specifies the number of packet descriptors that the pool should contain.</dd>
+
+<DT><I>ProtocolReservedLength</I></DT>
+
+<DD>Specifies the number of bytes to be allocated for the <I>ProtocolReserved</I> array of each packet descriptor. For packet descriptors to be used in receive indications, this parameter can be at most 16 bytes.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A handle to the packet pool indicates success.</P>
+
+<H4>Remarks</H4>
+
+<P>The caller should save the handle returned by this function. Usually, the driver next calls the <B>NdisAllocatePacket</B> function one or more times with this handle to allocate a set of packet descriptors. The <I>NumberofDescriptors</I> specified in the call to this function is the effective limit on how many times the driver can call <B>NdisAllocatePacket</B> before it must call the <B>NdisFreePacket</B> function to return a packet descriptor to the free list for the packet pool.</P>
+
+<P>Since packets sent or indicated are returned to the allocating driver, it can reuse each packet descriptor after calling the <B>NdisReinitializePacket</B> function and setting it up again with a chain of buffer descriptors, or the driver can call the <B>NdisFreePacket</B> function to return that packet to the free list. Reinitializing and reusing packets allocated from the packet pool is far faster than freeing and reallocating them. Before a driver calls <B>NdisReinitializePacket</B> with a packet descriptor, it must save the pointers to buffer descriptors that are chained to the packet descriptor since <B>NdisReinitializePacket</B> sets the head of the buffer chain to NULL.</P>
+
+<P>When the driver no longer needs the packet pool, it calls the <B>NdisFreePacketPool</B> function to release the packet pool storage.</P>
+
+<P>The driver must release any spin lock that it is holding before calling this function.</P>
+
+<P>A driver that calls this function runs at IRQL &lt;=DISPATCH_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_176.htm"><B>NdisAllocatePacket</B></A>, <A HREF="funct_1_194.htm"><B>NdisFreePacketPool</B></A>, <A HREF="funct_1_219.htm"><B>NdisMIndicateReceivePacket</B></A>, <A HREF="funct_1_273.htm"><B>NdisReinitializePacket</B></A>, <A HREF="funct_1_286.htm"><B>NdisUnchainBufferAtBack</B></A>, <A HREF="funct_1_287.htm"><B>NdisUnchainBufferAtFront</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

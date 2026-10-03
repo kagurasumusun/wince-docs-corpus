@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::GetDisplayName</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_imoniker_getdisplayname"></A>IMoniker::GetDisplayName</H2>
+
+<P>This method returns the display name.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT GetDisplayName( IBindCtx *</B><I>pbc</I><B>, IMoniker *</B><I>pmkToLeft</I><B>, <BR>
+LPOlESTR * </B><I>ppszDisplayName </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <B>IBindCtx</B> interface on the bind context to be used in this operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. For more information, see <B>IBindCtx</B>.</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.</dd>
+
+<DT><I>ppszDisplayName</I></DT>
+
+<DD>[out] Address of <B>LPOLESTR</B> pointer variable that receives a pointer to the display name string. When successful, this string is a zero-terminated wide character string (two bytes per character) that contains the display name of the moniker. The implementation must use <B>IMalloc::Alloc</B> to allocate the string returned in <I>ppszDisplayName</I>, and the caller is responsible for calling <B>IMalloc::Free</B> to free it. Both the caller and the implementation of this method use the COM task allocator returned by <B>CoGetMalloc</B>. If an error occurs, the implementation must set *<I>ppszDisplayName</I> should be set to NULL.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The method supports the standard return value E_OUTOFMEMORY, as well as the values described in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=38%>
+<H5>Value</H5>
+</TD>
+<TD width=62%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>S_OK</TD>
+<TD width=62%>The display name was successfully supplied.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>MK_E_EXCEEDEDDEADLINE </TD>
+<TD width=62%>The binding operation could not be completed within the time limit specified by the bind context’s <B>BIND_OPTS</B> structure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>E_NOTIMPL</TD>
+<TD width=62%>There is no display name.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P><B>IMoniker::GetDisplayName</B> provides a string that is a displayable representation of the moniker. A display name is not a complete representation of a moniker’s internal state; it is simply a form that can be read by users. As a result, it is possible (though rare) for two different monikers to have the same display name. While there is no guarantee that the display name of a moniker can be parsed back into that moniker when calling the <B>MkParseDisplayName</B> function with it, failure to do so is rare.</P>
+
+<P>As examples, the file moniker implementation of this method supplies the path the moniker represents, and an item moniker’s display name is the string identifying the item that is contained in the moniker. </P>
+
+<H4>Notes to Callers</H4>
+
+<P>It is possible that retrieving a moniker’s display name may be an expensive operation. For efficiency, you may want to cache the results of the first successful call to <B>IMoniker::GetDisplayName</B>, rather than making repeated calls.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>If you are writing a moniker class in which the display name does not change, simply cache the display name and supply the cached name when requested. If the display name can change over time, getting the current display name might mean that the moniker has to access the object’s storage or bind to the object, either of which can be expensive operations. If this is the case, your implementation of <B>IMoniker::GetDisplayName</B> should return MK_E_EXCEEDEDDEADLINE if the name cannot be retrieved by the time specified in the bind context’s <B>BIND_OPTS</B> structure.</P>
+
+<P>A moniker that is intended to be part of a generic composite moniker should include any preceding delimiter (such as ‘\’) as part of its display name. For example, the display name returned by an item moniker includes the delimiter specified when it was created with the <B>CreateItemMoniker</B> function. The display name for a file moniker does not include a delimiter because file monikers are always expected to be the leftmost component of a composite.</P>
+<p>&nbsp;</p></body>
+</HTML>

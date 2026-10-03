@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling Drag-and-Drop Operations</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_handling_drag_and_drop_operations"></A>Handling Drag-and-Drop Operations</H2>
+
+<P>A tree view control notifies the parent window when a user starts to drag an item with a mouse. The parent window receives a TVN_BEGINDRAG notification message when a user begins dragging an item with the left mouse button and a TVN_BEGINRDRAG notification message when a user begins dragging with the right button. You can prevent a tree view control from sending these notifications by giving the tree view control the TVS_DISABLEDRAGDROP style.</P>
+
+<P>You obtain an image to display during a drag operation by using the TVM_CREATEDRAGIMAGE message. The tree view control creates a dragging bitmap based on the label of the item being dragged. Then, the tree view control creates an image list, adds the bitmap to it, and returns the handle to the image list.</P>
+
+<P>You must provide the code that actually drags the item. This typically involves using the dragging capabilities of the image list functions and including code for processing the WM_MOUSEMOVE and WM_LBUTTONUP messages sent to the parent window after the drag operation begins. </P>
+
+<P>To use an item in a tree view control as the target of a drag-and-drop operation, use the <B>SendMessage</B> function to send a TVM_HITTEST message to determine when the stylus is on a target item. To do this, specify the address of a <B>TVHITTESTINFO</B> structure that contains the current coordinates of the stylus. When the <B>SendMessage</B> function returns, the structure contains a flag indicating the location of the stylus relative to the tree view control. If the stylus is over an item in the tree view control, the structure contains the handle to the item as well.</P>
+
+<P>You indicate that an item is the target of a drag-and-drop operation by using the TVM_SETITEM message to set the state to TVIS_DROPHILITED. An item that has this state is drawn in the style used to indicate a target for a drag-and-drop operation.</P>
+
+<P>The following code example shows how to handle drag-and-drop messages.</P>
+
+<PRE><CODE>case WM_NOTIFY:
+{
+  LPNMHDR  pnmh = (LPNMHDR) lParam;
+  
+  switch (pnmh-&gt;code)
+  {
+    case TVN_BEGINDRAG:
+        {    
+            // Notifies the tree view control's parent window that a 
+            // drag-and-drop operation is being initiated
+
+            return 0;
+        }
+            
+        case TVN_BEGINLABELEDIT:
+        {    
+            // Notifies the tree view control's parent window about the 
+            // start of label editing for an item
+
+            return 0;
+        }
+            
+    case TVN_ITEMEXPANDED:
+    {
+      // Notifies a tree view control's parent window that a parent
+      // item's list of child items has expanded or collapsed. This 
+      // notification message is sent in the form of a WM_NOTIFY 
+      // message.
+
+      return 0;
+    }
+      
+    case TVN_ITEMEXPANDING:
+    {
+      // Notifies a tree view control's parent window that a parent
+      // item's list of child items is about to expand or collapse
+
+      return 0;  
+    }
+
+    default:
+      return 0;    
+  }
+  break;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

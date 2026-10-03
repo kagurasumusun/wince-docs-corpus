@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::Reduce</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_imoniker_reduce"></A>IMoniker::Reduce</H2>
+
+<P>This<B> </B>method reduces the moniker to the simplest form.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT Reduce( IBindCtx * </B><I>pbc</I><B>, DWORD </B><I>dwReduceHowFar</I><B>, <BR>
+IMoniker **</B><I>ppmkReduced </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <B>IBindCtx</B> interface on the bind context to be used in this binding operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. For more information, see <B>IBindCtx</B>.</dd>
+
+<DT><I>dwReduceHowFar</I></DT>
+
+<DD>[in] Specifies how far this moniker should be reduced. This parameter must be one of the values from the <B>MKRREDUCE</B> enumeration. </dd>
+
+<DT><I>ppmkToLeft</I></DT>
+
+<DD>[in/out] On entry, address of <B>IMoniker</B>* pointer variable that contains the interface pointer to moniker to the left of this moniker. This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker; moniker clients can usually pass NULL.
+
+<P>On return, *<I>ppmkToLeft</I> is usually set to NULL, that indicates no change in the original moniker to the left. In rare situations, *<I>ppmkToLeft</I> indicates a moniker, that indicates that the previous moniker to the left should be disregarded and the moniker returned through *<I>ppmkToLeft</I> is the replacement. In such a situation, the implementation must call <A HREF="ki_uw_3.htm"><B>IUnknown::Release</B></A> on the old moniker to the left of this moniker and must call <A HREF="ki_uw_1.htm"><B>IUnknown::AddRef</B></A> on the new returned moniker; the caller must release it later. If an error occurs, the implementation can either leave the interface pointer unchanged or set it to NULL.
+</dd>
+
+<DT><I>ppmkReduced</I></DT>
+
+<DD>[out] Address of <B>IMoniker</B>* pointer variable that receives the interface pointer to the reduced form of this moniker, which can be NULL if an error occurs or if this moniker is reduced to nothing. If this moniker cannot be reduced, *<I>ppmkReduced</I> is simply set to this moniker and the return value is MK_S_REDUCED_TO_SELF. If *<I>ppmkReduced</I> is non-NULL, the implementation must call <B>IUnknown::AddRef</B> on the the new moniker; it is the caller’s responsibility to call <B>IUnknown::Release</B>. (This is true even if *<I>ppmkReduced</I> is set to this moniker.)
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The method supports the standard return values E_UNEXPECTED and E_OUTOFMEMORY, as well as the values described in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=38%>
+<H5>Value</H5>
+</TD>
+<TD width=62%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>S_OK</TD>
+<TD width=62%>This moniker was reduced.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>MK_S_REDUCED_TO_SELF</TD>
+<TD width=62%>This moniker could not be reduced any further, so <I>ppmkReduced</I> indicates this moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>MK_E_EXCEEDEDDEADLINE</TD>
+<TD width=62%>The operation could not be completed within the time limit specified by the bind context’s <B>BIND_OPTS</B> structure.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P><B>IMoniker::Reduce</B> is intended for the following uses:
+
+<UL>
+	<LI>It enables the construction of user-defined macros or aliases as new kinds of moniker classes. When reduced, the moniker to which the macro evaluates is returned.</li>
+
+	<LI>It enables the construction of a kind of moniker that tracks data as it moves about. When reduced, the moniker of the data in its current location is returned.</li>
+
+	<LI>On file systems that support an identifier-based method of accessing files which is independent of file names; a file moniker could be reduced to a moniker which contains one of these identifiers.</li>
+</UL>
+
+<P>The intent of the <B>MKRREDUCE</B> flags passed in the <I>dwReduceHowFar</I> parameter is to provide the ability to programmatically reduce a moniker to a form whose display name is recognizable to the user. For example, paths in the file system, bookmarks in word-processing documents, and range names in spreadsheets are all recognizable to users. In contrast, a macro or an alias encapsulated in a moniker are not recognizable to users.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>The scenarios described above are not currently implemented by the system-supplied moniker classes. </P>
+
+<P>You should call <B>IMoniker::Reduce</B> before comparing two monikers using the <A HREF="ki_m_10.htm"><B>IMoniker::IsEqual</B></A> method, because a reduced moniker is in its most specific form. <B>IMoniker::IsEqual</B> may return S_FALSE on two monikers before they are reduced and return S_OK after they are reduced. </P>
+
+<H4>Notes to Implementers</H4>
+
+<P>If the current moniker can be reduced, your implementation must not reduce the moniker in-place. Instead, it must return a new moniker that represents the reduced state of the current one. This way, the caller still has the option of using the non-reduced moniker (for example, enumerating its components). Your implementation should reduce the moniker <I>at least</I> as far as is requested.</P>
+<p>&nbsp;</p></body>
+</HTML>

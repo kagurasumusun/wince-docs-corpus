@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating an FSD named MyFSD</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_creating_an_fsd_named_myfsd"></A>Creating an FSD named MyFSD</H2>
+
+<P>To create an FSD for a hypothetical file system named MyFSD, you must create a DLL named MyFSD.dll. This DLL contains the data type definitions, header files, and functions for MyFSD.</P>
+
+<P>You can define the PVOLUME, PFILE, and PSEARCH data types in MyFSD.dll. These types are used to declare variables and function parameters that hold information about the mounted volume, the file, and the search handle, respectively. These data types are used throughout the FSD functions. By default, PVOLUME, PFILE, and PSEARCH are defined as double-words. You can redefine PVOLUME, PFILE, and PSEARCH to contain any information that you need. For example, you can redefine them as pointers to customized structures. You must redefine these types prior to including Fsdmgr.h or the default definitions will be used.</P>
+
+<P>The code that is compiled into MyFSD.dll must include Fsdmgr.h. This header file generates the prototypes for all of the functions you write for your file system. If you want to define the PVOLUME, PFILE, or PSEARCH data types, do so before including Fsdmgr.h. You must also define a constant, FSDAPI, which is the name of your file system. The following code example shows how it is included:</P>
+
+<PRE><CODE>// This defines a type which is
+// a pointer to a structure containing two DWORDs.
+typedef struct {
+    DWORD    first_field ;
+    DWORD    second_field ;
+} TWODWORDS, *PTWODWORDS ;
+
+// In this example, only PSEARCH is redefined.
+// PFILE and PVOLUME will default to being defined as DWORDs.
+// You can define these types to be different types or the same type,
+//     whatever your FSD needs.
+#define PSEARCH PTWODWORDS
+
+// Now define the name of the file system.
+#define FSDAPI  MyFSD
+#include &lt;fsdmgr.h&gt;
+
+// … The rest of your code for implementing MyFSD should follow.
+</CODE></PRE>
+
+<P>The file system name, the prefix for all functions, and the name of the resulting DLL are all defined by the name that you define for FSDAPI. MyFSD.dll must generate prototypes for all the FSDMGR services that your FSD needs.</P>
+
+<P>MyFSD.dll must export entry points for all the file system functions that you want to export. You must prefix the names of the file system functions with MyFSD_. You must also implement the <B><I>MyFSD</I>_MountDisk</B> and <B><I>MyFSD</I>_UnmountDisk</B> functions in MyFSD.dll. These functions are exported using the generic names <B>FSD_MountDisk</B> and <B>FSD_UnmountDisk</B>. FSDMGR uses these functions to identify MyFSD.dll as a legitimate FSD. The following example of a .def file shows the .def file for MyFSD.dll:</P>
+
+<PRE><CODE>LIBRARY     MyFSD
+    DESCRIPTION    'My File System for Windows CE'
+
+EXPORTS
+    MyFSD_MountDisk
+    MyFSD_UnmountDisk
+    FSD_MountDisk=MyFSD_MountDisk
+    FSD_UnmountDisk=MyFSD_UnmountDisk
+    MyFSD_CreateDirectoryW
+    MyFSD_RemoveDirectoryW
+    MyFSD_GetFileAttributesW
+    MyFSD_SetFileAttributesW
+    MyFSD_DeleteFileW
+    MyFSD_MoveFileW
+    MyFSD_DeleteAndRenameFileW
+    MyFSD_GetDiskFreeSpaceW
+    MyFSD_Notify
+    MyFSD_RegisterFileSystemFunction
+    MyFSD_FindFirstFileW
+    MyFSD_FindNextFileW
+    MyFSD_FindClose
+    MyFSD_CreateFileW
+    MyFSD_ReadFile
+    MyFSD_ReadFileWithSeek
+    MyFSD_WriteFile
+    MyFSD_WriteFileWithSeek
+    MyFSD_SetFilePointer
+    MyFSD_GetFileSize
+    MyFSD_GetFileInformationByHandle
+    MyFSD_FlushFileBuffers
+    MyFSD_GetFileTime
+    MyFSD_SetFileTime
+    MyFSD_SetEndOfFile
+    MyFSD_DeviceIoControl
+    MyFSD_CloseFile
+    MyFSD_CloseVolume
+</CODE></PRE>
+
+<P>The hypothetical file system MyFSD implements the full set of functions for working with a file system. You must supply the functions necessary for your file system. However, as mentioned previously, you have the option of not providing a function in your FSD. For any missing functions, FSDMGR automatically provides stub functions that return ERROR_NOT_SUPPORTED. The complete list of functions you can include in your DLL is given in <I>Microsoft Visual C++ for Windows CE Programmer’s Reference, Software Development Kit: Functions</I>, Microsoft Press, 1998. Generally, these functions are similar to the corresponding Windows CE functions with the addition of a volume identifier parameter.</P>
+
+<P><B>Note</B>  The Reference lists these functions under names beginning with <B><I>MyFSD</I>_*</B>.</P>
+<p>&nbsp;</p></body>
+</HTML>

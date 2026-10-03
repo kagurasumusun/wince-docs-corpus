@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Opening and Creating Databases</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_opening_and_creating_databases"></A>Opening and Creating Databases</H2>
+
+<P>Windows CE provides several functions for creating, opening, reading, and deleting databases.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To access records or properties in a database</H4>
+
+<OL>
+	<LI>Call the <B>CeOpenDatabaseEx</B> function.</li>
+
+	<LI>Pass either the database name or its <B>CEOID</B> to the <B>CeOpenDatabaseEx</B> function.
+<P>The <B>CeOpenDatabaseEx</B> function returns a handle to the database.
+</li>
+
+	<LI>Use the handle in subsequent calls to read or modify database properties or records.</li>
+
+	<LI>Call the <B>CloseHandle</B> function with the database handle when you have completed the previous steps.</li>
+</OL>
+
+<P>Use the CEDB_AUTOINCREMENT flag when calling <B>CeOpenDatabaseEx </B>to increase performance when reading many properties. This flag directs the system to increment the seek pointer automatically every time you access a database property with the <B>CeReadRecordPropsEx</B> function. The seek pointer marks the record that will be read by the next read operation. </P>
+
+<P>When calling <B>CeOpenDatabaseEx</B>, you can specify the identifier of a property to use as the sort order for the database. The system uses the sort order to increment the seek pointer after each subsequent call to <B>CeReadRecordPropsEx</B>, if the CEDB_AUTOINCREMENT flag is specified. The sort order also determines the property that the <B>CeSeekDatabase</B> function uses to traverse the database. </P>
+
+<P>The following code example shows the call to <B>CeOpenDatabaseEx</B>.</P>
+
+<P>For more information about sort order, see <A HREF="objstore_24.htm">Sorting Records</A>.  For more information about moving the seek pointer, see <A HREF="objstore_25.htm">Searching for Records</A>.  </P>
+
+<P>To create a new database, use <B>CeCreateDatabaseEx</B>.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a new database</H4>
+
+<OL>
+	<LI>Call the <B>CeCreateDatabaseEx</B> function.</li>
+
+	<LI>Pass the <B>CEGUID</B> of the mounted volume on which to create the database in the <B>CEGUID</B> parameter.</li>
+
+	<LI>Pass the other parameters in the function’s <B>CEDBASEINFO</B> parameter.</li>
+
+	<LI>Specify the database name in the <B>CEDBASEINFO</B> structure.</li>
+
+	<LI>Optionally, specify a database type identifier in the <B>CEDBASEINFO</B> structure.</li>
+
+	<LI>Optionally, specify any sort order specifications in the <B>CEDBASEINFO</B> structure.</li>
+
+	<LI>Optionally, specify the <B>CEDB_NOCOMPRESS</B> flag in the <B>CEDBASEINFO</B> structure.
+<P>By default, the database will be created as a compressed database. If you do not want it to be compressed, you must set this flag.
+</li>
+</OL>
+
+<P><B>Note</B>  When you create a database on a PC Card storage device, it is usually preferable to make it noncompressed. This is because the access speed to read and write from a storage card is slower than when reading and writing in RAM, and compressing and decompressing data slows your application further. Create your database as a noncompressed database, unless you expext it to be larger than the storage card can contain if left noncompressed.</P>
+
+<P>If the database grows to fill the storage card, you can call <B>CeSetDatabaseInfoEx</B> with CEDB_VALIDDBFLAGS and the <B>HIWORD</B> set to zero, and the database will compress itself. Compression can take a long time to complete, especially on large databases.&nbsp; </P>
+
+<P>The database type identifier is an optional, application-defined value that allows you to differentiate individual databases. For example, you can have a different type of database for an address book than for a to-do list. The type identifier allows you to group related databases for searching, record management, and enumeration of databases.</P>
+
+<P>To delete a database, the application passes the database’s CEOID to <B>CeDeleteDatabaseEx</B>, which removes the database from its database volume. </P>
+
+<P>The following code example attempts to open a database of addresses by calling the <B>CeOpenDatabaseEx</B> function. If the database does not exist, the code example calls the <B>CeCreateDatabaseEx</B> function to create a new address database with three different sort orders. After creating the database, try again to open the database. </P>
+
+<PRE><CODE>HANDLE OpenDatabase (
+            HWND hwndNotify,        // Handle to the window to which
+                                // notification messages are posted 
+            PCEGUID pceguid,        // Pointer to the mounted database
+                                //     volume where the database to
+                                //     be opened resides
+            CEOID CeOid)            // Object identifier of the database
+                                //     to be opened 
+{
+    int index;
+    DWORD dwError;                // Return value from GetLastError
+    HANDLE hDataBase;            // Open handle to the address database
+    CENOTIFYREQUEST *pRequest;    // CENOTIFYREQUEST structure
+    CEDBASEINFO CEDBInfo;        // Structure containing 
+                                //     database information 
+    TCHAR szError[100];            // String to display with error message
+    
+    // Allocate memory for pRequest.
+    pRequest = (CENOTIFYREQUEST *) LocalAlloc (LPTR, 
+                                        sizeof (CENOTIFYREQUEST));
+
+    pRequest-&gt;dwSize = sizeof (CENOTIFYREQUEST);
+    pRequest-&gt;hwnd = hwndNotify;
+    pRequest-&gt;hHeap = NULL;        // Let system allocate memory properly.
+    pRequest-&gt;dwFlags = 0;        // Notifications are handled as they
+                                //     were in Windows CE 1.0.
+
+    hDataBase = CeOpenDatabaseEx( 
+            pceguid,                // Pointer to the mounted volume
+            &amp;CeOid,                // Location for the database identifier
+            TEXT("MyDBase"),        // Database name
+            0,                    // Sort order; 0 indicates to ignore
+            CEDB_AUTOINCREMENT,    // Automatically increase seek pointer
+            pRequest);            // Pointer to a CENOTIFYREQUEST
+                                //     structure
+                
+    if (hDataBase == INVALID_HANDLE_VALUE) 
+    { 
+        dwError = GetLastError();
+    
+        if (dwError == ERROR_NOT_ENOUGH_MEMORY)
+        {
+            wsprintf(szError, TEXT("Not enough memory"));
+        }
+        else
+        {
+            // Possibility of non-existing database. Create it.
+        
+            // Initialize structure CEDBInfo
+            memset (&amp;CEDBInfo, 0, sizeof(CEDBInfo));
+
+            // Create the database with the following specified flags.
+            // Create the database as uncompressed.
+            // You can use CeSetDataBaseInfoEx to compress the Database.
+            CEDBInfo.dwFlags = 
+                    CEDB_VALIDNAME           // szDbaseName is valid
+                    | CEDB_VALIDTYPE           // dwDbaseType is valid
+                    | CEDB_VALIDDBFLAGS       // HIWORD of dwFlag is valid
+                    | CEDB_VALIDSORTSPEC       // rgSortSpecs is valid
+                    | CEDB_NOCOMPRESS;       // The database is
+                                           //    not compressed.
+
+            // Assign the database name as MyDBase.
+            wcscpy (CEDBInfo.szDbaseName, TEXT("MyDBase"));
+
+            // Assign the database type.
+            CEDBInfo.dwDbaseType = 0;
+
+            // Set the number of active sort orders to 4.
+            // This is the maximum number allowed.
+            CEDBInfo.wNumSortOrder = 4;        
+
+            // Initialize the array of sort order descriptions.
+            for (index = 0; index &lt; CEDBInfo.wNumSortOrder; ++index)
+            {
+                // Sort in descending order.
+                CEDBInfo.rgSortSpecs[index].dwFlags = 
+                                            CEDB_SORT_DESCENDING; 
+
+                // Assign the identifier of the properties to sort by:
+                // CEDBInfo.rgSortSpecs[index].propid = ...;    
+            }
+
+            // Create database "MyDBase".
+            CeOid = CeCreateDatabaseEx (pceguid, &amp;CEDBInfo);
+
+            if (CeOid == NULL)
+            {
+                wsprintf(szError, 
+                        TEXT("ERROR: CeCreateDatabaseEx failed (%ld)"),
+                        GetLastError());
+            }
+            else    // Succeeded in creating the database. Open it.
+            {
+                hDataBase = CeOpenDatabaseEx(pceguid, &amp;CeOid, 
+                                TEXT("MyDBase"), 0, 0, pRequest);
+            }
+        }
+    }
+
+    // return the database handle.
+    return hDataBase;
+}
+</CODE></PRE>
+
+<P>The <B>CENOTIFICATION</B> structure must be freed after the notification has been processed. To free the structure, you must call <B>CeFreeNotification</B>.</P>
+<p>&nbsp;</p></body>
+</HTML>

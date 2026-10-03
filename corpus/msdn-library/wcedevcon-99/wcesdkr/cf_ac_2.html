@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>AcquireCredentialsHandle</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_acquirecredentialshandle"></A>AcquireCredentialsHandle</H2>
+
+<P>This function allows applications to acquire a handle to preexisting credentials associated with the user on whose behalf the call is made. These preexisting credentials are established through a system logon not described here. However, this is different from “login to the network” and does not imply gathering of credentials.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Sspi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>SECURITY_STATUS AcquireCredentialsHandle( <BR>
+SEC_CHAR</B> *<I> pszPrincipal</I>, <B>SEC_CHAR</B> *<I> pszPackage</I>,<BR>
+<B>ULONG</B><I> fCredentialUse</I>, <B>PLUID</B><I> pvLogonID</I>, <B>PVOID</B><I> pAuthData</I>,<BR>
+<B>PVOID</B><I> pGetKeyFn</I>, <B>VOID</B><I> pvGetKeyArgument</I>, <B>PCredHandle</B><I> phCredential</I>,<BR>
+<B>PTimeStamp</B><I> ptsExpiry </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pszPrincipal</I></DT>
+
+<DD>[in] Pointer to a null-terminated string that specifies the name of the principal whose credentials the handle will reference. Note that if the process requesting the handle does not have access to the credentials, the function returns an error. A null string indicates that the process requires a handle to the credentials of the user under whose security context it is executing.</dd>
+
+<DT><I>pszPackage</I></DT>
+
+<DD>[in] Pointer to a null-terminated string that specifies the name of the security package with which these credentials will be used. This is a security package name returned in the <I>Name</I> member of a <B>SecPkgInfo</B> structure returned by the <B>EnumerateSecurityPackages</B> function.</dd>
+
+<DT><I>fCredentialUse</I></DT>
+
+<DD>[in] Flag that indicates how these credentials will be used. This parameter can one of the following values:
+
+<UL>
+	<LI>CRED_INBOUND</li>
+
+	<LI>CRED_OUTBOUND</li>
+
+	<LI>CRED_BOTH</li>
+</UL>
+
+
+<P>The credentials created with the CRED_INBOUND option can be used only for validating incoming calls. They cannot be used for accessing objects. 
+</dd>
+
+<DT><I>pvLogonId</I></DT>
+
+<DD>[in] Void pointer to a Windows NT–style logon identifier, an <B>LUID</B>. This parameter is provided for file-system processes such as network redirectors. This parameter can be NULL.</dd>
+
+<DT><I>pAuthData</I></DT>
+
+<DD>[in] Pointer to package-specific data. This parameter can be NULL, indicating that the default credentials for that package should be used. The NTLM SSP accepts a pointer to a  SEC_WINNT_AUTH_IDENTITY structure, containing the user name, domain name and password.</dd>
+
+<DT><I>pGetKeyFn</I></DT>
+
+<DD>[in] Pointer to a SEC_GET_KEY_FN function to retrieve the key for the function. The security package can call this function, as provided by the RPC run-time transport application. This parameter can be NULL if the transport application does not support callbacks to retrieve credentials.</dd>
+
+<DT><I>pvGetKeyArgument</I></DT>
+
+<DD>[in] Specifies the pointer argument that the security provider should pass to the <B>GetKey</B> function. This parameter can be NULL.</dd>
+
+<DT><I>phCredential</I></DT>
+
+<DD>[out] Pointer to <B>CredHandle</B> structure that receives the credential handle. </dd>
+
+<DT><I>ptsExpiry</I></DT>
+
+<DD>[out] Pointer to a <B>TimeStamp</B> variable that receives the time at which the returned credentials expire. The value returned in this member depends on the security package. The security provider should always return this value in local time. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>SEC_E_OK indicates success. </P>
+
+<P>Upon failure, one of the error values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=45%>
+<H5>Value </H5>
+</TD>
+<TD width=55%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_E_UNKNOWN_CREDENTIALS</TD>
+<TD width=55%>The credentials supplied to the package were not recognized.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_E_NO_CREDENTIALS</TD>
+<TD width=55%>No credentials are available in the security package.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_E_NOT_OWNER</TD>
+<TD width=55%>The caller of the function does not own the necessary credentials.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_E_INSUFFICIENT_MEMORY</TD>
+<TD width=55%>Not enough memory is available to complete this request.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_E_INTERNAL_ERROR</TD>
+<TD width=55%>The Local Security Authority cannot be contacted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_E_SECPKG_NOT_FOUND</TD>
+<TD width=55%>The requested security package does not exist.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The <B>AcquireCredentialsHandle</B> function returns a handle to the credentials of a principal (user, client) as used by a specific security package. The handle returned can be used in subsequent calls to the <A HREF="cf_ac_1.htm"><B>AcceptSecurityContext</B></A> and <A HREF="cf_hk_13.htm"><B>InitializeSecurityContext</B></A> functions. </P>
+
+<P>The<B> AcquireCredentialsHandle</B> function will not let a process obtain a handle to credentials that are not related to the process; in other words, a process cannot get the credentials of another user who is logged on to the same computer. There is no way to determine whether a process is a Trojan horse if it is executed by the user.</P>
+
+<P>The <B>AcquireCredentialsHandle</B> function uses the following algorithm to determine whether to grant the request for a handle to the credentials. </P>
+
+<P>When you no longer need the returned credentials, call the <B>FreeCredentialsHandle</B> function. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_dg_11.htm"><B>FreeCredentialsHandle</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Working with Brushes</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_working_with_brushes"></A>Working with Brushes</H2>
+
+<P>In Windows CE, a <I>brush</I> is a graphic object for painting the interior of closed shapes. Drawing applications use brushes to paint shapes; word-processing applications use brushes to paint rules; CAD applications use brushes to paint the interiors of cross-section views; and spreadsheet applications use brushes to paint graphs.</P>
+
+<P>When you call one of the functions that create a brush, such as <B>CreatePatternBrush</B>, it returns a handle to a logical brush. When you select the logical brush into the device context with the <B>SelectObject</B> function, the device driver for the corresponding device creates the physical brush used for painting.</P>
+
+<P>When you call a painting function, GDI maps a pixel in the brush bitmap to the window origin of the client area. The window origin is the upper-left corner of the window client area. The coordinates of the mapped pixel are called the <I>brush</I> <I>origin</I>. The default brush origin is the upper-left corner of the brush bitmap, at the coordinates (0, 0). You can call the <B>SetBrushOrgEx</B> function to change the location of the brush origin by a specified number of pixels. To make the changes effective, you must call the <B>SelectObject</B> function to select the modified brush.</P>
+
+<P>Windows CE supports three types of logical brushes: stock brushes, solid brushes, and pattern brushes.</P>
+
+<P>The types of stock brushes include the white brush, black brush, gray brush, light gray brush, dark gray brush, and the null brush, which does not paint. Call the <B>GetStockObject</B> function to select one of the stock brushes.</P>
+
+<P>Windows CE maintains 21 stock brushes whose colors are used in window elements such as menus, scroll bars, and buttons. You can obtain a handle to a system stock brush with the <B>GetSysColorBrush</B> function. Furthermore, you can retrieve the color window element with the <B>GetSysColor</B> function, and set a color corresponding to a window element with the <B>SetSysColors</B> function.</P>
+
+<P>A solid brush contains 64 pixels of the same color in an 8 x 8 pixel square. You can call the <B>CreateSolidBrush</B> function to create a solid brush of a specified color. To paint with your solid brush, call <B>SelectObject </B>to select it into a specified device context.</P>
+
+<P>You can create a pattern brush from an application-defined bitmap or a device-independent bitmap. To create a logical pattern brush, you must create a bitmap and then call the <B>CreatePatternBrush</B> or <B>CreateDIBPatternBrushPt</B> function, supplying a handle that identifies the bitmap or DIB.</P>
+
+<P>Windows CE does not support hatched brushes. However, you can achieve the effect of a hatched brush by calling the <B>CreateDIBPatternBrushPt </B>function to create a pattern brush with the hatch pattern that you want.</P>
+
+<P>The following code example shows how to use brush functions.</P>
+
+<PRE><CODE>HDC hDC;            // Handle to the display device context 
+HRGN hRgn;          // Handle to a region object  
+HBRUSH hBrush;      // Handle to a brush object 
+RECT rect;          // A RECT structure that contains the window’s 
+                    // client area coordinates
+static COLORREF g_crColor[] = {
+                        0x000000FF,0x0000FF00,0x00FF0000,0x0000FFFF,
+                        0x00FF00FF,0x00FFFF00,0x00FFFFFF,0x00000080,
+                        0x00008000,0x00800000,0x00008080,0x00800080,
+                        0x00808000,0x00808080,0x000000FF,0x0000FF00,
+                        0x00FF0000,0x0000FFFF,0x00FF00FF,0x00FFFF00};
+
+// Retrieve the handle to a display device context for the client 
+// area of the window (hwnd). 
+if (!(hDC = GetDC (hwnd)))
+  return;
+
+// Retrieve the coordinates of the window’s client area. 
+GetClientRect (hwnd, &amp;rect);
+
+// Create a rectangular region.
+hRgn = CreateRectRgn (0, 0, rect.right, rect.bottom);
+
+// Create a solid brush.
+hBrush = CreateSolidBrush (g_crColor[0]); 
+
+// Fill the region out with the created brush.
+FillRgn (hDC, hRgn, hBrush);
+
+// Delete the rectangular region. 
+DeleteObject (hRgn);
+
+// Delete the brush object and free all resources associated with it.
+DeleteObject (hBrush);
+
+// Release the device context.
+ReleaseDC (hwnd, hDC);
+
+return;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

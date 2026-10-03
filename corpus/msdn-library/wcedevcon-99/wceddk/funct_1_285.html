@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisTransferData</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndistransferdata"></A>NdisTransferData</H2>
+
+<P>This function forwards a request to copy data received on the underlying NIC into a protocol-supplied packet.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisTransferData(OUT PNDIS_STATUS </B><I>Status</I><B>, <BR>
+IN NDIS_HANDLE </B><I>NdisBindingHandle</I><B>, IN NDIS_HANDLE </B><I>MacReceiveContext</I><B>, IN UINT </B><I>ByteOffset</I><B>, IN UINT </B><I>BytesToTransfer</I><B>, <BR>
+IN OUT PNDIS_PACKET </B><I>Packet</I><B>, OUT PUINT </B><I>BytesTransferred</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable that can be one of the following values on return from this function:
+
+<DL>
+<DT>NDIS_STATUS_SUCCESS</DT>
+
+<DD>The requested data has been transferred into the packet at <I>Packet</I>.</dd>
+
+<DT>NDIS_STATUS_PENDING</DT>
+
+<DD>The request is being handled asynchronously, and the caller’s <B>ProtocolTransferComplete</B> function will be called when it is completed.</dd>
+
+<DT>NDIS_STATUS_RESET_IN_PROGRESS</DT>
+
+<DD>The underlying driver is currently resetting its NIC or virtual NIC state. The caller’s <B>ProtocolStatus</B> function was or will be called with NDIS_STATUS_RESET_START to indicate that a reset is in progress.</dd>
+
+<DT>NDIS_STATUS_REQUEST_ABORTED</DT>
+
+<DD>The caller’s binding is being closed.</dd>
+
+<DT>NDIS_STATUS_FAILURE</DT>
+
+<DD>The given <I>ByteOffset</I> and/or the given <I>BytesToTransfer</I> is too large.</dd>
+</DL>
+</dd>
+
+<DT><I>NdisBindingHandle</I></DT>
+
+<DD>Handle returned by the <B>NdisOpenAdapter</B> function that identifies the target NIC or the virtual adapter of the next-lower driver to which the caller is bound.</dd>
+
+<DT><I>MacReceiveContext</I></DT>
+
+<DD>Specifies the underlying driver’s handle that was passed as an input parameter to the caller’s <B>ProtocolReceive</B> function. The protocol driver must consider this handle to be opaque.</dd>
+
+<DT><I>ByteOffset</I></DT>
+
+<DD>Specifies the offset from the start of the receive network packet at which to begin the transfer.</dd>
+
+<DT><I>BytesToTransfer</I></DT>
+
+<DD>Specifies the number of bytes to transfer. This value can be 0.</dd>
+
+<DT><I>Packet</I></DT>
+
+<DD>Pointer to the packet descriptor, provided by the caller, into which the underlying NIC driver is to copy the data.</dd>
+
+<DT><I>BytesTransferred</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which this function returns the number of bytes actually transferred. The value is invalid if this function returns NDIS_STATUS_PENDING at <I>Status</I>.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>Several protocols can be bound to a single underlying NIC, and each such protocol driver can receive an indication for the same packet. Such a packet is read-only to protocol drivers. Each such driver’s <B>ProtocolReceive</B> function determines whether to make itself a copy of the indicated packet with this function.</P>
+
+<P>Before calling this function, the protocol must allocate a packet descriptor and chain some number of buffer descriptors mapping protocol-allocated buffers into which the underlying driver copies the data. The protocol also might set up the <B>ProtocolReserved</B> part of its packet descriptor before calling this function.</P>
+
+<P>A protocol driver should always allocate its packet descriptors from the packet pool that the driver set up during initialization.</P>
+
+<P>The range requested in a call to this function, specified by <I>ByteOffset</I> and <I>BytesToTransfer</I>, should be suitable to the <I>PacketSize</I> passed in to the caller’s <B>ProtocolReceive</B> function. Callers of this function usually pass a <I>ByteOffset</I> value calculated from the input parameters to <B>ProtocolReceive</B> as (<I>LookaheadBufferRange</I> + 1). That is, <B>ProtocolReceive</B> already consumed the data in the look-ahead buffer, so it calls this function to get the remaining data in the indicated receive packet.</P>
+
+<P>A driver that calls this function runs at IRQL &lt;= DISPATCH_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_219.htm"><B>NdisMIndicateReceivePacket</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

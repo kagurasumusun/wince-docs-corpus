@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>GetObject</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_getobject"></A>GetObject</H2>
+
+<P>This function obtains information about a specified graphics object. Depending on the graphics object, the function places a filled-in <B>BITMAP</B>, <B>DIBSECTON,</B> <B>LOGBRUSH</B>, <B>LOGFONT</B>, or <B>LOGPEN</B> structure into a specified buffer. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Wingdi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int</B> <B>GetObject(HGDIOBJ</B> <I>hgdiobj</I><B>, int</B> <I>cbBuffer</I><B>, LPVOID</B> <I>lpvObject</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hgdiobj</I></DT>
+
+<DD>[in] Handle to the graphics object of interest. This can be a handle to one of the following: a logical bitmap, a brush, a font, a palette, a pen, or a device-independent bitmap created by calling the <A HREF="uif_ac_50.htm"><B>CreateDIBSection</B></A> function.</dd>
+
+<DT><I>cbBuffer</I></DT>
+
+<DD>[in] Specifies the number of bytes of information to be written to the buffer. </dd>
+
+<DT><I>lpvObject</I></DT>
+
+<DD>[out] Long pointer to a buffer that is to receive the information about the specified graphics object.
+
+<P>The following table shows the type of information the buffer receives for each type of graphics object you can specify with <I>hgdiobj</I>:
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=38%>
+<H5>Object type</H5>
+</TD>
+<TD width=62%>
+<H5>Data written to *<I>lpvObject</I></H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>HBITMAP</B></TD>
+<TD width=62%><A HREF="uis_ad_1.htm"><B>BITMAP</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>HBITMAP</B> returned from a call to <B>CreateDIBSection</B></TD>
+<TD width=62%><A HREF="uis_ad_13.htm"><B>DIBSECTION</B></A>, if <I>cbBuffer</I> is set to <B>sizeof</B>(<B>DIBSECTION</B>), or <B>BITMAP</B>, if <I>cbBuffer</I> is set to <B>sizeof</B>(<B>BITMAP</B>)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>HPALETTE</B></TD>
+<TD width=62%>A <B>WORD</B> count of the number of entries in the logical palette</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>HPEN</B></TD>
+<TD width=62%><A HREF="uis_el_17.htm"><B>LOGPEN</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>HBRUSH</B></TD>
+<TD width=62%><A HREF="uis_el_14.htm"><B>LOGBRUSH</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>HFONT</B></TD>
+<TD width=62%><A HREF="uis_el_15.htm"><B>LOGFONT</B></A></TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>If the <I>lpvObject </I>parameter is NULL, the function return value is the number of bytes required to store the information it writes to the buffer for the specified graphics object.
+
+
+<P>For Windows CE versions 1.0 and 1.01: 
+
+
+<UL>
+	<LI>The <B>HPALETTE</B> object type is not supported.</li>
+
+	<LI><B>GetObject</B> always returns a <B>BITMAP</B> when it is used on a DIB section.</li>
+</UL>
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>If the function succeeds, and <I>lpvObject</I> is a valid pointer, the return value is the number of bytes stored into the buffer.</P>
+
+<P>If the function succeeds, and <I>lpvObject</I> is NULL, the return value is the number of bytes required to hold the information the function would store into the buffer.</P>
+
+<P>If the function fails, the return value is zero. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>.</P>
+
+<H4>Remarks</H4>
+
+<P>The buffer pointed to by the <I>lpvObject</I> parameter must be sufficiently large to receive the information about the graphics object. </P>
+
+<P>If <I>hgdiobj</I> identifies a bitmap created by calling <A HREF="uif_ac_50.htm"><B>CreateDIBSection</B></A>, and the specified buffer is large enough, the <B>GetObject</B> function returns a <A HREF="uis_ad_13.htm"><B>DIBSECTION</B></A> structure. In addition, the <B>bmBits </B>member of the <A HREF="uis_ad_1.htm"><B>BITMAP</B></A> structure contained within the <B>DIBSECTION</B> will contain a pointer to the bitmap's bit values. </P>
+
+<P>If <I>hgdiobj</I> identifies a bitmap created by any other means, <B>GetObject</B> returns only the width, height, and color format information of the bitmap. </P>
+
+<P>If <I>hgdiobj</I> identifies a logical palette, <B>GetObject</B> retrieves a 2-byte integer that specifies the number of entries in the palette. The function does not retrieve the <B>LOGPALETTE</B> structure defining the palette. To retrieve information about palette entries, an application can call the <A HREF="uif_fg_52.htm"><B>GetPaletteEntries</B></A> function. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="uif_ac_50.htm"><B>CreateDIBSection</B></A>, <A HREF="uif_fg_56.htm"><B>GetRegionData</B></A>, <A HREF="uis_ad_1.htm"><B>BITMAP</B></A>, <A HREF="uis_ad_13.htm"><B>DIBSECTION</B></A>, <A HREF="uis_el_14.htm"><B>LOGBRUSH</B></A>, <A HREF="uis_el_15.htm"><B>LOGFONT</B></A>, <A HREF="uis_el_17.htm"><B>LOGPEN</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

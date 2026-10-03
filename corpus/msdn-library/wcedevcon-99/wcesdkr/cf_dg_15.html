@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>FtpFindFirstFile</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_ftpfindfirstfile"></A>FtpFindFirstFile</H2>
+
+<P>This function searches the specified directory of the specified FTP session. File and directory entries are returned to the application in the <B>WIN32_FIND_DATA</B> structure.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Wininet.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL WINAPI FtpFindFirstFile(HINTERNET </B><I>hConnect</I><B>, LPCTSTR </B><I>lpszSearchFile</I><B> , LPWIN32_FIND_DATA </B><I>lpFindFileData</I><B> , DWORD </B><I>dwFlags</I><B>, DWORD </B><I>dwContext</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hConnect</I></DT>
+
+<DD>[in] Valid handle to an FTP session returned by the <B>InternetConnect</B> function.</dd>
+
+<DT><I>lpszSearchFile</I> </DT>
+
+<DD>[in] Long pointer to a null-terminated string that specifies a valid directory path or file name for the FTP server file system. The string can contain wildcards, but blank spaces are not accepted. If the value of <I>lpszSearchFile</I> is NULL or if it is an empty string, it will find the first file in the current directory on the server.</dd>
+
+<DT><I>lpFindFileData</I> </DT>
+
+<DD>[out] Long pointer to a <B>WIN32_FIND_DATA</B> structure that receives data about the found file or directory.</dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>[in] Specifies an application-defined value that associates this search with an application. It is one of the following values:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=61%>
+<H5>Value</H5>
+</TD>
+<TD width=39%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>INTERNET_FLAG_DONT_CACHE</TD>
+<TD width=39%>Does not add the returned entity to the cache. Identical to the preferred value, INTERNET_FLAG_NO_CACHE_WRITE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>INTERNET_FLAG_HYPERLINK</TD>
+<TD width=39%>Forces a reload if there was no Expires time and no Last-Modified time returned by the server when determining whether to reload the item from the network.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>INTERNET_FLAG_MUST_CACHE_REQUEST</TD>
+<TD width=39%>Causes a temporary file to be created if the file cannot be cached. Identical to the preferred value, INTERNET_FLAG_NEED_FILE.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>INTERNET_FLAG_NEED_FILE</TD>
+<TD width=39%>Causes a temporary file to be created if the file cannot be cached.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>INTERNET_FLAG_NO_CACHE_WRITE</TD>
+<TD width=39%>Does not add the returned entity to the cache.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>INTERNET_FLAG_RELOAD</TD>
+<TD width=39%>Forces a download of the requested file, object, or directory listing from the origin server, not from the cache.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=61%>INTERNET_FLAG_RESYNCHRONIZE</TD>
+<TD width=39%>Causes the FTP resource to be reloaded from the server.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwContext</I> </DT>
+
+<DD>[in] Specifies an application-defined value that associates this search with application data. This parameter is used only if the application has already called the <B>InternetSetStatusCallback</B> function to set up a status callback function. All status requests are handled synchronously.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A valid handle for the request if the directory enumeration was started indicates success. NULL indicates failure. To get extended error data, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. If the function finds no matching files, <B>GetLastError</B> returns ERROR_NO_MORE_FILES.</P>
+
+<H4>Remarks</H4>
+
+<P>Inetftp.dll is available only for Intel x86 processors.</P>
+
+<P>This function enumerates both files and directories.</P>
+
+<P><B>FtpFindFirstFile</B> is similar to the Win32 <B>FindFirstFile</B> function. Note, however, that only one <B>FtpFindFirstFile</B> can occur at a time within a given FTP session. The enumerations, therefore, are correlated with the FTP session handle. This is because the FTP protocol accepts only one directory enumeration per session.</P>
+
+<P>After calling <B>FtpFindFirstFile</B> and until calling the <B>InternetCloseHandle</B> function, the application cannot call <B>FtpFindFirstFile</B> again on the given FTP session handle. If a call is made to <B>FtpFindFirstFile</B> on that handle, the function will fail with ERROR_FTP_TRANSFER_IN_PROGRESS.</P>
+
+<P>After beginning a directory enumeration with <B>FtpFindFirstFile</B>, the <B>InternetFindNextFile</B> function can be used to continue the enumeration.</P>
+
+<P><B>InternetCloseHandle</B> closes the handle returned by <B>FtpFindFirstFile</B>. If <B>InternetCloseHandle</B> closes the handle before <B>InternetFindNextFile</B> fails with ERROR_NO_MORE_FILES, the directory enumeration will be terminated.</P>
+
+<P>Because the FTP protocol provides no standard means of enumerating, common file data, such as file creation date and time, is not always available or correct. When this happens, <B>FtpFindFirstFile</B> and <B>InternetFindNextFile</B> fill in unavailable data with an estimate. For example, creation and last access dates will often be the same as the file modification date.</P>
+
+<P>The application cannot call <B>FtpFindFirstFile</B> between calls to <B>FtpOpenFile</B> and <B>InternetCloseHandle</B>.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_hk_35.htm"><B>InternetSetStatusCallback</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

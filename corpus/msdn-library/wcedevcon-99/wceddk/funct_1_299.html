@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>OhcdMdd_CreateMemoryObject</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ohcdmdd_creatememoryobject"></A>OhcdMdd_CreateMemoryObject</H2>
+
+<P>This function creates the OHCI shared memory area.</P>
+
+<H4>Syntax</H4>
+
+<P><B>LPVOID</B> <B>OhcdMdd_CreateMemoryObject(DWORD</B> <I>cbSize</I><B>, <BR>
+DWORD</B> <I>cbHighPrioritySize</I><B>, PUCHAR</B> <I>pVirtAddr</I><B>, PUCHAR</B> <I>pPhysAddr</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>cbSize</I></DT>
+
+<DD>[IN] Specifies the total size of OHCD shared memory area.</dd>
+
+<DT><I>cbHighPrioritySize</I></DT>
+
+<DD>[IN] Specifies the bytes reserved for high-priority isochronous or interrupt transfers and OHCI host controller communication area.</dd>
+
+<DT><I>pVirtAddr</I></DT>
+
+<DD>[IN] Pointer to the virtual address, which may be NULL, of a memory area.</dd>
+
+<DT><I>pPhysAddr</I></DT>
+
+<DD>[IN] Pointer to the physical address, which may be NULL, of a memory area.
+</dd>
+</DL>
+
+<H4>Return Value</H4>
+
+<P>A pointer to an OHCD memory object indicates success. NULL indicates failure.</P>
+
+<H4>Remarks</H4>
+
+<P>This function is called by the OHCD PDD to initialize the shared memory area used by the OHCI driver. This memory contains the the Host Controller Communication Area (HCCA) for communicating with the OHCI hardware and is used to allocate DMA buffers for USB driver data transfers. Two options are available. If a platform has an area of memory set aside that can be used by OHCI, as specified in the Config.bib file, it can pass the virtual and physical address pointers in to this function. This is the recommended method. Alternatively, the PDD may pass NULL in for the physical and virtual address pointers, in which case the <B>OhcdMdd_CreateMemoryObject</B> function attempts to allocate a suitable memory buffer from system RAM.</P>
+
+<P>The OHC interface shared memory area is broken into two separate areas: a high-priority pool of buffers for the HCCA and for isochronous client buffers and a lower-priority pool of buffers for other client transfers.</P>
+
+<P>The size of the shared memory area is dependent on the perceived usage of USB within the platform. The OHC interface controller uses 4-KB page boundaries for internal data structures, so the size should be a multiple of 4 KB and must be at least 8 KB for the control structures and memory needed for device configuration. Additionally, client drivers may need to utilize this area for their transfers, so it is recommended that OEMS provide additional memory. The maximum DMA memory used for a client transfer is 8 KB, so OEMs should try to determine what a reasonable number of outstanding client transfers may be.</P>
+
+<P>A recommended value for general-purpose USB operation is 38 KB, with 20 KB reserved for high-priority transfers. OEMs that anticipate less demand on the USB subsystem can safely reduce this to 28 KB, of which 20 KB is high priority. Reducing the size of the high-priority buffer may cause isochronous transfers to fail if memory cannot be allocated, whereas reducing the size of the non-high-priority buffer reduces performance on bulk transfers. However, reducing the non-high-priority buffer does not cause failures, because bulk transfers can block to wait for memory to become available.</P>
+
+<P>If possible, OEMs should consider placing the OHCD shared memory area in high-speed memory, particularly to support streaming (isochronous) data transfers.</P>
+
+<P>This function is declared in the Ohcdddsi.h header file.</P>
+<p>&nbsp;</p></body>
+</HTML>

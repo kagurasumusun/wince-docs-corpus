@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Sample Application</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_creating_a_sample_application"></A>Creating a Sample Application</H2>
+
+<P>This section contains a code example used to create a simple Windows CE-based application. This sample application demonstrates the basic framework common to all Windows CE-based applications. It begins executing with the <B>WinMain</B> function, which performs the following tasks:
+
+<OL>
+	<LI><B>WinMain</B> places the application-instance handle in a global variable. Because this handle is used in various places throughout an application, it is common to place it in a global variable accessible to all functions. The smallest possible interval a timer can measure is the system-tick interval.</li>
+
+	<LI><B>WinMain</B> calls the application-defined <B>InitApplication</B> function, which then calls the <B>RegisterClass</B> function to register the application’s main window class. More complicated applications may need to register more window classes and determine if other instances of the application are running.</li>
+
+	<LI><B>WinMain</B> calls the application-defined <B>InitInstance</B> function, which then calls the <B>CreateWindow</B> function to create a window. <B>CreateWindow</B> returns a window handle identifying the new window. This handle is used to refer to the window in subsequent function calls.</li>
+
+	<LI><B>WinMain</B> creates the message loop by calling the <B>GetMessage</B>, <B>TranslateMessage</B>, and <B>DispatchMessage </B>functions in the format displayed in the sample application. This loop receives messages and dispatches them to the window procedures.</li>
+</OL>
+
+<P>Note that the application does not directly call the window procedure, <B>MainWndProc</B>. The system calls this function as the message loop receives and dispatches messages. In this application, <B>MainWndProc</B> processes only the WM_CLOSE message that tells the window to close. When the window receives a WM_CLOSE message, it calls the <B>PostQuitMessage</B> function, which then calls <B>GetMessage</B> to return FALSE. This, in turn, causes the message loop to terminate and the application to exit.</P>
+
+<P>Windows CE sends many other messages to the window besides WM_CLOSE. <B>MainWndProc</B> passes all other messages to the <B>DefWindowProc</B> function, the default window procedure provided by the system. Pass all messages to <B>DefWindowProc</B> that you do not process yourself; otherwise, your window may not function correctly. The following code example provides a framework for creating a Windows CE-based application. </P>
+
+<PRE><CODE>#include &lt;windows.h&gt;
+
+HINSTANCE g_hInst = NULL;     // Handle to the application instance
+HWND g_hwndMain = NULL;       // Handle to the application main window
+TCHAR g_szTitle[80] = TEXT ("Main Window"),    
+                              // Application main window name
+      g_szClassName[80] = TEXT ("Main window class");  
+                              // Main window class name
+                
+/***********************************************************************
+
+FUNCTION: 
+  WndProc
+
+PURPOSE: 
+  The callback function for the main window. It processes messages sent
+  to the main window.
+
+***********************************************************************/
+LRESULT CALLBACK WndProc (HWND hwnd, UINT umsg, WPARAM wParam, 
+                          LPARAM lParam)
+{
+  switch (umsg)
+  {
+    // Add cases such as WM_CREATE, WM_COMMAND, WM_PAINT if you don't 
+    // want pass these messages along for default processing.
+
+    case WM_CLOSE:
+      DestroyWindow (hwnd);
+      return 0;
+
+    case WM_DESTROY:
+      PostQuitMessage (0);
+      return 0;
+  }
+
+  return DefWindowProc (hwnd, umsg, wParam, lParam);
+}
+
+/***********************************************************************
+
+FUNCTION: 
+  InitInstance
+
+PURPOSE: 
+  Create and display the main window.
+
+***********************************************************************/
+BOOL InitInstance (HINSTANCE hInstance, int iCmdShow)
+{
+
+  g_hInst = hInstance;
+  
+  g_hwndMain = CreateWindow (
+                  g_szClassName,  // Registered class name         
+                  g_szTitle,      // Application window name
+                  WS_OVERLAPPED,  // Window style
+                  0,              // Horizontal position of window
+                  0,              // Vertical position of window
+                  CW_USEDEFAULT,  // Window width
+                  CW_USEDEFAULT,  // Window height
+                  NULL,           // Handle to parent window
+                  NULL,           // Handle to menu identifier
+                  hInstance,      // Handle to application instance
+                  NULL);          // Pointer to window-creation data
+
+  // If it failed to create the window, return FALSE.
+  if (!g_hwndMain)
+    return FALSE;
+
+  ShowWindow (g_hwndMain, iCmdShow);
+  UpdateWindow (g_hwndMain);
+  return TRUE;
+}
+
+/***********************************************************************
+
+FUNCTION: 
+  InitApplication
+
+PURPOSE:
+  Declare the window class structure, assign values to the window class
+  structure members and register the window class.
+
+***********************************************************************/
+BOOL InitApplication (HINSTANCE hInstance)
+{
+  WNDCLASS wndclass;
+
+  wndclass.style = CS_HREDRAW | CS_VREDRAW;
+  wndclass.lpfnWndProc = (WNDPROC)WndProc;
+  wndclass.cbClsExtra = 0;
+  wndclass.cbWndExtra = 0;
+  wndclass.hIcon = NULL;
+  wndclass.hInstance = hInstance;
+  wndclass.hCursor = NULL;
+  wndclass.hbrBackground = (HBRUSH) GetStockObject (WHITE_BRUSH);
+  wndclass.lpszMenuName = NULL;
+  wndclass.lpszClassName = g_szClassName;
+  
+  return RegisterClass (&amp;wndclass);
+}
+
+/***********************************************************************
+
+FUNCTION: 
+  WinMain
+
+PURPOSE: 
+  The WinMain function of the application. It is called by the system as
+  the initial entry point for this WindowsCE-based application.
+
+***********************************************************************/
+int WINAPI WinMain (
+               HINSTANCE hInstance,     // Handle to current instance
+               HINSTANCE hPrevInstance, // Handle to previous instance
+               LPWSTR lpCmdLine,        // Pointer to command line
+               int iCmdShow)            // Shows the state of the window
+{
+  MSG msg;                          // Message structure
+  HACCEL hAccel;                    // Handle of the accelerator table
+    
+  if (!hPrevInstance)
+  {
+    if (!InitApplication (hInstance))
+      return FALSE; 
+  }
+
+  if (!InitInstance (hInstance, iCmdShow))
+    return FALSE;
+  
+  // Insert code here to load the accelerator table.
+  // hAccel = LoadAccelerators (...);
+  
+  while (GetMessage (&amp;msg, NULL, 0, 0))
+  {
+    if (!TranslateAccelerator (
+                    g_hwndMain,     // Handle to the destination window
+                    hAccel,         // Handle to the accelerator table
+                    &amp;msg))          // Address of the message data
+    {
+      TranslateMessage (&amp;msg);
+      DispatchMessage (&amp;msg);
+    }
+  }
+  
+  return msg.wParam;
+}
+</CODE></PRE>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

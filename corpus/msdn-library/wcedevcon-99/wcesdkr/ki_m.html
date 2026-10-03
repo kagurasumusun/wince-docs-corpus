@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker : IUnknown</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_imoniker"></A>IMoniker : IUnknown</H2>
+
+<P>This interface contains methods that allow you to use a moniker object, which contains information that uniquely identifies a Component Object Model (COM) object. An object that has a pointer to the moniker object’s <B>IMoniker</B> interface can locate, activate, and access the identified object without having any other specific information on where the object is actually located in a distributed system.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<P>The <B>IMoniker</B> interface contains methods that allow you to use a moniker object, which contains information that uniquely identifies a COM object. An object that has a pointer to the moniker object’s <B>IMoniker</B> interface can locate, activate, and get access to the identified object without having any other specific information on where the object is actually located in a distributed system.</P>
+
+<P>Like a path to a file in a file system, a moniker contains information that allows a COM object to be located and activated. Monikers can identify any type of COM object, from a document object stored in a file to a selection within an embedded object. COM provides a set of moniker classes that allow you to create moniker objects identifying the objects most commonly found in the system. For example, there might be an object representing a range of cells in a spreadsheet which is itself embedded in a text document stored in a file. In a distributed system, this object’s moniker would identify the location of the object’s system, the file’s physical location on that system, the storage of the embedded object within that file, and, finally, the location of the range of cells within the embedded object.</P>
+
+<P>A moniker object supports the <B>IMoniker</B> interface and uniquely identifies a single object in the system. Once an object providing a moniker has created the moniker object, this information cannot be changed within that object. If the moniker provider changes the information, it can only do so by creating a new moniker object, which would then uniquely identify the object in question.</P>
+
+<P>Monikers have two important capabilities:
+
+<UL>
+	<LI>Monikers can be saved to a persistent storage. When a moniker is loaded back into memory, it still identifies the same object. </li>
+
+	<LI>Monikers support an operation called “binding,” which is the process of locating the object named by the moniker, activating it (loading it into memory) if it is not already active, and returning a pointer to a requested interface on that object. </li>
+</UL>
+
+<P>Monikers are used as the basis for linking in COM. A linked object contains a moniker that identifies its source. When the user activates the linked object to edit it, the moniker is bound; this loads the link source into memory. </P>
+
+<H4>When to Implement</H4>
+
+<P>Implement <B>IMoniker</B> only if you are writing a new moniker class. This is necessary only if you need to identify objects that cannot be identified using one of the COM-supplied moniker classes described below.</P>
+
+<P>The COM-supplied moniker classes are sufficient for most situations. Before considering writing your own moniker class, you should make sure that your requirements cannot be satisfied by these classes.</P>
+
+<H4>When to Use</H4>
+
+<P>Two kinds of objects call the methods of <B>IMoniker</B>:
+
+<UL>
+	<LI>A component that contains one or more objects to be identified with a moniker and must provide the moniker to other objects</li>
+
+	<LI>A client object that must bind to the object identified by the moniker</li>
+</UL>
+
+<P>The component providing a moniker makes it accessible to other objects. It is important to understand the differences between the various system-supplied moniker classes to know which are appropriate for a given object. COM also provides functions for creating monikers using the COM-supplied moniker classes. 
+
+<DL>
+<DT><B>File monikers</B></DT>
+
+<DD>Based on a path in the file system. File monikers can be used to identify objects that are saved as files. The associated creation function is <B>CreateFileMoniker</B>. </dd>
+
+<DT><B>Item monikers</B></DT>
+
+<DD>Based on a string that identifies an object in a container. Item monikers can be used to identify objects smaller than a file, such as embedded objects in a compound document and pseudo-objects (like a range of cells in a spreadsheet). The associated creation function is <B>CreateItemMoniker</B>. </dd>
+
+<DT><B>Generic composite monikers</B></DT>
+
+<DD>Consists of two or more monikers of arbitrary type that have been composed together. Generic composite monikers allow monikers of different classes to be used in combination. The associated creation function is <B>CreateGenericComposite</B>. </dd>
+
+<DT><B>Anti-monikers</B></DT>
+
+<DD>The inverse of file, item, or pointer monikers. Anti-monikers are used primarily for constructing relative monikers, which are analogous to relative path (such as “..\backup\report.old”), and which specify a location of an object <I>relative</I> to the location of another object). The associated creation function is <B>CreateAntiMoniker</B>. </dd>
+
+<DT><B>Pointer monikers</B></DT>
+
+<DD>A non-persistent moniker that wraps an interface pointer to an object loaded in memory. Whereas most monikers identify objects that can be saved to persistent storage, pointer monikers identify objects that cannot. The associated creation function is <B>CreatePointerMoniker</B>. 
+</dd>
+</DL>
+
+<P>A moniker provider must also implement other interfaces to allow the monikers it hands out to be bound. COM objects that commonly provide monikers are link sources. These include server applications that support linking and container applications that support linking to their embedded objects.</P>
+
+<P>Binding to an object means that a client uses a moniker to locate the object, activate it when necessary, and get a pointer to one of the active object’s interfaces. The client of the moniker does not need to be aware of the class of the moniker—it must just get a pointer to the correct moniker’s <B>IMoniker</B> interface. Monikers are used most often in this way by container applications that allow their documents to contain linked objects. However, link containers rarely call <B>IMoniker</B> methods directly. Instead, they generally manipulate linked objects through the default handler’s implementation of the <B>IOleLink</B> interface, which calls the appropriate <B>IMoniker</B> methods as needed. 
+
+<DL>
+<DT><B>Class monikers</B></DT>
+
+<DD>These represent an object class. Class monikers bind to the class object of the class for which they are created. The associated creation function is <B>CreateClassComposite</B>. 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=42%>
+<H5>Method</H5>
+</TD>
+<TD width=58%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_1.htm"><B>IMoniker::BindToObject</B></A></TD>
+<TD width=58%>Binds to the object named by the moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_2.htm"><B>IMoniker::BindToStorage</B></A></TD>
+<TD width=58%>Binds to the object’s storage.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_3.htm"><B>IMoniker::CommonPrefixWith</B></A></TD>
+<TD width=58%>Finds the prefix that the moniker has in common with another moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_4.htm"><B>IMoniker::ComposeWith</B></A></TD>
+<TD width=58%>Composes with another moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_5.htm"><B>IMoniker::Enum</B></A></TD>
+<TD width=58%>Enumerates component monikers.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_6.htm"><B>IMoniker::GetDisplayName</B></A></TD>
+<TD width=58%>Returns the display name.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_7.htm"><B>IMoniker::GetTimeOfLastChange</B></A></TD>
+<TD width=58%>Returns the time the object was last changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_8.htm"><B>IMoniker::Hash</B></A></TD>
+<TD width=58%>Returns a hash value.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_9.htm"><B>IMoniker::Inverse</B></A></TD>
+<TD width=58%>Returns the inverse of the moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_10.htm"><B>IMoniker::IsEqual</B></A></TD>
+<TD width=58%>Compares one moniker with another moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_11.htm"><B>IMoniker::IsRunning</B></A></TD>
+<TD width=58%>Checks whether object is running.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_12.htm"><B>IMoniker::IsSystemMoniker</B></A></TD>
+<TD width=58%>Checks whether moniker is one of the system-supplied types.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_13.htm"><B>IMoniker::ParseDisplayName</B></A></TD>
+<TD width=58%>Converts a display name into a moniker.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_14.htm"><B>IMoniker::Reduce</B></A></TD>
+<TD width=58%>Reduces the moniker to the simplest form.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%><A HREF="ki_m_15.htm"><B>IMoniker::RelativePathTo</B></A></TD>
+<TD width=58%>Constructs a relative moniker between the specified moniker and another.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+</DL>
+<p>&nbsp;</p></body>
+</HTML>

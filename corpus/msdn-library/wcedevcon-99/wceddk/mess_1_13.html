@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ACMDM_STREAM_OPEN</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_acmdm_stream_open"></A>ACMDM_STREAM_OPEN</H2>
+
+<P>This message requests an ACM driver either to open a conversion stream or to indicate whether the specified conversion is supported.</P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwDriverID</I></DT>
+
+<DD>Specifies a driver instance identifier. The driver returns this value in response to the <B>ACM_Open</B> function.</dd>
+
+<DT><I>hDriver</I></DT>
+
+<DD>Handle to a driver.</dd>
+
+<DT><I>uMsg</I></DT>
+
+<DD>Specifies this message.</dd>
+
+<DT><I>lParam1</I></DT>
+
+<DD>Pointer to an <B>ACMDRVSTREAMINSTANCE </B>structure.</dd>
+
+<DT><I>lParam2</I></DT>
+
+<DD>Not used.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>MMSYSERR_NOERROR indicates success. Otherwise, the driver returns one of the MMSYSERR error values declared in the Mmsystem.h header file or one of the ACMERR error values declared in the Msacm.h header file. If a specified conversion is not supported, the driver should return ACMERR_NOTPOSSIBLE.</P>
+
+<H4>Remarks</H4>
+
+<P>The ACM (Waveapi.dll) sends this message by calling the ACM driver’s <B>ACM_IOControl</B> entry point through the <B>DeviceIoControl</B> function. The ACM sends this message when an application calls the <B>acmStreamOpen</B> function.</P>
+
+<P>All ACM drivers that provide stream conversions must support this message. For more information about stream conversions, see the Windows NT DDK.</P>
+
+<P>If the client has specified the ACM_STREAMOPENF_QUERY flag, which is contained in the <I>fdwOpen</I> member of <B>ACMDRVSTREAMINSTANCE</B>, the driver should not open a stream instance. The driver returns MMSYSERR_NOERROR if the conversion is possible and MMSYSERR_NOTPOSSIBLE, otherwise.</P>
+
+<P>When a driver receives this message, it first determines if it can perform the specified conversion. If it can, it performs instance initialization operations for the stream, such as determining which conversion routines to use and allocating instance-specific resources.</P>
+
+<P>Store stream instance data in a local, dynamically allocated structure. Store a pointer to the <I>dwDriver</I> member of <B>ACMDRVSTREAMINSTANCE</B>.</P>
+
+<P>If the driver supports asynchronous operations and the client has specified the ACM_STREAMOPENF_ASYNC flag, which is contained in the <I>fdwOpen</I> member<B> </B>of <B>ACMDRVSTREAMINSTANCE</B>, the driver sends the client an MM_ACM_OPEN callback message by calling the <B>PostThreadMessage</B> function after the operation completes.</P>
+
+<P>Before calling the driver’s <B>ACM_IOControl</B> function, the ACM verifies the following conditions:
+
+<UL>
+	<LI>The <I>fdwOpen</I> member of <B>ACMDRVSTREAMINSTANCE</B> contains valid flag values.</li>
+
+	<LI>The source and destination <B>WAVEFORMATEX</B> structures are readable.</li>
+
+	<LI>If a <B>WAVEFILTER</B> structure is specified, it is readable, and the source and destination format structures contain identical information.</li>
+
+	<LI>If the client has specified different source and destination format tags, the driver has declared itself to be a codec by setting ACMDRIVERDETAILS_SUPPORTF_CODEC in the <I>fdwSupport</I> member<B> </B>of <B>ACMDRIVERDETAILS</B>. </li>
+
+	<LI>If the client specifies source and destination formats associated with a single format tag, the driver declares itself to be a converter by setting ACMDRIVERDETAILS_SUPPORTF_CONVERTER in the <I>fdwSupport</I> member<B> </B>of <B>ACMDRIVERDETAILS</B>. </li>
+
+	<LI>If the client specifies a filter operation, the driver declares itself to be a filter by setting ACMDRIVERDETAILS_SUPPORTF_FILTER in the <I>fdwSupport</I> member<B> </B>of <B>ACMDRIVERDETAILS</B>.</li>
+</UL>
+
+<P>If the client specifies the ACM_STREAMOPENF_NONREALTIME flag, which is contained in the <I>fdwOpen</I> member of <B>ACMDRVSTREAMINSTANCE</B>, the driver can perform the conversion without time constraints. However, if this flag is not specified and the driver cannot perform the conversion in real time, it returns ACMERR_NOTPOSSIBLE. For more information about real-time conversions, see the Windows NT DDK.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="mess_1_2.htm">ACMDM_DRIVER_DETAILS</A></P>
+<p>&nbsp;</p></body>
+</HTML>

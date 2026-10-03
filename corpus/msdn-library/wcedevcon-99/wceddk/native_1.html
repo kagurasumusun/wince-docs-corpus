@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>System Architecture for Native Device Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_system architecture_for_native_drivers"></A>System Architecture for Native Device Drivers</H2>
+
+<P>The sample device drivers included with the Platform Builder come in two types: <I>monolithic</I> and <I>layered</I>. A monolithic driver, as the name implies, is based on a single piece of code that exposes the functionality of the hardware device to the operating system directly. In contrast to the monolithic driver, the layered driver consists of two customized layers: the upper layer is the model device driver (MDD), and the lower layer is the platform-dependent driver (PDD). Most of the sample device drivers are configured as layered, rather than monolithic.</P>
+
+<P>The following illustration shows the integration of monolithic and layered drivers within the Windows CE operating system.</P>
+
+<P><IMG SRC="drvrarch.gif" ALT="" BORDER=0></P>
+
+<P>Microsoft provides the MDD for a layered driver. The MDD is common to all platforms and functions, both as source code and as a library. It performs the following tasks:
+
+<UL>
+	<LI>Links to the PDD layer and defines the functions it expects to call in that layer</li>
+
+	<LI>Exposes different sets of functions to the operating system</li>
+
+	<LI>Handles complex tasks, such as interrupt processing</li>
+
+	<LI>Communicates with the GWES module and with the kernel</li>
+</UL>
+
+<P>Each MDD also handles a specific set of devices, such as audio hardware or touch screens.</P>
+
+<P>In general, the MDD requires no changes. If you choose to modify the MDD, be aware that Microsoft does not test, warrant, or support custom MDDs. You are responsible for all further MDD maintenance if Microsoft supplies an updated MDD in order to fix bugs or to support later versions of Windows CE. In addition, if you revise the MDD you must provide support to any IHVs who use those changes.</P>
+
+<P>Unlike the MDD layer, the PDD layer, which interfaces with both the MDD and the hardware, is meant to be tailored to your target platform. A PDD consists of hardware-specific functions that correspond to an MDD. There is no direct one-to-one relationship between the functions in a PDD and the corresponding MDD; the MDD functions implement discrete tasks that the MDD uses to achieve its goals. Because the PDD is hardware-dependent, you must create a customized PDD and port it to your platform hardware. To assist you, Microsoft provides several sample PDD layers for various built-in devices.</P>
+
+<P>You can forego the MDD and PDD layers by implementing your device driver as a monolithic driver. For example, if performance is a critical factor, a monolithic driver might be a better choice than a layered driver because a monolithic driver avoids the overhead associated with the function calls that take place between the MDD and PDD layers. You might also choose to implement a monolithic driver if the capabilities of the device in question are well matched to the tasks that the functions in the MDD layer perform. In such a case, implementing a monolithic driver might be simpler and more efficient than implementing a layered driver. However, regardless of whether you implement a monolithic driver or a layered driver, you can base your implementation on the source code for any of the sample layered drivers.</P>
+
+<P>As shown in the previous illustration, the device driver interface (DDI) is a set of functions implemented in the MDD and called by the GWES module; the device driver service-provider interface (DDSI) is a set of functions implemented in the PDD and called by the MDD. Use DDI functions for monolithic drivers and DDSI functions for layered drivers.</P>
+
+<P>Finally, some of the sample device drivers are implemented as stream interface drivers, which means that the drivers use the stream interface as their DDI. In this case, you do not need to link such drivers with the GWES module. They exist as ordinary DLLs and are loaded as needed. The audio driver is an example of a device driver using the stream interface model. Because these drivers have an MDD and PDD that you can use as a basis for your development efforts, they are included here, in the native device driver section, rather than in <A HREF="stream.htm">Developing Stream Interface Device Drivers</A>.</P>
+<p>&nbsp;</p></body>
+</HTML>

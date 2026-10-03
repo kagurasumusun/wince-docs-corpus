@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisMSetAttributesEx</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndismsetattributesex"></A>NdisMSetAttributesEx</H2>
+
+<P>This function informs the NDIS library about significant features of the caller’s NIC or virtual NIC during initialization.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>Header file:</TD>
+<TD width=70%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Windows CE versions:</TD>
+<TD width=70%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisMSetAttributesEx(IN NDIS_HANDLE </B><I>MiniportAdapterHandle</I><B>,</B> <B>IN NDIS_HANDLE</B> <I>MiniportAdapterContext</I><B>,</B> <BR>
+<B>IN UINT</B> <I>CheckForHangTimeInSeconds</I><B>,</B> <BR>
+<B>OPTIONAL,</B> <B>IN ULONG</B> <I>AttributeFlags</I><B>,</B> <BR>
+<B>IN NDIS_INTERFACE_TYPE</B> <I>AdapterType</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>MiniportAdapterHandle</I></DT>
+
+<DD>Handle input to the <B>MiniportInitialize</B> function.</dd>
+
+<DT><I>MiniportAdapterContext</I></DT>
+
+<DD>Handle to a resident context area allocated by <B>MiniportInitialize</B>.</dd>
+
+<DT><I>CheckForHangTimeInSeconds</I></DT>
+
+<DD>Specifies the interval, in seconds, at which NDIS should call the <B>MiniportCheckForHang</B> function, if any. Specifying 0 for this parameter indicates that NDIS should call <B>MiniportCheckForHang</B> at NDIS’s default two-second interval and that NDIS should call the <B>MiniportReset</B> function at the default four-second time-out interval for pending sends and requests that NDIS subsequently holds queued to the caller.
+
+<P>Specifying a value greater than 2 extends both the check-for-hang and time-out intervals. NDIS uses double the specified check-for-hang interval as its time-out interval for the caller.
+</dd>
+
+<DT><I>AttributeFlags</I></DT>
+
+<DD>Specifies a bitmask that can be set with one or more of the following flags:
+
+<DL>
+<DT>NDIS_ATTRIBUTE_BUS_MASTER</DT>
+
+<DD>Set if the caller’s NIC is a busmaster DMA device.</dd>
+
+<DT>NDIS_ATTRIBUTE_IGNORE_PACKET_TIMEOUT</DT>
+
+<DD>Set if NDIS should not attempt to time-out pending send packets that it holds queued to the caller. Intermediate drivers should set this flag, but NIC drivers should not.</dd>
+
+<DT>NDIS_ATTRIBUTE_IGNORE_REQUEST_TIMEOUT</DT>
+
+<DD>Set if NDIS should not attempt to time-out pending query and set requests that it holds queued to the caller. Intermediate drivers should set this flag, but NIC drivers should not.</dd>
+
+<DT>NDIS_ATTRIBUTE_INTERMEDIATE_DRIVER</DT>
+
+<DD>Set if the caller is an intermediate driver.</dd>
+
+<DT>NDIS_ATTRIBUTE_IGNORE_TOKEN_RING_ERRORS</DT>
+
+<DD>Set if NDIS should not call a token ring NIC driver’s <B>MiniportReset</B> function if token ring errors are indicated.</dd>
+</DL>
+</dd>
+
+<DT><I>AdapterType</I></DT>
+
+<DD>Specifies the I/O bus interface type of the caller’s NIC, which usually is the type of I/O bus on which the NIC is connected, as one of the following:
+
+<DL>
+<DT>NdisInterfaceInternal</DT>
+
+<DD>Specifies a host-specific internal interface.</dd>
+
+<DT>NdisInterfaceIsa</DT>
+
+<DD>Specifies the ISA interface.</dd>
+
+<DT>NdisInterfaceEisa</DT>
+
+<DD>Specifies the extended ISA (EISA) interface.</dd>
+
+<DT>NdisInterfacePci</DT>
+
+<DD>Specifies the Peripheral Component Interconnect (PCI) interface.</dd>
+
+<DT>NdisInterfacePcMcia</DT>
+
+<DD>Specifies the Personal Computer Memory Card International Association (PCMCIA) interface.</dd>
+</DL>
+
+
+<P>This parameter is irrelevant for intermediate drivers, which should pass 0 for this parameter to this function.
+
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P><B>MiniportInitialize</B> must call this function or <B>NdisMSetAttributes</B> before calling any other <B>NdisMRegister</B><I>XXX</I> or <B>Ndis</B><I>XXX </I>function that depends on the information supplied to this function. For example, an NIC driver’s call to <B>NdisMAllocateMapRegisters</B> fails if <B>MiniportInitialize</B> has not yet called this function with the <I>AttributeFlags</I> set with NDIS_ATTRIBUTE_BUS_MASTER.</P>
+
+<P>Intermediate drivers must call this function, rather than <B>NdisMSetAttributes</B>, and they must set the NDIS_ATTRIBUTE_INTERMEDIATE_DRIVER in the <I>AttributeFlags</I>. Setting this flag causes NDIS to treat an intermediate driver as a full-duplex miniport, which prevents rare but intermittent deadlocks from occurring in the intermediate driver. Consequently, every intermediate driver must be capable of handling concurrent sends and indications.</P>
+
+<P>NIC drivers can call either of these functions from <B>MiniportInitialize</B>, but <B>NdisMSetAttributes</B> does not allow its caller to adjust the interval at which an NIC driver’s <B>MiniportCheckForHang</B> and/or <B>MiniportReset</B> function(s) are called.</P>
+
+<P>The value of <I>CheckForHangTimeInSeconds</I> determines the NDIS library’s time-out interval on sends and requests that it holds queued to the caller. By default, NDIS times out queued sends and requests at twice the check-for-hang interval, after which it calls the <B>MiniportReset</B> function, unless the driver sets <I>AttributeFlags</I> with NDIS_ATTRIBUTE_IGNORE_PACKET_TIMEOUT and NDIS_ATTRIBUTE_IGNORE_REQUEST_TIMEOUT when it calls this function. Intermediate drivers should set these flags when calling this function because such a driver cannot determine or control when the underlying device driver processes sends and requests.</P>
+
+<P>NIC drivers should not set the NDIS_ATTRIBUTE_IGNORE_PACKET_TIMEOUT and NDIS_ATTRIBUTE_IGNORE_REQUEST_TIMEOUT flags, although NDIS honors such a specification by an NIC driver. However, NIC drivers can adjust the time-out interval at which their <B>MiniportReset</B> functions are called by specifying an explicit <I>CheckForHangTimeInSeconds</I>. For example, an NIC driver that emulates Ethernet over a modem might not complete every packet within the default time-out interval of the NDIS library. Whenever a packet appears to time out on such an NIC, NDIS assumes that the NIC is no longer operating correctly and calls the driver’s <B>MiniportReset</B> function. For the driver of such an NIC, calling this function with a <I>CheckForHangTimeInSeconds</I> set to something greater than 2 both prevents unnecessary resets and extends the interval at which its <B>MiniportCheckForHang</B> function, if any, is called to test the operational state of the NIC.</P>
+
+<P>In general, an NIC driver must call this function before it calls any <B>Ndis</B><I>XXX</I> function that claims hardware resources in the registry for its NIC, because NDIS must have the <I>AttributeFlags</I> value before such a call is made and because the driver usually needs the memory at <I>MiniportAdapterContext</I> to store information for these calls. This restriction implies that an NIC driver’s <B>MiniportInitialize</B> function cannot call the following <B>Ndis</B><I>XXX</I> functions before it calls this function:
+
+<UL>
+	<LI><B>NdisMPciAssignResources</B></li>
+
+	<LI><B>NdisMAllocateMapRegisters</B> and <B>NdisMAllocateSharedMemory</B></li>
+
+	<LI><B>NdisMMapIoSpace</B></li>
+
+	<LI><B>NdisMRegisterDmaChannel</B></li>
+
+	<LI><B>NdisMRegisterInterrupt</B></li>
+
+	<LI><B>NdisMRegisterIoPortRange</B> and, consequently, the <B>NdisRaw</B><I>XXX</I><B>Port</B><I>XXX</I> functions</li>
+</UL>
+
+<P>However, before calling this function, any driver’s <B>MiniportInitialize</B> function can call the NDIS configuration functions to retrieve configuration information installed in the registry. Before calling this function, an NIC driver can call the <B>NdisImmediate</B><I>XXX</I>, such as <B>NdisImmediateReadPciSlotInformation</B> or <B>NdisImmediateReadSharedMemory</B>, as well as the <B>NdisImmediate</B><I>XXX</I><B>Port</B><I>XXX</I> functions. <B>MiniportInitialize</B> can also call the bus-type-specific <B>NdisRead</B><I>XXX</I> functions, such as <B>NdisReadPciSlotInformation</B>, as long as the installed registry entry for the driver’s interface type matches the bus-type-specific <B>NdisRead</B><I>XXX</I> <B>MiniportInitialize</B> calls.</P>
+
+<P>The <I>MiniportAdapterContext</I> handle supplied to this function becomes an input parameter to all <B>Miniport</B><I>XXX</I> functions that were registered, along with <B>MiniportInitialize</B>, in the call to <B>NdisMRegisterMiniport</B> or <B>NdisIMRegisterLayeredMiniport</B>. Usually, this handle is a pointer to resident memory allocated by <B>MiniportInitialize</B>, in which the driver maintains NIC-specific run-time state.</P>
+
+<P>A driver that calls this function runs at IRQL PASSIVE_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_175.htm"><B>NdisAllocateMemory</B></A>, <A HREF="funct_1_224.htm"><B>NdisMMapIoSpace</B></A>, <A HREF="funct_1_229.htm"><B>NdisMPciAssignResources</B></A>, <A HREF="funct_1_232.htm"><B>NdisMRegisterInterrupt</B></A>, <A HREF="funct_1_233.htm"><B>NdisMRegisterIoPortRange</B></A>, <A HREF="funct_1_234.htm"><B>NdisMRegisterMiniport</B></A>, <A HREF="funct_1_249.htm"><B>NdisOpenConfiguration</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

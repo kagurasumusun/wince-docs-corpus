@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ACMDRVSTREAMHEADER</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_acmdrvstreamheader"></A>ACMDRVSTREAMHEADER</H2>
+
+<P>This structure describes a source buffer and a destination buffer associated with a conversion stream. This structure is used with the ACMDM_STREAM_PREPARE, ACMDM_STREAM_UNPREPARE, and ACMDM_STREAM_CONVERT messages.</P>
+
+<H4>Syntax</H4>
+
+<P><B>typedef struct { <BR>
+DWORD </B><I>cbStruct</I><B>; <BR>
+DWORD </B><I>fdwStatus</I><B>; <BR>
+DWORD </B><I>dwUser</I><B>; <BR>
+LPBYTE </B><I>pbSrc</I><B>; <BR>
+DWORD </B><I>cbSrcLength</I><B>; <BR>
+DWORD </B><I>cbSrcLengthUsed</I><B>;<BR>
+DWORD </B><I>dwSrcUser</I><B>; <BR>
+LPBYTE </B><I>pbDst</I><B>; <BR>
+DWORD </B><I>cbDstLength</I><B>; <BR>
+DWORD </B><I>cbDstLengthUsed</I><B>; <BR>
+DWORD </B><I>dwDstUser</I><B>; <BR>
+DWORD </B><I>fdwConvert</I><B>; <BR>
+LPACMDRVSTREAMHEADER </B><I>padshNext</I><B>; <BR>
+DWORD </B><I>fdwDriver</I><B>; <BR>
+DWORD </B><I>dwDriver</I><B>; <BR>
+DWORD </B><I>fdwPrepared</I><B>; <BR>
+DWORD </B><I>dwPrepared</I><B>; <BR>
+LPBYTE </B><I>pbPreparedSrc</I><B>; <BR>
+DWORD </B><I>cbPreparedSrcLength</I><B>; <BR>
+LPBYTE </B><I>pbPreparedDst</I><B>; <BR>
+DWORD </B><I>cbPreparedDstLength</I><B>; <BR>
+} ACMDRVSTREAMHEADER;</B></P>
+
+<H4>Members</H4>
+
+<DL>
+<DT><I>cbStruct</I></DT>
+
+<DD>Specifies the size, in bytes, of the structure.</dd>
+
+<DT><I>fdwStatus</I></DT>
+
+<DD>Contains status flags. The defined flags are as follows:
+
+<DL>
+<DT>ACMSTREAMHEADER_STATUSF_DONE</DT>
+
+<DD>Indicates that a conversion is complete. For synchronous conversion, the ACM sets this flag when the driver returns from an ACMDM_STREAM_CONVERT message. For asynchronous drivers, the driver sets this flag after the data has been converted. The ACM clears the flag before sending each ACMDM_STREAM_CONVERT message.</dd>
+
+<DT>ACMSTREAMHEADER_STATUSF_PREPARED</DT>
+
+<DD>Indicates that the data buffers have been prepared. This flag is set by the ACM, regardless of whether the driver or the ACM prepared the buffers. See ACMDM_STREAM_PREPARE and ACMDM_STREAM_UNPREPARE.</dd>
+
+<DT>ACMSTREAMHEADER_STATUSF_INQUEUE</DT>
+
+<DD>Used by the driver during asynchronous conversions to indicate that the structure has been queued for conversion. The driver is responsible for setting and clearing this flag. See ACMDM_STREAM_CONVERT.</dd>
+</DL>
+</dd>
+
+<DT><I>dwUser</I></DT>
+
+<DD>Specifies information supplied by a client for its own use.</dd>
+
+<DT><I>pbSrc</I></DT>
+
+<DD>Pointer to a source buffer. For an ACMDM_STREAM_CONVERT message, this buffer contains the data to be converted.</dd>
+
+<DT><I>cbSrcLength</I></DT>
+
+<DD>Specifies the length, in bytes, of the source buffer pointed to by <I>pbSrc</I>. For the ACMDM_STREAM_PREPARE and ACMDM_STREAM_UNPREPARE messages, this value represents the maximum source buffer size. For   ACMDM_STREAM_CONVERT, this value represents the length of the data in the buffer.</dd>
+
+<DT><I>cbSrcLengthUsed</I></DT>
+
+<DD>Specifies the length, in bytes, of source data that has been converted. The driver sets this value to indicate the number of bytes in the source buffer that the driver actually converted. The value cannot be greater than the value in <I>cbSrcLength</I>.</dd>
+
+<DT><I>dwSrcUser</I></DT>
+
+<DD>Specifies information supplied by a client for its own use.</dd>
+
+<DT><I>pbDst</I></DT>
+
+<DD>Pointer to a destination buffer. For an ACMDM_STREAM_CONVERT message, the driver fills this buffer with converted data.</dd>
+
+<DT><I>cbDstLength</I></DT>
+
+<DD>Specifies the length, in bytes, of the destination buffer pointed to by <I>pbDst</I>.</dd>
+
+<DT><I>cbDstLengthUsed</I></DT>
+
+<DD>Specifies the length, in bytes, of destination data that has been converted. The driver sets this value to indicate the number of converted bytes that it has placed in the destination buffer. The value cannot be greater than the value in <I>cbDstLength</I>. If the conversion fails, the driver must set this value to 0.</dd>
+
+<DT><I>dwDstUser</I></DT>
+
+<DD>Specifies information supplied by a client for its own use.</dd>
+
+<DT><I>fdwConvert</I></DT>
+
+<DD>Specifies one of the following values:
+
+<DL>
+<DT>ACMDM_STREAM_PREPARE</DT>
+
+<DD>Not used.</dd>
+
+<DT>ACMDM_STREAM_UNPREPARE</DT>
+
+<DD>Not used.</dd>
+
+<DT>ACMDM_STREAM_CONVERT</DT>
+
+<DD>Specifies the <B>acmStreamConvert</B> function’s <I>fdwConvert</I> parameter.</dd>
+</DL>
+
+
+<P>For ACMDM_STREAM_CONVERT, the following flags are defined:
+
+
+<DL>
+<DT>ACM_STREAMCONVERTF_BLOCKALIGN</DT>
+
+<DD>Indicates that only whole blocks of source data should be converted. The size of a block is obtained from the source format’s <B>WAVEFORMATEX</B> structure. See ACMDRVSTREAMINSTANCE. If this flag is set, the driver should not convert extra bytes that do not make up a whole block. Generally, clients set this flag for all buffers in a conversion stream except the last one.</dd>
+
+<DT>ACM_STREAMCONVERTF_START</DT>
+
+<DD>Indicates that the driver re-initializes stream instance data—such as predictor coefficients or scale factors—to default starting values. This flag can be specified with the ACM_STREAMCONVERTF_END flag.</dd>
+
+<DT>ACM_STREAMCONVERTF_END</DT>
+
+<DD>Indicates that the driver returns end-of-stream data—such as tail end echo data for an echo filter—in the destination buffer along with data converted from the source buffer. This flag can be specified with the ACM_STREAMCONVERTF_START flag.</dd>
+</DL>
+</dd>
+
+<DT><I>padshNext</I></DT>
+
+<DD>Pointer to another <B>ACMDRVSTREAMHEADER</B> structure. An asynchronous driver can use this member for creating a queue of pending conversion requests. The ACM clears this member prior to sending an ACMDM_STREAM_PREPARE or ACMDM_STREAM_CONVERT message.</dd>
+
+<DT><I>fdwDriver</I></DT>
+
+<DD>Contains stream instance information supplied by the driver for its own use. This member is intended for storing driver-defined flags, but you can use it for storing any data that fits into a <B>DWORD</B>. The ACM clears this member prior to sending an ACMDM_STREAM_PREPARE message. Otherwise, its value is preserved from one message to the next.</dd>
+
+<DT><I>dwDriver</I></DT>
+
+<DD>Specifies stream instance information supplied by the driver for its own use. You can use this member for any purpose. The ACM clears this member prior to sending an ACMDM_STREAM_PREPARE message. Otherwise, its value is preserved from one message to the next.</dd>
+
+<DT><I>fdwPrepared</I></DT>
+
+<DD>Specifies the <I>fdwPrepared</I> member of the <B>acmStreamPrepareHeader</B> function. Used by the ACM only.</dd>
+
+<DT><I>dwPrepared</I></DT>
+
+<DD>Specifies the parameter of <B>acmStreamPrepareHeader</B>. Used by the ACM only.</dd>
+
+<DT><I>pbPreparedSrc</I></DT>
+
+<DD>Pointer to the source buffer supplied with <B>acmStreamPrepareHeader</B>. Used by the ACM only.</dd>
+
+<DT><I>cbPreparedSrcLength</I></DT>
+
+<DD>Specifies the length of the source buffer supplied with <B>acmStreamPrepareHeader</B>. Used by the ACM only.</dd>
+
+<DT><I>pbPreparedDst</I></DT>
+
+<DD>Pointer to the destination buffer supplied with <B>acmStreamPrepareHeader</B>. Used by the ACM only.</dd>
+
+<DT><I>cbPreparedDstLength</I></DT>
+
+<DD>Specifies the length of the destination buffer supplied with the <B>acmStreamPrepareHeader</B> function. Used by the ACM only.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>This structure is declared in the Msacmdrv.h header file.</P>
+<p>&nbsp;</p></body>
+</HTML>

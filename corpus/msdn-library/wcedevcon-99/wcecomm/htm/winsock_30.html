@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sending an IP Multicast Datagram</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_sendto_2">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Win32_setsockopt_2">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_sending_an_ip_multicast_datagram"></A>Sending an IP Multicast Datagram</H2>
+
+<P>To send a multicast datagram, specify an IP multicast address with a range from 224.0.0.0 through 239.255.255.255 as the destination address in a <A HREF="JavaScript:hhobj_1.Click()"><B>sendto</B></A> function call.</P>
+
+<P>Use the <A HREF="JavaScript:hhobj_2.Click()"><B>setsockopt</B></A> function to set options for IP multicasting.</P>
+
+<P>By default, IP multicast datagrams are sent with a Time to Live (TTL) of 1, which prevents them from being forwarded beyond a single subnetwork. The following code example shows how to change this.</P>
+
+<PRE><CODE>int ttl = 1 ; // Limits to subnet.
+setsockopt(
+            sock,
+            IPPROTO_IP,
+            IP_MULTICAST_TTL,
+            (char *)&amp;ttl, 
+            sizeof(ttl));
+</CODE></PRE>
+
+<P>Multicast datagrams with a TTL of 0 are not transmitted on any subnetwork. Multicast datagrams with a TTL of greater than 1 may be delivered to more than one subnetwork, if there are one or more multicast routers attached to the first subnetwork.</P>
+
+<P>A multicast router does not forward multicast datagrams with destination addresses from 224.0.0.0 through 224.0.0.255, inclusive, regardless of their TTL value. This address range is reserved for routing protocols and other low-level, topology discovery protocols, or maintenance protocols. These include gateway discovery protocols and group membership reporting protocols.</P>
+
+<P>Each multicast transmission is sent from a single network interface, even if the host has more than one multicasting-capable interface. The following code example shows how to use the <B>setsockopt</B> function to override the default for subsequent transmissions from a specified socket.</P>
+
+<PRE><CODE>unsigned long addr = inet_addr("157.57.8.1");
+setsockopt(    
+            sock,
+            IPPROTO_IP, 
+            IP_MULTICAST_IF,
+            (char *)&amp;addr, 
+            sizeof(addr));
+</CODE></PRE>
+
+<P>The<I> addr</I> parameter is the local IP address of the outgoing interface. An address of INADDR_ANY may be used to revert to the default interface. This address may be different from that which the socket is bound.</P>
+
+<P>By default, if a multicast datagram is sent to a group to which the sending host belongs, a copy of the datagram on the outgoing interface is looped back by the IP layer for local delivery. Any attempt to disable this multicast loop-back results in the call failing, with the error message WSAENOPROTOOPT.</P>
+
+<P>For an example of an application sending a multicast datagram, see <A HREF="winsock_44.htm">Sending an IP Multicast Datagram Sample</A>. </P>
+<p>&nbsp;</p></body>
+</HTML>

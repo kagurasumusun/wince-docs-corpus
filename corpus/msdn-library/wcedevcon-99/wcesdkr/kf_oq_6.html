@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>OleSave</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Programming_Considerations">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_com_olesave"></A>OleSave</H2>
+
+<P>This function saves an object opened in transacted mode into the specified storage object.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Ole2.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>WINOLEAPI OleSave(</B> <B>IPersistStorage</B> * <I>pPS</I>, <B>IStorage</B> * <I>pStg</I>, <BR>
+<B>BOOL</B> <I>fSameAsLoad</I> <B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pPS</I></DT>
+
+<DD>[in] Pointer to the <B>IPersistStorage</B> interface on the object to be saved.</dd>
+
+<DT><I>pStg</I></DT>
+
+<DD>[in] Pointer to the <B>IStorage</B> interface on the destination storage object to which the object indicated in <I>pPS</I> is to be saved.</dd>
+
+<DT><I>fSameAsLoad</I></DT>
+
+<DD>[in] Boolean that is set to TRUE if <I>pStg</I> is the same storage object from which the object was loaded or created, or to FALSE if <I>pstg</I> was loaded or created from a different storage object.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<DL>
+<DT>S_OK </DT>
+
+<DD>The object was successfully saved.</dd>
+
+<DT>STG_E_MEDIUMFULL</DT>
+
+<DD>The object could not be saved due to lack of disk space.
+</dd>
+</DL>
+
+<P>This function can also return any of the error values returned by the <A HREF="ki_pr_18.htm"><B>IPersistStorage::Save</B></A> method.</P>
+
+<H4>Remarks</H4>
+
+<P>Passing into this function any invalid and, under some circumstances, NULL pointers will result in unexpected termination of the application. For more information about handling exceptions, see <A HREF="JavaScript:hhobj_1.Click()">Programming Considerations</A>.</P>
+
+<P>The <B>OleSave</B> helper function handles the common situation in which an object is open in transacted mode and is then to be saved into the specified storage object which uses the OLE-provided compound file implementation. Transacted mode means that changes to the object are buffered until either of the <B>IStorage</B> methods <B>Commit</B> or <B>Revert</B> is called. Callers can handle other situations by calling the <B>IPersistStorage</B> and <A HREF="ki_s.htm"><B>IStorage</B></A> interfaces directly.</P>
+
+<P><B>OleSave</B> does the following:
+
+<OL>
+	<LI>Calls the <B>IPersistStorage::GetClassID</B> method to get the CLSID of the object.</li>
+
+	<LI>Writes the CLSID to the storage object using the <A HREF="kf_w_6.htm"><B>WriteClassStg</B></A> function. </li>
+
+	<LI>Calls the <A HREF="ki_pr_18.htm"><B>IPersistStorage::Save</B></A> method to save the object.</li>
+
+	<LI>If there were no errors on the save; calls the <A HREF="ki_s_1.htm"><B>IStorage::Commit</B></A> method to commit the changes.</li>
+</OL>
+
+<P><B>Note</B>  Static objects are saved into a stream called CONTENTS. Static metafile objects get saved in "placeable metafile format" and static DIB data gets saved in "DIB file format." These formats are defined to be the OLE standards for metafile and DIB. All data transferred using an <A HREF="ki_s_16.htm"><B>IStream</B></A> interface or a file transferred using <B>IDataObject::GetDataHere</B> must be in these formats. Also, all objects whose default file format is a metafile or DIB must write their data into a CONTENTS stream using these standard formats.</P>
+<p>&nbsp;</p></body>
+</HTML>

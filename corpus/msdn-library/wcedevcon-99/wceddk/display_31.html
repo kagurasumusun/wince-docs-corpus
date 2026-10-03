@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registry Keys for Removable Display Adapters</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_registry_keys_for_removable_display_adapters"></A>Registry Keys for Removable Display Adapters</H2>
+
+<P>When a secondary display adapter is provided on removable hardware, such as a PC Card, the display driver is typically implemented as two drivers: a native driver that exposes the native DDI and a stream interface driver that exposes the stream interfaces. The stream driver must initialize the Registry with the keys that allow it to be detected and loaded. When the PC Card is inserted, the Device Manager initiates a detection sequence to determine what driver should service the card. If the PC Card has a Plug and Play ID, it is used to determine which driver to load. Otherwise, the Device Manager tries the detection functions for all the PC Card drivers installed on the system until one of them reports that it recognizes the PC Card. Once the correct driver is located, the Device Manager loads the driver whose name is provided as the registry key along with the detection function that succeeded in detecting the PC Card. The following example shows how the Device Manager then loads the driver, registers its special device file name, and calls the driver’s <B><I>XXX</I>_Init</B> function.</P>
+
+<PRE><CODE> [HKEY_LOCAL_MACHINE\Drivers\PCMCIA\VoyagerVGA]
+    Dll="VOYAGER.DLL"
+    Prefix="VGA"
+    Index=Dword:1
+
+[HKEY_LOCAL_MACHINE\Drivers\PCMCIA\Detect\60]
+    Dll="VOYAGER.DLL"
+    Entry="DetectVGA"
+</CODE></PRE>
+
+<P>As discussed earlier, the Microsoft Pocket PowerPoint application needs additional registry keys in order to use secondary display adapters. During initialization, the driver should update the <B>HKEY_LOCAL_MACHINE\Drivers\Display\Active</B> key with the information appropriate for its driver. This includes information about the native driver .dll name, as well as Buffer and Tap information. For removable display adapters, this initialization should take place when the adapter is connected to the system and the Device Manager calls the stream driver’s <B><I>XXX</I>_Init</B> function. The following example shows how this is done.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Drivers\Display\Active\Voyager]
+    Dll="PCARDVGA.DLL"
+    BufferMode=Dword:0
+    Tapmode=Dword:0
+</CODE></PRE>
+
+<P>The following table shows the four available values for <B>BufferMode</B>.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=21%>
+<H5>Value</H5>
+</TD>
+<TD width=79%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%><B>bmNotShared</B></TD>
+<TD width=79%>There is no common frame buffer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%><B>bmTopHalf</B></TD>
+<TD width=79%>The top half of the secondary display is also shown on the system’s built-in LCD display.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%><B>bmSquashed</B></TD>
+<TD width=79%>A scaled-down version of the secondary display is also shown on the system’s built-in LCD display.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%><B>bmOff</B></TD>
+<TD width=79%>The system’s built-in display is turned off while the driver is active.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following table shows the three available values for <B>Tapmode</B>.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%><B>tmNone</B></TD>
+<TD width=52%>The display driver performs no conversion of any tap coordinates.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%><B>tmScaled</B></TD>
+<TD width=52%>The display driver scales tap coordinates to match the secondary display’s resolution.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%><B>tmUndefined</B></TD>
+<TD width=52%>The display driver always reports tap coordinates of (0,0), but still reports tap events.</TD>
+</TR>
+</TABLE><BR>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

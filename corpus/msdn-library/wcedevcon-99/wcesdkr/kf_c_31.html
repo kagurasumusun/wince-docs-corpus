@@ -1,0 +1,312 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateFile</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_createfile"></A>CreateFile</H2>
+
+<P>This function creates, opens, or truncates a file, communications resource, disk device, or console. It returns a handle that can be used to access the object. It can also open and return a handle to a directory. </P>
+
+<P>A remote application interface (RAPI) version of this function exists, and it is named <A HREF="kf_ac_11.htm"><B>CeCreateFile</B></A>. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HANDLE</B> <B>CreateFile(LPCTSTR</B> <I>lpFileName</I><B>, DWORD</B> <I>dwDesiredAccess</I><B>, DWORD</B> <I>dwShareMode</I><B>, LPSECURITY_ATTRIBUTES</B> <I>lpSecurityAttributes</I><B>, DWORD</B> <I>dwCreationDistribution</I><B>, DWORD</B> <I>dwFlagsAndAttributes</I><B>, <BR>
+HANDLE</B> <I>hTemplateFile</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>lpFileName</I></DT>
+
+<DD>[in] Pointer to a null-terminated string that specifies the name of the object (file, communications resource, disk device, console, or directory) to create or open. 
+
+<P>If *<I>lpFileName</I> is a path, there is a default string size limit of MAX_PATH characters. This limit is related to how the <B>CreateFile </B>function parses paths. 
+
+
+<P>When <I>lpFileName</I> points to a communications resource to open, you must include a colon after the name. For example, specify “COM1:” to open that port.
+</dd>
+
+<DT><I>dwDesiredAccess</I></DT>
+
+<DD>[in] Specifies the type of access to the object. An application can obtain read access, write access, read-write access, or device query access. This parameter can be any combination of the following values. 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=45%>
+<H5>Value</H5>
+</TD>
+<TD width=55%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>0</TD>
+<TD width=55%>Specifies device query access to the object. An application can query device attributes without accessing the device.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>GENERIC_READ</TD>
+<TD width=55%>Specifies read access to the object. Data can be read from the file and the file pointer can be moved. Combine with GENERIC_WRITE for read-write access.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>GENERIC_WRITE</TD>
+<TD width=55%>Specifies write access to the object. Data can be written to the file and the file pointer can be moved. Combine with GENERIC_READ for read-write access.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwShareMode</I></DT>
+
+<DD>[in] Specifies how the object can be shared. If <I>dwShareMode</I> is 0, the object cannot be shared. Subsequent open operations on the object will fail, until the handle is closed. 
+
+<P>To share the object, use a combination of one or more of the following values: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=42%>
+<H5>Value</H5>
+</TD>
+<TD width=58%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>FILE_SHARE_READ</TD>
+<TD width=58%>Subsequent open operations on the object will succeed only if read access is requested.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>FILE_SHARE_WRITE</TD>
+<TD width=58%>Subsequent open operations on the object will succeed only if write access is requested.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>lpSecurityAttributes</I></DT>
+
+<DD>[in] Ignored; set to NULL.</dd>
+
+<DT><I>dwCreationDisposition</I></DT>
+
+<DD>[in] Specifies which action to take on files that exist, and which action to take when files do not exist. For more information about this parameter, see the Remarks section. This parameter must be one of the following values: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CREATE_NEW</TD>
+<TD width=52%>Creates a new file. The function fails if the specified file already exists.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>CREATE_ALWAYS</TD>
+<TD width=52%>Creates a new file. If the file exists, the function overwrites the file and clears the existing attributes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>OPEN_EXISTING</TD>
+<TD width=52%>Opens the file. The function fails if the file does not exist.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>&nbsp;</TD>
+<TD width=52%>See the Remarks section for a discussion of why you should use the OPEN_EXISTING flag if you are using the <B>CreateFile</B> function for devices, including the console.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>OPEN_ALWAYS</TD>
+<TD width=52%>Opens the file, if it exists. If the file does not exist, the function creates the file as if <I>dwCreationDisposition</I> were CREATE_NEW.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>TRUNCATE_EXISTING</TD>
+<TD width=52%>Opens the file. Once opened, the file is truncated so that its size is zero bytes. The calling process must open the file with at least GENERIC_WRITE access. The function fails if the file does not exist.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwFlagsAndAttributes</I></DT>
+
+<DD>[in] Specifies the file attributes and flags for the file. 
+
+<P>Any combination of the following attributes is acceptable for the <I>dwFlagsAndAttributes</I> parameter, except all other file attributes override FILE_ATTRIBUTE_NORMAL. 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_ATTRIBUTE_ARCHIVE</TD>
+<TD width=52%>The file should be archived. Applications use this attribute to mark files for backup or removal.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_ATTRIBUTE_HIDDEN</TD>
+<TD width=52%>The file is hidden. It is not to be included in an ordinary directory listing.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_ATTRIBUTE_NORMAL</TD>
+<TD width=52%>The file has no other attributes set. This attribute is valid only if used alone.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_ATTRIBUTE_READONLY</TD>
+<TD width=52%>The file is read only. Applications can read the file but cannot write to it or delete it.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_ATTRIBUTE_SYSTEM</TD>
+<TD width=52%>The file is part of or is used exclusively by the operating system.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_ATTRIBUTE_TEMPORARY</TD>
+<TD width=52%>Not supported.</TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>Any combination of the following flags is acceptable for the <I>dwFlagsAndAttributes</I> parameter. 
+
+
+<TABLE border=1 cellspacing=4 cols=2 frame=above rules=rows>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_FLAG_WRITE_THROUGH</TD>
+<TD width=52%>Instructs the system to write through any intermediate cache and go directly to disk. The system can still cache write operations, but cannot lazily flush them.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_FLAG_OVERLAPPED</TD>
+<TD width=52%>This flag is not supported; however, multiple reads/writes pending on a device at a time are allowed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_FLAG_RANDOM_ACCESS</TD>
+<TD width=52%>Indicates that the file is accessed randomly. The system can use this as a hint to optimize file caching.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_FLAG_SEQUENTIAL_SCAN</TD>
+<TD width=52%>Indicates that the file is to be accessed sequentially from beginning to end. The system can use this as a hint to optimize file caching. If an application moves the file pointer for random access, optimum caching may not occur; however, correct operation is still guaranteed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>&nbsp;</TD>
+<TD width=52%>Specifying this flag can increase performance for applications that read large files using sequential access. Performance gains can be even more noticeable for applications that read large files mostly sequentially, but occasionally skip over small ranges of bytes.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>hTemplateFile</I></DT>
+
+<DD>[in] Ignored; as a result, <B>CreateFile</B> does not copy the extended attributes to the new file.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>An open handle to the specified file indicates success. If the specified file exists before the function call and <I>dwCreationDisposition</I> is CREATE_ALWAYS or OPEN_ALWAYS, a call to <A HREF="kf_g_19.htm"><B>GetLastError</B></A> returns ERROR_ALREADY_EXISTS, even though the function has succeeded. If the file does not exist before the call, <B>GetLastError</B> returns zero. INVALID_HANDLE_VALUE indicates failure. To get extended error information, call <B>GetLastError</B>. </P>
+
+<H4>Remarks</H4>
+
+<P>Use the <A HREF="kf_c_7.htm"><B>CloseHandle</B></A> function to close an object handle returned by <B>CreateFile</B>. </P>
+
+<P>As noted above, specifying zero for <I>dwDesiredAccess</I> allows an application to query device attributes without actually accessing the device. This type of querying is useful, for example, if an application wants to determine the size of a floppy disk drive and the formats it supports without having a floppy in the drive. </P>
+
+<P><B>Files</B></P>
+
+<P>When creating a new file, the <B>CreateFile</B> function performs the following actions: 
+
+<UL>
+	<LI>Combines the file attributes and flags specified by <I>dwFlagsAndAttributes</I> with FILE_ATTRIBUTE_ARCHIVE. </li>
+
+	<LI>Sets the file length to zero. </li>
+</UL>
+
+<P>When opening an existing file, <B>CreateFile</B> performs the following actions: 
+
+<UL>
+	<LI>Combines the file flags specified by <I>dwFlagsAndAttributes</I> with existing file attributes. <B>CreateFile</B> ignores the file attributes specified by <I>dwFlagsAndAttributes</I>. </li>
+
+	<LI>Sets the file length according to the value of <I>dwCreationDisposition</I>. </li>
+</UL>
+
+<P>To store the maximum number of files on PC Card storage devices, limit file names to eight uppercase characters and file extensions to three uppercase characters. Also, do not allow non-OEM characters in file names. File names that do not conform to these limits require more than one physical directory entry on a PC Card.</P>
+
+<P><B>Communications Resources</B></P>
+
+<P>The <B>CreateFile</B> function can create a handle to a communications resource. By setting the <I>dwCreationDisposition</I> parameter to OPEN_EXISTING, read, write, or read-write access can be specified.  </P>
+
+<P><B>Directories</B></P>
+
+<P>An application cannot create a directory with <B>CreateFile</B>; it must call <B>CreateDirectory</B> to create a directory.</P>
+
+<P>Some file systems, such as NTFS, support compression or encryption for individual files and directories. On volumes formatted for such a file system, a new directory inherits the compression and encryption attributes of its parent directory.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_c_7.htm"><B>CloseHandle</B></A>, <A HREF="kf_c_28.htm"><B>CreateDirectory</B></A>, <A HREF="kf_r_5.htm"><B>ReadFile</B></A>, <A HREF="kf_v_181.htm"><B>VirtualAlloc</B></A> </P>
+<p>&nbsp;</p></body>
+</HTML>

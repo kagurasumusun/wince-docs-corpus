@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisAllocateSpinLock</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisallocatespinlock"></A>NdisAllocateSpinLock</H2>
+
+<P>This function initializes a variable of type NDIS_SPIN_LOCK, used to synchronize access to resources shared among driver functions not related to interrupts.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID<BR>
+NdisAllocateSpinLock (IN PNDIS_SPIN_LOCK</B> <I>SpinLock</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>SpinLock</I></DT>
+
+<DD>Pointer to an opaque variable that represents a spin lock.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>Before a driver calls <B>NdisAcquireSpinLock</B>, <B>NdisDprAcquireSpinLock</B>, or any of the <B>NdisInterlocked</B><I>XXX</I> functions, it must call this function to initialize the spin lock passed as a required parameter to these <B>Ndis</B><I>XXX</I> functions. The caller must provide nonpaged storage for the variable at <I>SpinLock</I>.</P>
+
+<P>After calling this function, the driver can call <B>NdisAcquireSpinLock</B> to obtain exclusive use of the resource(s) that the spin lock protects. When resource access is complete, the driver calls <B>NdisReleaseSpinLock</B> so that other driver functions can access the resource(s) protected by that spin lock.</P>
+
+<P>As a general rule, a driver should not pass the same spin lock to every <B>Ndis</B><I>XXX</I><B>SpinLock</B> and <B>NdisInterlocked</B><I>XXX</I> that it calls subsequently. In this way, any driver might initialize more than one spin lock with this function.</P>
+
+<P>Each spin lock that a driver allocates protects a discrete set of shared resources from simultanous access by driver functions that run at IRQL &lt;= DISPATCH_LEVEL. For example, a driver that maintains an internal queue of packets might initialize one spin lock to protect its queue and another to protect a set of state variables that several driver functions, not including the <B>MiniportISR</B> or <B>MiniportDisableInterrupt</B> function, access while the driver is processing packets.</P>
+
+<P>A driver should never use two spin locks to protect the same resources because nested spin-lock acquisitions frequently cause deadlocks. Even if a driver could be designed to prevent deadlocks, nested spin-lock acquisitions have an adverse effect on driver performance and I/O throughput.</P>
+
+<P>A miniport driver cannot use a spin lock to protect resources that its non-ISR functions share with its <B>MiniportISR</B> or the <B>MiniportDisableInterrupt</B> function. To access resources shared with a <B>MiniportISR</B> or <B>MiniportDisableInterrupt</B> function, a miniport must call <B>NdisMSynchronizeWithInterrupt</B> to have its <B>MiniportSynchronizeISR</B> function access those resources at DIRQL.</P>
+
+<P>When a driver no longer requires resource protection, for example, when an NIC is being removed and the driver is releasing the resources that it allocated for that NIC, the driver calls <B>NdisFreeSpinLock</B>.</P>
+
+<P>Freeing a spin lock and releasing a spin lock must be distinguished. <B>NdisFreeSpinLock</B> clears the memory at <I>SpinLock</I> so it no longer represents a spin lock. Releasing an acquired spin lock with <B>NdisReleaseSpinLock</B> allows another thread of execution to acquire that spin lock.</P>
+
+<P>A driver that calls this function can run at any IRQL. Usually a caller is running at IRQL PASSIVE_LEVEL during initialization.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_171.htm"><B>NdisAcquireSpinLock</B></A>, <A HREF="funct_1_186.htm"><B>NdisDprAcquireSpinLock</B></A>, <A HREF="funct_1_187.htm"><B>NdisDprReleaseSpinLock</B></A>, <A HREF="funct_1_195.htm"><B>NdisFreeSpinLock</B></A>, <A HREF="funct_1_244.htm"><B>NdisMSynchronizeWithInterrupt</B></A>, <A HREF="funct_1_274.htm"><B>NdisReleaseSpinLock</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

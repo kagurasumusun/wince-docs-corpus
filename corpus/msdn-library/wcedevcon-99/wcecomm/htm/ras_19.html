@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Establishing a Connection</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RASDIALPARAMS_str">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_establishing_a_connection"></A>Establishing a Connection</H2>
+
+<P>The Windows CE <B>RasDial</B> function indicates a successful connection in two ways. If RasDial make a successful connection:
+
+<UL>
+	<LI>It returns a zero, a non-zero value indicates failure.</li>
+
+	<LI>In addition, the function stores a handle to the RAS connection into the variable point to by the function parameter <I>pRasConn</I>.</li>
+</UL>
+
+<P>The <B>RasDial</B> function must specify data so that RAS can establish the connection from a Windows CE–based device to a remote access server. The client uses the <B>RasDial</B> function parameters to specify a phone-book file and a phone-book entry. The <I>lpszPhonebookPath</I> parameter can specify the name of a phone-book file, or it can be NULL to indicate that the default phone-book file should be used. The <I>lpRasDialParams</I> parameter points to a <A HREF="JavaScript:hhobj_1.Click()"><B>RASDIALPARAMS</B></A> structure that specifies the phone-book entry to use. To connect, the <B>RasDial</B> function must specify the data necessary to establish a connection. Typically, the <B>RasDial</B> call provides the connection data by specifying a phone-book entry using the <B>RASDIALPARAMS</B> structure to provide data such as phone number, user name, domain, and password.</P>
+
+<P>The connection data includes callback and user authentication data. To make a connection, the <B>RasDial</B> function can specify an empty string for the <I>szEntryName</I> member of the <B>RASDIALPARAMS</B> structure. The <I>szPhoneNumber</I> member must contain the phone number to dial.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use RasDial to establish a connection</H4>
+
+<OL>
+	<LI>Set the <I>dialExtensions</I> parameter to NULL.</li>
+
+	<LI>Set the <I>lpszPhonebook</I> parameter to NULL. Phone-book entries are stored in the registry rather than in a phone-book file.</li>
+
+	<LI>Set the <I>dwNotiferType</I> parameter to 0xFFFFFFFF, specifying the <I>lpvNotifier</I> parameter as a handle to the window receiving progress notification messages. If the application requires messages from RAS, the messages must be sent to a window handle. There is no support for callback functions.</li>
+
+	<LI>Set the <I>szEntryName, szUserName, szPassword, and szDomain</I> members of the <B>RASDIALPARAM</B><I> </I>structure. Pass a pointer to this structure into <I>lpRasDialParam</I>.</li>
+</OL>
+
+<P><B>Note</B>  <B>RasDial</B> does not automatically display the logon dialog box. This is currently done through the Remote Networking application. Your application is responsible for getting the data from a user.</P>
+
+<P>The following code example shows how to establish a RAS connection.</P>
+
+<PRE><CODE>BOOL MakeRasDial (HWND hDlgWnd)
+{
+  BOOL bPassword;
+  TCHAR szBuffer[100];
+
+  if (bUseCurrent)
+  {
+    // Get the last configuration parameters used for this connection. 
+    // If the password was saved, then the logon dialog box will not be
+    // displayed.
+    if (RasGetEntryDialParams (NULL, &amp;RasDialParams, &amp;bPassword) != 0)
+    {
+      MessageBox (hDlgWnd, 
+                  TEXT("Could not get parameter details"), 
+                  szTitle, 
+                  MB_OK);
+      return FALSE;
+    }
+  }
+  else
+  {
+    // Display the Authentication dialog box.
+    DialogBox (hInst, MAKEINTRESOURCE(IDD_AUTHDLG), hDlgWnd, 
+               AuthDlgProc);
+
+    // Set hRasConn to NULL before attempting to connect.
+    hRasConn = NULL;
+
+    // Initialize the structure.
+    memset (&amp;RasDialParams, 0, sizeof (RASDIALPARAMS));
+
+    // Configure the RASDIALPARAMS structure. 
+    RasDialParams.dwSize = sizeof (RASDIALPARAMS);
+    RasDialParams.szPhoneNumber[0] = TEXT('\0');
+    RasDialParams.szCallbackNumber[0] = TEXT('\0');
+    wcscpy (RasDialParams.szEntryName, szRasEntryName);
+    wcscpy (RasDialParams.szUserName, szUserName);
+    wcscpy (RasDialParams.szPassword, szPassword);
+    wcscpy (RasDialParams.szDomain, szDomain); 
+  }
+
+  // Try to establish RAS connection.
+  if (RasDial (NULL,            // Extension not supported
+               NULL,            // Phone book is in registry
+               &amp;RasDialParams,  // RAS configuration for connection
+               0xFFFFFFFF,      // Use this value
+               hDlgWnd,         // Window receives notification message
+               &amp;hRasConn) != 0) // Connection handle
+  {
+    MessageBox (hDlgWnd, 
+                TEXT("Could not connect using RAS"), 
+                szTitle, 
+                MB_OK);
+    return FALSE;
+  }
+
+  wsprintf (szBuffer, TEXT("Dialing %s..."), szRasEntryName);
+
+  // Set the Dialing dialog box window name to szBuffer.
+  SetWindowText (hDlgWnd, szBuffer);
+
+  return TRUE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

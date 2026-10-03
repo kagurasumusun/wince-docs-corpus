@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Copying a Phone-Book Entry</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RasGetEntryProperties">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_RasSetEntryProperties">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_copying_a_phone_book_entry"></A>Copying a Phone-Book Entry</H2>
+
+<P>An application can use the <A HREF="JavaScript:hhobj_1.Click()"><B>RasGetEntryProperties</B></A> function or the <A HREF="JavaScript:hhobj_2.Click()"><B>RasSetEntryProperties</B></A> function to copy the configuration data to another entry. The <I>lpszEntryName</I> parameter can be used to change the entry.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To copy a phone-book entry to the dialing list</H4>
+
+<OL>
+	<LI>Call <B>RasGetEntryProperties</B> to get current phone-book properties.</li>
+
+	<LI>Call <B>RasSetEntryProperties</B> to set new phone-book properties.</li>
+
+	<LI>Call <B>RasGetEntryDialParams</B> to retrieve current user data.</li>
+
+	<LI>Call <B>RasSetEntryDialParams</B> to set user password data.</li>
+
+	<LI>The return value is TRUE if successful, and FALSE if not.</li>
+</OL>
+
+<P>The following code example shows how to copy a RAS entry.</P>
+
+<PRE><CODE>BOOL CopyRasEntry (LPTSTR lpszEntryName)
+{
+  BOOL bPasswordSaved;              
+  TCHAR szNewEntryName[100];       // Name for the copied entry
+  TCHAR szError[100];              // Buffer for the error message
+  DWORD dwError,                   // Return code from the functions
+        dwRasEntrySize,            // Size of the RASENTRY structure
+        dwDevConfigSize,           // Size of DevConfigBuf
+        dwDeviceNum = 0xFFFFFFFF;  // Telephony API device number 
+  BYTE DevConfigBuf[128];          // Buffer for device configuration 
+                                   // data
+  RASENTRY RasEntry;               // RASENTRY structure
+  RASDIALPARAMS RasDialParams;     // RASDIALPARAMS structure 
+  LPVARSTRING lpDevConfig = (LPVARSTRING)&amp;DevConfigBuf;
+                                   // Pointer to the memory location of
+                                   // the device configuration structure
+
+  // Assign the name for the copied phone-book entry.
+  wsprintf (szNewEntryName, TEXT("%s1"), lpszEntryName);
+    
+  // Validate the format of a connection entry name.
+  if (dwError = RasValidateEntryName (NULL, szNewEntryName))
+  {
+    wsprintf (szError, TEXT("Unable to validate entry name.")
+              TEXT(" Error %ld"), dwError);  
+
+    return FALSE;
+  }
+
+  dwDevConfigSize = sizeof (DevConfigBuf);
+  dwRasEntrySize = sizeof (RASENTRY);
+  RasEntry.dwSize = dwRasEntrySize;
+
+  // Retrieve the entry properties.
+  if (dwError = RasGetEntryProperties (NULL,               
+                                       lpszEntryName,      
+                                       (LPBYTE)&amp;RasEntry,  
+                                       &amp;dwRasEntrySize,    
+                                       DevConfigBuf,       
+                                       &amp;dwDevConfigSize))  
+  {
+    wsprintf (szError, TEXT("Unable to read entry properties.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  memset (&amp;RasDialParams, 0, sizeof (RasDialParams));
+  RasDialParams.dwSize = sizeof (RASDIALPARAMS);
+  _tcscpy (RasDialParams.szEntryName, lpszEntryName);
+
+  // Retrieve the connection data.
+  if (dwError = RasGetEntryDialParams (NULL, &amp;RasDialParams, 
+                      &amp;bPasswordSaved))
+  {
+    wsprintf (szError, TEXT("Unable to get the connection information.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+// Create a new phone-book entry.
+  if (dwError = RasSetEntryProperties (NULL, 
+                                       szNewEntryName, 
+                                       (LPBYTE)&amp;RasEntry,
+                                       dwRasEntrySize, 
+                                       DevConfigBuf, 
+                                       dwDevConfigSize))
+  {
+    wsprintf (szError, TEXT("Unable to copy the phonebook entry.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+  
+  _tcscpy (RasDialParams.szEntryName, szNewEntryName);
+
+  // Change the connection data.
+  if (dwError = RasSetEntryDialParams (NULL, &amp;RasDialParams, FALSE))
+  {
+    wsprintf (szError, TEXT("Unable to set the connection information.")
+              TEXT(" Error %ld"), dwError);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

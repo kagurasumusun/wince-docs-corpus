@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ICeFileFilter::NextConvertFile</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Transferring_Files">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_icefilefilter_nextconvertfile"></A>ICeFileFilter::NextConvertFile</H2>
+
+<P>This method is called by Windows CE Services when the user selects a conversion type from the Windows CE Services conversion selection dialog box.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Replfilt.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>STDMETHODIMP ICeFileFilter::NextConvertFile(<BR>
+int</B> <I>nConversion</I><B>, PFF_CONVERTINFO</B> *<I>pci</I><B>, PFF_SOURCEFILE</B> *<I>psf</I><B>,</B><BR>
+<B>PFF_DESTINATIONFILE</B> *<I>pdf</I><B>, volatile BOOL</B> *<I>pbCancel</I><B>, <BR>
+PR_ERROR</B> *<I>perr </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>nConversion</I> </DT>
+
+<DD>Counter for converting a single source file into multiple destination files. This parameter is zero the first time <B>NextConvertFile</B> is called and is incremented for each successive call. A simple filter should return HRESULT_FROM_WIN32<B>(</B>ERROR_NO_MORE_ITEMS<B>)</B> if this parameter is not zero. </dd>
+
+<DT><I>pci</I> </DT>
+
+<DD>Pointer to a <B>CFF_CONVERTINFO</B> structure that contains a pointer to an <B>ICeFileFilterSite</B> object. A file filter uses this interface to create an <B>IStream</B> or <B>IStorage</B> object to read the contents of the source file or to write to the destination file. The type of interface object to create is determined by the <I>nHowToOpen</I> parameter in the <A HREF="ki_ac_16.htm"><B>ICeFileFilterSite::OpenSourceFile</B></A> and <A HREF="ki_ac_15.htm"><B>ICeFileFilterSite::OpenDestinationFile</B></A> methods. Any files opened in this way should be closed using the corresponding <A HREF="ki_ac_14.htm"><B>ICeFileFilterSite::CloseSourceFile</B></A> or <A HREF="ki_ac_13.htm"><B>ICeFileFilterSite::CloseDestinationFile</B></A> method. </dd>
+
+<DT><I>psf</I> </DT>
+
+<DD>Pointer to a <A HREF="ks_ac_19.htm"><B>CFF_SOURCEFILE</B></A> structure that contains information about the source file. </dd>
+
+<DT><I>pdf</I> </DT>
+
+<DD>Pointer to a <A HREF="ks_ac_18.htm"><B>CFF_DESTINATIONFILE</B></A> structure that contains information about the destination file. </dd>
+
+<DT><I>pbCancel</I> </DT>
+
+<DD>Pointer to a Boolean that is set to TRUE if the user cancels the file conversion before it is completed, or set to FALSE otherwise. Because this variable is updated asynchronously by another thread, its contents can change at any time. A file filter must check this variable regularly during the conversion process, and return ERROR_CANCELLED, after cleaning up, if it is ever set to TRUE. </dd>
+
+<DT><I>perr</I> </DT>
+
+<DD>Pointer to a filter-defined error value that can be passed by the Windows CE Services application to the <B>ICeFileFilter::FormatMessage</B> method. This error value is ignored unless the return value from <B>NextConvertFile</B> is E_FAIL. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=37%>
+<H5>Value</H5>
+</TD>
+<TD width=63%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>NOERROR</TD>
+<TD width=63%>The subconversion was successful; proceed to the next subconversion.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>HRESULT_FROM_WIN32 (ERROR_CANCELLED)</TD>
+<TD width=63%>The user canceled the conversion.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>HRESULT_FROM_WIN32 (ERROR_NO_MORE_ITEMS)</TD>
+<TD width=63%>The conversion, or last subconversion, was successful. End calls to <B>ICeFileFilter::NextConvertFile</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=37%>E_FAIL</TD>
+<TD width=63%>The <I>perr</I> parameter contained an error value that should be passed to <A HREF="ki_ac_8.htm"><B>ICeFileFilter::FormatMessage</B></A>.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The Explorer window for the mobile device calls the <B>ICeFileFilter::NextConvertFile</B> method repeatedly, incrementing the <I>nConversion</I> parameter, until the return value is ERROR_NO_MORE_ITEMS. A simple filter should return NOERROR the first time this method is called, and thereafter return HRESULT_FROM_WIN32<B>(</B>ERROR_NO_MORE_ITEMS<B>)</B>. Alternatively, a file filter can return E_FAIL and specify a filter-defined error value in the variable pointed to by <I>perr</I>. </P>
+
+<P>As a file conversion progresses, a file filter should periodically call <A HREF="ki_ac_18.htm"><B>ICeFileFilterSite::ReportProgress</B></A> to report its progress. Windows CE Services uses the progress information to update a progress bar that shows the user how much of the conversion is complete. </P>
+
+<P>If any important data is intentionally discarded by a file filter during the conversion process, the filter should call <A HREF="ki_ac_17.htm"><B>ICeFileFilterSite::ReportLoss</B></A> to report the loss. When calling this <B>ReportLoss</B>, the filter specifies a message that explains the data loss, and Windows CE Services formats and displays the message in a message box when the file conversion has completed. For more information, see <A HREF="JavaScript:hhobj_1.Click()">Transferring Files</A>.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="ki_ac_17.htm"><B>ICeFileFilterSite::ReportLoss</B></A>, <A HREF="ki_ac_18.htm"><B>ICeFileFilterSite::ReportProgress</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

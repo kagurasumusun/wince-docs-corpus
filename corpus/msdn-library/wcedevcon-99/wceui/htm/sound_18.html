@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Deallocating Memory Blocks</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_deallocating_memory_blocks"></A>Deallocating Memory Blocks</H2>
+
+<P>An application must be able to determine when a device driver is finished with the data block so that the application can unprepare and free the memory associated with the data block and header structure. The following list describes several ways to determine when a device driver is finished with a data block:
+
+<UL>
+	<LI>By specifying a callback function to receive a message that is sent by the driver when it is finished with a data block</li>
+
+	<LI>By using an event callback</li>
+
+	<LI>By specifying a window or thread to receive a message sent by the driver when finished with a data block</li>
+
+	<LI>By polling the WHDR_DONE bit in the <I>dwFlags</I> member of the <B>WAVEHDR</B> structure sent with each data block</li>
+</UL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use a callback function for driver messages</H4>
+
+<OL>
+	<LI>Specify the CALLBACK_FUNCTION flag in the <I>fdwOpen</I> parameter of the <B>waveInOpen</B> or <B>waveOutOpen</B> function.</li>
+
+	<LI>Specify the address of the callback in the <I>dwCallback</I> parameter of the <B>waveInOpen</B> or <B>waveOutOpen</B> function.</li>
+</OL>
+
+<P>Messages sent to a callback function are similar to messages sent to a window, except that they have two <B>DWORD</B> parameters instead of one <B>UINT</B> and one <B>DWORD</B> parameter.</P>
+
+<P>The following list describes techniques for passing instance data from an application to a callback function:
+
+<UL>
+	<LI>Pass the instance data by using the <I>dwInstance</I> parameter of the function that opens the device driver</li>
+
+	<LI>Pass the instance data by using the <I>dwUser</I> member of the <B>WAVEHDR</B> structure that identifies an audio data block that was sent to a device driver</li>
+</UL>
+
+<P><B>Note</B>  If you need more than 32 bits of instance data, pass a pointer to a structure containing the additional data.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use an event callback</H4>
+
+<OL>
+	<LI>Retrieve the handle of an event from <B>CreateEvent</B>.</li>
+
+	<LI>Specify CALLBACK_EVENT for the <I>fdwOpen</I> parameter in your call to <B>waveOutOpen</B>.</li>
+
+	<LI>Use <B>waveOutPrepareHeader </B>or<B> waveInPrepareHeader</B> to prepare the data block.</li>
+
+	<LI>Call <B>ResetEvent</B> with the event handle retrieved by <B>CreateEvent</B>.
+<P>This action creates a non-signaled event.
+</li>
+
+	<LI>Send the waveform audio data block to the driver.</li>
+
+	<LI>Call <B>WaitForSingleObject</B>, specifying as parameters the event handle and a time-out value of INFINITE.
+<P>This call should be inside a loop that checks whether the WHDR_DONE bit is set in the <I>dwFlags</I> member of the <B>WAVEHDR</B> structure.
+</li>
+</OL>
+
+<P>Because event callbacks do not receive specific close, done, or open notifications, an application might have to check the status of the process waiting for after the event occurs. It is possible for a number of tasks to be completed by the time <B>WaitForSingleObject</B> returns.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use a window callback function</H4>
+
+<UL>
+	<LI>Call <B>waveInOpen</B> or <B>waveOutOpen</B> with the <I>fdwOpen</I> parameter set to CALLBACK_WINDOW and a window handle passed in the <I>dwCallback</I> parameter.</li>
+</UL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use a callback thread</H4>
+
+<UL>
+	<LI>Call <B>waveInOpen</B> or <B>waveOutOPen</B> with the <I>fdwOpen</I> parameter set to CALLBACK_THREAD and a thread handle passed in the <I>dwCallback</I> parameter.</li>
+</UL>
+
+<P><B>Note</B>  Messages sent to the window or thread callback are specific to the audio I/O device type used.</P>
+
+<P>In addition to using a callback function, you can poll the <I>dwFlags</I><B> </B>member of a <B>WAVEHDR</B> structure to determine when an audio I/O device is finished with a data block. Sometimes it is better to poll <I>dwFlags</I> than to wait for another mechanism to receive messages from the drivers. For example, after calling the <B>waveOutReset</B> or <B>waveInReset</B> function to release pending data blocks, you can immediately poll <I>dwFlags</I> for WHDR_DONE to be sure that the data blocks have been released.</P>
+
+<P>Once you determine that the function has released the data block, call the <B>waveInUnprepareHeader</B> or <B>waveOutUnprepareHeader</B> function to unprepare the header file. After you have unprepared the header file, you can deallocate the memory normally.</P>
+<p>&nbsp;</p></body>
+</HTML>

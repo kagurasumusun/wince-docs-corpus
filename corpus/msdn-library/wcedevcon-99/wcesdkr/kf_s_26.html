@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SetFilePointer</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_Working_with_Processes_and_Threads">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_win32_setfilepointer"></A>SetFilePointer </H2>
+
+<P>This function moves the file pointer of an open file. A remote application interface (RAPI) version of this function exists, and it is called <B>CeSetFilePointer</B>. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>DWORD</B> <B>SetFilePointer( HANDLE</B> <I>hFile</I><B>, LONG</B> <I>lDistanceToMove</I><B>, <BR>
+PLONG</B> <I>lpDistanceToMoveHigh</I><B>, DWORD</B> <I>dwMoveMethod </I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hFile</I></DT>
+
+<DD>[in] Handle to the file whose file pointer is to be moved. The file handle must have been created with GENERIC_READ or GENERIC_WRITE access to the file. </dd>
+
+<DT><I>lDistanceToMove</I></DT>
+
+<DD>Low-order 32 bits of a signed value that specifies the number of bytes to move the file pointer. If <I>lpDistanceToMoveHigh</I> is not NULL, <I>lpDistanceToMoveHigh</I> and <I>lDistanceToMove</I> form a single 64-bit signed value that specifies the distance to move. If <I>lpDistanceToMoveHigh</I> is NULL, <I>lDistanceToMove</I> is a 32-bit signed value. A positive value for <I>lDistanceToMove </I>moves the file pointer forward in the file, and a negative value moves the file pointer backward.</dd>
+
+<DT><I>lpDistanceToMoveHigh</I></DT>
+
+<DD>[in] Pointer to the high-order 32 bits of the signed 64-bit distance to move. If you do not need the high-order 32 bits, this pointer can be NULL. When non-NULL, this parameter also receives the high-order <B>DWORD</B> of the new value of the file pointer. For more information, see the Remarks section later in this topic.</dd>
+
+<DT><I>dwMoveMethod</I></DT>
+
+<DD>[in] Specifies the starting point for the file pointer move. This parameter can be one of the following values. 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_BEGIN</TD>
+<TD width=52%>The starting point is zero or the beginning of the file.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_CURRENT</TD>
+<TD width=52%>The starting point is the current value of the file pointer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>FILE_END</TD>
+<TD width=52%>The starting point is the current end-of-file position.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The low-order <B>DWORD</B> of the new file pointer indicates success and that <I>lpDistanceToMoveHigh</I> is NULL. If <I>lpDistanceToMoveHigh</I> is not NULL, the function returns the low order <B>DWORD</B> of the new file pointer, and puts the high-order <B>DWORD</B> of the new file pointer into the <B>LONG</B> pointed to by that parameter. </P>
+
+<P>If the function fails and <I>lpDistanceToMoveHigh</I> is NULL, the return value is 0xFFFFFFFF. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. </P>
+
+<P>If the function fails, and <I>lpDistanceToMoveHigh</I> is non-NULL, the return value is 0xFFFFFFFF. However, because 0xFFFFFFFF is a valid value for the low-order <B>DWORD</B> of the new file pointer, you must check <B>GetLastError</B> to determine whether an error occurred. If an error occurred, <B>GetLastError</B> returns a value other than NO_ERROR. For a code example that illustrates this point, see the Remarks section later in this topic.</P>
+
+<P>If the new file pointer would have been a negative value, the function fails, the file pointer is not moved, and the code returned by <B>GetLastError</B> is ERROR_NEGATIVE_SEEK.</P>
+
+<H4>Remarks</H4>
+
+<P>You cannot use the <B>SetFilePointer</B> function with a handle to a nonseeking such as communications device. </P>
+
+<P>You can use the <B>SetFilePointer</B> function to query the current file pointer position. To do this, specify a move method of FILE_CURRENT and a distance of zero. </P>
+
+<P>You should be careful when setting the file pointer in a multithreaded application. For example, an application whose threads share a file handle, update the file pointer, and read from the file must protect this sequence by using a critical section object or mutex object. For more information about these objects, see <A HREF="JavaScript:hhobj_1.Click()">Working with Processes and Threads</A>. </P>
+
+<P>It is not an error to set the file pointer to a position beyond the end of the file. The size of the file does not increase until you call the <A HREF="kf_s_22.htm"><B>SetEndOfFile</B></A> or <A HREF="kf_w_8.htm"><B>WriteFile</B></A> function. A write operation increases the size of the file to the file pointer position plus the size of the buffer written, leaving the intervening bytes uninitialized. </P>
+
+<P>If the return value is 0xFFFFFFFF and if <I>lpDistanceToMoveHigh</I> is non-NULL, an application must call <B>GetLastError</B> to determine whether the function has succeeded or failed. The following sample code illustrates this point: </P>
+
+<PRE><CODE>// 
+// Case One: calling the function with lpDistanceToMoveHigh == NULL 
+ 
+// Try to move hFile's file pointer some distance 
+dwPtr = SetFilePointer (hFile, lDistance, NULL, FILE_BEGIN) ; 
+ 
+if (dwPtr == 0xFFFFFFFF) // Test for failure
+{ 
+ // Obtain the error code 
+ dwError = GetLastError() ; 
+ 
+ // Deal with failure 
+ // . . . 
+ 
+} // End of error handler 
+
+
+// 
+// Case Two: calling the function with lpDistanceToMoveHigh != NULL 
+ 
+// Try to move hFile's file pointer some huge distance 
+dwPtrLow = SetFilePointer (hFile, lDistLow, &amp; lDistHigh, FILE_BEGIN) ; 
+ 
+// Test for failure
+if (dwPtrLow == 0xFFFFFFFF &amp;&amp; (dwError = GetLastError()) != NO_ERROR )
+{ 
+ // Deal with failure 
+ // . . . 
+
+} // End of error handler 
+ </CODE></PRE>
+
+<P>The parameter <I>lpDistanceToMoveHigh</I> is used to manipulate huge files. If it is set to NULL, then <I>lDistanceToMove</I> has a maximum value of 2^31–2, or 2 gigabytes less two. This is because all file pointer values are signed values. Therefore if there is even a small chance that the file will grow to that size, you should treat the file as a huge file and work with 64-bit file pointers. </P>
+
+<P>If <I>lpDistanceToMoveHigh </I>is not NULL, then <I>lpDistanceToMoveHigh </I>and <I>lDistanceToMove </I>form a single 64-bit signed value. The <I>lDistanceToMove </I>parameter is treated as the low-order 32 bits of the value, and <I>lpDistanceToMoveHigh </I>as the upper 32 bits. Thus, <I>lpDistanceToMoveHigh </I>is a sign extension of <I>lDistanceToMove.</I></P>
+
+<P>To move the file pointer from 0 to 2 gigabytes, <I>lpDistanceToMoveHigh </I>can be either NULL or a sign extension of <I>lDistanceToMove.</I> To move the pointer more than 2 gigabytes, use <I>lpDistanceToMoveHigh </I>and <I>lDistanceToMove </I>as a single 64-bit quantity. For example, to move in the range from 2 gigabytes to 4 gigabytes, set the contents of <I>lpDistanceToMoveHigh </I>to zero, or to –1 for a negative sign extension of <I>lDistanceToMove.</I></P>
+
+<P>To work with 64-bit file pointers, you can declare a <B>LONG</B>, treat it as the upper half of the 64-bit file pointer, and pass its address in <I>lpDistanceToMoveHigh.</I> This means you have to treat two different variables as a logical unit, which is error-prone. The problems can be ameliorated by using the <B>LARGE_INTEGER </B>structure to create a 64-bit value and passing the two 32-bit values by means of the appropriate elements of the union.</P>
+
+<P>It is conceptually simpler and better design to use a function to hide the interface to <B>SetFilePointer</B>. To do so, use something like this:</P>
+
+<PRE><CODE>__int64 myFileSeek (HANDLE hf, __int64 distance, DWORD MoveMethod)
+{
+ LARGE_INTEGER li;
+
+ li.QuadPart = distance;
+
+ li.LowPart = SetFilePointer (hf, li.LowPart, &amp;li.HighPart, MoveMethod);
+
+ if (li.LowPart == 0xFFFFFFFF &amp;&amp; GetLastError() != NO_ERROR)
+ {
+ li.QuadPart = </CODE>–<CODE>1;
+ }
+
+ return li.QuadPart;
+}
+</CODE></PRE>
+
+<P>You can use <B>SetFilePointer</B> to determine the length of a file. To do this, use FILE_END for <I>dwMoveMethod </I>and seek to location zero. The file offset returned is the length of the file. However, this practice can have unintended side effects, such as failure to save the current file pointer so that the program can return to that location. It is simpler and safer to use <A HREF="kf_g_17.htm"><B>GetFileSize</B></A> instead.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_r_5.htm"><B>ReadFile</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

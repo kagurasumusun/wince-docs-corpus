@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Searching for a Record</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_searching_for_a_record"></A>Searching for a Record</H2>
+
+<P>Before you can read and write a record in a database, you must find the record. Use <B>CeSeekDatabase</B> to move the database seek pointer to the record that you want to read from or write to. <B>CeSeekDatabase</B> always uses the current sort order as it is specified in the call to <B>CeOpenDatabaseEx</B>. <B>CeSeekDatabase</B> can search through a database for a relative or exact property value, a relative or exact location, or a record object identification. However, Windows CE can perform a seek operation only on a sorted property value. When <B>CeSeekDatabase</B> finds a record, Windows CE positions the seek pointer at that record. Any subsequent read operation takes place at the location of the seek pointer. If you set the CEDB_AUTOINCREMENT flag in your call to <B>CeOpenDatabaseEx</B>, each read operation automatically increments the seek pointer from the current record to the next record.</P>
+
+<P>Seek operations are affected by the sort order that is associated with the open database handle. For example, suppose that the Contacts database was opened by using a sort operation on the name property. If you specify the CEDB_SEEK_VALUEFIRSTEQUAL flag and a value of "John Smith,” <B>CeSeekDatabase</B> searches from the beginning of the database looking only at the name property of each record. It stops when, and if, it finds a matching property.</P>
+
+<P>The following code example shows how to search for a record by using <B>CeSeekDatabase</B>.</P>
+
+<PRE><CODE>void UsingCeSeekDatabase (void)
+{
+  CEOID CeOid;          // Object identifier
+  CEOID CeOidSeek;      // Object identifier
+  DWORD dwIndex;        // Index of record to seek
+  TCHAR szError[100];   // String for displaying error messages
+  HANDLE hDataBase;     // Handle to a user-allocated heap
+
+  // Assign to CeOidSeek the object identifier of the record
+  // being searched for.
+  // ...
+
+  // Call CeOpenDatabaseEx to open the database.
+  // hDataBase = CeOpenDatabaseEx {...}
+
+  // Perform the seek. This type of seek operation is very efficient.
+  if ((CeOid = CeSeekDatabase(
+              hDataBase,        // Handle of the database
+              CEDB_SEEK_CEOID,  // Finding an object with the
+                                // same identifier
+              CeOidSeek,        // Specifies the record to seek
+              &amp;dwIndex          // If successful, moves the database
+                                // pointer to point to the record
+                )) == 0)
+  {
+    wsprintf (szError, TEXT("ERROR: CeSeekDatabase failed (%ld)"),
+                          GetLastError ());
+  }
+
+} // End of UsingCeSeekDatabase example code
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

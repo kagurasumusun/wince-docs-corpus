@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CreateFileMapping</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_createfilemapping"></A>CreateFileMapping</H2>
+
+<P>This function creates a named or unnamed file-mapping object for the specified file.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.01 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HANDLE CreateFileMapping(HANDLE</B> <I>hFile</I>, <BR>
+<B>LPSECURITY_ATTRIBUTES</B> <I>lpFileMappingAttributes</I>, <B>DWORD</B> <I>flProtect</I>, <BR>
+<B>DWORD</B> <I>dwMaximumSizeHigh</I>, <B>DWORD</B> <I>dwMaximumSizeLow</I>, <BR>
+<B>LPCTSTR</B> <I>lpName </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hFile</I></DT>
+
+<DD>Handle to the file from which to create a mapping object. The file must be opened with an access mode compatible with the protection flags specified by the <I>flProtect</I> parameter. It is recommended, though not required, that files you intend to map be opened for exclusive access. 
+
+<P>If <I>hFile</I> is (HANDLE)0xFFFFFFFF, the calling process must also specify a mapping object size in the <I>dwMaximumSizeHigh</I> and <I>dwMaximumSizeLow</I> parameters. The function creates a file-mapping object of the specified size backed by physical memory rather than by a named file in the file system. The file-mapping object can be shared by name. In Windows CE, memory utilized for the mapping object is not part of the 32 MB virtual process space. 
+</dd>
+
+<DT><I>lpFileMappingAttributes</I></DT>
+
+<DD>Ignored. Must be NULL.</dd>
+
+<DT><I>flProtect</I></DT>
+
+<DD>Specifies the protection desired for the file view, when the file is mapped. This parameter can be one of the following values: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=45%>
+<H5>Value</H5>
+</TD>
+<TD width=55%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>PAGE_READONLY</TD>
+<TD width=55%>Gives read-only access to the committed region of pages. An attempt to write to or execute the committed region results in an access violation. The file specified by the <I>hFile</I> parameter must have been created with GENERIC_READ access. You cannot specify PAGE_READONLY without a file handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>PAGE_READWRITE</TD>
+<TD width=55%>Gives read-write access to the committed region of pages. The file specified by <I>hFile</I> must have been created with GENERIC_READ and GENERIC_WRITE access.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>PAGE_WRITECOPY</TD>
+<TD width=55%>Not supported.</TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>In addition, an application can specify certain section attributes by combining (using the bitwise OR operator) one or more of the following section attribute values with one of the preceding page protection values: 
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=45%>
+<H5>Value</H5>
+</TD>
+<TD width=55%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_COMMIT</TD>
+<TD width=55%>Allocates physical storage in memory or in the paging file on disk for all pages of a section. This is the default setting.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_IMAGE</TD>
+<TD width=55%>Not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_NOCACHE</TD>
+<TD width=55%>Not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=45%>SEC_RESERVE</TD>
+<TD width=55%>Not supported.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>dwMaximumSizeHigh</I></DT>
+
+<DD>Specifies the high-order 32 bits of the maximum size of the file-mapping object. </dd>
+
+<DT><I>dwMaximumSizeLow</I></DT>
+
+<DD>Specifies the low-order 32 bits of the maximum size of the file-mapping object. If this parameter and <I>dwMaximumSizeHig </I>are zero, the maximum size of the file-mapping object is equal to the current size of the file identified by <I>hFile</I>. </dd>
+
+<DT><I>lpName</I></DT>
+
+<DD>Long pointer to a null-terminated string specifying the name of the mapping object. The name can contain any character except the backslash character (\). 
+
+<P>If this parameter matches the name of an existing named mapping object, the function requests access to the mapping object with the protection specified by <I>flProtect</I>. 
+
+
+<P>If this parameter is NULL, the mapping object is created without a name. 
+
+
+<P>If <I>lpName</I> matches the name of an existing event, semaphore, mutex, waitable timer, or job, the function fails and the <A HREF="kf_g_19.htm"><B>GetLastError</B></A> function returns ERROR_INVALID_HANDLE. This occurs because these objects share the same name space. 
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A handle to the file-mapping object indicates success. If the object existed before the function call, the function returns a handle to the existing object — with its current size, not the specified size — and <A HREF="kf_g_19.htm"><B>GetLastError</B></A> returns ERROR_ALREADY_EXISTS. NULL indicates failure. To get extended error information, call <B>GetLastError</B>. </P>
+
+<H4>Remarks</H4>
+
+<P>If you call <B>CreateFileMapping</B> with a handle from <B>CreateFileForMapping</B> and it fails for any reason, the handle is closed.</P>
+
+<P>This function will not work on a Windows CE–based platform that does not support Page-In.</P>
+
+<P>After a file-mapping object has been created, the size of the file must not exceed the size of the file-mapping object; if it does, not all of the file’s contents will be available for sharing. </P>
+
+<P>If an application specifies a size for the file-mapping object that is larger than the size of the actual named file on disk, the file on disk is grown to match the specified size of the file-mapping object. If the file cannot be grown, this results in a failure to create the file-mapping object. <B>GetLastError</B> will return ERROR_DISK_FULL.</P>
+
+<P>The handle that <B>CreateFileMapping</B> returns has full access to the new file-mapping object. It can be used with any function that requires a handle to a file-mapping object. File-mapping objects can be shared through process creation.</P>
+
+<P>File handles that have been used to create file-mapping objects must <I>not</I> be used in subsequent calls to file I/O functions, such as <B>ReadFile</B> and <B>WriteFile</B>. In general, if a file handle has been used in a successful call to the <B>CreateFileMapping</B> function, do not use that handle unless you first close the corresponding file-mapping object.</P>
+
+<P>Creating a file-mapping object creates the potential for mapping a view of the file but does not map the view. The <A HREF="kf_mn_26.htm"><B>MapViewOfFile</B></A> function maps a view of a file into the address space of a process. </P>
+
+<P>With one important exception, file views derived from a single file-mapping object are coherent, or identical, at a given time. If multiple processes have handles of the same file-mapping object, they see a coherent view of the data when they map a view of the file. </P>
+
+<P>The exception has to do with remote files. Although <B>CreateFileMapping</B> works with remote files, it does not keep them coherent. For example, if two computers both map a file as writeable, and both change the same page, each computer will only see its own writes to the page. When the data gets updated on the disk, it is not merged. </P>
+
+<P>A mapped file and a file accessed by means of the input and output (I/O) functions (<A HREF="kf_r_5.htm"><B>ReadFile</B></A> and <A HREF="kf_w_8.htm"><B>WriteFile</B></A>) are not necessarily coherent. </P>
+
+<P>To fully close a file mapping object, an application must unmap all mapped views of the file mapping object by calling <A HREF="kf_tu_28.htm"><B>UnmapViewOfFile</B></A>, and close the file mapping object handle by calling <A HREF="kf_c_7.htm"><B>CloseHandle</B></A>. The order in which these functions are called does not matter. The call to <B>UnmapViewOfFile</B> is necessary because mapped views of a file mapping object maintain internal open handles to the object, and a file mapping object will not close until all open handles to it are closed. </P>
+
+<P><B>Note</B>  To guard against an access violation, use structured exception handling to protect any code that writes to or reads from a memory mapped view.</P>
+
+<H4>Example</H4>
+
+<P>To implement a mapping-object creation function that fails if the object already exists, an application can use the following code. </P>
+
+<PRE><CODE>hMap = CreateFileMapping(...); 
+
+if (hMap != NULL &amp;&amp; GetLastError() == ERROR_ALREADY_EXISTS) 
+{ 
+    CloseHandle(hMap); 
+    hMap = NULL; 
+} 
+return hMap; 
+ </CODE></PRE>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_c_7.htm"><B>CloseHandle</B></A>, <A HREF="kf_c_32.htm"><B>CreateFileForMapping</B></A>, <A HREF="kf_mn_26.htm"><B>MapViewOfFile</B></A>, <A HREF="kf_r_5.htm"><B>ReadFile</B></A>, <A HREF="kf_tu_28.htm"><B>UnmapViewOfFile</B></A>, <A HREF="kf_v_181.htm"><B>VirtualAlloc</B></A>, <A HREF="kf_w_8.htm"><B>WriteFile</B></A> </P>
+<p>&nbsp;</p></body>
+</HTML>

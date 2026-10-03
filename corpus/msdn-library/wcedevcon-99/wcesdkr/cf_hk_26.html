@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>InternetOpen</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_internetopen"></A>InternetOpen</H2>
+
+<P>This function<B> </B>initializes an application’s use of the Windows CE Internet functions.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Wininet.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HINTERNET WINAPI InternetOpen(LPCTSTR</B> <I>lpszAgent</I>, <B>DWORD </B><I>dwAccessType</I><B>,  LPCTSTR </B><I>lpszProxy</I><B> , LPCTSTR </B><I>lpszProxyBypass</I><B> ,  DWORD </B><I>dwFlags</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>lpszAgent</I> </DT>
+
+<DD>Long pointer to a null-terminated string that contains the name of the application or entity calling the Internet functions (for example, Microsoft Internet Explorer). This name is used as the user agent in the HTTP protocol. </dd>
+
+<DT><I>dwAccessType</I> </DT>
+
+<DD>Specifies the type of access required. It is one of the following values: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=60%>
+<H5>Value</H5>
+</TD>
+<TD width=40%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=60%>INTERNET_OPEN_TYPE_DIRECT </TD>
+<TD width=40%>Resolves all host names locally. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=60%>INTERNET_OPEN_TYPE_PRECONFIG </TD>
+<TD width=40%>Retrieves the proxy or direct configuration from the registry. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=60%>INTERNET_OPEN_TYPE_PRECONFIG_WITH_NO_AUTOPROXY </TD>
+<TD width=40%>Retrieves the proxy or direct configuration from the registry and prevents the use of a startup JScript or Internet Setup (INS) file. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=60%>INTERNET_OPEN_TYPE_PROXY </TD>
+<TD width=40%>Passes requests to the proxy unless a proxy bypass list is supplied and the name to be resolved bypasses the proxy. In this case, the function uses INTERNET_OPEN_TYPE_DIRECT. </TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>lpszProxyName</I> </DT>
+
+<DD>Long pointer to a null-terminated string that contains the name of the proxy server (or servers) to use if proxy access was specified. If this parameter is NULL, the function reads proxy information from the registry. Do not use an empty string, because <B>InternetOpen</B> will use it as the proxy name. The Win32 Internet functions only recognize CERN type proxies (HTTP only) and the TIS FTP gateway (FTP only). If Microsoft Internet Explorer is installed, the Win32 Internet functions also support SOCKS proxies. FTP requests can be made through a CERN type proxy either by changing them to an HTTP request or by using <B>InternetOpenUrl</B>. </dd>
+
+<DT><I>lpszProxyBypass</I> </DT>
+
+<DD>Long pointer to a null-terminated string that contains an optional list of host names or IP addresses, or both, that should not be routed through the proxy. The list can contain wildcards. Do not use an empty string, because <B>InternetOpen</B> will use it as the proxy bypass list. If this parameter specifies the "&lt;local&gt;" macro as the only entry, the function bypasses any host name that does not contain a period. If this parameter is NULL, the function reads the bypass list from the registry. </dd>
+
+<DT><I>dwFlags</I> </DT>
+
+<DD>Specifies various options affecting the behavior of the function. It can be a combination of these values:
+
+<UL>
+	<LI>INTERNET_FLAG_ASYNC</li>
+
+	<LI>INTERNET_FLAG_FROM_CACHE</li>
+
+	<LI>INTERNET_FLAG_OFFLINE</li>
+</UL>
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>A valid handle, which the application passes on to subsequent Win32 Internet functions, indicates success. NULL indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. </P>
+
+<H4>Windows CE Remarks</H4>
+
+<P>The <B>InternetOpen</B> function makes available most of the functionality of the corresponding Win32 Internet function, including basic direct connections, proxy connections, and pre-configuration proxy settings. The type of internet access is specified by one of the three values assigned to the <I>in</I> parameter, <I>dwAccessType</I>:
+
+<DL>
+<DT>INTERNET_OPEN_TYPE_DIRECT </DT>
+
+<DD>Requests are made directly to the nominated server.</dd>
+
+<DT>INTERNET_OPEN_TYPE_PROXY</DT>
+
+<DD>Request are made through the nominated proxy.</dd>
+
+<DT>INTERNET_OPEN_TYPE_PRECONFIG </DT>
+
+<DD>Gets configuration from the registry. <B>InternetOpen</B> looks under the HKEY_CURRENT_USER\Comm\Wininet\ProxyServer key to determine the proxy configuration to use. If this key does not exist, or the string is NULL, all requests will be made directly to the nominated server. The string stored in the key must be in the form [&lt;protocol&gt;=][&lt;scheme&gt;://]&lt;proxy&gt;[:&lt;port&gt;].If the proxy server list is not registered in the registry or the string is NULL, Windows CE defaults to the INTERNET_OPEN_TYPE_DIRECT access.
+</dd>
+</DL>
+
+<P>Windows CE does not support multiple proxy servers. Thus, only one proxy can be specified for <I>lpszProxy</I> in the form: [&lt;protocol&gt;=][&lt;scheme&gt;://]&lt;proxy&gt;[:&lt;port&gt;] For example, “http://proxy:80” is allowed, but "ftp=ftp://ftp-gw http=http://jerhico:80" is not.</P>
+
+<P>Windows CE does not support the proxy bypass lists; the <I>lpszProxyBypass</I> parameter must be NULL .</P>
+
+<P>An application can accept the INTERNET_FLAG_ASYNC value for the <I>dwFlags</I> parameter, but only the <B>InternetReadFile</B> and <B>InternetQueryDataAvailable</B> functions can execute asynchronously. All other requests will be completed synchronously. However, it does not take the INTERNET_FLAG_OFFLINE flag as no caching features are available.</P>
+
+<H4>Remarks</H4>
+
+<P><B>InternetOpen</B> is the first Win32 Internet function called by an application. It tells the Internet DLL to initialize internal data structures and prepare for future calls from the application. When the application finishes using the Internet functions, it should call <B>InternetCloseHandle </B>to free the handle and any associated resources. </P>
+
+<P>The application can make any number of calls to <B>InternetOpen</B>, although a single call is normally sufficient. The application might need to have separate behaviors defined for each <B>InternetOpen</B> instance, such as different proxy servers configured for each. </P>
+<p>&nbsp;</p></body>
+</HTML>

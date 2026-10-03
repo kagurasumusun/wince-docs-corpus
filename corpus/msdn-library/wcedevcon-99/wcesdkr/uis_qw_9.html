@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>SPLBUFFER</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_splbuffer_str"></A>SPLBUFFER</H2>
+
+<P>This structure contains information about a spelling session. An application uses this structure to specify the text for the spelling checker to process, and the spelling checker uses this structure to return misspelled words and suggested corrections. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Splapi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>typedef</B> <B>struct</B> <B>tagSPLBUFFER{</B><BR>
+ <B>const</B> <B>WCHAR</B> <B>*</B> <I>pwszIn</I><B>;<BR>
+</B> <B>WCHAR</B> <B>*</B> <I>pwszOut</I><B>;<BR>
+</B> <B>SPLSUGGEST</B> <I>aspl[8]</I><B>;<BR>
+</B> <B>DWORD</B> <I>iwcIn</I><B>;<BR>
+</B> <B>DWORD</B> <I>cwcIn</I><B>;<BR>
+</B> <B>DWORD</B> <I>dwMode</I><B>;<BR>
+</B> <B>DWORD</B> <I>cwcOut</I><B>;<BR>
+</B> <B>DWORD</B> <I>cwcUsed</I><B>;<BR>
+</B> <B>DWORD</B> <I>dwErr</I><B>;<BR>
+</B> <B>DWORD</B> <I>iwcErr</I><B>;<BR>
+</B> <B>DWORD</B> <I>cwcErr</I><B>;<BR>
+</B> <B>DWORD</B> <I>cspl</I><B>;</B><BR>
+<B>}</B> <B>SPLBUFFER</B>, <B>*PSPLBUFFER;</B></P>
+
+<H4>Members</H4>
+
+<DL>
+<DT><I>pwszIn</I></DT>
+
+<DD>Pointer to the beginning of the input buffer, which contains the text to be processed.</dd>
+
+<DT><I>pwszOut</I></DT>
+
+<DD>Pointer to the output buffer, which the spelling checker fills with suggestions. Each suggested word is a null-terminated string. A second NULL character indicates the end of the suggestion list. When the application calls the <B>SplEnumUserDict</B> function, the output buffer contains up to eight words from the specified user dictionary. </dd>
+
+<DT><I>aspl</I></DT>
+
+<DD>Array of eight <B>SPLSUGGEST</B> structures that specify pointers to spelling checker suggestions and the score for each suggestion. The <I>pwsz</I> member of <B>SPLSUGGEST </B>points to a single suggestion, which is a null-terminated string in <I>pwszOut</I>. The <I>nScore</I> member of <B>SPLSUGGEST</B> specifies the suggestion’s score. The spelling checker can provide up to eight suggestions and scores for each misspelled word.</dd>
+
+<DT><I>iwcIn</I></DT>
+
+<DD>Index that specifies a number of characters offset from <I>pwzIn</I>. Use <I>iwcIn</I> for context checking. The <I>iwcIn</I> member specifies to the spelling checker a number of characters preceding the first word to be checked. For example, the correctness of the first word to be processed can depend on the word that precedes it </dd>
+
+<DT><I>cwcIn</I></DT>
+
+<DD>Size, in characters, of the input buffer relative to <I>pwszIn</I>. </dd>
+
+<DT><I>dwMode</I></DT>
+
+<DD>Specifies the processing mode. It is one of the following flags:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=34%>
+<H5>Value</H5>
+</TD>
+<TD width=66%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>SPL_NO_STATE_INFO</TD>
+<TD width=66%>The input buffer has an arbitrary starting point. This mode occurs when the user selects a portion of a document to check instead of an entire document.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>SPL_IS_CONTINUED</TD>
+<TD width=66%>After the user requests that the spelling checker ignore an error, the spelling checker continues to process the text in the input buffer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>SPL_IS_EDITED_CHANGE</TD>
+<TD width=66%>The input buffer has changed because a mistake was corrected. The result is a signal to an application to carefully resume processing because of the potential of entering a loop where the spelling checker becomes stuck on a word that it determines to be incorrect.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>SPL_STARTS_SENTENCE</TD>
+<TD width=66%>The input buffer starts at the beginning of a sentence. This mode typically occurs when processing starts at the beginning of the input buffer. </TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>cwcOut</I></DT>
+
+<DD>Size, in characters, of the output buffer.</dd>
+
+<DT><I>cwcUsed</I></DT>
+
+<DD>Portion of the output buffer, in characters, that the suggestions utilize. This value includes the NULL character that terminates each suggestion.</dd>
+
+<DT><I>dwErr</I></DT>
+
+<DD>Specifies the error or result of the spell checking. It is one of the following flags:
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=63%>
+<H5>Value</H5>
+</TD>
+<TD width=37%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_OK</TD>
+<TD width=37%>The spelling checker reached the end of the input buffer and found no more errors.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_ERROR_CAPITALIZATION</TD>
+<TD width=37%>The word should be capitalized.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_INITIAL_NUMERAL</TD>
+<TD width=37%>The word begins with a numeral.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_MORE_INFO_THAN_BUFFER_CAN_HOLD</TD>
+<TD width=37%>The output buffer is not large enough to hold all the suggestions.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_NO_MORE_SUGGESTIONS</TD>
+<TD width=37%>There are no more suggestions for the misspelled word.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_REPEAT_WORD</TD>
+<TD width=37%>The word occurs consecutively in the buffer.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_RETURNING_AUTO_REPLACE</TD>
+<TD width=37%>The spelling checker returned a word that automatically replaces the misspelled word.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_RETURNING_CHANGE_ALWAYS</TD>
+<TD width=37%>The spelling checker returned a word that is in the change always internal user dictionary.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_RETURNING_CHANGE_ONCE</TD>
+<TD width=37%>The spelling checker returned a word that is in the change once internal user dictionary.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_UNKNOWN_INPUT_WORD</TD>
+<TD width=37%>The word is not in any of the dictionaries.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_WORD_CONSIDERED_ABBREVIATION</TD>
+<TD width=37%>The word is probably an abbreviation, but the spelling checker indicates the word is an error nevertheless.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=63%>SPL_UNKNOWN_ERROR</TD>
+<TD width=37%>The error is not known.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>iwcErr</I></DT>
+
+<DD>Index of the location of the error relative to the beginning of the input buffer, which <I>pwszIn</I> points to. The <I>iwcErr</I> member specifies the number of characters in the input buffer that precede the error.</dd>
+
+<DT><I>cwcErr</I></DT>
+
+<DD>Length of the word containing the error. A possible use of this value is to specify a single word to check with an inline spelling checker with an automatic replacement feature. </dd>
+
+<DT><I>cspl</I></DT>
+
+<DD>Number of suggestions that the spelling checker provides in the output buffer.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>The <B>SplCheck</B>, <B>SplSuggest</B>, and <B>SplReplace</B> functions use this structure to track a spelling session. A spelling session is created by the <B>SplInit</B> function and ended by the <B>SplQuit</B> function. <B>SplCheck</B> causes the spelling checker to process the input buffer. <B>SplSuggest</B> causes the spelling checker to provide suggestions in the output buffer. <B>SplReplace</B> offers a suggestion that an application can use to automatically replace a misspelled word. An application can use this function to implement an inline spelling checker with an automatic replacement feature.</P>
+
+<P>The <B>SplEnumUserDict</B> function uses the output buffer to enumerate user dictionaries so that an application can display dictionary contents to a user.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_s_51.htm"><B>SplCheck</B></A>, <A HREF="kf_s_53.htm"><B>SplEnumUserDict</B></A>, <A HREF="kf_s_54.htm"><B>SplInit</B></A>, <A HREF="kf_s_59.htm"><B>SplQuit</B></A>, <A HREF="kf_s_61.htm"><B>SplReplace</B></A>, <A HREF="kf_s_63.htm"><B>SplSuggest</B></A>, <A HREF="uis_qw_10.htm"><B>SPLSUGGEST</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::Close</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ioleobject_close"></A>IOleObject::Close</H2>
+
+<P>This method changes an embedded object from the running to the loaded state. It also disconnects a linked object from its link source.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT Close( DWORD </B><I>dwSaveOption </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwSaveOption</I></DT>
+
+<DD>[in] Specifies whether the object is to be saved as part of the transition to the loaded state. Valid values are taken from the enumeration <B>OLECLOSE</B>.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=44%>
+<H5>Value</H5>
+</TD>
+<TD width=56%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>S_OK</TD>
+<TD width=56%>The object closed successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=44%>OLE_E_PROMPTSAVECANCELLED</TD>
+<TD width=56%>The user was prompted to save but chose the <B>Cancel</B> button from the prompt message box.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The OLE 2 user model recommends that object applications do not prompt users before saving linked or embedded objects, including those activated in place. This policy represents a change from the OLE 1 user model, in which object applications always prompt the user to decide whether to save changes.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>A container application calls <B>IOleObject::Close</B> when it wants to move the object from a running to a loaded state. Following such a call, the object still appears in its container but is not open for editing. Calling <B>IOleObject::Close</B> on an object that is loaded but not running has no effect. Closing a linked object simply means disconnecting it.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>Upon receiving a call to <B>IOleObject::Close</B>, a running object should do the following:
+
+<UL>
+	<LI>If the object has been changed since it was last opened for editing, it should request to be saved, or not, according to instructions specified in <I>dwSaveOption</I>. If the option is to save the object, then it should call its container’s <A HREF="ki_no_12.htm"><B>IOleClientSite::SaveObject</B></A> interface.</li>
+
+	<LI>If the object has <B>IDataObject::DAdvise</B> connections with ADVF_DATAONSTOP flags, then it should send an OnDataChange notification.</li>
+
+	<LI>If the object currently owns the Clipboard, it should empty it by calling <B>OleFlushClipboard</B>.</li>
+
+	<LI>If the object is currently visible, notify its container by calling <A HREF="ki_no_10.htm"><B>IOleClientSite::OnShowWindow</B></A> with the <I>fshow</I> parameter set to FALSE.</li>
+
+	<LI>Send <B>IAdvise::OnClose</B> notifications to appropriate advise sinks.</li>
+
+	<LI>Finally, forcibly cut off all remoting clients by calling <B>CoDisconnectObject</B>.</li>
+</UL>
+
+<P>If the object application is a local server (an EXE rather than a DLL), closing the object should also shut down the object application unless the latter is supporting other running objects or has another reason to remain in the running state. Such reasons might include the presence of <A HREF="ki_ac_21.htm"><B>IClassFactory::LockServer</B></A> locks, end-user control of the application, or the existence of other open documents requiring access to the application.</P>
+
+<P>Calling <B>IOleObject::Close</B> on a linked object disconnects it from, but does not shut down, its source application. A source application that is visible to the user when the object is closed remains visible and running after the disconnection and does not send an <B>OnClose</B> notification to the link container.</P>
+<p>&nbsp;</p></body>
+</HTML>

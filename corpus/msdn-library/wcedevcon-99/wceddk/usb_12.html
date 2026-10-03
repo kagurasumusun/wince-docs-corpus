@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registry Keys for USB Device Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_registry_keys_for_usb_device_drivers"></A>Registry Keys for USB Device Drivers</H2>
+
+<P>Registry keys control how USB device drivers are loaded. When a USB device is attached, a USBD module loads the appropriate USBD to control that device, based on the device’s configuration and interface descriptor information. The USBD module locates the correct driver by using a set of registry keys, which track both the drivers and the devices. The registry keys are stored as subkeys of the <B>HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients\</B>. registry key.</P>
+
+<P>This loading method provides a flexible framework that allows drivers to be loaded in different contexts, depending on the range of devices that they are able to control. For example, OEMs may decide to include a generic class driver with their Windows CE–based platform that can control a broad range of USB devices. However, an IHV may have a driver for the a specific USB device within that class that is more efficient or works better than the generic class driver. In this case, the IHV’s driver could control a subset of the devices that the generic class driver controls, while allowing other devices to continue to be controlled by the generic driver. The structure of the <B>LoadClients</B> key defines a framework in which programmers can specify driver precedence in great detail. The following are examples of the contexts that can cause specific USB device drivers to be loaded:
+
+<UL>
+	<LI>To match every device connected to the bus. For example, a driver that displays an icon in the system’s taskbar can be loaded to control each USB device connected to the system. In this case, the driver could purposely fail the <B>USBDeviceAttach</B> call after obtaining the device information, in which case the USBD module would continue looking for a driver to control the device. Only one driver of this type may be registered in the system.</li>
+
+	<LI>To match a vendor-specific identifier. This is used for USB devices that do not fall into any currently defined class, or to provide an enhanced driver for a particular IHV’s USB devices. It is not recommended for general-purpose drivers that may be able to control devices from multiple IHVs.</li>
+
+	<LI>To control devices of a specific device class. For example, you could write a USB device driver to control all human interface device (HID) class devices. The USB Working Group has defined other device classes, including communications, audio, and mass storage.</li>
+
+	<LI>To control each interface on a device. For example, a USB CD-ROM drive that has an audio interface, as is common with CD-ROM drives that can play audio CDs, could have separate drivers for each interface. This method is the best for loading USB device drivers because it allows compound devices that require multiple drivers to operate without additional reconfiguration.</li>
+</UL>
+
+<P>The registry key for a USBD should either be part of an OEM’s platform .reg file or be created when a USB device driver is installed on a Windows CE–based platform. At installation time, the key can be created either by a setup application or by the driver’s <B>USBInstallDriver</B> function. <B>USBInstallDriver</B> should create the keys indirectly, by calling the <B>RegisterClientSettings</B> function, rather than by invoking the Windows CE registry APIs. Installation by <B>USBInstallDriver</B> occurs when an unrecognized USB device is connected to the bus and the USBD module queries a user for the name of the device driver DLL. The USBD module then loads the driver and calls its <B>USBInstallDriver</B> function.</P>
+
+<P>Subkeys for each driver have the form <B><I>Group1_ID</I>\<I>Group2_ID</I>\<I>Group3_ID</I>\<I>DriverName</I></B>. Each of the group identifier subkeys can be named <B>Default</B> to indicate that the USBD should be loaded if the remaining group identifier subkey names match the USB device. Otherwise, the group identifier subkey names are formed from combinations of vendor, device class, and protocol information, separated by underscores. This information comes from the USB device descriptor. The following table shows the allowable combinations. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=15%>
+<H5>Group key</H5>
+</TD>
+<TD width=85%>
+<H5>Allowable forms</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><B><I>Group1_ID</I></B></TD>
+<TD width=85%><I>DeviceVendorID,<BR>
+DeviceVendorID_DeviceProductID,<BR>
+DeviceVendorID_DeviceProductID_DeviceReleaseNumber</I></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><B><I>Group2_ID</I></B></TD>
+<TD width=85%><I>DeviceClassCode</I>, <BR>
+<I>DeviceClassCode_DeviceSubclassCode</I>, <BR>
+<I>DeviceClassCode_DeviceSubclassCode_DeviceProtocolCode</I></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><B><I>Group3_ID</I></B></TD>
+<TD width=85%><I>InterfaceClassCode,<BR>
+InterfaceClassCode_InterfaceSubclassCode, <BR>
+InterfaceClassCode_InterfaceSubclassCode_InterfaceProtocolCode</I></TD>
+</TR>
+</TABLE><BR>
+
+<P>The following example shows the registry key setup for the sample mouse driver.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients]
+  [Default]
+    [Default]
+      [3_1_2]
+         [Generic_Sample_Mouse_Driver]
+           “DLL”=“USBmouse.dll”
+</CODE></PRE>
+
+<P>This example shows that the driver contained in Usbmouse.dll called <B>Generic_Sample_Mouse_Driver</B> is loaded by default for any interface on a USB device with an <B><I>InterfaceClassCode</I></B> of 3 (HID class), <B><I>InterfaceSubclassCode</I></B> of 1 (boot interface subclass), and <B><I>InterfaceProtocolCode</I></B> of 2 (mouse protocol). These values are defined in the USB HID specification.</P>
+
+<P>The following example shows the settings for the sample HID driver.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients]
+  [Default]
+    [Default]
+      [3]
+         [Generic_Sample_Hid_Class_Driver]
+           “DLL”=“USBHID.dll”</CODE></PRE>
+
+<P>This example shows that the driver contained in Usbhid.dll is called <B>Generic_Sample_Hid_Class_Driver</B> and is loaded for any interface with an <B><I>InterfaceClassCode</I></B> of 3.</P>
+
+<P>According to the precedence rules for loading USB device drivers, if the settings for both the sample mouse and the HID drivers are included in the registry, the HID driver is loaded first because it has the more general <B>Group3_ID</B> subkey.</P>
+<p>&nbsp;</p></body>
+</HTML>

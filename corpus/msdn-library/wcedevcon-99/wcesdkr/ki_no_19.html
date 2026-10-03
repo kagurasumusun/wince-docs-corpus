@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::EnumVerbs</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ioleobject_enumverbs"></A>IOleObject::EnumVerbs</H2>
+
+<P>This<B> </B>method<B> </B>exposes a pull-down menu listing the verbs available for an object in ascending order by verb number.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT EnumVerbs( IEnumOleVerb ** </B><I>ppEnumOleVerb</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>ppEnumOleVerb</I></DT>
+
+<DD>[out] Address of <B>IEnumOleVerb</B>* pointer variable that receives the interface pointer to the new enumerator object. Each time an object receives a call to <B>EnumVerbs</B>, it must increase the reference count on *<I>ppEnumOleVerb</I>. It is the caller’s responsibility to call <B>Release</B> when it is done with *<I>ppEnumOleVerb</I>. If an error occurs, *<I>ppEnumOleVerb</I> must be set to NULL. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%>
+<H5>Value</H5>
+</TD>
+<TD width=72%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_OK</TD>
+<TD width=72%>Verb(s) enumerated successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>OLE_S_USEREG</TD>
+<TD width=72%>Delegate to the default handler to use the entries in the registry to provide the enumeration.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>OLEOBJ_E_NOVERBS</TD>
+<TD width=72%>Object does not support any verbs.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<H4>Notes to Callers</H4>
+
+<P>Containers call this method to expose a pull-down menu of the verbs available for their embedded objects. You may want your container to call <B>IOleObject::EnumVerbs</B> each and every time such a menu is selected in order to enable such objects as media clips, whose verbs may change while they are running, to update their menus. The default verb for a media clip, for example, changes from “Play” before it is activated to “Stop” once it is running.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>The default handler’s implementation of <B>IOleObject::EnumVerbs</B> uses the registry to enumerate an object’s verbs. If an object application is to use the default handler’s implementation, it should return OLE_S_USEREG.</P>
+
+<P>The enumeration returned is of type <B>IEnumOLEVERB</B>:</P>
+
+<PRE><CODE>typedef Enum &lt; OLEVERB &gt; IEnumOLEVERB; 
+ </CODE></PRE>
+
+<P>where <B>OLEVERB</B> is defined as:</P>
+
+<PRE><CODE>typedef struct tagOLEVERB 
+{ 
+    LONG    iVerb; 
+    LPOLESTR   lpszVerbName; 
+    DWORD   fuFlags; 
+    DWORD   grfAttribs; 
+} OLEVERB; 
+ </CODE></PRE>
+
+<P>The following list describes the members of the <B>OLEVERB</B> structure:
+
+<DL>
+<DT><I>iVerb</I></DT>
+
+<DD>Verb number being enumerated. If the object supports OLEIVERB_OPEN, OLEIVERB_SHOW and/or OLEIVERB_HIDE (or another predefined verb), these will be the first verbs enumerated, since they have the lowest verb numbers. </dd>
+
+<DT><I>lpszVerbName</I></DT>
+
+<DD>Long pointer to the null-terminated string that contains the name of the verb. 
+
+<P>In Windows, this value, along with optional embedded ampersand characters to indicate accelerator keys, can be passed to the <B>AppendMenu</B> function.
+
+
+<P>On the Macintosh, the following metacharacters may be passed along with this value:
+
+
+<UL>
+	<LI>! marks the menu item with the subsequent character</li>
+
+	<LI>&lt; sets the character style of the item</li>
+
+	<LI> ( disables the item.</li>
+</UL>
+
+
+<P>The metacharacters / and ^ are not permitted.
+</dd>
+
+<DT><I>fuFlags</I></DT>
+
+<DD>In Windows, a group of flags taken from the flag constants beginning with MF_ defined in <B>AppendMenu</B>. Containers should use these flags in building an object’s verb menu. All flags defined in <B>AppendMenu</B> are supported except for MF_BITMAP, MF_OWNERDRAW, and MF_POPUP.</dd>
+
+<DT><I>grfAttribs</I></DT>
+
+<DD>In Windows, a group of flag bits taken from the enumeration <B>OLEVERBATTRIB</B>. The flag OLEVERBATTRIB_NEVERDIRTIES indicates that executing this verb will not cause the object to become dirty and is therefore in need of saving to persistent storage.
+
+<P>OLEVERBATTRIB_ONCONTAINERMENU indicates that this verb should be placed on the container’s menu of object verbs when the object is selected. OLEIVERB_HIDE, OLEIVERB_SHOW, and OLEIVERB_OPEN never have this value set.
+
+</dd>
+</DL>
+
+<P>For more information on the Windows <B>AppendMenu</B> function, see the Microsoft <I>Win32 SDK</I>.</P>
+<p>&nbsp;</p></body>
+</HTML>

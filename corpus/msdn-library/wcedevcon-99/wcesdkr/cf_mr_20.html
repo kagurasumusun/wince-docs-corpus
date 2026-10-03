@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>recvfrom</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_recvfrom_2"></A>recvfrom </H2>
+
+<P>This function receives a datagram and stores the source address. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winsock.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>int</B> <B>recvfrom</B> <B>(SOCKET</B> <I>s</I><B>, char</B> <I>*buf</I><B>, int</B> <I>len</I><B>, int</B> <I>flags</I><B>, struct</B> <B>sockaddr</B> <I>*from</I><B>, int</B> <I>*fromlen</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>s</I></DT>
+
+<DD>[in] Descriptor that identifies a bound socket.</dd>
+
+<DT><I>buf</I></DT>
+
+<DD>[out] Buffer for the incoming data.</dd>
+
+<DT><I>len</I></DT>
+
+<DD>[in] Length of <I>buf</I>.</dd>
+
+<DT><I>flags</I></DT>
+
+<DD>[in] Specifies the way in which the call is made.</dd>
+
+<DT><I>from</I></DT>
+
+<DD>[out] Optional pointer to a buffer that will hold the source address upon return.</dd>
+
+<DT><I>fromlen</I></DT>
+
+<DD>[in/out] Optional pointer to the size of the <I>from</I> buffer.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates that the connection has been gracefully closed. SOCKET_ERROR indicates failure. To get a specific error value, call <B>WSAGetLastError</B>.</P>
+
+<H4>Remarks</H4>
+
+<P>The <B>recvfrom</B> function reads incoming data on both connected and unconnected sockets and captures the address from which the data was sent. The socket must not be connected. The local address of the socket must be known. For server applications, this is usually done explicitly through <A HREF="cf_ac_4.htm"><B>bind</B></A>. Explicit binding is discouraged for client applications. For client applications using this function, the socket can become bound implicitly to a local address through<B> <A HREF="cf_sw_2.htm">sendto</A></B>.</P>
+
+<P>For stream-oriented sockets such as those of type SOCK_STREAM, a call to <B>recvfrom</B> returns as much information as is currently available—up to the size of the buffer supplied.  The <I>from</I> and <I>fromlen</I> parameters are ignored for connection-oriented sockets.</P>
+
+<P>For message-oriented sockets, data is extracted from the first queued message, up to the size of the buffer supplied. If the datagram or message is larger than the buffer supplied, the buffer is filled with the first part of the datagram, and <B>recvfrom</B> generates the error WSAEMSGSIZE. For unreliable protocols (for example, UDP) the excess data is lost.</P>
+
+<P>If the <I>from</I> parameter is nonzero and the socket is not connection oriented, (type SOCK_DGRAM for example), the network address of the peer that sent the data is copied to the corresponding <A HREF="cs_az_37.htm"><B>SOCKADDR</B></A> structure. The value pointed to by <I>fromlen</I> is initialized to the size of this structure and is modified, on return, to indicate the actual size of the address stored in the <B>SOCKADDR</B> structure.</P>
+
+<P>If no incoming data is available at the socket, the <B>recvfrom</B> call blocks and waits for data to arrive. When the socket is nonblocking, a value of SOCKET_ERROR is returned with the error value set to WSAEWOULDBLOCK. The <A HREF="cf_sw.htm"><B>select</B></A> function can be used to determine when more data arrives. </P>
+
+<P>Any data that has already been received and buffered by the transport will be copied into the supplied user buffers. In the case of a blocking socket with no data currently having been received and buffered by the transport, the call will block until data is received. For byte-stream protocols, the stack tries to return as much data as possible, subject to the supplied buffer space and amount of received data available. However, receipt of a single byte is sufficient to unblock the caller. There is no guarantee that more than a single byte will be returned. For message-oriented protocols, a full message is required to unblock the caller.</P>
+
+<P>If the socket is connection oriented and the remote side has shut down the connection gracefully, the call to <B>recvfrom</B> will complete immediately with zero bytes received. If the connection has been reset <B>recvfrom</B> will fail with the error WSAECONNRESET.</P>
+
+<P>The <I>flags</I> parameter can be used to influence the behavior of the function invocation beyond the options specified for the associated socket. The semantics of this function are determined by the socket options and the <I>flags</I> parameter. Windows CE supports the following <I>flags </I>parameter: 
+
+<DL>
+<DT>MSG_PEEK</DT>
+
+<DD>Peek at the incoming data. The data is copied into the buffer but is not removed from the input queue. The function then returns the number of bytes currently pending to receive.
+</dd>
+</DL>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_ac_4.htm"><B>bind</B></A>, <A HREF="cf_mr_19.htm"><B>recv</B></A>, <A HREF="cf_sw.htm"><B>select</B></A>, <A HREF="cf_sw_1.htm"><B>send</B></A>, <A HREF="cf_sw_11.htm"><B>shutdown</B></A>, <A HREF="cf_sw_12.htm"><B>socket</B></A>, <A HREF="cf_sw_32.htm"><B>WSAStartup</B></A> </P>
+<p>&nbsp;</p></body>
+</HTML>

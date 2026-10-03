@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>GetDCEx</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_getdcex"></A>GetDCEx</H2>
+
+<P>This function retrieves a handle to a display device context (DC) for the client area of a specified window or for the entire screen. You can use the returned handle in subsequent graphics display interface (GDI) functions to draw in the device context. </P>
+
+<P><B>GetDCEx</B> is an extension to the <A HREF="uif_fg_25.htm"><B>GetDC</B></A> function, which gives an application more control over how and whether or not clipping occurs in the client area.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winuser.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HDC GetDCEx( HWND</B> <I>hWnd</I>, <B>HRGN</B> <I>hrgnClip</I>, <B>DWORD</B><I> flags </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hWnd</I></DT>
+
+<DD>Handle to the window whose device context is to be retrieved. If this value is NULL, <B>GetDCEx</B> retrieves the device context for the entire screen. 
+
+<P><B>Windows 98, Windows NT 5.0 and later:</B> If this parameter is NULL, <B>GetDCEx</B> retrieves the device context for the primary display monitor. <I>hrgnClip</I>
+
+
+<P>Specifies a clipping region that may be combined with the visible region of the device context. 
+</dd>
+
+<DT><I>flags</I></DT>
+
+<DD>Specifies how the device context is created. This parameter can be a combination of the following values. 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=42%>
+<H5>Value</H5>
+</TD>
+<TD width=58%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_WINDOW</TD>
+<TD width=58%>Returns a device context corresponding to the window rectangle rather than the client rectangle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_CACHE</TD>
+<TD width=58%>Returns a device context from the cache, rather than the OWNDC or CLASSDC window. Essentially overrides CS_OWNDC and CS_CLASSDC.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_PARENTCLIP</TD>
+<TD width=58%>Uses the visible region of the parent window. The parent's WS_CLIPCHILDREN and CS_PARENTDC style bits are ignored. The device context origin is set to the upper-left corner of the window identified by <I>hWnd</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_CLIPSIBLINGS</TD>
+<TD width=58%>Excludes the visible regions of all sibling windows above the window identified by <I>hWnd</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_CLIPCHILDREN</TD>
+<TD width=58%>Excludes the visible regions of all child windows below the window identified by <I>hWnd</I>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_NORESETATTRS</TD>
+<TD width=58%>Does not reset the attributes of this device context to the default attributes when this device context is released.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_LOCKWINDOWUPDATE</TD>
+<TD width=58%>Allows drawing even if there is a <B>LockWindowUpdate</B> call in effect that would otherwise exclude this window. Used for drawing during tracking.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_EXCLUDERGN</TD>
+<TD width=58%>The clipping region identified by <I>hrgnClip</I> is excluded from the visible region of the returned device context.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_INTERSECTRGN</TD>
+<TD width=58%>The clipping region identified by <I>hrgnClip</I> is intersected with the visible region of the returned device context.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DCX_VALIDATE</TD>
+<TD width=58%>When specified with DCX_INTERSECTUPDATE, causes the device context to be completely validated. Using this function with both DCX_INTERSECTUPDATE and DCX_VALIDATE is identical to using the <A HREF="uif_ac_6.htm"><B>BeginPaint</B></A> function.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The handle of the device context for the specified window indicates success. NULL indicates failure. An invalid value for the <I>hWnd</I> parameter causes the function to fail. </P>
+
+<P><B>Windows NT:</B> To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>.</P>
+
+<H4>Windows CE Remarks</H4>
+
+<P>The <I>flags</I> parameter supports the following values: DCX_WINDOW, DCX_CACHE, DCX_CLIPCHILDREN, DCX_CLIPSIBLINGS, DCX_EXCLUDERGN, DCX_INTERSECTRGN, DCX_EXCLUDEUPDATE, and DCX_INTERSECTUPDATE. </P>
+
+<P>Unlike a DC returned by <B>GetDC</B>, a DC returned by this function is not kept in sync with its associated window. If the window moves or is resized, unexpected drawing results may occur. The chance of error is reduced if an application gets a DC, draws, and then releases that DC. </P>
+
+<H4>Remarks</H4>
+
+<P>Unless the display device context belongs to a window class, the <B>ReleaseDC</B> function must be called to release the device context after painting. Because only five common device contexts are available at any given time, failure to release a device context can prevent other applications from accessing a device context. </P>
+
+<P>The function returns a device context belonging to the window's class if CS_CLASSDC, CS_OWNDC or CS_PARENTDC was specified as a style in the <B>WNDCLASS</B> structure when the class was registered. </P>
+<p>&nbsp;</p></body>
+</HTML>

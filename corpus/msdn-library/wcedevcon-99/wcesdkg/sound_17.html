@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using Windows Messages to Manage Waveform Audio Playback</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_using_windows_messages_to_manage_waveform_audio_playback"></A>Using Windows Messages to Manage Waveform Audio Playback</H2>
+
+<P>You can send a variety of Windows CE messages to a windows procedure function to manage waveform audio playback. The following table shows these messages.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=25%>
+<H5>Message</H5>
+</TD>
+<TD width=75%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>MM_WIM_CLOSE</TD>
+<TD width=75%>Sent when the <B>waveOutClose</B> or the <B>waveInClose</B> function closes a device</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>MM_WIM_DATA</TD>
+<TD width=75%>Sent when the device driver finishes with a data block sent by <B>waveOutWrite</B> or <B>waveInAddBuffer</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=25%>MM_WIM_OPEN</TD>
+<TD width=75%>Sent when <B>waveOutOpen</B> or <B>waveInOpen</B> opens a device</TD>
+</TR>
+</TABLE><BR>
+
+<P>MM_WIM_DATA is the most useful message in this table. When MM_WIM_DATA signals a completed data block, you can clean up and free that data block. Unless you need to allocate memory or initialize variables, you probably do not need to process the MM_WIM_OPEN or MM_WIM_CLOSE messages.</P>
+
+<P>Like other windows messages, these window messages have a <I>wParam</I> and an <I>lParam</I> parameter associated with them. The <I>wParam</I> always specifies a handle to the open waveform audio output device. For the MM_WIM_DATA message, <I>lParam</I> specifies a pointer to a <B>WAVEHDR</B> structure. This structure identifies a completed data block. The MM_WIM_CLOSE and MM_WIM_OPEN messages do not use <I>lParam</I>.</P>
+
+<P>The following code example shows how to process the MM_WIM_DATA message. </P>
+
+<PRE><CODE>// WndProc--Main window procedure 
+LRESULT FAR PASCAL WndProc (HWND hWnd, UINT msg, WPARAM wParam, 
+                            LPARAM lParam) 
+{ 
+  switch (msg) 
+  { 
+    case MM_WIM_DATA: 
+      // A waveform audio data block has been played and can now be 
+      // freed. 
+      waveOutUnprepareHeader ((HWAVEOUT)wParam, (LPWAVEHDR)lParam, 
+                              sizeof (WAVEHDR)); 
+      // Free hData memory 
+      waveOutClose ((HWAVEOUT)wParam); 
+
+      break; 
+  } 
+
+  return DefWindowProc (hWnd, msg, wParam, lParam); 
+}
+</CODE></PRE>
+
+<P>This example assumes that the application does not play multiple data blocks, so it can close the output device after playing a single data block.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Searching for Records</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_searching_for_records"></A>Searching for Records</H2>
+
+<P>Use the <B>CeSeekDatabase</B> function to search for a record in a database. The <B>CeSeekDatabase</B> function always uses the current sort order as specified in the call to <B>CeOpenDatabaseEx</B>. If the CEDB_AUTOINCREMENT flag was specified, each read operation on the database will automatically increment the seek pointer from the current position to the next position. </P>
+
+<P>The <B>CeSeekDatabase</B> function can perform different types of seek operations. When calling the function, you specify a flag that indicates the type of seek operation, and a value whose meaning depends on the specified flag. For example, to find a particular record, you specify the CEDB_SEEK_CEOID flag and the CEOID of the desired record. When <B>CeSeekDatabase</B> finds a record, the seek pointer is positioned at that record. Any subsequent read operation takes place at the location of the seek pointer. </P>
+
+<P><B>Note</B>  A seek operation can only be performed on a sorted property value.</P>
+
+<P>Seek operations are affected by the sort order associated with the open database handle. For example, suppose the Contacts database was opened using a sort operation on the name property. If you specify the CEDB_SEEK_VALUEFIRSTEQUAL flag and a value of “Joe Smith,” the <B>CeSeekDatabase</B> function will search from the beginning of the database looking only at the name property of each record. It will stop when, and if, a matching property is found. </P>
+
+<P>You can use <B>CeSetDatabaseInfoEx</B> to change the sort order that was set when the database was created, but this is expensive in terms of time and resources. The system maintains a set of indexes and other information that it uses to optimize database searches for the specified sort orders. When new sort orders are specified, the system must revise all of this internal information, which can take several minutes for large databases. It is better to set the desired sort order on the database when it is created so that records will be placed in order as they are added to the database. The following code example shows how to call <B>CeSeekDatabase</B>.</P>
+
+<PRE><CODE>CEOID    CeOid;                // Object identifier
+CEOID    CeOidSeek;            // Object identifier
+DWORD    dwIndex;                // Index of record to seek
+TCHAR    szError[100];        // String for displaying error messages 
+HANDLE    hDataBase;            // Handle to a user-allocated heap
+
+// Assign to CeOidSeek the object identifier of the record
+// being searched for.
+// ...
+
+// Call CeOpenDatabaseEx to open the database.
+// hDataBase = CeOpenDatabaseEx {...}
+
+// Perform the seek. This type of seek operation is very efficient. 
+if ((CeOid = CeSeekDatabase(
+            hDataBase,            // Handle of the database
+            CEDB_SEEK_CEOID,        // Finding an object with the
+                                //     same identifier.
+            CeOidSeek,            // Specifies the record to seek
+            &amp;dwIndex                // If successful, move the database
+                                //     pointer to point to the record.
+            )) == 0)
+{
+    wsprintf(szError, TEXT("ERROR: CeSeekDatabase failed (%ld)"),
+            GetLastError());
+}
+</CODE></PRE>
+
+<P></P>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

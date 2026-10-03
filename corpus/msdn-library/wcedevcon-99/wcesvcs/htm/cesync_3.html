@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Initializing the Store</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_initializing_the_store"></A>Initializing the Store</H2>
+
+<P>When a connection event occurs, the service manager calls <B>IReplStore::Initialize</B> to ensure that the data file for the application exists and is open. The service manager: 
+
+<UL>
+	<LI>Initializes the data store and compares store identifiers to determine if the desktop object and the device object are mapped correctly. </li>
+
+	<LI>Accesses the data store and enumerates each desktop object. </li>
+
+	<LI>Determines what data has changed and transfers that data to the device. </li>
+</UL>
+
+<P>To accomplish these tasks, the service manager places a series of calls to the desktop provider module, prompting the desktop provider module to respond with the necessary information. </P>
+
+<P>The following illustration shows the order in which the service manager calls the desktop provider module.</P>
+
+<P><IMG SRC="flow1_4.gif" ALT="" BORDER=0></P>
+
+<P>In order for the service manager to initialize the desktop provider module, you must store the name of the file that needs to be synchronized in the registry. The registry location for this file name depends on whether you are initializing the desktop provider module for a connected device or a selected device. </P>
+
+<P>A selected device is a disconnected device that a user selects from the list of profiles stored in the Windows CE Services Mobile Device folder. A user selects a profile to change synchronization options. When a user selects a device, the service manager passes the bit flag ISF_SELECTED_DEVICE into <B>IReplStore::Initialize</B>. </P>
+
+<P>To access the profile information for a device: 
+
+<UL>
+	<LI>To get the registry key for a connected device profile, call <B>IReplNotify::QueryDevice </B>with<B> </B>QDC_CON_DEVICE_KEY.</li>
+
+	<LI>To get the registry key for a selected device profile, call <B>IReplNotify::QueryDevice </B>with QDC_SEL_DEVICE_KEY.</li>
+</UL>
+
+<P>If a device is remotely connected to the desktop, the service manager passes the ISF_REMOTE_CONNECTED bit flag into <B>IReplStore::Initialize</B>. Whenever this flag is set, the desktop provider module should not display any blocking UI, such as a message box or a dialog box, because the user may not be able to respond to the UI. Instead, the desktop provider module should accept all default actions, without prompting the user on the desktop. </P>
+
+<P>If the service provider returns an error in <B>IReplStore::Initialize</B>, the service manager automatically displays an error message. If you want the desktop provider module rather than the service manager to display an error message that you create, return RERR_NO_ERR_PROMPT.</P>
+
+<P>The service manager typically calls <B>IReplStore::Initialize </B>immediately after a connection event occurs. However, the service manager can call other methods first, such as when a user changes the synchronization options for a disconnected device. </P>
+
+<P>The following table shows the methods that can be called before <B>IReplStore::Initialize</B>.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=38%>
+<H5>IReplStore method</H5>
+</TD>
+<TD width=62%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>IReplStore::GetStoreInfo</B></TD>
+<TD width=62%>Gets information about a store, which is displayed in the ActiveSync option dialog box.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>IReplStore::GetObjTypeUIData</B></TD>
+<TD width=62%>Gets information about an object type, which is displayed in the ActiveSync option dialog box under <B>Status</B>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>IReplStore::GetFolderInfo</B></TD>
+<TD width=62%>Gives the folder handle, HREPLFLD, to the desktop provider module.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>IReplStore::ActivateDialog</B></TD>
+<TD width=62%>Allows a user to change options for an ActiveSync service.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>IReplStore::BytesToObject</B></TD>
+<TD width=62%>Converts a series of bytes to a HREPLITEM handle or a HREPLFLD handle.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>IReplStore::ObjectToBytes</B></TD>
+<TD width=62%>Converts a HREPLITEM handle or a HREPLFLD handle to a series of bytes.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%><B>IReplStore::ReportStatus</B></TD>
+<TD width=62%>Informs the desktop provider module about events that are taking place. This method is optional.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following code example shows how to implement <B>IReplStore::Initialize</B>.</P>
+
+<PRE><CODE>STDMETHODIMP CStore::Initialize
+(
+    IReplNotify *pNotify,    // Pointer to the IReplNotify interface
+    UINT uFlags              // Either ISF_SELECTED_DEVICE or 
+                            // ISF_REMOTE_CONNECTED
+)
+{
+    m_pNotify = pNotify;
+    m_uFlags = uFlags;
+
+    // Get the correct registry for the synchronization options.
+    HKEY hKey;
+    HRESULT hr;
+    hr = m_pNotify-&gt;QueryDevice( ( uFlags &amp; ISF_SELECTED_DEVICE )? 
+            QDC_SEL_DEVICE_KEY : QDC_CON_DEVICE_KEY, (LPVOID *)&amp;hKey );
+
+ // Read the registry for the type of files to synchronize.
+ // ...
+
+
+    // The service provider should suppress all UI that requires 
+    // user input 
+    // if ISF_REMOTE_CONNECTED is set in uFlags.
+    // ...
+
+    return NOERROR;
+}
+</CODE></PRE>
+
+<P><B>CStore</B> is a COM class whose base is <B>IReplStore</B>. The following code example shows the <B>CStore</B> definition.</P>
+
+<PRE><CODE>class CStore: public IReplStore
+{
+private:
+    LONG                m_cRef;
+    LPUNKNOWN        m_pUnkOuter;
+
+public:
+    CStore( LPUNKNOWN );
+    ~CStore();
+
+    // ******** IUnknown methods **************
+    // QueryInterface, AddRef, and Release
+
+    // ******** IReplStore methods **************
+    // Store manipulation routines
+     // Initialize, GetStoreInfo, ReportStatus, CompareStoreIDs
+
+    // Object-related routines
+     // CompareItem, IsItemChanged, IsItemReplicated, UpdateItem
+
+    // Folder-related routines
+    // GetFolderInfo, IsFolderChanged
+
+    // Enumeration of folder objects
+    // FindFirstItem, FindNextItem, FindItemClose
+
+    // STD management routines
+     // ObjectToBytes, BytesToObject, FreeObject, CopyObject,         
+    // IsValidObject
+
+    // UI-related routines
+    // ActivateDialog, GetObjTypeUIData, GetConflictInfo, 
+    // RemoveDuplicates
+
+private:
+    IreplNotify        *m_pNotify;
+    CDataHandler    *m_pObjHandler;
+    UINT                m_uFlags;
+};
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

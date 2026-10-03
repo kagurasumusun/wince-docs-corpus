@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sending and Receiving Objects</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_sending_and_receiving_objects"></A>Sending and Receiving Objects</H2>
+
+<P>You use <B>IReplObjHandler</B> to serialize or convert an object to a series of bytes. It also deserializes an object or converts the bytes back to an object in order to transmit data to a device or desktop. There is no limitation or specification on how to serialize an object. A desktop provider module can serialize the object into any number of bytes, and it can group these bytes into any number of packets.</P>
+
+<P>Whenever an object requires serialization, the service manager calls the <B>IReplObjHandler</B> methods in the following order:
+
+<OL>
+	<LI><B>IReplObjHandler::Setup</B> to tell the desktop provider module what object to serialize and to enable the desktop provider module to allocate any resource that are required for serialization.
+<OL>
+	<LI>2.<B>IReplObjHandler::GetPacket </B>to let the desktop provider module create one or more packets of bytes of any size. </li>
+</OL>
+
+<P>The service manager calls this <B> </B>method repeatedly until RWRN_LAST_PACKET is returned.
+
+<OL>
+	<LI>3.<B>IReplObjHandler::Reset</B> to let the desktop provider module free any used resources.<B> </B></li>
+</OL>
+
+<P>The service manager calls this method when serialization is completed.
+</li>
+</OL>
+
+<P>The service manager does not recognize byte format during serialization. The service manager simply sends the packets in the same byte number and sequence as originally received.</P>
+
+<P>The following flowchart shows the sequence of calls necessary to send and receive data.</P>
+
+<P></P>
+
+<P>The following code example shows how to implement <B>IReplObjHandler::Setup</B> and <B>IReplObjHandler::GetPacket</B>. It also shows the definition for <B>CDataHandler</B>, which is a COM class whose base is <B>IReplStore</B>. </P>
+
+<PRE><CODE>class CDataHandler : public IReplObjHandler
+{
+public:
+    CDataHandler( CStore *pStore );
+    ~CDataHandler();</CODE></PRE>
+
+<PRE><CODE>    // ******** IUnknown methods **************
+    // AddRef, Release, QueryInterface
+    
+    // ******** IReplObjHandler methods **************
+    // Setup, Reset, GetPacket, SetPacket, DeleteObj</CODE></PRE>
+
+<PRE><CODE>private:
+    long     m_cRef;
+     PREPLSETUP m_pWriteSetup, m_pReadSetup;
+};</CODE></PRE>
+
+<PRE><CODE>STDMETHODIMP CDataHandler::Setup
+( 
+    PREPLSETUP pSetup    // Points a REPLSETUP structure, which contains // information about the object to be serialized // or deserialized.
+)
+{
+    // Could be reading and writing at the same time, so it is necessary     // to save the pointer to setup struct differently.
+    if ( pSetup-&gt;fRead )
+        m_pReadSetup = pSetup;
+    else
+        m_pWriteSetup = pSetup;</CODE></PRE>
+
+<PRE><CODE>    return NOERROR;
+}</CODE></PRE>
+
+<PRE><CODE>STDMETHODIMP CDataHandler::GetPacket
+( 
+    LPBYTE  *lppbPacket,        // Pointer to the pointer of the outgoing 
+                            // packet.
+    DWORD   *pcbPacket,        // Pointer to a DWORD for the packet size.
+    DWORD   cbRecommend         // Recommended maximum size of the packet.
+)
+{
+     if ( m_pReadSetup-&gt;hItem == NULL )
+        return E_UNEXPECTED;</CODE></PRE>
+
+<PRE><CODE>     // Initialize the packet. </CODE></PRE>
+
+<P><CODE>// ...</CODE></P>
+
+<PRE></PRE>
+
+<PRE><CODE>    // Fill up the packet.</CODE></PRE>
+
+<P><CODE>// ...</CODE></P>
+
+<PRE></PRE>
+
+<PRE><CODE>    // Assign the size of the packet to *pcbPacket and the packet
+    // to *lppbPacket.
+    //*pcbPacket = sizeof( packet );
+    //*lppbPacket = (LPBYTE)&amp;packet;</CODE></PRE>
+
+<PRE><CODE>    return NOERROR;     
+    //return RWRN_LAST_PACKET if it is the final packet.
+}</CODE></PRE>
+
+<P>During synchronization, the service manager creates an instance of <B>IReplObjHandler</B> for each object type. The desktop provider module recognizes when <B>IReplObjHandler::SetPacket</B> is sending information about a new object by checking for RSF_NEW_OBJECT in <B>REPLSETUP::dwFlags</B>. The service manager passes <B>REPLSETUP::dwFlags</B> in the <B>IReplObjHandler::Setup</B> call. The structure <B>REPLSETUP</B> is passed in <B>IReplObjHandler::Setup</B>. </P>
+
+<P>The following table shows the <B>REPLSETUP </B>members that are used by the desktop provider module. All other members are internal to the service manager and should not be changed.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=29%>
+<H5>REPLSETUP member</H5>
+</TD>
+<TD width=71%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><I>fRead</I></TD>
+<TD width=71%>Set to TRUE for reading an object from the desktop store. 
+<P>Set to FALSE for writing an object to the desktop store. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><I>dwFlags</I></TD>
+<TD width=71%>A collection of bit flags related to serialization and deserialization.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><I>Hfolder</I></TD>
+<TD width=71%>A handle to the folder. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=29%><I>HItem</I></TD>
+<TD width=71%>A handle to the object to be serialized. The desktop provider module uses the information in this handle to identify and convert the object into packets of bytes.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The process of receiving an object from the device is similar to sending an object to the device. After the packets of data arrive from the device, the service manager calls the <B>IReplObjHandler</B> interface methods, which enables the desktop provider module to convert those packets back into an object. The desktop provider module must take the data packets and create an object. It then must create a new <B>HREPLITEM</B> that represents the object in <B>REPLSETUP::hItem</B>. </P>
+
+<P>The <B>IReplObjhandler</B> methods are always called in the following sequence:
+
+<OL>
+	<LI>1.<B>IReplObjHandler::Setup</B> tells the desktop provider module what object to deserialize and enables the desktop provider module to allocate any resource needed for deserialization.</li>
+
+	<LI>2.<B>IReplObjHandler::SetPacket</B> sends packets to the desktop provider module so that it can recreate the object. 
+<P>Packets are sent in the exact same number, size, and sequence. The service manager calls this method repeatedly until the last packet is received from the device.
+</li>
+
+	<LI>3.<B>IReplObjHandler::Reset</B> enables the desktop provider module to free any used resources. 
+<P>The service manager calls this method when deserialization is completed
+</li>
+</OL>
+
+<P>When the service manager writes an object to the desktop store, it calls <B>IReplStore::UpdateItem</B>. This prompts the desktop provider module to open the object and update the <B>HREPLITEM</B> handle with a time stamp or version number, thus ensuring that the object is not marked as changed on the desktop.</P>
+
+<P>The following code example shows how to implement <B>IReplStore::UpdateItem</B>.</P>
+
+<PRE><CODE>STDMETHODIMP_(void) CStore::UpdateItem
+(
+    HREPLFLD    hFolder,    // The handle of a folder.
+    HREPLITEM   hItemDst,   // The handle of the destination object.
+    HREPLITEM   hItemSrc    // A handle to the source object.
+)
+{
+    CFolder *pFolder = (CFolder *)hFolder;
+    CItem   *pItemDst = (CItem *)hItemDst;
+    CItem   *pItemSrc = (CItem *)hItemSrc;</CODE></PRE>
+
+<PRE><CODE>    if ( pItemSrc )
+    {
+        pItemDst-&gt;m_ftModified = pItemSrc-&gt;m_ftModified;
+    }
+    else 
+    {
+        // Implementation should update whatever it has used to validate
+        // object changes, such as a time stamp, by reading it from the         // object.</CODE></PRE>
+
+<PRE><CODE>        // Update the time stamp.
+        // pItemDst-&gt;m_ftModified = time stamp read from object.
+    }
+}</CODE></PRE>
+
+<P>Depending on the type of application, a desktop provider module may synchronize objects coming from a device as deletions. For example, when a user deletes an e-mail message on a device, the message is moved to the Deleted Item folder and marked as changed. The desktop provider module receives the changed object and automatically attempts to delete the message on the desktop. In response, <B>IReplObjHandler::SetPacket</B> returns one of the following errors:
+
+<UL>
+	<LI>RERR_DISCARD when the desktop provider module tries to delete the device object immediately after the change is synchronized. The service manager sends a command to the device to delete the corresponding object. </li>
+
+	<LI>RERR_DISCARD_LOCAL when the desktop provider module tries to delete the desktop object immediately after the change is synchronized. The service manager calls <B>IReplObjHandler::DeleteObject</B> to delete the existing desktop object.</li>
+</UL>
+<p>&nbsp;</p></body>
+</HTML>

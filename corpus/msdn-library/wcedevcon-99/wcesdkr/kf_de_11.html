@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>DllMain</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_dllmain"></A>DllMain</H2>
+
+<P>This function is an optional method of entry into a dynamic-link library (DLL). If the function is used, it is called by the system when processes and threads are initialized and terminated, or upon calls to the <A HREF="kf_jl_11.htm"><B>LoadLibrary</B></A> and <A HREF="kf_f_11.htm"><B>FreeLibrary</B></A> functions. </P>
+
+<P><B>DllMain</B> is a placeholder for the library-defined function name. You must specify the actual name you use when you build your DLL. For more information, see the documentation included with your development tools. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL WINAPI DllMain(HANDLE<I> </I></B><I>hinstDLL</I><B>, DWORD<I> </I></B><I>dwReason</I><B>, LPVOID<I> </I></B><I>lpvReserved</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hinstDLL</I></DT>
+
+<DD>Handle to the DLL. The value is the base address of the DLL. The HINSTANCE of a DLL is the same as the HMODULE of the DLL, so <I>hinstDLL</I> can be used in subsequent calls to the <A HREF="kf_g_22.htm"><B>GetModuleFileName</B></A> function and other functions that require a module handle. </dd>
+
+<DT><I>dwReason</I></DT>
+
+<DD>Specifies a flag indicating why the DLL entry-point function is being called. This parameter can be one of the following values: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=43%>
+<H5>Value</H5>
+</TD>
+<TD width=57%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_PROCESS_ATTACH</TD>
+<TD width=57%>Indicates that the DLL is being loaded into the virtual address space of the current process as a result of the process starting up or as a result of a call to <B>LoadLibrary</B>. DLLs can use this opportunity to initialize any instance data or to use the <A HREF="kf_tu_5.htm"><B>TlsAlloc</B></A> function to allocate a thread local storage (TLS) index.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_THREAD_ATTACH</TD>
+<TD width=57%>Indicates that the current process is creating a new thread. When this occurs, the system calls the entry-point function of all DLLs currently attached to the process. The call is made in the context of the new thread. DLLs can use this opportunity to initialize a TLS slot for the thread. A thread calling the DLL entry-point function with DLL_PROCESS_ATTACH does not call the DLL entry-point function with DLL_THREAD_ATTACH.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>&nbsp;</TD>
+<TD width=57%>Note that the entry-point of a DLL function is called with this value only by threads created after the DLL is loaded by the process. When a DLL is loaded using <B>LoadLibrary</B>, existing threads do not call the entry-point function of the newly loaded DLL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_THREAD_DETACH</TD>
+<TD width=57%>Indicates that a thread is exiting cleanly. If the DLL has stored a pointer to allocated memory in a TLS slot, it uses this opportunity to free the memory. The system calls the entry-point function of all currently loaded DLLs with this value. The call is made in the context of the exiting thread.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=43%>DLL_PROCESS_DETACH</TD>
+<TD width=57%>Indicates that the DLL is being unloaded from the virtual address space of the calling process as a result of either a process exit or a call to <B>FreeLibrary</B>. The DLL can use this opportunity to call the <A HREF="kf_tu_6.htm"><B>TlsFree</B></A> function to free any TLS indices allocated by using <B>TlsAlloc</B> and to free any thread local data.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>lpvReserved</I></DT>
+
+<DD>Specifies further aspects of DLL initialization and cleanup. 
+
+<P>If <I>dwReason</I> is DLL_PROCESS_ATTACH, <I>lpvReserved</I> is NULL for dynamic loads and non-NULL for static loads. 
+
+
+<P>If <I>dwReason</I> is DLL_PROCESS_DETACH, <I>lpvReserved</I> is NULL if <B>DllMain</B> has been called by using <B>FreeLibrary</B> and non-NULL if <B>DllMain</B> has been called during process termination. 
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>When the system calls the <B>DllMain</B> function with the DLL_PROCESS_ATTACH value, the function returns TRUE if it succeeds or FALSE if initialization fails. If the return value is FALSE when <B>DllMain</B> is called because the process uses the <B>LoadLibrary</B> function, <B>LoadLibrary</B> returns NULL. If the return value is FALSE when <B>DllMain</B> is called during process initialization, the process terminates with an error. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. </P>
+
+<P>When the system calls the <B>DllMain</B> function with any value other than DLL_PROCESS_ATTACH, the return value is ignored. </P>
+
+<H4>Remarks</H4>
+
+<P>During initial process startup or after a call to <B>LoadLibrary</B>, the system scans the list of loaded DLLs for the process. For each DLL that has not already been called with the DLL_PROCESS_ATTACH value, the system calls the entry-point function of the DLL. This call is made in the context of the thread that caused the process address space to change, such as the primary thread of the process or the thread that called <B>LoadLibrary</B>.</P>
+
+<P>There are cases in which the entry-point function is called for a terminating thread even if the DLL never attached to the thread — for example, the entry-point function was never called with the DLL_THREAD_ATTACH value in the context of the thread in either of these two situations:
+
+<UL>
+	<LI>The thread was the initial thread in the process, so the system called the entry-point function with the DLL_PROCESS_ATTACH value. </li>
+
+	<LI>The thread was already running when a call to the <B>LoadLibrary</B> function was made, so the system never called the entry-point function for it. </li>
+</UL>
+
+<P>When a DLL is unloaded from a process as a result of process termination or as a result of a call to <B>FreeLibrary</B>, the system does not call the entry-point function of the DLL with the DLL_THREAD_DETACH value for the individual threads of the process. The DLL is only given DLL_PROCESS_DETACH notification. DLLs can take this opportunity to clean up all resources for all threads known to the DLL.</P>
+
+<P>On attach, the body of your DLL entry-point function should perform only simple initialization tasks, such as setting up thread local storage (TLS), creating synchronization objects, and opening files. You must not call <B>LoadLibrary</B> in the entry-point function, because you may create dependency loops in the DLL load order. This can result in a DLL being used before the system has executed its initialization code. Similarly, you must not call the <B>FreeLibrary</B> function in the entry-point function on detach, because this can result in a DLL being used after the system has executed its termination code. </P>
+
+<P>Calling Win32 functions other than TLS, object-creation, and file functions may result in problems that are difficult to diagnose. For example, calling User, Shell, COM, and Windows Sockets functions (or any functions that call these functions) can cause access violation errors, because their DLLs call <B>LoadLibrary</B> to load other system components. While it is acceptable to create synchronization objects in <B>DllMain</B>, you should not perform synchronization in <B>DllMain</B> (or a function called by <B>DllMain</B>) because all calls to <B>DllMain</B> are serialized. Waiting on synchronization objects in <B>DllMain</B> can cause a deadlock. </P>
+
+<P>To provide more complex initialization, create an initialization routine for the DLL. You can require applications to call the initialization routine before calling any other routines in the DLL. Otherwise, you can have the initialization routine create a named mutex, and have each routine in the DLL call the initialization routine if the mutex does not exist. </P>
+<p>&nbsp;</p></body>
+</HTML>

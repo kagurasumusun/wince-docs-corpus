@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Initializing the SSPI</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_initializing_the_sspi"></A>Initializing the SSPI</H2>
+
+<P>Before initializing the SSPI, an application must load the security provider using the <B>LoadLibrary</B> function.</P>
+
+<P>The following code example shows how to load the security provider DLL.</P>
+
+<PRE><CODE>void    *    DllHandle;
+//loading NTLM SSP
+DllHandle = (void *)LoadLibrary(TEXT("security.dll");
+if(!DllHandle)
+{
+    // 
+    // DLL did not get loaded.
+    //
+    Status = GetLastError();
+    return Status;
+}
+//
+// DllHandle is valid.
+//
+</CODE></PRE>
+
+<P>Once the security service provider has been loaded successfully, the client and the server call the <B>GetProcAddress</B> function to get a pointer to the initialization function for the provider called <B>InitSecurityInterface</B>. You can use <B>InitSecurityInterface</B> to return a pointer to the <B>SecurityFunctionTable</B>. The table contains pointers to information about the security packages or protocols supported by the security provider.</P>
+
+<P>Before using a specific security package, both the client and the server should call the <B>EnumerateSecurityPackages</B> function to enumerate the security packages that are available from the security provider. The <B>EnumerateSecurityPackages</B> function returns an array of <B>SecPkgInfo</B> structures that describe the attributes of the available security packages. A client or server can also use the <B>QuerySecurityPackageInfo</B> function to determine the attributes of the specified security package.</P>
+
+<P>The following code example shows how to initialize the SSPI.</P>
+
+<PRE><CODE>// Initial provider setup.
+//
+INIT_SECURITY_INTERFACE     InitSecurityInterface;
+PSecurityFunctionTable     SecurityInterface = 0;
+SecPkgInfo     PAPI *          SecurityPackages;
+DWORD             NumOfPkgs;
+SECURITY_PROVIDER_INFO PAPI * List;
+InitSecurityInterface = GetProcAddress(DllHandle, SECURITY_ENDPOINT);
+if(!InitSecurityInterface)
+{
+    //
+    // If something goes wrong..
+    //
+}
+// We got the InitSecurityInterface!
+// Use it to get the function table.
+//
+SecurityInterface = (*InitSecurityInterface)();
+if(!SecurityInterface)
+{
+    //
+    // If something goes wrong..
+    //
+}
+// Find out if the security packages supported by the provider.
+//
+Status = (*SecurityInterface-&gt;EnumerateSecurityPackages)( &amp;NumOfPkgs, &amp;SecurityPackages);
+// Using the capabilities information, figure out which package you want // to use.
+PkgToUseIndex = -1;
+for(I=0;I&lt;NumOfPackages;I++)
+{
+    //
+    // If an application needs integrity and privacy on messages, it 
+    // checks:
+if(SecurityPackages[I].fCapabilities &amp; (SECPKG_FLAG_INTEGRITY | SECPKG_FLAG_PRIVACY))
+    {
+        PkgToUseIndex = I;
+        break;
+    }
+}
+if(PkgToUseIndex &gt; 0)
+{
+    //
+    // Find out the maximum token size for this package
+    //
+    g_MaxToken = SecurityPackages[I].cbMaxToken;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

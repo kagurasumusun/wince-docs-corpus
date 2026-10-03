@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CeCreateProcess (RAPI)</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_cecreateprocess_rapi_"></A>CeCreateProcess (RAPI)</H2>
+
+<P>This function is used to run a new program. It creates a new process and its primary thread. The new process executes the specified executable file. </P>
+
+<P><B>CeCreateProcess</B> is a remote application interface (RAPI), which enables an application running on a desktop computer to make function calls on a Windows CE–based device.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=27%>Header file:</TD>
+<TD width=73%>Rapi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%>Windows CE versions:</TD>
+<TD width=73%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL</B> <B>CeCreateProcess(LPCWSTR</B> <I>lpApplicationName</I><B>, LPCWSTR</B> <I>lpCommandLine</I><B>, LPSECURITY_ATTRIBUTES</B> <I>lpProcessAttributes</I><B>, LPSECURITY_ATTRIBUTES</B> <I>lpThreadAttributes</I><B>, BOOL</B> <I>bInheritHandles</I><B>, DWORD</B> <I>dwCreationFlags</I><B>, LPVOID</B> <I>lpEnvironment</I><B>, LPWSTR</B> <I>lpCurrentDirectory</I><B>, LPSTARTUPINFO</B> <I>lpStartupInfo</I><B>, LPPROCESS_INFORMATION</B> <I>lpProcessInformation<B>)</B></I><B>;</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>lpApplicationName</I></DT>
+
+<DD>[in] Long pointer to a null-terminated string that specifies the module to execute.
+
+<P>The string can specify the full path and filename of the module to execute or it can specify a partial name. In the case of a partial name, the function uses the current drive and current directory to complete the specification. 
+</dd>
+
+<DT><I>lpCommandLine</I></DT>
+
+<DD>[in] Long pointer to a null-terminated string that specifies the command line to execute. 
+
+<P>The <I>lpCommandLine</I> parameter can be NULL. In that case, the function uses the string pointed to by <I>lpApplicationName</I> as the command line. 
+
+
+<P>If <I>lpCommandLine</I> is non-NULL, <I>lpApplicationName</I> specifies the module to execute, and <I>lpCommandLine</I> specifies the command line. C runtime processes can use the <B>argc</B> and <B>argv</B> arguments. 
+
+
+<P>If <I>lpApplicationName</I> does not contain an extension, .EXE is assumed. If the filename ends in a period (.) with no extension, or the filename contains a path, .EXE is not appended. 
+
+
+<P>If the filename does not contain a directory path, Windows CE versions 2.10 and later search for the executable file in the following sequence: 
+
+
+<UL>
+	<LI>The windows (\windows) directory</li>
+
+	<LI>The root (\) directory of the device </li>
+
+	<LI>An OEM-dependent directory</li>
+
+	<LI>The OEM-defined shell (\ceshell) directory—Embedded Toolkit users only</li>
+</UL>
+
+
+<P>Windows CE versions 1.0 through 2.01 search for the executable file in the following sequence:
+
+
+<UL>
+	<LI>The root of the PC Card if it exists</li>
+
+	<LI>The windows (\windows) directory</li>
+
+	<LI>The root (\ ) directory of the device</li>
+</UL>
+</dd>
+
+<DT><I>lpProcessAttributes</I></DT>
+
+<DD>[in] Not supported; set to NULL.</dd>
+
+<DT><I>lpThreadAttributes</I></DT>
+
+<DD>[in] Not supported; set to NULL.</dd>
+
+<DT><I>bInheritHandles</I></DT>
+
+<DD>[in] Not supported; set to FALSE.</dd>
+
+<DT><I>dwCreationFlags</I></DT>
+
+<DD>[in] Specifies additional flags that control the priority class and the creation of the process. For Windows CE versions 1.0 and later, specify either zero or the following flag:
+
+<TABLE border=1 cellspacing=4 cols=2 frame=void rules=rows>
+
+<TR VALIGN="top">
+<TD width=34%>
+<H5>Value</H5>
+</TD>
+<TD width=66%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%>CREATE_SUSPENDED</TD>
+<TD width=66%>The primary thread of the new process is created in a suspended state, and does not run until the <A HREF="kf_r_25.htm"><B>ResumeThread</B></A> function is called.</TD>
+</TR>
+</TABLE><BR>
+
+
+
+<P>For Windows CE versions 2.0 and later, you can specify one of the following flags in addition to CREATE_SUSPENDED:
+
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=42%>
+<H5>Value</H5>
+</TD>
+<TD width=58%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DEBUG_PROCESS</TD>
+<TD width=58%>If this flag is set, the calling process is treated as a debugger, and the new process is a process being debugged. Child processes of the new process are also debugged. The system notifies the debugger of all debug events that occur in the process being debugged.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>&nbsp;</TD>
+<TD width=58%>If you create a process with this flag set, only the calling thread—the thread that called <B>CreateProcess</B>—can call the <A HREF="kf_w.htm"><B>WaitForDebugEvent</B></A> function.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=42%>DEBUG_ONLY_THIS_PROCESS</TD>
+<TD width=58%>If this flag is set, the calling process is treated as a debugger, and the new process is a process being debugged. No child processes of the new process are debugged. The system notifies the debugger of all debug events that occur in the process being debugged.<B> </B></TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>lpEnvironment</I></DT>
+
+<DD>[in] Not supported; set to NULL.</dd>
+
+<DT><I>lpCurrentDirectory</I></DT>
+
+<DD>[in] Not supported; set to NULL. </dd>
+
+<DT><I>lpStartupInfo</I></DT>
+
+<DD>[in] Not supported; set to NULL. </dd>
+
+<DT><I>lpProcessInformation</I></DT>
+
+<DD>[out] Long pointer to a <A HREF="ks_op_16.htm"><B>PROCESS_INFORMATION</B></A> structure that receives identification information about the new process. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Nonzero indicates success. Zero indicates failure. To determine if a function failed because of RAPI errors, call <A HREF="kf_ac_65.htm"><B>CeRapiGetError</B></A>. To determine if a function failed because of non-RAPI errors, call <A HREF="kf_ac_42.htm"><B>CeGetLastError</B></A>. </P>
+
+<H4>Remarks</H4>
+
+<P>When writing applications for Windows CE versions 1.0 and 1.01, use the <B>PegCreateProcess</B> function.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_c_36.htm"><B>CreateProcess</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

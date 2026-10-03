@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Detecting Desktop Object Changes</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_detecting_desktop_object_changes"></A>Detecting Desktop Object Changes</H2>
+
+<P>The service manager automatically detects object changes and deletions by comparing the list of handles that are returned during enumeration with the handles that are saved in Repl.dat. Before starting an enumeration process, the service manager: 
+
+<OL>
+	<LI>Marks a bit for each handle that is stored in Repl.dat. </li>
+
+	<LI>Calls <B>IReplStore::FindFirstItem</B> and <B>IReplStore::FindNextItem</B>. </li>
+
+	<LI>Performs a binary search on the handles in Repl.dat each time one of these methods returns a new handle, in order to find a handle representing the same object. 
+<UL>
+	<LI>If no matching handle is found, it creates a new object on the desktop store. </li>
+
+	<LI>If a matching handle is found, it clears the bit from the handle in Repl.dat and calls <B>IReplStore::IsItemChanged</B> to see if the object has changed since the last synchronization. 
+<P>If the object has changed, it calls <B>IReplStore::CopyObject</B> to copy the data from the returned handle into the handle that is saved in Repl.dat. 
+</li>
+</UL>
+</li>
+
+	<LI>Calls <B>IReplStore::IsItemReplicated</B> to see if it should send the object to the device. </li>
+</OL>
+
+<P>All handles in Repl.dat that remain marked once enumeration is complete represent deleted objects. </P>
+
+<P>To hasten the enumeration process, the desktop provider module can detect and report desktop changes to the service manager in real time. To do this:
+
+<OL>
+	<LI>The service manager calls <B>IReplNotify::OnItemNotify</B> to inform the desktop provider module of the status for an object.</li>
+
+	<LI>The desktop provider module passes RNC_MODIFIED for a modified object, RNC_CREATED for a created object, and RNC_DELETED for a deleted object. </li>
+
+	<LI>The desktop provider module passes a handle to the object so that the service manager can search Repl.dat for the corresponding device object. </li>
+</OL>
+
+<P>The following illustration shows the sequence of real-time notification calls.</P>
+
+<P><IMG SRC="flow3_2.gif" ALT="" BORDER=0></P>
+
+<P>The desktop provider module also can call <B>IReplNotify::OnItemNotify</B> with RNC_SHUTDOWN if it detects that the desktop application has closed. The service manager responds by unloading the desktop provider module and updating the status display.</P>
+
+<P>The following code examples show how to implement <B>IReplStore::IsItemChanged</B> and <B>IReplStore::IsItemReplicated</B>.</P>
+
+<PRE><CODE>STDMETHODIMP_(BOOL) CStore::IsItemChanged
+(
+    HREPLFLD    hFolder,    // Handle of the folder or the container 
+                            // that stores the object
+    HREPLITEM   hItem,      // Handle of the object
+    HREPLITEM   hItemComp   // Handle of the object that is used 
+                            // for comparison
+)
+{
+    CFolder *pFolder = (CFolder *)hFolder;
+    CItem *pItem = (CItem *)hItem;
+    CItem *pItemComp = (CItem *)hItemComp;
+    BOOL fChanged = FALSE;
+
+    if ( pItemComp )
+        fChanged = CompareFileTime( &amp;pItem-&gt;m_ftModified, 
+                                    &amp;pItemComp-&gt;m_ftModified );
+    else
+    {
+        FILETIME ft;
+
+        // Read the modification time stamp from the object into ft.
+        // Compare it with the time stamp given in the object.
+        fChanged = CompareFileTime( &amp;pItem-&gt;m_ftModified, &amp;ft );
+    }
+    return fChanged;
+}
+
+STDMETHODIMP_(BOOL) CStore::IsItemReplicated
+(
+    HREPLFLD    hFolder,    // Handle of the folder or the container 
+                            // that stores the object
+    HREPLITEM   hItem       // Handle of the object
+)
+{
+    CFolder *pFolder = (CFolder *)hFolder;
+    CItem *pItem = (CItem *)hItem;
+
+    // hItem can be passed NULL.
+    if ( pItem == NULL )
+        return TRUE;
+
+    // Search for the item; return FALSE if the item is not found.
+
+    // Check if pItem should be replicated by using information stored
+    //both in pFolder &amp; pItem. If so, return TRUE.
+
+    return FALSE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

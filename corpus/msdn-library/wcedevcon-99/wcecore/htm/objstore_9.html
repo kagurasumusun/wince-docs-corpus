@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Read/Write Example</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_read_write_example"></A>Read/Write Example</H2>
+
+<P>The following code example shows how to append one file to the end of another file. The example uses the <B>CreateFile</B> function to open two files: One.txt for reading and Two.txt for writing. Then the example uses <B>ReadFile</B> and <B>WriteFile</B> to append the contents of One.txt to the end of Two.txt by reading and writing 4-kilobyte (KB) blocks. </P>
+
+<PRE><CODE>void AppendExample (void)
+{
+  HANDLE hFile, hAppend;
+  DWORD dwBytesRead, dwBytesWritten, dwPos;
+  char buff[4096];
+  TCHAR szMsg[1000];
+
+  // Open the existing file.
+
+  hFile = CreateFile (TEXT("\ONE.TXT"),       // Open One.txt.
+                      GENERIC_READ,           // Open for reading
+                      0,                      // Do not share
+                      NULL,                   // No security
+                      OPEN_EXISTING,          // Existing file only
+                      FILE_ATTRIBUTE_NORMAL,  // Normal file
+                      NULL);                  // No template file
+
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
+    // Your error-handling code goes here.
+    wsprintf (szMsg, TEXT("Could not open ONE.TXT"));
+    return;
+  }
+
+  // Open the existing file, or if the file does not exist,
+  // create a new file.
+
+  hAppend = CreateFile (TEXT("\TWO.TXT"),       // Open Two.txt.
+                        GENERIC_WRITE,          // Open for writing
+                        0,                      // Do not share
+                        NULL,                   // No security
+                        OPEN_ALWAYS,            // Open or create
+                        FILE_ATTRIBUTE_NORMAL,  // Normal file
+                        NULL);                  // No template file
+
+  if (hAppend == INVALID_HANDLE_VALUE)
+  {
+    wsprintf (szMsg, TEXT("Could not open TWO.TXT"));
+    CloseHandle (hFile);            // Close the first file.
+    return;
+  }
+
+  // Append the first file to the end of the second file.
+
+  do
+  {
+    if (ReadFile (hFile, buff, 4096, &amp;dwBytesRead, NULL))
+    {
+      dwPos = SetFilePointer (hAppend, 0, NULL, FILE_END);
+      WriteFile (hAppend, buff, dwBytesRead,
+                 &amp;dwBytesWritten, NULL);
+    }
+  }
+  while (dwBytesRead == 4096);
+
+  // Close both files.
+
+  CloseHandle (hFile);
+  CloseHandle (hAppend);
+
+  return;
+} // End of AppendExample code
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

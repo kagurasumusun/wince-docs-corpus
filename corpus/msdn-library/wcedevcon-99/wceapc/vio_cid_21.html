@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CLSID_VIO_FUEL_TRIM</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_clsid_vio_fuel_trim"></A>CLSID_VIO_FUEL_TRIM</H2>
+
+<P>This CLSID describes the adjustment to the fuel delivery calibration.</P>
+
+<H4>Name</H4>
+
+<P>Fuel trim</P>
+
+<H4>Access</H4>
+
+<P>Read, shareable or exclusive</P>
+
+<H4>Range</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>VT_I4</B> (signed fixed point)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Low:</TD>
+<TD width=79%>–100.0</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>High:</TD>
+<TD width=79%>99.2</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Input</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>VT_UI4</B> (unsigned long)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Low-order word:</TD>
+<TD width=79%>VIOFUELTRIM_SHORTTERM = 0, VIOFUELTRIM_LONGTERM = 1</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>High-order word:</TD>
+<TD width=79%>Cylinder bank number (range 0-n). </TD>
+</TR>
+</TABLE><BR>
+
+<H4>Output</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>VT_I2</B> (signed fixed point)</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Measurement:</TD>
+<TD width=79%>VIOMEASUREMENT_PERCENTAGE</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Units:</TD>
+<TD width=79%>VIOUNITS_PERCENT</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>Long term fuel trim is an adjustment made due to long term changes in engine function. Short term fuel trim is based on instantaneous input from the engine — for example, from the oxygen sensors. The fuel trim is returned as a percentage increase or decrease from the maximum value of fuel being delivered from the nominal rate.</P>
+
+<P>API device objects expect the following data types and sizes when sending data to and from the mini-drivers:</P>
+
+<H4>Mini-driver input</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>DWORD *</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Size:</TD>
+<TD width=79%>4 bytes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Low-order word:</TD>
+<TD width=79%>One of the VIOFUELTRIM_* values</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>High-order word</TD>
+<TD width=79%>Cylinder bank number</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Mini-driver output</H4>
+
+<TABLE cellspacing=4 cols=2 width=464>
+
+<TR VALIGN="top">
+<TD width=21%>Type:</TD>
+<TD width=79%><B>ULONG *</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Size:</TD>
+<TD width=79%>4 bytes</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>Description:</TD>
+<TD width=79%>Percentage of fuel flow adjustment in 0.01% increments</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Example</H4>
+
+<PRE><CODE>HRESULT hr;
+VIODEVICEMETRICS dmFuelTrim;
+IVIO_Device *pFuelTrim;
+VARIANT vDeviceData;
+float fFuelTrimPct;
+//Create an instance of the fuel trim device and get its 
+//IVIO_Device interface.
+hr = CoCreateInstance(CLSID_VIO_FUEL_TRIM, NULL,
+                     CLSCTX_INPROC_SERVER, IID_VIODEVICE,
+                     &amp;pFuelTrim);
+//Get the metrics for the fixed-point precision value.
+pFuelTrim-&gt;get_Metrics(&amp;dmFuelTrim);
+//Initialize the VARIANT for the input data.
+VariantInit(&amp;vDeviceData);
+vDeviceData.vt = VT_UI4;
+//For bank 0, set the input data for long term fuel trim.
+vDeviceData.ulVal = MAKELONG((WORD) VIOFUELTRIM_LONGTERM, 0);
+//Ask the device for the long term fuel trim for bank 0.
+pFuelTrim-&gt;GetData(&amp;vDeviceData, 3000);
+//Convert the fixed-point percentage to a floating point value.
+fFuelTrimPct = ((float) vDeviceData.lVal) * (10.0 ^ dmFuelTrim.lExponent);
+//Release the reference to the interface.
+pFuelTrim-&gt;Release();
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

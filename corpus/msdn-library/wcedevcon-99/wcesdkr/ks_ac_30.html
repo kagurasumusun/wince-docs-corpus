@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>CREATE_PROCESS_DEBUG_INFO</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_create_process_debug_info_str"></A>CREATE_PROCESS_DEBUG_INFO</H2>
+
+<P>This structure contains process creation information that can be used by a debugger.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>typedef struct _CREATE_PROCESS_DEBUG_INFO { <BR>
+ HANDLE </B><I>hFile</I><B>; <BR>
+ HANDLE </B><I>hProcess</I><B>; <BR>
+ HANDLE </B><I>hThread</I><B>; <BR>
+ LPVOID </B><I>lpBaseOfImage</I><B>; <BR>
+ DWORD </B><I>dwDebugInfoFileOffset</I><B>; <BR>
+ DWORD </B><I>nDebugInfoSize</I><B>; <BR>
+ LPVOID </B><I>lpThreadLocalBase</I><B>; <BR>
+ LPTHREAD_START_ROUTINE </B><I>lpStartAddress</I><B>;<BR>
+ LPVOID </B><I>lpImageName</I><B>; <BR>
+ WORD </B><I>fUnicode</I><B>; <BR>
+} CREATE_PROCESS_DEBUG_INFO; </B></P>
+
+<H4>Members</H4>
+
+<DL>
+<DT><I>hFile</I></DT>
+
+<DD>Handle to the process’s image file. In Windows CE, this member is always NULL. </dd>
+
+<DT><I>hProcess</I></DT>
+
+<DD>Handle to the process. If this member is NULL, the handle is not valid. Otherwise, the debugger can use the member to read from and write to the process’s memory. </dd>
+
+<DT><I>hThread</I></DT>
+
+<DD>Handle to the initial thread of the process identified by the <I>hProcess</I> member. If <I>hThread</I> is NULL, the handle is not valid. Otherwise, the debugger has THREAD_GET_CONTEXT, THREAD_SET_CONTEXT, and THREAD_SUSPEND_RESUME access to the thread, allowing the debugger to read from and write to the registers of the thread and to control execution of the thread. </dd>
+
+<DT><I>lpBaseOfImage</I></DT>
+
+<DD>Pointer to the base address of the executable image that the process is running. </dd>
+
+<DT><I>dwDebugInfoFileOffset</I></DT>
+
+<DD>Specifies the offset to the debugging information in the file identified by the <I>hFile</I> member. This member is always set to zero.</dd>
+
+<DT><I>nDebugInfoSize</I></DT>
+
+<DD>Specifies the size, in bytes, of the debugging information in the file. This member is always set to zero. </dd>
+
+<DT><I>lpThreadLocalBase</I></DT>
+
+<DD>Pointer to a block of data. At offset 0x2C into this block is another pointer, called <I>ThreadLocalStoragePointer</I>, that points to an array of per-module thread local storage blocks. This gives a debugger access to per-thread data in the threads of the process being debugged using the same algorithms that a compiler would use. </dd>
+
+<DT><I>lpStartAddress</I></DT>
+
+<DD>Pointer to the starting address of the thread. This value may only be an approximation of the thread’s starting address, because any application with appropriate access to the thread can change the thread’s context by using the <A HREF="kf_s_34.htm"><B>SetThreadContext</B></A> function. </dd>
+
+<DT><I>lpImageName</I></DT>
+
+<DD>Pointer to the file name associated with the <I>hFile</I> member. This member may be NULL, or it may contain the address of a string pointer in the address space of the process being debugged. That address may, in turn, either be NULL or point to the actual filename. If <I>fUnicode</I> is a nonzero value, the name string is Unicode; otherwise, it is ANSI. 
+
+<P>This member is strictly optional. Debuggers must be prepared to handle the case where <I>lpImageName</I> is NULL or <I>*lpImageName</I> (in the address space of the process being debugged) is NULL. Specifically, the system does not provide an image name for a create process event, and will not likely pass an image name for the first DLL event. The system also does not provide this information in the case of debug events that originate from a call to the <B>DebugActiveProcess</B> function. 
+</dd>
+
+<DT><I>fUnicode</I></DT>
+
+<DD>Indicates whether a file name specified by the <I>lpImageName</I> member is Unicode or ANSI. A nonzero value indicates Unicode; zero indicates ANSI. 
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>The <I>lpImageName</I> member is a pointer into the address space of the process that is being debugged. To retrieve the actual image name, use the <B>ReadProcessMemory</B> function in the following manner.</P>
+
+<PRE><CODE>ReadProcessMemory( hProcess, lpImageName, lpBuffer, nSize,
+   &amp;NumberOfBytesRead );
+</CODE></PRE>
+
+<P>For the <B>DebugActiveProcess</B> function, if the <I>dwDebugEventCode</I> member of the <B>DEBUG_EVENT</B> structure has a value of CREATE_PROCESS_DEBUG_EVENT or CREATE_THREAD_DEBUG_EVENT, the <I>lpStartAddress</I> member is NULL. </P>
+
+<P>The <I>lpThreadLocalBase</I> member points directly to the Thread Local Storage (TLS) data block of the process that is being debugged. To obtain the TLS data for a slot, call the <B>ReadProcessMemory</B> function and pass the following calculated value for the <I>lpBaseAddress</I> parameter: <I>lpThreadLocalBase</I>+4*&lt;slot number&gt;. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="#_wcesdk_win32_create_process_debug_info_str"><B>CREATE_PROCESS_DEBUG_INFO</B></A>, <A HREF="ks_de.htm"><B>DEBUG_EVENT</B></A>, <A HREF="ks_il_6.htm"><B>LOAD_DLL_DEBUG_INFO</B></A>, <A HREF="kf_r_6.htm"><B>ReadProcessMemory</B></A>, <A HREF="kf_s_34.htm"><B>SetThreadContext</B></A> </P>
+<p>&nbsp;</p></body>
+</HTML>

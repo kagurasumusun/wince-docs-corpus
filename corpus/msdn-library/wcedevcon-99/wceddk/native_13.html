@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample Serial Port Driver</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_sample_serial_port_driver"></A>Sample Serial Port Driver</H2>
+
+<P>The serial port driver handles any I/O devices that behave like serial ports, including those based on 16450 and 16550 universal asynchronous receiver-transmitter (UART) chips and those that use direct memory access (DMA). Many Windows CE–based platforms have devices of this type, including ordinary nine-pin serial ports, infrared I/O ports, and PC Card serial devices, such as modems. If multiple types of serial port exist on a platform, you can either create several different serial drivers, one per serial port type, or create several different PDD layers and link them to a single MDD, thus creating one multipurpose serial driver. Either approach is equally acceptable. Creating separate drivers can simplify debugging and maintenance because each driver supports only one type of port. Creating a multipurpose driver, such as the sample serial port driver for the Windows CE reference platform, is more complex but gives a small memory savings.</P>
+
+<P>The sample serial port MDD driver code appears under Public\Common\Oak\Drivers\Serial. The PDD code for various platforms is in Platform\CEPC\Drivers\Ser_Pdd and Platform\Odo\Drivers\Serial. There are sample serial port PDDs that support standard 16550, PC Card–based, and infrared serial ports. The sample MDD also supports linking multiple PDD layers, as described previously, by using a function pointer array that defines the types of supported serial port. If you add serial devices with unusual properties or functionality, you can add new serial port PDDs. In addition, Microsoft provides a library of functions appropriate for supporting serial ports that use 16550-compatible UARTs under Public\Common\Oak\Drivers\Ser16550. The <A HREF="funct_1_49.htm"><B>COM_Open</B></A> function in the serial port MDD does not support the <I>fErrorChar</I>, <I>fNull</I>, and <I>fAbortOnChar</I> members of the serial device control block (<B>DCB</B>) structure. You are expected to add support for this functionality in your PDD layer, if appropriate for your serial port hardware.</P>
+
+<P>Because the functionality of serial ports maps easily to the functionality provided by standard stream interface functions, the serial port driver uses the stream interface functions as its DDI. Like other drivers that expose stream interface functions, it is loaded by the Device Manager.</P>
+
+<P>Serial port devices make extensive use of I/O control codes to set and query various attributes of a serial port. For example, there are I/O control codes for setting and clearing the Data Terminal Ready (DTR) line, for purging any undelivered data, and for getting the status of a modem device. Therefore, you should support as many <B>IOCTL_SERIAL</B> I/O control codes as possible in your implementation of <B>COM_IOControl</B>.</P>
+
+<P>The following table shows the DDI functions for the serial port driver. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="funct_1_45.htm"><B>COM_Close</B></A></TD>
+<TD width=70%><A HREF="funct_1_50.htm"><B>COM_PowerDown</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="funct_1_46.htm"><B>COM_Deinit</B></A></TD>
+<TD width=70%><A HREF="funct_1_51.htm"><B>COM_PowerUp</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="funct_1_47.htm"><B>COM_INIT</B></A></TD>
+<TD width=70%><A HREF="funct_1_52.htm"><B>COM_Read</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="funct_1_48.htm"><B>COM_IOControl</B></A></TD>
+<TD width=70%><A HREF="funct_1_53.htm"><B>COM_Write</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="funct_1_49.htm"><B>COM_Open</B></A></TD>
+<TD width=70%>&nbsp;</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following table shows the DDSI functions for the sample serial port driver.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_102.htm"><B>GetSerialObject</B></A></TD>
+<TD width=33%><A HREF="funct_1_116.htm"><B>HWGetIntrType</B></A></TD>
+<TD width=33%><A HREF="funct_1_127.htm"><B>HWPutBytes</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_107.htm"><B>HWClearBreak</B></A></TD>
+<TD width=33%><A HREF="funct_1_117.htm"><B>HWGetModemStatus</B></A></TD>
+<TD width=33%><A HREF="funct_1_128.htm"><B>HWReset</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_108.htm"><B>HWClearDTR</B></A></TD>
+<TD width=33%><A HREF="funct_1_118.htm"><B>HWGetRxBufferSize</B></A></TD>
+<TD width=33%><A HREF="funct_1_129.htm"><B>HWSetBreak</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_109.htm"><B>HWClearRTS</B></A></TD>
+<TD width=33%><A HREF="funct_1_119.htm"><B>HWGetRxStart</B></A></TD>
+<TD width=33%><A HREF="funct_1_130.htm"><B>HWSetCommTimeouts</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_110.htm"><B>HWClose</B></A></TD>
+<TD width=33%><A HREF="funct_1_120.htm"><B>HWGetStatus</B></A></TD>
+<TD width=33%><A HREF="funct_1_131.htm"><B>HWSetDCB</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_111.htm"><B>HWDeinit</B></A></TD>
+<TD width=33%><A HREF="funct_1_121.htm"><B>HWInit</B></A></TD>
+<TD width=33%><A HREF="funct_1_132.htm"><B>HWSetDTR</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_112.htm"><B>HWDisableIR</B></A></TD>
+<TD width=33%><A HREF="funct_1_123.htm"><B>HWOpen</B></A></TD>
+<TD width=33%><A HREF="funct_1_133.htm"><B>HWSetRTS</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_113.htm"><B>HWEnableIR</B></A></TD>
+<TD width=33%><A HREF="funct_1_124.htm"><B>HWPowerOff</B></A></TD>
+<TD width=33%><A HREF="funct_1_134.htm"><B>HWTxIntrHandler</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_114.htm"><B>HWGetBytes</B></A></TD>
+<TD width=33%><A HREF="funct_1_125.htm"><B>HWPowerOn</B></A></TD>
+<TD width=33%><A HREF="funct_1_135.htm"><B>HWXmitComChar</B></A></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=34%><A HREF="funct_1_115.htm"><B>HWGetCommProperties</B></A></TD>
+<TD width=33%><A HREF="funct_1_126.htm"><B>HWPurgeComm</B></A></TD>
+<TD width=33%>&nbsp;</TD>
+</TR>
+</TABLE><BR>
+
+<P>These function names are listed as they are defined in the sample serial port code. You can change this set of functions or the function names by modifying the serial object table, which is a table of <B>HWOBJ</B> type objects, in the serial port PDD.</P>
+<p>&nbsp;</p></body>
+</HTML>

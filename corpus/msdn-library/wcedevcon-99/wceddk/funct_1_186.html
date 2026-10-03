@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisDprAcquireSpinLock</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisdpracquirespinlock"></A>NdisDprAcquireSpinLock</H2>
+
+<P>This function acquires a spin lock so that the caller can synchronize access to resources shared among driver functions not related to interrupts in a multiprocessor-safe way.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisDprAcquireSpinLock(IN PNDIS_SPIN_LOCK </B><I>SpinLock</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>SpinLock</I></DT>
+
+<DD>Pointer to an opaque spin lock, already initialized by the caller.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>In Windows CE, NDIS spinlocks are implemented using critical sections.</P>
+
+<P>The NIC driver must initialize a variable of type NDIS_SPIN_LOCK with the <B>NdisAllocateSpinLock</B> function before it calls any other <B>Ndis</B><I>XXX</I><B>SpinLock </B>function. The driver must provide resident storage for the spin lock(s) it uses.</P>
+
+<P>This function is an optimized version of <B>NdisAcquireSpinLock</B> that a miniport can call only while running at IRQL DISPATCH_LEVEL.</P>
+
+<P>After acquiring a spin lock with this function, the caller must release that lock with a call to the <B>NdisDprReleaseSpinLock</B> function. An NIC driver must call <B>NdisDprReleaseSpinLock</B> following each call to this function. Otherwise, a deadlock occurs, hanging the driver.</P>
+
+<P>A spin lock acquired with this function must be released with <B>NdisDprReleaseSpinLock</B>. A spin lock acquired with <B>NdisAcquireSpinLock</B> must be released with <B>NdisReleaseSpinLock</B>.</P>
+
+<P>A driver should never hold a spin lock for an extended period—more than a few instructions. Holding a spin lock for longer than 25 microseconds degrades both system and driver performance.</P>
+
+<P>A miniport driver cannot use a spin lock to protect resources that its other functions share with the <B>MiniportISR</B> and/or <B>MiniportDisableInterrupt</B> functions. Instead, a miniport must call the <B>NdisMSynchronizeWithInterrupt</B> function so that its <B>MiniportSynchronizeISR</B> function accesses such shared resources at the same DIRQL at which its <B>MiniportISR</B> and/or <B>MiniportDisableInterrupt </B>functions do.</P>
+
+<P>A driver that calls this function must be running at IRQL DISPATCH_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_171.htm"><B>NdisAcquireSpinLock</B></A>, <A HREF="funct_1_187.htm"><B>NdisDprReleaseSpinLock</B></A>, <A HREF="funct_1_244.htm"><B>NdisMSynchronizeWithInterrupt</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

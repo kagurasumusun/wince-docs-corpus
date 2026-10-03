@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Input Methods</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_programming_input_methods"></A>Programming Input Methods</H2>
+
+<P>An IM is an in-process Component Object Model (COM) server that implements the <B>IInputMethod</B> interface. Windows CE provides a default QWERTY keyboard IM to handle alpha-numeric input. The IM manages the space inside the input panel window. Within this window, the IM is responsible for screen output and responding to user input. Typically, an IM creates a child window of the input panel window. This enables the IM window to respond to user input through the input panel window; the IM does not have access to the input panel window’s <B>WindowProc</B> function unless the IM subclasses that window. The IM usually converts user input into characters and sends those characters to the input panel through the <B>IMCallback</B> interface.</P>
+
+<P>In order to use an IM, the user first selects the IM from the input panel dialog box or <B>Input Panel</B> button. The input panel dynamically loads the selected IM by calling the <B>CoCreateInstance </B>function. When the user selects a different IM, the input panel frees the existing IM by calling <B>Release</B> on the interface pointer. The input panel then calls <B>IInputMethod</B> methods to notify the IM of events and to request data. The input panel implements and exposes the <B>IIMCallback</B> interface. This interface lets the IM call the input panel to send keystrokes to the application through GWES. The following table shows the methods available through the <B>IIMCallback</B> interface.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=27%>
+<H5>IIMCallback method</H5>
+</TD>
+<TD width=73%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>SetImInfo</B></TD>
+<TD width=73%>Lets the IM change the <B>input panel</B> icon and the visible state of the input panel </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>SendVirtualKey</B></TD>
+<TD width=73%>Modifies the global key state </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>SendCharEvents</B></TD>
+<TD width=73%>Sends Unicode characters to the window with the current focus </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>SendString</B></TD>
+<TD width=73%>Sends strings to the window with the current focus </TD>
+</TR>
+</TABLE><BR>
+
+<P>In response to the input panel calls to <B>IInputMethod</B>, an IM creates windows in the contexts of the input panel thread. This way the input panel and the IM belong to the same message loop. For simplicity, all calls to <B>IIMCallback</B> should be made in the input panel thread. That is, the IM should call <B>IIMCallback</B> methods only in response to a call coming through an <B>IInputMethod</B> method.</P>
+
+<P>Additionally, the IM should not create a separate thread to implement a UI. Only the thread that responds to <B>IInputMethod</B> methods should create and manipulate windows. Instead, the IM can create process threads to implement a UI<I>.</I> However, these process threads must not call <B>IIMCallback</B>, because certain GWES window functions work properly only if created from the same thread that created the window.</P>
+
+<P>If you develop your own IM component, you should have your setup application perform self-registration by calling the <B>DllRegisterServer</B> and <B>DllUnregisterServer</B> functions. Implement these functions in the IM server dynamic-link library (DLL). Optionally, you can set the registry values directly. The <B>Input Panel</B> properties dialog box does not provide any UI elements for the self-registration service.</P>
+<p>&nbsp;</p></body>
+</HTML>

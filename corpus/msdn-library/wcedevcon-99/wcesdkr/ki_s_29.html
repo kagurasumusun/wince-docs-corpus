@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>ISupportErrorInfo::InterfaceSupportsErrorInfo</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_oa96_isupporterrorinfo_interfacesupportserrorinfo"></A>ISupportErrorInfo::InterfaceSupportsErrorInfo</H2>
+
+<P>This method indicates whether or not an interface supports the <B>IErrorInfo</B> interface.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT InterfaceSupportsErrorInfo(REFIID </B><I>riid</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>riid</I></DT>
+
+<DD>Pointer to an interface identifier (IID).
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=15%>
+<H5>Value</H5>
+</TD>
+<TD width=85%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>S_OK </TD>
+<TD width=85%>Interface supports <B>IErrorInfo.</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%>S_FALSE</TD>
+<TD width=85%>Interface does not support<B> IErrorInfo</B>.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>Objects that support the <B>IErrorInfo</B> interface must also implement this interface.</P>
+
+<P>Programs that receive an error return value should call <B>QueryInterface</B> to get a pointer to the <B>ISupportErrorInfo</B> interface, and then call <B>InterfaceSupportsErrorInfo</B> with the <I>riid</I> of the interface that returned the return value. If <B>InterfaceSupportsErrorInfo </B>returns S_FALSE, then the error object does not represent an error returned from the caller, but from somewhere else. In this case, the error object can be considered incorrect and should be discarded.</P>
+
+<P>If <B>ISupportErrorInfo </B>returns S_OK, use the <A HREF="kf_g_10.htm"><B>GetErrorInfo</B></A><B> </B>function to get a pointer to the error object.</P>
+
+<H4>Example</H4>
+
+<P>The following code example implements the <B>ISupportErrorInfo</B> for the Lines sample. The <B>IErrorInfo</B> implementation also supports the <B>AddRef</B>, <B>Release</B>, and <B>QueryInterface</B> members inherited from the <B>IUnknown</B> interface.</P>
+
+<PRE><CODE>CSupportErrorInfo::CSupportErrorInfo(IUnknown FAR* punkObject, REFIID riid)
+{
+   m_punkObject = punkObject;
+   m_iid = riid;
+}
+
+
+STDMETHODIMP
+CSupportErrorInfo::QueryInterface(REFIID iid, void FAR* FAR* ppv)
+{
+   return m_punkObject-&gt;QueryInterface(iid, ppv);
+}
+
+
+STDMETHODIMP_(ULONG)
+CSupportErrorInfo::AddRef(void)
+{
+   return m_punkObject-&gt;AddRef();
+}
+
+STDMETHODIMP_(ULONG)
+CSupportErrorInfo::Release(void)
+{
+   return m_punkObject-&gt;Release();
+}
+
+STDMETHODIMP
+CSupportErrorInfo::InterfaceSupportsErrorInfo(REFIID riid)
+{
+   return (riid == m_iid) ? NOERROR : ResultFromScode(S_FALSE);
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

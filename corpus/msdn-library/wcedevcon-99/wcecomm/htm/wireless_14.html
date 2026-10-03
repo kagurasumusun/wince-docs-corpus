@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating Radio Address Data</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_radio_address_data"></A>Creating Radio Address Data</H2>
+
+<P>Genpgm.exe creates the radio address data file that tells the radio card which addresses to use. Genpgm.exe is used with Dopgm.exe, which loads the radio address data file into the radio card.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To program your radio hardware</H4>
+
+<OL>
+	<LI>Create a file on your system that contains the programming information that you want to use.</li>
+
+	<LI value=3>Run Genpgm.exe, and pass it the name of your file through the /PGM= switch.
+<P>Specify the output file name with the /OUT= switch.
+</li>
+
+	<LI>Copy the output file to the Windows CE directory on your Windows CE–based device using the Windows CE Services utilities.</li>
+
+	<LI>Run Dopgm.exe on your Windows CE–based device, and pass it the name of your .bin file through the /PGM= switch.</li>
+</OL>
+
+<P>When you restart your machine, repeat steps 4 and 5.</P>
+
+<P>When you run Genpgm.exe, it creates the programming data file in an encrypted format using the entry identification (EID) of the radio hardware as the key. If you do not want the file to be encrypted, use the switch “/KTYPE=N” to indicate encryption should not be performed.</P>
+
+<P>The programming data file follows a specific format. It consists of a series of programming and deprogramming clauses for keys, addresses, and carriers. Any type of block can be repeated to program multiple keys, addresses, or carriers. Comments can be interspersed; a comment begins with a semicolon and extends to the end of the line. Each clause contains a set of parameters and values. Values consist of either strings or byte values. The following table shows the formats of each of these.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=18%>
+<H5>Type</H5>
+</TD>
+<TD width=49%>
+<H5>Format</H5>
+</TD>
+<TD width=33%>
+<H5>Examples</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%>Byte value</TD>
+<TD width=49%>Decimal integer from 0 through 255, which must not have a leading 0</TD>
+<TD width=33%>0  1  60  219  255</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD rowspan=3 width=18%>&nbsp;</TD>
+<TD width=49%>Octal integer from 0 through 0377, which must begin with 0</TD>
+<TD width=33%>0  01  074  0333  0377</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%>Hexadecimal integer from 0x0 through 0xff, which must begin with 0x</TD>
+<TD width=33%>0x0  0x1  0x3c  0xff</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%>Single-byte character, which must be enclosed in single quotation marks</TD>
+<TD width=33%>‘c’    ‘A’    ‘;’    ‘#’    ‘ ‘</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%>String</TD>
+<TD width=49%>Text within quotation marks</TD>
+<TD width=33%>“hello, world”,
+<P>“etaoin shrdlu”</P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%>&nbsp;</TD>
+<TD width=49%>Comma-separated list of byte values</TD>
+<TD width=33%>0x68, 101, 0154, 0x6c, ‘o’</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following example of a definition file for radio address data shows its syntax. Any type of block can be repeated to program multiple keys, addresses, or data structures about wireless service providers.</P>
+
+<PRE><CODE>PROGRAM_KEY
+KeyNumber=&lt;ByteValue&gt;
+AlgCode=&lt;ByteValue&gt;
+KeyTag=&lt;String&gt;
+KeyValue=&lt;String&gt;
+END
+
+PROGRAM_ADDRESS
+AddressNumber=&lt;ByteValue&gt;
+Status=&lt;ByteValue&gt;            ;ENABLE=0x01, PRIORITY=0x02, AC_ONLY=0x04
+ExpirationDate=CC,YY,MM,DD
+AddressTag=&lt;String&gt;
+KeyTag=&lt;String&gt;
+AddressName=&lt;String&gt;
+AddrDescription=&lt;String&gt;
+AddressInfo=&lt;String&gt;
+END
+
+PROGRAM_CARRIER
+RxFrequency=ByteValue        ; Reception frequency
+UserId=&lt;String&gt;                ; User PIN or equivalent
+CarrierName=&lt;String&gt;
+CarrierDescription=&lt;String&gt;
+END
+
+; Use either KeyNumber or KeyTag.
+UNPROGRAM_KEY
+KeyNumber=&lt;ByteValue&gt;
+KeyTag=&lt;String&gt;
+END
+
+; Use either AddressNumber or AddressTag.
+; If there are any keys associated with the address,
+; and if they are not referenced by another address, they are deleted.
+UNPROGRAM_ADDRESS
+AddressNumber=&lt;ByteValue&gt;
+AddressTag=&lt;String&gt;
+END
+
+; Use the CarrierName parameter to select which carrier to delete.
+UNPROGRAM_CARRIER
+CarrierName=&lt;String&gt;
+END
+</CODE></PRE>
+
+<P>The following example of a radio address definition file shows an input file for Genpgm.exe that, when used as input for Genpgm.exe, sets up a key and two addresses.</P>
+
+<PRE><CODE>PROGRAM_KEY
+KeyNumber=0x02
+AlgCode=0x22
+KeyTag="Key234"
+KeyValue=0x20,0x21,0x22,0x23
+END
+
+PROGRAM_ADDRESS
+AddressNumber=0x0
+Status=0x01             ; ENABLE=0x01, PRIORITY=0x02, AC_ONLY=0x04
+; The address will expire on August 12, 1999. August is a single digit,
+; not a double digit, 8 not 08, because the zero would be interpreted
+; as making it octal.
+ExpirationDate=19,99,8,12        
+AddressTag="Addr1"
+KeyTag="Key1"
+AddressName="Test Addr1"
+AddrDescription="Address used for personal messaging"
+AddressInfo="AddrInfo"
+END
+</CODE></PRE>
+
+<P>If you save this example of a radio address definition file in a file named Card.dat, then run Genpgm.exe, the file Card.bin is created. It contains the address programming. The following example of a command line shows how to do this.</P>
+
+<PRE><CODE>    genpgm.exe /I=card.dat
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

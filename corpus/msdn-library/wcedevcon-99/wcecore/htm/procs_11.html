@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Mutex Objects</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_mutex_objects"></A>Mutex Objects</H2>
+
+<P>A <I>mutex object</I> is a synchronization object whose state is set to signaled when it is not owned by any thread and non-signaled when it is owned. Its name comes from its usefulness in coordinating mutually exclusive access to a shared resource. Only one thread at a time can own a mutex object.</P>
+
+<P>A thread calls the <B>CreateMutex</B> function to create a mutex object. The creating thread can request immediate ownership of the mutex object as well as specify a name for the mutex object. Threads in other processes can open a handle to an existing mutex object by specifying the object’s name in a call to <B>CreateMutex</B>. If the mutex object already exists, <B>GetLastError</B> returns ERROR_ALREADY_EXISTS. For more information about names for mutex objects and event objects, see “<A HREF="procs_15.htm">Interprocess Synchronization</A>.”</P>
+
+<P>Any thread with a handle to a mutex object can use a wait function to request ownership of the mutex object. If the mutex object is owned by another thread, the wait function blocks the requesting thread until the owning thread releases the mutex object by calling the <B>ReleaseMutex</B> function. The return value of the wait function indicates whether the function returned for some reason other than that the state of the mutex is set to signaled. For more information about wait functions, see “<A HREF="procs_13.htm">Wait Functions</A>.”</P>
+
+<P>Once a thread owns a mutex object, it can specify the same mutex object in repeated calls to one of the wait functions without blocking its execution. This prevents a thread from deadlocking itself while waiting for a mutex object that it already owns. To release its ownership under such circumstances, the thread must call <B>ReleaseMutex</B> once for each time that the mutex object satisfied the conditions of a wait function. </P>
+
+<P>If a thread terminates without releasing its ownership of a mutex object, the mutex object is considered to be abandoned. A waiting thread can acquire ownership of an abandoned mutex object, but the wait function’s return value indicates that the mutex object is abandoned. To be safe, you should assume that an abandoned mutex object indicates that an error has occurred and that any shared resource being protected by the mutex object is in an undefined state. If the thread proceeds as though the mutex object had not been abandoned, the object’s abandoned flag is cleared when the thread releases its ownership. This restores typical behavior, if a handle to the mutex object is subsequently specified in a wait function. </P>
+
+<P>The following code example shows how to call <B>CreateMutex</B> to create a named mutex object.</P>
+
+<PRE><CODE>void NamedMutexExample (void)
+{
+  HANDLE  hMutex;
+  TCHAR szMsg[100];
+
+  hMutex = CreateMutex (
+                NULL,                       // No security descriptor
+                FALSE,                      // Mutex object not owned
+                TEXT("NameOfMutexObject")); // Object name
+
+  if (NULL == hMutex)
+  {
+    // Your code to deal with the error goes here.
+
+    // Here is one example of what might be done.
+    wsprintf (szMsg, TEXT("CreateMutex error: %d."), GetLastError ());
+    MessageBox (NULL, szMsg, TEXT("Error"), MB_OK);
+  }
+  else
+  {
+    // Not an error -- deal with success
+    if ( ERROR_ALREADY_EXISTS == GetLastError () )
+      MessageBox (NULL, TEXT("CreateMutex opened existing mutex."),
+                  TEXT("Results"), MB_OK);
+    else
+      MessageBox (NULL, TEXT("CreateMutex created new mutex."),
+                  TEXT("Results"), MB_OK);
+  }
+} // End of NamedMutexExample code
+</CODE></PRE>
+
+<P>The following code example opens a handle of an existing mutex object. Additionally, it uses the <B>try</B>-<B>finally</B> structured exception-handling syntax to ensure that the thread properly releases the mutex object. To prevent the mutex object from being abandoned inadvertently, the <B>finally</B> block of code executes no matter how the <B>try</B> block terminates, unless the <B>try</B> block includes a call to the <B>TerminateThread</B> function.</P>
+
+<PRE><CODE>BOOL WriteToDatabase (HANDLE hMutex)
+{
+  DWORD dwWaitResult;
+
+  dwWaitResult = WaitForSingleObject (hMutex,   // Handle of mutex object
+                                      5000L);   // Five-second time-out
+  switch (dwWaitResult)
+  {
+    case WAIT_OBJECT_0:
+      __try
+      {
+        // Your code to write to the database goes here.
+      }
+      __finally
+      {
+        // Your code to clean up the database operations goes here.
+
+        if (! ReleaseMutex (hMutex))
+        {
+          // Your code to deal with the error goes here.
+        }
+      }
+      break;
+
+    // Cannot get mutex object ownership due to time-out
+    case WAIT_TIMEOUT:
+      return FALSE;
+
+    // Got ownership of an abandoned mutex object
+    case WAIT_ABANDONED:
+      return FALSE;
+  }
+
+  return TRUE;
+} // End of WriteToDatabase example code
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Storing Session Keys</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<TABLE ALIGN=right WIDTH=0 BORDER=0><TR><TD>
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink,MENU">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptExportKey">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink,MENU">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptImportKey">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink,MENU">
+	<PARAM NAME="DefaultTopic" VALUE="notopic.htm">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_crypto2_CryptDeriveKey">
+</OBJECT>
+</TD></TR></TABLE>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_storing_session_keys"></A>Storing Session Keys</H2>
+
+<P>To exchange cryptographic keys, it is necessary to first store the session key outside of the CSP for a certain period of time, because CSPs do not preserve session keys from session to session.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To store a session key for future use</H4>
+
+<OL>
+	<LI>Create a simple key BLOB using the <A HREF="JavaScript:hhobj_1.Click()"><B>CryptExportKey</B></A> function.
+<P>This will transfer the session key from the CSP to your application’s memory space. Specify that your own key exchange public key be used to encrypt the key BLOB.
+</li>
+
+	<LI>Store the signed key BLOB to disk.
+<P>All disks are considered to be nonsecure.
+</li>
+
+	<LI>Read the key BLOB from disk when you need to use the key.</li>
+
+	<LI>Import the key BLOB into the CSP using the <A HREF="JavaScript:hhobj_2.Click()"><B>CryptImportKey</B></A> function.</li>
+</OL>
+
+<P>If you plan to use the session key for encryption at a later time, then the key BLOB should be signed with your key exchange key before the key is stored to disk. When you later read the key BLOB from disk, you should validate the signature to make sure the key BLOB is intact. If these steps are omitted, then someone with access to your storage media can create their own session key, encrypt it with your key exchange public key, and substitute it for your key BLOB. You could then unknowingly use their session key to encrypt files and messages, which the unscrupulous user could then easily decrypt.</P>
+
+<P>As an alternative to storing a random session key BLOB, you can use a <I>derived</I> <I>session key</I>, which is created from a password using the <A HREF="JavaScript:hhobj_3.Click()"><B>CryptDeriveKey</B></A> function. In this way, instead of storing a particular derived key, an application can create a derived key as needed by prompting the user for the password.</P>
+
+<P>A stored key BLOBs is dependent on the stability of the public and private key pairs stored within the CSP. If these key pairs are lost through a hardware or software incident, for example, you will be unable to decrypt your key BLOBs. Any data that has been encrypted using these keys will also be lost. For this reason, a user should consider using a backup authority when storing long-term archival data.</P>
+<p>&nbsp;</p></body>
+</HTML>

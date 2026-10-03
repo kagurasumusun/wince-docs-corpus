@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::GetTimeOfLastChange</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_imoniker_gettimeoflastchange"></A>IMoniker::GetTimeOfLastChange</H2>
+
+<P>This<B> </B>method returns the time the object was last changed.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT GetTimeOfLastChange( IBindCtx *</B><I>pbc</I><B>, IMoniker *</B><I>pmkToLeft</I><B>, <BR>
+FILETIME *</B><I>pFileTime </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the bind context to be used in this binding operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. For more information, see <B>IBindCtx</B>.</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. This parameter is primarily used by moniker Implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.</dd>
+
+<DT><I>pFileTime</I></DT>
+
+<DD>[out] Pointer to the <A HREF="ks_fh.htm"><B>FILETIME</B></A> structure receiving the time of last change. A value of {0xFFFFFFFF,0x7FFFFFFF} indicates an error (for example, exceeded time limit, information not available).
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The method supports the standard return value E_UNEXPECTED, as well as the values described in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=38%>
+<H5>Value</H5>
+</TD>
+<TD width=62%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>S_OK</TD>
+<TD width=62%>The method successfully returned a time.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>MK_E_EXCEEDEDDEADLINE</TD>
+<TD width=62%>The binding operation could not be completed within the time limit specified by the bind context’s <B>BIND_OPTS</B> structure. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>MK_E_CONNECTMANUALLY</TD>
+<TD width=62%>The operation was unable to connect to the storage for this object, possibly because a network device could not be connected to. For more information, see <A HREF="ki_m_1.htm"><B>IMoniker::BindToObject</B></A>.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=38%>MK_E_UNAVAILABLE</TD>
+<TD width=62%>The time of the change is unavailable, and will not be available no matter what deadline is used.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<H4>Notes to Callers</H4>
+
+<P>If you’re caching information returned by the object identified by the moniker, you may want to ensure that your information is up-to-date. To do so, you would call <B>IMoniker::GetTimeOfLastChange</B> and compare the time returned with the time you last retrieved information from the object. </P>
+
+<P>For the monikers stored within linked objects, <B>IMoniker::GetTimeOfLastChange</B> is primarily called by the default handler’s implementation of <A HREF="ki_no_28.htm"><B>IOleObject::IsUpToDate</B></A>. Container applications call <B>IOleObject::IsUpToDate</B> to determine if a linked object (or an embedded object that contains linked objects) is up-to-date without actually binding to the object. This enables an application to determine quickly which linked objects require updating when the end user opens a document. The application can then bind only those linked objects that need updating (after prompting the end user to determine whether they should be updated), instead of binding every linked object in the document.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>It is important to perform this operation quickly because, for linked objects, this method is called when a user first opens a compound document. Consequently, your <B>IMoniker::GetTimeOfLastChange</B> implementation should not bind to any objects. In addition, your implementation should check the deadline parameter in the bind context and return MK_E_EXCEEDEDDEADLINE if the operation cannot be completed by the specified time.</P>
+
+<P>There are a number of strategies you can use in your implementations: 
+
+<UL>
+	<LI>For many types of monikers, the <I>pmkToLeft</I> parameter identifies the container of the object identified by this moniker. If this is true of your moniker class, you can simply call <B>IMoniker::GetTimeOfLastChange</B> on the <I>pmkToLeft</I> parameter, since an object cannot have changed at a date later than its container. </li>
+
+	<LI>You can get a pointer to the Running Object Table (ROT) by calling <B>IBindCtx::GetRunningObjectTable</B> on the <I>pbc</I> parameter, and then calling <B>IRunningObjectTable::GetTimeOfLastChange</B>, since the ROT generally records the time of last change.</li>
+
+	<LI>You can get the storage associated with this moniker (or the <I>pmkToLeft</I> moniker) and return the storage’s last modification time with a call to <B>IStorage::Stat</B>.</li>
+</UL>
+<p>&nbsp;</p></body>
+</HTML>

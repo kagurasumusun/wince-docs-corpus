@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>GPE::AllocSurface</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_gpe_allocsurface"></A>GPE::AllocSurface</H2>
+
+<P>This method is called when the driver must allocate storage for surface pixels.</P>
+
+<H4>Syntax</H4>
+
+<P><B>SCODE GPE::AllocSurface(  GPESurf **</B><I>ppSurf</I><B>, int </B><I>width</I><B>, int </B><I>height</I><B>, EGPEFormat </B><I>format</I><B>,  int </B><I>surfaceFlags</I><B> );</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>ppSurf</I></DT>
+
+<DD>[OUT] Pointer to the memory allocated by the <B>AllocSurface</B> function.</dd>
+
+<DT><I>width</I></DT>
+
+<DD>[IN] Width, in pixels, of the surface to allocate.</dd>
+
+<DT><I>height</I></DT>
+
+<DD>[IN] Height, in pixels, of the surface to allocate.</dd>
+
+<DT><I>format</I></DT>
+
+<DD>Format of the surface.</dd>
+
+<DT><I>surfaceFlags</I></DT>
+
+<DD>[IN] One of the flags GPE_REQUIRE_VIDEO_MEMORY or GPE_PREFER_VIDEO_MEMORY, which specify where to allocate the memory
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>If GPE_REQUIRE_VIDEO_MEMORY is set in the <I>surfaceFlags</I> parameter, the call returns one of two error values: if the available video memory is insufficient, the call returns E_NOT_ENOUGH_MEMORY, whereas if the allocation is inappropriate for video memory, such as an incorrect pixel format, the call returns E_INVALID_PARAMETER.</P>
+
+<H4>Remarks</H4>
+
+<P>For video memory allocation, the driver should implement a class, derived from <B>GPESurf</B>, that contains extra information, such as a pointer to the allocator used when freeing the memory. Refer to the <B>Node2D</B> class for information on a supplied memory allocator that can be used for rectangular allocation requirements.</P>
+
+<P>The following code example shows the system memory allocation for this method.</P>
+
+<PRE><CODE>    *ppSurf = new GPESurf( width, height, format );
+    if( *ppSurf )
+        return S_OK;
+    return E_NOT_ENOUGH_MEMORY;
+</CODE></PRE>
+
+<P>The <I>surfaceFlags</I> member can contain GPE_REQUIRE_VIDEO_MEMORY or GPE_PREFER_VIDEO_MEMORY, although neither is required. For GPE_PREFER_VIDEO_MEMORY, the driver should, if possible, allocate the surface from video memory. Otherwise, the driver should use system memory.</P>
+<p>&nbsp;</p></body>
+</HTML>

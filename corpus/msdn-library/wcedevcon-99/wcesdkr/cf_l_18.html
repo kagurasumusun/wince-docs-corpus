@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineTranslateAddress</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_linetranslateaddress"></A>lineTranslateAddress </H2>
+
+<P>This function translates the specified address into a dialable string format.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Tapi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>LONG</B> <B>lineTranslateAddress(HLINEAPP</B> <I>hLineApp</I><B>, DWORD</B> <I>dwDeviceID</I><B>, DWORD</B> <I>dwAPIVersion</I><B>, LPCTSTR</B> <I>lpszAddressIn</I><B>, DWORD</B> <I>dwCard</I><B>, DWORD</B> <I>dwTranslateOptions</I><B>, LPLINETRANSLATEOUTPUT</B> <I>lpTranslateOutput<B>)</B></I><B>;</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>hLineApp</I> </DT>
+
+<DD>[in] Application handle returned by <A HREF="cf_l_10.htm"><B>lineInitialize</B></A>. If an application has not yet called the <B>lineInitialize</B> function, it can set the <I>hLineApp</I> parameter to NULL. </dd>
+
+<DT><I>dwDeviceID</I> </DT>
+
+<DD>[in] Specifies the device identifier for the line device upon which the call is intended to be dialed, so that variations in dialing procedures on different lines can be applied to the translation process. </dd>
+
+<DT><I>dwAPIVersion</I> </DT>
+
+<DD>[in] Specifies the highest version of TAPI supported by the application (<I>not</I> necessarily the value negotiated by <A HREF="cf_l_12.htm"><B>lineNegotiateAPIVersion</B></A> on some particular line device). </dd>
+
+<DT><I>lpszAddressIn</I> </DT>
+
+<DD>[in] Pointer to a null-terminated string that contains the address from which the data is to be extracted for translation. Must be in either the canonical address format, or an arbitrary string of dialable digits (non-canonical). This parameter must not be NULL. If the <I>AddressIn</I> contains a subaddress or name field, or additional addresses separated from the first address by ASCII CR and LF characters, only the first address is translated, and the remainder of the string is returned to the application without modification. </dd>
+
+<DT><I>dwCard</I> </DT>
+
+<DD>[in] Unsupported; set to zero. </dd>
+
+<DT><I>dwTranslateOptions</I> </DT>
+
+<DD>[in] Specifies the associated operations to be performed prior to the translation of the address into a dialable string. This parameter uses the following LINETRANSLATEOPTION_ constants: 
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD colspan=2 width=50%>
+<H5>Value</H5>
+</TD>
+<TD width=50%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=50%>LINETRANSLATEOPTION_CARDOVERRIDE </TD>
+<TD width=50%>If this bit is set, <I>dwCard</I> specifies the permanent identifier of a Card entry in the [Cards] section in the registry (as obtained from <B>lineTranslateCaps</B>) that should be used instead of the <I>PreferredCardID</I> specified in the definition of the <B>CurrentLocation</B>. It does not cause the <I>PreferredCardID</I> parameter of the current Location entry in the registry to be modified; the override applies only to the current translation operation. The <I>dwCard</I> parameter is ignored if the CARDOVERRIDE bit is not set. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD colspan=2 width=50%>LINETRANSLATEOPTION_CANCELCALLWAITING </TD>
+<TD width=50%>Ignored. A user runs a Control Panel application to specify whether a Cancel Call Waiting string is appropriate for the location. A Cancel Call Waiting string is commonly used by data modem and fax applications to prevent interruption of calls by call waiting beeps. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%>LINETRANSLATEOPTION_FORCELOCAL </TD>
+<TD colspan=2 width=51%>If the number is local but would have been translated as a long distance call (LINETRANSLATERESULT_INTOLLLIST bit set in the <A HREF="cs_az_15.htm"><B>LINETRANSLATEOUTPUT</B></A> structure), this option forces it to be translated as local. This is a temporary override of the toll list setting. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=49%>LINETRANSLATEOPTION_FORCELD </TD>
+<TD colspan=2 width=51%>If the address could potentially have been a toll call, but would have been translated as a local call (LINETRANSLATERESULT_NOTINTOLLLIST bit set in the <B>LINETRANSLATEOUTPUT</B> structure), this option forces it to be translated as long distance. This is a temporary override of the toll list setting. </TD>
+</TR>
+</TABLE><BR>
+
+
+
+
+<P><B>Note</B>  If you have set the LINETRANSLATEOPTION_CANCELCALLWAITING bit, it is also advisable to set the LINECALLPARAMFLAGS_SECURE bit in the <I>dwCallParamFlags</I> member of the <A HREF="cs_az_10.htm"><B>LINECALLPARAMS</B></A> structure (passed in to <B>lineMakeCall</B> through the <I>lpCallParams</I> parameter). This prevents the line device from using dialable digits to suppress call interrupts. 
+
+</dd>
+
+<DT><I>lpTranslateOutput</I> </DT>
+
+<DD>[out] Pointer to an application-allocated memory area to contain the output of the translation operation, of type <B>LINETRANSLATEOUTPUT</B>. Prior to calling <B>lineTranslateAddress</B>, the application should set the <I>dwTotalSize</I> member of this structure to indicate the amount of memory available to TAPI for returning data. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates success. A negative error number indicates that an error occurred. Possible error values are as follows:</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_BADDEVICEID</TD>
+<TD width=50%>LINEERR_INVALPOINTER</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INCOMPATIBLEAPIVERSION</TD>
+<TD width=50%>LINEERR_NODRIVER</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INIFILECORRUPT</TD>
+<TD width=50%>LINEERR_NOMEM</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALADDRESS</TD>
+<TD width=50%>LINEERR_OPERATIONFAILED</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALAPPHANDLE</TD>
+<TD width=50%>LINEERR_RESOURCEUNAVAIL</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALCARD</TD>
+<TD width=50%>LINEERR_STRUCTURETOOSMALL</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=50%>LINEERR_INVALPARAM</TD>
+<TD width=50%>&nbsp;</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>This function does not translate multiplexed canonical addresses—that is, two canonical addresses separated by &lt;CRLF&gt;. Only the first address is translated. The other address(es) are ignored.</P>
+
+<P>When an address is specified with a country code but without the local area code, the translation is not as expected. Instead of translating the address as a local call, the system translates the address as a long distance call with no area code. To avoid this behavior, set the LINETRANSLATEOPTION_FORCELOCAL bit or provide the area code for all addresses, including local ones.<B> </B></P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_l_10.htm"><B>lineInitialize</B></A>, <A HREF="cf_l_11.htm"><B>lineMakeCall</B></A>, <A HREF="cf_l_12.htm"><B>lineNegotiateAPIVersion</B></A>, <A HREF="cs_az_10.htm"><B>LINECALLPARAMS</B></A>, <A HREF="cs_az_15.htm"><B>LINETRANSLATEOUTPUT</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

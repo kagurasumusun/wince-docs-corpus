@@ -1,0 +1,26 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Secondary Display Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_secondary_display_drivers"></A>Secondary Display Drivers</H2>
+
+<P>In addition to the primary display, Windows CE–based platforms can support additional display devices. These additional controllers might be used, for example, to support a VGA output to a CRT screen. Display drivers for such additional display devices are called secondary display drivers. Secondary display drivers are only loaded when an application calls the <B>CreateDC</B> function with the name of the secondary display driver’s .dll file. <B>CreateDC</B> returns a handle to a DC that is associated with the secondary display driver. An application can use this DC just like a DC associated with the primary display driver; all of the text and graphics APIs work with the DC. However, applications may not use any Window Manager functions with the DC because the Window Manager was not involved in creating it. Thus, applications are responsible for rendering the entire display on the secondary display device. If you want to create the appearance of windows, menus, dialog boxes, scroll bars, and so on, on the secondary display, your application must draw those items itself, using the text and graphics APIs. If you want to show the contents of the primary display on the secondary display, your application can copy the frame buffer for the primary display to the frame buffer for the secondary display. The secondary display driver is unloaded when there are no remaining DCs associated with it. When multiple display devices are being used, the GDI makes sure that all drawing calls are routed to the appropriate display driver.</P>
+
+<P>Windows CE–based platforms can provide a built-in secondary display controller. The controller must be managed by a secondary display driver. The secondary display driver must be implemented as an ordinary Windows CE display driver, and expose the same DDI as other display drivers.</P>
+
+<P>If the display controller resides on a removable medium, such as a PC Card, the secondary display driver can be implemented as two DLLs or as a single DLL. In practice, most device driver writers choose to implement two separate DLLs: a secondary display driver that exposes the native display driver DDI and a stream driver that exposes the 11 stream interfaces. The Device Manager loads the stream interface driver when a user connects the display adapter to the system and registers the driver’s special device file name, for example, “VGA1:”. The secondary display driver is loaded when an application calls <B>CreateDC</B> and passes in the name of the secondary display driver’s .dll file. The secondary display driver gets a handle to the stream interface driver by calling the <B>FileOpen</B> function on the “VGA1:” special device file. The secondary display driver handles all of the graphics processing. When it needs to communicate with the display controller, it uses the stream interface driver’s <B>IOControl</B> function.</P>
+
+<P>You may choose to create a single DLL that acts as both secondary display driver and stream driver instead. In this case, the Device Manager loads this combined driver in its own process space to serve as an ordinary stream interface driver, whereas GWES would load the same driver in its process space to act as the secondary display driver. If you choose to implement a combined driver, be aware that because the driver DLL is loaded in separate process spaces, it cannot share global data without using shared memory or a memory-mapped file. Furthermore, having the driver loaded twice wastes system resources.</P>
+
+<P>Many of the stream interface functions are not used by display device drivers because display devices are not particularly oriented to working with streams of data. Display drivers need only have stubs for those functions. For these interfaces, the driver should handle the call and return. The driver’s <B><I>XXX</I>_Init</B> and <B><I>XXX</I>_Deinit</B> functions are exceptions. The driver should handle calls to these functions correctly, as described in <A HREF="stream.htm">Developing Stream Interface Device Drivers</A>. The Device Manager calls <B><I>XXX</I>_Init</B> when the display adapter is connected to the system. When the adapter is disconnected, the Device Manager calls <B><I>XXX</I>_Deinit</B>. <B><I>XXX</I>_Deinit</B> deletes any data structures and registry entries that were created by the driver’s <B><I>XXX</I>_Init</B> function.</P>
+
+<P>Like all PCMCIA-based drivers, the stream interface driver must create Registry entries that enable the device to be detected. For more information, see <A HREF="display_30.htm">Registry Keys for Display Drivers</A>.</P>
+<p>&nbsp;</p></body>
+</HTML>

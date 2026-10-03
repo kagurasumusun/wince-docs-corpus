@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Object Identifiers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_object_identifiers"></A>Object Identifiers</H2>
+
+<P>Each object—whether a directory, file, database, database on a mounted file system, or database record—is associated with a unique Windows CE object identifier (CEOID). Each CEOID is unique within its own mounted database volume, but not across multiple database volumes. The system generates a CEOID for each object when it is created. CEOIDs are commonly used to access databases and their records. The following table shows where to obtain the system-generated CEOIDs for the various file system object types.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=24%>
+<H5>Object type</H5>
+</TD>
+<TD width=76%>
+<H5>Where to obtain the CEOID</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Directory or file</TD>
+<TD width=76%>The <B>dwOID</B> member of WIN32_FIND_DATAW returned by <B>FindFirstFile</B> or <B>FindNextFile</B>
+<P>The <B>dwOID</B> member of BY_HANDLE_FILE_INFORMATION returned by <B>GetFileInformationByHandle</B></P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Database</TD>
+<TD width=76%>For any Windows CE version later than 2.0, the return value of <B>CeCreateDatabaseEx</B> or <B>CeFindNextDatabaseEx</B>.
+<P>For any Windows CE version earlier than 2.0, the return value of <B>CeCreateDatabase</B> or<B> CeFindNextDatabase</B></P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Database record</TD>
+<TD width=76%>The return value of <B>CeSeekDatabase</B>, <B>CeReadRecordPropsEx</B>, or <B>CeWriteRecordProps</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%>Mounted database volume</TD>
+<TD width=76%><B>CeMountDBVolume</B> and <B>CeEnumDBVolume</B> return the Windows CE Globally Unique Identifier (CEGUID) of the mounted database volume. This can then be used in conjunction with a CEOID to uniquely reference a database or record when more than one database volume is mounted.</TD>
+</TR>
+</TABLE><BR>
+
+<P>Another use of a CEOID is to obtain information about an object.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To obtain information about a CEOID</H4>
+
+<OL>
+	<LI>Call the <B>CeOidGetInfoEx</B> function.</li>
+
+	<LI>Pass the CEOID in the <B>CeOidGetInfoEx</B> function’s CEOID parameter.
+<P>The <B>CeOidGetInfoEx</B> function returns object data in a <B>CEOIDINFO </B>structure. This structure’s wObjType member contains a flag indicating the object type. The data structure that is returned depends on the object type. For example, if the object is a database record, the <B>CEOIDINFO</B> structure’s wObjType member contains the flag OBJTYPE_RECORD, indicating that the data for the object consists of a <B>CERECORDINFO</B> structure. If there is no valid object for the CEOID, the return value of <B>CeOidGetInfoEx</B> is FALSE. 
+</li>
+</OL>
+
+<P>The following code example shows how to retrieve information about an object in the object store or a mounted database volume.</P>
+
+<PRE><CODE>CEOID        CeOid;            // Object identifier
+PCEGUID        pceguid;            // GUID of the mounted volume
+CEOIDINFO    CeObjectInfo;    // Structure into which to retrieve
+                            //    object information 
+TCHAR        szMsg[200];        // String to display with object information
+
+// Assign to pceguid the GUID of the mounted volume
+// on which the object resides.
+// ...
+
+// Assign to CeOid the OID of the object about which 
+// you want to get information.
+// ...
+
+if (CeOidGetInfoEx(pceguid, CeOid, &amp;CeObjectInfo)) 
+{ 
+    switch (CeObjectInfo.wObjType) 
+    {
+        case OBJTYPE_FILE:
+            wsprintf(szMsg, TEXT("Object is a file: %s"), 
+                    CeObjectInfo.infFile.szFileName); 
+            break;
+
+        case OBJTYPE_DIRECTORY: 
+            wsprintf(szMsg, TEXT("Object is a directory: %s"), 
+                    CeObjectInfo.infDirectory.szDirName); 
+            break;
+
+        case OBJTYPE_DATABASE: 
+            wsprintf(szMsg, TEXT("Object is a database: %s"), 
+                    CeObjectInfo.infDatabase.szDbaseName); 
+            break;
+
+        case OBJTYPE_RECORD:
+            wsprintf(szMsg, TEXT("Object is a record"));
+            break;
+
+        case OBJTYPE_INVALID: 
+            wsprintf(szMsg, TEXT("The object store does not contain a \
+                    \valid object that has this object identifier."));
+            break;
+
+        default:
+            wsprintf(szMsg,TEXT(“Object is of unknown OBJTYPE”));
+            break;
+    }
+}
+else
+{
+    // error handling...
+
+    if (GetLastError () == ERROR_INVALID_HANDLE)
+        wsprintf(szMsg, TEXT("Invalid Object ID"));
+    else
+        wsprintf(szMsg, TEXT("Unknown error"));
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Getting and Opening a Line</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+<OBJECT ID="hhobj_1" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_lineInitialize">
+</OBJECT>
+<OBJECT ID="hhobj_2" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_lineOpen">
+</OBJECT>
+<OBJECT ID="hhobj_3" TYPE="application/x-oleobject" CLASSID="clsid:adb880a6-d8ff-11cf-9377-00aa003b7a11">
+	<PARAM NAME="Command" VALUE="ALink">
+	<PARAM NAME="Item1" VALUE="">
+	<PARAM NAME="Item2" VALUE="_wcesdk_win32_lineNegotiateAPIVersion">
+</OBJECT>
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_getting_and_opening_a_line"></A>Getting and Opening a Line</H2>
+
+<P>When a Windows CE–based application is initialized using the <A HREF="JavaScript:hhobj_1.Click()"><B>lineInitialize</B></A> function, a user needs to call a phone number and get an available line using the <A HREF="JavaScript:hhobj_2.Click()"><B>lineOpen</B></A> function. The application can provide a dialog box for a user to enter the phone number of their choice.</P>
+
+<P>Each call from a Windows CE device is identified by a <I>call handle</I>. A call handle provides a pointer to a value to identify a specific call. TAPI assigns call handles as required. One call handle exists for every call owned by an application. Certain TAPI functions create new calls. As they do so, they return new call handles to the application.</P>
+
+<P>A line may have different capabilities; to determine these capabilities, the application should call the <B><U>lineGetDevCaps </U></B>function. The function fills in the <B>LINEDEVCAPS</B> structure, which the telephone service provider defines. The size of the structure might be different for different service providers; therefore, the application must check to see if the buffer size is adequate. To check if the amount of space supplied for the structure is sufficient for the size of the structure of the provider, compare the <I>dwNeededSize</I> and <I>dwTotalSize</I> fields. If the total size is too small, the application needs to pass a larger buffer to the function.</P>
+
+<P>The <A HREF="JavaScript:hhobj_3.Click()"><B>lineNegotiateAPIVersion</B></A> function indicates which version of TAPI the application supports, and negotiates which API version number TAPI should use. The reason for negotiating the TAPI version is to be sure that the correct protocol is used. New versions might define new features, new fields to data structures, and so on. Version numbers therefore indicate how to interpret various data, structures, and messages. If version ranges do not match, the application and API or service provider versions are incompatible and an error is returned.</P>
+
+<P>When the function succeeds, the line data such as permanent identifier, number of addresses, and line name, can be obtained from the <B>LINEDEVCAPS</B> structure.</P>
+
+<P>The following code example shows how to open a line.</P>
+
+<PRE><CODE>DWORD GetLineInfo (DWORD dwLineID, LPLINEINFO lpLineInfo)
+{
+  DWORD dwSize,
+        dwReturn;
+  LPTSTR lpszLineName = NULL; 
+  LPLINEDEVCAPS lpLineDevCaps = NULL;
+  
+  // Negotiate the API version number. If it fails, return to dwReturn.
+  if (dwReturn = lineNegotiateAPIVersion (
+        g_hLineApp,                   // TAPI registration handle
+        dwLineID,                     // Line device to be queried
+        TAPI_VERSION_1_0,             // Least recent API version 
+        TAPI_CURRENT_VERSION,         // Most recent API version 
+        &amp;(lpLineInfo-&gt;dwAPIVersion),  // Negotiated API version 
+        NULL))                        // Must be NULL; the provider-
+                                      // specific extension is not 
+                                      // supported by Windows CE.
+  {
+    goto exit;
+  }
+
+  dwSize = sizeof (LINEDEVCAPS);
+
+  // Allocate enough memory for lpLineDevCaps.
+  do
+  {
+    if (!(lpLineDevCaps = (LPLINEDEVCAPS) LocalAlloc (LPTR, dwSize)))
+    {
+      dwReturn = LINEERR_NOMEM;
+      goto exit;
+    }
+
+    lpLineDevCaps-&gt;dwTotalSize = dwSize;
+
+    if (dwReturn = lineGetDevCaps (g_hLineApp,
+                                   dwLineID,
+                                   lpLineInfo-&gt;dwAPIVersion,
+                                   0,
+                                   lpLineDevCaps))
+    {
+      goto exit;
+    }
+
+    // Stop if the allocated memory is equal to or greater than the 
+    // needed memory.
+    if (lpLineDevCaps-&gt;dwNeededSize &lt;= lpLineDevCaps-&gt;dwTotalSize)
+      break;  
+
+    dwSize = lpLineDevCaps-&gt;dwNeededSize;
+    LocalFree (lpLineDevCaps);
+    lpLineDevCaps = NULL;
+    
+  } while (TRUE);
+
+  // Store the line data in *lpLineInfo.
+  lpLineInfo-&gt;dwPermanentLineID = lpLineDevCaps-&gt;dwPermanentLineID;
+  lpLineInfo-&gt;dwNumOfAddress = lpLineDevCaps-&gt;dwNumAddresses;
+  lpLineInfo-&gt;bVoiceLine = 
+    (lpLineDevCaps-&gt;dwMediaModes &amp; LINEMEDIAMODE_INTERACTIVEVOICE);
+
+  // Allocate memory for lpszLineName.
+  if (!(lpszLineName = (LPTSTR) LocalAlloc (LPTR, 512)))
+  {
+    dwReturn = LINEERR_NOMEM;
+    goto exit;
+  }  
+  
+  // Store the line name in *lpszLineName.
+  if (lpLineDevCaps-&gt;dwLineNameSize &gt;= 512)
+  {
+    wcsncpy (
+      lpszLineName, 
+      (LPTSTR)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwLineNameOffset),
+      512);
+  }
+  else if (lpLineDevCaps-&gt;dwLineNameSize &gt; 0)
+  {
+    wcsncpy (
+      lpszLineName, 
+      (LPTSTR)((LPSTR)lpLineDevCaps + lpLineDevCaps-&gt;dwLineNameOffset),
+      lpLineDevCaps-&gt;dwLineNameSize);
+  }
+  else 
+    wsprintf (lpszLineName, TEXT("Line %d"), dwLineID);
+
+  // Copy lpszLineName to lpLineInfo-&gt;lpszLineName.
+  lstrcpy (lpLineInfo-&gt;szLineName, lpszLineName);
+
+  dwReturn = ERR_NONE;
+
+exit:
+    
+  if (lpLineDevCaps)
+    LocalFree (lpLineDevCaps);
+
+  if (lpszLineName)
+    LocalFree (lpszLineName);
+
+  return dwReturn; 
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

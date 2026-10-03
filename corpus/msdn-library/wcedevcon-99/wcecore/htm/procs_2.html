@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Process</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_creating_a_process"></A>Creating a Process</H2>
+
+<P>To start a process from within another process, call the <B>CreateProcess</B> function, which loads a new application into memory and creates a new process with at least one new thread.</P>
+
+<P>The following code example shows the <B>CreateProcess</B> function prototype.</P>
+
+<PRE><CODE>BOOL CreateProcess(LPCTSTR lpApplicationName,
+LPTSTR lpCommandLine,
+LPSECURITY_ATTRIBUTES lpProcessAttributes,
+LPSECURITY_ATTRIBUTES lpThreadAttributes,
+BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+LPCTSTR lpCurrentDirectory, LPSTARTUPINFO lpStartupInfo,
+LPPROCESS_INFORMATION lpProcessInformation );
+</CODE></PRE>
+
+<P>Because Windows CE does not support security or current directories and does not handle inheritance, the majority of the parameters must be set to NULL or 0. The following code example shows how the function prototype would look when all nonsupported features are taken into consideration.</P>
+
+<PRE><CODE>BOOL CreateProcess(LPCTSTR lpApplicationName,
+LPTSTR lpCommandLine, NULL, NULL, FALSE,
+DWORD dwCreationFlags, NULL, NULL, NULL,
+LPPROCESS_INFORMATION lpProcessInformation );
+</CODE></PRE>
+
+<P>The first parameter, <I>lpApplicationName,</I> must contain a pointer to the name of the application to start. Windows CE does not support passing NULL for <I>lpApplicationName </I>and looks for the application in the following directories, in the following order:
+
+<OL>
+	<LI>The path specified in <I>lpApplicationName</I>, if one is listed.</li>
+
+	<LI>An OEM-specified search path.</li>
+
+	<LI>The Windows directory (\Windows).</li>
+
+	<LI>The root directory in the object store (\).</li>
+</OL>
+
+<P>The <I>lpCommandLine</I> parameter specifies the command line to pass to the new process. The command line must be passed as a Unicode string. The <I>dwCreationFlags</I> parameter specifies the initial state of the process after loading. The following table describes all of the supported flags.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=40%>
+<H5>Flag</H5>
+</TD>
+<TD width=60%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>0</TD>
+<TD width=60%>Creates a standard process.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>CREATE_SUSPENDED</TD>
+<TD width=60%>Creates a process with a suspended primary thread.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>DEBUG_PROCESS</TD>
+<TD width=60%>Creates a process to be debugged by the calling process. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>DEBUG_ONLY_THIS_PROCESS</TD>
+<TD width=60%>Creates a process to be debugged by the calling process, but doesn’t debug any child processes that are launched by the process being debugged. This flag must be used in conjunction with DEBUG_PROCESS.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=40%>CREATE_NEW_CONSOLE</TD>
+<TD width=60%>Creates a new console.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The last parameter used by <B>CreateProcess</B> is <I>lpProcessInformation</I>. This parameter points to the <B>PROCESS_INFORMATION</B> structure, which contains data about the new process. The parameter can also be set to NULL.</P>
+
+<P>If the process cannot run, <B>CreateProcess</B> returns FALSE. For more information about the failure, call the <B>GetLastError</B> function.</P>
+<p>&nbsp;</p></body>
+</HTML>

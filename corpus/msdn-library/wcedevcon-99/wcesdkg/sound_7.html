@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Querying Audio I/O Devices</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_querying_audio_i_o_devices"></A>Querying Audio I/O Devices</H2>
+
+<P>The following table shows functions that retrieve the number of audio devices on a Windows CE-based device. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Function</H5>
+</TD>
+<TD width=69%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>waveInGetNumDevs</B></TD>
+<TD width=69%>Retrieves the number of waveform audio input devices present in a system</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%><B>waveOutGetNumDevs</B></TD>
+<TD width=69%>Retrieves the number of waveform audio output devices present in a system</TD>
+</TR>
+</TABLE><BR>
+
+<P>After you determine how many devices are present in a system, you can query the capabilities of each device. The following table shows the functions and structures that retrieve this information.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=27%>
+<H5>Function</H5>
+</TD>
+<TD width=46%>
+<H5>Description</H5>
+</TD>
+<TD width=27%>
+<H5>Returned structure</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>waveInGetDevCaps</B></TD>
+<TD width=46%>Retrieves the capabilities of a specified waveform audio input device</TD>
+<TD width=27%><B>WAVEINCAPS</B></TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=27%><B>waveOutGetDevCaps</B></TD>
+<TD width=46%>Retrieves the capabilities of a specified waveform audio output device</TD>
+<TD width=27%><B>WAVEOUTCAPS</B></TD>
+</TR>
+</TABLE><BR>
+
+<P>The <B>waveInGetDevCaps</B> and <B>waveOutGetDevCaps</B> fill the <I>dwFormats</I> member of the <B>WAVEINCAPS</B> and <B>WAVEOUTCAPS</B> structures with flags describing the standard supported sound formats for a specified audio I/O device. Waveform audio I/O devices also support nonstandard capabilities. You can also use the <B>waveInOpen</B> or the <B>waveOutOpen</B> function to determine if a waveform audio I/O device supports a specific format.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To determine if a waveform audio I/O device supports a standard or nonstandard format</H4>
+
+<OL>
+	<LI>Specify the format you wish to query in the <B>WAVEFORMATEX</B> structure.</li>
+
+	<LI>Pass this structure into <B>waveInOpen</B> or <B>waveOutOpen</B> using the <I>pwfx</I> parameter.</li>
+
+	<LI>Call <B>waveInOpen</B> or <B>waveOutOpen</B> with the WAVE_FORMAT_QUERY flag set.
+<P>This call does not open the device. Instead, the function returns a message declaring whether or not the audio device supports the specified format.
+</li>
+</OL>
+
+<P><B>Note</B>  While <B>WAVEFORMATEX</B> supersedes <B>PCMWAVEFORMAT</B> and <B>WAVEFORMAT</B>, Windows CE maintains both structures for backward compatibility.</P>
+
+<P>The following code example shows how to use the <B>waveOutOpen</B> function with the WAVE_FORMAT_QUERY flag to determine whether a waveform audio device supports a specified format.</P>
+
+<PRE><CODE>MMRESULT IsFormatSupported (LPWAVEFORMATEX pwfx, UINT uDeviceID) 
+{ 
+    return waveOutOpen (NULL,               // ptr can be NULL for query
+                        uDeviceID,          // The device identifier 
+                        pwfx,               // Defines requested format 
+                        NULL,               // No callback 
+                        NULL,               // No instance data 
+                        WAVE_FORMAT_QUERY); // Query only, do not open
+}
+</CODE></PRE>
+
+<P>The preceding example determines whether the specified waveform-audio output device supports a specified waveform-audio format. It returns MMSYSERROR_NOERROR if the device supports the format, WAVERROR_BADFORMAT if the device does not support the format, and one of the other MMSYSERROR codes for other errors.</P>
+
+<P>This technique for determining nonstandard format support also applies to waveform audio input devices. The only difference is that the function will use <B>waveInOpen</B> instead of <B>waveOutOpen</B> to query for format support. </P>
+
+<P>To determine if any waveform audio I/O devices on a system support a particular waveform audio data format, use the technique illustrated in the previous example. However, you must specify the WAVE_MAPPER constant in the <I>uDeviceID</I> parameter. </P>
+<p>&nbsp;</p></body>
+</HTML>

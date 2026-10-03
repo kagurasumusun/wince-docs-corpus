@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enabling TTS</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_enabling_tts"></A>Enabling TTS</H2>
+
+<P>You enable TTS for your application to provide verbal feedback to your users about your application.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To enable TTS</H4>
+
+<OL>
+	<LI>Get the speech interface using <B>IfmManage::get_Speech</B>.</li>
+
+	<LI>Call the <B>IAPCSpeech::Speak</B> or <B>IAPCSpeech::SpeakEx</B> function to speak a sentence.</li>
+
+	<LI>Create a sink to handle TTS messages.
+<P><B>Note</B>  If you use <B>IAPCSpeech::SpeakEx</B> and want to do text normalization (changing word pronunciation based on context), call <B>IAPCSpeech::CreateSpkContext</B>.
+</li>
+
+	<LI>If you want to use the voice text interfaces, call <B>IAPCSpeech::QuerySpeechInterface</B> to get the <B>IVTxtAttributes</B> and <B>IVoiceText</B> interfaces. The following table shows these interfaces.</li>
+</OL>
+
+<TABLE cellspacing=4 cols=2 width=446>
+
+<TR VALIGN="top">
+<TD width=24%>
+<H5>Interface</H5>
+</TD>
+<TD width=76%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><B>IVTxtAttributes</B></TD>
+<TD width=76%>Controls the attributes of a voice text object</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=24%><B>IVoiceText</B> </TD>
+<TD width=76%>Registers an application to use a voice text object and controls playback of text</TD>
+</TR>
+</TABLE><BR>
+
+<P>The code examples used in this section are part of a complete sample application, TTS.dsp, included in the SDK. TTS.dsp shows a TTS application that reads the user-selected information from the menu.</P>
+
+<P>The following code example shows how the <B>Read Menu</B> command is implemented.</P>
+
+<PRE><CODE>VOID CTTSApp::ProcessMessage(LONG uMsg, LONG wParam, LONG lParam)
+{
+    long lCurSel = 0;
+    long lCount = 0;
+    long lId = 0;
+    int i;
+    BSTR bstr;
+    IASPowerListBoxItem *pItem = NULL;
+    long lItemData = NULL;
+
+    if(uMsg == WM_COMMAND &amp;&amp; LOWORD(wParam) == IDC_LISTBOX &amp;&amp;
+        HIWORD(wParam) == LBN_DBLCLK) // Some menu option is
+                                      // selected
+    {
+        switch (HIWORD(lParam)) // Identifier of the item that
+                                // is selected
+// in HIWORD(lParam)
+        {
+        // When the user selects the Read Menu command the application
+        // passes each command and its identifier to the Speak
+        // function. When the Speak function is about to say each
+        // command, it initiates a VTXTF_SPEAK message with the bookmark
+        // identifier in the lParam.
+
+        case IDM_READMENU:
+            m_pListBox-&gt;get_Count(&amp;lCount);
+            for(i=0; i&lt;lCount; i++)
+            {
+                m_pListBox-&gt;ItemAt(i, (IDispatch **)&amp;pItem);
+                pItem-&gt;get_Caption(&amp;bstr);
+                pItem-&gt;get_ItemId(&amp;lId);
+                m_pSpeech-&gt;Speak(bstr, lId);
+            }
+            break;
+
+        // When the Exit command is selected, a flag is set so that
+        // the application can exit after the VTXTF_SPEAKDONE message 
+        // is received.
+
+        case IDM_EXIT:
+            m_bExiting = TRUE;
+:
+        default:
+            break;
+        } // end switch
+    } //end if command
+}
+</CODE></PRE>
+
+<P>The following code example shows how the TTS notification sink is handled.</P>
+
+<PRE><CODE>STDMETHODIMP 
+CAppMessageSink::HandleMessage(IDispatch* pdispControl, LONG uMsg, LONG wParam, LONG lParam)
+{
+    switch(uMsg)
+    {
+    default:
+        break;
+
+    case WM_SPCH_NOTIFY:    // Notifications from TTS engine
+        switch(wParam)
+        {
+        default:
+            break;
+
+        case VTXTF_SPEAKDONE:    // When a TTS phrase is done, this is called
+            g_pApp-&gt;OnSpeakDone();    // Call a CTTSApp function to handle this
+            break;
+            
+        case VTXTF_SPEAK:    // Messages fired while TTS engine is speaking, holds 
+                            // the bookmark identifier passed to the Speak function
+            g_pApp-&gt;SetFocusOnId(lParam);    // in this App, the bookmark identifier is the 
+            break;                            // Identifier of the menu item about to be spoken
+        } //end switch(wParam)
+        break;
+
+    case WM_SETTINGCHANGE:        // Fired when a system setting changed
+        if(wParam == SPI_SETAPCFEEDBACK) g_pApp-&gt;GetFeedbackLevels();    // Feedback level changed
+        break;                                                            // Refresh our applications variables
+
+    } //end switch(uMsg)
+
+    return S_FALSE; // return S_FALSE to keep message processing down the hierarchy
+}
+</CODE></PRE>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::BindToStorage</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_imoniker_bindtostorage"></A>IMoniker::BindToStorage</H2>
+
+<P>This<B> </B>method binds to the object’s storage.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT BindToStorage( IBindCtx *</B><I>pbc</I><B>, IMoniker * </B><I>pmkToLeft</I><B>, <BR>
+REFIID </B><I>riid</I><B>, void ** </B><I>ppvObj </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <B>IBindCtx</B> interface on the bind context object to be used during this binding operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment. For more information, see <B>IBindCtx</B>.</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.</dd>
+
+<DT><I>riid</I></DT>
+
+<DD>[in] Reference to the identifier of the storage interface requested, whose pointer will be returned in <I>ppvObj</I>. Storage interfaces commonly requested include <A HREF="ki_s.htm"><B>IStorage</B></A>, <A HREF="ki_s_16.htm"><B>IStream</B></A>, and <A HREF="ki_fl_16.htm"><B>ILockBytes</B></A>. </dd>
+
+<DT><I>ppvObj</I></DT>
+
+<DD>[out] Address of pointer variable that receives the interface pointer requested in <I>riid</I>. Upon successful return, *<I>ppvObj</I> contains the requested interface pointer to the storage of the object identified by the moniker. If <I>ppvObj</I> is non-NULL, the implementation must call <A HREF="ki_uw_1.htm"><B>IUnknown::AddRef</B></A> on the storage; it is the caller’s responsibility to call <A HREF="ki_uw_3.htm"><B>IUnknown::Release</B></A>. If an error occurs, *<I>ppvObj</I> must be set to NULL.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The method supports the standard return value E_OUTOFMEMORY, as well as the values described in the following table.
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The binding operation was successful.</dd>
+
+<DT>MK_E_NOSTORAGE</DT>
+
+<DD>The object identified by this moniker does not have its own storage.</dd>
+
+<DT>MK_E_EXCEEDEDDEADLINE</DT>
+
+<DD>The operation could not be completed within the time limit specified by the bind context’s <B>BIND_OPTS</B> structure.</dd>
+
+<DT>MK_E_CONNECTMANUALLY</DT>
+
+<DD>The operation was unable to connect to the storage, possibly because a network device could not be connected to. For more information, see <A HREF="ki_m_1.htm"><B>IMoniker::BindToObject</B></A>.</dd>
+
+<DT>MK_E_INTERMEDIATEINTERFACENOTSUPPORTED</DT>
+
+<DD>An intermediate object was found but it did not support an interface required for an operation. For example, an item moniker returns this value if its container does not support the <B>IOleItemContainer</B> interface.</dd>
+
+<DT>STG_E_ACCESSDENIED</DT>
+
+<DD>Unable to access the storage object.</dd>
+
+<DT><B>IOleItemContainer::GetObject</B> errors</DT>
+
+<DD>Binding to a moniker that contains an item moniker can return any of the errors associated with this function.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>There is an important difference between the <A HREF="ki_m_1.htm"><B>IMoniker::BindToObject</B></A> and <B>IMoniker::BindToStorage</B> methods. If, for example, you have a moniker that identifies a spreadsheet object, calling <B>IMoniker::BindToObject</B> provides access to the spreadsheet object itself, while calling <B>IMoniker::BindToStorage</B> provides access to the storage object in which the spreadsheet resides.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>Although none of the COM moniker classes call this method in their binding operations, it might be appropriate to call it in the implementation of a new moniker class. You could call this method in an implementation of <A HREF="ki_m_1.htm"><B>IMoniker::BindToObject</B></A> that requires information from the object identified by the <I>pmkToLeft</I> parameter and can get it from the persistent storage of the object without activation. For example, if your monikers are used to identify objects that can be activated without activating their containers, you may find this method useful.</P>
+
+<P>A client that can read the storage of the object its moniker identifies could also call this method.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>Your implementation should locate the persistent storage for the object identified by the current moniker and return the desired interface pointer. Some types of monikers represent pseudo-objects, which are objects that do not have their own persistent storage. Such objects comprise some portion of the internal state of its container; as, for example, a range of cells in a spreadsheet. If your moniker class identifies this type of object, your implementation of <B>IMoniker::BindToStorage </B>should return the error MK_E_NOSTORAGE. </P>
+
+<P>If the bind context’s <B>BIND_OPTS</B> structure specifies the BINDFLAGS_JUSTTESTEXISTENCE flag, your implementation has the option of returning NULL in <I>ppvObj</I> (although it can also ignore the flag and perform the complete binding operation).</P>
+<p>&nbsp;</p></body>
+</HTML>

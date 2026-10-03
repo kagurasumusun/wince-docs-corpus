@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IStream::LockRegion</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_istream_lockregion"></A>IStream::LockRegion</H2>
+
+<P>This method restricts access to a specified range of bytes in the stream. Supporting this functionality is optional since some file systems do not provide it.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Objidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT LockRegion( LARGE_INTEGER </B><I>libOffset</I><B>,</B><I> <BR>
+</I><B>LARGE_INTEGER </B><I>cb</I><B>,</B><I> </I><B>DWORD</B> <I>dwLockType </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>libOffset</I></DT>
+
+<DD>[in] Integer that specifies the byte offset for the beginning of the range.</dd>
+
+<DT><I>cb</I></DT>
+
+<DD>[in] Integer that specifies the length of the range, in bytes, to be restricted.</dd>
+
+<DT><I>dwLockType</I></DT>
+
+<DD>[in] Specifies the restrictions being requested on accessing the range.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=35%>
+<H5>Value</H5>
+</TD>
+<TD width=65%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>S_OK</TD>
+<TD width=65%>The specified range of bytes was locked.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>E_PENDING</TD>
+<TD width=65%>Asynchronous Storage only: Part or all of the stream’s data is currently unavailable.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>STG_E_INVALIDFUNCTION</TD>
+<TD width=65%>Locking is not supported at all or the specific type of lock requested is not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>STG_E_LOCKVIOLATION</TD>
+<TD width=65%>Requested lock is supported, but cannot be granted because of an existing lock.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=35%>STG_E_REVERTED</TD>
+<TD width=65%>The object has been invalidated by a revert operation above it in the transaction tree.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>The byte range can extend past the current end of the stream. Locking beyond the end of a stream is useful as a method of communication between different instances of the stream without changing data that is actually part of the stream.</P>
+
+<P>Three types of locking can be supported: locking to exclude other writers, locking to exclude other readers or writers, and locking that allows only one requestor to obtain a lock on the given range, which is usually an alias for one of the other two lock types. A given stream instance might support either of the first two types, or both. The lock type is specified by <I>dwLockType</I>, using a value from the <B>LOCKTYPE</B> enumeration.</P>
+
+<P>Any region locked with <B>IStream::LockRegion</B> must later be explicitly unlocked by calling <A HREF="ki_s_26.htm"><B>IStream::UnlockRegion</B></A><B> </B>with exactly the same values for the <I>libOffset</I>, <I>cb</I>, and <I>dwLockTyp</I>e parameters. The region must be unlocked before the stream is released. Two adjacent regions cannot be locked separately and then unlocked with a single unlock call.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>Since the type of locking supported is optional and can vary in different implementations of <A HREF="ki_s_16.htm"><B>IStream</B></A>, you must provide code to deal with the STG_E_INVALIDFUNCTION error.</P>
+
+<P>This method has no effect in the compound file implementation, because the implementation does not support range locking.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>Support for this method is optional for implementations of stream objects since it may not be supported by the underlying file system. The type of locking supported is also optional. The STG_E_INVALIDFUNCTION error is returned if the requested type of locking is not supported.</P>
+<p>&nbsp;</p></body>
+</HTML>

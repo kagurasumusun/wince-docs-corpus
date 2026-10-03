@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>MyFSD_ReadFile</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_myfsd_readfile"></A><I>MyFSD</I>_ReadFile</H2>
+
+<P>This function reads data from a file, starting at the position indicated by the file pointer. After the read operation has been completed, the file pointer is adjusted by the number of bytes actually read. The application does not call this function directly. Instead, use the corresponding standard Win32 function <B>ReadFile</B>. The file system driver (FSD) Manager determines the file system type and calls the <B><I>MyFSD</I>_ReadFile </B>implementation of the function.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Fsdmgr.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.10 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>BOOL</B> <B><I>MyFSD</I>_ReadFile( PFILE </B><I>pFile</I>, <B>PVOID</B> <I>pBuffer</I>,<B> DWORD</B> <I>cbRead</I>,<B> <BR>
+PDWORD</B> <I>pcbRead</I>,<B> OVERLAPPED</B> <I>*pOverlapped </I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pFile</I></DT>
+
+<DD>Pointer to the value that the file system driver (FSD) passes to the <B>FSDMGR_CreateFileHandle</B> function when creating the file handle.</dd>
+
+<DT><I>pBuffer</I></DT>
+
+<DD>Pointer to the buffer that receives the data read from the file. </dd>
+
+<DT><I>cbRead</I></DT>
+
+<DD>Number of bytes to be read from the file. </dd>
+
+<DT><I>pcbRead</I></DT>
+
+<DD>Pointer to the number of bytes read. <B>ReadFile</B> sets this value to zero before doing any work or error checking. If this parameter is zero when <B>ReadFile</B> returns TRUE on a named pipe, the other end of the message-mode pipe called the <A HREF="kf_w_8.htm"><B>WriteFile</B></A> function with <I>nNumberOfBytesToWrite</I> set to zero. 
+
+<P><B>Windows NT:</B> If <I>lpOverlapped</I> is NULL, <I>lpNumberOfBytesRead</I> cannot be NULL.
+
+
+<P><B>Windows NT:</B> If <I>lpOverlapped</I> is not NULL, <I>lpNumberOfBytesRead</I> can be NULL. If this is an overlapped read operation, you can get the number of bytes read by calling <B>GetOverlappedResult</B>. If <I>hFile</I> is associated with an I/O completion port, you can get the number of bytes read by calling <B>GetQueuedCompletionStatus</B>.
+
+
+<P><B>Windows 95 and Windows 98:</B> This parameter cannot be NULL.
+</dd>
+
+<DT><I>pOverlapped</I></DT>
+
+<DD>Pointer to an <B>OVERLAPPED</B> structure. This structure is required if <I>hFile</I> was created with FILE_FLAG_OVERLAPPED.
+
+<P>If <I>hFile</I> was opened with FILE_FLAG_OVERLAPPED, the <I>lpOverlapped</I> parameter must not be NULL. It must point to a valid <B>OVERLAPPED</B> structure. If <I>hFile</I> was created with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is NULL, the function can incorrectly report that the read operation is complete. 
+
+
+<P>If <I>hFile</I> was opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is not NULL, the read operation starts at the offset specified in the <B>OVERLAPPED</B> structure and <B>ReadFile</B> may return before the read operation has been completed. In this case, <B>ReadFile</B> returns FALSE and the <B>GetLastError</B> function returns ERROR_IO_PENDING. This allows the calling process to continue while the read operation finishes. The event specified in the <B>OVERLAPPED</B> structure is set to the signaled state upon completion of the read operation. 
+
+
+<P>If <I>hFile</I> was not opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is NULL, the read operation starts at the current file position and <B>ReadFile</B> does not return until the operation has been completed.
+
+
+<P>If <I>hFile</I> is not opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is not NULL, the read operation starts at the offset specified in the <B>OVERLAPPED</B> structure. <B>ReadFile</B> does not return until the read operation has been completed. 
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The <B>ReadFile</B> function returns when one of the following is true: a write operation completes on the write end of the pipe, the number of bytes requested has been read, or an error occurs. </P>
+
+<P>Nonzero indicates success. If the return value is nonzero and the number of bytes read is zero, the file pointer was beyond the current end of the file at the time of the read operation. However, if the file was opened with FILE_FLAG_OVERLAPPED and <I>lpOverlapped</I> is not NULL, the return value is FALSE and <A HREF="kf_g_19.htm"><B>GetLastError</B></A> returns ERROR_HANDLE_EOF when the file pointer goes beyond the current end of file.</P>
+
+<P>Zero indicates failure. To get extended error information, call <B>GetLastError</B>. </P>
+
+<H4>Remarks</H4>
+
+<P>The <I>lpOverlapped</I> parameter must be set to NULL. Windows CE does not allow files to be created with the overlapped attribute.</P>
+
+<P>Windows CE does not support asynchronous read operations on files.</P>
+
+<P>The <I>hFile</I> parameter cannot be a socket handle.</P>
+
+<P>The Fsdmgr component is a dynamic-link library (DLL) that manages all operating system interaction with installable files systems. Each installable file system requires an FSD, which is a DLL that exports an API needed to support an installable file system. The name of the DLL and the names of the functions it exports start with the name of the associated installable file system. For example, if the name of file system is MyFSD, then its DLL is MyFSD.dll and its exported functions are prefaced with MyFSD_*. </P>
+
+<P>Fsdmgr provides services to FSDs. The <B>FSDMGR_RegisterVolume</B>,<B> FSDMGR_CreateFileHandle</B>, and<B> FSDMGR_CreateSearchHandle</B> functions record a <B>DWORD </B>of volume-specific data the FSD needs to keep associated with volume. This volume-specific data is passed as the first parameter of these three functions.</P>
+
+<P>Applications that access an installable file system use standard Win32 functions. For example, when an application wants to create a folder on a device that contains an installable file system, it calls <B>CreateDirectory</B>. Fsdmgr recognizes that the path is to a device containing an installable file system and calls the appropriate function, which in the case of the FAT file system is <B>FATFSD_CreateDirectoryW</B>.That is, the application calls <B>CreateDirectory</B>, causing Fsdmgr to call <B>FATFSD_CreateDirectoryW</B>.</P>
+
+<P>If part of the file is locked by another process and the read operation overlaps the locked portion, this function fails. </P>
+
+<P>An application must meet certain requirements when working with files opened with FILE_FLAG_NO_BUFFERING:
+
+<UL>
+	<LI>File access must begin at byte offsets within the file that are integer multiples of the volume’s sector size. To determine a volume’s sector size, call the <B>GetDiskFreeSpace</B> function. </li>
+
+	<LI>File access must be for numbers of bytes that are integer multiples of the volume’s sector size. For example, if the sector size is 512 bytes, an application can request reads and writes of 512, 1024, or 2048 bytes, but not of 335, 981, or 7171 bytes. </li>
+
+	<LI>Buffer addresses for read and write operations must be sector aligned (aligned on addresses in memory that are integer multiples of the volume’s sector size). One way to sector align buffers is to use the <A HREF="kf_v_181.htm"><B>VirtualAlloc</B></A> function to allocate the buffers. This function allocates memory that is aligned on addresses that are integer multiples of the system's page size. Because both page and volume sector sizes are powers of 2, memory aligned by multiples of the system's page size is also aligned by multiples of the volume’s sector size. </li>
+</UL>
+
+<P>Accessing the input buffer while a read operation is using the buffer may lead to corruption of the data read into that buffer. Applications must not read from, write to, reallocate, or free the input buffer that a read operation is using until the read operation completes.</P>
+
+<P>Characters can be read from the console input buffer by using <B>ReadFile</B> with a handle to console input. The console mode determines the exact behavior of the <B>ReadFile</B> function. </P>
+
+<P>If a named pipe is being read in message mode and the next message is longer than the <I>nNumberOfBytesToRead</I> parameter specifies, <B>ReadFile</B> returns FALSE and <A HREF="kf_g_19.htm"><B>GetLastError</B></A> returns ERROR_MORE_DATA. The remainder of the message may be read by a subsequent call to the <B>ReadFile</B> or <B> PeekNamedPipe</B> function. </P>
+
+<P>When reading from a communications device, the behavior of <B>ReadFile</B> is governed by the current communication time-outs as set and retrieved using the <A HREF="cf_sw_6.htm"><B>SetCommTimeouts</B></A> and <A HREF="cf_dg_27.htm"><B>GetCommTimeouts</B></A> functions. Unpredictable results can occur if you fail to set the time-out values. For more information about communication time-outs, see <A HREF="cs_az_1.htm"><B>COMMTIMEOUTS</B></A>.</P>
+
+<P>If <B>ReadFile</B> attempts to read from a mailslot whose buffer is too small, the function returns FALSE and <B>GetLastError</B> returns ERROR_INSUFFICIENT_BUFFER. </P>
+
+<P>If the anonymous write pipe handle has been closed and <B>ReadFile</B> attempts to read using the corresponding anonymous read pipe handle, the function returns FALSE and <B>GetLastError</B> returns ERROR_BROKEN_PIPE. </P>
+
+<P>The <B>ReadFile</B> function may fail and return ERROR_INVALID_USER_BUFFER or ERROR_NOT_ENOUGH_MEMORY whenever there are too many outstanding asynchronous I/O requests. </P>
+
+<P>The <B>ReadFile </B>code to check for the end-of-file condition (eof) differs for synchronous and asynchronous read operations.</P>
+
+<P>When a synchronous read operation reaches the end of a file, <B>ReadFile </B>returns TRUE and sets *<I>lpNumberOfBytesRead</I> to zero. The following sample code tests for end-of-file for a synchronous read operation:</P>
+
+<PRE><CODE>// Attempt a synchronous read operation. 
+bResult = ReadFile(hFile, &amp;inBuffer, nBytesToRead, &amp;nBytesRead, NULL) ; 
+// Check for end of file. 
+if (bResult &amp;&amp;  nBytesRead == 0, ) 
+{ 
+    // we’re at the end of the file 
+} 
+ </CODE></PRE>
+
+<P>An asynchronous read operation can encounter the end of a file during the initiating call to <B>ReadFile</B>, or during subsequent asynchronous operation. </P>
+
+<P>If EOF is detected at <B>ReadFile</B> time for an asynchronous read operation, <B>ReadFile</B> returns FALSE and <B>GetLastError</B> returns ERROR_HANDLE_EOF.</P>
+
+<P>If EOF is detected during subsequent asynchronous operation, the call to <B>GetOverlappedResult</B> to obtain the results of that operation returns FALSE and <B>GetLastError </B>returns ERROR_HANDLE_EOF.</P>
+
+<P>To cancel all pending asynchronous I/O operations, use the <B>CancelIo</B> function. This function only cancels operations issued by the calling thread for the specified file handle. I/O operations that are canceled complete with the error ERROR_OPERATION_ABORTED. </P>
+
+<P>If you are attempting to read from a floppy drive that does not have a floppy disk, the system displays a message box prompting the user to retry the operation. To prevent the system from displaying this message box, call the <B>SetErrorMode</B> function with SEM_NOOPENFILEERRORBOX. </P>
+
+<P>The following sample code illustrates testing for end-of-file for an asynchronous read operation:</P>
+
+<PRE><CODE>// set up overlapped structure fields 
+// to simplify this sample, we'll eschew an event handle 
+gOverLapped.Offset     = 0; 
+gOverLapped.OffsetHigh = 0; 
+gOverLapped.hEvent     = NULL; 
+ 
+// attempt an asynchronous read operation 
+bResult = ReadFile(hFile, &amp;inBuffer, nBytesToRead, &amp;nBytesRead, 
+    &amp;gOverlapped) ; 
+ 
+// if there was a problem, or the async. operation's still pending ... 
+if (!bResult) 
+{ 
+    // deal with the error code 
+    switch (dwError = GetLastError()) 
+    { 
+        case ERROR_HANDLE_EOF: 
+        { 
+            // we're reached the end of the file 
+            // during the call to ReadFile 
+ 
+            // code to handle that 
+        } 
+ 
+        case ERROR_IO_PENDING: 
+        { 
+            // asynchronous i/o is still in progress 
+ 
+            // do something else for a while 
+            GoDoSomethingElse() ; 
+ 
+            // check on the results of the asynchronous read 
+            bResult = GetOverlappedResult(hFile, &amp;gOverlapped, 
+                &amp;nBytesRead, FALSE) ; 
+ 
+            // if there was a problem ... 
+            if (!bResult) 
+            { 
+                // deal with the error code 
+                switch (dwError = GetLastError()) 
+                { 
+                    case ERROR_HANDLE_EOF: 
+                    { 
+                        // we're reached the end of the file 
+                        //during asynchronous operation 
+                    } 
+ 
+                    // deal with other error cases 
+                } 
+            } 
+        } // end case 
+ 
+        // deal with other error cases 
+ 
+    } // end switch 
+} // end if 
+ </CODE></PRE>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_f_14.htm"><B>FSDMGR_CreateFileHandle</B></A>, <A HREF="kf_mn_34.htm"><B><I>MyFSD</I>_CreateFileW</B></A>, <A HREF="kf_mn_58.htm"><B><I>MyFSD</I>_WriteFile</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

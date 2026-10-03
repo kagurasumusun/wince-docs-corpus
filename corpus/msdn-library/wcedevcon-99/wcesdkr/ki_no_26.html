@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::GetUserType</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ioleobject_getusertype"></A>IOleObject::GetUserType</H2>
+
+<P>This<B> </B>method retrieves the user type name of an object for display in user interface elements such as menus, list boxes, and dialog boxes.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT GetUserType( DWORD </B><I>dwFormOfType</I><B>, <BR>
+LPOLESTR * </B><I>pszUserType </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwFormOfType</I></DT>
+
+<DD>[in] Specifies the form of the user-type name to be presented to users. Valid values are obtained from the <B>USERCLASSTYPE</B> enumeration.</dd>
+
+<DT><I>pszUserType</I></DT>
+
+<DD>[out] Address of <B>LPOLESTR</B> pointer variable that receives a pointer to the user type string. The caller must free *<I>pszUserType</I> using the current <B>IMalloc</B> instance. If an error occurs, the implementation must set *<I>pszUserType</I> to NULL.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=21%>
+<H5>Value</H5>
+</TD>
+<TD width=79%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>S_OK</TD>
+<TD width=79%>The object’s user-type name is successfully returned.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=21%>OLE_S_USEREG</TD>
+<TD width=79%>Delegate to the default handler’s implementation using the registry to provide the requested information. </TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>Containers call <B>IOleObject::GetUserType</B> in order to represent embedded objects in list boxes, menus, and dialog boxes by their normal, user-recognizable names. Examples include “Word Document,” “Excel Chart,” and “Paintbrush Object.” The information returned by <B>IOleObject::GetUserType</B> is the user-readable equivalent of the binary class identifier returned by <A HREF="ki_no_25.htm"><B>IOleObject::GetUserClassID</B></A>.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>The default handler’s implementation of <B>IOleObject::GetUserType</B> uses the object’s class identifier (the <I>pClsid</I> parameter returned by <B>IOleObject::GetUserClassID</B>) and the <I>dwFormOfType</I> parameter together as a key into the registry. If an entry is found that matches the key exactly, then the user type specified by that entry is returned. If only the CLSID part of the key matches, then the lowest-numbered entry available (usually the full name) is used. If the CLSID is not found, or there are no user types registered for the class, the user type currently found in the object’s storage is used.</P>
+
+<P>You should not cache the string returned from <B>GetUserType.</B> Instead, call this method each and every time the string is needed. This guarantees correct results when the embedded object is being converted from one type into another without the caller’s knowledge. Calling this method is inexpensive because the default handler implements it using the registry.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>You can use the implementation provided by the default handler by returning OLE_S_USEREG as your application’s implementation of this method. If the user type name is an empty string, the message “Unknown Object” is returned.</P>
+<p>&nbsp;</p></body>
+</HTML>

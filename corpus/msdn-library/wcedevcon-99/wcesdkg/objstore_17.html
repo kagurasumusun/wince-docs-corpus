@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Mounting, Unmounting, and Enumerating Database Volumes</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_mounting_unmounting_and_enumerating_database_volumes"></A>Mounting, Unmounting, and Enumerating Database Volumes</H2>
+
+<P>You call <B>CeMountDBVol </B>to mount a database volume, such as a permanent storage device. This is required before creating or accessing a database. Likewise, you call <B>CeUnmountDBVol</B> to unmount, or remove, a database volume. However, you do not need to call either of these functions for the object store on the Windows CE device itself, because the object store is always mounted. The object store’s CEGUID can be obtained by using the macro <B>CREATE_SYSTEMGUID</B>.</P>
+
+<P>In a mounted database volume, all write operations are cached. The data is periodically written to permanent storage when the cache fills up. To explicitly force the data to be written to permanent storage, you must call <B>CeFlushDBVol</B>. When you call <B>CeUnmountDBVol</B>, all cached data is flushed to the permanent storage device. You may lose data if there is a power failure or if you reset your Windows CE device<B> </B>before data is flushed from the cache to the permanent storage.</P>
+
+<P>To retrieve the name of a mounted database volume, call <B>CeEnumDBVolumes</B>. This function takes a database CEGUID as a parameter. It returns the name of the volume in its string buffer parameter, and the CEGUID of the next volume in the enumeration sequence in its CEGUID parameter. To begin enumerating with the first database, call <B>CeEnumDBVolumes</B> with an invalid CEGUID created with CREATE_INVALIDGUID. You can enumerate all mounted database volumes by repeatedly calling <B>CeEnumDBVolumes</B> in a loop, passing it the last CEGUID it returned, until an error occurs. To ensure that there was no problem with the enumeration, call <B>GetLastError</B> and check for the ERROR_NO_MORE_ITEMS value.</P>
+
+<P>The following code example shows how to mount the database volume MyDBVol. It opens the database volume if it already exists, or creates the database if it does not exist. It also shows how to enumerate all of the mounted database volumes and flush their information to permanent storage.</P>
+
+<PRE><CODE>CEGUID    *pceguid;                // Pointer to the mounted volume
+LPWSTR    lpBuf;                    // Buffer to store the volume name
+TCHAR    szError[100];            // String to display with error message
+DWORD    dwError,                    // Return value of GetLastError function
+        dwNumChars;                // Length of the buffer in characters 
+BOOLEAN bFinished = FALSE;        // TRUE: done with enumeration 
+                                // FALSE: not done with enumeration
+
+// Allocate memory for pceguid.
+pceguid = (PCEGUID) LocalAlloc (LPTR, sizeof (CEGUID));
+
+// Open the database volume MyDBVol on the storage card if it exists. 
+// Create it if it does not exist.
+if (!CeMountDBVol (
+        pceguid,                            // Pointer to a CEGUID
+        TEXT("\\Storage Card\\MyDBVol"),    // Name of the database volume
+        OPEN_ALWAYS))                    // Create the database volume
+                                        //<B>   </B>if it does not exist.
+{
+    // If the database volume was not opened or created
+    wsprintf(szError, TEXT("ERROR: CeMountDBVol failed (%ld)"),
+                GetLastError());
+}
+
+// Allocate memory for lpBuf.
+lpBuf = (LPWSTR) LocalAlloc (LPTR, MAX_PATH);
+
+// Assign MAX_PATH to dwNumChars.
+dwNumChars = MAX_PATH;
+    
+// Create an invalid pceguid as the input parameter of CeEnumDBVolumes.
+CREATE_INVALIDGUID (pceguid);
+
+while (!bFinished)
+{
+    // Enumerates database volumes
+    if (!CeEnumDBVolumes (
+                pceguid,            // Points to a mounted volume
+                lpBuf,            // Buffer to store the volume name
+                dwNumChars))        // Length of buffer in char
+
+    {
+        // If error occurs in enumerating
+
+        bFinished = TRUE;        // Finished enumerating
+            
+        dwError = GetLastError();
+        
+        wsprintf(szError, TEXT("ERROR: CeMountDBVol failed (%ld)"),
+                dwError);
+
+        if (dwError == ERROR_INSUFFICIENT_BUFFER)
+        {
+            // To avoid having to restart the enumeration,
+            // free lpBuf and re-allocate a bigger buffer.
+
+            bFinished = TRUE;    // continue with enumerating
+            LocalFree (lpBuf);    // free lpBuf
+
+            // Reallocate a bigger buffer.
+            // ...
+        }
+    }
+    else                            // succeeded in enumerating
+    {
+        // Flush the database volume's information to permanent storage.
+
+        if (!CeFlushDBVol (pceguid))
+        {
+            wsprintf(szError, TEXT("ERROR: CeFlushDBVol failed."));
+        }
+    }
+}
+</CODE></PRE>
+
+<P>The following code example shows how to unmount database volumes by calling <B>CeUnmountDBVol</B>. </P>
+
+<PRE><CODE>if (!CeUnmountDBVol (pceguid)
+{
+    wsprintf(szMsg, TEXT("Failed unmounting the database."));
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

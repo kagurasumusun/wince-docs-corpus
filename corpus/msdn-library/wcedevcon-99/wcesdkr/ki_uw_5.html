@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IViewObject::Draw</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_iviewobject_draw"></A>IViewObject::Draw</H2>
+
+<P>This method draws a representation of an object onto the specified device context.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT Draw( DWORD </B><I>dwAspect</I><B>, LONG </B><I>lindex</I><B>, void * </B><I>pvAspet</I><B>, <BR>
+DVTARGETDEVICE * </B><I>ptd</I><B>, HDC </B><I>hicTargetDev</I><B>, HDC </B><I>hdcDraw</I><B>, <BR>
+const LPRECTL </B><I>lprcBounds</I><B>, const LPRECTL </B><I>lprcWBounds</I><B>, <BR>
+BOOL (*) (DWORD) </B><I>pfnContinue</I><B>, DWORD </B><I>dwContinue </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwAspect</I></DT>
+
+<DD>[in] Specifies the aspect to be drawn, that is, how the object is to be represented. Representations include content, an icon, a thumbnail, or a printed document. Valid values are taken from the enumeration <A HREF="comole_e_2.htm"><B>DVASPECT</B></A>. Windowless objects allow only DVASPECT_CONTENT, DVASPECT_OPAQUE, and DVASPECT_TRANSPARENT.</dd>
+
+<DT><I>lindex</I></DT>
+
+<DD>[in] Portion of the object that is of interest for the draw operation. Its interpretation varies depending on the value in the <I>dwAspect</I> parameter. For more information, see the <B>DVASPECT</B> enumeration.</dd>
+
+<DT><I>pvAspect</I></DT>
+
+<DD>[in] Pointer to additional information in a <B>DVASPECTINFO</B> structure that enables drawing optimizations depending on the aspect specified. Note that newer objects and containers that support optimized drawing interfaces support this parameter as well. Older objects and containers that do not support optimized drawing interfaces always specify NULL for this parameter.</dd>
+
+<DT><I>ptd</I></DT>
+
+<DD>[in] Pointer to the <A HREF="ks_de_8.htm"><B>DVTARGETDEVICE</B></A> structure that describes the device for which the object is to be rendered. If NULL, the view should be rendered for the default target device (typically the display). A value other than NULL is interpreted in conjunction with <I>hicTargetDev</I> and <I>hdcDraw</I>. For example, if <I>hdcDraw</I> specifies a printer as the device context, the <I>ptd</I> parameter points to a structure describing that printer device. The data may actually be printed if <I>hicTargetDev</I> is a valid value or it may be displayed in print preview mode if <I>hicTargetDev</I> is NULL.</dd>
+
+<DT><I>hicTargetDev</I></DT>
+
+<DD>[in] Information context for the target device indicated by the <I>ptd</I> parameter from which the object can extract device metrics and test the device’s capabilities. If <I>ptd</I> is NULL; the object should ignore the value in the <I>hicTargetDev</I> parameter.</dd>
+
+<DT><I>hdcDraw</I></DT>
+
+<DD>[in] Device context on which to draw. For a windowless object, the <I>hdcDraw</I> parameter should be in MM_TEXT mapping mode with its logical coordinates matching the client coordinates of the that contains window. For a windowless object, the device context should be in the same state as the one normally passed by a WM_PAINT message.</dd>
+
+<DT><I>lprcBounds</I></DT>
+
+<DD>[in] Long pointer to a <B>RECTL </B>structure that specifies the rectangle on <I>hdcDraw</I> and in which the object should be drawn. This parameter controls the positioning and stretching of the object. This parameter should be NULL to draw a windowless in-place active object. In every other situation, NULL is not a legal value and should result in an E_INVALIDARG error code. If the container passes a non-NULL value to a windowless object, the object should render the requested aspect into the specified device context and rectangle. A container can request this from a windowless object to render a second, non-active view of the object or to print the object.</dd>
+
+<DT><I>lprcWBounds</I></DT>
+
+<DD>[in] If <I>hdcDraw</I> is a metafile device context, this parameter is a long pointer to a <B>RECTL</B> structure specifying the bounding rectangle in the underlying metafile. The rectangle structure contains the window extent and window origin. These values are useful for drawing metafiles. The rectangle indicated by <I>lprcBounds</I> is nested inside this <I>lprcWBounds</I> rectangle; they are in the same coordinate space.
+
+<P>If <I>hdcDraw</I> is not a metafile device context; <I>lprcWBounds</I> will be NULL.
+</dd>
+
+<DT><I>pfnContinue</I></DT>
+
+<DD>[in] Pointer to a callback function that the view object should call periodically during a lengthy drawing operation to determine whether the operation should continue or be canceled. This function returns TRUE to continue drawing. It returns FALSE to stop the drawing in which case <B>IViewObject::Draw</B> returns DRAW_E_ABORT.</dd>
+
+<DT><I>dwContinue</I></DT>
+
+<DD>[in] Specifies a value to pass as a parameter to the function pointed to by the <I>pfnContinue</I> parameter. Typically, <I>dwContinue</I> is a pointer to an application-defined structure needed inside the callback function. 
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>This method supports the standard return values E_INVALIDARG and E_OUTOFMEMORY, as well as the values described in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%>
+<H5>Value</H5>
+</TD>
+<TD width=72%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_OK</TD>
+<TD width=72%>The object was drawn successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>OLE_E_BLANK </TD>
+<TD width=72%>No data to draw from.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>DRAW_E_ABORT</TD>
+<TD width=72%>Draw operation aborted.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>VIEW_E_DRAW</TD>
+<TD width=72%>Error in drawing.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>DV_E_LINDEX</TD>
+<TD width=72%>Invalid value for <I>lindex</I>; currently only -1 is supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>DV_E_DVASPECT</TD>
+<TD width=72%>Invalid value for <I>dwAspect</I>. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>OLE_E_INVALIDRECT</TD>
+<TD width=72%>Invalid rectangle.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>A container application issues a call to <B>IViewObject::Draw</B> to create a representation of a contained object. This method draws the specified piece (<I>lindex</I>) of the specified view (<I>dwAspect</I> and <I>pvAspect</I>) on the specified device context (<I>hdcDraw</I>). Formatting, fonts, and other rendering decisions are made on the basis of the target device specified by the <I>ptd</I> parameter.</P>
+
+<P>There is a relationship between the <I>dwDrawAspect</I> value and the <I>lprcbounds</I> value. The <I>lprcbounds</I> value specifies the rectangle on <I>hdcDraw</I> into which the drawing is to be mapped. For DVASPECT_THUMBNAIL, DVASPECT_ICON, and DVASPECT_SMALLICON, the object draws whatever it wants to draw, and it maps it into the space given in the best way. Some objects might scale to fit while some might scale to fit but preserve the aspect ratio. In addition, some might scale so the drawing appears at full width, but the bottom is cropped. The container can use <B>IOleObject::SetExtent</B> to suggest a size, but it has no control over the rendering size. In the case of DVASPECT_CONTENT, the <B>Draw</B> implementation should either use the extents given by <B>IOleObject::SetExtent</B> or use the bounding rectangle given in the <I>lprcBounds</I> parameter.</P>
+
+<P>To maintain compatibility with older objects and containers that do not support drawing optimizations, all objects, rectangular or not, are required to maintain an origin and a rectangular extent. This allows the container to still consider all its embedded objects as rectangles and to pass them appropriate rendering rectangles in <B>IViewObjectEx::Draw</B>.</P>
+
+<P>An object’s extent depends on the drawing aspect. For non-rectangular objects, the extent should be the size of a rectangle covering the entire aspect. By convention, the origin of an object is the top-left corner of the rectangle of the DVASPECT_CONTENT aspect. In other words, the origin always coincides with the top-left corner of the rectangle maintained by the object’s site, even for a non-rectangular object.</P>
+
+<H4>Note to Callers</H4>
+
+<P>The value of <I>hicTargetDevice</I> is typically an information context for the target device. However, it may be a full device context instead.</P>
+
+<H4>Note to Implementers</H4>
+
+<P>If you are writing an object handler (such as the default handler) that implements <B>IViewObject::Draw</B> by playing a metafile, you have to treat <B>SetPaletteEntries</B> metafile records in a special way because of Windows’ behavior. The Windows function <B>PlayMetaFile</B> sets these palette entries to the foreground. You must override this default by setting them to the background palette. Use <B>EnumMetaFile</B> to do this. Enhanced metafiles are always recorded with the background palette so there is no need to do it manually.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using PlaySound with a Resource Identifier</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_using_playsound_with_a_resource_identifier"></A>Using PlaySound with a Resource Identifier</H2>
+
+<P>To play a sound stored as a resource, use the <B>PlaySound</B> function. Although you can use <B>sndPlaySound</B> to play a resource sound, you must find, load, lock, unlock, and free the resource; in contrast, <B>PlaySound</B> completes these tasks in a single line of code. </P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To include a .wav file as a resource in an application</H4>
+
+<UL>
+	<LI>Add the following entry to the application resource script (.rc) file
+<PRE><CODE>soundName WAVE \sounds\bells.wav
+</CODE></PRE>
+
+<P>The name <I>soundName</I> is a placeholder for a name you supply to refer to the wave resource sound. Wave resources are loaded and accessed like other application-defined Windows resources. 
+</li>
+</UL>
+
+<P>The following example shows how to use the <B>PlaySound</B> function to play the wave resource sound.</P>
+
+<PRE><CODE>PlaySound (TEXT("soundName"), hInst, SND_RESOURCE | SND_ASYNC);
+</CODE></PRE>
+
+<P>In contrast, the following code example shows how to use the <B>sndPlaySound</B> function to play a wave resource sound.</P>
+
+<PRE><CODE>BOOL PlayResource (LPTSTR lpName) 
+{ 
+    BOOL bRtn; 
+    LPTSTR lpRes; 
+    HANDLE hResInfo, hRes; 
+
+    // Find the WAVE resource. 
+    hResInfo = FindResource (hInst, lpName, "WAVE"); 
+
+    if (hResInfo == NULL) 
+      return FALSE; 
+
+    // Load the WAVE resource. 
+    hRes = LoadResource (hInst, hResInfo); 
+
+    if (hRes == NULL) 
+      return FALSE; 
+
+    // Lock the WAVE resource and play it. 
+    lpRes = LockResource (hRes);
+  
+    if (lpRes != NULL) 
+  { 
+      bRtn = sndPlaySound (lpRes, SND_MEMORY | SND_SYNC | SND_NODEFAULT); 
+      UnlockResource (hRes); 
+    } 
+    else 
+      bRtn = 0; 
+
+    // Free the WAVE resource and return success or failure. 
+    FreeResource (hRes); 
+
+    return bRtn; 
+}
+</CODE></PRE>
+
+<P>To play a wave resource sound by using <B>sndPlaySound</B>, pass the function a pointer to a string containing the resource name, as shown in the following example. </P>
+
+<PRE><CODE>PlayResource (TEXT("soundName"));
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

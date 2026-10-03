@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPersistStorage::Save</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ipersiststorage_save"></A>IPersistStorage::Save</H2>
+
+<P>This<B> </B>method saves an object and any nested objects that it contains into the specified storage. The object is placed in NoScribble mode and must not write to the specified storage until it receives a call to its <B>IPersistStorage::SaveCompleted</B> method.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT Save( IStorage * </B><I>pStgSave</I><B>, BOOL </B><I>fSameAsLoad </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pStgSave</I></DT>
+
+<DD>[in] <B>IStorage</B> pointer to the storage into which the object is to be saved.</dd>
+
+<DT><I>fSameAsLoad</I></DT>
+
+<DD>[in] Boolean value that indicates whether the specified storage is the current one, which was passed to the object by one of the following calls:
+
+<UL>
+	<LI><A HREF="ki_pr_15.htm"><B>IPersistStorage::InitNew</B></A> when it was created.</li>
+
+	<LI><A HREF="ki_pr_17.htm"><B>IPersistStorage::Load</B></A> when it was loaded.</li>
+
+	<LI><A HREF="ki_pr_19.htm"><B>IPersistStorage::SaveCompleted</B></A> when it was saved to a storage different from its current storage.</li>
+</UL>
+
+
+<P>This parameter is set to FALSE when performing a Save As or Save A Copy To operation or when performing a full save. In the latter case, this method saves to a temporary file, deletes the original file, and renames the temporary file.
+
+
+<P>This parameter is set to TRUE to perform a full save in a low-memory situation or to perform a fast incremental save in which only the dirty components are saved.
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>One of the values described in the following table is returned.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%>
+<H5>Value</H5>
+</TD>
+<TD width=72%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>S_OK</TD>
+<TD width=72%>The object was successfully saved.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>STG_E_MEDIUMFULL</TD>
+<TD width=72%>The object was not saved because of a lack of space on the disk.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>E_FAIL</TD>
+<TD width=72%>The object could not be saved due to errors other than a lack of disk space.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>This method saves an object, and any nested objects it contains, into the specified storage. It also places the object into NoScribble mode. Thus, the object cannot write to its storage until a subsequent call to the <A HREF="ki_pr_19.htm"><B>IPersistStorage::SaveCompleted</B></A> method returns the object to Normal mode.</P>
+
+<P>If the storage object is the same as the one it was loaded or created from, the save operation may be able to write incremental changes to the storage object. Otherwise, a full save must be done.</P>
+
+<P>This method recursively calls the <B>IPersistStorage::Save</B> method, the <A HREF="kf_oq_6.htm"><B>OleSave</B></A> function, or the <A HREF="ki_s_2.htm"><B>IStorage::CopyTo</B></A> method to save its nested objects.</P>
+
+<P>This method does not call the <A HREF="ki_s_1.htm"><B>IStorage::Commit</B></A> method. Nor does it write the CLSID to the storage object. Both of these tasks are the responsibilities of the caller.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>Rather than calling <B>IPersistStorage::Save</B> directly, you typically call the <A HREF="kf_oq_6.htm"><B>OleSave</B></A> helper function which performs the following steps:
+
+<OL>
+	<LI>Call the <A HREF="kf_w_6.htm"><B>WriteClassStg</B></A> function to write the class identifier for the object to the storage.</li>
+
+	<LI>Call the <B>IPersistStorage::Save</B> method.</li>
+
+	<LI>If needed, call the <A HREF="ki_s_1.htm"><B>IStorage::Commit</B></A> method on the storage object.</li>
+</OL>
+
+<P>Then, a container application performs any other operations necessary to complete the save and calls the <B>SaveCompleted</B> method for each object.</P>
+
+<P>If an embedded object passes the <B>IPersistStorage::Save</B> method to its nested objects, it must receive a call to its <A HREF="ki_pr_19.htm"><B>IPersistStorage::SaveCompleted</B></A> method before calling this method for its nested objects.</P>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating Image Lists</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_creating_image_lists"></A>Creating Image Lists</H2>
+
+<P>By default, a list view control does not display item images. To display item images, you must create image lists and associate them with the control. A list view control can have three image lists: 
+
+<UL>
+	<LI>One that contains full-sized icons displayed when the control is in icon view</li>
+
+	<LI>One that contains small icons displayed when the control is in small icon view, list view, or report view</li>
+
+	<LI>One that contains state images displayed to the left of the full-sized icon or small icon</li>
+</UL>
+
+<P>You can use state images, such as checked or cleared check boxes, to indicate application-defined item states. State images are displayed in icon view, small icon view, list view, or report view. </P>
+
+<P>To assign an image list to a list view control, use the LVM_SETIMAGELIST message to specify whether the image list contains full-sized icons, small icons, or state images. To retrieve the handle to an image list currently assigned to a list view control, use the LVM_GETIMAGELIST message. You can use the <B>GetSystemMetrics</B> function to determine appropriate dimensions for the full-sized icons and small icons. Use the <B>ImageList_Create</B> function to create an image list, and use other image list functions to add bitmaps to the image list. </P>
+
+<P>Create only the image list that the control will use. For example, if the list view control will never be in icon view, do not create and assign a large image list because the large images will never be used. If you create large and small icon image lists, each image list must contain the same images in the same order. This is because a single value is used to identify a list view item’s icon in both image lists. You can associate an icon index with an item when you call the <B>ListView_InsertItem</B> or<B> ListView_SetItem</B> macro. </P>
+
+<P>The full-sized icon and small icon image lists can also contain overlay images, designed to be drawn transparently over the item icons. </P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To use overlay images in a list view control</H4>
+
+<OL>
+	<LI>Call the <B>ImageList_SetOverlayImage</B> function to assign an overlay image index to an image in the full-sized icon and small icon image lists. 
+<P>An overlay image is identified by a one-based index.
+</li>
+
+	<LI>Call the<B> ListView_InsertItem</B> or <B>ListView_SetItem</B> macro to associate an overlay image index with an item.</li>
+
+	<LI>Use the <B>INDEXTOOVERLAYMASK</B> macro to specify an overlay image index in the <I>state</I> member of the item’s <B>LVITEM</B> structure. 
+<P>You must also set the<B> LVIS_OVERLAYMASK</B> bits in the <I>stateMask</I> member.
+</li>
+</OL>
+
+<P>To associate a state image with an item, use the <B>INDEXTOSTATEIMAGEMASK</B> macro to specify a state image index in the <B>state</B> member of the <B>LVITEM</B> structure. </P>
+
+<P>By default, when a list view control is destroyed, it destroys the image lists assigned to it. However, if a list view control has the LVS_SHAREIMAGELISTS window style, you are responsible for destroying the image lists when no longer in use. You should specify this style if you assign the same image lists to multiple list view controls; otherwise, more than one control might try to destroy the same image list. </P>
+
+<P>The following code example shows how to create a listview control and accompanying image list. It also shows how to assign the image list to the control.</P>
+
+<PRE><CODE>HWND CreateListView (HINSTANCE hInstance, HWND hwndParent)
+{
+  DWORD dwStyle;              // The window style of list view control
+  HWND hwndListView;          // The handle of list view control
+  HIMAGELIST himlSmall;       // The handle to the small image list
+  HIMAGELIST himlLarge;       // The handle to the large image list
+  INITCOMMONCONTROLSEX iccex; // INITCOMMONCONTROLSEX structure
+
+  // Initialize the INITCOMMONCONTROLSEX structure.   
+  iccex.dwSize = sizeof (INITCOMMONCONTROLSEX);
+
+  // Load list view and header control classes.  
+  iccex.dwICC = ICC_LISTVIEW_CLASSES;  
+
+  // Registers treeview control classes from the common control 
+  // dynamic-link library (DLL). 
+  InitCommonControlsEx (&amp;iccex);
+
+  // Assign the list view window style.
+  dwStyle = WS_TABSTOP | WS_CHILD | WS_BORDER | WS_VISIBLE | 
+            LVS_AUTOARRANGE | LVS_REPORT | LVS_OWNERDATA;
+
+  // Create list view control.        
+  hwndListView = CreateWindowEx (
+                  WS_EX_CLIENTEDGE,   // Extended window style
+                  WC_LISTVIEW,        // Class name
+                  TEXT(""),           // Window name
+                  dwStyle,            // Window style
+                  0,                  // Horizontal position of window
+                  0,                  // Vertical position of window
+                  0,                  // Window width
+                  0,                  // Window height
+                  hwndParent,         // Handle to parent window
+                  (HMENU)ID_LISTVIEW, // Handle to menu identifier
+                  g_hInst,            // Handle to application instance
+                  NULL);              // Window-creation data
+
+  // If it fails in creating the window, return.
+  if (!hwndListView)
+    return NULL;
+
+  // Insert code to resize the list view window here since the list view
+  // control was created zero in size. 
+  // ...
+
+  // Create the large and small image lists.
+  himlSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, 1, 0);
+  himlLarge = ImageList_Create (32, 32, ILC_COLORDDB | ILC_MASK, 1, 0);
+
+  if (himlSmall &amp;&amp; himlLarge)
+  {
+    HICON hIcon;
+
+    // Load the small icon from the instance.
+    hIcon = LoadImage (g_hInst, MAKEINTRESOURCE (IDI_DISK), IMAGE_ICON, 
+                       16, 16, LR_DEFAULTCOLOR);
+
+    // Adds the icon to the image list.
+    ImageList_AddIcon (himlSmall, hIcon);
+
+    // Load the small icon from the instance.
+    hIcon = LoadIcon (g_hInst, MAKEINTRESOURCE (IDI_DISK));
+
+    // Adds the icon to the image list.
+    ImageList_AddIcon (himlLarge, hIcon);
+
+    // Assigns the large and small image lists to the list view control.
+    ListView_SetImageList (hwndListView, himlSmall, LVSIL_SMALL);
+    ListView_SetImageList (hwndListView, himlLarge, LVSIL_NORMAL);
+  }
+
+  return hwndListView;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

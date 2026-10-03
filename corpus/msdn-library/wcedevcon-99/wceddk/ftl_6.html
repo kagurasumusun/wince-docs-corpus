@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Loading and Unloading a File System</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_loading_and_unloading_a_file_system"></A>Loading and Unloading a File System</H2>
+
+<P>Block device drivers need to perform certain tasks to work correctly with Windows CE file systems. When the driver receives DISK_IOCTL_INITIALIZED in its <B>DSK_IOControl</B> function, it also receives a pointer to a <B>POST_INIT_BUF</B> structure. This structure lists the driver’s registry key, which the driver can use to retrieve the name of a file system driver. The driver must pass that name and a device-specific handle also present in the structure to the <B>LoadFSD</B> function. The Device Manager then loads the correct file system driver. The file system driver name should never be hard coded into a block device driver; it should always be retrieved from the registry. Hard coding the file system driver name means that your block device driver could stop working if later versions of Windows CE use different names for their file system drivers.</P>
+
+<P>The block device driver should be prepared to accept I/O control requests as soon as it calls <B>LoadFSD</B>, even if <B>LoadFSD</B> has not yet returned. Because of the way the Device Manager implements <B>LoadFSD</B>, it is possible for the file system driver to be loaded and to issue a request to your block device driver before <B>LoadFSD</B> actually returns. It is also possible for <B>LoadFSD</B> to return successfully, even if there are subsequent errors initializing the file system driver. Presently, there are no mechanisms that the block device driver can use to detect such errors.</P>
+
+<P>Windows CE versions 2.12 and earlier do not support multiple file system drivers acting on the same block device. If a Windows CE–based system has multiple file system drivers installed, the block device driver must determine which one to load during its processing of DISK_IOCTL_INITIALIZED. A block device driver can make only one successful call to <B>LoadFSD</B>; calling <B>LoadFSD</B> more than once causes unpredictable behavior.</P>
+
+<P>The Device Manager unloads file system drivers at the time that a block device’s driver is deregistered by the <B>DeregisterDevice</B> function. Once the file system driver is loaded, the block device driver cannot force it to unload or unmount the block device from the system’s directory structure.</P>
+
+<P>Because file systems are frequently unloaded just prior to system shutdown, block device drivers must ensure that all write operations to the block device are fully complete before the driver’s <B>DSK_IOControl</B> function returns. Failure to do so can cause corruption of files or directories.</P>
+<p>&nbsp;</p></body>
+</HTML>

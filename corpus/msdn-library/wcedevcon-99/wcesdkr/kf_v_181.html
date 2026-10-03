@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>VirtualAlloc</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_virtualalloc"></A>VirtualAlloc </H2>
+
+<P>This function reserves or commits a region of pages in the virtual address space of the calling process. Memory allocated by <B>VirtualAlloc</B> is automatically initialized to zero. </P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Winbase.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>LPVOID</B> <B>VirtualAlloc(LPVOID</B> <I>lpAddress</I><B>, DWORD</B> <I>dwSize</I><B>, <BR>
+DWORD</B> <I>flAllocationType</I><B>, DWORD</B> <I>flProtect</I><B>);</B> </P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>lpAddress</I></DT>
+
+<DD>Long pointer to the desired starting address of the region to allocate. If the memory is being reserved, the specified address is rounded down to the next 64-kilobyte boundary. If the memory is already reserved and is being committed, the address is rounded down to the next page boundary. To determine the size of a page on the host computer, use the <A HREF="kf_g_35.htm"><B>GetSystemInfo</B></A> function. If this parameter is NULL, the system determines where to allocate the region. </dd>
+
+<DT><I>dwSize</I></DT>
+
+<DD>Specifies the size, in bytes, of the region. If the <I>lpAddress</I> parameter is NULL, this value is rounded up to the next page boundary. Otherwise, the allocated pages include all pages containing one or more bytes in the range from <I>lpAddress</I> to (<I>lpAddress</I>+<I>dwSize</I>). This means that a 2-byte range straddling a page boundary causes both pages to be included in the allocated region. </dd>
+
+<DT><I>flAllocationType</I></DT>
+
+<DD>Specifies the type of allocation. You can specify any combination of the following flags: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MEM_COMMIT</TD>
+<TD width=52%>Allocates physical storage in memory or in the paging file on disk for the specified region of pages.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>&nbsp;</TD>
+<TD width=52%>An attempt to commit an already committed page will not cause the function to fail. This means that a range of committed or decommitted pages can be committed without having to worry about a failure.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MEM_RESERVE</TD>
+<TD width=52%>Reserves a range of the process’s virtual address space without allocating any physical storage. The reserved range cannot be used by any other allocation operations (the <B>malloc</B> function, the <A HREF="kf_jl_15.htm"><B>LocalAlloc</B></A> function, and so on) until it is released. Reserved pages can be committed in subsequent calls to the <B>VirtualAlloc</B> function.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MEM_RESET</TD>
+<TD width=52%>Not supported.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>MEM_TOP_DOWN</TD>
+<TD width=52%>Allocates memory at the highest possible address.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+
+<DT><I>flProtect</I></DT>
+
+<DD>Specifies the type of access protection. If the pages are being committed, any one of the following flags can be specified, along with the PAGE_GUARD and PAGE_NOCACHE protection modifier flags, as desired: 
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>
+<H5>Value</H5>
+</TD>
+<TD width=52%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_READONLY</TD>
+<TD width=52%>Enables read access to the committed region of pages. An attempt to write to the committed region results in an access violation. If the system differentiates between read-only access and execute access, an attempt to execute code in the committed region results in an access violation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_READWRITE</TD>
+<TD width=52%>Enables both read and write access to the committed region of pages.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_EXECUTE</TD>
+<TD width=52%>Enables execute access to the committed region of pages. An attempt to read or write to the committed region results in an access violation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_EXECUTE_READ</TD>
+<TD width=52%>Enables execute and read access to the committed region of pages. An attempt to write to the committed region results in an access violation.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_EXECUTE_READWRITE</TD>
+<TD width=52%>Enables execute, read, and write access to the committed region of pages.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_GUARD</TD>
+<TD width=52%>Pages in the region become guard pages. Any attempt to read from or write to a guard page causes the system to raise a STATUS_GUARD_PAGE exception and turn off the guard page status. Guard pages thus act as a one-shot access alarm.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD rowspan=2 width=48%>&nbsp;</TD>
+<TD width=52%>The PAGE_GUARD flag is a page protection modifier. An application uses it with one of the other page protection flags, with one exception: It cannot be used with PAGE_NOACCESS. When an access attempt leads the system to turn off guard page status, the underlying page protection takes over.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=52%>If a guard page exception occurs during a system service, the service typically returns a failure status indicator.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_NOACCESS</TD>
+<TD width=52%>Disables all access to the committed region of pages. An attempt to read from, write to, or execute in the committed region results in an access violation exception, called a general protection (GP) fault.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>PAGE_NOCACHE</TD>
+<TD width=52%>Allows no caching of the committed regions of pages. The hardware attributes for the physical memory should be specified as “no cache.” This is not recommended for general usage. It is useful for device drivers; for example, mapping a video frame buffer with no caching. This flag is a page protection modifier, only valid when used with one of the page protections other than PAGE_NOACCESS.</TD>
+</TR>
+</TABLE><BR>
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The base address of the allocated region of pages indicates success. NULL indicates failure. To get extended error information, call <A HREF="kf_g_19.htm"><B>GetLastError</B></A>. </P>
+
+<H4>Remarks</H4>
+
+<P>The following <I>flProtect</I> flags are not supported:
+
+<UL>
+	<LI>PAGE_WRITECOPY</li>
+
+	<LI>PAGE_EXECUTE_WRITECOPY</li>
+</UL>
+
+<P><B>VirtualAlloc</B> can perform the following operations: 
+
+<UL>
+	<LI>Commit a region of pages reserved by a previous call to the <B>VirtualAlloc</B> function. </li>
+
+	<LI>Reserve a region of free pages. </li>
+
+	<LI>Reserve and commit a region of free pages. </li>
+</UL>
+
+<P>You can use <B>VirtualAlloc</B> to reserve a block of pages and then make additional calls to <B>VirtualAlloc</B> to commit individual pages from the reserved block. This enables a process to reserve a range of its virtual address space without consuming physical storage until it is needed. </P>
+
+<P>Each page in the process’s virtual address space is in one of three states: 
+
+<DL>
+<DT>Free</DT>
+
+<DD>The page is not committed or reserved and is not accessible to the process. <B>VirtualAlloc</B> can reserve, or simultaneously reserve and commit, a free page.</dd>
+
+<DT>Reserved</DT>
+
+<DD>The range of addresses cannot be used by other allocation functions, but the page is not accessible and has no physical storage associated with it. <B>VirtualAlloc</B> can commit a reserved page, but it cannot reserve it a second time. The <A HREF="kf_v_182.htm"><B>VirtualFree</B></A> function can release a reserved page, making it a free page.</dd>
+
+<DT>Committed</DT>
+
+<DD>Physical storage is allocated for the page, and access is controlled by a protection code. The system initializes and loads each committed page into physical memory only at the first attempt to read or write to that page. When the process terminates, the system releases the storage for committed pages. <B>VirtualAlloc</B> can commit an already committed page. This means that you can commit a range of pages, regardless of whether they have already been committed, and the function will not fail. <A HREF="kf_v_182.htm"><B>VirtualFree</B></A> can decommit a committed page, releasing the page’s storage, or it can simultaneously decommit and release a committed page.
+</dd>
+</DL>
+
+<P>If the <I>lpAddress</I> parameter is not NULL, the function uses the <I>lpAddress</I> and <I>dwSize</I> parameters to compute the region of pages to be allocated. The current state of the entire range of pages must be compatible with the type of allocation specified by the <I>flAllocationType</I> parameter. Otherwise, the function fails and none of the pages are allocated. This compatibility requirement does not preclude committing an already committed page; see the preceding list. </P>
+
+<H4>See Also</H4>
+
+<P><A HREF="kf_jl_15.htm"><B>LocalAlloc</B></A>, <A HREF="kf_v_182.htm"><B>VirtualFree</B></A>, <A HREF="kf_v_183.htm"><B>VirtualProtect</B></A>, <A HREF="kf_v_184.htm"><B>VirtualQuery</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

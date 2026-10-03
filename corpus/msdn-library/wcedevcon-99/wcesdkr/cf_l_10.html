@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>lineInitialize</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_win32_lineinitialize"></A>lineInitialize </H2>
+
+<P>This function initializes the application’s use of Tapi.dll for subsequent use of the line abstraction. It registers the application’s specified notification mechanism and returns the number of line devices available to the application. A line device is any device that provides an implementation for the <B>line</B>-prefixed functions in TAPI.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Tapi.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>1.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>LONG</B> <B>lineInitialize(LPHLINEAPP</B> <I>lphLineApp</I><B>, HINSTANCE</B> <I>hInstance</I><B>, LINECALLBACK</B> <I>lpfnCallback</I><B>, LPCTSTR</B> <I>lpszAppName</I><B>, <BR>
+LPDWORD</B> <I>lpdwNumDevs<B>)</B></I><B>;</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>lphLineApp</I></DT>
+
+<DD>[out] Pointer to a location that is filled with the application's usage handle for TAPI.</dd>
+
+<DT><I>hInstance</I></DT>
+
+<DD>[in] Instance handle of the client application or DLL.</dd>
+
+<DT><I>lpfnCallback</I></DT>
+
+<DD>[in] Pointer to a callback function that is invoked to determine status and events on the line device, addresses, or calls. For more information, see <A HREF="cf_l_1.htm"><B>lineCallbackFunc</B></A>.</dd>
+
+<DT><I>lpszAppName</I></DT>
+
+<DD>[in] Pointer to a null-terminated string that contains only displayable ASCII characters. If this parameter is not NULL, it contains an application-supplied name for the application. This name is provided in the <A HREF="cs_az_9.htm"><B>LINECALLINFO</B></A> structure to indicate, in a user-friendly way, which application originated, or originally accepted or answered the call. This data can be useful for call logging purposes. If <I>lpszAppName</I> is NULL, the application's filename is used instead.</dd>
+
+<DT><I>lpdwNumDevs</I></DT>
+
+<DD>[out] Pointer to a <B>DWORD</B>-sized location. Upon successful completion of this request, this location is filled with the number of line devices available to the application.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>Zero indicates success. A negative error number indicates that an error occurred. Possible error values are as follows:</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=48%>LINEERR_INVALAPPNAME</TD>
+<TD width=52%>LINEERR_REINIT</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>LINEERR_OPERATIONFAILED</TD>
+<TD width=52%>LINEERR_NODRIVER</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>LINEERR_INIFILECORRUPT</TD>
+<TD width=52%>LINEERR_NODEVICE</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>LINEERR_RESOURCEUNAVAIL</TD>
+<TD width=52%>LINEERR_NOMEM</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=48%>LINEERR_INVALPOINTER</TD>
+<TD width=52%>LINEERR_NOMULTIPLEINSTANCE</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>If LINEERR_REINIT is returned and TAPI reinitialization has been requested (for example as a result of adding or removing a telephony service provider), then <B>lineInitialize</B> requests are rejected with this error until the last application shuts down its usage of the API (using <A HREF="cf_l_17.htm"><B>lineShutdown</B></A>). At that time, the new configuration becomes effective and applications are once again permitted to call <B>lineInitialize</B>. If the LINEERR_INVALPARAM error value is returned, the specified <I>hInstance</I> parameter is invalid.</P>
+
+<P>The application can refer to individual line devices by using line device identifiers that range from zero to <I>dwNumDevs</I> minus one. An application should not assume that these line devices are capable of anything beyond what is specified by the Basic Telephony subset without first querying their device capabilities using <A HREF="cf_l_6.htm"><B>lineGetDevCaps</B></A>. </P>
+
+<P>Applications should not invoke <B>lineInitialize</B> without subsequently opening a line (at least for monitoring). If the application is not monitoring and not using any devices, it should call <B>lineShutdown</B> so that memory resources allocated by Tapi.dll can be released if unneeded, and Tapi.dll itself can be unloaded from memory while not needed.</P>
+
+<P>Another reason for performing a <B>lineShutdown</B> is that if a user changes the device configuration (adds or removes a line or phone), there is no way for TAPI to notify an application that has a line or phone handle open at the time. After a reconfiguration has taken place, causing a LINEDEVSTATE_REINIT message to be sent, no applications can open a device until all applications have performed a <B>lineShutdown</B>. If any service provider fails to initialize properly, this function fails and returns the error indicated by the service provider.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="cf_l_6.htm"><B>lineGetDevCaps</B></A>, <A HREF="cf_l_17.htm"><B>lineShutdown</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

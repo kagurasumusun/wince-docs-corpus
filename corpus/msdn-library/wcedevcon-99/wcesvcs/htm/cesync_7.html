@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Enumerating Objects</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_enumerating_objects"></A>Enumerating Objects</H2>
+
+<P>Enumeration is the process of accessing each object in a directory or folder to determine whether it has changed and whether it meets any specified filtering criteria. The enumeration process is as follows:
+
+<OL>
+	<LI>The service manager calls <B>IReplStore::IsFolderChanged</B>.</li>
+
+	<LI>If <B>IReplStore::IsFolderChanged</B> returns TRUE, the service manager calls <B>IReplStore::FindFirstItem</B>. </li>
+
+	<LI>If additional objects exist, <B>IReplStore::FindFirstItem </B>sets <I>*pfExist</I> to TRUE. </li>
+
+	<LI>The service manager calls <B>IReplStore::FindNextItem </B>repeatedly until <I>*pfExist</I> is FALSE, which indicates that there are no more objects. </li>
+
+	<LI>The service manager calls <B>IReplStore::FindItemClose</B> to free any resources that were used during enumeration.</li>
+</OL>
+
+<P><B>Note</B>  If an enumeration takes more than a few seconds to complete, you can use <B>IReplNotify::SetStatusText</B> to have the desktop provider module display text that notifies the user how much time remains until completion. </P>
+
+<P>The following code example shows how to implement <B>IReplStore::FindFirstItem</B>.</P>
+
+<PRE><CODE>STDMETHODIMP CStore::FindFirstItem
+(
+    HREPLFLD hFolder,    // Handle to a folder
+    HREPLITEM *phItem,    // Output pointer to the handle of the first 
+                        // item in the folder
+    BOOL *pfExist        // Output pointer to a Boolean value that is set 
+                        // to TRUE if there is an object in the folder
+)
+{
+    CFolder *pFolder = (CFolder *)hFolder;
+    
+    // Find the first item. pItem used in the following code points to 
+    // the first item.</CODE></PRE>
+
+<P><CODE>// ...</CODE></P>
+
+<PRE><CODE>    // Implementation should retrieve a unique identifier from 
+    // the first item.
+    // pItem-&gt;m_uid = retrieved_unique_ID;
+
+    // Implementation also should retrieve whatever it is using to         // verify if the first item is changed; for example, a time stamp.
+    // pItem-&gt;m_ftModified = retrieved_time_stamp;
+
+    *phItem = (HREPLITEM)pItem;
+
+    if ( pfExist )
+        *pfExist = TRUE;
+
+    return NOERROR;
+}
+</CODE></PRE>
+
+<P>You can use the desktop provider module to filter synchronization objects during enumeration by returning to the service manager only those objects that meet your filtering criteria. For example, you may want to synchronize only appointments that fall within the next three days. The service manager accesses the filtering criteria—which is stored with the folder handle—by calling <B>IReplStore::IsItemReplicated</B>.</P>
+
+<P><B>Note</B>  If a filter is implemented incorrectly, any object that fails the filter criteria appears as a deleted object on the desktop. If the desktop enumeration does not return the object, the service manager assumes that the object is deleted and deletes the corresponding device object. To avoid this, be sure that the desktop provider module returns every object in the store during enumeration.</P>
+
+<P>You can reapply a filter as certain conditions change. For example, you may want to synchronize the appointments falling within the next three days, everyday. This would mean that the date criteria for the filter would change as the days pass. In order to determine exactly what date range to filter for, the service manager calls <B>IReplStore::ReportStatus</B> with RSC_DATE_CHANGED to initiate the synchronization process. </P>
+<p>&nbsp;</p></body>
+</HTML>

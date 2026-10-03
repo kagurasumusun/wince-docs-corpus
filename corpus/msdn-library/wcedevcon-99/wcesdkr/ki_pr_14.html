@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IPersistStorage::HandsOffStorage</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ipersiststorage_handsoffstorage"></A>IPersistStorage::HandsOffStorage</H2>
+
+<P>This<B> </B>method instructs the object to release all storage objects that have been passed to it by its container and to enter HandsOff mode, in which the object cannot do anything and only the close operation works.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT HandsOfStorage(void);</B></P>
+
+<H4>Return Values</H4>
+
+<P>S_OK indicates that the object has successfully entered HandsOff mode.</P>
+
+<H4>Remarks</H4>
+
+<P>This method causes an object to release any storage objects that it is holding and to enter the HandsOff mode until a subsequent <A HREF="ki_pr_19.htm"><B>IPersistStorage::SaveCompleted</B></A> call. In HandsOff mode, the object cannot do anything and the only operation that works is a close operation.</P>
+
+<P>A container application typically calls this method during a full save or low-memory full save operation to force the object to release all pointers to its current storage. In these scenarios, the <B>HandsOffStorage</B> call comes after a call to either <A HREF="kf_oq_6.htm"><B>OleSave</B></A> or <A HREF="ki_pr_18.htm"><B>IPersistStorage::Save</B></A>, putting the object in HandsOffAfterSave mode. Calling this method is necessary so the container application can delete the current file as part of a full save, or so it can call the <A HREF="ki_pr_59.htm"><B>IRootStorage::SwitchToFile</B></A> method as part of a low-memory save.</P>
+
+<P>A container application also calls this method when an object is in Normal mode to put the object in HandsOffFromNormal mode.</P>
+
+<P>While the component object is in either HandsOffAfterSave or HandsOffFromNormal mode, most operations on the object will fail. Thus, the container should restore the object to Normal mode as soon as possible. The container application does this by calling the <B>IPersistStorage::SaveCompleted</B> method, which passes a storage pointer back to the component object for the new storage object.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>This method must release all pointers to the current storage object, including pointers to any nested streams and storages. If the object contains nested objects, the container application must recursively call this method for any nested objects that are loaded or running.</P>
+<p>&nbsp;</p></body>
+</HTML>

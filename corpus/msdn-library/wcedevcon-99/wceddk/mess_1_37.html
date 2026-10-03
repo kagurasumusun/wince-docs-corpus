@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>WODM_OPEN</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_wodm_open"></A>WODM_OPEN</H2>
+
+<P>This message is used in an <B>MMDRV_MESSAGE_PARAMS</B> structure passed to the <B>WAV_IOControl</B> function to request a waveform output driver to open an instance of a specified device.</P>
+
+<H4>Parameters </H4>
+
+<DL>
+<DT><I>uDeviceId</I></DT>
+
+<DD>Device identifier—0, 1, 2, and so on—for the target device.</dd>
+
+<DT><I>uMsg</I></DT>
+
+<DD>Specifies this message.</dd>
+
+<DT><I>dwUser</I></DT>
+
+<DD>Pointer to a location to receive the device instance identifier.</dd>
+
+<DT><I>dwParam1</I></DT>
+
+<DD>Pointer to a <B>WAVEOPENDESC</B> structure containing the client’s device handle, notification target, and instance identifier</dd>
+
+<DT><I>dwParam2</I></DT>
+
+<DD>Contains the following flags:
+
+<DL>
+<DT>WAVE_FORMAT_DIRECT</DT>
+
+<DD>Data compression and decompression take place in hardware.</dd>
+
+<DT>WAVE_FORMAT_QUERY</DT>
+
+<DD>The driver indicates whether or not it supports the specified format.
+</dd>
+</DL>
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>MMSYSERR_NOERROR indicates success. Otherwise, the driver returns one of the MMSYSERR or WAVEERR error values declared in the Mmsystem.h header file.</P>
+
+<H4>Remarks</H4>
+
+<P>The ACM sends this message by calling the audio driver’s <B>WAV_IOControl</B> entry point through the <B>DeviceIoControl</B> function.</P>
+
+<P>The driver assigns a device instance identifier and returns it in the location pointed to by <I>dwUser</I>. The driver receives this value as the <I>dwUser</I> input parameter of all other wave output driver messages.</P>
+
+<P>The driver determines the number of clients that it enables to use a particular device. If a device is opened by the maximum number of clients, the driver returns MMSYSERR_ALLOCATED for subsequent open requests.</P>
+
+<P>The WAVE_FORMAT_DIRECT flag is meant for use with a wave mapper. If the flag is set in <I>dwParam2</I>, the driver does not call the ACM to handle compression or decompression operations; the caller wants the hardware to perform these operations directly. If the hardware is not capable of performing compression or decompression operations, the driver returns MMSYSERR_NOTSUPPORTED when WAVE_FORMAT_DIRECT is set.</P>
+
+<P>If the WAVE_FORMAT_QUERY flag is set in <I>dwParam2</I>, the driver does not open the device. Instead, the driver determines whether it supports the format specified by the <I>lpFormat</I> member of <B>WAVEOPENDESC</B>. If the driver supports the requested format, it returns MMSYSERR_NOERROR. Otherwise, the driver returns WAVERR_BADFORMAT.</P>
+
+<P>If the open operation succeeds, the Wave API Manager sends the ACM a WOM_OPEN message by calling the <B>PostThreadMessage</B> function on the callback thread handle.</P>
+<p>&nbsp;</p></body>
+</HTML>

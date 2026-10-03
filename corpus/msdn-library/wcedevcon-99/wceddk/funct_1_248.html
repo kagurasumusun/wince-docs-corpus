@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisOpenAdapter</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndisopenadapter"></A>NdisOpenAdapter</H2>
+
+<P>This function sets up a binding between the calling protocol and a particular underlying NIC driver or NDIS intermediate driver.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=30%>Header file:</TD>
+<TD width=70%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=30%>Windows CE versions:</TD>
+<TD width=70%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID</B> <B>NdisOpenAdapter(OUT PNDIS_STATUS</B> <I>Status</I><B>,</B> <BR>
+<B>OUT PNDIS_STATUS</B> <I>OpenErrorStatus</I><B>,</B> <BR>
+<B>OUT PNDIS_HANDLE</B> <I>NdisBindingHandle</I><B>,</B> <BR>
+<B>OUT PUINT</B> <I>SelectedMediumIndex</I><B>,</B> <B>IN PNDIS_MEDIUM</B> <I>MediumArray</I><B>,</B> <BR>
+<B>IN UINT</B> <I>MediumArraySize</I><B>,</B> <B>IN NDIS_HANDLE</B> <I>NdisProtocolHandle</I><B>,</B> <BR>
+<B>IN NDIS_HANDLE</B> <I>ProtocolBindingContext</I><B>,</B> <BR>
+<B>IN PNDIS_STRING</B> <I>AdapterName</I><B>,</B> <B>IN UINT</B> <I>OpenOptions</I><B>,</B> <BR>
+<B>IN PSTRING</B> <I>AddressingInformation</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Status</I></DT>
+
+<DD>Pointer to a caller-supplied variable that can be one of the following values on return from this function:
+
+<DL>
+<DT>STATUS_SUCCESS</DT>
+
+<DD>The requested binding is now set up, so the caller can use the values returned at <I>NdisBindingHandle</I> and <I>SelectedMediumIndex</I> in subsequent calls to the <B>Ndis</B><I>XXX</I> functions.</dd>
+
+<DT>NDIS_STATUS_PENDING</DT>
+
+<DD>The requested operation is being handled asynchronously, and the caller’s <B>ProtocolOpenAdapterComplete</B> function will be called when the open is completed.</dd>
+
+<DT>NDIS_STATUS_RESOURCES</DT>
+
+<DD>The requested operation failed because NDIS could not allocate sufficient memory or initialize the state that it uses to track an open binding.</dd>
+
+<DT>NDIS_STATUS_ADAPTER_NOT_FOUND</DT>
+
+<DD>The requested operation failed because the name at <I>AdapterName</I> could not be found in the system object namespace.</dd>
+
+<DT>NDIS_STATUS_UNSUPPORTED_MEDIA</DT>
+
+<DD>The array at <I>MediumArray</I> did not specify any medium that is supported by NDIS or by the underlying driver.</dd>
+
+<DT>NDIS_STATUS_CLOSING</DT>
+
+<DD>Either the caller or the physical or virtual device designated at <I>AdapterName</I> is being closed.</dd>
+
+<DT>NDIS_STATUS_OPEN_FAILED</DT>
+
+<DD>The open attempt failed for none of the preceding specific reasons. For example, possibly, NDIS could not initialize the filter package for the selected medium.</dd>
+</DL>
+</dd>
+
+<DT><I>OpenErrorStatus</I></DT>
+
+<DD>Pointer to a caller-supplied variable that can contain an NDIS_STATUS_<I>XXX</I> error supplying more information if this function returns an error at <I>Status</I>. For example, the driver of a token ring NIC might return a ring error in this variable.</dd>
+
+<DT><I>NdisBindingHandle</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which NDIS returns a handle representing a successful binding between the caller and the specified physical or virtual NIC specified at <I>AdapterName</I>.</dd>
+
+<DT><I>SelectedMediumIndex</I></DT>
+
+<DD>Pointer to a caller-supplied variable in which NDIS returns the index of the array element that specifies the type of media that the underlying NDIS driver uses.</dd>
+
+<DT><I>MediumArray</I></DT>
+
+<DD>Pointer to an array of NDIS_MEDIUM-type values specifying the types of media that the caller supports. Possible elements include any proper subset of the following:
+
+<DL>
+<DT>NdisMedium802_3</DT>
+
+<DD>Specifies an Ethernet (802.3) network.</dd>
+
+<DT>NdisMedium802_5</DT>
+
+<DD>Specifies a Token Ring (802.5) network.</dd>
+
+<DT>NdisMediumFddi</DT>
+
+<DD>Specifies a Fiber Distributed Data Interface (FDDI) network.</dd>
+
+<DT>NdisMediumWan</DT>
+
+<DD>Specifies a wide area network. This type covers various forms of point-to-point and WAN NICs, as well as variant address and header formats that must be negotiated between the protocol driver and the underlying driver after the binding is established.</dd>
+
+<DT>NdisMediumLocalTalk</DT>
+
+<DD>Specifies a LocalTalk network.</dd>
+
+<DT>NdisMediumDix</DT>
+
+<DD>Specifies an Ethernet network for which the drivers use the DIX Ethernet header format.</dd>
+
+<DT>NdisMediumArcnetRaw</DT>
+
+<DD>Specifies an ARCNET network.</dd>
+
+<DT>NdisMediumArcnet878_2</DT>
+
+<DD>Specifies an ARCNET (878.2) network.</dd>
+
+<DT>NdisMediumAtm</DT>
+
+<DD>This value is reserved for future use. Currently, NIC drivers support ATM through LAN emulation, LanE 1.0 as defined in the ATM Forum’s 1.0 specification and UNI 3.1 signaling. Such a driver should report its medium type as either of NdisMedium802_3 or NdisMedium802_5.</dd>
+
+<DT>NdisMediumWirelessWan</DT>
+
+<DD>Specifies a wireless network. This type covers various wireless media that do not include the infrared wireless types designated by NdisMediumIrda.</dd>
+
+<DT>NdisMediumIrda</DT>
+
+<DD>This value is reserved for future use.</dd>
+</DL>
+</dd>
+
+<DT><I>MediumArraySize</I></DT>
+
+<DD>Specifies the number of elements at <I>MediumArray</I>.</dd>
+
+<DT><I>NdisProtocolHandle</I></DT>
+
+<DD>Handle returned by <B>NdisRegisterProtocol</B>.</dd>
+
+<DT><I>ProtocolBindingContext</I></DT>
+
+<DD>Handle to a caller-supplied resident context area in which the protocol maintains state information about this binding after it has been established.</dd>
+
+<DT><I>AdapterName</I></DT>
+
+<DD>Pointer to a counted string, specified in the system-default character set, naming the NIC or the virtual adapter of an underlying NDIS driver that exports a set of upper-edge (<B>Miniport</B><I>XXX</I>) functions.</dd>
+
+<DT><I>OpenOptions</I></DT>
+
+<DD>Specifies a bitmask containing flags that the caller passes to the next-lower driver, assumed to be an NIC driver. Currently, this parameter is reserved for system use.</dd>
+
+<DT><I>AddressingInformation</I></DT>
+
+<DD>Pointer to an optional variable-length counted string containing information specific to the underlying NIC that the NIC driver can use to program the netcard. This pointer can be NULL.
+
+<P>If it is supplied, the addressing information must remain valid until the open operation completes. An underlying NIC driver that supports an asynchronous modem can use this information for dialing.
+
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>Protocol drivers call this function from either their <B>DriverEntry</B> or their <B>ProtocolBindAdapter</B> functions. NDIS intermediate drivers usually make this call from their <B>ProtocolBindAdapter</B> functions.</P>
+
+<P>The string at <I>AdapterName</I> remains valid only until this function returns control, even if it returns NDIS_STATUS_PENDING at <I>Status</I>.</P>
+
+<P>The variables at <I>NdisBindingHandle</I> and <I>SelectedMediumIndex</I> should be ignored until the <B>ProtocolOpenAdapterComplete</B> function is called if this function returns NDIS_STATUS_PENDING. Because these variables can remain invalid until <B>ProtocolOpenAdapterComplete</B> is called, they cannot be on the stack. Usually, these variables reside in the <I>ProtocolBindingContext</I> area since this handle is an input parameter to <B>ProtocolOpenAdapterComplete</B>.</P>
+
+<P>A protocol driver should keep the handle returned at <I>NdisProtocolHandle</I>. It is a required parameter to other NDIS functions that the driver calls subsequently. The supplied <I>ProtocolBindingContext</I> is an input parameter to the caller’s protocol functions.</P>
+
+<P>The caller uses the value returned at <I>SelectedMediumIndex</I> in subsequent calls to the <B>NdisRequest</B> function. The OIDs that it sets in the request packet depend on the returned <B>NdisMedium</B><I>XXX</I> function. For example, if NdisMediumWan is returned at <I>SelectedMediumIndex</I>, the protocol driver calls <B>NdisRequest</B> specifying OID_WAN_MEDIUM_SUBTYPE in a query to determine which of the WAN media types that the underlying driver uses.</P>
+
+<P>If a previously issued global query of OID_NETWORK_TYPE for wireless media indicates that the driver and underlying NIC support more than one NdisMediumWirelessWan-type medium, the protocol must select one of the supported media as soon as NDIS has set up the binding and before the protocol selects the header format.</P>
+
+<P>As another example, if NdisMedium802_3 is returned, a protocol driver can determine whether the underlying driver supports packet priority by calling <B>NdisRequest</B>, specifying OID_802_3_MAC_OPTIONS as a query to check whether the underlying driver sets the flags with NDIS_802_3_MAC_OPTION_PRIORITY. If this flag is set when the query is complete, the protocol driver can pass down prioritized packets to the underlying NIC driver with the <B>NdisSendPackets</B> function. The protocol driver can expect its <B>ProtocolReceivePacket</B> function to get indications of prioritized packets if the underlying driver also supports multipacket receive indications.</P>
+
+<P>A driver that calls this function runs at IRQL PASSIVE_LEVEL.</P>
+
+<H4>See Also</H4>
+
+<P><A HREF="funct_1_182.htm"><B>NdisCloseAdapter</B></A>, <A HREF="funct_1_219.htm"><B>NdisMIndicateReceivePacket</B></A>, <A HREF="funct_1_272.htm"><B>NdisRegisterProtocol</B></A>, <A HREF="funct_1_275.htm"><B>NdisRequest</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>

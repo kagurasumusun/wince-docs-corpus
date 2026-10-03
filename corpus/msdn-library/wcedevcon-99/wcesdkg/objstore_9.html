@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Using StorageCards</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2>
+
+<A NAME="_wcesdk_using_storagecards"></A>Using StorageCards</H2>
+
+<P>The Windows CE OS supports several types of PC Card storage devices: ATA flash cards, SRAM cards, and linear flash cards. You can use a PC Card storage device to store Windows CE files and databases. You can transfer files from the object store to the storage card. This process frees memory on your device.</P>
+
+<P>Windows CE detects a storage card when it is inserted or if it is present when the user turns on the computer. Windows CE reserves the folder name Storage Card as the default folder name for a storage card when one is inserted into the device. To create, copy, or delete files on the storage card, open the Storage Card folder and then create, copy, or delete files as you would in the rest of the file system.</P>
+
+<P><B>Note</B>  If multiple storage cards are inserted, or if a storage card has multiple partitions, Windows CE creates multiple directories, one for each partition on each card. The second directory is Storage Card2, the third is Storage Card3, and so on. Windows CE does not reserve these names. If a file or directory with the same name exists in the root directory, Windows CE assigns the partition the next available name.</P>
+
+<P>This section outlines the method an application uses for accessing storage card files. <B> </B>For information on more complex file system support on a mounted volume, see <A HREF="objstore_11.htm">Developing an Installable File System</A>.  </P>
+
+<P>The following code example tries to open any Storage Card directories that exist and tests them to see if they are located on a storage card.</P>
+
+<PRE><CODE>TCHAR    szMsg[100];            // String to store the error message    
+HANDLE    hSearch;                // Search handle returned by FindFirstFile
+WIN32_FIND_DATA    fd;            // Data structure describes the file found
+BOOL        bFinished = FALSE;    // Flag to indicate whether the loop is done
+
+// Be sure "Storage Card" exists.
+
+hSearch = FindFirstFile(TEXT("\\Storage Card*"), &amp;fd); 
+
+if (hSearch == INVALID_HANDLE_VALUE) 
+{ 
+    wsprintf(szMsg, TEXT("No storage card found.")); 
+    return;
+}
+
+do {
+    // Test whether the file is on a storage card,
+    // not a directory in the root directory.
+    // It must have both the directory attribute and
+    //      the temporary attribute.
+
+    if (!(  (fd.dwFileAttributes &amp; FILE_ATTRIBUTE_TEMPORARY)
+          &amp;&amp;(fd.dwFileAttributes &amp; FILE_ATTRIBUTE_DIRECTORY) )) 
+    { 
+       wsprintf(szMsg, TEXT("%s is not a storage card."), fd.cFileName);
+    }
+    else {
+        wsprintf(szMsg, TEXT("%s is a storage card."), fd.cFileName);
+    }
+
+    if (!FindNextFile(hSearch, &amp;fd))
+    {
+        bFinished = TRUE;
+        if (GetLastError() != ERROR_NO_MORE_FILES)
+        {
+            wsprintf(szMsg, TEXT("Error trying to find files matching\
+                                \ \"Storage Card*\".")) ;
+        }
+    }
+} while (!bFinished) ;
+
+FindClose (hSearch);        // Close the search handle.
+return ;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

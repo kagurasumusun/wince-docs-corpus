@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample Blit Acceleration</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_sample_blit_acceleration"></A>Sample Blit Acceleration</H2>
+
+<P>By default, a display driver routes all blits to the GPE. As alternatives, a display driver can route blit handling to the emulation library or directly to the hardware. </P>
+
+<P>The S3Virge display driver serves as a model to demonstrate how a display driver can invoke all three of these methods. The S3Virge sample code is located under Platform\CEPC\Drivers\Display\S3Virge in the Platform Builder.</P>
+
+<P>The following code example is drawn from the sample S3Virge display driver contained in the Platform Builder. It shows how blit processing begins when the GDI calls the driver’s <B>BltPrepare</B> function. The driver initializes the blit parameters and determines which function to use to perform the individual blits. Typically, the driver initializes the GPE to handle default blit processing. The following code example shows this initialization.</P>
+
+<PRE><CODE>SCODE 
+S3Virge::BltPrepare(GPEBltParms *pBltParms)
+{
+    // Put debug messages and optional timing processing here.
+
+    pBltParms-&gt;pBlt = EmulatedBlt; // Generic BLT processing
+</CODE></PRE>
+
+<P>For improved performance, <B>BltPrepare</B> can examine the characteristics of the blit and the associated display surfaces to determine whether an accelerated blit is appropriate. After the initialization code, the display driver can contain code for hardware or software accelerations. The sample driver includes or excludes this code at compilation time. The <B>ENABLE_ACCELERATION</B> preprocessor directive specifies inclusion of the code for hardware accelerations. The <B>ENABLE_EMULATION</B> directive specifies inclusion of the code for software-accelerated emulation.</P>
+
+<P>After setting the default handler, the S3Virge driver dispatches blits to hardware acceleration, if available, and then to software-accelerated emulation, if available. The driver defines a macro that simplifies calls to functions in the emulation library. Next, it checks whether the destination surface is in video memory. This is an important check that most display drivers must make before using hardware acceleration because the GDI uses the display driver to render printer output, as well as display output. Printer output is rendered in system memory, not in video memory. Most display hardware is able to perform accelerated drawing in only two situations: when the destination surface is in video memory, for blits without a source surface, or when both the source and destination surfaces are in video memory, for blits with a source surface. Therefore, if the hardware has this limitation, the driver must check the source and destination surfaces before calling the acceleration function.</P>
+
+<P>The following code example shows how the driver evaluates the raster operation (ROP) code and directs the blit to a supported hardware acceleration, when available. The SRCCOPY ROP illustrates how the driver checks for a source surface in video memory before invoking hardware acceleration.</P>
+
+<PRE><CODE>#ifdef ENABLE_ACCELERATION
+
+#define FUNCNAME(basename) (SCODE (GPE::*)(struct GPEBltParms *))Emulator::Emulated##basename
+
+    if ( pBltParms-&gt;pDst-&gt;InVideoMemory() ) {
+
+switch( pBltParms-&gt;rop4 )
+    {
+        case 0x0000:    // BLACKNESS
+            pBltParms-&gt;solidColor = 0x0;
+            pBltParms-&gt;pBlt = (SCODE (GPE::*)
+(struct GPEBltParms *)) AcceleratedFillRect;
+            break;
+        case 0xFFFF:    // WHITENESS
+            pBltParms-&gt;solidColor = 0xffffff;
+            pBltParms-&gt;pBlt = (SCODE (GPE::*)
+(struct GPEBltParms *))AcceleratedFillRect;
+            break;
+        
+        case 0xF0F0:    // PATCOPY
+        case 0x5A5A:    // PATINVERT
+            if (pBltParms-&gt;pLookup || pBltParms-&gt;pConvert)    // Emulate Color Convertion
+            {
+                RETAILMSG(VIRGE_VERBOSE_MSGS, (TEXT("S3Virge::Blt - Emulate Color Conversion\r\n")));
+                break;
+            }
+            if (pBltParms-&gt;solidColor == -1)
+            {
+                RETAILMSG(VIRGE_VERBOSE_MSGS, (TEXT("S3Virge::Blt - PATCOPY - patterned brush\r\n")));
+                DEBUGWAIT(GPE_ZONE_BLT_LO)
+                pBltParms-&gt;pBlt = (SCODE (GPE::*) (struct GPEBltParms *)) AcceleratedPatCopyBlt;
+            }
+            else
+            {
+                RETAILMSG(VIRGE_VERBOSE_MSGS, (TEXT("S3Virge::Blt - PATCOPY - solid brush\r\n")));
+                DEBUGWAIT(GPE_ZONE_BLT_LO)
+                pBltParms-&gt;pBlt = (SCODE (GPE::*) (struct GPEBltParms *)) AcceleratedFillRect;
+            }
+            break; 
+        case 0x6666:    // SRCINVERT
+        case 0x8888:    // SRCAND
+        case 0xCCCC:    // SRCCOPY
+        case 0xEEEE:    // SRCPAINT
+            // can't accelerate if src not in video memory
+            // can't accelerate color translations
+            if (!pBltParms-&gt;pSrc-&gt;InVideoMemory() || pBltParms-&gt;pLookup || pBltParms-&gt;pConvert)
+                break;
+
+            if (pBltParms-&gt;bltFlags &amp; BLT_STRETCH)
+            {
+                // Stretch blit
+                RETAILMSG(VIRGE_VERBOSE_MSGS,(TEXT("Stretch Blt!\r\n")));
+                break;
+            }
+            pBltParms-&gt;pBlt = (SCODE (GPE::*) (struct GPEBltParms *)) AcceleratedSrcCopyBlt;
+            break; 
+</CODE></PRE>
+
+<P>The following code example for the S3Virge display driver shows how to use the blit emulation library. After setting the default blit handler and handling hardware accelerations, the driver checks for possible software accelerations. When available, it sets the blit function pointer to the corresponding function in the emulation library. </P>
+
+<P>Before invoking a blit function in the emulation library, the driver must check for conditions that would prevent the blit from using emulation. This is critical because the functions in the emulation library require that the driver validate the blit before calling an emulation function. In the previous example, the driver checked for a solid brush because the emulation library does not support pattern brushes. The emulation library also cannot handle color conversions, bit depth conversions, stretching, and transparency. The following code example shows how the driver checks that none of these restrictions apply.</P>
+
+<PRE><CODE>if (pBltParms-&gt;pBlt == EmulatedBlt) {
+        //
+        // Cancel any parameter values that would make this
+        // blit non-emulatable.
+        //
+        if (!(EGPEFormatToBpp[pBltParms-&gt;pDst-&gt;Format()] != 8        ||
+             (pBltParms-&gt;bltFlags &amp; (BLT_TRANSPARENT | BLT_STRETCH)) ||
+             pBltParms-&gt;pLookup                                      ||
+             pBltParms-&gt;pConvert))
+</CODE></PRE>
+
+<P>After confirming that the emulation library functions can perform a blit, the display driver examines the ROPs, dispatching supported ROPs to the appropriate function. For simplicity, the driver specifies the ROP4 value. For masking blits, the entire <B>WORD</B> is relevant. For non-masking blits, only the least significant byte, the ROP3 value, is relevant. ROPs are defined as <B>DWORD</B>s for compatibility with Windows-based desktop platforms, although Windows CE–based display drivers use only the most significant <B>WORD</B> of an ROP value. Windows CE–based display drivers ignore the lower <B>WORD</B>, which contains ROP compiler directives. The following code example shows how the display driver checks the ROP4 value to choose which blit function to use.</P>
+
+<PRE><CODE>switch (pBltParms-&gt;rop4)
+    {
+        case 0x0000:    // BLACKNESS
+            pBltParms-&gt;solidColor = 0;
+            pBltParms-&gt;pBlt = FUNCNAME(BltFill08);
+break;
+        case 0xFFFF:    // WHITENESS
+            pBltParms-&gt;solidColor = 0x00ffffff;
+            pBltParms-&gt;pBlt = FUNCNAME(BltFill08);
+break;
+        case 0xF0F0:    // PATCOPY
+            if( pBltParms-&gt;solidColor != -1 )
+            {
+                pBltParms-&gt;pBlt = FUNCNAME(BltFill08);
+            }
+            break;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

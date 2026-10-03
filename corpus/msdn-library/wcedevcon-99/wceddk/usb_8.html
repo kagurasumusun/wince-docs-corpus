@@ -1,0 +1,26 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>USB Power Management</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_usb_power_management"></A>USB Power Management</H2>
+
+<P>Windows CE provides full support for power management of USB devices, as described in the <I>Universal Serial Bus Specification, Revision 1.0</I>. Very important for Windows CE are support for suspending and resuming because Windows CE–based platforms have a power-on and startup cycle that differs from the one on desktop computers. Support for bus-powered and self-powered USB devices is also important because many Windows CE–based platforms have limited power resources. For more information about power management, see <A HREF="native.htm">Developing Native Device Drivers</A>. </P>
+
+<P>Windows CE supports power cycling USB devices in association with the standard Windows CE power states. When Windows CE issues a POWER_DOWN notification, the HCD module suspends the USB host controller hardware and all devices. When power returns to the platform, Windows CE sends a POWER_UP notification to the HCD module. When the host controller hardware has been re-initialized, the USBD module unloads the USB device drivers loaded prior to the POWER_DOWN notification, identifies all the USB devices currently connected to the bus—a process called bus enumeration—and loads the USB device drivers for those devices. This power cycle processing is very similar to that performed by the Windows CE Device Manager for PC Card devices.</P>
+
+<P>This implies that USB device drivers may need to take special action to make a power cycle transparent to upper-level applications. For example, if a USB device provides a file system, the device driver should preserve open file handles across a power cycle. There are several ways to accomplish this. One solution is for the USB device driver to register itself with the Device Manager as a stream interface driver by calling the <B>RegisterDevice</B> function. This increments the reference count on the USB device driver’s DLL so that when the USBD module unloads the driver, the driver’s code still remains in memory. The USB device driver could keep any application file handles open and wait for the the call to the <B>USBDeviceAttach</B> function, which occurs after the system resumes and the USB device is ready to be used. The disadvantage of this approach is that the driver remains in memory even after the USB device is detached from the system. The second solution is to separate the USB interface from the upper-level file system interface. For example, the PC Card FAT file system module uses this approach to separate its file system driver code, which must manage file handles, from the PC Card driver code that actually manages the PC Card hardware.</P>
+
+<P>Windows CE versions 2.12 and later provide full support for bus-powered and self-powered USB devices. When a user connects any self-powered or bus-powered device to a Windows CE–based platform, the USB system software automatically accepts or rejects the device, based on the device’s power requirements and the system’s overall power load. The power model is identical for both self-powered and bus-powered devices.</P>
+
+<P>When a USB device is attached to a platform, the HCD module sets the initial power configuration. During the device attachment processing phase, the HCD module reads the power requirements of the USB device configurations from the device configuration descriptor structures. It then calls in to the platform-specific portion of the HCD module to determine if the host platform can support the USB device’s power requirements. An OEM can implement code in the platform-specific portion of the HCD module to test system power status, such as whether the system is running on batteries or is plugged into a power outlet, to assist in making this determination. In this way, the HCD module can choose an appropriate power configuration for the USB device from those listed in the device’s configuration descriptor structures.</P>
+
+<P>At this time, Windows CE 2.10 does not support placing a USB peripheral into suspend mode programmatically.</P>
+<p>&nbsp;</p></body>
+</HTML>

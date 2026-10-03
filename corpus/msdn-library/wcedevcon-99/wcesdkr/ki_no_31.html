@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IOleObject::SetExtent</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_ioleobject_setextent"></A>IOleObject::SetExtent</H2>
+
+<P>This<B> </B>method informs an object of how much display space its container has assigned it.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oleidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT SetExtent( DWORD </B><I>dwDrawAspect</I><B>, SIZEL * </B><I>psizel </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>dwDrawAspect</I></DT>
+
+<DD>[in] Describes which form, or “aspect,” of an object is to be displayed. The object’s container obtains this value from the enumeration <A HREF="comole_e_2.htm"><B>DVASPECT</B></A> (refer to the <A HREF="ks_fh_2.htm"><B>FORMATETC</B></A> enumeration). The most common aspect is DVASPECT_CONTENT, which specifies a full rendering of the object within its container. An object can also be rendered as an icon, a thumbnail version for display in a browsing tool, or a print version, which displays the object as it would be rendered using the File Print command.</dd>
+
+<DT><I>psizel</I></DT>
+
+<DD>[in] Pointer to the size limit for the object.
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>This method supports the standard return value E_FAIL, as well as the values described in the following table.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Value</H5>
+</TD>
+<TD width=69%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>S_OK</TD>
+<TD width=69%>The object has resized successfully.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>OLE_E_NOTRUNNING</TD>
+<TD width=69%>The object is not running.</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Remarks</H4>
+
+<P>A container calls <B>IOleObject::SetExtent</B> when it needs to dictate to an embedded object the size at which it will be displayed. Often, this call occurs in response to an end user resizing the object window. Upon receiving the call, the object, if possible, should recompose itself gracefully to fit the new window.</P>
+
+<P>Whenever possible, a container seeks to display an object at its finest resolution, sometimes called the object’s <I>native size</I>. All objects, however, have a default display size specified by their applications, and in the absence of other constraints, this is the size they will use to display themselves. Since an object knows its optimum display size better than does its container, the latter normally requests that size from a running object by calling <A HREF="ki_no_22.htm"><B>IOleObject::GetExtent</B></A>. Only in cases where the container cannot accommodate the value returned by the object does it override the object’s preference by calling <B>IOleObject::SetExtent</B>.</P>
+
+<H4>Notes to Callers</H4>
+
+<P>You can call <B>SetExtent</B> on an object only when the object is running. If a container resizes an object while an object is not running, the container should keep track of the object’s new size but defer calling <B>IOleObject::SetExtent</B> until a user activates the object. If the OLEMISC_RECOMPOSEONRESIZE bit is set on an object, its container should force the object to run before calling <B>OleObject::SetExtent</B>.</P>
+
+<P>As noted above, a container may want to delegate responsibility for setting the size of an object’s display site to the object itself, by calling <B>IOleObject::GetExtent</B>.</P>
+
+<H4>Notes to Implementers</H4>
+
+<P>You may want to implement this method so that your object rescales itself to match as closely as possible the maximum space available to it in its container.</P>
+
+<P>If an object’s size is fixed, that is, if it cannot be set by its container, <B>OleObject::SetExtent</B> should return E_FAIL. This is always the case with linked objects, whose sizes are set by their link sources, not by their containers.</P>
+<p>&nbsp;</p></body>
+</HTML>

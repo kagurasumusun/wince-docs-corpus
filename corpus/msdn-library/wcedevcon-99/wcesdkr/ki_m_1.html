@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>IMoniker::BindToObject</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_com_imoniker_bindtoobject"></A>IMoniker::BindToObject</H2>
+
+<P>This method binds to the object named by the moniker.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=33%>Header file:</TD>
+<TD width=67%>Oaidl.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=33%>Windows CE versions:</TD>
+<TD width=67%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>HRESULT BindToObject( IBindCtx * </B><I>pbc</I><B>, IMoniker * </B><I>pmkToLeft</I><B>, <BR>
+REFIID </B><I>riidResult</I><B>, void ** </B><I>ppvResult </I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>pbc</I></DT>
+
+<DD>[in] Pointer to the <B>IBindCtx </B>interface on the bind context object, which is used in this binding operation. The bind context caches objects bound during the binding process, contains parameters that apply to all operations using the bind context, and provides the means by which the moniker implementation should retrieve information about its environment.</dd>
+
+<DT><I>pmkToLeft</I></DT>
+
+<DD>[in] If the moniker is part of a composite moniker, pointer to the moniker to the left of this moniker. This parameter is primarily used by moniker implementers to enable cooperation between the various components of a composite moniker. Moniker clients should pass NULL.</dd>
+
+<DT><I>riidResult</I></DT>
+
+<DD>[in] Reference to the identifier of the interface the client wishes to use to communicate with the object that the moniker identifies.</dd>
+
+<DT><I>ppvResult</I></DT>
+
+<DD>[out] Address of pointer variable that receives the interface pointer requested in <I>riid</I>. Upon successful return, *<I>ppvResult</I> contains the requested interface pointer to the object the moniker identifies. When successful, the implementation must call <A HREF="ki_uw_1.htm"><B>IUnknown::AddRef</B></A> on the moniker. It is the caller’s responsibility to release the object with a call to <A HREF="ki_uw_3.htm"><B>IUnknown::Release</B></A>. If an error occurs, *<I>ppvResult</I> should be NULL.
+
+</dd>
+</DL>
+
+<H4>Return Values</H4>
+
+<P>The method supports the standard return values E_UNEXPECTED and E_OUTOFMEMORY, as well as the values described in the following table.
+
+<DL>
+<DT>S_OK</DT>
+
+<DD>The binding operation was successful.</dd>
+
+<DT>MK_E_NOOBJECT</DT>
+
+<DD>The object identified by this moniker, or some object identified by the composite moniker of which this moniker is a part, could not be found.</dd>
+
+<DT>MK_E_EXCEEDEDDEADLINE</DT>
+
+<DD>The binding operation could not be completed within the time limit specified by the bind context’s <B>BIND_OPTS</B> structure. </dd>
+
+<DT>MK_E_CONNECTMANUALLY</DT>
+
+<DD>The binding operation requires assistance from the end user. The most common reasons for returning this value are that a password is needed or that a floppy needs to be mounted. When this value is returned, retrieve the moniker that caused the error with a call to <B>IBindCtx::GetObjectParam</B> with the key “ConnectManually”. You can then call <B>IMoniker::GetDisplayName</B> to get the display name, display a dialog box that communicates the desired information, such as instructions to mount a floppy or a request for a password, and then retry the binding operation.</dd>
+
+<DT>MK_E_INTERMEDIATEINTERFACENOTSUPPORTED</DT>
+
+<DD>An intermediate object was found but it did not support an interface required to complete the binding operation. For example, an item moniker returns this value if its container does not support the <B>IOleItemContainer</B> interface.</dd>
+
+<DT>STG_E_ACCESSDENIED</DT>
+
+<DD>Unable to access the storage object.</dd>
+
+<DT><B>IOleItemContainer::GetObject</B> errors</DT>
+
+<DD>If the moniker used to bind to an object contains an item moniker, errors associated with this method can be returned.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P><B>IMoniker::BindToObject</B> implements the primary function of a moniker, which is to locate the object identified by the moniker and return a pointer to one of its interfaces. </P>
+
+<H4>Notes to Callers</H4>
+
+<P>If you are using a moniker as a persistent connection between two objects, you activate the connection by calling <B>IMoniker::BindToObject</B>. </P>
+
+<P>You typically call <B>IMoniker::BindToObject</B> during the following process:
+
+<OL>
+	<LI>Create a bind context object with a call to the <A HREF="kf_c_27.htm"><B>CreateBindCtx</B></A> function.</li>
+
+	<LI>Call <B>IMoniker::BindToObject</B> using the moniker, retrieving a pointer to a desired interface on the identified object. </li>
+
+	<LI>Release the bind context.</li>
+
+	<LI>Through the acquired interface pointer, perform the desired operations on the object. </li>
+
+	<LI>When finished with the object, release the object’s interface pointer. </li>
+</OL>
+
+<P>The following code fragment illustrates these steps:</P>
+
+<PRE><CODE>// pMnk is an IMoniker * that points to a previously acquired moniker 
+// ICellRange is a custom interface designed for an object that is a 
+//            range of spreadsheet cells 
+ICellRange *pCellRange; 
+IBindCtx *pbc; 
+ 
+CreateBindCtx( 0, &amp;pbc ); 
+pMnk-&gt;BindToObject( pbc, NULL, IID_ICellRange, &amp;pCellRange ); 
+pbc-&gt;Release(); 
+// pCellRange now points to the object; safe to use pCellRange 
+pCellRange-&gt;Release(); 
+ </CODE></PRE>
+
+<P>You can also use the <B>BindMoniker</B> function when you only intend one binding operation and don’t need to retain the bind context object. This helper function encapsulates the creation of the bind context, calling <B>IMoniker::BindToObject</B>, and releasing the bind context.</P>
+
+<P>COM containers that support links to objects use monikers to locate and get access to the linked object, but typically do not call <B>IMoniker::BindToObject</B> directly. Instead, when a user activates a link in a container, the link container usually calls <B>IOleObject::DoVerb</B>, using the link handler’s implementation, which calls <B>IMoniker::BindToObject</B> on the moniker stored in the linked object (if it cannot handle the verb). </P>
+
+<H4>Notes to Implementers</H4>
+
+<P>What your implementation does depends on whether you expect your moniker to have a prefix, that is, whether you expect the <I>pmkToLeft</I> parameter to be NULL or not. For example, an item moniker, which identifies an object within a container, expects that <I>pmkToLeft</I> identifies the container. An item moniker consequently uses <I>pmkToLeft</I> to request services from that container. If you expect your moniker to have a prefix, you should use the <I>pmkToLeft</I> parameter (for instance, calling <B>IMoniker::BindToObject</B> on it) to request services from the object it identifies. </P>
+
+<P>If you expect your moniker to have no prefix, your <B>IMoniker::BindToObject</B> implementation should first check the Running Object Table (ROT) to see if the object is already running. To acquire a pointer to the ROT, your implementation should call <B>IBindCtx::GetRunningObjectTable</B> on the <I>pbc</I> parameter. You can then call the <B>IRunningObjectTable::GetObject</B> method to see if the current moniker has been registered in the ROT. If so, you can immediately call <A HREF="ki_uw_2.htm"><B>IUnknown::QueryInterface</B></A> to get a pointer to the interface requested by the caller. </P>
+<p>&nbsp;</p></body>
+</HTML>

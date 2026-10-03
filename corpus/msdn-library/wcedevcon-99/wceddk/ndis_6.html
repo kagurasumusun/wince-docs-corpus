@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registry Keys for Miniport Drivers</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_registry_keys_for_miniport_drivers"></A>Registry Keys for Miniport Drivers</H2>
+
+<P>When a miniport driver is installed on a Windows CE–based platform, the setup application should create several registry keys to expose the miniport driver to Windows CE properly. Windows CE loads NDIS drivers listed within the <B>HKEY_LOCAL_MACHINE\Comm\</B> key. Subkeys within this key are named for the corresponding miniport driver.</P>
+
+<P>The following table shows the subkeys contained in each <B><I>Miniport</I>\ </B>key.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=18%>
+<H5>Name</H5>
+</TD>
+<TD width=11%>
+<H5>Type</H5>
+</TD>
+<TD width=71%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>DisplayName</B></TD>
+<TD width=11%>SZ</TD>
+<TD width=71%>A user-friendly name for the driver.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>Group</B></TD>
+<TD width=11%>SZ</TD>
+<TD width=71%>The literal string “NDIS”.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>ImagePath</B></TD>
+<TD width=11%>SZ</TD>
+<TD width=71%>The name of the DLL containing the miniport driver.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>Linkage\Route</B></TD>
+<TD width=11%>SZ</TD>
+<TD width=71%>A set of <B><I>Miniport Instance</I></B> keys separated by commas.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The value of the <B>Linkage\Route</B> key lists additional subkeys of the <B>Comm\</B> key for each miniport instance. These subkeys in turn contain a set of keys that describes the parameters of that miniport instance. The following table shows the subkeys contained in each <B><I>Miniport Instance</I></B> key.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=18%>
+<H5>Name</H5>
+</TD>
+<TD width=13%>
+<H5>Type</H5>
+</TD>
+<TD width=69%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>DisplayName</B></TD>
+<TD width=13%>SZ</TD>
+<TD width=69%>A user-friendly description of the miniport instance.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>Group</B></TD>
+<TD width=13%>SZ</TD>
+<TD width=69%>The literal value “NDIS”.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>ImagePath</B></TD>
+<TD width=13%>SZ</TD>
+<TD width=69%>The name of the miniport driver’s DLL.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>Parms</B></TD>
+<TD width=13%>subkey</TD>
+<TD width=69%>Subkeys for the miniport driver’s parameters.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following table shows the subkeys contained in each <B><I>Miniport Instance</I>\PARMS</B> key.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=18%>
+<H5>Name</H5>
+</TD>
+<TD width=15%>
+<H5>Type</H5>
+</TD>
+<TD width=67%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>BusNumber</B></TD>
+<TD width=15%>DWORD</TD>
+<TD width=67%>The bus number for the miniport instance.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>BusType</B></TD>
+<TD width=15%>DWORD</TD>
+<TD width=67%>The bus type of the miniport instance.</TD>
+</TR>
+</TABLE><BR>
+
+<P><B>BusNumber</B> values range from 0 to one less than the number of buses on a Windows CE–based platform. Valid <B>BusType</B> values are declared in the <B>_INTERFACE_TYPE</B> enumeration in the Ceddk.h header file. Use the <B><I>Miniport Instance</I>\Parms</B> key to store any miniport-specific values because this is the registry location accessed when miniport drivers call the <A HREF="funct_1_249.htm"><B>NdisOpenConfiguration</B></A> and <A HREF="funct_1_268.htm"><B>NdisReadConfiguration</B></A> functions.</P>
+
+<P>The following example shows a set of registry keys for a miniport driver.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Comm]
+  [NE2000]
+    DisplayName="NE2000 Compatible Ethernet Driver"
+    Group ="NDIS"
+    ImagePath="NE2000.DLL"
+    [Linkage]
+      Route="NE20001, NE20002"
+  [NE20001]
+    DisplayName="NE2000 Compatible Ethernet Driver"
+    Group="NDIS"
+    ImagePath="NE2000.dll"
+    [Parms]
+      BusNumber=0
+      BusType=8
+      CardType=1
+      InterruptNumber=03
+      IOBaseAddress=0300
+      Transceiver=3
+</CODE></PRE>
+
+<P>PC Card miniport drivers also require an <B>HKEY_LOCAL_MACHINE\Drivers\PCMCIA\<I>Plug-and-Play ID</I>\ </B>registry key. This key enables the driver to load correctly when its NIC is inserted into a PC Card socket. The key typically is named for the Plug and Play identifier of the PC Card, but this is not a requirement. However, if the key is not named for the NIC’s Plug and Play identifier, the driver needs additional registry keys to enable the driver-detection algorithm of the Device Manager to load the driver. For more information on driver detection, see <A HREF="rkeys_1_5.htm"><B>Drivers\PCMCIA\Detect</B></A>.</P>
+
+<P>The following table shows the subkeys contained in the <B>HKEY_LOCAL_MACHINE\Drivers\PCMCIA\<I>Plug-and-Play ID</I></B>\ key.</P>
+
+<TABLE cellspacing=4 cols=3>
+
+<TR VALIGN="top">
+<TD width=12%>
+<H5>Name</H5>
+</TD>
+<TD width=12%>
+<H5>Type</H5>
+</TD>
+<TD width=76%>
+<H5>Description</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%><B>DLL</B></TD>
+<TD width=12%>SZ</TD>
+<TD width=76%>The literal string “Ndis.dll”.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%><B>Prefix</B></TD>
+<TD width=12%>SZ</TD>
+<TD width=76%>The literal string “NDS”.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=12%><B>Miniport</B></TD>
+<TD width=12%>SZ</TD>
+<TD width=76%>The name of the miniport driver for the PC Card, which corresponds to the name of the registry key within <B>HKEY_LOCAL_MACHINE\Comm\</B> for the miniport driver.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following example shows the additional keys that a PC Card network adapter could have.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Drivers\PCMCIA\NICs-R-Us Inc.-Super2000-E6FE]
+  DLL="NDIS.DLL"
+  Prefix= "NDS"
+  Miniport="NE2000"
+</CODE></PRE>
+
+<P>Ndis.dll sets values for the <B>BusNumber</B> and <B>BusType</B> keys for PC Card–based NICs. The <B>BusNumber</B> key contains the socket and function pair for the network adapter. The <B>BusType</B> key contains the value for the PC Card bus. Finally, if the card information structure (CIS) of the PC Card contains a network address value, Ndis.dll creates a <B>\HKEY_LOCAL_MACHINE\Comm\<I>Miniport Instance</I>\Parms\NetworkAddress</B> key to store the network address.</P>
+
+<P>Protocol binding for miniport drivers for PC Card–based NICs occurs automatically when the driver is loaded. Protocol binding for miniport drivers for built-in NICs is controlled by the registry keys stored within <B>HKEY_LOCAL_MACHINE\Comm\IrDA\Linkage\</B> and <B>HKEY_LOCAL_MACHINE\Comm\Tcpip\Linkage\</B>. Each of these <B>Linkage\</B> keys should contain a single key called <B>Bind</B>. You can set the <B>Bind</B> key to a list of miniport instances that the corresponding protocol stack binds to. The following example shows the values that the registry could contain to enable the IrDA protocol stack to bind to the IrSIR miniport and the TCP/IP stack to bind to both the PPP and NE2000 miniports.</P>
+
+<PRE><CODE>[HKEY_LOCAL_MACHINE\Comm]
+  [IrDA\Linkage]
+    Bind=multi_sz:"IrSir1"
+  [Tcpip\Linkage]
+    Bind=multi_sz: "PPP","NE20001"
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

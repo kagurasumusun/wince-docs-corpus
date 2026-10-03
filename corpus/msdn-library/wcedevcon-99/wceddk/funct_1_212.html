@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>NdisMCancelTimer</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wceddk_ndismcanceltimer"></A>NdisMCancelTimer</H2>
+
+<P>This function cancels a preceding call to the <B>NdisMSetPeriodicTimer</B> function or cancels the preceding call to the <B>NdisMSetTimer</B> function if the interval specified to <B>NdisMSetTimer</B> has not yet expired.</P>
+
+<H4>At a Glance</H4>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>Header file:</TD>
+<TD width=69%>Ndis.h</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>Windows CE versions:</TD>
+<TD width=69%>2.0 and later</TD>
+</TR>
+</TABLE><BR>
+
+<H4>Syntax</H4>
+
+<P><B>VOID NdisMCancelTimer(IN PNDIS_MINIPORT_TIMER </B><I>Timer</I><B>, <BR>
+OUT PBOOLEAN </B><I>TimerCanceled</I><B>);</B></P>
+
+<H4>Parameters</H4>
+
+<DL>
+<DT><I>Timer</I></DT>
+
+<DD>Pointer to a timer object, already initialized with the <B>NdisMInitializeTimer</B> function and set with the <B>NdisMSetPeriodicTimer</B> or the <B>NdisMSetTimer</B> function.</dd>
+
+<DT><I>TimerCancelled</I></DT>
+
+<DD>Pointer to a caller-supplied variable, which this function sets to TRUE if the timer was queued and then canceled, or to FALSE if the timer either was not set or has already fired.
+</dd>
+</DL>
+
+<H4>Remarks</H4>
+
+<P>All NDIS timer functions operate on an opaque timer object, for which an NIC driver must supply resident storage. The <B>MiniportInitialize</B> function must call <B>NdisMInitializeTimer</B> with a caller-supplied pointer to this storage, thus associating a driver-supplied <B>MiniportTimer</B> function with the timer object. <B>MiniportInitialize</B> must call <B>NdisMInitializeTimer</B> before the driver passes the <I>Timer</I> pointer to any other NDIS timer function.</P>
+
+<P>Drivers of NICs that do not generate interrupts have a polling <B>MiniportTimer</B> function to monitor the NIC state for incoming receives and for send completions.</P>
+
+<P>Calls to the <B>NdisMSet</B><I>XXX</I><B>Timer</B> functions insert the timer object in the system timer queue. Calls to this function dequeue the timer object if it is currently queued. Only one instantiation of a particular timer object can be queued at any moment.</P>
+
+<P>A call to this function while the timer object designated by <I>Timer</I> is queued removes the timer object from the queue, thus canceling the execution of the associated <B>MiniportTimer </B>function.</P>
+
+<P>A subsequent call to <B>NdisMSetTimer</B> or <B>NdisMSetPeriodicTimer</B> requeues the timer object so that the <B>MiniportTimer</B> function runs again when the specified interval expires.</P>
+
+<P>A call to this function can occur just after a timer has fired but before the associated <B>MiniportTimer</B> function is run. Usually, <B>MiniportTimer</B> sets a state variable immediately on entry to indicate that it is running. When another miniport function calls this function, it can check such a <I>TimerCancelled</I> variable on return from this call to determine whether its call to this function also canceled execution of <B>MiniportTimer</B>.</P>
+
+<P>A call to this function while <B>MiniportTimer</B> is running has no effect on the execution of <B>MiniportTimer</B>. It continues to run until it returns control.</P>
+
+<P>A driver that calls this function runs at IRQL &lt;= DISPATCH_LEVEL.</P>
+
+<H4>SeeAlso</H4>
+
+<P><A HREF="funct_1_222.htm"><B>NdisMInitializeTimer</B></A>, <A HREF="funct_1_241.htm"><B>NdisMSetPeriodicTimer</B></A>, <A HREF="funct_1_242.htm"><B>NdisMSetTimer</B></A></P>
+<p>&nbsp;</p></body>
+</HTML>
