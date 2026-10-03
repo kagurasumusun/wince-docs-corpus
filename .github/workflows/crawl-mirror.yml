@@ -85,12 +85,18 @@ jobs:
           if [ -n "$PAGES" ]; then
             PAGE_ARG="--max-pages $PAGES"
           fi
+          mkdir -p data/reports
+          # The job log of a run is not readable from the environment this
+          # corpus is maintained from, so the run's own output is committed
+          # (the same reason the media import does it).
           if [ -n "$NAME" ]; then
             python3 tools/crawl-mirror.py --config queues/mirrors.tsv \
-              --only "$NAME" $PAGE_ARG $BUDGET $DRY | tee /tmp/crawl.log
+              --only "$NAME" $PAGE_ARG $BUDGET $DRY \
+              2>&1 | tee data/reports/crawl-last.txt
           else
             python3 tools/crawl-mirror.py --config queues/mirrors.tsv \
-              $PAGE_ARG $BUDGET $DRY | tee /tmp/crawl.log
+              $PAGE_ARG $BUDGET $DRY \
+              2>&1 | tee data/reports/crawl-last.txt
           fi
 
       - name: Refresh indexes and commit

@@ -46,6 +46,9 @@ import harvest  # noqa: E402  (the Fetcher, HostPacer and robots handling)
 
 ROOT = harvest.ROOT
 
+# A real link never contains these: parentheses and quotes mean the page's own
+# template code leaked into the markup (`Href(ChildElem)`, `" + x + "`).
+JUNK_HREF = re.compile(r"""[()\\{}"'<>\s|]""")
 HREF_RE = re.compile(r"""(?:href|src)\s*=\s*["']?([^"'\s>]+)""", re.I)
 SKIP_SCHEMES = ("mailto:", "javascript:", "data:", "tel:", "#")
 
@@ -267,6 +270,11 @@ class Crawl:
             and "/_toc/" in url
         for raw in HREF_RE.findall(text):
             if raw.startswith(SKIP_SCHEMES) or raw.startswith("#"):
+                continue
+            if JUNK_HREF.search(raw):
+                # template placeholders some mirrors carry verbatim, e.g.
+                # href="MC.Href(ChildElem)" in the MSDN Library pages
+                self.skipped["junk-href"] += 1
                 continue
             absolute = urllib.parse.urljoin(url, html.unescape(raw))
             absolute, _, _frag = absolute.partition("#")

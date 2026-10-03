@@ -96,6 +96,11 @@ The checker also reports how many pages belong to each index (`INDEX.tsv`,
 `corpus.sqlite3`) and compares them with the files on disk; run it after any
 harvest or import.
 
+`crawl-last.txt` — what the last mirror crawl did (which pages it stored, what
+it skipped and why it stopped), for the same reason: the runner's job log is
+not readable from here, and a crawl that dies half way through commits its
+pages anyway.
+
 `media-last.txt` — what the last `import-media` run did (`queues/media.tsv`,
 `.github/workflows/import-media.yml`): which medium it fetched, what the
 inventory found, which documentation files it imported, and the reason when a
