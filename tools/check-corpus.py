@@ -37,6 +37,14 @@ PROBLEMS = os.path.join(ROOT, "data", "reports", "corpus-problems.tsv")
 PAGE_EXT = (".html", ".htm", ".md")
 NOT_PAGES = {"README.md", "PROVENANCE.md"}
 
+# This is a documentation archive: source code does not belong in corpus/.
+# The list is a detector, not a filter - nothing here should ever match (see
+# "What is collected" in the top-level README).
+SOURCE_EXT = (".c", ".h", ".cpp", ".cxx", ".hpp", ".cs", ".vb", ".java",
+              ".rc", ".def", ".asm", ".s", ".inc", ".mak", ".dsp", ".dsw",
+              ".vbp", ".vcp", ".vcproj", ".sln", ".py", ".js", ".ps1", ".sh",
+              ".lib", ".obj", ".dll", ".exe", ".sys", ".pdb")
+
 # web.archive.org answers with this interstitial when the replay needs
 # JavaScript; tools/harvest.py refuses to store it, so any file that contains
 # it is a leftover from an older harvest.
@@ -129,6 +137,7 @@ def main():
 
     unindexed = sorted(on_disk - index_paths)
     empty, bad_utf8, no_endtag, interstitial = [], [], [], []
+    sources = []
     hashes = {}
     unreadable = []
 
@@ -137,6 +146,9 @@ def main():
             info = scan(path)
         except OSError as exc:
             unreadable.append(f"{rel(path)}\t{exc}")
+            continue
+        if path.lower().endswith(SOURCE_EXT):
+            sources.append(rel(path))
             continue
         if info["size"] == 0:
             empty.append(rel(path))
@@ -160,6 +172,7 @@ def main():
         "index_rows_without_file": len(index_missing) + len(db_missing),
         "files_not_in_index": len(unindexed),
         "empty_files": len(empty),
+        "source_files": len(sources),
         "unreadable_files": len(unreadable),
         "not_utf8": len(bad_utf8),
         "html_without_endtag": len(no_endtag),
@@ -180,7 +193,8 @@ def main():
             for kind, items in (("unindexed", unindexed), ("empty", empty),
                                 ("unreadable", unreadable), ("not-utf8", bad_utf8),
                                 ("html-without-endtag", no_endtag),
-                                ("wayback-interstitial", interstitial)):
+                                ("wayback-interstitial", interstitial),
+                                ("source-file", sources)):
                 for item in items:
                     fh.write(f"{kind}\t{item}\n")
             for path in index_missing + db_missing:

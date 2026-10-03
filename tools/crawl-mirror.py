@@ -23,6 +23,11 @@ file records what was fetched, so a run that is stopped simply continues, and
 Config file format (`queues/mirrors.tsv`, tab-separated, `#` comments):
 
     name <TAB> seeds <TAB> out <TAB> toc_regex <TAB> max_pages <TAB> delay
+              [<TAB> exclude_regex]
+
+The optional seventh field refuses paths (a regex on the URL path), so a crawl
+of one section of a big mirror cannot walk into another section's
+documentation; see queues/mirrors.tsv.
 """
 
 import argparse
@@ -111,11 +116,13 @@ def load_config(path):
             if not line.strip() or line.lstrip().startswith("#"):
                 continue
             parts = [p.strip() for p in line.split("\t")]
-            if len(parts) != 6:
+            if len(parts) not in (6, 7):
                 print(f"[crawl] {path}: line {line_no} has {len(parts)} "
-                      f"fields, expected 6 -- ignored", file=sys.stderr)
+                      f"fields, expected 6 (or 7 with an exclude list) -- "
+                      f"ignored", file=sys.stderr)
                 continue
             name, seeds, out, toc_re, max_pages, delay = parts[:6]
+            exclude = parts[6] if len(parts) == 7 else ""
             entries.append({
                 "name": name,
                 "seeds": [s for s in seeds.split(",") if s],
@@ -123,6 +130,11 @@ def load_config(path):
                 "toc_re": re.compile(toc_re) if toc_re and toc_re != "-" else None,
                 "max_pages": int(max_pages),
                 "delay": float(delay),
+                # Documentation of other sections of the same mirror (the
+                # desktop Visual C++ trees, for instance) is not this
+                # corpus's material: those path segments are refused.
+                "exclude": re.compile(exclude) if exclude and exclude != "-"
+                else None,
             })
     return entries
 
@@ -206,6 +218,10 @@ class Crawl:
             return False
         if not p.path.startswith(urllib.parse.urlsplit(self.base).path):
             return False
+        if self.spec.get("exclude") and self.spec["exclude"].search(p.path):
+            return False
+        if ALT_PATH in p.path:
+            return False
         if p.path.lower().endswith((".zip", ".pdf", ".chm", ".cab", ".exe")):
             return False
         if self.spec["toc_re"] and self.spec["toc_re"].search(p.path):
@@ -262,6 +278,12 @@ class Crawl:
             if p.path.lower().endswith((".css", ".js", ".gif", ".png", ".jpg",
                                         ".ico", ".zip", ".pdf", ".chm")):
                 continue
+            if self.spec.get("exclude") and self.spec["exclude"].search(p.path):
+                self.skipped["excluded"] += 1
+                continue
+            if ALT_PATH in p.path:
+                self.skipped["alt-page"] += 1
+                continue
             if is_toc:
                 # a link from a table of contents: remember the book folder
                 rel = p.path[len(urllib.parse.urlsplit(self.base).path):]
@@ -284,10 +306,6 @@ class Crawl:
         """Fetch one URL: store it, skip it, or queue what it links to."""
         if not self.allowed(url):
             self.done.add(url)      # out of scope: do not queue it again
-            return
-        if ALT_PATH in urllib.parse.urlsplit(url).path:
-            self.skipped["alt-page"] += 1
-            self.done.add(url)
             return
         if self.dry_run:
             self.stored += 1

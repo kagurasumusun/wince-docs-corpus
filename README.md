@@ -13,6 +13,29 @@ repository also carries the original media the pages were extracted from, the
 URL queues used to harvest them, the complete upstream snapshots, and the
 derived catalogs, manifests and indexes.
 
+## What is collected — and what is not
+
+This is a **documentation archive**: documentation pages, reference material
+and support articles, one page per file. Nothing else is imported.
+
+* **Collected**: the product documentation and API reference of the releases
+  above (as HTML pages or markdown), the KnowledgeBase articles, release notes,
+  and the media those came from (kept verbatim under `sources/` as the source
+  of the extraction).
+* **Not collected**: source code. No `.c`, `.h`, `.cpp`, `.cs`, `.rc`, `.def`,
+  `.dsp`, `.vbp` or similar files are imported into `corpus/`, and a medium is
+  never unpacked *into* the corpus — `tools/import-media.py` classifies
+  everything inside a CD image, keeps the documentation files and counts the
+  rest (`bin/`, `samples/`, toolchains) as skipped. Code that a documentation
+  page quotes as part of its own text is part of that page.
+* **Not collected**: another product's documentation that a CE page links to.
+  The crawl of the MSDN Library April 2000 refuses the desktop Visual C++ trees
+  (`vcmfc`, `vccore`, …) because that material is not CE documentation and the
+  Win32-common subset the corpus wants is already collected from Microsoft's
+  own `MicrosoftDocs` repositories.
+* `tools/check-corpus.py` reports a `source_files` count, so a source file that
+  ever reaches `corpus/` is visible in `data/reports/corpus-problems.tsv`.
+
 ## Repository layout
 
 | Path | Contents |
@@ -32,8 +55,8 @@ derived catalogs, manifests and indexes.
 | `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror) and the complete MicrosoftDocs snapshots (`sources/microsoftdocs/`), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
-| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32 pages), `extract-mvb.py` (decode Books Online into pages), `crawl-mirror.py` (crawl a documentation mirror), `import-techshelps.py` / `import-kbarchive.py` (third-party sources), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report and Win32-map generators. |
-| `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`, refresh indexes/reports; runs on demand, daily from `queues/auto-harvest.txt`, or whenever that file changes), `crawl-mirror.yml` (crawl the mirror sites in `queues/mirrors.tsv`, e.g. the MSDN Library April 2000 CE documentation) and `import-win32.yml` (re-import `corpus/win32/` from the pinned MicrosoftDocs commits). All are `workflow_dispatch` — run them from the Actions tab. |
+| `tools/` | `harvest.py` (queue → corpus), `fetch-upstream.py` (import the Win32 pages), `extract-mvb.py` (decode Books Online into pages), `extract-chm.py` (unpack documentation CHMs), `crawl-mirror.py` (crawl a documentation mirror), `import-media.py` + `iso9660.py` (fetch a CD image from the Internet Archive and import its documentation), `import-techshelps.py` / `import-kbarchive.py` (third-party sources), `find-api.py` (look a name up across CE and Win32), `check-corpus.py` (integrity/duplicate check), the index builders, the gap-report and Win32-map generators. |
+| `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`; runs on demand or whenever `queues/auto-harvest.txt` changes), `crawl-mirror.yml` (crawl the mirror sites in `queues/mirrors.tsv`, twice a day — this is the live collection), `extract-chm.yml` (unpack the documentation CHMs of a media set in `queues/chm-sets.tsv`), `import-media.yml` (fetch a CD image from the Internet Archive and import its documentation, `queues/media.tsv`) and `import-win32.yml` (re-import `corpus/win32/` from the pinned MicrosoftDocs commits). All are `workflow_dispatch` — run them from the Actions tab. |
 
 ## Corpus conventions
 

@@ -84,8 +84,9 @@ jobs:
           mkdir -p data/reports
           # The job log of a run is not readable from the environment this
           # corpus is maintained from, so the run's own output is committed.
+          # (Not *.log: .gitignore keeps harvest logs out of the repository.)
           python3 tools/import-media.py --config queues/media.tsv $ONLY $DRY \
-            2>&1 | tee data/reports/media-last.log
+            2>&1 | tee data/reports/media-last.txt
 
       - name: Refresh indexes and commit
         if: ${{ github.event.inputs.dry_run != 'true' }}
@@ -107,5 +108,5 @@ jobs:
       - name: Report the outcome
         if: ${{ steps.media.outcome == 'failure' && github.event.inputs.dry_run != 'true' }}
         run: |
-          echo "the import failed; data/reports/media-last.log has the reason"
+          echo "the import failed; data/reports/media-last.txt has the reason"
           exit 1

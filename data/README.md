@@ -96,6 +96,12 @@ The checker also reports how many pages belong to each index (`INDEX.tsv`,
 `corpus.sqlite3`) and compares them with the files on disk; run it after any
 harvest or import.
 
+`media-last.txt` — what the last `import-media` run did (`queues/media.tsv`,
+`.github/workflows/import-media.yml`): which medium it fetched, what the
+inventory found, which documentation files it imported, and the reason when a
+step failed. The runner's job log is not readable from the environment this
+corpus is maintained from, so the run commits its own output.
+
 `wayback-status.tsv` — what the harvester learned about the Wayback queue:
 one row per topic (`page_id`, `status`, `checked`, `snapshot`).
 

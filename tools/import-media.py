@@ -56,9 +56,16 @@ ARCHIVE_EXT = (".iso", ".zip", ".7z", ".rar", ".cab", ".exe", ".msi", ".img",
                ".bin", ".tar", ".gz", ".tgz")
 PAGE_EXT = (".htm", ".html")
 HELP_EXT = (".hlp", ".mvb", ".mvw", ".gid")
+# Assets, binaries, toolchains and source code: counted, never imported.  A
+# medium is a carrier for its documentation; the code it ships stays where it
+# is (see "What is collected" in the top-level README).
 SKIP_EXT = (".gif", ".png", ".jpg", ".jpeg", ".bmp", ".ico", ".css", ".js",
             ".xml", ".dtd", ".xsl", ".hhc", ".hhk", ".cnt", ".dll", ".exe",
-            ".lib", ".obj", ".pdb", ".sys", ".cab", ".msi")
+            ".lib", ".obj", ".pdb", ".sys", ".cab", ".msi", ".c", ".h",
+            ".cpp", ".cxx", ".hpp", ".cs", ".vb", ".java", ".rc", ".def",
+            ".asm", ".s", ".inc", ".mak", ".dsp", ".dsw", ".vbp", ".vcp",
+            ".vcxproj", ".sln", ".py", ".sh", ".bat", ".ocx", ".tlb", ".res",
+            ".map", ".pch", ".ncb", ".opt", ".plg", ".bsc", ".exp")
 CHARSET_RE = re.compile(rb"charset\s*=\s*[\"']?([A-Za-z0-9_.:-]+)", re.I)
 TITLE_RE = re.compile(r"<title>(.*?)</title>", re.S | re.I)
 
