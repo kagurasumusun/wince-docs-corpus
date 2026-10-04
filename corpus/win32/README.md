@@ -51,6 +51,12 @@ name — is an API name Windows CE's own documentation uses:
 Nothing is included "for context": if Windows CE does not document the name,
 the page stays out, however closely related it looks.
 
+The sdk-api tree is a *reference* tree: it has a page per function, structure
+and interface, and no page per message constant (`WM_PAINT`, `CB_GETEDITSEL`)
+or per macro.  Those names are documented by the CE pages themselves and are
+therefore collected there; `data/reports/win32-coverage.tsv` marks them so the
+boundary stays visible instead of looking like a missing import.
+
 ## The reports
 
 | Report | Columns | What it answers |
@@ -58,6 +64,7 @@ the page stays out, however closely related it looks.
 | `data/reports/win32-shared.tsv` | `name`, `ce_sets`, `ce_page_ids`, `win32_pages` | which part of Win32 Windows CE shares, and where each side is |
 | `data/reports/win32-imported.tsv` | `path`, `module`, `kind`, `name`, `ce_sets`, `ce_page_ids` | the evidence for every imported page: the CE page(s) that document its API |
 | `data/reports/ce-api-names.tsv` | `name`, `ce_sets`, `ce_page_ids`, `sources` | the name list the import is derived from, including names no sdk-api page exists for |
+| `data/reports/win32-coverage.tsv` | `name`, `kind`, `doc_role`, `ce_sets`, `headers`, `underscore_candidate`, `example_page`, `reason` | the review list of the rule in the other direction: CE-documented names under a shared-surface header with no page here (992 rows; 782 are message/macro constants sdk-api does not page) |
 
 ```bash
 grep -P '^createfile\t' data/reports/win32-shared.tsv

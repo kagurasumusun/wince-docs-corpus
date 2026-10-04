@@ -23,10 +23,10 @@ tools/       the pipeline that produces all of the above
 | Path | Contents |
 |------|----------|
 | `kb/entities.jsonl.gz` | One record per API name (**24,442** names): kinds, layers, `ce_sets` (the version scope), the CE and Win32 pages, the header/library/DLL/module names the pages state, the ids of its evidence records, its `relations` to other definitions, and `generation_use`. |
-| `kb/declarations.jsonl.gz` | Every C/C++ declaration, prototype and struct/enum body found in a CE or Win32 page (**78,518**), **verbatim** — the raw material of the generated `.h` files. |
-| `kb/declarations-dotnet.jsonl.gz` | The signature blocks of the separated .NET layer (**31,827**, `language: "managed"`), kept as evidence of that layer and out of the C declaration file. |
-| `kb/requirements.jsonl.gz` | Every Header / Library / DLL / module / OS-version statement (**156,548**), with the page's own label next to the mapped field — the raw material of the include map and of the import-library/`.def` map. |
-| `kb/constraints.jsonl.gz` | Sentences in which a page states a Windows CE restriction or extension (**3,289**), quoted. |
+| `kb/declarations.jsonl.gz` | Every C/C++ declaration, prototype and struct/enum body found in a CE or Win32 page (**78,442**), **verbatim** — the raw material of the generated `.h` files. |
+| `kb/declarations-dotnet.jsonl.gz` | The signature blocks of the separated .NET layer (**31,326**, `language: "managed"`), kept as evidence of that layer and out of the C declaration file. |
+| `kb/requirements.jsonl.gz` | Every Header / Library / DLL / module / OS-version statement (**156,514**), with the page's own label next to the mapped field — the raw material of the include map and of the import-library/`.def` map. |
+| `kb/constraints.jsonl.gz` | Sentences in which a page states a Windows CE restriction or extension (**3,239**), quoted. |
 | `kb/headers.tsv` | Header -> entities (the include mapping). The key is the value the page printed with trailing punctuation and whitespace removed (`Winbase.h.` -> `Winbase.h`); the `as_printed` column shows the verbatim forms. A value that names several files (`Bthapi.h, Bthapi.idl`) is kept as the page printed it — split it if you generate includes from it. |
 | `kb/libraries.tsv` | Library -> entities (the link mapping). |
 | `kb/dlls.tsv` | DLL -> entities. |
@@ -35,6 +35,7 @@ tools/       the pipeline that produces all of the above
 | `reports/coverage-by-tree.tsv` | What each corpus tree contributed (pages, requirements, declarations). |
 | `reports/coverage.tsv` | One row per entity: what is known about it. |
 | `reports/gaps.tsv` | **The collection worklist**: every reference entity for which a declaration, a header or a library is still missing. |
+| `reports/filtered-values.tsv` | The Header/Library/DLL values that name no file at all (`Library: Developer Implemented`, `Header: Windows 7`). The requirement record keeps the printed value and stays in `requirements.jsonl`, but its derived `key` is empty, so no header file or library is invented for it. |
 | `reports/summary.md` | The same in prose, with the totals. |
 | `schema/*.json` | JSON Schema for the four record types. |
 
@@ -54,9 +55,20 @@ Python).  `python3 tools/build-kb.py --plain` writes them uncompressed.
   a consumer can then prefer another page's copy of the same declaration.  The
   text is not repaired here.
 * **Derived fields are marked as derived.**  `kind`, `doc_role`, `spacing`,
-  the requirement `field`/`key` and the declaration `language` are computed
-  deterministically and documented as derived in the schema; the original label
-  and text are always kept beside them.
+  the requirement `field`/`key`, the declaration `language` and
+  `calling_convention` are computed deterministically and documented as derived
+  in the schema; the original label and text are always kept beside them.
+  `calling_convention` is read from the declaration text (`WINAPI`, `CALLBACK`,
+  `_stdcall`, `_cdecl`, `_fastcall`, `extern "C"`) and stays `null` when the page
+  does not say -- a missing convention is not guessed.
+* **A Unicode/ANSI spelling is folded into its base name, on evidence.**
+  `CreateSemaphoreW` is a page of its own in the Win32 reference while the CE
+  page documents `CreateSemaphore`.  The page's own "Unicode and ANSI"
+  statement is the evidence: the variant gets `variants_of`, the base gets the
+  variant in `variants`, the variant's Win32 pages in
+  `win32_pages_from_variants`, `win32_documented` set and a
+  `unicode-ansi-variant` relation.  A variant whose page states no base is left
+  as its own entity -- nothing is paired by name alone.
 * **The .NET layer stays separated here too.**  `corpus/dotnet/` pages are
   parsed like every other page and their records say `layer: "dotnet"`, but
   their signature blocks (C#/VB/C++/JScript) go to
@@ -92,8 +104,11 @@ else.
 
 ## How this becomes include / def material
 
-The intended pipeline (nothing here generates those files yet — this layer is
-the input to it):
+The intended pipeline.  The prototype consumer
+(`tools/gen-include-def.py --set <set> --out <dir>`, §7 of
+`docs/review-2026-10.ja.md`) already walks it end to end and writes fragments
+into a git-ignored `build/` directory; it is a worklist generator, not a
+finished include/def set:
 
 1. **Include map.**  For a version target, take the entities whose `ce_sets`
    include that version, group them by `headers`, and use each entity's
@@ -125,6 +140,8 @@ the repository keeps its current shape: media -> documents -> statements.
 python3 tools/build-kb.py                # rebuild everything under knowledge/
 python3 tools/build-kb.py --report       # totals only, write nothing
 python3 tools/build-kb.py --tree learn/windows-ce-5.0   # one tree while iterating
+python3 tools/check-kb.py                # validate what was written (expects "knowledge OK")
+python3 tools/check-kb.py --strict --sample 2
 ```
 
 `tools/build-kb.py` reads `data/index/INDEX.tsv` for the page list and

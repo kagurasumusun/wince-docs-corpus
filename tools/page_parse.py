@@ -138,7 +138,7 @@ CELL = re.compile(r"(?is)<t[dh]\b[^>]*>(.*?)</t[dh]>")
 LINE_LABEL = re.compile(r"([A-Za-z][A-Za-z /+.]{2,28}?)\s*:\s*([^\n]{1,200})")
 
 
-FILEISH = re.compile(r"[A-Za-z0-9_.+\-]+\.(h|hpp|lib|dll|hlp|inc)\b", re.I)
+FILEISH = re.compile(r"[A-Za-z0-9_.+\-]+\.(h|hpp|hh|hxx|lib|dll|hlp|inc)\b", re.I)
 PROSE_WORDS = re.compile(r"\b(this|your|the|to|of|for|and|see|use|must|not)\b", re.I)
 
 
@@ -230,6 +230,29 @@ def _spacing(text):
     return "preserved"
 
 
+CALLING_CONVENTION = (
+    ("winapi", r"\bWINAPI\b|\bAPIENTRY\b|\bSTDAPICALLTYPE\b|\bWINAPIV\b"),
+    ("cdecl", r"\b_cdecl\b|\b__cdecl\b|\bCDECL\b"),
+    ("stdcall", r"\b_stdcall\b|\b__stdcall\b|\bSTDAPI\b|\bCALLBACK\b|"
+                r"\bPASCAL\b|\b_export\b"),
+    ("fastcall", r"\b_fastcall\b|\b__fastcall\b"),
+    ("this", r"\bthis\b\s*\("),
+    ("extern-c", r'extern\s+"C"'),
+)
+
+
+def _calling_convention(text):
+    """Which calling convention the declaration *prints*, if any.
+
+    The declaration text is quoted verbatim; this only reports which of the
+    documented spellings occur (``WINAPI``, ``CALLBACK``, ``_stdcall``, ...).
+    When the text says nothing, the answer is None -- not a guess.
+    """
+    found = [name for name, pattern in CALLING_CONVENTION
+             if re.search(pattern, text)]
+    return found[0] if found else None
+
+
 def _members(text):
     """Struct/enum member lines, quoted as they appear (no interpretation)."""
     if not re.search(r"(?i)\b(typedef\s+)?(struct|enum|union)\b", text):
@@ -302,6 +325,7 @@ def declarations(fragment):
             "markup": (re.search(r'class\s*=\s*"([^"]+)"', attrs, re.I) or
                        [None, "pre"])[1] if 'class=' in attrs.lower() else "pre",
             "spacing": _spacing(text),
+            "calling_convention": _calling_convention(text),
             "role": role,
             "kind": _kind_of(text),
             "members": _members(text),
@@ -313,7 +337,8 @@ def declarations(fragment):
             if _looks_like_declaration(text) and re.search(r"[;{()]", text):
                 out.insert(0, {
                     "text": text, "markup": "paragraph",
-                    "spacing": _spacing(text), "role": "syntax",
+                    "spacing": _spacing(text),
+            "calling_convention": _calling_convention(text), "role": "syntax",
                     "kind": _kind_of(text), "members": _members(text),
                 })
                 break
@@ -384,6 +409,7 @@ def markdown(text):
         role = "syntax" if re.search(r"(?im)^##\s+-?syntax\s*$", before) else "example"
         decls.append({"text": body, "markup": f"fence:{language or 'text'}",
                       "spacing": _spacing(body), "role": role,
+                      "calling_convention": _calling_convention(body),
                       "kind": _kind_of(body), "members": _members(body)})
     return fields, reqs, decls
 

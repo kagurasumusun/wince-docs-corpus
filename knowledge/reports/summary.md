@@ -6,12 +6,14 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 
 ## Totals
 
-* pages parsed: **121,058**
-* API entities: **24,442** (CE-only 19,374, documented on both sides 3,910)
-* declarations extracted: **110,345** (C/C++ 78,518 in `kb/declarations.jsonl`, managed-code signatures 31,827 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
-* requirement statements: **156,548**
-* Windows CE constraint sentences: **3,289**
-* entities with a gap record: **14,042** (`reports/gaps.tsv`)
+* pages parsed: **121,039**
+* API entities: **24,442** (CE-only 19,374; the shared surface documents 4,293 of them directly or through a Unicode/ANSI variant spelling)
+* declarations extracted: **109,768** (C/C++ 78,442 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
+* requirement statements: **156,514**
+* Windows CE constraint sentences: **3,239**
+* entities with a gap record: **14,706** (`reports/gaps.tsv`)
+* relations between definitions: **23,472** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`)
+* requirement values that name no file (a library statement like `Developer Implemented`) stay in `kb/requirements.jsonl` with an empty derived key and are listed in `reports/filtered-values.tsv`
 
 ## What each tree contributed
 
@@ -110,10 +112,10 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `win32/api/winber` | 13 | 13 | 13 | 0 | 52 | 0 |
 | `win32/api/wsdutil` | 13 | 13 | 13 | 0 | 65 | 0 |
 | `win32/api/raseapif` | 12 | 12 | 12 | 0 | 36 | 0 |
-| `site/windows-ce-2.0/prodinfo` | 11 | 0 | 0 | 0 | 0 | 0 |
 | `win32/api/ole2` | 11 | 11 | 11 | 0 | 48 | 0 |
 | `win32/api/winineti` | 11 | 11 | 11 | 0 | 85 | 0 |
 | `kb/192` | 10 | 0 | 0 | 5 | 0 | 5 |
+| `site/windows-ce-2.0/prodinfo` | 10 | 0 | 0 | 0 | 0 | 0 |
 | `win32/api/sysinfoapi` | 10 | 10 | 10 | 0 | 52 | 0 |
 | `win32/api/debugapi` | 9 | 9 | 9 | 0 | 47 | 0 |
 | `win32/api/heapapi` | 9 | 9 | 9 | 2 | 45 | 2 |
@@ -138,7 +140,6 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `kb/238` | 6 | 0 | 0 | 2 | 0 | 2 |
 | `kb/271` | 6 | 0 | 0 | 4 | 0 | 4 |
 | `kb/301` | 6 | 0 | 0 | 1 | 0 | 1 |
-| `site/windows-ce-2.0/resources` | 6 | 0 | 0 | 0 | 0 | 0 |
 | `win32/api/cchannel` | 6 | 6 | 6 | 0 | 14 | 0 |
 | `win32/api/dmort` | 6 | 6 | 6 | 0 | 30 | 0 |
 | `win32/api/stringapiset` | 6 | 6 | 6 | 2 | 33 | 2 |
@@ -151,7 +152,6 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `kb/241` | 5 | 0 | 0 | 2 | 0 | 2 |
 | `kb/247` | 5 | 0 | 0 | 2 | 0 | 2 |
 | `kb/254` | 5 | 0 | 0 | 4 | 0 | 4 |
-| `site/windows-ce-2.0` | 5 | 0 | 0 | 0 | 0 | 0 |
 | `win32/api/dmoimpl` | 5 | 5 | 5 | 0 | 20 | 0 |
 | `win32/api/errhandlingapi` | 5 | 5 | 5 | 0 | 25 | 0 |
 | `win32/api/ipexport` | 5 | 5 | 5 | 1 | 25 | 1 |
@@ -167,7 +167,6 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `kb/240` | 4 | 0 | 0 | 1 | 0 | 1 |
 | `kb/250` | 4 | 0 | 0 | 3 | 0 | 3 |
 | `mvb/windows-ce-1.0/RELNOTES` | 4 | 0 | 0 | 0 | 0 | 0 |
-| `site/windows-ce-2.0/programs` | 4 | 0 | 0 | 0 | 0 | 0 |
 | `win32/api/datetimeapi` | 4 | 4 | 4 | 0 | 20 | 0 |
 | `win32/api/dsgetdc` | 4 | 4 | 4 | 0 | 20 | 0 |
 | `win32/api/dvp` | 4 | 4 | 4 | 0 | 20 | 0 |
@@ -216,7 +215,6 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `kb/269` | 2 | 0 | 0 | 1 | 0 | 1 |
 | `kb/296` | 2 | 0 | 0 | 0 | 0 | 0 |
 | `kb/306` | 2 | 0 | 0 | 0 | 0 | 0 |
-| `site/windows-ce-2.0/download` | 2 | 0 | 0 | 0 | 0 | 0 |
 | `site/windows-ce-4.2` | 2 | 0 | 1 | 1 | 2 | 2 |
 | `site/windows-ce-5.0` | 2 | 0 | 1 | 1 | 1 | 5 |
 | `win32/api/commoncontrols` | 2 | 2 | 2 | 0 | 8 | 0 |
@@ -286,9 +284,8 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `kb/322` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `kb/323` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `mvb/windows-ce-2.0-sdk/MPLATSDK.20` | 1 | 1 | 0 | 0 | 0 | 0 |
+| `site/windows-ce-2.0` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `site/windows-ce-2.0/embedded` | 1 | 0 | 0 | 0 | 0 | 0 |
-| `site/windows-ce-2.0/feedback` | 1 | 0 | 0 | 0 | 0 | 0 |
-| `site/windows-ce-2.0/purchase` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `site/windows-ce-6.0` | 1 | 0 | 1 | 1 | 1 | 19 |
 | `win32/api/af_irda` | 1 | 1 | 1 | 0 | 5 | 0 |
 | `win32/api/audiomediatype` | 1 | 1 | 1 | 0 | 3 | 0 |
@@ -339,8 +336,8 @@ The full per-book breakdown (one row per component CHM, mirror folder, ...) is `
 | missing | entities | what to collect |
 |---------|----------|-----------------|
 | `no-declaration` | 3,178 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
-| `no-header` | 2,442 | the page has no `Header` requirement -- same approach |
-| `no-library` | 12,611 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
+| `no-header` | 2,619 | the page has no `Header` requirement -- same approach |
+| `no-library` | 13,268 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
 
 ## Using it
 

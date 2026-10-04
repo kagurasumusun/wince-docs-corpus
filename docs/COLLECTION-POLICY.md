@@ -9,7 +9,7 @@ that does not belong appears in `corpus/`. Every collection workflow runs it.
 
 ```
 python3 tools/check-policy.py
-corpus/            121,058 pages in 9 trees
+corpus/            121,039 pages in 9 trees
 corpus/win32/api/  5,279 CE-shared API pages
 policy             OK - Windows CE documentation only
 ```
@@ -52,8 +52,10 @@ generated. The collection policy therefore also decides what is *structured*:
 declarations, requirements, constraints), each record quoting the page it came
 from, and the .NET tree is parsed into that layer with `layer: "dotnet"` rather
 than mixed into the CE surface. Nothing is ever invented to fill a gap; gaps
-are listed (`knowledge/reports/gaps.tsv`) and collected. See
-`knowledge/README.md`.
+are listed (`knowledge/reports/gaps.tsv`) and collected. The first consumer of
+that layer, `tools/gen-include-def.py`, turns one CE version's records into
+header fragments and `.def` worklists under a git-ignored `build/` -- material
+for a generator, not a finished toolchain. See `knowledge/README.md`.
 
 ## The Win32-common rule
 
@@ -88,11 +90,16 @@ ce_page_ids`, and `data/reports/win32-shared.tsv` maps each shared name to the
 CE page ids that document it.
 
 The rule is reviewed from both sides: `tools/build-win32-coverage.py` lists the
-CE-documented names that state a Win32 header but have no page in
-`corpus/win32/` (`data/reports/win32-coverage.tsv`, 1,226 names, of which 16
-are a spelling variant of an imported name). Most of them are compiler
-intrinsics, CE extensions and names sdk-api has no page for -- i.e. the rule is
-not cutting anything off -- but the list keeps the question answerable.
+CE-documented names that state a shared-surface header (`Winbase.h`,
+`Winuser.h`, ...) but have no page in `corpus/win32/`
+(`data/reports/win32-coverage.tsv`).  Names the reference documents through a
+Unicode/ANSI variant spelling are not listed -- the knowledge base folds
+`CreateSemaphoreW` onto the CE name `CreateSemaphore` on the page's own
+"Unicode and ANSI" statement. Of the 992 rows that remain, 782 are
+message/notification/macro constants (`WM_PAINT`, `CB_GETEDITSEL`, ...) that
+sdk-api has no page for, and the rest are CE-only APIs (`Ce*` RAPI,
+`CommandBar_*`) and Win32 APIs the reference no longer pages (`GetStringType`,
+`Random`): no page was missed, and the list keeps the question answerable.
 
 ## Review 2026-10 (what was wrong, what changed)
 
@@ -135,8 +142,9 @@ Checked and found correct during the same review, so it stayed:
   (`tools/dedupe-corpus.py`; priority `learn` > `dotnet` > `chm` > `mvb` >
   `wcedevcon-99` > `techshelps` > `kb` > `windows-mobile-6.5` > `2010-05` >
   `datadungeon`, so the page survives in the most authoritative tree; a 673rd
-  row is the FrontPage temp copy `site/windows-ce-2.0/programs/~hsB154.html`,
-  byte-identical to `weblogo.html`, which the CE 2.0 site import brought along).
+  row was the FrontPage temp copy `site/windows-ce-2.0/programs/~hsB154.html`,
+  byte-identical to `weblogo.html` -- both were removed when the CE 2.0 site
+  was re-read in 2026-10, so the table now holds 672 rows).
   `--check` reports 0 groups now, and
   `corpus/msdn-library/2010-05/` keeps its 161 wayback captures next to the
   Learn pages they duplicate because they are a *different capture* of the same
@@ -148,7 +156,9 @@ Checked and found correct during the same review, so it stayed:
 2. If it is Win32 material, it goes through `tools/ce_api_names.py` — do not
    add a folder by hand.
 3. Run `tools/check-policy.py`, `tools/check-corpus.py --report`,
-   `tools/dedupe-corpus.py --check`, `tools/build-index.py`,
-   `tools/build-index-sql.py`, `tools/build-ce-api-names.py`,
-   `tools/build-win32-map.py` and `tools/build-kb.py`, and commit the
-   refreshed reports with it.
+   `tools/dedupe-corpus.py --check`, `tools/audit-sources.py`,
+   `tools/build-index.py`, `tools/build-index-sql.py`,
+   `tools/build-ce-api-names.py`, `tools/build-win32-map.py`,
+   `tools/build-win32-coverage.py`, `tools/build-kb.py` and
+   `tools/check-kb.py`, and commit the refreshed reports with it.  (All five
+   collection workflows do exactly this before they commit.)

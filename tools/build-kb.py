@@ -200,15 +200,35 @@ def parse_page(job):
 VALUE_TAIL = re.compile(r"[\s.,;:]+$")
 
 
-def normalize_value(value):
+FILE_TOKEN = re.compile(r"[\w.+-]+\.(?:lib|dll|drv|sys|ocx|tlb)\b", re.I)
+# A Header value is a file name too, and a page may state several
+# ("Wilhelm.h, Otto.h"); a cell that names no header file at all (the OS
+# version, a source file name, "Developer Implemented") keeps its requirement
+# row but gets an empty key, so it never enters the header map.
+HEADER_TOKEN = re.compile(r"[\w.+-]*\.(?:h|hpp|hh|hxx|idl|inc)\b", re.I)
+
+
+def normalize_value(value, field=None):
     """DERIVED key for grouping a requirement value.
 
     The pages print the same header as ``Winbase.h``, ``Winbase.h.`` and
-    ``winbase.h``; grouping needs one key.  Only trailing punctuation and
+    ``winbase.h``; grouping needs one key, so trailing punctuation and
     whitespace are removed -- the verbatim ``value`` stays in the record, so
     nothing is invented and nothing is lost.
+
+    For a library/DLL the key is the file name the value contains
+    (``Iphlpapi.dll on Windows Server 2008`` -> ``Iphlpapi.dll``); a value that
+    names no file at all (``Library: Developer Implemented``) gets an empty key
+    -- it is a statement about the API, not a library, and it is listed in
+    ``reports/filtered-values.tsv`` instead of entering the link map.
     """
-    return VALUE_TAIL.sub("", re.sub(r"\s+", " ", value)).strip()
+    value = VALUE_TAIL.sub("", re.sub(r"\s+", " ", value)).strip()
+    if field in ("library", "dll"):
+        match = FILE_TOKEN.search(value)
+        return match.group(0) if match else ""
+    if field == "header" and not HEADER_TOKEN.search(value):
+        return ""
+    return value
 
 
 def declaration_records(facts, entity_of):
@@ -231,6 +251,7 @@ def declaration_records(facts, entity_of):
                 "language": "managed" if fact["layer"] == "dotnet" else "c",
                 "markup": decl["markup"],
                 "spacing": decl["spacing"],
+                "calling_convention": decl.get("calling_convention"),
                 "text": decl["text"],
                 "members": decl["members"],
                 "source": source_of(fact),
@@ -260,7 +281,7 @@ def requirement_records(facts, entity_of):
                 "field": req["field"],
                 "label": req["label"],
                 "value": req["value"],
-                "key": normalize_value(req["value"]),
+                "key": normalize_value(req["value"], req["field"]),
                 "evidence": req["evidence"],
                 "source": source_of(fact),
             })
@@ -367,6 +388,14 @@ def entity_records(facts, declarations, requirements):
             "dotnet_pages": dotnet_pages,
             "name_evidence": sorted({f["entity_evidence"] for f in pages
                                      if f["entity_evidence"]}),
+            # Set by fold_variants(): a Windows CE page documents the base
+            # name (CreateFile) while the Win32 reference is written per
+            # spelling (CreateFileW).  ``win32_documented`` says the shared
+            # surface documents the name, whether directly or as a variant.
+            "variants_of": None,
+            "variants": [],
+            "win32_pages_from_variants": [],
+            "win32_documented": bool(win32_pages),
             "headers": values("header"),
             "modules": values("module"),
             "libraries": values("library"),
@@ -432,7 +461,7 @@ def add_relations(entities, requirements, declarations):
                     "type": "unicode-ansi-base",
                     "name": variant,
                     "id": ce_api_names.normalize(variant),
-                    "present": True,
+                    "present": ce_api_names.normalize(variant) in by_id,
                     "evidence": (f"{base} -> " + " and ".join(plain) + "; " +
                                  record["evidence"]),
                     "page": record["source"]["path"],
@@ -442,7 +471,7 @@ def add_relations(entities, requirements, declarations):
                     "type": "unicode-ansi-base",
                     "name": base,
                     "id": base_id,
-                    "present": True,
+                    "present": base_id in by_id,
                     "evidence": record["evidence"],
                     "page": record["source"]["path"],
                 })
@@ -524,7 +553,74 @@ def add_relations(entities, requirements, declarations):
         entity["relations"].sort(key=lambda r: (r["type"], r["id"]))
 
 
+def fold_variants(entities):
+    """Link a variant spelling (``CreateSemaphoreW``) to its base name.
+
+    Win32 reference pages are written per spelling while the Windows CE pages
+    document the base name, so one API lived in two entities.  The pages
+    themselves state the pair (``CreateSemaphoreW (Unicode) and
+    CreateSemaphoreA (ANSI)``), and ``add_relations`` already recorded that as
+    a ``unicode-ansi-base`` relation on the variant.  This pass uses exactly
+    that statement -- nothing is guessed, and a variant whose page states no
+    base stays on its own:
+
+    * the variant gets ``variants_of`` (base name, kind, evidence, page);
+    * the base gets the variant in ``variants``, the variant's Win32 pages in
+      ``win32_pages_from_variants`` and ``win32_documented`` set, so the shared
+      surface is visible under the name the CE reader knows.
+    """
+    by_id = {e["id"]: e for e in entities}
+    folded = 0
+    for entity in entities:
+        name = entity["name"]
+        if entity["variants_of"] or len(name) < 2 or name[-1] not in "AW" \
+                or not name[:-1].isalnum():
+            continue
+        for relation in entity["relations"]:
+            if relation["type"] != "unicode-ansi-base" \
+                    or not relation["present"]:
+                continue
+            base = by_id.get(relation["id"])
+            if not base or base is entity \
+                    or base["name"].lower() != name[:-1].lower():
+                continue
+            kind = "unicode" if name[-1] == "W" else "ansi"
+            entity["variants_of"] = {
+                "name": base["name"], "id": base["id"], "kind": kind,
+                "evidence": relation["evidence"], "page": relation["page"],
+            }
+            pages = sorted(set(entity["win32_pages"]))
+            base["variants"].append({
+                "name": name, "id": entity["id"], "kind": kind,
+                "win32_pages": pages,
+                "evidence": relation["evidence"], "page": relation["page"],
+            })
+            base["win32_pages_from_variants"] += pages
+            if pages:
+                base["win32_documented"] = True
+                base["relations"].append({
+                    "type": "unicode-ansi-variant",
+                    "name": name, "id": entity["id"], "present": True,
+                    "evidence": relation["evidence"], "page": pages[0],
+                })
+            folded += 1
+            break
+    for entity in entities:
+        entity["win32_pages_from_variants"] = sorted(
+            set(entity["win32_pages_from_variants"]))
+        entity["variants"].sort(key=lambda v: v["name"])
+    return folded
+
+
 # ------------------------------------------------------------------- outputs
+
+def dedupe_records(records):
+    """One record per id: the same page can print the same block twice."""
+    unique = {}
+    for record in records:
+        unique.setdefault(record["id"], record)
+    return [unique[key] for key in sorted(unique)]
+
 
 def write_jsonl(path, records, compress=True):
     """Write JSONL, gzipped by default.
@@ -561,12 +657,17 @@ def write_tsv(path, header, rows):
 
 
 def aggregate(records, field):
-    """key -> entities/sets, plus the verbatim forms seen (for evidence)."""
+    """key -> entities/sets, plus the verbatim forms seen (for evidence).
+
+    Records whose derived key is empty (a library/DLL/header statement that
+    names no file) are left out here and reported separately; the record
+    itself stays in ``requirements.jsonl``.
+    """
     table = collections.defaultdict(
         lambda: {"entities": set(), "sets": set(),
                  "printed": collections.Counter()})
     for record in records:
-        if record["field"] != field or not record["value"]:
+        if record["field"] != field or not record["value"] or not record["key"]:
             continue
         entry = table[record["key"]]
         if record["entity"]:
@@ -598,11 +699,17 @@ def build(rows, workers, report_only, plain=False):
     for entity in entities:
         entity["constraints"] = sorted(constraint_ids.get(entity["id"], []))
     add_relations(entities, requirements, declarations)
+    print(f"[kb] {fold_variants(entities):,} Unicode/ANSI variant spelling(s) "
+          "folded into their base name", flush=True)
 
     if report_only:
         return facts, entities, declarations, requirements, constraints
 
     compress = not plain
+    entities = dedupe_records(entities)
+    declarations = dedupe_records(declarations)
+    requirements = dedupe_records(requirements)
+    constraints = dedupe_records(constraints)
     write_jsonl(os.path.join(KB, "entities.jsonl"), entities, compress)
     # The .NET layer is separated here as in corpus/: kb/declarations.jsonl is
     # the include/def material (C/C++), declarations-dotnet.jsonl.gz the
@@ -641,6 +748,18 @@ def build(rows, workers, report_only, plain=False):
                       sum(1 for e in entities if e["id"] in ids and e["libraries"]),
                       sum(1 for e in entities if e["id"] in ids and e["dlls"]))
                      for book, ids in entity_of_set.items()))
+
+    # ---- requirement values that name no file (kept, but not in the maps)
+    filtered = collections.defaultdict(collections.Counter)
+    for record in requirements:
+        if record["field"] in ("library", "dll", "header") \
+                and not record["key"]:
+            filtered[record["field"]][record["value"]] += 1
+    write_tsv(os.path.join(REPORTS, "filtered-values.tsv"),
+              ["field", "value", "pages"],
+              [(field, value, count)
+               for field, values in sorted(filtered.items())
+               for value, count in values.most_common()])
 
     # ---- coverage per tree
     per_tree = collections.defaultdict(collections.Counter)
@@ -735,7 +854,7 @@ def write_summary(facts, entities, declarations, requirements, constraints,
     per_tree = rolled
     decs_c = sum(1 for r in declarations if r["layer"] != "dotnet")
     ce_entities = [e for e in entities if e["layers"] == ["ce"]]
-    shared = [e for e in entities if "win32" in e["layers"] and e["ce_pages"]]
+    shared = [e for e in entities if e["win32_documented"] and e["ce_pages"]]
 
     def pct(part, whole):
         return f"{part:,} ({100 * part // whole if whole else 0}%)"
@@ -756,8 +875,9 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "",
         f"* pages parsed: **{len(facts):,}**",
         f"* API entities: **{len(entities):,}** "
-        f"(CE-only {len(ce_entities):,}, documented on both sides "
-        f"{len(shared):,})",
+        f"(CE-only {len(ce_entities):,}; the shared surface documents "
+        f"{len(shared):,} of them directly or through a Unicode/ANSI variant "
+        f"spelling)",
         f"* declarations extracted: **{len(declarations):,}** "
         f"(C/C++ {decs_c:,} in `kb/declarations.jsonl`, managed-code "
         f"signatures {len(declarations) - decs_c:,} in "
@@ -766,6 +886,13 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"* Windows CE constraint sentences: **{len(constraints):,}**",
         f"* entities with a gap record: **{len(gap_rows):,}** "
         "(`reports/gaps.tsv`)",
+        f"* relations between definitions: "
+        f"**{sum(len(e['relations']) for e in entities):,}** "
+        "(`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the "
+        "page's own statement, `interface-method`, `layer`)",
+        "* requirement values that name no file (a library statement like "
+        "`Developer Implemented`) stay in `kb/requirements.jsonl` with an "
+        "empty derived key and are listed in `reports/filtered-values.tsv`",
         "",
         "## What each tree contributed",
         "",

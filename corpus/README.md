@@ -25,7 +25,7 @@ corpus/
     └── windows-mobile-6.5/   MSHelp-format Windows Mobile 6.5 topics
 ```
 
-Total: 121,058 pages = **105,122 CE pages + 10,657 .NET pages + 5,279
+Total: 121,039 pages = **105,103 CE pages + 10,657 .NET pages + 5,279
 Win32-common pages** (as of 2026-10-04; the April 2000 crawl is still
 running). The CE trees are `learn/`, `chm/`, `mvb/`, `kb/`, `site/` and
 `msdn-library/`; `dotnet/` is separated because it documents a layer on top of
@@ -172,7 +172,11 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
   including the w32model, comm_mod, porting and mgdi guides — plus the CE
   4.2/5.0/6.0 pages that were still only under `sources/`), by
   `tools/import-site.py` from `queues/site-sets.tsv`; see
-  `data/reports/site-imported.tsv` for the receipt.
+  `data/reports/site-imported.tsv` for the receipt. The site is a whole
+  product site, so its shop window (press releases, order/download/feedback
+  pages, partner and logo programmes, case studies) is refused by the tree's
+  exclude regex and recorded, page by page, in
+  `data/reports/site-excluded.tsv`.
 * `win32/` — 5,279 pages from Microsoft's public Win32 API reference
   (`MicrosoftDocs/sdk-api`, pinned commit): every sdk-api page whose API name
   Windows CE documents, including the `A`/`W` variants of a shared base name.
