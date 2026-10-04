@@ -1,0 +1,73 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Adding Callback Items and Callback Masks</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_adding_callback_items_and_callback_masks"></A>Adding Callback Items and Callback Masks</H2>
+
+<P>For each of its items, a list view control typically stores the label text, the image list index of the item's icons, and a set of bit flags for the item state. A callback item in a list view control is an item for which the application stores the text, icon index, or both. You can define callback items or change the control's callback mask to indicate that the application—rather than the control—stores some or all of this data. You may want to use callbacks if your application already stores some of this data. You can define callback items when you send the LVM_INSERTITEM message to add an item to the list view control.</P>
+
+<P>The callback mask of a list view control is a set of bit flags that specify the item states for which the application, rather than the control, stores the current data. The callback mask applies to all the control items, unlike the callback item designation, which applies to a specific item. The callback mask is zero by default, meaning that the list view control stores all item-state data. After creating a list view control and initializing its items, you can send the LVM_SETCALLBACKMASK message to change the callback mask. To get the current callback mask, send the LVM_GETCALLBACKMASK message.</P>
+
+<P>When a list view control must display or sort a list view item for which the application stores callback data, the control sends the LVN_GETDISPINFO notification message to the control's parent window. This message specifies an <B>NMLVDISPINFO</B> structure that indicates the type of data required. The parent window must process LVN_GETDISPINFO to provide the requested data.</P>
+
+<P>If the list view control detects a change in an item's callback data, the control sends an LVN_SETDISPINFO notification message to notify you of the change. Changes that the list view control detects are alterations to the text, the icon, or the state data being tracked by the application.</P>
+
+<P>The following code example shows how the list view control requests data.</P>
+
+<PRE><CODE>LRESULT ListViewNotify (HWND hwnd, LPARAM lParam)
+{
+  LPNMHDR lpnmh = (LPNMHDR) lParam; // Contains notification message
+                                    // data
+  HWND hwndListView  = GetDlgItem (hwnd, ID_LISTVIEW);        
+                                    // Handle to the list view control        
+  switch (lpnmh-&gt;code)
+  {
+    case LVN_GETDISPINFO:
+    {
+      TCHAR szString[MAX_PATH];
+      LV_DISPINFO *lpdi = (LV_DISPINFO *) lParam;
+      
+      // The message LVN_GETDISPINFO is sent by the list view control to
+      // its parent window. It is a request for the parent window to 
+      // provide data required to display or sort a list view item.
+      
+      return 0;
+    }
+
+    case LVN_ODCACHEHINT:
+    {
+      LPNMLVCACHEHINT lpCacheHint = (LPNMLVCACHEHINT)lParam;
+      
+      // The message LVN_ODCACHEHINT is sent by the list view control 
+      // when the contents of its display area have changed. For 
+      // example, a list view control sends this notification when the 
+      // user scrolls the control's display.
+
+      return 0;
+    }
+
+    case LVN_ODFINDITEM:
+    {
+      LPNMLVFINDITEM lpFindItem = (LPNMLVFINDITEM)lParam;
+      
+      // The message LVN_ODFINDITEM is sent by the list view control
+      // when it needs the owner to find a particular callback item.
+      // Return -1 if the item is not found.
+
+      return 0;
+    }
+  }
+</CODE></PRE>
+
+<P>If you change a callback item's attributes or state bits, you can use the LVM_UPDATE message to force the control to repaint the item. This message also causes the control to arrange its items if it has the LVS_AUTOARRANGE style. You can use the LVM_REDRAWITEMS message to redraw a range of items by invalidating the corresponding portions of the list view control's client area.</P>
+<p>&nbsp;</p></body>
+</HTML>

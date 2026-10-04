@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Comparing Store Identifiers</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_comparing_store_identifiers"></A>Comparing Store Identifiers</H2>
+
+<P>When a user connects a device to a desktop:
+
+<OL>
+	<LI>The service manager calls <B>IReplStore::GetStoreInfo</B> to retrieve the store's identifier number. 
+<P>This number is stored in Repl.dat. 
+</li>
+
+	<LI>The service manager reads the store identifier for the store to be synchronized and passes this identifier number to <B>IReplStore::CompareStoreIDs</B>. </li>
+
+	<LI>The desktop provider module determines whether this store identifier matches the one loaded from Repl.dat, which identifies the store that was used in the previous synchronization. </li>
+</OL>
+
+<P>If the identifiers do not match, the service manager reestablishes the mapping between the desktop and device objects by issuing a request to the user either to combine two sets of data or to discard the device data and send all desktop objects to the device. </P>
+
+<P>The combine and discard process is required when Repl.dat is corrupt and cannot be read, as well as when the user:
+
+<UL>
+	<LI>Synchronizes a device with existing data for the first time.</li>
+
+	<LI>Uses an existing device to delete the device profile, and then reconnects the device to create a new partnership.</li>
+
+	<LI>Chooses a desktop store that is different from the one that was used in the last synchronization. The service manager detects the new selection by comparing store identifiers.</li>
+
+	<LI>Restores the device data from a backup file. </li>
+
+	<LI>Does a discard operation on one computer, and then synchronizes the device with a second computer.</li>
+</UL>
+
+<P>If a user chooses to combine the data, all objects on both the device and the desktop are marked as changed. If a user chooses to discard the data, all objects on the device are marked as deleted and all desktop objects are marked as changed. Synchronization occurs immediately after a user makes a selection. </P>
+
+<P>Combining data typically creates duplicate objects in the desktop store. To find the duplicate objects in the desktop store and remove them, use <B>IReplStore::RemoveDuplicates</B>. The service manager calls this method after the first successful synchronization occurs. Once duplicated objects are removed, the desktop provider module returns control to the service manager to begin enumerating the store. Through enumeration, the service manager determines which desktop objects are deleted and informs the device to remove the corresponding device objects.</P>
+
+<P>In addition to using <B>IReplStore::GetStoreInfo</B> to provide identification information, you can use this method to perform other tasks, such as changing the size of an object store or the time interval between enumerations. When the service manager calls <B>IReplStore::GetStoreInfo</B>, it passes the structure <B>STOREINFO</B>. Use <B>STOREINFO</B> to change store information: 
+
+<UL>
+	<LI>To receive a variable-sized store identifier, the service manager calls <B>IReplStore::GetStoreInfo</B> with <B>STOREINFO::cbMaxStoreId</B> set to 0. This call should prompt the desktop provider module to set the required size for the store identifier in <B>STOREINFO::cbStoreId</B> and return E_OUTOFMEMORY. In response, the service manager allocates the required memory and passes a pointer to the store identifier in <B>STOREINFO::lpbStoreId. </B>The desktop provider module then can use this pointer to save the store identifier. </li>
+
+	<LI>If your desktop provider module does not support real-time notification of changes, you need to set <B>STOREINFO::uTimerRes</B>: 
+<UL>
+	<LI>To enable the service manager to automatically start enumerating the store at a set interval, set <B>STOREINFO::uTimerRes</B> to the non-zero time, in micro-seconds, that you want to use for the interval. </li>
+
+	<LI>To enable the service manager to begin the enumeration process only when the user activates the ActiveSync status window or immediately before synchronization begins, set <B>STOREINFO::uTimerRes</B> to –1.</li>
+</UL>
+</li>
+</UL>
+
+<P>The following code example shows how to implement the <B>IReplStore::CompareStoreIDs</B> and <B>IReplStore::GetStoreInfo</B> methods and the <B>STOREINFO</B> structure.</P>
+
+<PRE><CODE>STDMETHODIMP_(int) CStore::CompareStoreIDs
+(
+    LPBYTE  lpbID1,     // Points to the first store identifier
+    UINT    cbID1,      // Size of the first store identifier
+    LPBYTE  lpbID2,     // Points to the second store identifier
+    UINT    cbID2       // Size of the second store identifier
+)
+{
+    // If the size of the first store identifier is smaller than 
+    // the size of the second store identifier
+    if ( cbID1 &lt; cbID2 )
+        return -1;
+
+    // If the size of the first store identifier is larger than 
+    // the size of the second store identifier
+    if ( cbID1 &gt; cbID2 )
+        return 1;
+
+    return memcmp( lpbID1, lpbID2, cbID1 );
+}
+
+STDMETHODIMP CStore::GetStoreInfo
+(
+    PSTOREINFO pInfo    // Pointers to the STOREINFO structure
+)
+{
+    if ( pInfo-&gt;cbStruct != sizeof( STOREINFO ) )
+        return E_INVALIDARG;
+
+    pInfo-&gt;uFlags = SCF_SINGLE_THREAD | SCF_SIMULATE_RTS;
+
+    // ProgId of the store. You can change this to match your company 
+    // and your product. 
+    lstrcpy( pInfo-&gt;szProgId, "MyCompany.WinCE.DeskSamp" );
+
+    // The description of the store. This will be displayed to the user. 
+    // You can change this to suit your requirements.
+    lstrcpy( pInfo-&gt;szStoreDesc, "Files" );
+
+    // Let replication scan the store every 5 seconds.
+    pInfo-&gt;uTimerRes = 5000;
+
+    // Construct something that uniquely identifies the store. In this     // example, because the differences in the stores are 
+    //inconsequential,
+    // set the size of the store identifier to any value. 
+    pInfo-&gt;cbStoreId = 10;
+
+    // Compare the size of the the store identifier with the maximum 
+    // size of the store identifier.
+    if ( pInfo-&gt;cbStoreId &gt; pInfo-&gt;cbMaxStoreId )
+        return E_OUTOFMEMORY;
+
+    // Check if the pointer to the store identifier is NULL.
+    if ( pInfo-&gt;lpbStoreId == NULL )
+        return E_POINTER;
+
+    memset( pInfo-&gt;lpbStoreId, 0, 10 );
+    return NOERROR;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

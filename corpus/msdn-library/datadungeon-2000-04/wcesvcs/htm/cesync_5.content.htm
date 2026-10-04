@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Accessing Objects</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_accessing_objects"></A>Accessing Objects</H2>
+
+<P>In order for the service manager to access a data object, you must provide an HREPLITEM handle to the object. HREPLITEM is an important data type because each handle uniquely identifies one object. To the service manager, this handle is a 32-bit number created by the desktop provider module. To the desktop provider module, this handle is a pointer to an internal structure or class instance. </P>
+
+<P>Whenever the service manager needs information about the object, it calls methods in <B>IReplStore</B> or <B>IReplObjHandler</B> and passes the HREPLITEM of the object as a parameter. From the object identifier and the time stamp or version number contained in the HREPLITEM, the desktop provider module can determine whether two handles represent the same object, as well as which of the two handles represents a more recent version of the object.</P>
+
+<P>To compare information, <B>IReplStore::CompareItem</B> checks the object identifiers contained in the two handles. The following table shows the possible return values for this method.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=8%>
+<H5>Value</H5>
+</TD>
+<TD width=92%>
+<H5>Condition</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=8%>  1</TD>
+<TD width=92%>The first object identifier is greater than the  second object identifier.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=8%>–1</TD>
+<TD width=92%>The first object identifier is less than the second object identifier.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=8%>  0</TD>
+<TD width=92%>The first object identifier is equal to the second object identifier.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The ordering of the object identifiers allows the service manager to use a binary search on its table of object identifiers. </P>
+
+<P>The following code example shows how to implement <B>IReplStore::CompareItem</B>.</P>
+
+<PRE><CODE>STDMETHODIMP_(int) CStore::CompareItem
+(
+    HREPLITEM hItem1,    // Points to the handle of the first object. 
+    HREPLITEM hItem2        // Points to the handle of the second object. 
+                        // Both handles are guaranteed to be 
+                        // returned by IReplStore::FindFirstObject or 
+                        // IReplStore::FindNextObject.
+)
+{
+    CItem   *pItem1 = (CItem *)hItem1;
+    CItem   *pItem2 = (CItem *)hItem2;
+
+    if ( pItem1-&gt;m_uid == pItem2-&gt;m_uid )
+        return 0;
+
+    if ( pItem1-&gt;m_uid &lt; pItem2-&gt;m_uid )
+        return -1;
+
+    return 1;
+}
+</CODE></PRE>
+
+<P><B>CFolder </B>and <B>CItem</B> are COM classes based on <B>CReplObject</B>. The following code example shows the definition of these classes.</P>
+
+<PRE><CODE>#define OT_ITEM     1
+#define OT_FOLDER   2
+
+class CReplObject
+{
+public:
+    virtual ~CReplObject() {}
+    UINT    m_uType;
+};
+
+class CFolder: public CReplObject
+{
+public:
+    CFolder( void ) { m_uType = OT_FOLDER; }
+    virtual ~CFolder() {}
+};
+
+class CItem: public CReplObject
+{
+public:
+    CItem( void ) { m_uType = OT_ITEM; 
+                    memset( &amp;m_ftModified, 0, sizeof( m_ftModified )); }
+    virtual ~CItem() {}
+    UINT        m_uid;
+    FILETIME    m_ftModified;
+};
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Loading and Activating an Accelerator Table</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_loading_and_activating_an_accelerator_table"></A>Loading and Activating an Accelerator Table</H2>
+
+<P>An application loads an accelerator-table resource by calling the <B>LoadAccelerators</B> function and specifying the instance handle to the application whose executable file contains the resource and the name or identifier of the resource. <B>LoadAccelerators</B> loads the specified accelerator table into memory and returns the handle to the accelerator table.</P>
+
+<P>An application can load an accelerator-table resource at any time. Usually, a single-threaded application loads its accelerator table before entering its main message loop. An application that uses multiple threads typically loads the accelerator-table resource for a thread before entering the message loop for the thread. An application or thread might also use multiple accelerator tables, each associated with a particular application window. This type of application loads the accelerator table for the window each time the user activates the window.</P>
+
+<P>Windows CE maintains accelerator tables for each application. An application can define any number of accelerator tables for use with its own windows. A unique 32-bit handle, <B>HACCEL</B>, identifies each table. However, only one accelerator table can be active at a time for a specified thread.</P>
+
+<P>To activate an accelerator table, call the <B>TranslateAccelerator</B> function in the message loop associated with the thread message queue to process accelerator keystrokes for a specified thread. The handle of the accelerator table passed to the <B>TranslateAccelerator</B> function determines which accelerator table is active for a thread. This function also monitors keyboard input to the message queue, checking for key combinations that match an entry in the accelerator table. When <B>TranslateAccelerator</B> finds a match, it translates the keyboard input—that is, the WM_KEYUP and WM_KEYDOWN messages—into a WM_COMMAND or WM_SYSCOMMAND message. It then sends the message to the window procedure of the specified window. The WM_COMMAND message includes the identifier of the accelerator that caused <B>TranslateAccelerator</B> to generate the message. The window procedure examines the identifier to determine the source of the message, and then it processes the message accordingly.</P>
+
+<P>The following code example shows how to call <B>TranslateAccelerator </B>from within a message loop.</P>
+
+<PRE><CODE>while (GetMessage (&amp;msg, NULL, 0, 0))
+{
+  if (!TranslateAccelerator (
+                  g_hwndMain,   // Handle to the destination window.
+                  hAccel,       // Handle to the accelerator table.
+                  &amp;msg))        // Address of the message data.
+  {
+    TranslateMessage (&amp;msg);
+    DispatchMessage (&amp;msg);
+  }
+}
+</CODE></PRE>
+
+<P><B>Note</B>  Unlike Windows-based desktop platforms, Windows CE does not maintain a system-wide accelerator table that applies to all applications.</P>
+
+<P>To change the active accelerator table, pass a different accelerator-table handle to <B>TranslateAccelerator</B>.</P>
+<p>&nbsp;</p></body>
+</HTML>

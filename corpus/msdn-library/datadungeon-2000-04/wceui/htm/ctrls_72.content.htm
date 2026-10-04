@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Sample Custom Draw Function</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_sample_custom_draw_function"></A>Sample Custom Draw Function</H2>
+
+<P>Upon receiving the prepaint notification CDDS_PREPAINT, the function requests item-specific notifications by returning CDRF_NOTIFYITEMDRAW. When it receives the subsequent item-specific notifications, it selects a previously created font into the provided device context and specifies new colors before returning CDRF_NEWFONT. The following code example shows how an application-defined function processes custom draw notification messages sent by a child list view control.</P>
+
+<PRE><CODE>LRESULT DoNotify (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+  LPNMLISTVIEW pnm = (LPNMLISTVIEW)lParam;
+
+  switch (pnm-&gt;hdr.code)
+  {
+    case NM_CUSTOMDRAW:
+    {
+      LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+
+      if (lplvcd-&gt;nmcd.dwDrawStage == CDDS_PREPAINT)
+        return CDRF_NOTIFYITEMDRAW;
+
+      if (lplvcd-&gt;nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
+      {
+        if (!(lplvcd-&gt;nmcd.dwItemSpec % 3))
+          SelectObject (lplvcd-&gt;nmcd.hdc, g_hNewFont);
+        else
+          return CDRF_DODEFAULT;
+
+        lplvcd-&gt;clrText = RGB(150, 75, 150);
+        lplvcd-&gt;clrTextBk = RGB(255,255,255);
+
+        return CDRF_NEWFONT;
+      }
+    }
+
+    default:
+      break;
+  }
+
+  return 0;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

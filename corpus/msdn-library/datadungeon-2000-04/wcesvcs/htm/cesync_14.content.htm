@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Detecting Device Object Changes</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_detecting_device_object_changes"></A>Detecting Device Object Changes</H2>
+
+<P>Changes on the device are handled through the <B>ObjectNotify</B> function. The service manager calls <B>ObjectNotify</B> in the following cases:
+
+<UL>
+	<LI>Immediately after connection.</li>
+
+	<LI>When an object changes and a user connects the device.</li>
+
+	<LI>After an acknowledgement is received from the desktop that the object has been synchronized successfully.</li>
+
+	<LI>Two seconds after the device provider module sets ONF_CALLING_BACK.</li>
+</UL>
+
+<P><B>ObjectNotify</B> checks the flags and the file system identifier information in the <B>OBJNOTIFY</B> structure for a changed object.</P>
+
+<P>The following table shows the values for the <B>OBJNOTIFY::uFlags</B> member. </P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=28%>
+<H5>Uflags member</H5>
+</TD>
+<TD width=72%>
+<H5>Definition</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_FILE</TD>
+<TD width=72%><B>OBJNOTIFY::oidObject</B> is a file.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_DIRECTORY</TD>
+<TD width=72%><B>OBJNOTIFY::oidObject</B> is a directory.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_RECORD</TD>
+<TD width=72%><B>OBJNOTIFY::oidObject</B> is a record.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_DATABASE</TD>
+<TD width=72%><B>OBJNOTIFY::oidObject</B> is a database.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_CHANGED</TD>
+<TD width=72%>The file system object is changed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_DELETED</TD>
+<TD width=72%>The file system object is deleted. Only <B>oidParent</B> in <B>OBJNOTIFY::oidInfo</B> is defined. All other members in <B>OBJNOTIFY::oidInfo</B> are 0.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_CLEAR_CHANGE</TD>
+<TD width=72%>The desktop provider module should mark the object as up to date. In this case, <B>OBJNOTIFY::oidObject</B> is the synchronized object identifier, and not the Windows CE object identifier.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_CALL_BACK</TD>
+<TD width=72%>Set by the device provider module to ask the service manager to call back.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=28%>ONF_CALLING_BACK</TD>
+<TD width=72%>The service manager sets this flag and calls <B>ObjectNotify</B>.</TD>
+</TR>
+</TABLE><BR>
+
+<P>The following code example shows how to implement <B>ObjectNotify</B>.</P>
+
+<PRE><CODE>EXTERN_C BOOL ObjectNotify( POBJNOTIFY pNotify )
+{
+    // Check to see if the structure size is the same.
+    if ( pNotify-&gt;cbStruct != sizeof( OBJNOTIFY ) )
+         return FALSE;
+
+    // Check ONF_* flags to see if the notification is 
+    // relevant.
+    if ( !( pNotify-&gt;uFlags &amp; ONF_DELETED ) )
+    {
+        // Make sure that you are dealing with the records in your 
+        // database.
+        // The object (a record or a file) must exist.
+    }
+
+    if ( pNotify-&gt;uFlags &amp; ONF_CLEAR_CHANGE )
+    {
+        // Check whether the object was changed again 
+        // during synchronization.
+        // If so, return TRUE; if not, return FALSE.
+    }
+
+    pNotify-&gt;poid = (UINT *)&amp;pNotify-&gt;oidObject;
+
+    // Determine what object identifier to return. Consider 
+    // uPartnerBit in your decision.
+
+    // If you store one object per file and/or record, you simply 
+    // need to return the file system object identifier. Otherwise, 
+    // you need to read the file system object and determine the list of 
+    // object identifiers that have changed. 
+
+    
+    return TRUE;
+ }
+</CODE></PRE>
+
+<P>To get information from a database with the <B>oidDataBase</B> object identifier, the service manager calls <B>GetObjTypeInfo</B>. </P>
+
+<P>The following code example shows how to implement <B>GetObjTypeInfo</B>.</P>
+
+<PRE><CODE>EXTERN_C BOOL GetObjTypeInfo
+( 
+POBJTYPEINFO pInfo        // Pointer to the OBJTYPEINFO structure
+)
+{
+CEOIDINFO   oidInfo;</CODE></PRE>
+
+<PRE><CODE>if ( pInfo-&gt;cbStruct != sizeof( OBJTYPEINFO ) )
+return FALSE;</CODE></PRE>
+
+<PRE><CODE>    // Clear the structure.
+    memset( &amp;(oidInfo), 0, sizeof(oidInfo));
+
+    // Retrieve information about the object in the object store.
+CeOidGetInfo( oidDataBase, &amp;oidInfo );
+
+    // Store the database information into the OBJTYPEINFO structure.
+wcscpy( pInfo-&gt;szName, oidInfo.infDatabase.szDbaseName );
+     pInfo-&gt;cObjects = oidInfo.infDatabase.wNumRecords;
+pInfo-&gt;cbAllObj = oidInfo.infDatabase.dwSize;
+pInfo-&gt;ftLastModified = oidInfo.infDatabase.ftLastModified;
+
+     return TRUE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

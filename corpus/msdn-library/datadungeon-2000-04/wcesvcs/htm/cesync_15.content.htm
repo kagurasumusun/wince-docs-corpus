@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registering the Service Provider Module</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_registering_the_service_provider_module"></A>Registering the Service Provider Module</H2>
+
+<P>For Windows CE Services to recognize a service provider, you must create valid registry entries in the registry on both the Windows-based desktop computer and on the Windows CE–based device. You also must register the object types. </P>
+
+<P><B>Note</B>  The CEUTIL utility DLL functions are especially helpful when adding desktop registry entries for Windows CE. For more information, see&nbsp; "Installing and Managing Applications."</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To register a service provider on the Windows-based desktop computer</H4>
+
+<OL>
+	<LI>Provide a programmatic identifier (<I>ProgID</I>) for the desktop provider module. 
+<P>The <I>ProgID</I> must be a unique name. 
+</li>
+
+	<LI>Generate a GUID (<I>Class ID</I>) for the service provider. </li>
+
+	<LI>Create the following keys in the Windows registry:
+<P><B>HKEY_CLASSES_ROOT\CLSID\</B><I>Class ID</I><B>\InProcServer32</B>
+
+<P><B>HKEY_CLASSES_ROOT\CLSID\</B><I>Class ID</I><B>\ProgID</B>
+
+<P><B>HKEY_CLASSES_ROOT\</B><I>ProgID</I><B>\CLSID</B>
+</li>
+</OL>
+
+<P>The default value of the <B>InProcServer32</B> key is the full path of the 32-bit DLL that implements the <B>IReplStore</B> interface (for example, for Microsoft Outlook the path is Outstore.dll); the default<I> </I>value of the <B>ProgID</B> key is MS.WinCE.Outlook; and the default value of the <B>CLSID</B> key is the GUID for the store. </P>
+
+<P>After registering the service provider, you must register each object type that the service provider synchronizes. Register the object types in a subdirectory under <B>HKEY_LOCAL_MACHINE</B>. The following screen shot illustrates the desktop registry location for the appointment, contact, and task object types.</P>
+
+<P><IMG SRC="syncdoc1.gif" ALT="" BORDER=0></P>
+
+<P>Each object type name is a key. Under each key, you must define the following five values:
+
+<UL>
+	<LI><B>Default</B> 
+<P>A description of the object type; for example, <B>Outlook Appointment Object</B>.
+</li>
+
+	<LI><B>Display Name</B> 
+<P>The name of the object that you want to display; for example, <B>Appointment</B>.
+</li>
+
+	<LI><B>Plural Name</B> 
+<P>The plural name of the object; for example, <B>Appointments</B>.
+</li>
+
+	<LI><B>Store</B> 
+<P>The OLE programmatic identifier, <I>ProgID</I>, of the store that implements the <B>IReplStore</B> and <B>IReplObjHandler</B> interfaces; for example, <B>MS.WinCE.Outlook</B>.
+</li>
+
+	<LI><B>Disabled</B> 
+<P>A value indicating whether the service provider is displayed as disabled or enabled in Windows CE Services. A nonzero value indicates that the service provider is disabled.
+</li>
+</UL>
+
+<P>The following screen shot illustrates the values defined under the <B>Appointment</B> object type.</P>
+
+<P><IMG SRC="syncdoc2.gif" ALT="" BORDER=0></P>
+
+<P>Whenever a user connects a new device to the desktop and a new device profile is added to Mobile Device folder, the registry keys for the synchronization objects under <B>HKEY_LOCAL_MACHINE</B> are automatically copied to <B>HKEY_CURRENT_USER</B>.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To register a service provider on the Windows CE–based device</H4>
+
+<UL>
+	<LI>Register the device provider module under <B>HKEY_LOCAL_MACHINE\Windows CE Services\Synchronization\Objects</B>.</li>
+</UL>
+
+<P>On the device, each object type name is a key, but you only define two values: <B>Store</B> and <B>Display Name</B>. <B>Store</B> refers to the module that exports the functions for this object type, and <B>Display Name</B> refers to the name of the object type. </P>
+
+<P>The following registry data shows the device registration for the <B>Appointment</B> object type that was explained above.</P>
+
+<PRE><CODE>Store    "pegobj.dll"
+Display Name    "Appointment"
+</CODE></PRE>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

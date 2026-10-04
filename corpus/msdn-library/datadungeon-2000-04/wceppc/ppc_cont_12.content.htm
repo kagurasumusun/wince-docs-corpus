@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Programming the Voice Recorder Control</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_programming_the_voice_recorder_control"></A>Programming the Voice Recorder Control</H2>
+
+<P>The Voice Recorder control records and plays sounds in a container application. For example, a developer could incorporate the Inbox and the Voice Recorder control to record a voice mail message in a file. This recording can then be attached to a regular e-mail message. The Voice Recorder application for Palm-size PC uses the Voice Recorder control many times.</P>
+
+<P>The Voice Recorder control offers a user-interface element that is similar to an audio recorder. Pressing the Record button on this UI element starts the Voice Recorder engine. Pressing the Stop button terminates the recording or playback session. Other features exposed through the UI element include the <B>Grip</B>, <B>Cancel</B> and <B>OK</B> buttons. These buttons move the control, interrupt the recording process, and exit the control, respectively.</P>
+
+<P>To program the Voice Recorder, you use one function, two data structures, and a small number of messages. </P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To program the Voice Recorder</H4>
+
+<OL>
+	<LI>Create the <B>CM_VOICERECORDER</B> structure.</li>
+
+	<LI>Initialize the <B>CM_VOICERECORDER</B> structure.</li>
+
+	<LI>Use <B>VoiceRecorder_Create</B> to initialize the Voice Recorder control.</li>
+</OL>
+
+<P>The following code example shows how to initialize a Voice Recorder control:</P>
+
+<PRE><CODE>// make sure that the owner window exists
+if (!IsWindow(hwndMain)) return FALSE;
+
+// initialize the control’s data structure.
+CM_VOICE_RECORDER cmvr;
+memset( &amp;cmvr, 0, sizeof(cmvr));
+cmvr.cb = sizeof(CM_VOICE_RECORDER);
+cmvr.dwStyle = VRS_NO_MOVE;
+cmvr.xPos = 100;  // use -1 to center the control relative to owner
+cmvr.yPos = 160;
+cmvr.hwndParent = hwndMain;
+cmvr.lpszRecordFileName = TEXT("\\My Documents\VoiceRec.wav");
+
+// returns the handle to the control
+hwndVoice = VoiceRecorder_Create(&amp;cmvr);
+</CODE></PRE>
+
+<P>The Voice Recorder control dispatches VRN_* messages to your application window whenever the control changes. These messages are sent in the WM_NOTIFY format. Any WM_NOTIFY message sent from the Voice Recorder application will have the <I>lParam</I> point to a <B>NM_VOICE_RECORDER</B> structure. The <B>NM_VOICE_RECORDER</B> structure holds the VRM_* messages and an optional error code. The following code example shows how to intercept VRM_* messages.</P>
+
+<PRE><CODE>case WM_NOTIFY 
+{
+     LPNMHDR pnmh = (LPNMHDR) lParam;
+     switch (pnmh-&gt;code);
+     {
+         case VRN_ERROR:
+            MessageBox(NULL, TEXT("Error…"), NULL, MB_OK);
+            break;
+         case VRN_RECORD_START:
+            MessageBox(NULL, TEXT("Recording…"), NULL, MB_OK);
+            break;
+         case VRN_RECORD_STOP:
+            MessageBox(NULL, TEXT("Stop recording…"), NULL, MB_OK);
+            break;
+         case VRN_PLAY_START:
+            MessageBox(NULL, TEXT("Playing…"), NULL, MB_OK);
+            break;
+         case VRN_PLAY_STOP:
+            MessageBox(NULL, TEXT("Stop playing…"), NULL, MB_OK);
+            break;
+         case VRN_CANCEL:
+            MessageBox(NULL, TEXT("Cancel…"), NULL, MB_OK);
+            break;
+         case VRN_OK:
+            MessageBox(NULL, TEXT("OK…"), NULL, MB_OK);
+            break;
+         default:
+            return DefWindowProc(hwnd, msg, wp,lp);
+     }
+}
+</CODE></PRE>
+
+<P><B>Note</B>  This example does not use the error code passed in with WM_VOICE_RECORDER. Therefore, the <I>lParam</I> is cast as a LPNHDR.</P>
+
+<P>When you program the Voice Recorder, keep the following points in mind:
+
+<UL>
+	<LI>The Voice Recorder is a WS_POPUP dialog box. This type of control can have an owner window, but not a parent window.</li>
+
+	<LI>The control always appears in z-order above its owner window. Consequently, the control always appears above the owner window’s children.</li>
+
+	<LI>When a child window creates its own Voice Recorder controls, the top-most parent window still owns the controls.</li>
+
+	<LI>All VRN_* notification messages are sent to the top-most owner window.</li>
+
+	<LI>Closing a child window does not cancel its associated Voice Recorder control.</li>
+</UL>
+
+<P></P>
+
+<P></P>
+<p>&nbsp;</p></body>
+</HTML>

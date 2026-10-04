@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a List Box</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_creating_a_list_box"></A>Creating a List Box</H2>
+
+<P>A <I>list box</I> is a window that displays a list of character strings. A user selects a string from the list by tapping it with the stylus. When a string is selected, it is highlighted. List boxes are typically placed in dialog boxes, but they can also be placed in a normal window by specifying the LISTBOX window class in the <I>lpClassName</I> parameter of the <B>CreateWindow</B> or <B>CreateWindowEx</B> function.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a list box control in a dialog box</H4>
+
+<UL>
+	<LI>Add the following <B>LISTBOX</B> resource-definition statement to the <B>DIALOG</B> resource.
+<PRE><CODE>LISTBOX id, x, y, width, height [[, style [[, extended-style]]]]
+</CODE></PRE>
+
+<P>Here, <I>id</I> is the value that identifies the list box. The upper-left corner of the control is positioned at coordinates <I>x</I>, <I>y</I>, and its dimension is determined by the values <I>width</I> and <I>height</I>. <I>Style</I> and <I>extended-style</I> determine the appearance of the list box. The Win32 API provides two types of list boxes: single-selection, the default, and multiple-selection. In a single-selection list box, a user can select only one item at a time. In a multiple-selection list box, a user can select more than one item at a time. To create a multiple-selection list box, specify the LBS_MULTIPLESEL or the LBS_EXTENDEDSEL style.
+
+<P><B>Note</B>  Windows CE supports the LBS_EX_CONSTSTRINGDATA style, which saves RAM when a large table of strings in ROM is inserted into a list box.
+
+<P>All list boxes in Windows CE have the LBS_HASSTRINGS style by default. Windows CE does not support owner-drawn list boxes. For a complete listing of supported styles, see <A HREF="../../wcesdkr/htm/appb.htm" TARGET="_top">Window and Control Styles</A>. 
+</li>
+</UL>
+
+<P>The following screen shot shows a list box.</P>
+
+<P><B><IMG SRC="listbox.gif" ALT="" BORDER=0></B></P>
+
+<P>Because list boxes are empty by default, you must initialize or populate the list box with data when the dialog box containing the list box is displayed. Each time a dialog box is activated, the system sends your dialog box procedure a WM_INITDIALOG message. A dialog box procedure is responsible for initializing and monitoring its child windows, including any list boxes. The dialog box procedure communicates with the list box by sending messages to it and by processing the notification messages sent by the list box. To initialize the list box, modify your dialog box procedure by adding a case to the <B>SWITCH</B> statement in you dialog box procedure. The following code example shows how to do this.</P>
+
+<PRE><CODE>#define IDC_FONTLIST  1000        // List control identifier
+
+int iNumOfFonts = 0;              // The total number of fonts
+int iCurrItem = -1;               // The index of newly selected or
+                                  // added font name in the list box
+BOOL CALLBACK FontListDlgProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, 
+                               LPARAM lParam)
+{
+  int index = 1,
+      iFontIndex;           // Font list index
+  TCHAR szFontName[80],     // For the currently enumerated font name
+        szFontNamePrev[80]; // For the previously enumerated font name
+  HWND hwndFontListCtrl;    // Window handle to the font list box
+  
+  // Get the window handle to the font list box control in the dialog
+  // box.
+  hwndFontListCtrl = GetDlgItem (hwndDlg, IDC_FONTLIST);
+        
+  switch (uMsg)
+  {
+    case WM_INITDIALOG:
+      // Need to find the total number of fonts, iNumOfFonts, prior to 
+      // the following code.
+
+      for (iFontIndex = 0; iFontIndex &lt; iNumOfFonts; ++iFontIndex)
+      {
+        // Insert code here to retrieve the name of each font and then 
+        // put it in szFontName.
+        // ...
+
+        // Add the font name to the list control.
+        iCurrItem = SendMessage (hwndFontListCtrl, LB_ADDSTRING, 0, 
+                                 (LPARAM)(LPCTSTR) szFontName);
+
+        // Set a 32-bit value, (LPARAM) iFontIndex, associated with the
+        // newly added item in the list control.
+        SendMessage (hwndFontListCtrl, LB_SETITEMDATA,      
+                     (WPARAM) iCurrItem, (LPARAM) iFontIndex);  
+      }
+
+      // Select the first font name in the list control.
+      SendMessage (hwndFontListCtrl, LB_SETCURSEL, 0, 0);
+
+      return TRUE;  
+
+    case WM_COMMAND:
+      switch (LOWORD (wParam))
+      {
+        case IDOK:
+          // Retrieve the index of the currently selected font.
+          if ((iCurrItem = SendMessage (hwndFontListCtrl, LB_GETCURSEL, 
+                                        0, 0)) != LB_ERR)
+          {
+            iFontIndex = SendMessage (hwndFontListCtrl, LB_GETITEMDATA, 
+                                      iCurrItem, 0);
+
+            // Get the currently selected font from the index.
+            CurrLogFont = g_lpEnumLogFont[iFontIndex].elfLogFont;
+
+            EndDialog (hwndDlg, 0);
+            return TRUE;
+          }
+
+        case IDCANCEL:
+          iCurrItem = -1;
+          EndDialog (hwndDlg, 0);
+          return TRUE;
+      }
+      break;
+  }
+  return FALSE;
+}
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>

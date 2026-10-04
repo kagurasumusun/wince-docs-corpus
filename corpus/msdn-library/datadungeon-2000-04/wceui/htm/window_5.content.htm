@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Window Relationship Fundamentals</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_window_relationship_fundamentals"></A>Window Relationship Fundamentals</H2>
+
+<P>When you create a window, you need to specify a window style. The style you select determines the relationship that window has with other windows in your application. For example, you can designate a window as a child of another window by specifying the WS_CHILD style. A <I>child window</I> is a window that appears only within the client area of its parent window. A child window has only one parent, but a parent window can have any number of child windows and these, in turn, can have their own child windows. </P>
+
+<P>A child window that can trace a relationship to a parent window through a chain of parent/child window relationships, however long, is said to be a <I>descendant</I> of the parent window. Likewise, a parent window that can trace a relationship to a child window through a chain of parent/child windows is said to be an <I>ancestor</I> window of that child window. To determine whether a window is a descendant window of a specified parent window, call the <B>IsChild</B> function.</P>
+
+<P>You can change the parent window of an existing child window by calling the <B>SetParent</B> function. When you do, the system removes the child window from the client area of the existing parent window and moves it to the client area of the new parent window. The <B>GetParent</B> function retrieves the handle to a window's parent window.</P>
+
+<P>Windows CE has rules governing the display and behavior of parent and child windows. For example, a child window is positioned relative to the upper-left corner of its parent's client rectangle. Child windows are always placed directly in front of their parent windows and are always kept with their parents in the z-order. When the z-order of a parent window is changed, child windows automatically move with their parent. </P>
+
+<P>Although you can place or size a child window outside of a parent window, a child window cannot draw any part of itself outside of its parent's client rectangle. In Windows CE, a parent window cannot draw on its children, and a window cannot draw on siblings in front of it. In other words, all windows behave as if they have the WS_CLIPCHILDREN and WS_CLIPSIBLING styles. You can avoid some of these restrictions by using the <B>GetDCEx</B> function. This function enables you to obtain a handle to a device context for the client area of a specified window and to control how, or whether, clipping occurs. For example, when used with either the WS_CLIPSIBLINGS or DCX_CACHE style, <B>GetDCEx</B> enables a child window to scroll with its parent.</P>
+
+<P>A window that has no parent is called a <I>top-level window</I>. Windows that have the same parent are <I>sibling windows</I>. Even though they might be in different applications, all top-level windows are considered siblings. Top-level windows are parented to an invisible dummy root window.</P>
+
+<P>The following screen shot shows the parent/child window relationship.</P>
+
+<P><IMG SRC="child.gif" ALT="" BORDER=0></P>
+
+<P>A window can also be defined as another window's owner; thus, there can be an <I>owner window</I> and an <I>owned window</I>. Although the relationship between an owner window and an owned window is similar to the relationship between a parent and child window, there are some differences. For example, the owner-owned relationship can exist only between top-level windows and, unlike child windows, owned windows can draw outside of their owners.</P>
+
+<P>You can create an owner-owned relationship between top-level windows when you create a window with the WS_POPUP style. Because top-level windows do not have parents, the window you specify as the parent when you call the <B>CreateWindow</B> function becomes the owner of the new window. Owned windows can in turn own other windows. To return the owner of a specified window, call the <B>GetParent</B> function. When a window is destroyed, owned windows are also destroyed.</P>
+
+<P>Owner-owned windows move as a group. If you move a window forward in the z-order, its owner window and owned windows move forward with it. Windows CE places owned windows in front of their owners. Although Windows CE does not prevent you from inserting a top-level window between an owner window and an owned window, it does keep owned groups of windows together when one is moved in the z-order. This means that when you change a window's placement in the z-order, Windows CE displaces any windows between the window and its owned or owner windows. Moving or sizing a window does not affect the location or size of its owner or owned windows.</P>
+
+<P>You can create a WS_POPUP window with a NULL owner. When you do, the window becomes partially owned by the desktop. If Windows CE moves the desktop to the top of the z-order, these windows remain on top of the desktop. However, if you move the window to the top of the z-order, it does not pull the desktop with it. Threads in the system that do not usually have any kind of window interface use this style when they need to display a message to the user. Owned windows typically do not have taskbar buttons. However, if you create a WS_POPUP window with a NULL owner, a taskbar button will appear in the taskbar. Be sure when specifying the WS_POPUP style that you do not specify the WS_CHILD style as well. WS_POPUP and WS_CHILD windows are incompatible and should not be used together.</P>
+<p>&nbsp;</p></body>
+</HTML>

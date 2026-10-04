@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Handling Conflicts</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_handling_conflicts"></A>Handling Conflicts</H2>
+
+<P>A conflict occurs when an object has changed on both the device and the desktop since the last synchronization. To resolve a conflict, the service manager calls <B>IReplObjHandler::GetPacket</B> on the device to send the object to the desktop. The service manager then calls <B>IReplObjHandler::SetPacket</B> on the desktop to create a temporary object. During both the device and the desktop call, the service manager passes RSF_CONFLICT_OBJECT in <B>REPLSETUP::dwFlags</B>. </P>
+
+<P>The following illustration shows the call sequence for conflict resolution.</P>
+
+<P><IMG SRC="flow2_7.gif" ALT="" BORDER=0></P>
+
+<P>After the service manager receives the data from the device, it calls <B>IReplStore::GetConflictInfo</B> and passes a handle to both the original desktop object and the temporary device object. Next, the desktop provider module must fill in the <B>CONFINFO</B> structure to customize the description text displayed in a standard <B>Conflict Resolution</B> dialog box, which is supplied by the service manager. </P>
+
+<P>The following code example shows how to implement <B>IReplStore::GetConflictInfo</B>.</P>
+
+<PRE><CODE>STDMETHODIMP CStore::GetConflictInfo
+( 
+    PCONFINFO pConfInfo         // Oointer to a CONFINFO structure
+)
+{
+    // Verify that you have the right version of OBJUIDATA.
+    if ( pConfInfo-&gt;cbStruct != sizeof( CONFINFO ) )
+        return E_INVALIDARG;
+
+    // Copy "Stock" to szLocalName and szRemoteName. You can use your 
+    // own local and remote object names to replace "Stock".
+    lstrcpy( pConfInfo-&gt;szLocalName, "Stock" );
+    lstrcpy( pConfInfo-&gt;szRemoteName, "Stock" );
+
+    CItem   *pLocalItem = (CItem *)pConfInfo-&gt;hLocalItem;
+    CItem   *pRemoteItem = (CItem *)pConfInfo-&gt;hRemoteItem;
+
+    // Find the local object, and then the remote object. 
+    // pLocalObject points to the local object.
+    // pRemoteObject points to the remote object.
+
+    // If both the local and remote objects are found
+    if (pLocalObject &amp;&amp; pRemoteObject )
+    {
+        // Compare the local and remote objects.
+        // If the local and remote objects are identical
+        return RERR_IGNORE;
+    }
+
+    // If a local object is found
+    if ( pLocalObject )
+        // Store information for the local object 
+        // in pConfInfo-&gt;szLocalDesc.
+
+    // If a remote object is found
+    if ( pRemoteObject )
+        // Store information for the remote object in 
+        // pConfInfo-&gt;szRemoteDesc.
+ 
+    return NOERROR;
+}
+</CODE></PRE>
+
+<P>If the desktop provider module cannot write a temporary object on the desktop, it can save the packets into memory and return <B>HREPLITEM</B> containing a pointer to the memory location. In this case, the desktop provider module must implement this handle in all methods in <B>IReplStore</B> that accept an <B>HREPLITEM</B> handle, such as <B>CopyObject </B>or <B>FreeObject</B>. When the service manager calls <B>IReplStore::GetConflictInfo</B>, the handle becomes <B>CONFINFO</B>::<B>hRemoteItem</B>. The desktop provider module then can extract descriptive text from the handle and save it into <B>CONFINFO</B>.</P>
+
+<P>The <B>Conflict Resolution</B> dialog box enables the user to:
+
+<UL>
+	<LI>Discard the original desktop object and keep the newly written device object.
+<P>If the user chooses to keep the newly written device object, the service manager marks the desktop object as up to date and the device object as changed. This ensures that the device object is transferred to the desktop during the next synchronization.
+</li>
+
+	<LI>Keep the original desktop object and discard the device object. 
+<P>If the user chooses to keep the desktop object, the service manager marks the device object as up-to-date.
+</li>
+</UL>
+
+<P>In either case, the service manager calls <B>IReplObjHandler::DeleteObject</B> to delete the temporary object. </P>
+
+<P>Conflict situations do not always require a <B>Conflict Resolution</B> dialog box. The following table describes special error values from <B>IReplStore::GetConflictInfo</B> that resolve the conflict automatically.</P>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=31%>
+<H5>Error value</H5>
+</TD>
+<TD width=69%>
+<H5>Action</H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>RERR_IGNOR</TD>
+<TD width=69%>The desktop provider module compares two handles in <B>CONFINFO</B>, determines that they are identical, and takes no action.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>RERR_DISCARD</TD>
+<TD width=69%>The service manager detects that the desktop object represented by a handle is already deleted and deletes the device object accordingly.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=31%>RERR_DISCARD_LOCAL</TD>
+<TD width=69%>The service manager resolves a conflict by deleting a desktop object instead of allowing the desktop provider module to delete the object.</TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

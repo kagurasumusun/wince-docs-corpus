@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Managing Files</TITLE>
+<style>@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet" href="msdn_ie3.css"></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_managing_files"></A>Managing Files</H2>
+
+<P>A unique feature of the Palm-size PC shell is its file management user interface. On a desktop computer, a user is able to build complex directories and files in which to store data. Because the shell has a simplified user interface for managing files, it does not expose its file system to the user. That is, the shell has no Windows CE Explorer application to manage files. Instead, the user accesses files using four common dialog boxes. These dialog boxes let users open, organize, and save files using folders and properties. You incorporate common dialog boxes into your application using the common dialog box APIs.</P>
+
+<P>The following screen shots show the supported common dialog boxes.</P>
+
+<P><IMG SRC="cezoom31.gif" ALT="" BORDER=0></P>
+
+<P>The <B>Open Folder</B> dialog box manages all user-created folders. It allows a user to create a new folder. It can also rename or delete existing ones. In addition, a user can use the <B>Open Folder</B> dialog box to select folders.</P>
+
+<P><IMG SRC="cezoom4.gif" ALT="" BORDER=0></P>
+
+<P>The <B>Property</B> dialog box displays file properties, including the name of a file or the number of multiple files. It can display a folder name, as well as the type, location, and size of a file.</P>
+
+<P><IMG SRC="cezoom5.gif" ALT="" BORDER=0></P>
+
+<P>The <B>Open File</B> dialog box lets a user select from all the files on a device. A user can select and sort files by folder or file type.</P>
+
+<P><IMG SRC="cezoom1.gif" ALT="" BORDER=0></P>
+
+<P>The <B>Save File</B> dialog box allows a user to save one file at a time. The file is saved with specified properties, such as project, file name, type size, location, and modification date.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To enable the Open Folder or Open File dialog boxes</H4>
+
+<OL>
+	<LI>Call the <B>GetOpenFileName</B> function. 
+<P>This function takes an <B>OPENFILENAME</B> structure as input.
+</li>
+
+	<LI>Set the <I>Flags</I> field of <B>OPENFILENAME</B> to OFN_PROJECT.
+<P>This produces the <B>Open Folder</B> dialog box. If the <I>Flags</I> field is set to anything else, the user gets the <B>Open File</B> dialog box.
+</li>
+</OL>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To enable the Property or Save File dialog boxes</H4>
+
+<OL>
+	<LI>Call the <B>GetSaveFileName</B> function. 
+<P>This function also takes an <B>OPENFILENAME</B> structure as input.
+</li>
+
+	<LI>Set the <I>Flags</I> field of <B>OPENFILENAME</B> to OFN_PROPERTY. 
+<P>This produces the <B>Property</B> dialog box. If the Flags field is set to anything else, the user gets the <B>Save File</B> dialog box.
+</li>
+</OL>
+
+<P>A user organizes files and folders in the My Documents folder, which is accessible by all applications. Folders within the My Documents folder cannot have subfolders. The following code example shows how to call the common dialog boxes.</P>
+
+<PRE><CODE>LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    LRESULT    lResult = TRUE;
+    TCHAR    szFile[MAX_PATH] = TEXT("\0");
+    OPENFILENAME        ofn;
+    
+    memset( &amp;(ofn), 0, sizeof(ofn));
+    ofn.lStructSize    = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = MAX_PATH;    
+            
+    switch(msg)
+    {
+    case WM_COMMAND:
+        switch (GET_WM_COMMAND_ID(wp,lp))
+        {
+        case IDM_OPENPRJ:
+            ofn.lpstrTitle = TEXT("Open Folder");
+            //Open project dialog for Palm-size PC.
+            ofn.Flags = OFN_PROJECT                
+            if (GetOpenFileName(&amp;ofn))    
+                MessageBox(NULL, ofn.lpstrFile, TEXT("Info"), MB_OK)
+                //Add the opening project code here.
+            break;
+
+        case IDM_OPENFILE:
+            ofn.lpstrFilter = TEXT("All (*.*)\0*.*\0");    
+               ofn.lpstrTitle = TEXT("Open File");
+                ofn.Flags = OFN_EXPLORER;
+            if (GetOpenFileName(&amp;ofn))    
+                MessageBox(NULL, ofn.lpstrFile, TEXT("Info"), MB_OK)
+                //Add the opening file code here.
+            break;
+
+        case IDM_SAVEFILE:
+            ofn.lpstrFilter = TEXT("Text (*.txt)\0*.txt\0");    
+               ofn.lpstrTitle = TEXT("Save File As");
+            ofn.Flags = OFN_HIDEREADONLY; 
+            ofn.lpstrDefExt = TEXT("txt");
+            if (GetSaveFileName(&amp;ofn))    
+                MessageBox(NULL, ofn.lpstrFile, TEXT("Info"), MB_OK)
+                //Add saving file code here.
+            break;
+
+        case IDM_PROPERTY:
+            //Use GetOpenFileName to choose a file and then use 
+            //GetSaveFileName to display its property. 
+            ofn.lpstrFilter = TEXT("All (*.*)\0*.*\0");    
+            ofn.lpstrTitle = TEXT("File Property");
+            ofn.Flags = OFN_EXPLORER;
+            if (GetOpenFileName(&amp;ofn))    {
+                ofn.lpstrTitle = TEXT("Property");
+                //Open property dialog for Palm-size PC.
+                ofn.Flags = OFN_PROPERTY;        
+                GetSaveFileName(&amp;ofn);
+            }
+            break;
+
+        default:
+            return DefWindowProc(hwnd, msg, wp, lp);
+        }
+    break; 
+</CODE></PRE>
+
+<P>You can have multiple subdirectories for your applications; indeed, many directory structures require subdirectories, such as links in the Communications directory at<B> </B>\Windows\Start Menu\Programs\Communications.<B> </B>However, a user does not have access to these folders through applications. Further, Windows CE Services exposes the file system. Using Windows CE Services, a user can create a multilevel directory on a Palm-size PC through a desktop computer. However, a user can only see that directory using a Palm-size PC if the directory begins in the My Documents folder. Further, a Palm-size PC user cannot access more than one level of subdirectories; the shell ignores any subdirectories beyond the first.</P>
+
+<P>For a complete example of using the common dialog boxes, see <A HREF="ppc_samp.htm" TARGET="_top">Sample Code for a Palm-size PC</A>.  </P>
+<p>&nbsp;</p></body>
+</HTML>

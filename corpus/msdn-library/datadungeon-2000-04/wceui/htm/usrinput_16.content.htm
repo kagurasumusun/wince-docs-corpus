@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Processing User Input</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_processing_user_input"></A>Processing User Input</H2>
+
+<P>To begin each input recognition session with a clean HRC, use the context from a pre-established HRC as a template. Each time you need a new HRC, pass the handle of the previous HRC object, excluding any previous ink data, to the recognition engine. This enables your application to save processing time by not having to recreate common HRC parameters that are used repeatedly in your application, such as <B>GUIDE</B> structures and alphabet codes.</P>
+
+<P>The character recognition sequence begins when the input panel IM sends a call to <B>HwxInput</B>. This function adds ink to the HRC object to provide the <B>STROKEINFO</B> structure with the count of stylus stroke points that are generated. <B>HwxProcess</B> passes the HRC to the recognition engine where the stroke data is processed, based on predetermined character recognition parameters. When a user finishes entering stroke data, your application calls <B>HwxEndInput</B> to tell the recognition engine that no further ink will be added to the HRC.</P>
+
+<P>To improve the performance of the recognition process, pass the context for the previous character to the recognition engine through <B>HwxSetContext</B>. If this function is not called, the recognition engine will assume that no previous context is available. <B>HwxSetContext</B> is called before <B>HwxProcess</B>. <B>HwxProcess</B> processes the ink received by the HRC to perform the recognition. Full character recognition occurs only after <B>HwxEndInput</B> is called. Results of the recognition are returned by <B>HwxGetResults</B>.</P>
+
+<P><B>HwxGetResults</B> simplifies the task of recognizing characters and glyphs that are drawn within the boundaries of the defined box by responding with character alternatives on a per-box basis in one call. The following code example sets the results for 10 boxes at a time, with 5 alternatives for each box.</P>
+
+<PRE><CODE>HANDLE hMem = GlobalAlloc( GHND, 10 * (sizeof( BOXRESULTS )
+</CODE>        <CODE> + (5-1) * sizeof( SYV )) );</CODE>
+<CODE>LPBOXRESULTS rgBoxR = (LPBOXRESULTS)GlobalLock( hMem );</CODE>
+<CODE>UINT indx = 0;</CODE>
+<CODE>Do </CODE>
+<CODE>{</CODE>
+<CODE>   int iRes = HwxGetResults( hrc, 5, indx, 10, rgBoxR); </CODE>
+    <CODE>   . </CODE>
+    <CODE>   .</CODE>        <CODE>// Check for errors and use rgBoxR </CODE>
+    <CODE>   . </CODE>
+<CODE>   indx += (UINT)iRes; </CODE>
+<CODE>} </CODE>
+<CODE>while (iRes == 10);</CODE>
+</PRE>
+
+<P>Once all input, processing, recognition, and output has been completed, destroy the active HRC with the <B>HwxDestroy</B> function.</P>
+<p>&nbsp;</p></body>
+</HTML>

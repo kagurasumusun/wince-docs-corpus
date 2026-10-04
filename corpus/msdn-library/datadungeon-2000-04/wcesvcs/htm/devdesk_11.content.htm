@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Registering a File Filter</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+
+
+<H2><A NAME="_wcesdk_registering_a_file_filter"></A>Registering a File Filter</H2>
+
+<P>An application registers a file filter by placing its CLSID in the following registry key locations: 
+
+<UL>
+	<LI><B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters\.</B>&lt;<I>file extension</I>&gt;<B>\InstalledFilters</B>. This registration associates the file filter with the file type that it converts. </li>
+
+	<LI><B>HKEY_CLASSES_ROOT\CLSID</B>. This registration provides information on the file filter's capabilities and its DLL. </li>
+</UL>
+
+<P>Registering a file filter in two locations guarantees that your file filter is available for any new <I>device partnership</I>. Windows CE Services uses device partnerships to allow multiple Windows CE–based devices to be connected to the same desktop computer. If device partnerships exist when an application registers a file filter, an application must create a file filter extension key for each existing device partnership. Connecting a device to a desktop computer for the first time establishes a new device partnership with a unique identifier. Devices use the partnership identifier to store unique settings for synchronization, file conversions, and backup-and-restore information. </P>
+
+<P>All filters registered under the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters</B> key are copied to the <B>HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows CE Services\Partners\</B>&lt;<I>partner identifier</I>&gt; key, where &lt;<I>partner identifier</I>&gt; is the identifier of the new device partnership.</P>
+
+<P>A file type can have more than one file filter associated with it. The Windows CE Services user interface (UI) lists the registered filters as filter options. A file filter can be registered under the file type's <B>InstalledFilters</B> key in the <B>DefaultImport</B> or <B>DefaultExport</B> subkeys. As their names imply, these subkeys define the default file filters for the file type. The file filter specified under the extension key as the <B>DefaultImport</B> or <B>DefaultExport</B> value will be shown as the default. </P>
+
+<P><B>Note</B>  Any filter defined as the <B>DefaultImport</B> or <B>DefaultExport</B> value must be an <B>InstalledFilters</B> value, also.</P>
+
+<P>A file filter can also be registered for a particular device. For example, for the Palm-size PC device category, the file filter extension subkey needs to be created under the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Windows CE Services\SpecialDefaults\Palm PC\Filters</B> key.</P>
+
+<P>The following is the structure of the <B>Filters</B> key and the <B>InstalledFilters</B> subkey.</P>
+
+<PRE><CODE>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters
+
+   \.&lt;file extension&gt;
+      [DefaultImport = &lt;default import filter CLSID&gt;]
+      [DefaultExport = &lt;default export filter CLSID&gt;]
+      \InstalledFilters
+         [&lt;clsid1&gt;]
+         . . .
+         [More CLSIDs for this extension.]
+    . . .
+    [More extensions.]
+</CODE></PRE>
+
+<P>The <B>HKEY_CLASSES_ROOT\CLSID</B> key provides basic information about file filters. Each file filter that has been identified in the <B>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows CE Services\Filters</B> key must be registered in this key. The following is the structure for this key and its subkeys.</P>
+
+<PRE><CODE>HKEY_CLASSES_ROOT\CLSID
+
+   \&lt;<I>clsid</I>&gt;
+      \(Default) = &lt;description in "Edit Conversion Settings" list&gt;
+      \DefaultIcon = &lt;file name,index for the icon for this type&gt;
+      \InProcServer32 = &lt;file name of the DLL that handles this type&gt;
+         ThreadingModel = Apartment
+      \PegasusFilter
+         [Import]
+         [HasOptions]
+         Description = &lt;string to display in the conversion dialog box&gt;
+         NewExtension = &lt;extension of the converted file&gt;
+   \. . . [More CLSIDs for filters.]
+</CODE></PRE>
+
+<P>The &lt;<I>clsid</I>&gt; key is a named value that is the CLSID of the registered file filter. This key contains the following subkeys:
+
+<UL>
+	<LI><B>DefaultIcon</B>, which defines the icon name string or icon resource identifier for the icon associated with the file filter DLL.</li>
+
+	<LI><B>InProcServer32</B>, which identifies the file filter DLL using the default value, and defines the apartment model capabilities of the file filter in the <B>ThreadingModel</B> named value. </li>
+
+	<LI><B>PegasusFilter</B>, which provides information on the specific capabilities of the file filer.
+<P>The following table shows possible named values for the <B>PegasusFilter</B> subkey.
+</li>
+</UL>
+
+<TABLE cellspacing=4 cols=2>
+
+<TR VALIGN="top">
+<TD width=18%>
+<H5>Named value </H5>
+</TD>
+<TD width=82%>
+<H5>Description </H5>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>Import</B></TD>
+<TD width=82%>If this named value exists, the conversion type is for importing files from the desktop computer to the device. Otherwise, the conversion type is for exporting files from the desktop computer to the device. </TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>HasOptions</B></TD>
+<TD width=82%>If this named value exists, the file filter supports the <B>ICeFileFilter::FilterOptions</B> method.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>Description</B></TD>
+<TD width=82%>The data for this named value is a string that describes the conversion. Windows CE Services displays this text on the property sheets that are displayed by selecting the <B>DeviceDesktop</B> or <B>DesktopDevice</B> tab control selections in the <B>File Conversion Properties</B> dialog box, and then choosing <B>Edit</B> to display the <B>Edit Conversion Settings</B> dialog box. 
+<P>For example, if the <B>Import</B> named value exists, then, on the <B>DesktopDevice</B> property sheet, the data value defined by the <B>Description</B> named value is displayed under the file conversions details <B>Convert to HPC files of the type</B>. </P>
+</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><B>NewExtension</B></TD>
+<TD width=82%>Defines the extension of the file that will be created on the destination device. </TD>
+</TR>
+</TABLE><BR>
+<p>&nbsp;</p></body>
+</HTML>

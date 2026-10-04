@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Creating a Tree View</TITLE>
+<style type="text/css">
+@import url(msdn_ie4.css);</style>
+<link disabled rel="stylesheet"
+href=msdn_ie3.css></HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000>
+
+<DIV STYLE="display:none;">
+
+</DIV>
+
+
+
+<H2><A NAME="_wcesdk_creating_a_tree_view"></A>Creating a Tree View</H2>
+
+<P>A <I>tree</I> <I>view</I> <I>control</I> is a hierarchical display of labeled items. Any item in a tree view control can have a list of subitems—called child items—associated with it. An item that has one or more child items is called a parent item. A child item is displayed below its parent item and is indented to indicate that it is subordinate to the parent. An item that has no parent appears at the top of the hierarchy and is called a root item.</P>
+
+<H4><IMG SRC="wedge.gif" ALT="" BORDER=0>&nbsp;&nbsp;&nbsp;&nbsp;To create a tree view control</H4>
+
+<OL>
+	<LI>Specify the WC_ TREEVIEW class in the <I>lpClassName</I> parameter of the <B>CreateWindowEx</B> function. 
+<P>This class is registered when the common control DLL is loaded. You can use the <B>InitCommonControls</B> function to ensure that this DLL is loaded. To register the tree view class using the <B>InitCommonControlsEx</B> function, specify the ICC_ TREEVIEW_CLASSES flag as the <I>dwICC</I> member of the <B>INITCOMMONCONTROLSEX</B> structure you pass in the <I>lpInitCtrls</I> parameter.
+</li>
+
+	<LI>Specify a treeview style in the <I>dwStyle</I> parameter of the <B>CreateWindowEx</B> function.
+<P>Tree view styles govern the appearance of a tree view control. You set the initial styles when you create the tree view control. You can retrieve and change the styles after creating the tree view control by using the <B>GetWindowLong</B> and <B>SetWindowLong</B> functions. For a complete listing of supported styles, see <A HREF="../../wcesdkr/htm/appb.htm" TARGET="_top">Window and Control Styles</A>. 
+</li>
+
+	<LI>Add one or more items to the tree view control by sending the TVM_INSERTITEM message.
+<P>The message returns a handle to the HTREEITEM type, which uniquely identifies the item. The message also includes a <B>TVINSERTSTRUCT</B> structure that specifies the handle to the parent item and the handle to the item after which the new item is to be inserted. When adding an item, specify the handle to the new item's parent item. If you specify NULL or the TVI_ROOT value instead of a parent item handle in the <B>TVINSERTSTRUCT</B> structure, the item is added as a root item. The second handle must identify either a child item of the specified parent or one of these values: TVI_FIRST, TVI_LAST, or TVI_SORT.
+
+<P>When you specify TVI_FIRST or TVI_LAST, the tree view control places the new item at the beginning or end of the specified parent item's list of child items. When you specify TVI_SORT, the tree view control inserts the new item into the list of child items in alphabetical order based on the text of the item labels. You can put a parent item's list of child items in alphabetical order by using the TVM_SORTCHILDREN message. The TVM_SORTCHILDRENCB message enables you to sort child items based on criteria that you define. When you use this message, you specify an application-defined callback function that the tree view control can call when the relative order of two child items needs to be determined.
+
+<P><B>Note</B>  A tree view control uses memory allocated from the heap of the process that creates the tree view control. The maximum number of items in a tree view is based on the amount of memory available in the heap.
+</li>
+</OL>
+
+<P>At any time, the state of a parent item's list of child items can be either expanded, partially expanded, or collapsed. When the state is expanded, the child items of the expanded section are displayed below the parent item. When collapsed, child items are not displayed. The list shifts between the expanded and collapsed states when a user double-taps the parent item or, if the parent has the TVS_HASBUTTONS style, when a user clicks the button associated with the parent item. You can expand or collapse the child items by using the TVM_EXPAND message. A tree view control sends the parent window a TVN_ITEMEXPANDING notification message when a parent item's list of child items is about to be expanded or collapsed. The notification gives an application the opportunity to prevent the change or to set any attributes of the parent item that depend on the state of the list of child items. After changing the state of the list, the tree view control sends the parent window a TVN_ITEMEXPANDED notification message. When a list of child items is expanded, it is indented relative to the parent item. Set the amount of indentation by using the TVM_SETINDENT message or retrieve the current amount by using the TVM_GETINDENT message.</P>
+
+<P>The following code example shows how to create a tree view control.</P>
+
+<PRE><CODE>DWORD dwStyle;                // Style flags of the tree view
+INITCOMMONCONTROLSEX  iccex;  // INITCOMMONCONTROLSEX structure
+
+// Initialize the INITCOMMONCONTROLSEX structure.
+iccex.dwSize = sizeof (INITCOMMONCONTROLSEX);
+iccex.dwICC = ICC_TREEVIEW_CLASSES;
+
+// Register tree view control classes from the common control 
+// DLL.
+InitCommonControlsEx (&amp;iccex);
+
+// Get the client area rectangle.
+GetClientRect (hwnd, &amp;rcClient);
+
+// Create the command bar and insert menu.
+g_hwndCB = CommandBar_Create (g_hInst, hwnd, 1);
+CommandBar_InsertMenubar (g_hwndCB, g_hInst, IDR_MENU, 0);
+CommandBar_AddAdornments (g_hwndCB, 0, 0);
+
+// Get the command bar height.
+iCBHeight = CommandBar_Height (g_hwndCB);
+
+// Assign the window styles for the tree view.
+dwStyle = WS_VISIBLE | WS_CHILD | TVS_HASLINES | TVS_LINESATROOT | 
+          TVS_HASBUTTONS;
+
+// Create the tree view control.
+g_hwndTreeView = CreateWindowEx (
+    0, 
+    WC_TREEVIEW,          // Class name
+    TEXT("TreeView"),     // Window name
+    dwStyle,              // Window style
+    0,                    // x coordinate of the upper left corner
+    iCBHeight + 1,        // y coordinate of the upper left corner
+    rcClient.right,       // The width of the edit control window
+    rcClient.bottom - (iCBHeight + 1), 
+                          // The height of the edit control window
+    hwnd,                 // Window handle to parent window
+    (HMENU) IDC_TREEVIEW, // The treeview control identifier
+    g_hInst,              // The instance handle
+    NULL);                // Specify NULL for this parameter when 
+                          // creating a control
+
+// Be sure the tree view was actually created.
+ if (!g_hwndTreeView)
+  return 0;
+</CODE></PRE>
+<p>&nbsp;</p></body>
+</HTML>
