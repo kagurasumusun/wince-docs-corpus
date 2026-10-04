@@ -164,13 +164,115 @@ def _field(label):
     return "other"
 
 
+TABLE = re.compile(r"(?is)<table\b[^>]*>(.*?)</table>")
+
+
+def _column_labels(cells):
+    """The column-header row of an old-SDK requirements table, or None.
+
+    The Windows CE 3.0 SDK CHM prints requirements as one wide table whose
+    first row names the columns instead of one label per row::
+
+        Runs on | Versions | Defined in | Include | Link to
+        Windows CE OS | 3.0 and later | Windbase.h | Winbase.h | coredll.lib
+
+    Reading that table row by row (label = first cell) flattens three facts
+    into one string, so the column names map each cell to its own field.
+    """
+    labels = [re.sub(r"\s+", " ", c).strip().rstrip(":").lower()
+              for c in cells]
+    if len(labels) >= 3 and labels[0].startswith("runs on") \
+            and "include" in labels:
+        return labels
+    return None
+
+
+def _requirements_from_columns(block, seen):
+    """Requirements from column-header tables in the block.
+
+    Returns ``(records, had_column_table)``; the caller skips the generic
+    row-by-row read when a column table is present, because that read is what
+    flattened the columns into one string.
+    """
+    out = []
+    found = False
+    for table in TABLE.finditer(block):
+        rows = ROW.findall(table.group(1))
+        if not rows:
+            continue
+        header = [text_of(c, keep_newlines=False) for c in
+                  CELL.findall(rows[0])]
+        labels = _column_labels(header)
+        if not labels:
+            continue
+        found = True
+        index = {}
+        for i, label in enumerate(labels):
+            index.setdefault(label, i)
+
+        def cell(values, name):
+            i = index.get(name)
+            if i is None or i >= len(values):
+                return ""
+            return re.sub(r"\s+", " ", values[i]).strip()
+
+        for body in rows[1:]:
+            values = [text_of(c, keep_newlines=False) for c in
+                      CELL.findall(body)]
+            if not any(values):
+                continue
+            runs = cell(values, "runs on")
+            versions = cell(values, "versions")
+            if runs or versions:
+                value = " ".join(v for v in (runs, versions) if v)
+                if ("os_versions", value) not in seen:
+                    seen.add(("os_versions", value))
+                    out.append({
+                        "field": "os_versions", "label": "Runs on / Versions",
+                        "value": value,
+                        "evidence": f"Runs on: {runs}, Versions: {versions}"})
+            for name, field in (("defined in", "header"),
+                                ("include", "header"),
+                                ("link to", "library")):
+                value = cell(values, name)
+                if value and _plausible(field, value) \
+                        and (field, value) not in seen:
+                    seen.add((field, value))
+                    label = {"defined in": "Defined in",
+                             "include": "Include",
+                             "link to": "Link to"}[name]
+                    out.append({"field": field, "label": label,
+                                "value": value,
+                                "evidence": f"{label}: {value}"})
+    return out, found
+
+
 def requirements(fragment):
     """Requirement label/value pairs, from a table or from ``Label: value``."""
     out = []
     seen = set()
+    got_columns = False
     for heading in ("requirements", "at a glance", "requirements", "system requirements"):
         block = region(fragment, heading)
         if not block:
+            continue
+        column_records, had_column_table = _requirements_from_columns(block,
+                                                                      seen)
+        out += column_records
+        if had_column_table:
+            got_columns = True
+            plain = text_of(block)
+            for match in LINE_LABEL.finditer(plain):
+                label, value = match.group(1).strip(), match.group(2).strip()
+                field = _field(label)
+                if not field or not value or (field, value) in seen \
+                        or not _plausible(field, value):
+                    continue
+                seen.add((field, value))
+                out.append({"field": field, "label": label, "value": value,
+                            "evidence": match.group(0).strip()})
+            if out:
+                break
             continue
         for row in ROW.finditer(block):
             cells = [text_of(c, keep_newlines=False) for c in CELL.findall(row.group(1))]
@@ -197,6 +299,17 @@ def requirements(fragment):
                         "evidence": match.group(0).strip()})
         if out:
             break
+    # The CE 3.0 SDK marks the section with <p class="label">Requirements</p>,
+    # not a heading, and a few pages split the word across tags
+    # (<b>Requir</b>e<b>ments</b>) or omit it.  The column header itself
+    # (Runs on | Versions | Defined in | Include | Link to) is the fact, so
+    # when the heading search did not already read that table, read it from
+    # the article.  The header check is the whole guard: no other table in
+    # the corpus starts with those columns.
+    if not got_columns and "Link to" in fragment \
+            and ("Runs on" in fragment or "Runs On" in fragment):
+        extra, _had = _requirements_from_columns(fragment, seen)
+        out.extend(extra)
     return out
 
 
@@ -432,6 +545,100 @@ def _cell_int(text):
         return None
     value = match.group(1)
     return int(value, 16) if value.lower().startswith("0x") else int(value)
+
+
+# A constant a page *numbers*.  Only a table that names the constant in one
+# column and prints its value in another is read, and only a row whose name
+# cell is one identifier and whose value cell is one number -- a cell that
+# mixes prose with a number is left on the page, not parsed apart.  A layout
+# table (it has an Offset column) is not a constant table; offset_tables owns
+# those rows.  Nothing is computed: a decimal is recorded only when the page
+# prints one, never by converting the hexadecimal.
+CONSTANT_NAME_COLUMNS = {
+    "flag", "name", "constant", "symbolic constant", "resource identifier",
+    "notification flag", "error code", "return code", "identifier",
+    "message", "macro", "symbol", "symbolic name",
+}
+CONSTANT_HEX_COLUMNS = {
+    "hexadecimal", "hexadecimal value", "hex value", "hex",
+}
+CONSTANT_DECIMAL_COLUMNS = {"decimal"}
+CONSTANT_VALUE_COLUMNS = {"value", "numeric value", "code"}
+CONSTANT_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+CONSTANT_NUMBER = re.compile(r"^(0x[0-9A-Fa-f]+|\d+)$")
+
+
+def _column(labels, names):
+    for index, label in enumerate(labels):
+        if label in names:
+            return index
+    return None
+
+
+def constant_tables(fragment):
+    """Rows of a name/value table a page prints, quoted as printed.
+
+    One dict per row that states both: ``name`` (the identifier cell),
+    ``value`` (the number cell, hexadecimal preferred when the page prints
+    one), ``decimal`` (only when a decimal column prints a decimal), ``table``
+    and ``row`` (the evidence a checker re-reads).
+    """
+    out = []
+    for table in HTML_TABLE.finditer(fragment):
+        rows = ROW.findall(table.group(1))
+        if len(rows) < 2:
+            continue
+        headers = [text_of(cell, keep_newlines=False).strip()
+                   for cell in CELL.findall(rows[0])]
+        labels = [re.sub(r"\s+", " ", header).strip().rstrip(":").lower()
+                  for header in headers]
+        if any(OFFSET_COLUMN.search(label) for label in labels):
+            continue
+        name_i = _column(labels, CONSTANT_NAME_COLUMNS)
+        hex_i = _column(labels, CONSTANT_HEX_COLUMNS)
+        dec_i = _column(labels, CONSTANT_DECIMAL_COLUMNS)
+        val_i = _column(labels, CONSTANT_VALUE_COLUMNS)
+        value_is = [i for i in (hex_i, val_i, dec_i) if i is not None]
+        if name_i is None or not value_is or name_i in value_is:
+            continue
+        header = " ".join(headers)
+        for row in rows[1:]:
+            cells = [text_of(cell, keep_newlines=False).strip()
+                     for cell in CELL.findall(row)]
+            if len(cells) <= name_i or not CONSTANT_IDENT.match(cells[name_i]):
+                continue
+
+            def number_at(index):
+                if index is None or index >= len(cells):
+                    return None
+                cell = cells[index].strip()
+                return cell if CONSTANT_NUMBER.match(cell) else None
+
+            value = None
+            value_from = None
+            for index in (hex_i, val_i, dec_i):
+                got = number_at(index)
+                if got:
+                    value = got
+                    value_from = index
+                    break
+            if not value:
+                continue
+            # A decimal is kept only when the page prints one *beside* the
+            # value, never by converting a hexadecimal and never by repeating
+            # the only number the row prints.
+            decimal = number_at(dec_i)
+            if not decimal or decimal.lower().startswith("0x") \
+                    or value_from == dec_i:
+                decimal = None
+            out.append({
+                "name": cells[name_i],
+                "value": value,
+                "decimal": decimal,
+                "table": header,
+                "row": " ".join(cells),
+            })
+    return out
 
 
 def offset_tables(fragment):

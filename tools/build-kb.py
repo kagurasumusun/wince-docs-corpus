@@ -21,6 +21,7 @@ knowledge/schema/):
                             verbatim, with its source page and markup
     kb/requirements.jsonl   every Header/Library/DLL/OS-version statement
     kb/constraints.jsonl    sentences that state a Windows CE restriction
+    kb/constants.jsonl      rows of a name/value table a page numbers
     kb/headers.tsv          header -> entities (the include mapping)
     kb/libraries.tsv        library -> entities (the link mapping)
     kb/dlls.tsv             DLL -> entities
@@ -203,7 +204,7 @@ def parse_page(job):
             "display": None, "kind": None,
             "requirements": [], "declarations": [], "constraints": [],
             "documented_fields": [], "documented_fields_page": None,
-            "abi_offsets": []}
+            "abi_offsets": [], "constants": []}
     full = os.path.join(ROOT, path)
     try:
         raw = open(full, "rb").read()
@@ -264,6 +265,10 @@ def parse_page(job):
     # markdown pages carry no such table (checked 2026-10-05), so this is the
     # HTML path only.
     fact["abi_offsets"] = page_parse.offset_tables(fragment)
+    # A name/value table (Flag | Value | Description, Return code | Hexadecimal
+    # | Decimal, ...) is a numbered constant the page states.  Read only, and
+    # only when the name cell is one identifier and the value cell one number.
+    fact["constants"] = page_parse.constant_tables(fragment)
     kinds = collections.Counter(d["kind"] for d in fact["declarations"]
                                 if d["role"] == "syntax" and d["kind"])
     if kinds:
@@ -450,6 +455,53 @@ def abi_offset_records(facts, entity_of):
             })
     records.sort(key=lambda r: (r["entity"] or "", r["source"]["path"],
                                 r["offset"], r["member"].lower()))
+    return records
+
+
+def constant_records(facts, entity_of):
+    """One record per row of a name/value table a page prints.
+
+    The row is quoted as printed.  ``value`` is the number cell (hexadecimal
+    when the page prints one); ``decimal`` is set only when a decimal column
+    prints a decimal beside it.  ``headers`` are the header files the *same
+    page* states -- a constant is not assigned a header the page does not name.
+    ``entity`` is the page's entity only when the constant's own name is that
+    entity; a flag table on a function's page does not make the flag that
+    function.
+    """
+    records = []
+    for fact in facts:
+        headers = []
+        for req in fact.get("requirements") or []:
+            if req.get("field") != "header":
+                continue
+            for match in HEADER_TOKEN.findall(req.get("value") or ""):
+                if match not in headers:
+                    headers.append(match)
+        page_entity = entity_of(fact)
+        for index, item in enumerate(fact.get("constants") or []):
+            key = hashlib.sha1(
+                (fact["path"] + "\x00" + item["table"] + "\x00" +
+                 str(index) + "\x00" + item["row"]).encode("utf-8")
+            ).hexdigest()[:12]
+            own = ce_api_names.normalize(item["name"])
+            records.append({
+                "id": "k" + key,
+                "name": item["name"],
+                "value": item["value"],
+                "decimal": item["decimal"],
+                "headers": headers,
+                "entity": own if own and own == page_entity else None,
+                "page_entity": page_entity,
+                "page_id": fact["page_id"],
+                "layer": fact["layer"],
+                "table": item["table"],
+                "row": item["row"],
+                "license": license_of(fact["path"]),
+                "source": source_of(fact),
+            })
+    records.sort(key=lambda r: (r["source"]["path"], r["name"].lower(),
+                                r["value"]))
     return records
 
 
@@ -1039,6 +1091,7 @@ def build(rows, workers, report_only, plain=False):
     requirements = requirement_records(facts, entity_of)
     constraints = constraint_records(facts, entity_of)
     abi_offsets = abi_offset_records(facts, entity_of)
+    constants = constant_records(facts, entity_of)
     entities = entity_records(facts, declarations, requirements)
 
     # attach constraint ids to entities
@@ -1088,7 +1141,7 @@ def build(rows, workers, report_only, plain=False):
 
     if report_only:
         return (facts, entities, declarations, requirements, constraints,
-                abi_offsets)
+                abi_offsets, constants)
 
     compress = not plain
     entities = dedupe_records(entities)
@@ -1106,6 +1159,7 @@ def build(rows, workers, report_only, plain=False):
     write_jsonl(os.path.join(KB, "requirements.jsonl"), requirements, compress)
     write_jsonl(os.path.join(KB, "constraints.jsonl"), constraints, compress)
     write_jsonl(os.path.join(KB, "abi-offsets.jsonl"), abi_offsets, compress)
+    write_jsonl(os.path.join(KB, "constants.jsonl"), constants, compress)
 
     for field, filename, title in (("header", "headers.tsv", "header"),
                                    ("library", "libraries.tsv", "library"),
@@ -1191,6 +1245,19 @@ def build(rows, workers, report_only, plain=False):
               ["entity", "member", "offset", "offset_printed", "size",
                "size_unit", "matches_declared_member", "page", "page_id",
                "title", "table", "row", "license"], offset_rows)
+
+    # ---- numbered constants a page prints in a name/value table
+    constant_rows = []
+    for record in constants:
+        constant_rows.append((
+            record["name"], record["value"], record["decimal"] or "",
+            ";".join(record["headers"]), record["page_entity"] or "",
+            record["source"]["path"], record["page_id"],
+            record["source"]["title"], record["table"], record["row"],
+            record["license"]))
+    write_tsv(os.path.join(KB, "constants.tsv"),
+              ["name", "value", "decimal", "headers", "page_entity", "page",
+               "page_id", "title", "table", "row", "license"], constant_rows)
 
     # ---- the members a page documents without printing a declaration
     field_pages = [f for f in facts if f["documented_fields"]]
@@ -1289,9 +1356,9 @@ def build(rows, workers, report_only, plain=False):
                "declaration_in_other_sets", "has_win32_page", "example_page"],
               gap_rows)
     write_summary(facts, entities, declarations, requirements, constraints,
-                  abi_offsets, per_tree, gap_rows)
+                  abi_offsets, constants, per_tree, gap_rows)
     return (facts, entities, declarations, requirements, constraints,
-            abi_offsets)
+            abi_offsets, constants)
 
 
 def jst_today():
@@ -1301,7 +1368,7 @@ def jst_today():
 
 
 def write_summary(facts, entities, declarations, requirements, constraints,
-                  abi_offsets, per_tree, gap_rows):
+                  abi_offsets, constants, per_tree, gap_rows):
     def top(book):
         """learn/windows-ce-5.0/... -> learn/windows-ce-5.0 (the report unit)."""
         parts = book.split("/")
@@ -1341,6 +1408,56 @@ def write_summary(facts, entities, declarations, requirements, constraints,
                                       for d in f["declarations"])]
     with_variant_win32 = sum(
         1 for e in entities if e["win32_pages_from_variants"])
+    constant_pages = {r["source"]["path"] for r in constants}
+    # What each version's own pages state, which is all a generator for that
+    # version may treat as its own.  A fact stated only by another version is
+    # a borrow, and a number no page prints is not counted.
+    ready_units = (
+        "learn/windows-ce-5.0", "learn/windows-embedded-ce-6.0",
+        "learn/windows-ce-net-4x", "chm/windows-ce-5.0",
+        "chm/windows-ce-3.0", "chm/windows-ce-4.2",
+        "mvb/windows-ce-1.0/PEGSDK", "msdn-library/wcedevcon-99",
+        "msdn-library/techshelps",
+    )
+    in_unit = {unit: set() for unit in ready_units}
+    for entity in entities:
+        if entity.get("noise"):
+            continue
+        for book in entity.get("ce_sets") or []:
+            for unit in ready_units:
+                if book == unit or book.startswith(unit + "/"):
+                    in_unit[unit].add(entity["id"])
+    syntax_unit = {unit: set() for unit in ready_units}
+    for record in declarations:
+        if record.get("role") != "syntax" or not record.get("entity"):
+            continue
+        book = record["source"]["set"]
+        for unit in ready_units:
+            if book == unit or book.startswith(unit + "/"):
+                syntax_unit[unit].add(record["entity"])
+    header_unit = {unit: set() for unit in ready_units}
+    library_unit = {unit: set() for unit in ready_units}
+    for record in requirements:
+        if not record.get("entity") or not record.get("key"):
+            continue
+        if record["field"] not in ("header", "library", "dll"):
+            continue
+        book = record["source"]["set"]
+        for unit in ready_units:
+            if book == unit or book.startswith(unit + "/"):
+                (header_unit if record["field"] == "header"
+                 else library_unit)[unit].add(record["entity"])
+    const_rows = collections.Counter()
+    const_names = {unit: set() for unit in ready_units}
+    for record in constants:
+        book = record["source"]["set"]
+        for unit in ready_units:
+            if book == unit or book.startswith(unit + "/"):
+                const_rows[unit] += 1
+                const_names[unit].add(record["name"])
+    function_ids = {entity["id"] for entity in entities
+                    if "function" in (entity.get("kinds") or [])
+                    and not entity.get("noise")}
 
     def pct(part, whole):
         return f"{part:,} ({100 * part // whole if whole else 0}%)"
@@ -1369,9 +1486,10 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"**{member_lines:,}**; bitfields **{abi_flags.get('bitfield', 0):,}**, "
         f"`#pragma pack` **{abi_flags.get('pack', 0):,}**, "
         f"`__declspec(align` **{abi_flags.get('align', 0):,}**",
-        f"* statements a page makes about alignment/byte order/pointer width: "
-        f"**{len(abi_notes):,}** quoted sentences "
-        "(`kind: \"abi-note\"` in `kb/constraints.jsonl`)",
+        f"* statements a page makes about alignment, byte order, pointer width "
+        f"or a structure size: **{len(abi_notes):,}** quoted sentences "
+        "(`kind: \"abi-note\"` in `kb/constraints.jsonl`; the structure-size "
+        "sentences are counted again on their own line below)",
         f"* layout tables (`Offset | Field | Size | …`): **{len(abi_offsets):,}** "
         f"documented offset rows over **{len(offset_pages):,}** page(s), quoted "
         f"row by row in `kb/abi-offsets.jsonl` (the flat view is "
@@ -1384,6 +1502,13 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "and the column is marked `matches_declared_member`",
         f"* structure sizes stated in prose: **{len(size_notes):,}** sentences "
         "(the number is a read of the quoted sentence, never a guess)",
+        f"* numbered constants (`Name | Value`, `Return code | Hexadecimal | "
+        f"Decimal`, and the same shapes): **{len(constants):,}** rows over "
+        f"**{len(constant_pages):,}** page(s), quoted in `kb/constants.jsonl` "
+        "(the flat view is `kb/constants.tsv`).  A row is kept only when the "
+        "name cell is one identifier and the value cell is one number; a "
+        "decimal is kept only when the page prints one.  A constant the page "
+        "does not number has no row",
         "* where a page states **no** offset, none is recorded: for the "
         "structures whose members a page documents without printing a body, "
         "`kb/struct-fields.tsv` keeps the names and documented order only, and "
@@ -1405,6 +1530,8 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"signatures {len(declarations) - decs_c:,} in "
         f"`kb/declarations-dotnet.jsonl` -- the separated .NET layer)",
         f"* requirement statements: **{len(requirements):,}**",
+        f"* numbered constants: **{len(constants):,}** "
+        f"(`kb/constants.jsonl`, {len(constant_pages):,} page(s))",
         f"* Windows CE constraint sentences: "
         f"**{sum(1 for c in constraints if c.get('kind') != 'abi-note'):,}** "
         f"and ABI statements quoted from the pages "
@@ -1460,6 +1587,39 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "same requirement records, with `layer: dotnet`, and are not part of the "
         "CE include/def surface.",
         "",
+        "## What a version's own pages state",
+        "",
+        "A header or a `.def` for one Windows CE version can only be built from "
+        "what *that version's pages* state.  The columns count entities "
+        "documented by the set, and — of those — how many have a syntax "
+        "declaration, a header file and a library stated by a page of that "
+        "same set.  A fact stated only by another version is not counted here "
+        "(a generator may borrow it, and must say so).  A calling convention, "
+        "an export ordinal or a constant with no value cell is absent because "
+        "the documents do not state it.",
+        "",
+        "| set | entities | syntax | header | library | functions with all three | numbered constants |",
+        "|-----|----------|--------|--------|---------|--------------------------|--------------------|",
+    ]
+    for unit in ready_units:
+        ents = in_unit[unit]
+        if not ents and not const_rows[unit]:
+            continue
+        funcs = function_ids & ents
+        all_three = (funcs & syntax_unit[unit] & header_unit[unit]
+                     & library_unit[unit])
+        lines.append(
+            f"| `{unit}` | {len(ents):,} | {len(syntax_unit[unit] & ents):,} | "
+            f"{len(header_unit[unit] & ents):,} | "
+            f"{len(library_unit[unit] & ents):,} | "
+            f"{len(all_three):,} / {len(funcs):,} | "
+            f"{const_rows[unit]:,} ({len(const_names[unit]):,} names) |")
+    lines += [
+        "",
+        "Numbered constants are rows of a name/value table the page prints "
+        "(`kb/constants.jsonl`).  Symbol decoration (`_Name@N`) and export "
+        "ordinals are not in these documents, so none is recorded.",
+        "",
         "## The gaps",
         "",
         "`reports/gaps.tsv` lists, for every CE-only entity, which of the three "
@@ -1512,7 +1672,13 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "* `kb/constraints.jsonl` -- the Windows CE restriction sentences "
         "(`kind: \"ce-restriction\"`) and the ABI sentences a page states "
         "(`kind: \"abi-note\"`, with the `pattern` that matched: alignment, "
-        "byte order, pointer width). Each is quoted, not summarised.",
+        "byte order, pointer width, structure size). Each is quoted, not "
+        "summarised.",
+        "* `kb/constants.jsonl` -- one row of a name/value table a page prints "
+        "(the identifier and the number, both as printed; `decimal` only when "
+        "the page prints a decimal beside the value; `headers` only the header "
+        "files that same page names). A constant the page does not number is "
+        "not here.",
         "* `kb/sets.tsv`, `kb/headers.tsv`, `kb/libraries.tsv`, `kb/dlls.tsv`, "
         "`kb/modules.tsv` -- the same data aggregated.",
         "",
@@ -1542,10 +1708,10 @@ def main():
     print(f"[kb] parsing {len(rows):,} page(s) with {args.workers} worker(s)",
           flush=True)
     (facts, entities, declarations, requirements, constraints,
-     abi_offsets) = build(rows, args.workers, args.report, args.plain)
+     abi_offsets, constants) = build(rows, args.workers, args.report, args.plain)
     print(f"[kb] entities={len(entities):,} declarations={len(declarations):,} "
           f"requirements={len(requirements):,} constraints={len(constraints):,} "
-          f"abi-offsets={len(abi_offsets):,}",
+          f"abi-offsets={len(abi_offsets):,} constants={len(constants):,}",
           flush=True)
     if not args.report:
         print(f"[kb] written to knowledge/ (see knowledge/reports/summary.md)")

@@ -35,11 +35,22 @@ Honesty rules (the same ones the knowledge base keeps):
   fallback to a Win32 reference page is used only when no CE set prints the
   declaration, and it is marked as such: those pages document the shared
   surface as *desktop* Windows, while Windows CE is not the whole of Win32;
-* a page states a header as ``Wilhelm.h, Otto.h`` -- the declaration is
-  written into each of those files, because that is what the page says; a
-  value that names no file at all (``Library: Developer Implemented``) is
-  *not* turned into a file name, it is counted in ``report.md`` and stays
-  visible in ``knowledge/reports/filtered-values.tsv``;
+* a header and a library are taken from the version being built.  Another
+  CE set's statement is used only when this version's pages state none, and
+  it is marked (``header_from`` / ``library_from``).  A Win32 reference
+  header (``processthreadsapi.h``, ``windows.h``) is a marked fallback, never
+  passed off as a Windows CE header.  Within the chosen statement, a page
+  that names ``Wilhelm.h, Otto.h`` has the declaration written into each of
+  those files, because that is what the page says; a value that names no
+  file at all (``Library: Developer Implemented``) is *not* turned into a
+  file name, it is counted in ``report.md`` and stays visible in
+  ``knowledge/reports/filtered-values.tsv``;
+* a numbered constant is a table row the page prints (``kb/constants.jsonl``).
+  The ``*.h.constants`` file quotes that row and, below it, a ``#define``
+  whose keyword the page did not print -- the comment says so.  Pages that
+  disagree on the number produce no ``#define``.  A number stated only by
+  the Win32 reference is not borrowed: desktop and Windows CE values are
+  not assumed to match;
 * a library and a DLL are kept apart (``coredll.lib`` in the library field,
   ``coredll.dll`` in the DLL field) and the worklist file is named after the
   module both spellings refer to, with the spellings it was stated as printed
@@ -93,6 +104,8 @@ def read_text(path):
 
 DECLARATIONS = os.path.join(KB, "declarations.jsonl.gz")
 ENTITIES = os.path.join(KB, "entities.jsonl.gz")
+REQUIREMENTS = os.path.join(KB, "requirements.jsonl.gz")
+CONSTANTS = os.path.join(KB, "constants.jsonl.gz")
 
 # The documentation prints header and library names as they are; these pull
 # the file names out of a value and leave the prose alone.
@@ -151,6 +164,52 @@ def module_of(value):
 
 
 CODE_SKIPPED = collections.Counter()
+
+
+def grouped_keys(records, fields, target):
+    """Requirement keys of one entity, split by who stated them.
+
+    ``own`` is a page of the version being built.  ``ce`` is another Windows
+    CE set.  ``win32`` is the desktop reference.  The first set that stated a
+    key is kept, so a borrow can be named.  A key is the file name the
+    requirement record already derived; a value that names no file has an
+    empty key and never arrives here.
+    """
+    groups = {"own": [], "ce": [], "win32": []}
+    sets = {"own": "", "ce": "", "win32": ""}
+    for record in records:
+        if record.get("field") not in fields or not record.get("key"):
+            continue
+        book = (record.get("source") or {}).get("set") or ""
+        if book == target or book.startswith(target + "/"):
+            slot = "own"
+        elif record.get("layer") == "win32":
+            slot = "win32"
+        elif record.get("layer") == "ce":
+            slot = "ce"
+        else:
+            continue
+        if record["key"].lower() not in [key.lower() for key in groups[slot]]:
+            groups[slot].append(record["key"])
+            if not sets[slot]:
+                sets[slot] = book
+    return groups, sets
+
+
+def choose_keys(groups, sets, borrow):
+    """(keys, borrowed_from) -- the version's own statement, or a marked borrow.
+
+    A desktop header (``processthreadsapi.h``, ``windows.h``) is never treated
+    as a Windows CE statement: it is used only when no CE page states a file,
+    and the caller marks it ``win32-reference``.
+    """
+    if groups["own"]:
+        return groups["own"], ""
+    if borrow and groups["ce"]:
+        return groups["ce"], "ce-set:" + sets["ce"]
+    if borrow and groups["win32"]:
+        return groups["win32"], "win32-reference"
+    return [], ""
 
 
 def choose_declarations(entity, declarations_of, target, borrow):
@@ -214,8 +273,12 @@ def write_includes(out, by_header, generated):
             f" * {len(entries)} declaration(s).",
             " */",
         ]
-        for entity, declaration in entries:
-            libs = ", ".join(entity["libraries"] or entity["dlls"] or []) or "-"
+        for entry in entries:
+            entity, declaration = entry[0], entry[1]
+            header_from = entry[2] if len(entry) > 2 else ""
+            stated_libs = entry[3] if len(entry) > 3 else (
+                entity["libraries"] or entity["dlls"])
+            libs = ", ".join(stated_libs) or "-"
             lines += [
                 "",
                 "/*" + "-" * 68,
@@ -223,6 +286,14 @@ def write_includes(out, by_header, generated):
                 f" * library: {libs}",
                 f" * source: {declaration['source']['path']}",
             ]
+            if header_from.startswith("win32"):
+                lines.append(
+                    " * header borrowed from: the Win32 reference -- NOT a "
+                    "header a Windows CE page states for this name")
+            elif header_from.startswith("ce-set:"):
+                lines.append(
+                    f" * header borrowed from: {header_from[len('ce-set:'):]} "
+                    "(this version's pages state no header file)")
             if not declaration["source"]["set"].startswith(generated["set"]):
                 if declaration.get("layer") == "win32":
                     lines.append(
@@ -269,15 +340,134 @@ def write_defs(out, by_module, generated):
             f"; {len(entries)} name(s)",
             "EXPORTS",
         ]
-        for entity, declaration in entries:
+        for entry in entries:
+            entity, declaration = entry[0], entry[1]
+            library_from = entry[2] if len(entry) > 2 else ""
             page = declaration["source"]["path"] if declaration else "-"
             kind = (entity["kinds"] or ["?"])[0]
             if declaration and declaration.get("layer") == "win32":
                 page += "  [Win32 ref: verify against the CE SDK]"
+            if library_from.startswith("win32"):
+                page += "  [library: Win32 ref, not a CE page]"
+            elif library_from.startswith("ce-set:"):
+                page += "  [library borrowed from " + library_from[len("ce-set:"):] + "]"
             lines.append(f"    {entity['name']:32s}; {kind}  {page}")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write("\n".join(lines) + "\n")
     return link_dir
+
+
+def in_set(book, target):
+    return book == target or book.startswith(target + "/")
+
+
+def write_constants(out, constants, target, borrow):
+    """The numbers a page prints, grouped by the header that same page names.
+
+    A ``#define`` line is *derived*: the page printed a table row, not a
+    ``#define``.  The row is quoted above the line, and a row whose pages
+    disagree on the number is listed and not turned into a ``#define``.  A
+    constant whose page names no header stays in ``constants.tsv`` only -- it
+    is not assigned a file.  A number stated only by the Win32 reference is
+    not borrowed: desktop and Windows CE values are not assumed to match.
+    """
+    own = [c for c in constants
+           if c.get("layer") == "ce" and in_set(c["source"]["set"], target)]
+    own_names = {c["name"] for c in own}
+    borrowed = []
+    if borrow:
+        for record in constants:
+            if record.get("layer") != "ce":
+                continue
+            if in_set(record["source"]["set"], target):
+                continue
+            if record["name"] in own_names:
+                continue
+            borrowed.append(record)
+    selected = [(c, "") for c in own] + [
+        (c, "ce-set:" + c["source"]["set"]) for c in borrowed]
+
+    by_key = collections.defaultdict(list)
+    no_header = []
+    for record, origin in selected:
+        headers = record.get("headers") or []
+        if not headers:
+            no_header.append((record, origin))
+            continue
+        for header in headers:
+            by_key[(header, record["name"])].append((record, origin))
+
+    conflicts = 0
+    written = 0
+    include_dir = os.path.join(out, "include")
+    os.makedirs(include_dir, exist_ok=True)
+    by_header = collections.defaultdict(list)
+    for (header, name), rows in by_key.items():
+        values = {row["value"] for row, _origin in rows}
+        if len(values) > 1:
+            conflicts += 1
+        by_header[header].append((name, rows, len(values) > 1))
+    for header, items in by_header.items():
+        path = os.path.join(include_dir, safe_name(header, ".h") +
+                            ".h.constants")
+        lines = [
+            f"/* {header} -- numbers documented for {target}",
+            " *",
+            " * Each block quotes a table row a page prints (name and value in",
+            " * separate columns).  The #define line below a block is derived",
+            " * from that row: the page did not print a #define, so the keyword",
+            " * is marked as derived and a row whose pages disagree on the",
+            " * number is not turned into one.",
+            " */",
+        ]
+        for name, rows, conflict in sorted(items, key=lambda item: item[0].lower()):
+            lines.append("")
+            lines.append(f"/* {name}")
+            for record, origin in rows:
+                borrowed_note = f"  borrowed from {origin[len('ce-set:'):]}" \
+                    if origin.startswith("ce-set:") else ""
+                lines.append(f" * row: {record['row']}")
+                lines.append(f" * source: {record['source']['path']}"
+                             f"{borrowed_note}")
+            if conflict:
+                lines.append(" * CONFLICT: the pages do not agree on the "
+                             "number -- no #define is written")
+                lines.append(" */")
+                continue
+            lines.append(" * derived: the #define keyword is not on the page")
+            lines.append(" */")
+            record = rows[0][0]
+            lines.append(f"#define {record['name']} {record['value']}")
+            written += 1
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(lines) + "\n")
+
+    with open(os.path.join(out, "constants.tsv"), "w", encoding="utf-8") as fh:
+        fh.write("name\tvalue\tdecimal\theaders\tborrowed_from\tpage\trow\t"
+                 "conflict\n")
+        seen_conflict = set()
+        for (header, name), rows in by_key.items():
+            values = {row["value"] for row, _origin in rows}
+            conflict = "yes" if len(values) > 1 else ""
+            if conflict:
+                seen_conflict.add(name)
+            for record, origin in rows:
+                fh.write("\t".join((
+                    record["name"], record["value"], record["decimal"] or "",
+                    header, origin, record["source"]["path"], record["row"],
+                    conflict)) + "\n")
+        for record, origin in no_header:
+            fh.write("\t".join((
+                record["name"], record["value"], record["decimal"] or "",
+                "", origin, record["source"]["path"], record["row"],
+                "")) + "\n")
+    return {
+        "rows": len(selected),
+        "defines": written,
+        "conflicts": conflicts,
+        "no_header": len(no_header),
+        "headers": len(by_header),
+    }
 
 
 def split_libraries(entity):
@@ -332,6 +522,11 @@ def main():
         ap.error("--set and --out are required (or use --list)")
 
     declarations_of = {d["id"]: d for d in load(DECLARATIONS)}
+    reqs_of = collections.defaultdict(list)
+    for record in load(REQUIREMENTS):
+        if record.get("entity"):
+            reqs_of[record["entity"]].append(record)
+    constants = list(load(CONSTANTS)) if os.path.exists(CONSTANTS) else []
     entities = [e for e in load(ENTITIES)
                 if not e.get("noise") and
                 (args.target in e["ce_sets"] or
@@ -359,17 +554,37 @@ def main():
         for record in chosen + alternatives:
             pages.add(record["source"]["path"])
 
-        headers = header_files(entity["headers"])
-        modules, unstated = split_libraries(entity)
+        header_groups, header_sets = grouped_keys(
+            reqs_of.get(entity["id"], ()), ("header",), args.target)
+        header_keys, header_from = choose_keys(
+            header_groups, header_sets, not args.no_borrow)
+        lib_groups, lib_sets = grouped_keys(
+            reqs_of.get(entity["id"], ()), ("library", "dll"), args.target)
+        lib_keys, library_from = choose_keys(
+            lib_groups, lib_sets, not args.no_borrow)
+        if header_from:
+            borrowed["header " + header_from.split(":")[0]] += 1
+        if library_from:
+            borrowed["library " + library_from.split(":")[0]] += 1
+        headers = header_files(header_keys)
+        # A .lib and a .dll of the same stem are one module; a key that names
+        # no file is a statement, not a worklist, and stays counted.
+        stated_libs = [key for key in lib_keys if module_of(key)]
+        modules, unstated = split_libraries(
+            {"libraries": stated_libs, "dlls": []})
+        unstated += sum(1 for key in lib_keys if not module_of(key))
         if not declaration:
             skipped["no declaration in the corpus"] += 1
-        elif not entity["headers"]:
-            skipped["no header stated"] += 1
+        elif not header_keys:
+            skipped["no header stated by a CE page of this version"
+                    if args.no_borrow else
+                    "no header stated"] += 1
         elif not headers:
             skipped["header value names no header file"] += 1
         else:
             for header in headers:
-                by_header[header].append((entity, declaration))
+                by_header[header].append(
+                    (entity, declaration, header_from, stated_libs))
         if unstated:
             skipped["library stated but naming no file"] += unstated
 
@@ -384,18 +599,21 @@ def main():
             worklist["stated"] |= stated
             if not exportable:
                 continue
-            worklist["entries"].append((entity, declaration))
+            worklist["entries"].append((entity, declaration, library_from))
             exports += 1
 
         manifest.append((
             entity["id"], entity["name"], ";".join(kinds),
             entity.get("surface") or "", ";".join(headers),
             ";".join(sorted(modules)),
-            ";".join(entity["dlls"]), ";".join(entity["libraries"]),
+            ";".join(k for k in stated_libs if module_of(k)[1] == "dll"),
+            ";".join(stated_libs),
             declaration["id"] if declaration else "",
             declaration["source"]["path"] if declaration else "",
             borrowed_from,
             ";".join(sorted(entity["ce_sets"])),
+            header_from,
+            library_from,
         ))
 
     out = os.path.abspath(args.out)
@@ -407,11 +625,13 @@ def main():
     generated = {"set": args.target, "pages": len(pages)}
     include_dir = write_includes(out, by_header, generated)
     link_dir = write_defs(out, by_module, generated)
+    constant_report = write_constants(out, constants, args.target,
+                                      not args.no_borrow)
 
     with open(os.path.join(out, "manifest.tsv"), "w", encoding="utf-8") as fh:
         fh.write("entity\tname\tkinds\tsurface\theader_files\tmodules\t"
                  "dlls\tlibraries\tdeclaration\tsource_page\tborrowed_from"
-                 "\tce_sets\n")
+                 "\tce_sets\theader_from\tlibrary_from\n")
         for row in manifest:
             fh.write("\t".join(row) + "\n")
 
@@ -450,10 +670,30 @@ def main():
         "the fragments, the manifest and here: the Win32 pages document the "
         "shared surface as desktop Windows, so each one must be checked "
         "against the CE SDK",
+        f"* headers taken from another CE set, because this version's pages "
+        f"state none: **{borrowed.get('header ce-set', 0):,}** (marked "
+        "`header_from` in the manifest and in the fragment comment)",
+        f"* headers taken from the Win32 reference, because no CE page states "
+        f"one: **{borrowed.get('header win32-reference', 0):,}** -- a desktop "
+        "header (`processthreadsapi.h`, `windows.h`) is never passed off as a "
+        "Windows CE header",
+        f"* libraries borrowed the same way: CE set "
+        f"**{borrowed.get('library ce-set', 0):,}**, Win32 reference "
+        f"**{borrowed.get('library win32-reference', 0):,}**",
         f"* EXPORTS worklists: {len(by_module):,} module file(s) in {link_dir}, "
         f"**{exports:,} export line(s)** "
         "(functions and callbacks only; structures, typedefs and C++ methods "
         "stay in the include material)",
+        f"* numbered constants: **{constant_report['defines']:,}** derived "
+        f"`#define` lines in {constant_report['headers']:,} "
+        f"`*.h.constants` file(s), from **{constant_report['rows']:,}** "
+        "table rows the pages print.  The `#define` keyword is not on the "
+        "page; the row is quoted above each line.  "
+        f"**{constant_report['conflicts']:,}** name(s) whose pages disagree "
+        "on the number were not turned into a `#define`.  "
+        f"**{constant_report['no_header']:,}** rows name no header, so they "
+        "stay in `constants.tsv` only.  A number stated only by the Win32 "
+        "reference is not borrowed",
         f"* pages behind the output: {len(pages):,}",
         "",
         "## Rights behind the output",
@@ -469,7 +709,8 @@ def main():
     ]
     scopes = collections.Counter()
     for entries in by_header.values():
-        for _entity, declaration in entries:
+        for entry in entries:
+            declaration = entry[1]
             for record in [declaration]:
                 scopes[record.get("license") or "?"] += 1
     try:

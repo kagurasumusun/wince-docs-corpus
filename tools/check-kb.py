@@ -48,6 +48,7 @@ FILES = {
     "requirement": "requirements.jsonl.gz",
     "constraint": "constraints.jsonl.gz",
     "abi_offset": "abi-offsets.jsonl.gz",
+    "constant": "constants.jsonl.gz",
 }
 REQUIRED = {
     "entity": ("id", "name", "layers", "doc_role", "kinds", "ce_sets",
@@ -69,6 +70,9 @@ REQUIRED = {
                    "offset_printed", "size", "size_unit", "size_printed",
                    "matches_declared_member", "table", "row", "license",
                    "source"),
+    "constant": ("id", "name", "value", "decimal", "headers", "entity",
+                 "page_entity", "page_id", "layer", "table", "row",
+                 "license", "source"),
     "constraint": ("id", "entity", "page_id", "layer", "kind", "pattern",
                    "text", "license", "source"),
 }
@@ -77,7 +81,8 @@ ID_RE = {"entity": re.compile(r"^[a-z0-9_]+$"),
          "declaration": re.compile(r"^d[0-9a-f]{12}$"),
          "requirement": re.compile(r"^r[0-9a-f]{12}$"),
          "constraint": re.compile(r"^c[0-9a-f]{12}$"),
-         "abi_offset": re.compile(r"^o[0-9a-f]{12}$")}
+         "abi_offset": re.compile(r"^o[0-9a-f]{12}$"),
+         "constant": re.compile(r"^k[0-9a-f]{12}$")}
 
 
 def read(name):
@@ -159,6 +164,25 @@ def main():
                         f"abi_offset {rid}: matches_declared_member "
                         f"{record.get('matches_declared_member')!r} is not "
                         "a bool")
+            if kind == "constant":
+                if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$",
+                                record.get("name") or ""):
+                    problems.append(f"constant {rid}: name "
+                                    f"{record.get('name')!r} is not one "
+                                    "identifier")
+                if not re.match(r"^(0x[0-9A-Fa-f]+|\d+)$",
+                                record.get("value") or ""):
+                    problems.append(f"constant {rid}: value "
+                                    f"{record.get('value')!r} is not one "
+                                    "number")
+                decimal = record.get("decimal")
+                if decimal is not None and not re.match(r"^\d+$", decimal):
+                    problems.append(f"constant {rid}: decimal {decimal!r} "
+                                    "is not a printed decimal")
+                if not isinstance(record.get("headers"), list):
+                    problems.append(f"constant {rid}: headers is not a list")
+                if not str(record.get("row") or "").strip():
+                    problems.append(f"constant {rid}: no row text")
             if kind == "constraint" and record.get("kind") not in (
                     "ce-restriction", "abi-note"):
                 problems.append(f"constraint {rid}: kind "

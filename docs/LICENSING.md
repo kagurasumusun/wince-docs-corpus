@@ -22,10 +22,10 @@ registry's own sheet for `docs/` quotes this sentence as the basis). The
 knowledge base is not a new work under a new licence: it is a set of facts and
 quotes, each traceable to one page.
 
-## The finding (`python3 tools/check-licenses.py --tracked`, 2026-10-04)
+## The finding (`python3 tools/check-licenses.py --tracked`, 2026-10-05)
 
 ```
-published (git-tracked) files by redistribution: yes 5,285, no 115,934, unclear 130
+published (git-tracked) files by redistribution: yes 5,285, no 115,934, unclear 133
 ```
 
 | Scope | Covers | The statement it rests on (as read from the item) | May be published |
@@ -47,7 +47,7 @@ whitespace aside). A summary is never used in place of the wording.
 
 ## What this means
 
-* As a **public** repository, 115,934 of the 121,349 files it carries are not
+* As a **public** repository, 115,934 of the 121,352 files it carries are not
   licensed for redistribution. The Learn terms forbid copying the pages onto a
   network computer; the CE 3.0 notice grants internal reference use only; for
   the CHM/MVB media no permission statement was located at all.

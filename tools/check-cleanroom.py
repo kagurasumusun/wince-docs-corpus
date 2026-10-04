@@ -10,9 +10,9 @@ itself to that specification.
 1. **No fact without a document.**  Every record's ``source.path`` -- and every
    page an entity lists -- exists in ``corpus/``.
 2. **Quotes are faithful.**  The characters of a quoted declaration, a
-   requirement value or a constraint sentence, in order and whitespace aside,
-   are on the page the record names (1 in N by default, ``--all`` for every
-   record).
+   requirement value, a constraint sentence, a layout-table row or a
+   constant-table row, in order and whitespace aside, are on the page the
+   record names (1 in N by default, ``--all`` for every record).
 3. **Documented members are on their page.**  Every ``documented_fields`` name
    occurs in one of the pages that document the entity (an A/W pair documents
    one structure).
@@ -58,6 +58,7 @@ FILES = {
     "requirement": "requirements.jsonl.gz",
     "constraint": "constraints.jsonl.gz",
     "abi_offset": "abi-offsets.jsonl.gz",
+    "constant": "constants.jsonl.gz",
 }
 
 # A statement form in a *declaration* would mean the extractor took a line of
@@ -135,7 +136,7 @@ def check_sources(records):
     checked = 0
     missing = []
     for kind in ("declaration", "declaration_dotnet", "requirement",
-                 "constraint", "abi_offset"):
+                 "constraint", "abi_offset", "constant"):
         for record in records[kind]:
             path = (record.get("source") or {}).get("path")
             checked += 1
@@ -161,7 +162,8 @@ def check_quotes(records, pages, every):
     checked = not_found = 0
     details = []
     for kind, field in (("declaration", "text"), ("requirement", "value"),
-                        ("constraint", "text"), ("abi_offset", "row")):
+                        ("constraint", "text"), ("abi_offset", "row"),
+                        ("constant", "row")):
         for record in sample(records[kind], every):
             text = record.get(field) or ""
             if not text.strip():
