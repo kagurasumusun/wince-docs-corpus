@@ -266,8 +266,9 @@ def parse_page(job):
     # HTML path only.
     fact["abi_offsets"] = page_parse.offset_tables(fragment)
     # A name/value table (Flag | Value | Description, Return code | Hexadecimal
-    # | Decimal, ...) is a numbered constant the page states.  Read only, and
-    # only when the name cell is one identifier and the value cell one number.
+    # | Decimal, ...) or a cell the page prints as ``NAME = 0x0001`` /
+    # ``NAME (0x0001)`` is a numbered constant the page states.  Read only,
+    # and only when the name is one identifier and the value one number.
     fact["constants"] = page_parse.constant_tables(fragment)
     kinds = collections.Counter(d["kind"] for d in fact["declarations"]
                                 if d["role"] == "syntax" and d["kind"])
@@ -1503,10 +1504,12 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"* structure sizes stated in prose: **{len(size_notes):,}** sentences "
         "(the number is a read of the quoted sentence, never a guess)",
         f"* numbered constants (`Name | Value`, `Return code | Hexadecimal | "
-        f"Decimal`, and the same shapes): **{len(constants):,}** rows over "
+        f"Decimal`, a cell printed `NAME = 0x0001` or `NAME (0x0001)`, and "
+        f"the same shapes): **{len(constants):,}** rows over "
         f"**{len(constant_pages):,}** page(s), quoted in `kb/constants.jsonl` "
         "(the flat view is `kb/constants.tsv`).  A row is kept only when the "
-        "name cell is one identifier and the value cell is one number; a "
+        "name is one identifier and the value is one number; a one-letter "
+        "`A=0` cell is left out, and a hexadecimal is never converted.  A "
         "decimal is kept only when the page prints one.  A constant the page "
         "does not number has no row",
         "* where a page states **no** offset, none is recorded: for the "
@@ -1616,7 +1619,8 @@ def write_summary(facts, entities, declarations, requirements, constraints,
             f"{const_rows[unit]:,} ({len(const_names[unit]):,} names) |")
     lines += [
         "",
-        "Numbered constants are rows of a name/value table the page prints "
+        "Numbered constants are rows of a name/value table the page prints, "
+        "or a cell it prints as `NAME = 0x0001` / `NAME (0x0001)` "
         "(`kb/constants.jsonl`).  Symbol decoration (`_Name@N`) and export "
         "ordinals are not in these documents, so none is recorded.",
         "",
@@ -1674,7 +1678,8 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "(`kind: \"abi-note\"`, with the `pattern` that matched: alignment, "
         "byte order, pointer width, structure size). Each is quoted, not "
         "summarised.",
-        "* `kb/constants.jsonl` -- one row of a name/value table a page prints "
+        "* `kb/constants.jsonl` -- one row of a name/value table a page prints, "
+        "or one cell printed `NAME = 0x0001` / `NAME (0x0001)` "
         "(the identifier and the number, both as printed; `decimal` only when "
         "the page prints a decimal beside the value; `headers` only the header "
         "files that same page names). A constant the page does not number is "

@@ -27,8 +27,10 @@ Honesty rules (the same ones the knowledge base keeps):
 
 * the declaration text is quoted verbatim; nothing is reformatted, completed
   or repaired.  A ``collapsed`` declaration is still written (with the flag in
-  the manifest) and a better copy from another set is preferred when
-  ``--borrow`` is on, but no text is invented either way;
+  the manifest).  When ``--borrow`` is on, another CE page's copy is used
+  instead only when, whitespace aside, it is the same text and that page kept
+  the spaces.  A copy that also adds a calling convention, a parameter name
+  or a different type is not a spacing repair, and the collapsed text stays;
 * a declaration is borrowed from another corpus set only when the same entity
   is documented there, and the borrowing is recorded per declaration in
   ``manifest.tsv`` (``borrowed_from``) and in the fragment's comment.  A
@@ -237,7 +239,18 @@ def choose_declarations(entity, declarations_of, target, borrow):
     if sample_code:
         for record in sample_code:
             CODE_SKIPPED["declaration text is implementation code"] += 1
-    own = [r for r in records if r["source"]["set"].startswith(target)]
+    def in_target(record):
+        book = record["source"]["set"]
+        return book == target or book.startswith(target + "/")
+
+    def spaced_first(rows):
+        return sorted(rows, key=lambda r: (
+            r.get("spacing") != "preserved", r["source"]["path"]))
+
+    def collapsed(record):
+        return re.sub(r"\s+", "", record.get("text") or "")
+
+    own = [r for r in records if in_target(r)]
     other_ce = [r for r in records
                 if r not in own and r.get("layer") == "ce"]
     win32 = [r for r in records
@@ -245,9 +258,26 @@ def choose_declarations(entity, declarations_of, target, borrow):
     rest = [r for r in records if r not in own and r not in other_ce
             and r not in win32]
     other = other_ce + win32 + rest
+    # The version's own text wins.  Another CE page is used only when this
+    # page lost the spaces and that page kept them, and the two texts are the
+    # same once whitespace is removed.  A copy that also prints a calling
+    # convention, a different type or a different parameter name is a different
+    # quotation, not a spacing repair, so the collapsed text stays.
     if own:
+        own = spaced_first(own)
+        if own[0].get("spacing") == "preserved" or not borrow:
+            return own, other, ""
+        flat = collapsed(own[0])
+        match = [r for r in other_ce
+                 if r.get("spacing") == "preserved" and collapsed(r) == flat]
+        if match:
+            match = spaced_first(match)
+            rest_ce = [r for r in other_ce if r is not match[0]]
+            return [match[0]], own + rest_ce + win32 + rest, \
+                "ce-set:" + match[0]["source"]["set"] + "|spacing"
         return own, other, ""
     if borrow and other_ce:
+        other_ce = spaced_first(other_ce)
         return other_ce[:1], other_ce[1:] + win32 + rest, \
             "ce-set:" + other_ce[0]["source"]["set"]
     if borrow and win32:
@@ -294,6 +324,7 @@ def write_includes(out, by_header, generated):
                 lines.append(
                     f" * header borrowed from: {header_from[len('ce-set:'):]} "
                     "(this version's pages state no header file)")
+            decl_from = entry[4] if len(entry) > 4 else ""
             if not declaration["source"]["set"].startswith(generated["set"]):
                 if declaration.get("layer") == "win32":
                     lines.append(
@@ -308,6 +339,12 @@ def write_includes(out, by_header, generated):
                     lines.append(
                         f" * borrowed from: {declaration['source']['set']} "
                         "(another CE set declares it)")
+                    if decl_from.endswith("|spacing"):
+                        lines.append(
+                            " *   (this version's page lost the spaces between "
+                            "tokens; the declaration below is the other page's "
+                            "text, quoted as printed, and it is the same text "
+                            "once whitespace is removed)")
             if declaration["spacing"] != "preserved":
                 lines.append(" * NOTE: the page lost the spaces in this "
                              "declaration (spacing: collapsed) -- prefer "
@@ -551,6 +588,8 @@ def main():
         declaration = chosen[0] if chosen else None
         if borrowed_from:
             borrowed[borrowed_from.split(":")[0]] += 1
+            if borrowed_from.endswith("|spacing"):
+                borrowed["spacing"] += 1
         for record in chosen + alternatives:
             pages.add(record["source"]["path"])
 
@@ -584,7 +623,8 @@ def main():
         else:
             for header in headers:
                 by_header[header].append(
-                    (entity, declaration, header_from, stated_libs))
+                    (entity, declaration, header_from, stated_libs,
+                     borrowed_from))
         if unstated:
             skipped["library stated but naming no file"] += unstated
 
@@ -664,7 +704,11 @@ def main():
         f"{len(by_header):,} header fragment(s) ({include_dir})",
         f"* declarations borrowed from another CE set: "
         f"**{borrowed.get('ce-set', 0):,}**"
-        f"{' (borrowing switched off)' if args.no_borrow else ''}",
+        f"{' (borrowing switched off)' if args.no_borrow else ''}"
+        f" -- **{borrowed.get('spacing', 0):,}** of them because this version's "
+        "page lost the spaces between tokens and another CE page kept them, "
+        "and the two texts are the same once whitespace is removed "
+        "(quoted as that page printed them, not repaired)",
         f"* declarations taken from the Win32 reference instead (the CE pages "
         f"print none): **{borrowed.get('win32-reference', 0):,}** -- marked in "
         "the fragments, the manifest and here: the Win32 pages document the "

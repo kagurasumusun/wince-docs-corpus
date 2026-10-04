@@ -638,6 +638,56 @@ def constant_tables(fragment):
                 "table": header,
                 "row": " ".join(cells),
             })
+    out.extend(_constants_in_cells(fragment, out))
+    return out
+
+
+# A page also prints a constant as one cell, ``NAME = 0x0001`` or
+# ``NAME (0x0001)``, instead of a name column and a value column.  The cell
+# has to be that and nothing else: a sentence that mentions a number is not
+# split apart.  The name is the all-caps identifier the page prints.  A
+# one-letter cell (``A=0``, a setting, not a constant) is left out; a name
+# with an underscore or at least four characters is kept (``S_OK``, ``TRUE``).
+_CELL_EQ = re.compile(r"^([A-Z][A-Z0-9_]*)\s*=\s*(0x[0-9A-Fa-f]+|-?\d+)$")
+_CELL_PAR = re.compile(
+    r"^([A-Z][A-Z0-9_]*)\s*\(\s*(0x[0-9A-Fa-f]+|-?\d+)\s*\)$")
+
+
+def _constant_name(name):
+    return "_" in name or len(name) >= 4
+
+
+def _constants_in_cells(fragment, already):
+    seen = {(item["name"], item["value"]) for item in already}
+    out = []
+    for table in HTML_TABLE.finditer(fragment):
+        rows = ROW.findall(table.group(1))
+        if not rows:
+            continue
+        headers = [text_of(cell, keep_newlines=False).strip()
+                   for cell in CELL.findall(rows[0])]
+        labels = [header.lower() for header in headers]
+        if any(OFFSET_COLUMN.search(label) for label in labels):
+            continue
+        header = " ".join(headers)
+        for row in rows:
+            cells = [text_of(cell, keep_newlines=False).strip()
+                     for cell in CELL.findall(row)]
+            for cell in cells:
+                match = _CELL_EQ.match(cell) or _CELL_PAR.match(cell)
+                if not match or not _constant_name(match.group(1)):
+                    continue
+                name, value = match.group(1), match.group(2)
+                if (name, value) in seen:
+                    continue
+                seen.add((name, value))
+                out.append({
+                    "name": name,
+                    "value": value,
+                    "decimal": None,
+                    "table": header,
+                    "row": " ".join(cells),
+                })
     return out
 
 
@@ -748,7 +798,60 @@ def _kind_of(text):
     return None
 
 
+def _is_macro_block(text):
+    """True when a block is only ``#define`` / ``#pragma`` / ``#undef`` lines.
+
+    A comment and a backslash continuation belong to the macro.  A ``typedef``,
+    a statement or an ``#include`` does not -- those stay whatever role the
+    rest of the reader gives them.  The page printed a declaration; this does
+    not repair or complete it.
+    """
+    if not text or not re.search(r"#\s*define\b", text):
+        return False
+    continued = False
+    saw = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if continued:
+            continued = stripped.endswith("\\")
+            continue
+        if stripped.startswith(("//", "/*", "*", "*/")):
+            continue
+        if re.match(r"#\s*(define|pragma|undef)\b", stripped):
+            saw = True
+            continued = stripped.endswith("\\")
+            continue
+        return False
+    return saw
+
+
+def _section_title_before(fragment, pos):
+    """The last heading or ``<p class="label">`` before ``pos``, lower-cased."""
+    titles = []
+    for match in HEADING.finditer(fragment, 0, pos):
+        titles.append((match.start(),
+                       text_of(match.group(0), keep_newlines=False)
+                       .strip(": ").lower()))
+    for match in re.finditer(
+            r"(?is)<p\b[^>]*\bclass\s*=\s*[\"']label[\"'][^>]*>\s*"
+            r"(?:<[^>]+>\s*)*([^<]{2,40})", fragment[:pos]):
+        titles.append((match.start(),
+                       re.sub(r"\s+", " ", match.group(1)).strip(": ").lower()))
+    if not titles:
+        return ""
+    titles.sort()
+    return titles[-1][1]
+
+
+_EXAMPLE_SECTION = ("example", "examples", "code example", "sample",
+                    "samples", "example code")
+
+
 def _looks_like_declaration(text):
+    if _is_macro_block(text):
+        return 8 <= len(text) <= 4000
     if len(text) < 8 or len(text) > 4000:
         return False
     return ("(" in text and ")" in text) or ";" in text or "{" in text
@@ -764,9 +867,18 @@ def declarations(fragment):
         if not _looks_like_declaration(text):
             continue
         implementation = is_implementation(text)
+        macro_block = _is_macro_block(text)
         role = "example" if implementation else (
             "syntax" if (syntax_region and
                          syntax_region.find(inner[:200]) != -1) else "example")
+        # A block that is only #define/#pragma lines is the declaration of
+        # those macros, unless the page put it under an Example heading.
+        # Templates without a Syntax heading were leaving these as examples,
+        # so a header generator never saw them.
+        if role == "example" and macro_block and not implementation:
+            title = _section_title_before(fragment, match.start())
+            if title not in _EXAMPLE_SECTION and not title.startswith("example"):
+                role = "syntax"
         if role == "example" and not implementation and not syntax_region:
             # Templates without a Syntax heading put the prototype between the
             # description and the Parameters/Remarks heading; a page with a
@@ -788,7 +900,7 @@ def declarations(fragment):
             "spacing": _spacing(text),
             "calling_convention": _calling_convention(text),
             "role": role,
-            "kind": _kind_of(text),
+            "kind": "macro" if macro_block else _kind_of(text),
             "members": _members(text),
             "member_types": [member_type(line) for line in _members(text)],
             "abi_flags": abi_flags(text),

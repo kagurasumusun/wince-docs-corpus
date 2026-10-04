@@ -170,7 +170,7 @@ def main():
                     problems.append(f"constant {rid}: name "
                                     f"{record.get('name')!r} is not one "
                                     "identifier")
-                if not re.match(r"^(0x[0-9A-Fa-f]+|\d+)$",
+                if not re.match(r"^(0x[0-9A-Fa-f]+|-?\d+)$",
                                 record.get("value") or ""):
                     problems.append(f"constant {rid}: value "
                                     f"{record.get('value')!r} is not one "
