@@ -25,7 +25,7 @@ quotes, each traceable to one page.
 ## The finding (`python3 tools/check-licenses.py --tracked`, 2026-10-04)
 
 ```
-published (git-tracked) files by redistribution: yes 5,285, no 115,932, unclear 117
+published (git-tracked) files by redistribution: yes 5,285, no 115,934, unclear 126
 ```
 
 | Scope | Covers | The statement it rests on (as read from the item) | May be published |
@@ -47,7 +47,7 @@ whitespace aside). A summary is never used in place of the wording.
 
 ## What this means
 
-* As a **public** repository, 115,932 of the 121,334 files it carries are not
+* As a **public** repository, 115,934 of the 121,345 files it carries are not
   licensed for redistribution. The Learn terms forbid copying the pages onto a
   network computer; the CE 3.0 notice grants internal reference use only; for
   the CHM/MVB media no permission statement was located at all.
