@@ -16,12 +16,12 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 
 ## Totals
 
-* pages parsed: **121,039**
+* pages parsed: **121,050**
 * API entities: **24,442** -- CE-specific **18,931**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
 * declarations extracted: **109,912** (C/C++ 78,586 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
 * requirement statements: **168,074**
 * numbered constants: **17,228** (`kb/constants.jsonl`, 698 page(s))
-* Windows CE constraint sentences: **3,239** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
+* Windows CE constraint sentences: **3,250** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
 * entities with a gap record: **14,592** (`reports/gaps.tsv`)
 * structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
 * relations between definitions: **23,738** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints)
@@ -135,6 +135,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `win32/api/uxtheme` | 9 | 9 | 9 | 0 | 36 | 0 |
 | `win32/api/wincred` | 9 | 9 | 9 | 0 | 44 | 0 |
 | `win32/api/wsdxmldom` | 9 | 9 | 9 | 0 | 27 | 0 |
+| `oss/qt` | 8 | 0 | 0 | 0 | 0 | 0 |
 | `site/windows-ce-2.0/technical` | 8 | 0 | 0 | 0 | 0 | 0 |
 | `win32/api/coml2api` | 8 | 8 | 8 | 0 | 40 | 0 |
 | `win32/api/dmoreg` | 8 | 8 | 8 | 1 | 33 | 1 |
@@ -297,6 +298,9 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `kb/322` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `kb/323` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `mvb/windows-ce-2.0-sdk/MPLATSDK.20` | 1 | 1 | 0 | 0 | 0 | 0 |
+| `oss/openssl` | 1 | 0 | 0 | 0 | 0 | 0 |
+| `oss/sdl` | 1 | 0 | 0 | 0 | 0 | 0 |
+| `oss/wxwidgets` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `site/windows-ce-2.0` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `site/windows-ce-2.0/embedded` | 1 | 0 | 0 | 0 | 0 | 0 |
 | `site/windows-ce-6.0` | 1 | 0 | 1 | 1 | 1 | 19 |
@@ -339,6 +343,7 @@ The full per-book breakdown (one row per component CHM, mirror folder, ...) is `
 * *with requirements / with declaration* counts pages, not entities: a page of prose has neither, and that is expected.
 * `corpus/site/` and `corpus/kb/` are mostly prose and release notes, so their reference coverage is low by nature.
 * The `.NET` tree (`corpus/dotnet/`) is documentation of a layer on top of Windows CE; its `Namespace:`/`Assembly:` values are recorded in the same requirement records, with `layer: dotnet`, and are not part of the CE include/def surface.
+* The open-source documents (`corpus/oss/`) are `layer: oss`.  Each page is quoted as an `oss-statement`.  No entity, declaration or constant is minted from them, and the include/def generator does not emit them.
 
 ## What a version's own pages state
 

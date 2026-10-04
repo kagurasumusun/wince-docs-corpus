@@ -79,6 +79,10 @@ REPORTS = os.path.join(KNOWLEDGE, "reports")
 TREE_LAYER = (
     ("corpus/win32/", "win32"),
     ("corpus/dotnet/", "dotnet"),
+    # Official documentation of named open-source projects.  Not Microsoft's
+    # statement, and not include/def material: parse_page records a quoted
+    # note and does not mint an entity, a declaration or a constant from it.
+    ("corpus/oss/", "oss"),
 )
 PAPERWORK = {"README.md", "PROVENANCE.md"}
 
@@ -205,6 +209,19 @@ def parse_page(job):
             "requirements": [], "declarations": [], "constraints": [],
             "documented_fields": [], "documented_fields_page": None,
             "abi_offsets": [], "constants": []}
+    # An open-source documentation page is evidence of what that project
+    # printed about Windows CE.  It is not a CE API page: no entity is minted
+    # from the title, and a code sample on the page is not a declaration.
+    # The quoted note is the page as this corpus reads it.
+    if layer == "oss":
+        full = os.path.join(ROOT, path)
+        try:
+            raw = open(full, "rb").read()
+        except OSError:
+            return fact
+        fragment = page_parse.article_html(raw)
+        fact["constraints"] = page_parse.oss_statements(fragment)
+        return fact
     full = os.path.join(ROOT, path)
     try:
         raw = open(full, "rb").read()
@@ -1589,6 +1606,9 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "of Windows CE; its `Namespace:`/`Assembly:` values are recorded in the "
         "same requirement records, with `layer: dotnet`, and are not part of the "
         "CE include/def surface.",
+        "* The open-source documents (`corpus/oss/`) are `layer: oss`.  Each page "
+        "is quoted as an `oss-statement`.  No entity, declaration or constant "
+        "is minted from them, and the include/def generator does not emit them.",
         "",
         "## What a version's own pages state",
         "",

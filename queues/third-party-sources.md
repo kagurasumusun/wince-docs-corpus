@@ -21,6 +21,17 @@ Google-Extended) but not documentation crawlers; this corpus uses an honest
 user agent, one request at a time, 2.5 s apart, and honours that file.
 GitHub-hosted sources are cloned, not crawled.
 
+## Open-source documentation (allowlisted, not a source tree)
+
+`queues/oss-docs.tsv` names the only open-source documents in `corpus/oss/`.
+The rule is the same as the rest of the collection: a document that states
+Windows CE facts, under a licence text that was read, and nothing around it.
+Source trees, headers and project files are not collected. A page that is not
+on the list fails `tools/check-policy.py`. What was looked at and refused
+(SDL 1.2 `README.WinCE`, because it is a file of the LGPL source distribution;
+mixed platform manuals that would have to be excerpted; mailing-list patches)
+is in `corpus/oss/PROVENANCE.md`.
+
 ## Not collected
 
 Candidate sources that were looked at and deliberately left out - vendor

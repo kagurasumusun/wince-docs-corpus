@@ -2,7 +2,8 @@
 
 What this repository is, in one sentence: **the documentation Microsoft
 published for Windows CE and its derivatives, plus the part of the Win32
-documentation that Windows CE shares** — nothing else.
+documentation that Windows CE shares, plus the open-source documents named
+in `queues/oss-docs.tsv`** — nothing else.
 
 Windows CE is **not** a full Win32: it is the CE-specific surface plus the
 shared part, so "shared" is decided not by resemblance but by a Windows CE
@@ -15,9 +16,11 @@ that does not belong appears in `corpus/`. Every collection workflow runs it.
 
 ```
 python3 tools/check-policy.py
-corpus/            121,039 pages in 9 trees
+corpus/            121,050 pages in 10 trees
+  CE trees         105,103 pages
+  other layers     10,668 pages (dotnet, oss; oss allowlist 11)
 corpus/win32/api/  5,279 CE-shared API pages
-policy             OK - Windows CE documentation only
+policy             OK
 ```
 
 The .NET families are collected but **kept apart** (`corpus/dotnet/`, 10,657
@@ -37,16 +40,17 @@ part of the CE API surface nor a reason to widen the Win32 rule. See
 | `corpus/msdn-library/` | the MSDN Library CE sets of the CE 1.0/2.0 era (techshelps), the April 2000 MSDN Library crawl (CE 2.12/3.0), the 2010-05 capture, Windows Mobile 6.5, and the CE 2.11/2.12 SDK documentation of the DevCon '99 disc |
 | `corpus/kb/` | the Windows CE KnowledgeBase articles |
 | `corpus/win32/api/` | the **Win32-common** half: sdk-api pages whose API name Windows CE also documents |
+| `corpus/oss/` | official documentation pages from named open-source projects (Qt, SDL, OpenSSL, wxWidgets) that are themselves about Windows CE. An allowlist (`queues/oss-docs.tsv`), not a source tree. Kept out of the CE API surface (`layer: oss`) |
 
 ## Out of scope (and how it is kept out)
 
 | Not collected | Kept out by |
 |---------------|-------------|
 | another product's documentation (desktop Win32 API reference, the Shell, DirectX, WMI, WinRT, Windows Media, the desktop programming guides, Commerce Server pages Microsoft itself misfiled in the embedded namespace) | the name rule below; `tools/check-policy.py` refuses any `corpus/win32/` page whose API name CE does not document |
-| source code, headers, samples, toolchains, OS images, installer payloads | `tools/import-media.py` counts and skips them; `tools/harvest.py` stores pages only; `tools/check-corpus.py`/`check-policy.py` report a `source or binary` count that must stay 0 |
+| source code, headers, samples, toolchains, OS images, installer payloads — including the source trees of the open-source projects whose documentation is allowlisted | `tools/import-media.py` counts and skips them; `tools/harvest.py` stores pages only; `tools/check-corpus.py`/`check-policy.py` report a `source or binary` count that must stay 0; `queues/oss-docs.tsv` names documents, not repositories |
 | a medium's shop window and leftovers: sponsor and vendor pages, sample trees and their readme pages, FrontPage metadata (`_vti_cnf/`, `_vti_pvt/`, `_derived/`) | per-medium exclude regexes in `queues/media.tsv` plus the built-in metadata-directory rule in `tools/import-media.py` |
 | help for a medium's own viewer/IDE (InfoViewer, the Visual C++ help) | per-medium exclude regexes in `queues/media.tsv` |
-| third-party mirrors, vendor knowledge bases, blog posts | `queues/third-party-sources.md` (the accepted mirrors for the CE 1.0/2.0 era are listed there explicitly) |
+| third-party mirrors, vendor knowledge bases, blog posts, and an open-source document that is not on the allowlist | `queues/third-party-sources.md` (the accepted mirrors for the CE 1.0/2.0 era, and the open-source documents that were looked at and refused, are listed there); `queues/oss-docs.tsv` is the only door into `corpus/oss/` |
 
 ## What the corpus is for
 

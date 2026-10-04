@@ -25,7 +25,7 @@ quotes, each traceable to one page.
 ## The finding (`python3 tools/check-licenses.py --tracked`, 2026-10-05)
 
 ```
-published (git-tracked) files by redistribution: yes 5,285, no 115,934, unclear 133
+published (git-tracked) files by redistribution: yes 5,291, no 115,943, unclear 137
 ```
 
 | Scope | Covers | The statement it rests on (as read from the item) | May be published |
@@ -38,6 +38,10 @@ published (git-tracked) files by redistribution: yes 5,285, no 115,934, unclear 
 | `kb-article-copyright` | 257 Knowledge Base articles | "Copyright Microsoft Corporation" on every article | no |
 | `msdn-library-copyright` | 14,678 MSDN Library captures | "© 2011 Microsoft. All rights reserved." where a notice is present (143 of 14,678 pages) | no |
 | `site-copyright` | 25 pages of the CE 2.0 CD site mirror | "© 1997 Microsoft Corporation. All rights reserved." | no |
+| `qt-docs-gfdl-1.3` | 8 Qt Windows CE documents + the notice file | the page footer: "The documentation provided herein is licensed under the terms of the GNU Free Documentation License version 1.3 as published by the Free Software Foundation." A reconstructed full licence text is not stored, so the copies are not offered as a GFDL redistribution | no |
+| `sdl-wiki-cc-by-4.0` | the SDL wiki WinCE page + its notice | "All wiki content is licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)." Attribution, the licence link and the modification note are on the page | yes |
+| `openssl-1.0.2` | OpenSSL 1.0.2u `INSTALL.WCE` + the notice | "The SSL documentation included with this distribution is covered by the same copyright terms except that the holder is Tim Hudson (tjh@cryptsoft.com)." The acknowledgment the licence requires is on the page. The library source was not collected | yes |
+| `wx-docs-licendoc` | wxWidgets 3.0.5 `docs/msw/wince/readme.txt` + `licendoc.txt` | "Permission is granted to make and distribute verbatim copies of this manual or piece of documentation provided any copyright notice and this permission notice are preserved on all copies." | yes |
 | `derived-from-sources` | `knowledge/`, `data/` | No separate statement: each record names its page, and that page's terms govern the record | per record |
 | `project-own` | `tools/`, `docs/`, `queues/`, `.github/`, the READMEs | **The repository publishes no LICENSE file** — its own licence is undecided | undecided |
 
@@ -47,15 +51,21 @@ whitespace aside). A summary is never used in place of the wording.
 
 ## What this means
 
-* As a **public** repository, 115,934 of the 121,352 files it carries are not
+* As a **public** repository, 115,943 of the 121,371 files it carries are not
   licensed for redistribution. The Learn terms forbid copying the pages onto a
   network computer; the CE 3.0 notice grants internal reference use only; for
-  the CHM/MVB media no permission statement was located at all.
+  the CHM/MVB media no permission statement was located at all. The Qt
+  documents are in that count too: the footer names the GNU Free Documentation
+  License 1.3, and a reconstructed full licence text is not stored, so those
+  copies are not offered as a redistribution.
 * That is a property of the **publication**, not of the collection. Keeping the
   pages and the knowledge built from them for one's own use is what the CE 3.0
   notice describes, and the Learn terms allow personal, non-commercial use.
-* The one part that is unambiguously publishable today is the CC-BY-4.0 Win32
-  reference (5,285 files) — and it too carries the attribution obligation.
+* What the statements that were read do permit publishing is the CC-BY-4.0
+  Win32 reference (5,285 files, with the attribution obligation), the SDL wiki
+  page and its notice (CC BY 4.0, same obligation), the OpenSSL 1.0.2u
+  `INSTALL.WCE` and the notice it requires, and the wxWidgets Windows CE
+  readme with the permission notice the licence requires. That is 5,291 files.
 * Knowing a declaration's text is not the same as being allowed to publish it:
   the quotes in `knowledge/kb/declarations.jsonl` are as restricted as the
   pages they come from.

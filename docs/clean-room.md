@@ -54,7 +54,7 @@ Two limits follow, and the project must not get them wrong:
 
 | Clean-room role | In this repository |
 |-----------------|--------------------|
-| First team (studies the original) | `tools/page_parse.py` + `tools/build-kb.py`: read `corpus/`, write `knowledge/` |
+| First team (studies the original) | `tools/page_parse.py` + `tools/build-kb.py`: read `corpus/`, write `knowledge/`. Open-source documents in `corpus/oss/` are read as documents only (`layer: oss`); their source trees are not in the corpus, and a code sample on a page is not turned into a declaration |
 | Reviewed specification | `knowledge/`: facts with their page, plus the declarations **quoted** as evidence of what the page prints — not as the project's own text |
 | Second team (implements from the specification only) | a consumer such as `tools/gen-include-def.py`: reads `knowledge/`, writes `build/` |
 | The wall | `gen-include-def.py` refuses to open anything under `corpus/` (`check_spec_path()`; `CORPUS_READS` counts any attempt) and `tools/check-cleanroom.py` runs a real build and requires the count to be 0 |
@@ -67,8 +67,8 @@ Result on 2026-10-05, with `--all` (every quote, no sampling; the file is
 
 | Invariant | Checked | Violations |
 |-----------|--------:|-----------:|
-| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 371,881 | 0 |
-| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names (declaration texts, requirement values, constraint sentences, **layout-table rows and constant-table rows**) | 268,495 | 0 |
+| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 371,892 | 0 |
+| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names (declaration texts, requirement values, constraint sentences, **layout-table rows, constant-table rows and open-source document quotations**) | 268,506 | 0 |
 | documented members are on their page — every `documented_fields` name occurs in one of the pages that document the entity (an A/W pair documents one structure) | 5,204 | 0 |
 | sample code stays out of the declarations — no entity's `syntax_declarations` points at a `role: "example"` or `implementation` record | 54,843 | 0 |
 | syntax blocks are declarations — no `role: "syntax"` text is implementation code; code blocks kept as `role: "example"` and never emitted: 4,572 | all declarations | 0 |

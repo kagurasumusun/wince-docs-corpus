@@ -16,6 +16,7 @@ corpus/
 ├── kb/                       Windows CE KnowledgeBase articles (CE 1.0/2.0 era)
 ├── site/<set>/               pages of the CE-era web sites that came with the media
 ├── dotnet/<set>/             the .NET families, documented on top of Windows CE
+├── oss/<project>/            allowlisted open-source documents about Windows CE
 ├── win32/api/                the Win32-common API reference (MicrosoftDocs)
 └── msdn-library/
     ├── 2010-05/<set>/        Internet Archive copies of MSDN topics

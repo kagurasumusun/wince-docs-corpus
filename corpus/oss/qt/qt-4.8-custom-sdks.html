@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Text rendering of Windows CE - Working with Custom SDKs</title>
+</head>
+<body>
+<section class="modified-version">
+<p>Modified Version. Authors of this rendering: wince-docs-corpus, 2026-10-05. Principal author shown on the original: The Qt Company Ltd. Publisher of this rendering: wince-docs-corpus. Copyright 2026 wince-docs-corpus, for the rendering only. The original copyright notice is preserved in the article below.</p>
+<p>Permission is granted to copy, distribute and/or modify this rendering under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the licence notice read from the original is in sources/oss-licenses/qt-gfdl-notice.txt. The licence text is at https://www.gnu.org/licenses/fdl-1.3.txt. The original notice designates no Invariant Sections and no Cover Texts.</p>
+<p>History: this rendering omits the site navigation and keeps the document text as retrieved. The network location of the original is given on the next line.</p>
+</section>
+<p>Original: <a href="https://doc.qt.io/archives/qt-4.8/windowsce-customization.html">https://doc.qt.io/archives/qt-4.8/windowsce-customization.html</a></p>
+<h1>Windows CE - Working with Custom SDKs</h1>
+<pre>
+Windows CE - Working with Custom SDKs
+
+When working with a custom SDK for Windows CE, Qt provides an easy way to add support for it to your development environment. The following is a tutorial that covers how to create a specification for Qt for Windows CE platforms.
+
+Creating a Custom Build Specification
+
+Create a subdirectory in the mkspecs folder of the Qt directory. New specifications for Qt for Windows CE following this naming convention:
+
+wince&lt;version&gt;&lt;SDK-shortcut&gt;-[architecture]-msvc2005
+
+Using this convention makes it possible for qmake to identify that you are building Qt for Windows CE, and will customize the compilation process accordingly.
+
+Create the files qmake.conf and qplatformdefs.h inside the new specification directory. Take a look at the implementation of the other Windows CE specifications included in the mkspecs directory to see what is required to build Qt for Windows CE successfully.
+
+Fine-Tuning Options
+
+Compared to the desktop versions, Qt for Windows CE needs two additional options:
+
+- CE_SDK specifies the name of the SDK.
+- CE_ARCH specifies information about the target architecture.
+
+Following is an example configuration for the Windows Mobile 5 for Pocket PC SDK:
+
+CE_SDK        = Windows Mobile 5.0 Pocket PC SDK
+CE_ARCH       = ARMV4I
+
+Note: qmake uses this information to build a valid Visual Studio project file. You need to ensure that they are identical to the configuration of the custom SDK, otherwise you might not be able to compile or debug your project with Visual Studio.
+
+Additionally, most Windows CE SDKs use extra compiler options. These can be specified by expanding the DEFINES value.
+
+For example, with Windows Mobile 5 for Pocket PC, the DEFINES variable is expanded in the following way:
+
+DEFINES      += UNDER_CE WINCE _WINDOWS _UNICODE UNICODE _WIN32_WCE=0x501 $$CE_ARCH _ARMV4I_ armv4i _ARM_ ARM _M_ARM ARM _WIN32 __arm__ Q_OS_WINCE_WM QT_NO_PRINTER QT_NO_PRINTDIALOG
+
+The mkspec may require additional configuration to be used inside of Visual Studio, depending on the Windows CE SDK. The above example defines _M_ARM. This definition is available internally in Visual Studio. Hence, the compiler will warn you about redefinition during the build step. These warnings can be disabled by adding a default_post.prf file containing the following lines, within the subdirectory.
+
+if(equals(TEMPLATE_PREFIX, &quot;vc&quot;) | equals(TEMPLATE, &quot;vc*&quot;)) {
+    DEFINES -= _M_ARM
+}
+
+Cross-compilation Environment for a Custom SDK
+
+Qt for Windows CE supports a convenience script, setcepaths.bat, that prepares the environment in a command prompt for cross-compilation. However, on custom SDKs, the checksdk tool is provided to identify the environment, so Qt compiles successfully.
+
+checksdk is generated during the configure step and allows for the following options:
+
+- list: Returns a list of available Windows CE SDKs. (This list may contain one or more SDKs not supported on Qt for Windows CE, e.g., Pocket PC 2003.)
+- sdk: The parameter to specify an SDK. Returns a setup of environment variables that must be set to cross-compile Qt.
+- script: Stores your setup in a .bat file. This simplifies the process of switching environments when you load a command prompt in future.
+
+Compiling Qt for a Custom SDK
+
+Windows CE is highly customizable, hence it is possible that some SDKs have feature-stripped setups. Depending on the SDK&#x27;s configuration, Qt may not compile in its standard configuration, as Qt for Windows CE is designed to be compatible with the Standard SDK setup.
+
+However, it is possible to exclude features of Qt and create a version that compiles for the desired SDK.
+
+Further information on stripping features can be found in the QFeatures documentation.
+
+Making Qt Applications Start on a Custom Device
+
+Sometimes, a Windows CE device has been created with a configuration different from the corresponding SDK&#x27;s configuration. In this case, symbols that were available at linking stage will be missing from the run-time libraries.
+
+Unfortunately, the operating system will not provide an error message that mentions which symbols are absent. Instead, a message box with the following message will appear:
+
+app.exe is not a valid CE application!
+
+To identify the missing symbols, you need to create a temporary application that attempts to dynamically load the Qt for Windows CE libraries using LoadLibrary. The following code can be used for this:
+
+wchar_t* libraries[] = {
+    L&quot;QtCore4.dll&quot;,
+    L&quot;QtGui4.dll&quot;,
+    0
+};
+
+for (int i = 0; libraries[i] != 0; ++i) {
+    HINSTANCE instance = LoadLibraryW(libraries[i]);
+    OutputDebugStringW(libraries[i]);
+    if (instance != NULL) {
+        OutputDebugStringW(L&quot; : Successfully instantiated\n&quot;);
+        FreeLibrary(instance);
+    } else {
+        OutputDebugStringW(L&quot; : Could not be loaded\n&quot;);
+    }
+}
+
+Once you have compiled and deployed the application as well as the Qt libraries, start a remote debugger. The debugger will then print the ordinal number of the unresolved symbol.
+
+Search for parts of Qt that rely on these functions and disable them using the QFeatures functionality.
+
+In our experience, when Qt applications do not start on Windows CE, it is usually the result of missing symbols for the following classes or features:
+
+- Drag and Drop
+- QClipboard
+- QCursor
+
+Please refer to the Microsoft documentation here for information on what ordinals are and how you can create them. Information on accessing the corresponding symbol name to a given ordinal value can also be found in the Microsoft documentation.
+
+© 2016 The Qt Company Ltd.
+Documentation contributions included herein are the copyrights of their respective owners. The documentation provided herein is licensed under the terms of the GNU Free Documentation License version 1.3 as published by the Free Software Foundation. Qt and respective logos are trademarks of The Qt Company Ltd. in Finland and/or other countries worldwide. All other trademarks are property of their respective owners.
+</pre>
+</body>
+</html>

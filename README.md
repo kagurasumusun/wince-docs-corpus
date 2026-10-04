@@ -17,9 +17,10 @@ The .NET families that shipped in the same documentation namespace
 **separate tree**, `corpus/dotnet/`: they document a layer on top of Windows CE,
 not the operating system its include/def files describe.
 
-**121,039 pages** (2026-10-04 — `data/index/INDEX.tsv` is the live count):
-105,103 CE pages, 10,657 .NET pages and 5,279 Win32 pages (markdown, from
-Microsoft's public `MicrosoftDocs` repositories). The repository also carries
+**121,050 pages** (2026-10-05 — `data/index/INDEX.tsv` is the live count):
+105,103 CE pages, 10,657 .NET pages, 5,279 Win32 pages (markdown, from
+Microsoft's public `MicrosoftDocs` repositories) and 11 allowlisted
+open-source documents about Windows CE (`corpus/oss/`; not source code). The repository also carries
 the media the pages were extracted from, the URL queues used to harvest them,
 the upstream snapshot the Win32 pages come from, and the derived catalogs,
 manifests, indexes — and `knowledge/`, the machine-readable knowledge base

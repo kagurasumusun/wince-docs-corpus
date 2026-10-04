@@ -1154,6 +1154,19 @@ def kind_from_filename(name):
 SENTENCE = re.compile(r"[^.\n]{20,400}\.")
 
 
+def oss_statements(fragment):
+    """The open-source document, quoted as this reader sees it.
+
+    One note per page.  The text is the article (everything from the first
+    heading), not a summary and not a declaration extracted from a sample.
+    ``pattern`` is ``page``: the whole article is the statement.
+    """
+    text = text_of(fragment, keep_newlines=False)
+    if not text:
+        return []
+    return [{"text": text, "pattern": "page", "kind": "oss-statement"}]
+
+
 def constraints(fragment):
     """Sentences of the page that state a Windows CE restriction.
 
