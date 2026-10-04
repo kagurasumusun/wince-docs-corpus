@@ -17,6 +17,11 @@ release-note files that shipped on the same discs. `corpus/` holds the page
 text extracted from these sources (plus the Microsoft Learn harvest, which has
 no local medium).
 
+`terms/` holds the statements that govern items of this collection but have no
+file of their own here (the Microsoft Learn Terms of Use excerpt), quoted with
+their URL and the date read: `data/license-scopes.tsv` points at them and
+`docs/LICENSING.md` explains how they are applied.
+
 Each release directory has a `PROVENANCE.md` recording the Internet Archive
 item (or Microsoft Download Center page), the archive URL and file size, the
 collection date, exactly which parts were extracted, and what was deliberately

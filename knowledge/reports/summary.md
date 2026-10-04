@@ -4,14 +4,21 @@ Generated 2026-10-04 by `python3 tools/build-kb.py`.
 
 The knowledge base is built from the pages in `corpus/` only: every declaration, requirement and constraint record quotes the page it came from. This report says how much of the corpus is *structured* so far, and what is missing -- it is the collection worklist, not a quality judgement of a document.
 
+## ABI
+
+* syntax declarations: **90,455**; of those **86,947** print no calling convention (none is guessed) and **3,508** print one (unstated 86,947, winapi 2,829, stdcall 409, cdecl 263, extern-c 6, fastcall 1)
+* member lines that print a type: **29,227** out of **31,309**; bitfields **126**, `#pragma pack` **4**, `__declspec(align` **4**
+* statements a page makes about alignment/byte order/pointer width: **964** quoted sentences (`kind: "abi-note"` in `kb/constraints.jsonl`)
+* **no page states a field offset**, so the knowledge base holds 0 offset facts and invents none (`reports/abi.tsv` is the per-name view; member names with their documented order are in `kb/struct-fields.tsv` when a page prints no declaration body)
+
 ## Totals
 
 * pages parsed: **121,039**
 * API entities: **24,442** -- CE-specific **18,931**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
-* declarations extracted: **109,768** (C/C++ 78,442 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
+* declarations extracted: **109,770** (C/C++ 78,444 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
 * requirement statements: **156,514**
-* Windows CE constraint sentences: **3,239**
-* entities with a gap record: **14,706** (`reports/gaps.tsv`)
+* Windows CE constraint sentences: **3,239** and ABI statements quoted from the pages (**964**, `kind: "abi-note"`)
+* entities with a gap record: **14,679** (`reports/gaps.tsv`)
 * structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
 * relations between definitions: **23,738** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints)
 * catalog-only names (the CE TOC names it, no CE page for it is in the corpus): **3** (`reports/catalog-leads.tsv` shows the CE page the name list points at, what that page actually prints, and what the Win32 page documents -- a lead, not a CE definition)
@@ -28,7 +35,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `chm/windows-ce-3.0` | 8,962 | 6,949 | 16 | 6,799 | 32 | 7,546 |
 | `msdn-library/wcedevcon-99` | 6,382 | 4,532 | 3,205 | 4,512 | 6,821 | 4,947 |
 | `dotnet/pos-for-net` | 5,793 | 0 | 0 | 5,067 | 0 | 23,157 |
-| `msdn-library/techshelps` | 5,165 | 3,802 | 3,229 | 3,260 | 8,994 | 3,347 |
+| `msdn-library/techshelps` | 5,165 | 3,802 | 3,229 | 3,260 | 8,994 | 3,349 |
 | `dotnet/dotnet-micro-framework` | 4,012 | 0 | 0 | 1,835 | 0 | 6,535 |
 | `msdn-library/datadungeon-2000-04` | 2,931 | 1,328 | 0 | 677 | 0 | 758 |
 | `mvb/windows-ce-1.0/PEGSDK` | 1,918 | 1,470 | 0 | 268 | 0 | 429 |
@@ -337,19 +344,19 @@ The full per-book breakdown (one row per component CHM, mirror folder, ...) is `
 
 | missing | entities | what to collect |
 |---------|----------|-----------------|
-| `no-declaration` | 3,178 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
-| `no-header` | 2,619 | the page has no `Header` requirement -- same approach |
-| `no-library` | 13,268 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
+| `no-declaration` | 3,194 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
+| `no-header` | 2,588 | the page has no `Header` requirement -- same approach |
+| `no-library` | 13,237 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
 
 ## Using it
 
 * `kb/entities.jsonl` -- one record per API name; `headers`, `libraries` and `dlls` are the include/link mapping, `syntax_declarations` the evidence for the declaration, `ce_sets` the version scope.
 * `kb/entities.jsonl` `relations` -- the links between definitions (the page's own Unicode/ANSI pair, `Interface::Method`, the CE<->Win32 layer match, `ce-name-lead` for a name the CE page prints under a different spelling), each with its page and the printed text; `present` says whether the target exists in this file.
-* `kb/entities.jsonl` `generation_use` -- the derived, rule-based list of generator steps the record can feed (`include-declaration`, `type-definition`, `link-library`, `def-export`, `abi-layout`, `abi-members` when only the documented member list exists, `unicode-mapping`, `version-scope`, `ce-restriction`). It says what the record *can* be used for, with the fields that justify it.
+* `kb/entities.jsonl` `generation_use` -- the derived, rule-based list of generator steps the record can feed (`include-declaration`, `type-definition`, `link-library`, `def-export`, `abi-layout`, `abi-members` when only the documented member list exists, `abi-note` when the declarations or pages state ABI facts, `unicode-mapping`, `version-scope`, `ce-restriction`). It says what the record *can* be used for, with the fields that justify it.
 * `kb/modules.tsv` -- sdk-api module -> entities (the Win32-side grouping; the module comes from each page's UID).
 * `kb/declarations.jsonl` -- the raw C/C++ declarations. Nothing is normalised: an include generator reads the text and the `spacing` flag.
 * `kb/declarations-dotnet.jsonl` -- the signature blocks of the separated .NET layer (`language: managed`), kept out of the C declaration file on purpose.
 * `kb/requirements.jsonl` -- Header/Library/DLL/OS-version statements with both the mapped `field` and the page's own `label`.
-* `kb/constraints.jsonl` -- the Windows CE restriction sentences.
+* `kb/constraints.jsonl` -- the Windows CE restriction sentences (`kind: "ce-restriction"`) and the ABI sentences a page states (`kind: "abi-note"`, with the `pattern` that matched: alignment, byte order, pointer width). Each is quoted, not summarised.
 * `kb/sets.tsv`, `kb/headers.tsv`, `kb/libraries.tsv`, `kb/dlls.tsv`, `kb/modules.tsv` -- the same data aggregated.
 

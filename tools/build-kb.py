@@ -55,7 +55,14 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import ce_api_names  # noqa: E402
+import license_scopes  # noqa: E402
 import page_parse  # noqa: E402
+
+# The rights registry (data/license-scopes.tsv): every record is stamped with
+# the scope of the page it came from, so a fact can never be read without its
+# terms attached.  A page whose scope nobody has looked at is a build error
+# (tools/check-licenses.py reports the same thing for the whole tree).
+LICENSES = license_scopes.Registry.load()
 
 ROOT = ce_api_names.ROOT
 CORPUS = os.path.join(ROOT, "corpus")
@@ -217,7 +224,8 @@ def parse_page(job):
         fact["kind"] = page_parse.kind_from_filename(name)
         fact["requirements"] = reqs
         fact["declarations"] = decls
-        fact["constraints"] = []
+        fact["constraints"] = [dict(note, kind="abi-note")
+                               for note in page_parse.abi_notes(text)]
         # sdk-api documents every member of a structure under -struct-fields,
         # sometimes without printing a syntax block; that member list is a
         # documented fact (member names and order, no offsets), so it is kept.
@@ -244,7 +252,12 @@ def parse_page(job):
     fact["entity_evidence"] = evidence
     fact["requirements"] = page_parse.requirements(fragment)
     fact["declarations"] = page_parse.declarations(fragment)
-    fact["constraints"] = page_parse.constraints(fragment)
+    fact["constraints"] = [dict(item, kind="ce-restriction")
+                           for item in page_parse.constraints(fragment)]
+    fact["constraints"] += [dict(note, kind="abi-note")
+                            for note in page_parse.abi_notes(
+                                page_parse.text_of(fragment,
+                                                   keep_newlines=False))]
     kinds = collections.Counter(d["kind"] for d in fact["declarations"]
                                 if d["role"] == "syntax" and d["kind"])
     if kinds:
@@ -311,6 +324,12 @@ def declaration_records(facts, entity_of):
                 "calling_convention": decl.get("calling_convention"),
                 "text": decl["text"],
                 "members": decl["members"],
+                "member_types": decl.get("member_types", []),
+                "abi_flags": decl.get("abi_flags", []),
+                # a code block a page prints as a *sample*: kept as evidence,
+                # never emitted as interface material (docs/clean-room.md)
+                "implementation": bool(decl.get("implementation")),
+                "license": license_of(fact["path"]),
                 "source": source_of(fact),
             })
     records.sort(key=lambda r: (r["entity"] or "", r["source"]["path"], r["id"]))
@@ -320,7 +339,17 @@ def declaration_records(facts, entity_of):
 def source_of(fact):
     return {"path": fact["path"], "page_id": fact["page_id"],
             "set": fact["book"], "title": fact["title"],
-            "layer": fact["layer"]}
+            "layer": fact["layer"],
+            "license": license_of(fact["path"])}
+
+
+def license_of(path):
+    """The scope governing a path; a page outside every rule is an error."""
+    scope = LICENSES.scope_for(path)
+    if scope is None:
+        raise SystemExit(f"{path}: no rule in data/license-scopes.tsv governs "
+                         "this page -- add one before building")
+    return scope
 
 
 def requirement_records(facts, entity_of):
@@ -340,6 +369,7 @@ def requirement_records(facts, entity_of):
                 "value": req["value"],
                 "key": normalize_value(req["value"], req["field"]),
                 "evidence": req["evidence"],
+                "license": license_of(fact["path"]),
                 "source": source_of(fact),
             })
     records.sort(key=lambda r: (r["entity"] or "", r["field"],
@@ -351,16 +381,19 @@ def constraint_records(facts, entity_of):
     records = []
     for fact in facts:
         for item in fact["constraints"]:
+            kind = item.get("kind") or "ce-restriction"
             key = hashlib.sha1(
-                (fact["path"] + "\x00" + item["text"]).encode("utf-8")
-            ).hexdigest()[:12]
+                (kind + "\x00" + fact["path"] + "\x00" +
+                 item["text"]).encode("utf-8")).hexdigest()[:12]
             records.append({
                 "id": "c" + key,
                 "entity": entity_of(fact),
                 "page_id": fact["page_id"],
                 "layer": fact["layer"],
+                "kind": kind,
                 "pattern": item["pattern"],
                 "text": item["text"],
+                "license": license_of(fact["path"]),
                 "source": source_of(fact),
             })
     records.sort(key=lambda r: (r["entity"] or "", r["source"]["path"], r["id"]))
@@ -385,6 +418,7 @@ def entity_records(facts, declarations, requirements):
     out = []
     for entity in sorted(by_entity):
         pages = by_entity[entity]
+        licenses = sorted({license_of(f["path"]) for f in pages})
         ce_pages = sorted({f["path"] for f in pages if f["layer"] == "ce"})
         win32_pages = sorted({f["path"] for f in pages if f["layer"] == "win32"})
         dotnet_pages = sorted({f["path"] for f in pages if f["layer"] == "dotnet"})
@@ -399,18 +433,47 @@ def entity_records(facts, declarations, requirements):
                 kinds[record["kind"]] += 1
         reqs = req_by_entity[entity]
         field_pages = [f for f in pages if f["documented_fields"]]
+        # The same name can be documented by more than one page (the A and W
+        # spellings of a structure): the field list is their union, and each
+        # field keeps the page it was actually read from (used for
+        # kb/struct-fields.tsv); the page list is kept beside it.
         documented = []
+        field_page_of = {}
         for fact_page in field_pages:
             for name in fact_page["documented_fields"]:
+                if name not in field_page_of:
+                    field_page_of[name] = fact_page["documented_fields_page"]
                 if name not in documented:
                     documented.append(name)
+        documented_pages = sorted({f["documented_fields_page"]
+                                   for f in field_pages})
 
         def values(field):
             return sorted({r["key"] for r in reqs
                            if r["field"] == field and r["key"]})
 
-        syntax_decls = sorted({d["id"] for d in decl_by_entity[entity]
-                               if d["role"] == "syntax"})
+        syntax_records = [d for d in decl_by_entity[entity]
+                          if d["role"] == "syntax"]
+        syntax_decls = sorted({d["id"] for d in syntax_records})
+        # The ABI view of a name: what its declarations print about
+        # themselves.  Nothing here is inferred -- a convention that no page
+        # prints is absent, and the count of such declarations is kept.
+        conventions = sorted({d["calling_convention"] for d in syntax_records
+                              if d.get("calling_convention")})
+        without_convention = sum(1 for d in syntax_records
+                                 if not d.get("calling_convention"))
+        declared_members = sum(len(d.get("members") or [])
+                               for d in syntax_records)
+        typed_members = sum(1 for d in syntax_records
+                            for line, type_text in zip(
+                                d.get("members") or [],
+                                d.get("member_types") or [])
+                            if type_text)
+        bitfield_members = sum(1 for d in syntax_records
+                               for line in (d.get("members") or [])
+                               if re.search(r"\w+\s*:\s*\d+", line))
+        abi_flag_names = sorted({flag for d in syntax_records
+                                 for flag in (d.get("abi_flags") or [])})
         reference_fields = {"header", "library", "dll", "os_versions"}
         looks_like_reference = bool(values("header") or values("library") or
                                     values("dll")) or any(
@@ -455,8 +518,22 @@ def entity_records(facts, declarations, requirements):
             # page prints no declaration body: names and order as documented,
             # no offsets -- the ABI gap stays visible instead of being filled.
             "documented_fields": documented,
-            "documented_fields_page": (field_pages[0]["documented_fields_page"]
-                                       if field_pages else None),
+            "documented_fields_page": (field_page_of[documented[0]]
+                                       if documented else None),
+            "documented_fields_pages": documented_pages,
+            "documented_field_pages": field_page_of,
+            "abi": {
+                "calling_conventions": conventions,
+                "declarations_without_convention": without_convention,
+                "syntax_declarations": len(syntax_decls),
+                "declared_members": declared_members,
+                "typed_members": typed_members,
+                "bitfield_members": bitfield_members,
+                "flags": abi_flag_names,
+                # the ABI statements the pages make in prose (kind abi-note),
+                # attached below once the constraint ids are known
+                "notes": 0,
+            },
             # Set by fold_variants(): a Windows CE page documents the base
             # name (CreateFile) while the Win32 reference is written per
             # spelling (CreateFileW).  ``win32_documented`` says the shared
@@ -476,6 +553,7 @@ def entity_records(facts, declarations, requirements):
             "doc_role": doc_role,
             "declarations": sorted({d["id"] for d in decl_by_entity[entity]}),
             "syntax_declarations": syntax_decls,
+            "licenses": licenses,
             "requirements": sorted({r["id"] for r in reqs}),
             "constraints": [],
             "relations": [],
@@ -616,6 +694,10 @@ def add_relations(entities, requirements, declarations):
             use.append("abi-layout")
         if entity["documented_fields"] and "abi-layout" not in use:
             use.append("abi-members")
+        abi = entity.get("abi") or {}
+        if abi.get("calling_conventions") or abi.get("flags") or \
+                abi.get("bitfield_members"):
+            use.append("abi-note")
         if any(r["type"].startswith("unicode-ansi")
                for r in entity["relations"]):
             use.append("unicode-mapping")
@@ -908,8 +990,14 @@ def build(rows, workers, report_only, plain=False):
     for record in constraints:
         if record["entity"]:
             constraint_ids[record["entity"]].append(record["id"])
+    notes_by_entity = collections.Counter()
+    for record in constraints:
+        if record["entity"] and record.get("kind") == "abi-note":
+            notes_by_entity[record["entity"]] += 1
     for entity in entities:
         entity["constraints"] = sorted(constraint_ids.get(entity["id"], []))
+        if entity.get("abi"):
+            entity["abi"]["notes"] = notes_by_entity.get(entity["id"], 0)
     add_relations(entities, requirements, declarations)
     folded = fold_variants(entities, read_shared_map())
     print(f"[kb] {folded:,} Unicode/ANSI variant spelling(s) folded into their "
@@ -981,6 +1069,35 @@ def build(rows, workers, report_only, plain=False):
     write_tsv(os.path.join(REPORTS, "surface.tsv"),
               ["surface", "entity", "name", "kinds", "ce_sets", "headers",
                "libraries"], surface_rows)
+
+    # ---- the ABI view, one row per name: what its declarations print about
+    # themselves (nothing inferred; an absent convention stays absent)
+    entity_of_id = {e["id"]: e for e in entities}
+    abi_rows = []
+    for entity in entities:
+        abi = entity.get("abi") or {}
+        abi_rows.append((
+            entity["id"], entity["name"], ";".join(entity["kinds"]),
+            entity["surface"] or "",
+            ";".join(abi.get("calling_conventions") or []),
+            abi.get("declarations_without_convention", 0),
+            abi.get("syntax_declarations", 0),
+            abi.get("declared_members", 0),
+            abi.get("typed_members", 0),
+            abi.get("bitfield_members", 0),
+            ";".join(abi.get("flags") or []),
+            abi.get("notes", 0),
+            ";".join(entity["headers"]),
+            ";".join(entity["modules"]),
+            ";".join(entity["ce_sets"]),
+            ";".join(entity["licenses"])))
+    abi_rows.sort(key=lambda r: r[1].lower())
+    write_tsv(os.path.join(REPORTS, "abi.tsv"),
+              ["entity", "name", "kinds", "surface", "calling_conventions",
+               "declarations_without_convention", "syntax_declarations",
+               "declared_members", "typed_members", "bitfield_members",
+               "abi_flags", "abi_notes", "headers", "modules", "ce_sets",
+               "licenses"], abi_rows)
 
     # ---- the members a page documents without printing a declaration
     field_pages = [f for f in facts if f["documented_fields"]]
@@ -1107,6 +1224,18 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         rolled[top(book)].update(counts)
     per_tree = rolled
     decs_c = sum(1 for r in declarations if r["layer"] != "dotnet")
+    # The ABI view, measured from the records themselves (never inferred):
+    # a convention no page prints stays absent, and the number of declarations
+    # that print none is reported so the gap is visible.
+    syntax_records = [r for r in declarations if r["role"] == "syntax"]
+    conventions = collections.Counter(r["calling_convention"] for r in syntax_records)
+    typed_members = sum(1 for r in syntax_records
+                        for type_text in (r.get("member_types") or [])
+                        if type_text)
+    member_lines = sum(len(r.get("members") or []) for r in syntax_records)
+    abi_flags = collections.Counter(flag for r in syntax_records
+                                    for flag in (r.get("abi_flags") or []))
+    abi_notes = [c for c in constraints if c.get("kind") == "abi-note"]
     surface = collections.Counter(e["surface"] for e in entities)
     field_pages = [f for f in facts if f["documented_fields"]]
     field_pages_no_decl = [f for f in field_pages
@@ -1130,6 +1259,26 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "and what is missing -- it is the collection worklist, not a quality "
         "judgement of a document.",
         "",
+        "## ABI",
+        "",
+        f"* syntax declarations: **{len(syntax_records):,}**; of those "
+        f"**{conventions.get(None, 0):,}** print no calling convention (none is "
+        f"guessed) and **{len(syntax_records) - conventions.get(None, 0):,}** "
+        "print one ("
+        + ", ".join(f"{name or 'unstated'} {count:,}"
+                    for name, count in conventions.most_common()) + ")",
+        f"* member lines that print a type: **{typed_members:,}** out of "
+        f"**{member_lines:,}**; bitfields **{abi_flags.get('bitfield', 0):,}**, "
+        f"`#pragma pack` **{abi_flags.get('pack', 0):,}**, "
+        f"`__declspec(align` **{abi_flags.get('align', 0):,}**",
+        f"* statements a page makes about alignment/byte order/pointer width: "
+        f"**{len(abi_notes):,}** quoted sentences "
+        "(`kind: \"abi-note\"` in `kb/constraints.jsonl`)",
+        "* **no page states a field offset**, so the knowledge base holds 0 "
+        "offset facts and invents none (`reports/abi.tsv` is the per-name view; "
+        "member names with their documented order are in "
+        "`kb/struct-fields.tsv` when a page prints no declaration body)",
+        "",
         "## Totals",
         "",
         f"* pages parsed: **{len(facts):,}**",
@@ -1146,7 +1295,11 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"signatures {len(declarations) - decs_c:,} in "
         f"`kb/declarations-dotnet.jsonl` -- the separated .NET layer)",
         f"* requirement statements: **{len(requirements):,}**",
-        f"* Windows CE constraint sentences: **{len(constraints):,}**",
+        f"* Windows CE constraint sentences: "
+        f"**{sum(1 for c in constraints if c.get('kind') != 'abi-note'):,}** "
+        f"and ABI statements quoted from the pages "
+        f"(**{sum(1 for c in constraints if c.get('kind') == 'abi-note'):,}**, "
+        "`kind: \"abi-note\"`)",
         f"* entities with a gap record: **{len(gap_rows):,}** "
         "(`reports/gaps.tsv`)",
         f"* structures whose members a page documents without printing a "
@@ -1234,6 +1387,7 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "of generator steps the record can feed (`include-declaration`, "
         "`type-definition`, `link-library`, `def-export`, `abi-layout`, "
         "`abi-members` when only the documented member list exists, "
+        "`abi-note` when the declarations or pages state ABI facts, "
         "`unicode-mapping`, `version-scope`, `ce-restriction`). It says what "
         "the record *can* be used for, with the fields that justify it.",
         "* `kb/modules.tsv` -- sdk-api module -> entities (the Win32-side "
@@ -1245,7 +1399,10 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "declaration file on purpose.",
         "* `kb/requirements.jsonl` -- Header/Library/DLL/OS-version statements "
         "with both the mapped `field` and the page's own `label`.",
-        "* `kb/constraints.jsonl` -- the Windows CE restriction sentences.",
+        "* `kb/constraints.jsonl` -- the Windows CE restriction sentences "
+        "(`kind: \"ce-restriction\"`) and the ABI sentences a page states "
+        "(`kind: \"abi-note\"`, with the `pattern` that matched: alignment, "
+        "byte order, pointer width). Each is quoted, not summarised.",
         "* `kb/sets.tsv`, `kb/headers.tsv`, `kb/libraries.tsv`, `kb/dlls.tsv`, "
         "`kb/modules.tsv` -- the same data aggregated.",
         "",

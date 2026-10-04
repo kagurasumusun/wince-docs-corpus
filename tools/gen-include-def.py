@@ -64,6 +64,33 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KB = os.path.join(ROOT, "knowledge", "kb")
 
+# The clean-room wall (docs/clean-room.md): this generator reads the
+# *specification* (knowledge/), never the corpus pages the specification was
+# built from.  Anything that reaches into corpus/ is counted and refused, so a
+# build of a generated header cannot depend on a page a reader may not take.
+CORPUS_READS = []
+
+
+def is_corpus(path):
+    rel = os.path.relpath(path, ROOT)
+    return rel == "corpus" or rel.startswith("corpus" + os.sep)
+
+
+def check_spec_path(path):
+    """Refuse a corpus path: the generator reads knowledge/ only."""
+    if is_corpus(path):
+        CORPUS_READS.append(os.path.relpath(path, ROOT))
+        raise RuntimeError(f"{os.path.relpath(path, ROOT)} is a corpus page: "
+                           "the generator reads knowledge/ only "
+                           "(docs/clean-room.md)")
+
+
+def read_text(path):
+    """Open a text file, refusing the corpus (the specification only)."""
+    check_spec_path(path)
+    with open(path, "r", encoding="utf-8") as fh:
+        return fh.read()
+
 DECLARATIONS = os.path.join(KB, "declarations.jsonl.gz")
 ENTITIES = os.path.join(KB, "entities.jsonl.gz")
 
@@ -76,6 +103,7 @@ EXPORTABLE = ("function", "callback")
 
 
 def load(path):
+    check_spec_path(path)
     if not os.path.exists(path) and path.endswith(".gz"):
         path = path[:-3]
     if not os.path.exists(path):
@@ -122,6 +150,9 @@ def module_of(value):
     return match.group("base"), match.group("ext").lower()
 
 
+CODE_SKIPPED = collections.Counter()
+
+
 def choose_declarations(entity, declarations_of, target, borrow):
     """Declarations for one entity, best evidence first.
 
@@ -140,6 +171,13 @@ def choose_declarations(entity, declarations_of, target, borrow):
     """
     records = [declarations_of[did] for did in entity["syntax_declarations"]
                if did in declarations_of]
+    # Belt and braces: a record the extractor marked as implementation code is
+    # never emitted, even if some older knowledge base still lists it (it may
+    # still be *read* as evidence by a human -- it is simply not inlined here).
+    sample_code = [r for r in records if r.get("implementation")]
+    if sample_code:
+        for record in sample_code:
+            CODE_SKIPPED["declaration text is implementation code"] += 1
     own = [r for r in records if r["source"]["set"].startswith(target)]
     other_ce = [r for r in records
                 if r not in own and r.get("layer") == "ce"]
@@ -311,8 +349,10 @@ def main():
     exports = 0
 
     for entity in sorted(entities, key=lambda e: e["name"].lower()):
+        CODE_SKIPPED.clear()
         chosen, alternatives, borrowed_from = choose_declarations(
             entity, declarations_of, args.target, not args.no_borrow)
+        skipped.update(CODE_SKIPPED)
         declaration = chosen[0] if chosen else None
         if borrowed_from:
             borrowed[borrowed_from.split(":")[0]] += 1
@@ -415,6 +455,42 @@ def main():
         "(functions and callbacks only; structures, typedefs and C++ methods "
         "stay in the include material)",
         f"* pages behind the output: {len(pages):,}",
+        "",
+        "## Rights behind the output",
+        "",
+        "Every declaration in this build comes from a page whose statement is",
+        "recorded in `data/license-scopes.tsv`; the counts below are the",
+        "scopes of those pages.  **Check before publishing an export**: a",
+        "scope whose `redistribution` is not `yes` may not be republished",
+        "(`tools/check-licenses.py`, `docs/LICENSING.md`).",
+        "",
+        "| scope | declarations written | may be published |",
+        "|-------|---------------------:|------------------|",
+    ]
+    scopes = collections.Counter()
+    for entries in by_header.values():
+        for _entity, declaration in entries:
+            for record in [declaration]:
+                scopes[record.get("license") or "?"] += 1
+    try:
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import license_scopes
+        registry = license_scopes.Registry.load()
+        permission_of = {}
+        for row in registry.rows:
+            permission_of.setdefault(row.scope, row.redistribution)
+    except Exception:
+        permission_of = {}
+    for scope, count in scopes.most_common():
+        report.append(f"| {scope} | {count:,} | "
+                      f"{permission_of.get(scope, '?')} |")
+    report += [
+        "",
+        "## The wall this generator keeps",
+        "",
+        "* the corpus pages read by this generator: "
+        f"**{len(CORPUS_READS)}** (the generator reads `knowledge/` only; a "
+        "corpus path is refused, see `docs/clean-room.md`)",
         "",
         "## What was skipped",
         "",

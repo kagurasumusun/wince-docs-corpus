@@ -35,6 +35,9 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ce_api_names  # noqa: E402
+import license_scopes  # noqa: E402
+
+SCOPES = set(license_scopes.Registry.load().scopes())
 
 KB = os.path.join(ROOT, "knowledge", "kb")
 REPORTS = os.path.join(ROOT, "knowledge", "reports")
@@ -52,14 +55,17 @@ REQUIRED = {
                "declarations", "syntax_declarations", "requirements",
                "constraints", "noise", "variants_of", "variants",
                "win32_pages_from_variants", "win32_documented", "surface",
-               "documented_fields", "documented_fields_page"),
+               "documented_fields", "documented_fields_page",
+               "documented_fields_pages", "documented_field_pages",
+               "licenses", "abi"),
     "declaration": ("id", "entity", "page_id", "layer", "kind", "role",
                     "language", "markup", "spacing", "calling_convention",
-                    "text", "members", "source"),
+                    "text", "members", "member_types", "abi_flags",
+                    "implementation", "license", "source"),
     "requirement": ("id", "entity", "page_id", "layer", "field", "label",
-                    "value", "key", "evidence", "source"),
-    "constraint": ("id", "entity", "page_id", "layer", "pattern", "text",
-                   "source"),
+                    "value", "key", "evidence", "license", "source"),
+    "constraint": ("id", "entity", "page_id", "layer", "kind", "pattern",
+                   "text", "license", "source"),
 }
 SURFACES = ("ce-only", "shared", "win32-spelling", "catalog-only", "win32-only")
 ID_RE = {"entity": re.compile(r"^[a-z0-9_]+$"),
@@ -114,12 +120,28 @@ def main():
                                         "the repository")
 
             else:
+                if record.get("license") not in SCOPES:
+                    problems.append(f"{kind} {rid}: license "
+                                    f"{record.get('license')!r} is not a scope "
+                                    "in data/license-scopes.tsv")
                 source = record.get("source")
                 if not isinstance(source, dict) or not source.get("path"):
                     problems.append(f"{kind} {rid}: no source path")
                 elif not os.path.exists(os.path.join(ROOT, source["path"])):
                     problems.append(f"{kind} {rid}: source {source['path']} is "
                                     "not in the repository")
+            if kind == "declaration":
+                implementation = record.get("implementation")
+                if record.get("role") == "syntax" and implementation:
+                    problems.append(f"declaration {rid}: role syntax but "
+                                    "flagged implementation code")
+                if implementation not in (True, False):
+                    problems.append(f"declaration {rid}: implementation "
+                                    f"{implementation!r} is not a bool")
+            if kind == "constraint" and record.get("kind") not in (
+                    "ce-restriction", "abi-note"):
+                problems.append(f"constraint {rid}: kind "
+                                f"{record.get('kind')!r} is not known")
             seen[rid] = record
         records[kind] = seen
         print(f"{filename:28s} {len(seen):>8,} records")
@@ -135,6 +157,35 @@ def main():
         if variant and variant.get("id") not in records["entity"]:
             problems.append(f"entity {entity['id']}: variants_of "
                             f"{variant.get('id')} is not an entity")
+        for scope in entity.get("licenses", ()):
+            if scope not in SCOPES:
+                problems.append(f"entity {entity['id']}: license {scope!r} is "
+                                "not a scope in data/license-scopes.tsv")
+        abi = entity.get("abi")
+        if not isinstance(abi, dict):
+            problems.append(f"entity {entity['id']}: abi is not an object")
+            abi = {}
+        if abi.get("syntax_declarations") and \
+                abi.get("declarations_without_convention") is None:
+            problems.append(f"entity {entity['id']}: ABI roll-up has "
+                            "declarations but no without-convention count")
+        if abi.get("typed_members", 0) > abi.get("declared_members", 0):
+            problems.append(f"entity {entity['id']}: typed_members exceeds "
+                            "declared_members")
+        if entity.get("syntax_declarations") and not abi.get(
+                "syntax_declarations"):
+            problems.append(f"entity {entity['id']}: syntax_declarations but "
+                            "no ABI roll-up")
+        for rid in entity.get("syntax_declarations", ()):  # noqa: B007
+            record = records["declaration"].get(rid)
+            if record is None:
+                continue
+            if record.get("role") != "syntax":
+                problems.append(f"entity {entity['id']}: syntax_declaration "
+                                f"{rid} has role {record.get('role')!r}")
+            elif record.get("implementation"):
+                problems.append(f"entity {entity['id']}: syntax_declaration "
+                                f"{rid} is implementation code")
         fields_page = entity.get("documented_fields_page")
         if entity.get("documented_fields") and not fields_page:
             problems.append(f"entity {entity['id']}: documented_fields but no "

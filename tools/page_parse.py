@@ -272,6 +272,136 @@ def _members(text):
     return members
 
 
+# ------------------------------------------------------------- ABI readers
+#
+# What an ABI consumer needs is: the calling convention, the member list with
+# its types, and any alignment/packing/size statement the page makes.  The
+# first two are read out of the declaration text itself (exact); the third is
+# only kept as a quoted sentence and only when it names a concrete fact (a
+# number of bytes, a byte order, a pointer width) -- loose prose ("alignment"
+# in the UI sense and similar) is deliberately not collected.
+
+TYPE_WORDS = frozenset("""
+    void char short int long float double signed unsigned bool
+    BOOL BOOLEAN BYTE WORD DWORD QWORD WCHAR TCHAR LPSTR LPCSTR LPWSTR
+    LPCWSTR LPVOID LPCVOID HANDLE HWND HMODULE HINSTANCE FARPROC WPARAM
+    LPARAM LRESULT INT8 INT16 INT32 INT64 UINT8 UINT16 UINT32 UINT64 SIZE_T
+    ULONG LONG USHORT SHORT UINT PSTR PCSTR PWSTR PCWSTR PVOID
+""".split())
+
+
+def member_parts(line):
+    """(type, name) a member line declares, or (None, None) when there is none.
+
+    ``"DWORD dwFlags;"`` -> ``("DWORD", "dwFlags")``;
+    ``"unsigned int LAP : 24;"`` -> ``("unsigned int", "LAP")``;
+    ``"unsigned int : 3;"`` -> ``("unsigned int", None)`` (anonymous bitfield);
+    ``"};"`` -> ``(None, None)``.  The type is quoted as printed; a member
+    whose type the declaration does not spell out is None.
+    """
+    text = line.strip().rstrip(",").rstrip(";").strip()
+    if not text or set(text) <= set("{}"):
+        return None, None
+    text = re.sub(r":\s*\d+$", "", text).strip()          # bitfield width
+    text = re.sub(r"\[[^\]]*\]$", "", text).strip()       # array extent
+    tokens = text.split()
+    if not tokens:
+        return None, None
+    if len(tokens) == 1:
+        token = tokens[0].rstrip("*&")
+        return (tokens[0], None) if token in TYPE_WORDS else (None, tokens[0])
+    name = tokens[-1].rstrip("*&")
+    pointer = re.match(r"^([*&]+)", tokens[-1])
+    type_text = " ".join(tokens[:-1])
+    if pointer:                       # ``struct _foo *pNext``: the ``*`` is
+        name = tokens[-1][len(pointer.group(1)):]     # part of the type
+        type_text = (type_text + " " + pointer.group(1)).strip()
+    if name in TYPE_WORDS and len(tokens) == 2 and tokens[0] in TYPE_WORDS:
+        # ``unsigned int`` -- a two-word type with no declarator name
+        return text, None
+    if not type_text:
+        return (text, None) if name in TYPE_WORDS else (None, name)
+    return type_text, name
+
+
+def member_type(line):
+    """The type part of a member line, or None when it names no type."""
+    return member_parts(line)[0]
+
+
+# A page can also *state* an ABI fact in prose.  Only a sentence that names a
+# concrete fact is kept -- a number of bytes, a byte order, a pointer width --
+# because loose prose is not an ABI fact.  The sentence is quoted, never
+# summarised, and no fact is inferred from it.
+ABI_PROSE = (
+    ("alignment", re.compile(
+        r"\balign(?:ed|ment)\b[^.]{0,60}\b\d+\s*-?\s*byte|"
+        r"\b\d+\s*-?\s*byte[- ]aligned\b|"
+        r"__declspec\s*\(\s*align|#pragma\s+pack", re.I)),
+    ("byte-order", re.compile(r"\b(?:little|big)[- ]endian\b|\bbyte order\b",
+                              re.I)),
+    ("pointer-size", re.compile(
+        r"\b(?:32|64)[- ]bit\s+(?:pointers?|addresses)\b", re.I)),
+)
+
+ABI_FLAGS = (
+    ("bitfield", re.compile(r"\w+\s*:\s*\d+\s*[;,]?(?=\s*\}?\s*$)", re.M)),
+    ("pack", re.compile(r"#pragma\s+pack\b", re.I)),
+    ("align", re.compile(r"__declspec\s*\(\s*align\b", re.I)),
+    ("pragma-once", re.compile(r"#pragma\s+once\b", re.I)),
+)
+
+
+def abi_flags(text):
+    """Which ABI-relevant constructs the declaration text itself prints."""
+    return [name for name, pattern in ABI_FLAGS if pattern.search(text)]
+
+
+def abi_notes(text):
+    """Sentences of a page that state an alignment/byte-order/pointer fact."""
+    notes = []
+    flat = re.sub(r"\s+", " ", text)
+    for sentence in re.split(r"(?<=[.!?])\s+", flat):
+        sentence = sentence.strip()
+        if not sentence or len(sentence) > 400:
+            continue
+        for pattern_name, pattern in ABI_PROSE:
+            if pattern.search(sentence):
+                notes.append({"pattern": "abi: " + pattern_name,
+                              "text": sentence})
+                break
+    return notes
+
+
+# ------------------------------------------------- what is implementation code
+#
+# A page prints two kinds of code block: the *declaration* of an interface
+# (what include/def material is built from) and *sample code* (what it is not).
+# The test below is deliberately blunt and conservative: it only fires when the
+# block is unmistakably an implementation -- a preprocessor include, or a
+# statement form (`return`, `if`, `for`, `while`, `switch`, `goto`, `break;`,
+# `continue;`).  A ``#define``/``#pragma`` block is a declaration; an
+# ``#ifdef``-fenced block is treated as code because the corpus uses those
+# fences around sample sources.
+
+IMPLEMENTATION_STATEMENT = re.compile(
+    r"\b(?:return|if|for|while|switch|goto)\b\s*[\s(\w*&=;]|"
+    r"\b(?:break|continue)\s*;")
+
+
+def is_implementation(text):
+    """True when a code block is implementation code, not a declaration."""
+    if re.search(r"#\s*include\b", text):
+        return True
+    if re.match(r"\s*#\s*(define|pragma)\b", text):
+        return False            # a #define/#pragma block is a declaration
+    if re.match(r"\s*#", text):
+        return True             # an #ifdef/#if-fenced block is code
+    if not re.search(r"[;{}]", text):
+        return False            # prose, a field list, a documentation header
+    return bool(IMPLEMENTATION_STATEMENT.search(text))
+
+
 def _kind_of(text):
     lowered = text.lower()
     if re.search(r"\btypedef\s+struct\b|\bstruct\s+[A-Za-z_]", lowered):
@@ -304,9 +434,11 @@ def declarations(fragment):
         text = text_of(inner)
         if not _looks_like_declaration(text):
             continue
-        role = "syntax" if (syntax_region and
-                            syntax_region.find(inner[:200]) != -1) else "example"
-        if role == "example" and not syntax_region:
+        implementation = is_implementation(text)
+        role = "example" if implementation else (
+            "syntax" if (syntax_region and
+                         syntax_region.find(inner[:200]) != -1) else "example")
+        if role == "example" and not implementation and not syntax_region:
             # Templates without a Syntax heading put the prototype between the
             # description and the Parameters/Remarks heading; a page with a
             # single code block there is documenting a declaration, not
@@ -329,17 +461,26 @@ def declarations(fragment):
             "role": role,
             "kind": _kind_of(text),
             "members": _members(text),
+            "member_types": [member_type(line) for line in _members(text)],
+            "abi_flags": abi_flags(text),
+            "implementation": implementation,
         })
     if not any(d["role"] == "syntax" for d in out):
         block = syntax_region or ""
         for para in PARA.finditer(block):
             text = text_of(para.group(1))
             if _looks_like_declaration(text) and re.search(r"[;{()]", text):
+                implementation = is_implementation(text)
                 out.insert(0, {
                     "text": text, "markup": "paragraph",
                     "spacing": _spacing(text),
-            "calling_convention": _calling_convention(text), "role": "syntax",
+                    "calling_convention": _calling_convention(text),
+                    "role": "example" if implementation else "syntax",
                     "kind": _kind_of(text), "members": _members(text),
+                    "member_types": [member_type(line)
+                                     for line in _members(text)],
+                    "abi_flags": abi_flags(text),
+                    "implementation": implementation,
                 })
                 break
     return out
@@ -486,11 +627,18 @@ def markdown(text):
         if not body or not _looks_like_declaration(body):
             continue
         before = text[:match.start()]
-        role = "syntax" if re.search(r"(?im)^##\s+-?syntax\s*$", before) else "example"
+        implementation = is_implementation(body)
+        role = "example" if implementation else (
+            "syntax" if re.search(r"(?im)^##\s+-?syntax\s*$", before)
+            else "example")
         decls.append({"text": body, "markup": f"fence:{language or 'text'}",
                       "spacing": _spacing(body), "role": role,
                       "calling_convention": _calling_convention(body),
-                      "kind": _kind_of(body), "members": _members(body)})
+                      "kind": _kind_of(body), "members": _members(body),
+                      "member_types": [member_type(line)
+                                       for line in _members(body)],
+                      "abi_flags": abi_flags(body),
+                      "implementation": implementation})
     return fields, reqs, decls, markdown_struct_fields(text)
 
 
