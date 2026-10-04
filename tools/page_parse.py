@@ -558,12 +558,28 @@ CONSTANT_NAME_COLUMNS = {
     "flag", "name", "constant", "symbolic constant", "resource identifier",
     "notification flag", "error code", "return code", "identifier",
     "message", "macro", "symbol", "symbolic name",
+    # The same shape under a more specific heading.  Each label was checked
+    # against the tables that use it: the name cell is the symbol and the
+    # other cell is the number the page assigns to it.  A correspondence
+    # (a character set beside a code page, a virtual key beside a scan code,
+    # a locale beside an LCID, a buffer index beside a type name) is not in
+    # this set -- those numbers are not the symbol's value.
+    "symbolic constant name", "screen identifier", "control code",
+    "message identifier", "virtual key code", "status identifier",
+    "hresult name", "version identifier", "escape code", "dwmessage",
+    "power notification type", "device generating notification",
+    "propvariant type", "message text", "visual basic constant",
+    "constant (button)", "constant (shift)", "system color",
+    "ioctl call", "event", "element", "error",
 }
 CONSTANT_HEX_COLUMNS = {
     "hexadecimal", "hexadecimal value", "hex value", "hex",
+    "value (hex)", "value (hexadecimal)", "hex code",
 }
 CONSTANT_DECIMAL_COLUMNS = {"decimal"}
-CONSTANT_VALUE_COLUMNS = {"value", "numeric value", "code"}
+CONSTANT_VALUE_COLUMNS = {
+    "value", "numeric value", "code", "win32 value", "registry order",
+}
 CONSTANT_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 CONSTANT_NUMBER = re.compile(r"^(0x[0-9A-Fa-f]+|\d+)$")
 
@@ -598,6 +614,14 @@ def constant_tables(fragment):
         hex_i = _column(labels, CONSTANT_HEX_COLUMNS)
         dec_i = _column(labels, CONSTANT_DECIMAL_COLUMNS)
         val_i = _column(labels, CONSTANT_VALUE_COLUMNS)
+        # LOGFONT weight tables print the constant in the column headed
+        # ``Value`` and the number in the column headed ``Weight``
+        # (``FW_THIN | 100``).  ``Value`` is not a name column anywhere else;
+        # this pair is the only table in the corpus that uses ``Weight``.
+        if name_i is None and "value" in labels and "weight" in labels:
+            name_i = labels.index("value")
+            val_i = labels.index("weight")
+            hex_i = dec_i = None
         value_is = [i for i in (hex_i, val_i, dec_i) if i is not None]
         if name_i is None or not value_is or name_i in value_is:
             continue

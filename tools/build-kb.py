@@ -1521,7 +1521,10 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"* structure sizes stated in prose: **{len(size_notes):,}** sentences "
         "(the number is a read of the quoted sentence, never a guess)",
         f"* numbered constants (`Name | Value`, `Return code | Hexadecimal | "
-        f"Decimal`, a cell printed `NAME = 0x0001` or `NAME (0x0001)`, and "
+        f"Decimal`, `Symbolic constant | Value (Hex)`, `Control code | Value`, "
+        f"`Message identifier | Value`, `Element | Hex code`, "
+        f"`Value | Weight` for the font-weight constants, a cell printed "
+        f"`NAME = 0x0001` or `NAME (0x0001)`, and "
         f"the same shapes): **{len(constants):,}** rows over "
         f"**{len(constant_pages):,}** page(s), quoted in `kb/constants.jsonl` "
         "(the flat view is `kb/constants.tsv`).  A row is kept only when the "
@@ -1641,8 +1644,15 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "",
         "Numbered constants are rows of a name/value table the page prints, "
         "or a cell it prints as `NAME = 0x0001` / `NAME (0x0001)` "
-        "(`kb/constants.jsonl`).  Symbol decoration (`_Name@N`) and export "
-        "ordinals are not in these documents, so none is recorded.",
+        "(`kb/constants.jsonl`).  A heading such as `Value (Hex)`, "
+        "`Control code`, `Message identifier`, `Hex code` or `Weight` is "
+        "read when the cells are one identifier and one number.  Digits in "
+        "a column the page heads as hexadecimal are stored as printed; "
+        "`0x` is not added.  A scan code beside a virtual key, a code page "
+        "beside a character set, and a locale beside an LCID are not "
+        "constant values, so those tables are not read.  Symbol decoration "
+        "(`_Name@N`) and export ordinals are not in these documents, so "
+        "none is recorded.",
         "",
         "## The gaps",
         "",
