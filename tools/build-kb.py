@@ -1265,8 +1265,8 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"**{conventions.get(None, 0):,}** print no calling convention (none is "
         f"guessed) and **{len(syntax_records) - conventions.get(None, 0):,}** "
         "print one ("
-        + ", ".join(f"{name or 'unstated'} {count:,}"
-                    for name, count in conventions.most_common()) + ")",
+        + ", ".join(f"{name} {count:,}" for name, count
+                    in conventions.most_common() if name) + ")",
         f"* member lines that print a type: **{typed_members:,}** out of "
         f"**{member_lines:,}**; bitfields **{abi_flags.get('bitfield', 0):,}**, "
         f"`#pragma pack` **{abi_flags.get('pack', 0):,}**, "

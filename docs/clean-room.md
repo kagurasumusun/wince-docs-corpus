@@ -71,7 +71,7 @@ Result on 2026-10-04, with `--all` (every quote, no sampling; the file is
 | quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names | 239,161 | 0 |
 | documented members are on their page — every `documented_fields` name occurs in one of the pages that document the entity (an A/W pair documents one structure) | 5,204 | 0 |
 | sample code stays out of the declarations — no entity's `syntax_declarations` points at a `role: "example"` or `implementation` record | 54,541 | 0 |
-| syntax blocks are declarations — no `role: "syntax"` text is implementation code; code blocks kept as `role: "example"` and never emitted: 4,585 | all declarations | 0 |
+| syntax blocks are declarations — no `role: "syntax"` text is implementation code; code blocks kept as `role: "example"` and never emitted: 4,572 | all declarations | 0 |
 | the generator reads the specification only — a real `gen-include-def.py` run reports zero corpus reads | 0 reads | 0 |
 
 The check found real defects when it was first run seriously, which is the point

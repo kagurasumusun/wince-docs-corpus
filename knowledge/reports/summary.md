@@ -6,7 +6,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 
 ## ABI
 
-* syntax declarations: **90,455**; of those **86,947** print no calling convention (none is guessed) and **3,508** print one (unstated 86,947, winapi 2,829, stdcall 409, cdecl 263, extern-c 6, fastcall 1)
+* syntax declarations: **90,455**; of those **86,947** print no calling convention (none is guessed) and **3,508** print one (winapi 2,829, stdcall 409, cdecl 263, extern-c 6, fastcall 1)
 * member lines that print a type: **29,227** out of **31,309**; bitfields **126**, `#pragma pack` **4**, `__declspec(align` **4**
 * statements a page makes about alignment/byte order/pointer width: **964** quoted sentences (`kind: "abi-note"` in `kb/constraints.jsonl`)
 * **no page states a field offset**, so the knowledge base holds 0 offset facts and invents none (`reports/abi.tsv` is the per-name view; member names with their documented order are in `kb/struct-fields.tsv` when a page prints no declaration body)
