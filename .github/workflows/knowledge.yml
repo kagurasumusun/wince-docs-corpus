@@ -1,0 +1,83 @@
+# Verify the knowledge base: it builds, it is the committed one, and it keeps
+# the rules this project states.
+#
+# Why a separate workflow: `knowledge/` is generated, so two things can go
+# wrong without anyone touching the tools -- a hand-edit that the next build
+# would overwrite, and a stale build that no longer matches the code.  Both
+# are caught here.  The same run then re-checks the three sets of rules the
+# knowledge base is supposed to keep:
+#
+#   tools/check-kb.py          structure, ids, references, licence scopes,
+#                              the ABI roll-up, and that no entity points at
+#                              implementation code
+#   tools/check-licenses.py    every page and every tracked file resolves to a
+#                              rights rule, and every quoted statement is
+#                              really in the file it was read from (the
+#                              publication audit is reported, not enforced --
+#                              docs/LICENSING.md says why that decision is the
+#                              owner's)
+#   tools/check-cleanroom.py   the six clean-room invariants, including a real
+#                              gen-include-def.py run that must read zero
+#                              pages under corpus/ (docs/clean-room.md)
+#
+# Everything runs offline: no queue is harvested here.
+
+name: Verify knowledge base
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'knowledge/**'
+      - 'tools/**'
+      - 'docs/**'
+      - 'data/license-scopes.tsv'
+      - 'sources/terms/**'
+  pull_request:
+    paths:
+      - 'knowledge/**'
+      - 'tools/**'
+
+permissions:
+  contents: read
+
+jobs:
+  knowledge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Rebuild the knowledge base from the corpus
+        run: python3 tools/build-kb.py --workers 4
+
+      - name: The committed knowledge base must be what the code produces
+        run: |
+          if [ -n "$(git status --porcelain knowledge/)" ]; then
+            echo "::error::knowledge/ is not reproducible: rebuild it and commit the result"
+            git status --porcelain knowledge/
+            git diff --stat knowledge/ | tail -5
+            exit 1
+          fi
+
+      - name: Structure and references
+        run: python3 tools/check-kb.py
+
+      - name: Rights registry and the statements behind it
+        run: |
+          python3 tools/check-licenses.py
+          python3 tools/check-licenses.py --tracked
+
+      - name: Clean-room invariants
+        run: python3 tools/check-cleanroom.py --all
+
+      - name: The checks must not have moved the reports either
+        run: |
+          if [ -n "$(git status --porcelain knowledge/)" ]; then
+            echo "::error::a check rewrote a committed report; commit the new figures"
+            git status --porcelain knowledge/
+            exit 1
+          fi
