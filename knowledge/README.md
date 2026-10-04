@@ -31,11 +31,13 @@ tools/       the pipeline that produces all of the above
 | `kb/libraries.tsv` | Library -> entities (the link mapping). |
 | `kb/dlls.tsv` | DLL -> entities. |
 | `kb/modules.tsv` | sdk-api module -> entities (the Win32-side grouping; from each page's UID). |
+| `kb/struct-fields.tsv` | `entity <TAB> field <TAB> order <TAB> page` — the members a page documents in its `-struct-fields` section (**5,204** rows over **801** structures). 882 sdk-api pages use `### -field` and 842 of them are a struct member list (40 use the heading for enum values, with no `-struct-fields` section); **840 of those 842 print no declaration at all** (only `WIN32_FIND_DATAA`/`W` do), so the member list, in documented order, is the only ABI fact held; **no offsets anywhere**, and none are invented (`generation_use: abi-members`). |
 | `kb/sets.tsv` | CE set -> entities, and how many of them have a declaration/header/library/DLL. |
 | `reports/coverage-by-tree.tsv` | What each corpus tree contributed (pages, requirements, declarations). |
 | `reports/coverage.tsv` | One row per entity: what is known about it. |
 | `reports/gaps.tsv` | **The collection worklist**: every reference entity for which a declaration, a header or a library is still missing. |
 | `reports/filtered-values.tsv` | The Header/Library/DLL values that name no file at all (`Library: Developer Implemented`, `Header: Windows 7`). The requirement record keeps the printed value and stays in `requirements.jsonl`, but its derived `key` is empty, so no header file or library is invented for it. |
+| `reports/catalog-leads.tsv` | The collection leads for the 3 `catalog-only` names: the CE page id the catalog list points at, the page in `corpus/`, the title, the spelling that page prints, how many syntax blocks it has, and the Win32 page with its documented member list. The finding it records: `AVIMAINHEADER`'s CE pages do print the type (as `MainAVIHeader`), while `MESSAGE`/`SECTION`'s CE pages are tool-option topics that print nothing. |
 | `reports/surface.tsv` | **The Windows CE / Win32 boundary, one row per name**: `surface <TAB> entity <TAB> name <TAB> kinds <TAB> ce_sets <TAB> headers <TAB> libraries` (24,442 rows). Windows CE is the CE-specific surface *plus* the part of Win32 the CE documents share — not the whole Win32 API — and this file is that statement in machine-readable form. |
 | `reports/summary.md` | The same in prose, with the totals. |
 | `schema/*.json` | JSON Schema for the four record types. |
@@ -72,7 +74,7 @@ Python).  `python3 tools/build-kb.py --plain` writes them uncompressed.
   | `ce-only` | 18,931 | only Windows CE documents the name |
   | `shared` | 4,353 | Windows CE documents it *and* the Win32 reference does (directly or through an A/W spelling) |
   | `win32-spelling` | 1,155 | the entity is a Win32 page for an A/W spelling of a documented CE name (`variants_of`) |
-  | `catalog-only` | 3 | only the official CE catalog names it; the Win32 page is the only documentation held, so it is a collection lead, not a CE definition (`AVIMAINHEADER`, `MESSAGE`, `SECTION`) |
+  | `catalog-only` | 3 | only the official CE catalog names it; the Win32 page is the only documentation held, so it is a collection lead, not a CE definition (`AVIMAINHEADER`, `MESSAGE`, `SECTION`). `reports/catalog-leads.tsv` records the CE page the name list points at, the spelling that page actually prints (`AVIMAINHEADER` is printed `MainAVIHeader`), and the Win32 page with the member list — a lead, never a CE declaration. Two of the three (`MESSAGE`, `SECTION`) turn out to be name-list noise: their CE pages are the `#message` / `/SECTION` tool-option topics and print no declaration at all (`ce_syntax_blocks` = 0) |
   | `win32-only` | 0 | a Win32 page not tied to a CE name — there is none: every imported Win32 page was taken because a CE document claims its name |
 
 * **A Unicode/ANSI spelling is folded into its base name, on evidence.**
@@ -112,8 +114,8 @@ them:
 |----------|--------|
 | **Which document is this from?** | every record has `source` (`path`, `page_id`, `set`, `title`, `layer`); `entities.jsonl` lists the pages in `ce_pages`/`win32_pages`/`dotnet_pages`, the evidence records in `declarations`/`requirements`/`constraints`, and the relation entries carry their own `page` and the printed `evidence` text |
 | **Which version / generation?** | `ce_sets` (the corpus sets that document the name, e.g. `learn/windows-embedded-ce-6.0`), the requirement `field: "os_versions"` values ("Windows CE versions: 5.0 and later"), and the per-set counts in `kb/sets.tsv` |
-| **How does it relate to other definitions?** | `relations`: `unicode-ansi` (the page's own "X (Unicode) and Y (ANSI)" statement), `unicode-ansi-base` (the base name the pair belongs to, derived from that statement), `interface-method` (`Interface::Method`, the vtable owner) and `layer` (documented by CE *and* the Win32 reference). Each entry names its target, whether that target is present in this file, the page and the printed text |
-| **How can it be used to generate include/def?** | `generation_use` says which generator steps the record can feed — `include-declaration` (a syntax declaration plus a stated header), `type-definition` (struct/enum/union/typedef), `link-library` (a function/callback with a stated library or DLL), `def-export` (a function/callback with a stated DLL), `abi-layout` (a struct whose declaration lists members), `unicode-mapping`, `version-scope`, `ce-restriction` — and `kb/headers.tsv`/`libraries.tsv`/`dlls.tsv`/`modules.tsv` are the inverted maps. `generation_use` is rule-based (DERIVED); it says what the record *can* feed, never that the record is complete |
+| **How does it relate to other definitions?** | `relations`: `unicode-ansi` (the page's own "X (Unicode) and Y (ANSI)" statement), `unicode-ansi-base` (the base name the pair belongs to, derived from that statement), `interface-method` (`Interface::Method`, the vtable owner), `layer` (documented by CE *and* the Win32 reference) and `ce-name-lead` (the CE page prints the name under a different spelling, e.g. `MainAVIHeader` for `AVIMAINHEADER` — as a lead with its page; no renaming). Each entry names its target, whether that target is present in this file, the page and the printed text |
+| **How can it be used to generate include/def?** | `generation_use` says which generator steps the record can feed — `include-declaration` (a syntax declaration plus a stated header), `type-definition` (struct/enum/union/typedef), `link-library` (a function/callback with a stated library or DLL), `def-export` (a function/callback with a stated DLL), `abi-layout` (a struct whose declaration lists members), `abi-members` (only the documented member list exists — names and order, no offsets), `unicode-mapping`, `version-scope`, `ce-restriction` — and `kb/headers.tsv`/`libraries.tsv`/`dlls.tsv`/`modules.tsv` are the inverted maps. `generation_use` is rule-based (DERIVED); it says what the record *can* feed, never that the record is complete |
 
 Nothing is invented: `present: false` in a relation means the other side was
 never collected (a collection lead), and an entity with no `syntax_declarations`
@@ -146,7 +148,12 @@ the fragment, a note on the `.def` line):
    `unicode-ansi`/`unicode-ansi-base` then say which of them exist in a given
    CE version and how the `A`/`W` spellings pair up.
 4. **ABI facts.**  The declaration text carries the calling convention and the
-   parameter/field types; struct bodies come with their `members` lines.  For a
+   parameter/field types; struct bodies come with their `members` lines.
+   Where a struct has no printed declaration, `documented_fields` and
+   `kb/struct-fields.tsv` give the member names in documented order (the
+   sdk-api `-struct-fields` sections) — usable for `#pragma pack`-free
+   re-declaration checks and for detecting a missing member, **not** for field
+   offsets, which no page states.  For a
    struct whose declaration is `collapsed`, look for the same name in another
    set (`declaration_in_other_sets` in `reports/gaps.tsv`, or the same entity in
    `kb/entities.jsonl.gz`).

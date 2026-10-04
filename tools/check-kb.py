@@ -33,6 +33,9 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ce_api_names  # noqa: E402
+
 KB = os.path.join(ROOT, "knowledge", "kb")
 REPORTS = os.path.join(ROOT, "knowledge", "reports")
 
@@ -48,7 +51,8 @@ REQUIRED = {
                "libraries", "dlls", "modules", "relations", "generation_use",
                "declarations", "syntax_declarations", "requirements",
                "constraints", "noise", "variants_of", "variants",
-               "win32_pages_from_variants", "win32_documented", "surface"),
+               "win32_pages_from_variants", "win32_documented", "surface",
+               "documented_fields", "documented_fields_page"),
     "declaration": ("id", "entity", "page_id", "layer", "kind", "role",
                     "language", "markup", "spacing", "calling_convention",
                     "text", "members", "source"),
@@ -131,6 +135,18 @@ def main():
         if variant and variant.get("id") not in records["entity"]:
             problems.append(f"entity {entity['id']}: variants_of "
                             f"{variant.get('id')} is not an entity")
+        fields_page = entity.get("documented_fields_page")
+        if entity.get("documented_fields") and not fields_page:
+            problems.append(f"entity {entity['id']}: documented_fields but no "
+                            "page")
+        if fields_page and not os.path.exists(os.path.join(ROOT, fields_page)):
+            problems.append(f"entity {entity['id']}: documented_fields_page "
+                            f"{fields_page} is not in the repository")
+        if entity.get("documented_fields") and not (
+                {"abi-layout", "abi-members"} &
+                set(entity.get("generation_use", ()))):
+            problems.append(f"entity {entity['id']}: documented_fields without "
+                            "an abi-* generation_use")
         if variant and variant.get("basis") not in ("page-statement",
                                                     "import-rule"):
             problems.append(f"entity {entity['id']}: variants_of basis "
@@ -171,6 +187,34 @@ def main():
                     relation["id"] not in records["entity"]:
                 problems.append(f"entity {entity['id']}: relation to "
                                 f"{relation['id']} says present but is missing")
+            if relation.get("type") == "ce-name-lead":
+                # What the CE page prints, with its evidence; the id is the
+                # entity this file would have for that spelling.
+                if not (relation.get("name") and relation.get("page") and
+                        relation.get("evidence")):
+                    problems.append(f"entity {entity['id']}: ce-name-lead "
+                                    "without name/page/evidence")
+                elif relation["id"] != ce_api_names.normalize(relation["name"]):
+                    problems.append(f"entity {entity['id']}: ce-name-lead "
+                                    f"{relation['name']!r} has id "
+                                    f"{relation['id']!r}")
+
+    # A catalog-only name is only useful if the lead to its CE page is
+    # recorded (reports/catalog-leads.tsv is the flat view of those leads).
+    leads_path = os.path.join(REPORTS, "catalog-leads.tsv")
+    if os.path.isfile(leads_path):
+        led = set()
+        with open(leads_path, encoding="utf-8") as fh:
+            next(fh, None)
+            for line in fh:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) > 1:
+                    led.add(parts[1])
+        for entity in records["entity"].values():
+            if entity.get("surface") == "catalog-only" and \
+                    entity["id"] not in led:
+                problems.append(f"entity {entity['id']}: catalog-only but not "
+                                "in reports/catalog-leads.tsv")
 
     surfaces = collections.Counter(e.get("surface")
                                    for e in records["entity"].values())

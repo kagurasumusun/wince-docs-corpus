@@ -34,6 +34,7 @@ Uses the SQL index built by ``tools/build-index-sql.py``; falls back to
 ``data/index/INDEX.tsv`` when the DB is missing.
 """
 import argparse
+import collections
 import gzip
 import json
 import os
@@ -87,6 +88,17 @@ def kb_line(record):
         variant = record["variants_of"]
         parts.append(f"{variant.get('kind', '?')} spelling of "
                      f"{variant.get('name')} ({variant.get('basis')})")
+    if record.get("documented_fields"):
+        # the page documents the members but prints no declaration body: the
+        # names and their order are the fact, offsets are not stated anywhere
+        parts.append(f"{len(record['documented_fields'])} documented member(s), "
+                     "no offsets")
+    leads = collections.OrderedDict()
+    for relation in record.get("relations", ()):
+        if relation.get("type") == "ce-name-lead":
+            leads.setdefault(relation["name"], []).append(relation["page"])
+    for name, pages in leads.items():
+        parts.append(f"CE page(s) print {name!r} ({len(pages)} page(s))")
     return "  ".join(parts)
 
 

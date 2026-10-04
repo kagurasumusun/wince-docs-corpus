@@ -351,12 +351,92 @@ FRONT_FIELD = re.compile(r"^(?P<key>[A-Za-z][A-Za-z0-9_.-]*):[ \t]*(?P<value>.*)
 FENCE = re.compile(r"(?s)```([A-Za-z0-9+#-]*)[ \t]*\n(.*?)```")
 
 
+MD_FIELD = re.compile(r"^###\s*-field\s+([A-Za-z_]\w*)\s*$", re.M)
+MD_FIELD_BODY = re.compile(
+    r"^###\s*-field\s+([A-Za-z_]\w*)\s*$\s*\n+(.*?)(?=\n###\s|\n##\s|\Z)",
+    re.M | re.S)
+
+_C_ID = re.compile(r"[A-Za-z_]\w*")
+_C_KEYWORD = {"if", "for", "while", "switch", "return", "sizeof", "defined",
+              "typedef", "struct", "union", "enum", "const", "void", "int",
+              "char", "short", "long", "float", "double", "unsigned", "signed",
+              "bool", "static", "extern", "inline", "register", "volatile",
+              "this", "class", "public", "private", "protected", "virtual"}
+_TAG = re.compile(r"\b(?:struct|union|enum)\s+([A-Za-z_]\w*)")
+# the aliases of a typedef: everything between the closing brace (or the
+# declaration start) and the final semicolon
+_TAIL = re.compile(r"([A-Za-z_\w\s,*]+)\s*;$", re.S)
+
+
+def declared_names(text):
+    """The identifier(s) a C declaration defines, as printed.
+
+    Used to answer "which name does this page's declaration define?" for pages
+    whose title is prose (``AVI Main Header``) -- the answer is the tag and the
+    typedef alias (``MainAVIHeader``), and both are read from the text, never
+    guessed.  A declaration that defines nothing recognisable returns [].
+    """
+    if not text or not text.strip():
+        return []
+    text = text.strip()
+    names = []
+
+    def add(name):
+        name = (name or "").strip()
+        if name and name not in _C_KEYWORD and name not in names:
+            names.append(name)
+
+    if text.startswith("#"):
+        match = re.match(r"#\s*define\s+([A-Za-z_]\w*)", text)
+        if match:
+            add(match.group(1))
+        return names
+    for match in _TAG.finditer(text):
+        add(match.group(1))
+    if re.match(r"^\s*(?:extern\s+|static\s+|inline\s+)*[A-Za-z_]",
+                text) and "(" in text and "}" not in text.split("(", 1)[0]:
+        head = text.split("(", 1)[0]
+        ids = _C_ID.findall(head)
+        if ids:
+            add(ids[-1])
+    for match in re.finditer(
+            r"\(\s*[A-Za-z_]*\s*\*+\s*([A-Za-z_]\w*)\s*\)", text):
+        add(match.group(1))
+    tail = _TAIL.search(text)
+    if tail and "}" in text[:tail.start()]:
+        for part in tail.group(1).split(","):
+            part = part.strip().strip("*").strip()
+            match = re.search(r"([A-Za-z_]\w*)\s*\)?$", part)
+            if match:
+                add(match.group(1))
+    return [name for name in names if not name.startswith("__")]
+
+
+def markdown_struct_fields(text):
+    """sdk-api ``## -struct-fields`` -> [{name, description}], in page order.
+
+    Some sdk-api structure pages document every member but print no syntax
+    block (``AVIMAINHEADER`` is one).  The member names and their order are a
+    documented fact, so they are extracted; the description is kept to the
+    first sentence as the page's own wording.
+    """
+    fields = []
+    for match in MD_FIELD_BODY.finditer(text):
+        name = match.group(1)
+        body = re.sub(r"\s+", " ", match.group(2)).strip()
+        sentence = body.split(". ")[0].strip()
+        fields.append({"name": name, "description": sentence[:300]})
+    return fields
+
+
 def markdown(text):
-    """sdk-api page -> (front matter fields, requirement list, declarations).
+    """sdk-api page -> (fields, requirements, declarations, struct fields).
 
     The front matter is the YAML block the Win32 reference ships
     (``req.header``, ``req.lib``, ``req.dll``, ``api_location``, ...); the
-    declaration is the fenced code block, usually under ``## -syntax``.
+    declaration is the fenced code block, usually under ``## -syntax``, and a
+    structure page may instead (or also) document its members under
+    ``## -struct-fields``.
     """
     fields = {}
     if text.startswith("---"):
@@ -411,7 +491,7 @@ def markdown(text):
                       "spacing": _spacing(body), "role": role,
                       "calling_convention": _calling_convention(body),
                       "kind": _kind_of(body), "members": _members(body)})
-    return fields, reqs, decls
+    return fields, reqs, decls, markdown_struct_fields(text)
 
 
 # ------------------------------------------------------------------ entities

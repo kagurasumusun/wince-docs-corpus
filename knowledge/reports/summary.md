@@ -12,7 +12,9 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 * requirement statements: **156,514**
 * Windows CE constraint sentences: **3,239**
 * entities with a gap record: **14,706** (`reports/gaps.tsv`)
-* relations between definitions: **23,734** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`)
+* structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
+* relations between definitions: **23,738** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints)
+* catalog-only names (the CE TOC names it, no CE page for it is in the corpus): **3** (`reports/catalog-leads.tsv` shows the CE page the name list points at, what that page actually prints, and what the Win32 page documents -- a lead, not a CE definition)
 * requirement values that name no file (a library statement like `Developer Implemented`) stay in `kb/requirements.jsonl` with an empty derived key and are listed in `reports/filtered-values.tsv`
 
 ## What each tree contributed
@@ -342,8 +344,8 @@ The full per-book breakdown (one row per component CHM, mirror folder, ...) is `
 ## Using it
 
 * `kb/entities.jsonl` -- one record per API name; `headers`, `libraries` and `dlls` are the include/link mapping, `syntax_declarations` the evidence for the declaration, `ce_sets` the version scope.
-* `kb/entities.jsonl` `relations` -- the links between definitions (the page's own Unicode/ANSI pair, `Interface::Method`, the CE<->Win32 layer match), each with its page and the printed text; `present` says whether the target exists in this file.
-* `kb/entities.jsonl` `generation_use` -- the derived, rule-based list of generator steps the record can feed (`include-declaration`, `type-definition`, `link-library`, `def-export`, `abi-layout`, `unicode-mapping`, `version-scope`, `ce-restriction`). It says what the record *can* be used for, with the fields that justify it.
+* `kb/entities.jsonl` `relations` -- the links between definitions (the page's own Unicode/ANSI pair, `Interface::Method`, the CE<->Win32 layer match, `ce-name-lead` for a name the CE page prints under a different spelling), each with its page and the printed text; `present` says whether the target exists in this file.
+* `kb/entities.jsonl` `generation_use` -- the derived, rule-based list of generator steps the record can feed (`include-declaration`, `type-definition`, `link-library`, `def-export`, `abi-layout`, `abi-members` when only the documented member list exists, `unicode-mapping`, `version-scope`, `ce-restriction`). It says what the record *can* be used for, with the fields that justify it.
 * `kb/modules.tsv` -- sdk-api module -> entities (the Win32-side grouping; the module comes from each page's UID).
 * `kb/declarations.jsonl` -- the raw C/C++ declarations. Nothing is normalised: an include generator reads the text and the `spacing` flag.
 * `kb/declarations-dotnet.jsonl` -- the signature blocks of the separated .NET layer (`language: managed`), kept out of the C declaration file on purpose.

@@ -46,6 +46,7 @@ import collections
 import concurrent.futures
 import datetime
 import hashlib
+import io
 import json
 import os
 import re
@@ -132,7 +133,7 @@ NAME_SHAPE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def read_ce_api_names():
-    """normalized name -> how Windows CE documents it (catalog/corpus).
+    """normalized name -> (catalog/corpus label, the CE page ids for it).
 
     ``data/reports/ce-api-names.tsv`` is the list the Win32 import is derived
     from (``tools/build-ce-api-names.py``): a name comes from the official TOC
@@ -147,7 +148,8 @@ def read_ce_api_names():
         for line in fh:
             parts = line.rstrip("\n").split("\t")
             if len(parts) >= 4:
-                out[ce_api_names.normalize(parts[0])] = parts[3]
+                pages = [p for p in parts[2].split(";") if p]
+                out[ce_api_names.normalize(parts[0])] = (parts[3], pages)
     return out
 
 
@@ -192,7 +194,8 @@ def parse_page(job):
     fact = {"page_id": page_id, "book": book, "path": path, "title": title,
             "layer": layer, "entity": None, "entity_evidence": None,
             "display": None, "kind": None,
-            "requirements": [], "declarations": [], "constraints": []}
+            "requirements": [], "declarations": [], "constraints": [],
+            "documented_fields": [], "documented_fields_page": None}
     full = os.path.join(ROOT, path)
     try:
         raw = open(full, "rb").read()
@@ -202,7 +205,7 @@ def parse_page(job):
 
     if name.endswith(".md"):
         text = page_parse.decode(raw)
-        fields, reqs, decls = page_parse.markdown(text)
+        fields, reqs, decls, struct_fields = page_parse.markdown(text)
         # The title carries the public name in its own casing; the file name
         # is lower-case and the UID uses the C tag name for structures.
         title_name = page_parse.name_from_markdown_title(fields.get("title", ""))
@@ -215,6 +218,11 @@ def parse_page(job):
         fact["requirements"] = reqs
         fact["declarations"] = decls
         fact["constraints"] = []
+        # sdk-api documents every member of a structure under -struct-fields,
+        # sometimes without printing a syntax block; that member list is a
+        # documented fact (member names and order, no offsets), so it is kept.
+        fact["documented_fields"] = [f["name"] for f in struct_fields]
+        fact["documented_fields_page"] = path if struct_fields else None
         fact["front_matter"] = {k: v for k, v in fields.items()
                                 if k in ("title", "UID", "ms.date",
                                          "req.header", "req.lib", "req.dll")}
@@ -390,6 +398,12 @@ def entity_records(facts, declarations, requirements):
             if record["role"] == "syntax" and record["kind"]:
                 kinds[record["kind"]] += 1
         reqs = req_by_entity[entity]
+        field_pages = [f for f in pages if f["documented_fields"]]
+        documented = []
+        for fact_page in field_pages:
+            for name in fact_page["documented_fields"]:
+                if name not in documented:
+                    documented.append(name)
 
         def values(field):
             return sorted({r["key"] for r in reqs
@@ -437,6 +451,12 @@ def entity_records(facts, declarations, requirements):
             "dotnet_pages": dotnet_pages,
             "name_evidence": sorted({f["entity_evidence"] for f in pages
                                      if f["entity_evidence"]}),
+            # The members a page documents (sdk-api -struct-fields) when the
+            # page prints no declaration body: names and order as documented,
+            # no offsets -- the ABI gap stays visible instead of being filled.
+            "documented_fields": documented,
+            "documented_fields_page": (field_pages[0]["documented_fields_page"]
+                                       if field_pages else None),
             # Set by fold_variants(): a Windows CE page documents the base
             # name (CreateFile) while the Win32 reference is written per
             # spelling (CreateFileW).  ``win32_documented`` says the shared
@@ -594,6 +614,8 @@ def add_relations(entities, requirements, declarations):
             use.append("def-export")
         if kinds & {"struct", "union"} and entity["id"] in members:
             use.append("abi-layout")
+        if entity["documented_fields"] and "abi-layout" not in use:
+            use.append("abi-members")
         if any(r["type"].startswith("unicode-ansi")
                for r in entity["relations"]):
             use.append("unicode-mapping")
@@ -695,6 +717,72 @@ def fold_variants(entities, shared_map):
     return folded
 
 
+def add_ce_name_leads(entities, facts, ce_names):
+    """Catalog-only names: what the Windows CE page actually prints.
+
+    ``data/reports/ce-api-names.tsv`` attributes the CE page ids to the name
+    (that is how the Win32 import knows what to take), but a CE page whose
+    title is prose prints the type under the name *the CE documentation used*
+    -- ``AVIMAINHEADER`` is documented by the CE pages as ``MainAVIHeader``.
+    This pass reads the identifiers out of the page's own syntax block and
+    records them as a ``ce-name-lead`` relation (a lead with its evidence, not
+    a renamed entity: the printed spelling may or may not be an entity here).
+
+    Returns the rows for ``reports/catalog-leads.tsv``.
+    """
+    by_id = {e["id"]: e for e in entities}
+    fact_by_id = collections.defaultdict(list)
+    for fact in facts:
+        fact_by_id[fact["page_id"]].append(fact)
+
+    def printed(fact):
+        names = []
+        for decl in fact["declarations"]:
+            if decl["role"] != "syntax":
+                continue
+            for name in page_parse.declared_names(decl["text"]):
+                if name not in names:
+                    names.append(name)
+        return names
+
+    rows = []
+    for entity in entities:
+        if entity["surface"] != "catalog-only":
+            continue
+        _label, page_ids = ce_names.get(entity["id"], ("", []))
+        for page_id in page_ids:
+            for fact in fact_by_id.get(page_id, []):
+                names = printed(fact)
+                for name in names:
+                    target = ce_api_names.normalize(name)
+                    entity["relations"].append({
+                        "type": "ce-name-lead",
+                        "name": name,
+                        "id": target,
+                        "present": target in by_id,
+                        "evidence": f"data/reports/ce-api-names.tsv attributes "
+                                    f"{page_id} to {entity['name']}; the page "
+                                    f"prints {name}",
+                        "page": fact["path"],
+                    })
+                rows.append((
+                    entity["name"], entity["id"], page_id, fact["path"],
+                    fact["title"], ";".join(names),
+                    sum(1 for d in fact["declarations"]
+                        if d["role"] == "syntax"),
+                    ";".join(entity["win32_pages"]),
+                    ";".join(entity["documented_fields"]),
+                ))
+    for entity in entities:
+        unique = {}
+        for relation in entity["relations"]:
+            unique[(relation["type"], relation["id"], relation["page"],
+                    relation["evidence"])] = relation
+        entity["relations"] = [unique[key] for key in sorted(unique)]
+    rows.sort(key=lambda r: (r[1], r[2]))
+    return rows
+
+
 def classify_surface(entities, shared_map, ce_names):
     """``surface``: where a name belongs in the Windows CE / Win32 split.
 
@@ -720,7 +808,7 @@ def classify_surface(entities, shared_map, ce_names):
             surface = "shared" if entity["win32_documented"] else "ce-only"
         elif entity["variants_of"]:
             surface = "win32-spelling"
-        elif any(ce_names.get(shared.lower(), "").find("catalog") >= 0
+        elif any("catalog" in (ce_names.get(shared.lower(), ("", ()))[0])
                  for page in entity["win32_pages"]
                  for shared in shared_map.get(page, ())):
             surface = "catalog-only"
@@ -752,10 +840,15 @@ def write_jsonl(path, records, compress=True):
     if compress:
         import gzip
         target = path + ".gz"
-        with gzip.open(target, "wt", encoding="utf-8", compresslevel=9) as fh:
-            for record in records:
-                fh.write(json.dumps(record, ensure_ascii=False,
-                                    sort_keys=True) + "\n")
+        # mtime=0: the build is deterministic, so rebuilding unchanged records
+        # must not produce a different file (the gzip header stores the time).
+        with open(target, "wb") as raw:
+            with gzip.GzipFile(filename="", mode="wb", fileobj=raw,
+                               compresslevel=9, mtime=0) as gz:
+                with io.TextIOWrapper(gz, encoding="utf-8", newline="\n") as fh:
+                    for record in records:
+                        fh.write(json.dumps(record, ensure_ascii=False,
+                                            sort_keys=True) + "\n")
         if os.path.exists(path):
             os.remove(path)
         return target
@@ -821,10 +914,15 @@ def build(rows, workers, report_only, plain=False):
     folded = fold_variants(entities, read_shared_map())
     print(f"[kb] {folded:,} Unicode/ANSI variant spelling(s) folded into their "
           "base name", flush=True)
-    surfaces = classify_surface(entities, read_shared_map(),
-                                read_ce_api_names())
+    ce_names = read_ce_api_names()
+    surfaces = classify_surface(entities, read_shared_map(), ce_names)
     print("[kb] surface: " + ", ".join(f"{k} {v:,}"
                                        for k, v in surfaces.most_common()),
+          flush=True)
+    # Runs after classify_surface() and before the entity records are written,
+    # so the lead lands in the entity as a relation (the report is its view).
+    lead_rows = add_ce_name_leads(entities, facts, ce_names)
+    print(f"[kb] {len(lead_rows):,} catalog-only lead(s) with a CE page",
           flush=True)
 
     if report_only:
@@ -883,6 +981,27 @@ def build(rows, workers, report_only, plain=False):
     write_tsv(os.path.join(REPORTS, "surface.tsv"),
               ["surface", "entity", "name", "kinds", "ce_sets", "headers",
                "libraries"], surface_rows)
+
+    # ---- the members a page documents without printing a declaration
+    field_pages = [f for f in facts if f["documented_fields"]]
+    field_pages_no_decl = [f for f in field_pages
+                           if not any(d["role"] == "syntax"
+                                      for d in f["declarations"])]
+    field_rows = []
+    for entity in entities:
+        for order, name in enumerate(entity["documented_fields"], 1):
+            field_rows.append((entity["id"], name, order,
+                               entity["documented_fields_page"] or ""))
+    field_rows.sort(key=lambda r: (r[0], r[2]))
+    write_tsv(os.path.join(KB, "struct-fields.tsv"),
+              ["entity", "field", "order", "page"], field_rows)
+
+    # ---- catalog-only names: what Windows CE actually prints for them
+    write_tsv(os.path.join(REPORTS, "catalog-leads.tsv"),
+              ["name", "entity", "ce_page_id", "ce_page", "ce_page_title",
+               "ce_printed_names", "ce_syntax_blocks", "win32_page",
+               "win32_documented_fields"],
+              lead_rows)
 
     # ---- requirement values that name no file (kept, but not in the maps)
     filtered = collections.defaultdict(collections.Counter)
@@ -989,6 +1108,10 @@ def write_summary(facts, entities, declarations, requirements, constraints,
     per_tree = rolled
     decs_c = sum(1 for r in declarations if r["layer"] != "dotnet")
     surface = collections.Counter(e["surface"] for e in entities)
+    field_pages = [f for f in facts if f["documented_fields"]]
+    field_pages_no_decl = [f for f in field_pages
+                           if not any(d["role"] == "syntax"
+                                      for d in f["declarations"])]
     with_variant_win32 = sum(
         1 for e in entities if e["win32_pages_from_variants"])
 
@@ -1026,10 +1149,22 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"* Windows CE constraint sentences: **{len(constraints):,}**",
         f"* entities with a gap record: **{len(gap_rows):,}** "
         "(`reports/gaps.tsv`)",
+        f"* structures whose members a page documents without printing a "
+        f"declaration body: **{sum(1 for e in entities if e['documented_fields']):,}**"
+        f" ({len(field_pages):,} page(s) carry a member list, "
+        f"{len(field_pages_no_decl):,} of them print no declaration at all; "
+        "`kb/struct-fields.tsv` has the member names and order, one row per "
+        "field -- the pages state no offsets, so none are recorded)",
         f"* relations between definitions: "
         f"**{sum(len(e['relations']) for e in entities):,}** "
         "(`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the "
-        "page's own statement, `interface-method`, `layer`)",
+        "page's own statement, `interface-method`, `layer`, `ce-name-lead` "
+        "for the spelling a CE page prints)",
+        f"* catalog-only names (the CE TOC names it, no CE page for it is in "
+        f"the corpus): **{surface.get('catalog-only', 0):,}** "
+        "(`reports/catalog-leads.tsv` shows the CE page the name list points"
+        " at, what that page actually prints, and what the Win32 page"
+        " documents -- a lead, not a CE definition)",
         "* requirement values that name no file (a library statement like "
         "`Developer Implemented`) stay in `kb/requirements.jsonl` with an "
         "empty derived key and are listed in `reports/filtered-values.tsv`",
@@ -1092,11 +1227,13 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "evidence for the declaration, `ce_sets` the version scope.",
         "* `kb/entities.jsonl` `relations` -- the links between definitions "
         "(the page's own Unicode/ANSI pair, `Interface::Method`, the CE<->Win32 "
-        "layer match), each with its page and the printed text; `present` says "
-        "whether the target exists in this file.",
+        "layer match, `ce-name-lead` for a name the CE page prints under a "
+        "different spelling), each with its page and the printed text; "
+        "`present` says whether the target exists in this file.",
         "* `kb/entities.jsonl` `generation_use` -- the derived, rule-based list "
         "of generator steps the record can feed (`include-declaration`, "
         "`type-definition`, `link-library`, `def-export`, `abi-layout`, "
+        "`abi-members` when only the documented member list exists, "
         "`unicode-mapping`, `version-scope`, `ce-restriction`). It says what "
         "the record *can* be used for, with the fields that justify it.",
         "* `kb/modules.tsv` -- sdk-api module -> entities (the Win32-side "
