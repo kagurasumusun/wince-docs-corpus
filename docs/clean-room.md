@@ -67,8 +67,8 @@ Result on 2026-10-04, with `--all` (every quote, no sampling; the file is
 
 | Invariant | Checked | Violations |
 |-----------|--------:|-----------:|
-| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 342,547 | 0 |
-| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names | 239,161 | 0 |
+| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 342,951 | 0 |
+| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names (declaration texts, requirement values, constraint sentences **and layout-table rows**) | 239,565 | 0 |
 | documented members are on their page — every `documented_fields` name occurs in one of the pages that document the entity (an A/W pair documents one structure) | 5,204 | 0 |
 | sample code stays out of the declarations — no entity's `syntax_declarations` points at a `role: "example"` or `implementation` record | 54,541 | 0 |
 | syntax blocks are declarations — no `role: "syntax"` text is implementation code; code blocks kept as `role: "example"` and never emitted: 4,572 | all declarations | 0 |
@@ -85,6 +85,10 @@ of having it:
 * the member lists of A/W structure pairs were attributed to a single page — the
   union and each field's own page are now recorded
   (`documented_fields_pages`, `documented_field_pages`);
+* pages that had lost their line breaks as well as their spaces were yielding no
+  member list at all (1,491 structure declarations); the reader now reads the
+  members out of the body as printed, which is where the ABI member types come
+  from (`kb/abi-offsets.jsonl` rows are checked by the same quote invariant);
 * the "verbatim" claim for quotes was stronger than what the extraction
   actually does: whitespace is normalised, and the records say so
   (`spacing: "collapsed"` marks the pages that had already lost the spaces

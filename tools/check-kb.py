@@ -47,6 +47,7 @@ FILES = {
     "declaration": "declarations.jsonl.gz",
     "requirement": "requirements.jsonl.gz",
     "constraint": "constraints.jsonl.gz",
+    "abi_offset": "abi-offsets.jsonl.gz",
 }
 REQUIRED = {
     "entity": ("id", "name", "layers", "doc_role", "kinds", "ce_sets",
@@ -64,6 +65,10 @@ REQUIRED = {
                     "implementation", "license", "source"),
     "requirement": ("id", "entity", "page_id", "layer", "field", "label",
                     "value", "key", "evidence", "license", "source"),
+    "abi_offset": ("id", "entity", "page_id", "layer", "member", "offset",
+                   "offset_printed", "size", "size_unit", "size_printed",
+                   "matches_declared_member", "table", "row", "license",
+                   "source"),
     "constraint": ("id", "entity", "page_id", "layer", "kind", "pattern",
                    "text", "license", "source"),
 }
@@ -71,7 +76,8 @@ SURFACES = ("ce-only", "shared", "win32-spelling", "catalog-only", "win32-only")
 ID_RE = {"entity": re.compile(r"^[a-z0-9_]+$"),
          "declaration": re.compile(r"^d[0-9a-f]{12}$"),
          "requirement": re.compile(r"^r[0-9a-f]{12}$"),
-         "constraint": re.compile(r"^c[0-9a-f]{12}$")}
+         "constraint": re.compile(r"^c[0-9a-f]{12}$"),
+         "abi_offset": re.compile(r"^o[0-9a-f]{12}$")}
 
 
 def read(name):
@@ -138,6 +144,21 @@ def main():
                 if implementation not in (True, False):
                     problems.append(f"declaration {rid}: implementation "
                                     f"{implementation!r} is not a bool")
+            if kind == "abi_offset":
+                if not isinstance(record.get("offset"), int) or \
+                        record["offset"] < 0:
+                    problems.append(f"abi_offset {rid}: offset "
+                                    f"{record.get('offset')!r} is not a "
+                                    "non-negative integer")
+                if not str(record.get("row") or "").strip():
+                    problems.append(f"abi_offset {rid}: no row text")
+                if not str(record.get("member") or "").strip():
+                    problems.append(f"abi_offset {rid}: no member name")
+                if record.get("matches_declared_member") not in (True, False):
+                    problems.append(
+                        f"abi_offset {rid}: matches_declared_member "
+                        f"{record.get('matches_declared_member')!r} is not "
+                        "a bool")
             if kind == "constraint" and record.get("kind") not in (
                     "ce-restriction", "abi-note"):
                 problems.append(f"constraint {rid}: kind "
@@ -176,6 +197,15 @@ def main():
                 "syntax_declarations"):
             problems.append(f"entity {entity['id']}: syntax_declarations but "
                             "no ABI roll-up")
+        if abi.get("documented_offsets") and "abi-offset" not in \
+                entity.get("generation_use", ()):
+            problems.append(f"entity {entity['id']}: documented_offsets "
+                            "without the abi-offset generation_use")
+        if not abi.get("documented_offsets") and "abi-offset" in \
+                entity.get("generation_use", ()):
+            problems.append(f"entity {entity['id']}: abi-offset without "
+                            "documented_offsets")
+
         for rid in entity.get("syntax_declarations", ()):  # noqa: B007
             record = records["declaration"].get(rid)
             if record is None:

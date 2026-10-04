@@ -255,7 +255,8 @@ def _calling_convention(text):
 
 def _members(text):
     """Struct/enum member lines, quoted as they appear (no interpretation)."""
-    if not re.search(r"(?i)\b(typedef\s+)?(struct|enum|union)\b", text):
+    if not re.search(r"(?i)\b(typedef\s+)?(struct|enum|union)\b",
+            text) and not re.search(r"(?i)\btypedef\b", text):
         return []
     members = []
     depth = 0
@@ -266,9 +267,37 @@ def _members(text):
         depth += stripped.count("{") - stripped.count("}")
         if depth <= 0 or stripped in ("{", "}"):
             continue
+        if "{" in stripped and "}" in stripped:
+            continue            # a whole nested declaration on one line
+        if stripped.lower().startswith("typedef"):
+            continue            # the declaration line, not a member
         if re.match(r"^[A-Za-z_#].*;\s*$", stripped) or \
                 re.match(r"^[A-Za-z_][A-Za-z0-9_]*\s*(=[^;]*)?,?\s*$", stripped):
             members.append(stripped.rstrip(","))
+    if members:
+        return members
+    # A page can print the body without line breaks too: the archived CE pages
+    # lose the spaces *and* the newlines (``typedef struct X {DWORD a;INT b;} X;``),
+    # and some blocks use literal ``\n`` escapes.  The member declarations are
+    # then the pieces between the semicolons inside the outermost braces, and an
+    # enum's between the commas.  Nothing is completed or reordered; a piece
+    # that carries a brace (a nested declaration) is left out rather than
+    # guessed at.
+    start, end = text.find("{"), text.rfind("}")
+    if start == -1 or end <= start:
+        return members
+    body = text[start + 1:end]
+    if "\n" not in body:   # the page lost the newlines too
+        body = body.replace(chr(92) + "n", " ")
+    for piece in body.split(";"):
+        piece = re.sub(r"\s+", " ", piece).strip()
+        if not piece or "{" in piece or "}" in piece:
+            continue
+        if re.search(r"\benum\b", text) and "," in piece:
+            members.extend(part.strip() for part in piece.split(",")
+                           if part.strip())
+        else:
+            members.append(piece)
     return members
 
 
@@ -342,6 +371,15 @@ ABI_PROSE = (
                               re.I)),
     ("pointer-size", re.compile(
         r"\b(?:32|64)[- ]bit\s+(?:pointers?|addresses)\b", re.I)),
+    # Only a sentence that *defines* the size of a structure counts: "the size
+    # of this structure is 68 bytes", "the structure is 128 bytes in length".
+    # Loose size talk ("a packet size is recommended to be less than 8,000
+    # bytes", "not including the initial 8 bytes") is deliberately not
+    # collected -- it states no size of a structure.
+    ("structure-size", re.compile(
+        r"\bsize\s+of\s+(?:this|the)\s+structure\s+is\s+\d+\s*-?\s*bytes\b"
+        r"|\b(?:this|the)\s+structure\s+is\s+(?:a\s+total\s+of\s+)?"
+        r"\d+\s*-?\s*bytes\b", re.I)),
 )
 
 ABI_FLAGS = (
@@ -371,6 +409,90 @@ def abi_notes(text):
                               "text": sentence})
                 break
     return notes
+
+
+# A second kind of ABI fact a page can carry: a layout *table*.  Many CE pages
+# document a structure or a wire format as ``Offset | Field | Size | …``
+# instead of (or beside) a C declaration.  What the page states is kept as
+# printed -- the offset cell, the field name, the size cell and the whole row --
+# and nothing is computed: no offset is inferred for a row the page gives none
+# for, and no member is invented.
+
+HTML_TABLE = re.compile(r"(?is)<table\b[^>]*>(.*?)</table>")
+OFFSET_COLUMN = re.compile(r"\boffsets?\b", re.I)
+NAME_COLUMN = re.compile(r"\b(?:member|field|name)s?\b", re.I)
+SIZE_COLUMN = re.compile(r"\b(?:size|length)\b", re.I)
+OFFSET_VALUE = re.compile(r"^\s*(0x[0-9A-Fa-f]+|\d+)\s*$")
+SIZE_VALUE = re.compile(r"^\s*(0x[0-9A-Fa-f]+|\d+)\s*(bits?|bytes?)?\s*$", re.I)
+
+
+def _cell_int(text):
+    match = OFFSET_VALUE.match(text or "")
+    if not match:
+        return None
+    value = match.group(1)
+    return int(value, 16) if value.lower().startswith("0x") else int(value)
+
+
+def offset_tables(fragment):
+    """Layout tables: ``Offset | Field | Size | …`` rows, quoted as printed.
+
+    Returns one dict per data row of a table that has both an *Offset* column
+    and a *member/field/name* column: ``member``, ``offset`` (int, derived from
+    the printed cell), ``offset_printed``, ``size``/``size_unit`` when the table
+    prints one, ``table`` (the header cells, as printed) and ``row`` (all cells
+    of the row, as printed -- the evidence a checker re-reads).
+    """
+    out = []
+    for table in HTML_TABLE.finditer(fragment):
+        rows = ROW.findall(table.group(1))
+        if len(rows) < 2:
+            continue
+        headers = [text_of(cell, keep_newlines=False).strip()
+                   for cell in CELL.findall(rows[0])]
+        labels = [header.lower() for header in headers]
+        offset_i = next((i for i, label in enumerate(labels)
+                         if OFFSET_COLUMN.search(label)), None)
+        name_i = next((i for i, label in enumerate(labels)
+                       if NAME_COLUMN.search(label)), None)
+        size_i = next((i for i, label in enumerate(labels)
+                       if SIZE_COLUMN.search(label)), None)
+        if offset_i is None or name_i is None or offset_i == name_i:
+            continue
+        header = " ".join(headers)
+        for row in rows[1:]:
+            cells = [text_of(cell, keep_newlines=False).strip()
+                     for cell in CELL.findall(row)]
+            if len(cells) <= max(offset_i, name_i):
+                continue
+            offset = _cell_int(cells[offset_i])
+            member = cells[name_i]
+            if offset is None or not member:
+                continue
+            size = size_unit = None
+            size_printed = (cells[size_i]
+                            if size_i is not None and len(cells) > size_i
+                            else "")
+            if size_printed:
+                match = SIZE_VALUE.match(size_printed)
+                if match:
+                    value = match.group(1)
+                    size = (int(value, 16) if value.lower().startswith("0x")
+                            else int(value))
+                    size_unit = (match.group(2) or "bytes").lower()
+                    if size_unit.startswith("bit"):
+                        size_unit = "bits"
+            out.append({
+                "member": member,
+                "offset": offset,
+                "offset_printed": cells[offset_i],
+                "size": size,
+                "size_unit": size_unit,
+                "size_printed": size_printed or None,
+                "table": header,
+                "row": " ".join(cells),
+            })
+    return out
 
 
 # ------------------------------------------------- what is implementation code

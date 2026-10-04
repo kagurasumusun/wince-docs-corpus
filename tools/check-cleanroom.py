@@ -57,6 +57,7 @@ FILES = {
     "declaration_dotnet": "declarations-dotnet.jsonl.gz",
     "requirement": "requirements.jsonl.gz",
     "constraint": "constraints.jsonl.gz",
+    "abi_offset": "abi-offsets.jsonl.gz",
 }
 
 # A statement form in a *declaration* would mean the extractor took a line of
@@ -134,7 +135,7 @@ def check_sources(records):
     checked = 0
     missing = []
     for kind in ("declaration", "declaration_dotnet", "requirement",
-                 "constraint"):
+                 "constraint", "abi_offset"):
         for record in records[kind]:
             path = (record.get("source") or {}).get("path")
             checked += 1
@@ -160,7 +161,7 @@ def check_quotes(records, pages, every):
     checked = not_found = 0
     details = []
     for kind, field in (("declaration", "text"), ("requirement", "value"),
-                        ("constraint", "text")):
+                        ("constraint", "text"), ("abi_offset", "row")):
         for record in sample(records[kind], every):
             text = record.get(field) or ""
             if not text.strip():

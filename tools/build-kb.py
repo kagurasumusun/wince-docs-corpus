@@ -202,7 +202,8 @@ def parse_page(job):
             "layer": layer, "entity": None, "entity_evidence": None,
             "display": None, "kind": None,
             "requirements": [], "declarations": [], "constraints": [],
-            "documented_fields": [], "documented_fields_page": None}
+            "documented_fields": [], "documented_fields_page": None,
+            "abi_offsets": []}
     full = os.path.join(ROOT, path)
     try:
         raw = open(full, "rb").read()
@@ -258,6 +259,11 @@ def parse_page(job):
                             for note in page_parse.abi_notes(
                                 page_parse.text_of(fragment,
                                                    keep_newlines=False))]
+    # A layout table (Offset | Field | Size | ...) is a documented ABI fact of
+    # the page, quoted row by row (page_parse.offset_tables).  The sdk-api
+    # markdown pages carry no such table (checked 2026-10-05), so this is the
+    # HTML path only.
+    fact["abi_offsets"] = page_parse.offset_tables(fragment)
     kinds = collections.Counter(d["kind"] for d in fact["declarations"]
                                 if d["role"] == "syntax" and d["kind"])
     if kinds:
@@ -397,6 +403,53 @@ def constraint_records(facts, entity_of):
                 "source": source_of(fact),
             })
     records.sort(key=lambda r: (r["entity"] or "", r["source"]["path"], r["id"]))
+    return records
+
+
+def abi_offset_records(facts, entity_of):
+    """One record per row of a documented layout table (offset + field).
+
+    The row is quoted as printed; ``offset`` is derived from the offset cell and
+    ``matches_declared_member`` says whether the name is one the same page
+    declares in a syntax block.  Nothing is inferred: a member the page gives no
+    offset for has no record, and a row whose offset cell is not a number is
+    dropped (it is still on the page for a reader).
+    """
+    records = []
+    for fact in facts:
+        declared = set()
+        for decl in fact["declarations"]:
+            if decl["role"] != "syntax":
+                continue
+            for member in decl.get("members") or []:
+                _type, name = page_parse.member_parts(member)
+                if name:
+                    declared.add(name.lower())
+        for item in fact.get("abi_offsets") or []:
+            key = hashlib.sha1(
+                (fact["path"] + "\x00" + item["row"]).encode("utf-8")
+            ).hexdigest()[:12]
+            records.append({
+                "id": "o" + key,
+                "entity": entity_of(fact),
+                "page_id": fact["page_id"],
+                "layer": fact["layer"],
+                "member": item["member"],
+                "offset": item["offset"],
+                "offset_printed": item["offset_printed"],
+                "size": item["size"],
+                "size_unit": item["size_unit"],
+                "size_printed": item["size_printed"],
+                "matches_declared_member": re.sub(
+                    r"\[[^\]]*\]$", "", item["member"]).strip().lower()
+                in declared,
+                "table": item["table"],
+                "row": item["row"],
+                "license": license_of(fact["path"]),
+                "source": source_of(fact),
+            })
+    records.sort(key=lambda r: (r["entity"] or "", r["source"]["path"],
+                                r["offset"], r["member"].lower()))
     return records
 
 
@@ -698,6 +751,8 @@ def add_relations(entities, requirements, declarations):
         if abi.get("calling_conventions") or abi.get("flags") or \
                 abi.get("bitfield_members"):
             use.append("abi-note")
+        if abi.get("documented_offsets"):
+            use.append("abi-offset")
         if any(r["type"].startswith("unicode-ansi")
                for r in entity["relations"]):
             use.append("unicode-mapping")
@@ -983,6 +1038,7 @@ def build(rows, workers, report_only, plain=False):
     declarations = declaration_records(facts, entity_of)
     requirements = requirement_records(facts, entity_of)
     constraints = constraint_records(facts, entity_of)
+    abi_offsets = abi_offset_records(facts, entity_of)
     entities = entity_records(facts, declarations, requirements)
 
     # attach constraint ids to entities
@@ -991,13 +1047,30 @@ def build(rows, workers, report_only, plain=False):
         if record["entity"]:
             constraint_ids[record["entity"]].append(record["id"])
     notes_by_entity = collections.Counter()
+    sizes_by_entity = collections.defaultdict(set)
     for record in constraints:
-        if record["entity"] and record.get("kind") == "abi-note":
-            notes_by_entity[record["entity"]] += 1
+        if not record["entity"] or record.get("kind") != "abi-note":
+            continue
+        notes_by_entity[record["entity"]] += 1
+        if record.get("pattern") == "abi: structure-size":
+            # the sentence is the fact; the number is a deterministic read of it
+            match = re.search(r"\b(\d+)\s*-?\s*bytes\b", record["text"])
+            if match:
+                sizes_by_entity[record["entity"]].add(int(match.group(1)))
+    offsets_by_entity = collections.Counter(
+        record["entity"] for record in abi_offsets if record["entity"])
+    offset_pages = collections.defaultdict(set)
+    for record in abi_offsets:
+        if record["entity"]:
+            offset_pages[record["entity"]].add(record["source"]["path"])
     for entity in entities:
         entity["constraints"] = sorted(constraint_ids.get(entity["id"], []))
         if entity.get("abi"):
-            entity["abi"]["notes"] = notes_by_entity.get(entity["id"], 0)
+            abi = entity["abi"]
+            abi["notes"] = notes_by_entity.get(entity["id"], 0)
+            abi["documented_offsets"] = offsets_by_entity.get(entity["id"], 0)
+            abi["offset_pages"] = sorted(offset_pages.get(entity["id"], ()))
+            abi["stated_size_bytes"] = sorted(sizes_by_entity.get(entity["id"], ()))
     add_relations(entities, requirements, declarations)
     folded = fold_variants(entities, read_shared_map())
     print(f"[kb] {folded:,} Unicode/ANSI variant spelling(s) folded into their "
@@ -1014,7 +1087,8 @@ def build(rows, workers, report_only, plain=False):
           flush=True)
 
     if report_only:
-        return facts, entities, declarations, requirements, constraints
+        return (facts, entities, declarations, requirements, constraints,
+                abi_offsets)
 
     compress = not plain
     entities = dedupe_records(entities)
@@ -1031,6 +1105,7 @@ def build(rows, workers, report_only, plain=False):
                 [r for r in declarations if r["layer"] == "dotnet"], compress)
     write_jsonl(os.path.join(KB, "requirements.jsonl"), requirements, compress)
     write_jsonl(os.path.join(KB, "constraints.jsonl"), constraints, compress)
+    write_jsonl(os.path.join(KB, "abi-offsets.jsonl"), abi_offsets, compress)
 
     for field, filename, title in (("header", "headers.tsv", "header"),
                                    ("library", "libraries.tsv", "library"),
@@ -1087,6 +1162,8 @@ def build(rows, workers, report_only, plain=False):
             abi.get("bitfield_members", 0),
             ";".join(abi.get("flags") or []),
             abi.get("notes", 0),
+            abi.get("documented_offsets", 0),
+            ";".join(str(size) for size in abi.get("stated_size_bytes", [])),
             ";".join(entity["headers"]),
             ";".join(entity["modules"]),
             ";".join(entity["ce_sets"]),
@@ -1096,8 +1173,24 @@ def build(rows, workers, report_only, plain=False):
               ["entity", "name", "kinds", "surface", "calling_conventions",
                "declarations_without_convention", "syntax_declarations",
                "declared_members", "typed_members", "bitfield_members",
-               "abi_flags", "abi_notes", "headers", "modules", "ce_sets",
+               "abi_flags", "abi_notes", "documented_offsets",
+               "stated_size_bytes", "headers", "modules", "ce_sets",
                "licenses"], abi_rows)
+
+    # ---- the documented offsets, one row per layout-table row
+    offset_rows = []
+    for record in abi_offsets:
+        offset_rows.append((
+            record["entity"] or "", record["member"], record["offset"],
+            record["offset_printed"], record["size"] if record["size"] is not None else "",
+            record["size_unit"] or "", "yes" if record["matches_declared_member"]
+            else "no", record["source"]["path"], record["page_id"],
+            record["source"]["title"], record["table"], record["row"],
+            record["license"]))
+    write_tsv(os.path.join(KB, "abi-offsets.tsv"),
+              ["entity", "member", "offset", "offset_printed", "size",
+               "size_unit", "matches_declared_member", "page", "page_id",
+               "title", "table", "row", "license"], offset_rows)
 
     # ---- the members a page documents without printing a declaration
     field_pages = [f for f in facts if f["documented_fields"]]
@@ -1196,8 +1289,9 @@ def build(rows, workers, report_only, plain=False):
                "declaration_in_other_sets", "has_win32_page", "example_page"],
               gap_rows)
     write_summary(facts, entities, declarations, requirements, constraints,
-                  per_tree, gap_rows)
-    return facts, entities, declarations, requirements, constraints
+                  abi_offsets, per_tree, gap_rows)
+    return (facts, entities, declarations, requirements, constraints,
+            abi_offsets)
 
 
 def jst_today():
@@ -1207,7 +1301,7 @@ def jst_today():
 
 
 def write_summary(facts, entities, declarations, requirements, constraints,
-                  per_tree, gap_rows):
+                  abi_offsets, per_tree, gap_rows):
     def top(book):
         """learn/windows-ce-5.0/... -> learn/windows-ce-5.0 (the report unit)."""
         parts = book.split("/")
@@ -1236,6 +1330,10 @@ def write_summary(facts, entities, declarations, requirements, constraints,
     abi_flags = collections.Counter(flag for r in syntax_records
                                     for flag in (r.get("abi_flags") or []))
     abi_notes = [c for c in constraints if c.get("kind") == "abi-note"]
+    size_notes = [c for c in abi_notes
+                  if c.get("pattern") == "abi: structure-size"]
+    offset_pages = {r["source"]["path"] for r in abi_offsets}
+    offset_matched = sum(1 for r in abi_offsets if r["matches_declared_member"])
     surface = collections.Counter(e["surface"] for e in entities)
     field_pages = [f for f in facts if f["documented_fields"]]
     field_pages_no_decl = [f for f in field_pages
@@ -1274,10 +1372,22 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"* statements a page makes about alignment/byte order/pointer width: "
         f"**{len(abi_notes):,}** quoted sentences "
         "(`kind: \"abi-note\"` in `kb/constraints.jsonl`)",
-        "* **no page states a field offset**, so the knowledge base holds 0 "
-        "offset facts and invents none (`reports/abi.tsv` is the per-name view; "
-        "member names with their documented order are in "
-        "`kb/struct-fields.tsv` when a page prints no declaration body)",
+        f"* layout tables (`Offset | Field | Size | …`): **{len(abi_offsets):,}** "
+        f"documented offset rows over **{len(offset_pages):,}** page(s), quoted "
+        f"row by row in `kb/abi-offsets.jsonl` (the flat view is "
+        f"`kb/abi-offsets.tsv`, with the page and its title). "
+        f"**{offset_matched:,}** of the rows name a member the same page "
+        "declares in a syntax block; the others are rows whose field the page "
+        "does not declare (wire/packet layouts, array spellings such as "
+        "`dwIndex[0]` where the declaration says `dwOffset`, and string "
+        "literals inside the table) -- each is kept as the page printed it, "
+        "and the column is marked `matches_declared_member`",
+        f"* structure sizes stated in prose: **{len(size_notes):,}** sentences "
+        "(the number is a read of the quoted sentence, never a guess)",
+        "* where a page states **no** offset, none is recorded: for the "
+        "structures whose members a page documents without printing a body, "
+        "`kb/struct-fields.tsv` keeps the names and documented order only, and "
+        "`reports/abi.tsv` says how many offsets a name has (0 for most)",
         "",
         "## Totals",
         "",
@@ -1431,10 +1541,11 @@ def main():
         rows = rows[:args.limit]
     print(f"[kb] parsing {len(rows):,} page(s) with {args.workers} worker(s)",
           flush=True)
-    facts, entities, declarations, requirements, constraints = build(
-        rows, args.workers, args.report, args.plain)
+    (facts, entities, declarations, requirements, constraints,
+     abi_offsets) = build(rows, args.workers, args.report, args.plain)
     print(f"[kb] entities={len(entities):,} declarations={len(declarations):,} "
-          f"requirements={len(requirements):,} constraints={len(constraints):,}",
+          f"requirements={len(requirements):,} constraints={len(constraints):,} "
+          f"abi-offsets={len(abi_offsets):,}",
           flush=True)
     if not args.report:
         print(f"[kb] written to knowledge/ (see knowledge/reports/summary.md)")

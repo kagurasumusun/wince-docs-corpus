@@ -1,15 +1,17 @@
 # Knowledge base coverage
 
-Generated 2026-10-04 by `python3 tools/build-kb.py`.
+Generated 2026-10-05 by `python3 tools/build-kb.py`.
 
 The knowledge base is built from the pages in `corpus/` only: every declaration, requirement and constraint record quotes the page it came from. This report says how much of the corpus is *structured* so far, and what is missing -- it is the collection worklist, not a quality judgement of a document.
 
 ## ABI
 
 * syntax declarations: **90,455**; of those **86,947** print no calling convention (none is guessed) and **3,508** print one (winapi 2,829, stdcall 409, cdecl 263, extern-c 6, fastcall 1)
-* member lines that print a type: **29,227** out of **31,309**; bitfields **126**, `#pragma pack` **4**, `__declspec(align` **4**
-* statements a page makes about alignment/byte order/pointer width: **964** quoted sentences (`kind: "abi-note"` in `kb/constraints.jsonl`)
-* **no page states a field offset**, so the knowledge base holds 0 offset facts and invents none (`reports/abi.tsv` is the per-name view; member names with their documented order are in `kb/struct-fields.tsv` when a page prints no declaration body)
+* member lines that print a type: **35,105** out of **40,285**; bitfields **126**, `#pragma pack` **4**, `__declspec(align` **4**
+* statements a page makes about alignment/byte order/pointer width: **969** quoted sentences (`kind: "abi-note"` in `kb/constraints.jsonl`)
+* layout tables (`Offset | Field | Size | …`): **399** documented offset rows over **58** page(s), quoted row by row in `kb/abi-offsets.jsonl` (the flat view is `kb/abi-offsets.tsv`, with the page and its title). **18** of the rows name a member the same page declares in a syntax block; the others are rows whose field the page does not declare (wire/packet layouts, array spellings such as `dwIndex[0]` where the declaration says `dwOffset`, and string literals inside the table) -- each is kept as the page printed it, and the column is marked `matches_declared_member`
+* structure sizes stated in prose: **5** sentences (the number is a read of the quoted sentence, never a guess)
+* where a page states **no** offset, none is recorded: for the structures whose members a page documents without printing a body, `kb/struct-fields.tsv` keeps the names and documented order only, and `reports/abi.tsv` says how many offsets a name has (0 for most)
 
 ## Totals
 
@@ -17,7 +19,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 * API entities: **24,442** -- CE-specific **18,931**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
 * declarations extracted: **109,770** (C/C++ 78,444 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
 * requirement statements: **156,514**
-* Windows CE constraint sentences: **3,239** and ABI statements quoted from the pages (**964**, `kind: "abi-note"`)
+* Windows CE constraint sentences: **3,239** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
 * entities with a gap record: **14,679** (`reports/gaps.tsv`)
 * structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
 * relations between definitions: **23,738** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints)
