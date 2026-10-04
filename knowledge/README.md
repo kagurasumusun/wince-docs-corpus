@@ -22,7 +22,7 @@ tools/       the pipeline that produces all of the above
 
 | Path | Contents |
 |------|----------|
-| `kb/entities.jsonl.gz` | One record per API name (**24,442** names): kinds, layers, `ce_sets` (the version scope), the CE and Win32 pages, the header/library/DLL/module names the pages state, the ids of its evidence records, its `relations` to other definitions, and `generation_use`. |
+| `kb/entities.jsonl.gz` | One record per API name (**24,442** names): kinds, layers, `surface` (where the name sits in the Windows CE / Win32 split), `ce_sets` (the version scope), the CE and Win32 pages, the header/library/DLL/module names the pages state, the ids of its evidence records, its `relations` to other definitions, its `variants` (Unicode/ANSI spellings), and `generation_use`. |
 | `kb/declarations.jsonl.gz` | Every C/C++ declaration, prototype and struct/enum body found in a CE or Win32 page (**78,442**), **verbatim** — the raw material of the generated `.h` files. |
 | `kb/declarations-dotnet.jsonl.gz` | The signature blocks of the separated .NET layer (**31,326**, `language: "managed"`), kept as evidence of that layer and out of the C declaration file. |
 | `kb/requirements.jsonl.gz` | Every Header / Library / DLL / module / OS-version statement (**156,514**), with the page's own label next to the mapped field — the raw material of the include map and of the import-library/`.def` map. |
@@ -36,6 +36,7 @@ tools/       the pipeline that produces all of the above
 | `reports/coverage.tsv` | One row per entity: what is known about it. |
 | `reports/gaps.tsv` | **The collection worklist**: every reference entity for which a declaration, a header or a library is still missing. |
 | `reports/filtered-values.tsv` | The Header/Library/DLL values that name no file at all (`Library: Developer Implemented`, `Header: Windows 7`). The requirement record keeps the printed value and stays in `requirements.jsonl`, but its derived `key` is empty, so no header file or library is invented for it. |
+| `reports/surface.tsv` | **The Windows CE / Win32 boundary, one row per name**: `surface <TAB> entity <TAB> name <TAB> kinds <TAB> ce_sets <TAB> headers <TAB> libraries` (24,442 rows). Windows CE is the CE-specific surface *plus* the part of Win32 the CE documents share — not the whole Win32 API — and this file is that statement in machine-readable form. |
 | `reports/summary.md` | The same in prose, with the totals. |
 | `schema/*.json` | JSON Schema for the four record types. |
 
@@ -61,14 +62,31 @@ Python).  `python3 tools/build-kb.py --plain` writes them uncompressed.
   `calling_convention` is read from the declaration text (`WINAPI`, `CALLBACK`,
   `_stdcall`, `_cdecl`, `_fastcall`, `extern "C"`) and stays `null` when the page
   does not say -- a missing convention is not guessed.
+* **The Windows CE / Win32 boundary is explicit.**  Windows CE is **not** the
+  whole Win32 API: it is the CE-specific surface plus the part of Win32 that
+  the CE documentation shares, and every entity carries `surface` so a consumer
+  never has to guess which side a record came from:
+
+  | `surface` | names | meaning |
+  |-----------|------:|---------|
+  | `ce-only` | 18,931 | only Windows CE documents the name |
+  | `shared` | 4,353 | Windows CE documents it *and* the Win32 reference does (directly or through an A/W spelling) |
+  | `win32-spelling` | 1,155 | the entity is a Win32 page for an A/W spelling of a documented CE name (`variants_of`) |
+  | `catalog-only` | 3 | only the official CE catalog names it; the Win32 page is the only documentation held, so it is a collection lead, not a CE definition (`AVIMAINHEADER`, `MESSAGE`, `SECTION`) |
+  | `win32-only` | 0 | a Win32 page not tied to a CE name — there is none: every imported Win32 page was taken because a CE document claims its name |
+
 * **A Unicode/ANSI spelling is folded into its base name, on evidence.**
   `CreateSemaphoreW` is a page of its own in the Win32 reference while the CE
   page documents `CreateSemaphore`.  The page's own "Unicode and ANSI"
   statement is the evidence: the variant gets `variants_of`, the base gets the
   variant in `variants`, the variant's Win32 pages in
   `win32_pages_from_variants`, `win32_documented` set and a
-  `unicode-ansi-variant` relation.  A variant whose page states no base is left
-  as its own entity -- nothing is paired by name alone.
+  `unicode-ansi-variant` relation.  `variants_of.basis` says which evidence the
+  link rests on: `page-statement` (the page prints the pair) or `import-rule`
+  (the page was imported for that CE name because it is its A/W spelling, as
+  `data/reports/win32-shared.tsv` records — used only when the page itself
+  states no pair). A spelling with neither is left as its own entity: nothing
+  is paired by name alone.
 * **The .NET layer stays separated here too.**  `corpus/dotnet/` pages are
   parsed like every other page and their records say `layer: "dotnet"`, but
   their signature blocks (C#/VB/C++/JScript) go to
@@ -105,15 +123,21 @@ else.
 ## How this becomes include / def material
 
 The intended pipeline.  The prototype consumer
-(`tools/gen-include-def.py --set <set> --out <dir>`, §7 of
+(`tools/gen-include-def.py --set <set> --out <dir>`, §8 of
 `docs/review-2026-10.ja.md`) already walks it end to end and writes fragments
 into a git-ignored `build/` directory; it is a worklist generator, not a
-finished include/def set:
+finished include/def set.  Because Windows CE is not the whole of Win32, it
+emits only names a CE set documents, prefers the CE set's own declaration, and
+uses a Win32 reference page only as a **marked** fallback when no CE page
+prints one (`borrowed_from: win32-reference` in `manifest.tsv`, a comment in
+the fragment, a note on the `.def` line):
 
 1. **Include map.**  For a version target, take the entities whose `ce_sets`
    include that version, group them by `headers`, and use each entity's
-   `syntax_declarations` as the declaration text.  `report/reports/gaps.tsv`
-   tells you which entities would come out empty.
+   `syntax_declarations` as the declaration text.  Filter on `surface` to keep
+   the CE-specific and shared names apart (`catalog-only`/`win32-spelling`
+   records are never a CE definition).  `reports/gaps.tsv` tells you which
+   entities would come out empty.
 2. **Link map.**  `libraries` and `dlls` per entity give the library/DLL names a
    linker needs (`libraries.tsv` is the inverted view).
 3. **Def/symbol worklist.**  The exports a `.def` file needs are the entities

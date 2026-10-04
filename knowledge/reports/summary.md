@@ -7,12 +7,12 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 ## Totals
 
 * pages parsed: **121,039**
-* API entities: **24,442** (CE-only 19,374; the shared surface documents 4,293 of them directly or through a Unicode/ANSI variant spelling)
+* API entities: **24,442** -- CE-specific **18,931**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
 * declarations extracted: **109,768** (C/C++ 78,442 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
 * requirement statements: **156,514**
 * Windows CE constraint sentences: **3,239**
 * entities with a gap record: **14,706** (`reports/gaps.tsv`)
-* relations between definitions: **23,472** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`)
+* relations between definitions: **23,734** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`)
 * requirement values that name no file (a library statement like `Developer Implemented`) stay in `kb/requirements.jsonl` with an empty derived key and are listed in `reports/filtered-values.tsv`
 
 ## What each tree contributed

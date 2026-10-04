@@ -4,6 +4,12 @@ What this repository is, in one sentence: **the documentation Microsoft
 published for Windows CE and its derivatives, plus the part of the Win32
 documentation that Windows CE shares** — nothing else.
 
+Windows CE is **not** a full Win32: it is the CE-specific surface plus the
+shared part, so "shared" is decided not by resemblance but by a Windows CE
+document using the name.  The knowledge base carries that decision per name
+(`surface` in `knowledge/kb/entities.jsonl`, one row per name in
+`knowledge/reports/surface.tsv`).
+
 The policy is executable: `tools/check-policy.py` fails (exit 1) when a page
 that does not belong appears in `corpus/`. Every collection workflow runs it.
 
@@ -89,13 +95,20 @@ Every imported page carries its CE evidence:
 ce_page_ids`, and `data/reports/win32-shared.tsv` maps each shared name to the
 CE page ids that document it.
 
+The rule is not a guess and not an assumption that Windows CE is Win32: a name
+is in the corpus only when a CE document uses it, and the knowledge base says so
+per name — `surface` in `knowledge/kb/entities.jsonl` (and
+`knowledge/reports/surface.tsv`) marks each entity `ce-only`, `shared`,
+`win32-spelling` (an A/W spelling of a CE name), `catalog-only` (only the CE TOC
+names it — a collection lead) or `win32-only` (of which there are none).
+
 The rule is reviewed from both sides: `tools/build-win32-coverage.py` lists the
 CE-documented names that state a shared-surface header (`Winbase.h`,
 `Winuser.h`, ...) but have no page in `corpus/win32/`
 (`data/reports/win32-coverage.tsv`).  Names the reference documents through a
 Unicode/ANSI variant spelling are not listed -- the knowledge base folds
 `CreateSemaphoreW` onto the CE name `CreateSemaphore` on the page's own
-"Unicode and ANSI" statement. Of the 992 rows that remain, 782 are
+"Unicode and ANSI" statement. Of the 960 rows that remain, 768 are
 message/notification/macro constants (`WM_PAINT`, `CB_GETEDITSEL`, ...) that
 sdk-api has no page for, and the rest are CE-only APIs (`Ce*` RAPI,
 `CommandBar_*`) and Win32 APIs the reference no longer pages (`GetStringType`,
@@ -157,8 +170,10 @@ Checked and found correct during the same review, so it stayed:
    add a folder by hand.
 3. Run `tools/check-policy.py`, `tools/check-corpus.py --report`,
    `tools/dedupe-corpus.py --check`, `tools/audit-sources.py`,
-   `tools/build-index.py`, `tools/build-index-sql.py`,
-   `tools/build-ce-api-names.py`, `tools/build-win32-map.py`,
-   `tools/build-win32-coverage.py`, `tools/build-kb.py` and
-   `tools/check-kb.py`, and commit the refreshed reports with it.  (All five
-   collection workflows do exactly this before they commit.)
+   `tools/build-chm-inventory.py`, `tools/build-index.py`,
+   `tools/build-index-sql.py`, `tools/build-ce-api-names.py`,
+   `tools/build-win32-map.py`, `tools/build-win32-coverage.py`,
+   `tools/build-kb.py` and `tools/check-kb.py`, and commit the refreshed
+   reports with it.  (All five collection workflows do exactly this before they
+   commit; `tools/build-topic-coverage.py --pattern <subject> --out …` measures
+   a whole subject area when a collection question is about one.)

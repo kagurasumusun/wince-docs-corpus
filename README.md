@@ -4,6 +4,14 @@ Offline, page-per-file copy of Microsoft's official Windows CE / Windows
 Embedded documentation: Windows CE 1.0 – 6.0, Windows Embedded Compact 7 and
 Windows Mobile 6.5 — **plus the Win32 documentation Windows CE shares**, so
 that an API question can be answered without breaking the offline copy.
+
+The boundary matters: **Windows CE is not the whole of Win32.**  It is the
+CE-specific surface plus the part of Win32 the CE documentation shares, and the
+corpus is collected that way — a Win32 page is taken only when a Windows CE
+document uses its API name (`docs/COLLECTION-POLICY.md`).  The knowledge base
+states the same boundary per name (`surface`, `knowledge/reports/surface.tsv`:
+18,931 CE-specific names, 4,353 shared with Win32, 1,155 Win32 spelling pages
+for CE names, 3 catalog-only leads, 0 unclaimed Win32 pages).
 The .NET families that shipped in the same documentation namespace
 (.NET Compact Framework, .NET Micro Framework, POS for .NET) are kept as a
 **separate tree**, `corpus/dotnet/`: they document a layer on top of Windows CE,
@@ -86,12 +94,12 @@ the collection rather than part of it).
 | `corpus/win32/api/` | 5,279 Win32 pages for the 5,068 API names Windows CE documents (from `MicrosoftDocs/sdk-api`, pinned by commit). `data/reports/win32-shared.tsv` maps each name to its CE pages, `data/reports/win32-imported.tsv` records each page's CE evidence, `data/reports/win32-coverage.tsv` is the review worklist of that rule, and `tools/find-api.py` looks a name up on both sides. |
 | `corpus/msdn-library/2010-05/<set>/` | 161 Internet Archive copies of MSDN topics (May 2010), filed under the set they duplicate. |
 | `corpus/msdn-library/windows-mobile-6.5/` | 34 Windows Mobile 6.5 topics in MSDN Library (MSHelp) format. |
-| `knowledge/` | The machine-readable knowledge base built from `corpus/` by `tools/build-kb.py`: 24,442 API entities with their header/library/DLL/module statements, relations (including the Unicode/ANSI variant links) and generation use, 78,442 verbatim C/C++ declarations (plus 31,326 managed-code signatures in the separated .NET file), 156,514 requirements and 3,239 CE constraint sentences, every record naming its page. See `knowledge/README.md`. |
+| `knowledge/` | The machine-readable knowledge base built from `corpus/` by `tools/build-kb.py`: 24,442 API entities with their `surface` (**where each name sits in the Windows CE / Win32 split** — 18,931 CE-only, 4,353 shared, 1,155 Win32 spellings of CE names, 3 catalog-only, 0 unclaimed Win32 pages), header/library/DLL/module statements, relations (including the Unicode/ANSI variant links, each with the evidence it rests on) and generation use, 78,442 verbatim C/C++ declarations (plus 31,326 managed-code signatures in the separated .NET file), 156,514 requirements and 3,239 CE constraint sentences, every record naming its page. See `knowledge/README.md`. |
 | `sources/` | The verbatim official media the corpus was extracted from (CHMs, HLP/MVB books, documentation zips, the 41-page CE 2.0 site mirror) and the sdk-api snapshot (`sources/microsoftdocs/`), with a `PROVENANCE.md` per release. Reference material — not part of the corpus text. |
 | `data/` | Derived datasets (catalogs, TOC trees, manifests, per-page API metadata, gap report) and the generated index. See `data/README.md`. |
 | `docs/` | `COLLECTION-POLICY.md` — what belongs in the corpus, the Win32-common rule and the .NET split; `review-2026-10.ja.md` — the 2026-10 review, including the round that removed 16,228 pages and the round that separated the .NET tree, resolved the duplicates and added the knowledge layer. |
 | `queues/` | URL work queues consumed by the harvester (plus out-of-policy candidates that are deliberately not harvested). |
-| `tools/` | Collection: `harvest.py` (queue → corpus), `fetch-upstream.py` (import the CE-shared Win32 pages), `extract-mvb.py`, `extract-chm.py`, `crawl-mirror.py`, `import-media.py` + `iso9660.py`, `import-techshelps.py` / `import-kbarchive.py` / `import-site.py`. Checks and indexes: `check-policy.py` (the collection policy), `check-corpus.py` (integrity/duplicate/source-file check), `dedupe-corpus.py` + `alias_index.py` (resolve duplicates and keep the page ids traceable), `build-index.py`, `build-index-sql.py`, `build-gap-report.py`, `build-ce-api-names.py` + `ce_api_names.py`, `build-win32-map.py`, `build-win32-coverage.py` (the shared-surface review worklist, built from the knowledge base), `find-api.py`, `audit-sources.py` (every artifact under `sources/` against where it ended up). Knowledge: `page_parse.py` (the page-format readers) + `build-kb.py` (writes `knowledge/`) + `check-kb.py` (validates it) + `gen-include-def.py` (the first consumer: writes include/def material into a git-ignored `build/`). |
+| `tools/` | Collection: `harvest.py` (queue → corpus), `fetch-upstream.py` (import the CE-shared Win32 pages), `extract-mvb.py`, `extract-chm.py`, `crawl-mirror.py`, `import-media.py` + `iso9660.py`, `import-techshelps.py` / `import-kbarchive.py` / `import-site.py`. Checks and indexes: `check-policy.py` (the collection policy), `check-corpus.py` (integrity/duplicate/source-file check), `dedupe-corpus.py` + `alias_index.py` (resolve duplicates and keep the page ids traceable), `build-index.py`, `build-index-sql.py`, `build-gap-report.py`, `build-ce-api-names.py` + `ce_api_names.py`, `build-win32-map.py`, `build-win32-coverage.py` (the shared-surface review worklist, built from the knowledge base), `find-api.py`, `audit-sources.py` (every artifact under `sources/` against where it ended up), `build-chm-inventory.py` (every CHM/HLP/MVB under `sources/` against the queue entry that extracts it) and `build-topic-coverage.py` (how much of a subject area, e.g. Platform Builder, the official catalogs cover and the corpus holds). Knowledge: `page_parse.py` (the page-format readers) + `build-kb.py` (writes `knowledge/`) + `check-kb.py` (validates it) + `gen-include-def.py` (the first consumer: writes include/def material into a git-ignored `build/`). |
 | `.github/workflows/` | `harvest.yml` (harvest a queue from `queues/`; runs on demand or whenever `queues/auto-harvest.txt` changes), `crawl-mirror.yml` (crawl the mirror sites in `queues/mirrors.tsv`, twice a day — this is the live collection), `extract-chm.yml` (unpack the documentation CHMs of a media set in `queues/chm-sets.tsv`), `import-media.yml` (fetch a CD image from the Internet Archive and import its documentation, `queues/media.tsv`) and `import-win32.yml` (re-import `corpus/win32/` from the pinned sdk-api commit). All are `workflow_dispatch` — run them from the Actions tab — and all end with `tools/check-corpus.py` and `tools/check-policy.py`. |
 
 ## Corpus conventions
@@ -135,6 +143,9 @@ python3 tools/build-win32-map.py       # data/reports/win32-{shared,imported}.ts
 python3 tools/build-win32-coverage.py  # data/reports/win32-coverage.tsv (review worklist)
 python3 tools/find-api.py CreateFile   # look a name up across CE + Win32
 python3 tools/audit-sources.py         # sources/ artifact -> corpus receipt, or a worklist
+python3 tools/build-chm-inventory.py   # every CHM under sources/ -> the corpus directory it fed
+python3 tools/build-topic-coverage.py --pattern "Platform Builder|OAL|BSP" \
+    --out data/reports/platform-builder-coverage.tsv
 python3 tools/build-kb.py              # knowledge/ (entities, declarations, requirements)
 python3 tools/check-kb.py              # validate knowledge/ ("knowledge OK")
 
@@ -177,6 +188,21 @@ resume check) don't have to rescan ~120k files.
 
 ## Provenance and history
 
+* 2026-10 (the boundary, measured): the Windows CE / Win32 boundary is now
+  explicit in the knowledge base — every entity carries `surface` (CE-only,
+  shared, Win32 spelling of a CE name, catalog-only, or Win32-only; the last is
+  empty: no imported Win32 page lacks a CE name behind it) and every
+  Unicode/ANSI link records its basis (`page-statement` from the page itself,
+  or `import-rule` from `data/reports/win32-shared.tsv`) — and in the
+  generator: a Win32 declaration is used only when no CE set prints one, and
+  then it is marked as the desktop-Windows reference in the fragment, the
+  manifest and the `.def` worklist.  Collection was re-measured instead of
+  assumed: `tools/build-chm-inventory.py` accounts for all 105 help files
+  under `sources/` (20,745 pages) and `tools/build-topic-coverage.py` shows the
+  Platform Builder / OAL / BSP material is complete in the catalogs
+  (662 of 662; the 2026-10 review had claimed it was missing — corrected in
+  `docs/review-2026-10.ja.md`).  1,155 Unicode/ANSI spellings are folded onto
+  their base name (up from 893), 585 of them giving a CE name its Win32 page.
 * 2026-10 (knowledge precision and the first generator): 893 Unicode/ANSI
   variant spellings were folded onto their base name on the pages' own
   evidence, the declaration records gained a derived `calling_convention`,

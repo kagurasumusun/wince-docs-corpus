@@ -69,6 +69,10 @@ def kb_line(record):
     if not record:
         return None
     parts = [f"kb: {record.get('doc_role', '?')}"]
+    if record.get("surface"):
+        # where the name sits in the Windows CE / Win32 split; Windows CE is
+        # the CE-specific surface plus the shared part, not all of Win32
+        parts.append(f"surface: {record['surface']}")
     if record.get("kinds"):
         parts.append("/".join(record["kinds"]))
     if record.get("syntax_declarations"):
@@ -79,6 +83,10 @@ def kb_line(record):
         parts.append("lib: " + ", ".join(record["libraries"][:3]))
     if record.get("ce_sets"):
         parts.append("sets: " + ",".join(record["ce_sets"][:3]))
+    if record.get("variants_of"):
+        variant = record["variants_of"]
+        parts.append(f"{variant.get('kind', '?')} spelling of "
+                     f"{variant.get('name')} ({variant.get('basis')})")
     return "  ".join(parts)
 
 

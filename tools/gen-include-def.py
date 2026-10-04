@@ -31,7 +31,10 @@ Honesty rules (the same ones the knowledge base keeps):
   ``--borrow`` is on, but no text is invented either way;
 * a declaration is borrowed from another corpus set only when the same entity
   is documented there, and the borrowing is recorded per declaration in
-  ``manifest.tsv`` and in the fragment's comment;
+  ``manifest.tsv`` (``borrowed_from``) and in the fragment's comment.  A
+  fallback to a Win32 reference page is used only when no CE set prints the
+  declaration, and it is marked as such: those pages document the shared
+  surface as *desktop* Windows, while Windows CE is not the whole of Win32;
 * a page states a header as ``Wilhelm.h, Otto.h`` -- the declaration is
   written into each of those files, because that is what the page says; a
   value that names no file at all (``Library: Developer Implemented``) is
@@ -120,22 +123,39 @@ def module_of(value):
 
 
 def choose_declarations(entity, declarations_of, target, borrow):
-    """Declarations for one entity, target set first.
+    """Declarations for one entity, best evidence first.
 
-    Returns (chosen, alternatives) where each chosen item is a declaration
-    record.  A declaration of the target set always wins; when the entity is
-    not declared there, one declaration from another set is borrowed (if
-    allowed) and every alternative is reported so a reader can compare.
+    Windows CE is the CE-specific surface plus the Win32 that CE documents
+    share -- it is **not** all of Win32 -- so the order is deliberate:
+
+    1. a declaration printed by the target CE set (the version being built);
+    2. a declaration printed by another CE set in the corpus;
+    3. a declaration from the Win32 reference (the shared surface, documented
+       as desktop Windows: a fallback, and it is *marked*, never passed off as
+       a CE statement).
+
+    Returns (chosen, alternatives, borrowed_from) where ``borrowed_from`` is
+    ``""``, ``"ce-set:<set>"`` or ``"win32-reference"``.  A win32 fallback is
+    only used when the CE pages print no declaration for the entity at all.
     """
     records = [declarations_of[did] for did in entity["syntax_declarations"]
                if did in declarations_of]
     own = [r for r in records if r["source"]["set"].startswith(target)]
-    other = [r for r in records if r not in own]
+    other_ce = [r for r in records
+                if r not in own and r.get("layer") == "ce"]
+    win32 = [r for r in records
+             if r not in own and r not in other_ce and r.get("layer") == "win32"]
+    rest = [r for r in records if r not in own and r not in other_ce
+            and r not in win32]
+    other = other_ce + win32 + rest
     if own:
-        return own, other
-    if borrow and other:
-        return other[:1], other[1:]
-    return [], other
+        return own, other, ""
+    if borrow and other_ce:
+        return other_ce[:1], other_ce[1:] + win32 + rest, \
+            "ce-set:" + other_ce[0]["source"]["set"]
+    if borrow and win32:
+        return win32[:1], win32[1:] + rest, "win32-reference"
+    return [], other, ""
 
 
 def write_includes(out, by_header, generated):
@@ -166,8 +186,19 @@ def write_includes(out, by_header, generated):
                 f" * source: {declaration['source']['path']}",
             ]
             if not declaration["source"]["set"].startswith(generated["set"]):
-                lines.append(f" * borrowed from: {declaration['source']['set']}"
-                             " (this set does not declare it)")
+                if declaration.get("layer") == "win32":
+                    lines.append(
+                        " * borrowed from: the Win32 reference -- NOT from a "
+                        "Windows CE page")
+                    lines.append(
+                        " *   (this name is on the shared surface; the CE "
+                        "documents print no declaration for it, and the Win32 "
+                        "page documents desktop Windows -- verify against the "
+                        "CE SDK)")
+                else:
+                    lines.append(
+                        f" * borrowed from: {declaration['source']['set']} "
+                        "(another CE set declares it)")
             if declaration["spacing"] != "preserved":
                 lines.append(" * NOTE: the page lost the spaces in this "
                              "declaration (spacing: collapsed) -- prefer "
@@ -203,6 +234,8 @@ def write_defs(out, by_module, generated):
         for entity, declaration in entries:
             page = declaration["source"]["path"] if declaration else "-"
             kind = (entity["kinds"] or ["?"])[0]
+            if declaration and declaration.get("layer") == "win32":
+                page += "  [Win32 ref: verify against the CE SDK]"
             lines.append(f"    {entity['name']:32s}; {kind}  {page}")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write("\n".join(lines) + "\n")
@@ -273,18 +306,16 @@ def main():
         lambda: {"entries": [], "stated": set()})
     manifest = []
     skipped = collections.Counter()
-    borrowed = 0
+    borrowed = collections.Counter()
     pages = set()
     exports = 0
 
     for entity in sorted(entities, key=lambda e: e["name"].lower()):
-        chosen, alternatives = choose_declarations(entity, declarations_of,
-                                                   args.target,
-                                                   not args.no_borrow)
+        chosen, alternatives, borrowed_from = choose_declarations(
+            entity, declarations_of, args.target, not args.no_borrow)
         declaration = chosen[0] if chosen else None
-        if declaration and not declaration["source"]["set"].startswith(
-                args.target):
-            borrowed += 1
+        if borrowed_from:
+            borrowed[borrowed_from.split(":")[0]] += 1
         for record in chosen + alternatives:
             pages.add(record["source"]["path"])
 
@@ -318,12 +349,12 @@ def main():
 
         manifest.append((
             entity["id"], entity["name"], ";".join(kinds),
-            ";".join(headers), ";".join(sorted(modules)),
+            entity.get("surface") or "", ";".join(headers),
+            ";".join(sorted(modules)),
             ";".join(entity["dlls"]), ";".join(entity["libraries"]),
             declaration["id"] if declaration else "",
             declaration["source"]["path"] if declaration else "",
-            "borrowed" if declaration and not
-            declaration["source"]["set"].startswith(args.target) else "",
+            borrowed_from,
             ";".join(sorted(entity["ce_sets"])),
         ))
 
@@ -338,20 +369,47 @@ def main():
     link_dir = write_defs(out, by_module, generated)
 
     with open(os.path.join(out, "manifest.tsv"), "w", encoding="utf-8") as fh:
-        fh.write("entity\tname\tkinds\theader_files\tmodules\tdlls\t"
-                 "libraries\tdeclaration\tsource_page\tborrowed\tce_sets\n")
+        fh.write("entity\tname\tkinds\tsurface\theader_files\tmodules\t"
+                 "dlls\tlibraries\tdeclaration\tsource_page\tborrowed_from"
+                 "\tce_sets\n")
         for row in manifest:
             fh.write("\t".join(row) + "\n")
 
+    surfaces = collections.Counter(e.get("surface") for e in entities)
     report = [
         f"# Generation report -- {args.target}",
+        "",
+        "## Boundary: this is Windows CE, not Win32",
+        "",
+        "Windows CE is the CE-specific surface **plus** the part of Win32 that",
+        "Windows CE documents share -- not the whole Win32 API.  Every entity",
+        "below is documented by a Windows CE set (`ce_sets` contains the",
+        "target); the Win32 reference is only ever *evidence* or a marked",
+        "fallback:",
+        "",
+        f"* entities emitted by surface: " + ", ".join(
+            f"`{k}` {v:,}" for k, v in sorted(surfaces.items(), key=lambda kv: str(kv[0]))),
+        f"* declarations that come from a Win32 page: "
+        f"**{borrowed.get('win32-reference', 0):,}** (marked in the fragment "
+        "comments, the manifest and the `.def` worklists)",
+        f"* a Win32-only name (a page the CE documents never claim) is never "
+        "emitted, even with `--include-win32`: that flag only adds entries "
+        "whose CE evidence exists",
+        "",
+        "## What was generated",
         "",
         f"* entities in scope: **{len(entities):,}**",
         f"* declarations written: "
         f"**{sum(len(v) for v in by_header.values()):,}** in "
         f"{len(by_header):,} header fragment(s) ({include_dir})",
-        f"* of those borrowed from another set: **{borrowed:,}** "
-        f"({'allowed' if not args.no_borrow else 'not allowed'})",
+        f"* declarations borrowed from another CE set: "
+        f"**{borrowed.get('ce-set', 0):,}**"
+        f"{' (borrowing switched off)' if args.no_borrow else ''}",
+        f"* declarations taken from the Win32 reference instead (the CE pages "
+        f"print none): **{borrowed.get('win32-reference', 0):,}** -- marked in "
+        "the fragments, the manifest and here: the Win32 pages document the "
+        "shared surface as desktop Windows, so each one must be checked "
+        "against the CE SDK",
         f"* EXPORTS worklists: {len(by_module):,} module file(s) in {link_dir}, "
         f"**{exports:,} export line(s)** "
         "(functions and callbacks only; structures, typedefs and C++ methods "
@@ -379,7 +437,8 @@ def main():
 
     print(f"entities {len(entities):,}  header fragments {len(by_header):,}  "
           f"module files {len(by_module):,}  export lines {exports:,}  "
-          f"borrowed {borrowed:,}")
+          f"borrowed ce-set {borrowed.get('ce-set', 0):,} / win32 "
+          f"{borrowed.get('win32-reference', 0):,}")
     print(f"written to {out} (see report.md)")
     return 0
 

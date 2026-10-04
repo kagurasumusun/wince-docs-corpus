@@ -13,6 +13,9 @@ as `invalid` and skipped.
 | `third-party-sources.md` | — | Which mirrors are accepted as sources (and which are not), with the robots/usage notes. |
 | `auto-harvest.txt` | 1 | Not a URL queue: the budget the daily automatic run reads (`<queue> <pages per run> [batch]`, or `off`). See below. |
 | `rejected-third-party-sources.txt` | 4 | Candidate sources that are **not** harvested: the collection policy is official Microsoft documentation only. Kept as a record of what was deliberately left out (a GitHub mirror, two vendor/community sites and one blog post). |
+| `chm-sets.tsv` | 2 | Not a URL queue: which CHMs under `sources/` are extracted into which corpus directory (`tools/extract-chm.py`, `.github/workflows/extract-chm.yml`). `python3 tools/build-chm-inventory.py` lists every help file under `sources/` against this table, so a CHM that no entry covers shows up instead of being forgotten. |
+| `media.tsv` | 2 | Not a URL queue: the CD/DVD images to fetch from the Internet Archive and import (`tools/import-media.py`, `.github/workflows/import-media.yml`), one row per medium with its exclude regex. |
+| `site-sets.tsv` | 4 | Not a URL queue: the plain-HTML page trees under `sources/` that are neither a CHM set nor a CD image (the CE 2.0 developer site, the CE 4.2/5.0/6.0 release notes), with the regex that refuses the site's shop-window pages (`tools/import-site.py`; every refusal is written to `data/reports/site-excluded.tsv`). |
 
 ## What `--limit` counts
 
@@ -46,8 +49,10 @@ editing sandbox has no route to either, so queues are run on a GitHub runner by
 `.github/workflows/harvest.yml`:
 
 1. **Actions → Windows CE Documentation Harvester → Run workflow**
-2. *Use workflow from*: the branch that holds the reorganized tree
-   (`arena/01a0fa05-wince-docs-corpus` until it is merged into `master`).
+2. *Use workflow from*: the branch that holds the reorganized tree and the
+   knowledge base (`arena/01a103df-wince-docs-corpus` until it is merged into
+   `master`).  A workflow run commits to the branch it was dispatched on, so
+   pick the branch whose corpus/data/knowledge you mean to extend.
 3. `queue` = the file name, `limit` = `0` for all (or a cap, see below),
    `batch` = 500, `dry_run` unchecked.
 

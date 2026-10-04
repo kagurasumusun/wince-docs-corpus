@@ -61,6 +61,8 @@ CORPUS = os.path.join(ROOT, "corpus")
 INDEX = os.path.join(ROOT, "data", "index", "INDEX.tsv")
 CATALOG_DIR = os.path.join(ROOT, "data", "catalogs")
 WIN32_MAP = os.path.join(ROOT, "data", "reports", "win32-imported.tsv")
+SHARED_MAP = os.path.join(ROOT, "data", "reports", "win32-shared.tsv")
+CE_API_NAMES = os.path.join(ROOT, "data", "reports", "ce-api-names.tsv")
 KNOWLEDGE = os.path.join(ROOT, "knowledge")
 KB = os.path.join(KNOWLEDGE, "kb")
 REPORTS = os.path.join(KNOWLEDGE, "reports")
@@ -123,6 +125,53 @@ def read_win32_map():
             if len(parts) == 6:
                 out[parts[0]] = (parts[1], parts[2], parts[3],
                                  parts[4].split(";"), parts[5].split(";"))
+    return out
+
+
+NAME_SHAPE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def read_ce_api_names():
+    """normalized name -> how Windows CE documents it (catalog/corpus).
+
+    ``data/reports/ce-api-names.tsv`` is the list the Win32 import is derived
+    from (``tools/build-ce-api-names.py``): a name comes from the official TOC
+    export of a harvested CE set (``catalog``) or was mined from the pages of a
+    CE set that has no catalog (``corpus``).
+    """
+    out = {}
+    if not os.path.isfile(CE_API_NAMES):
+        return out
+    with open(CE_API_NAMES, encoding="utf-8") as fh:
+        next(fh, None)
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) >= 4:
+                out[ce_api_names.normalize(parts[0])] = parts[3]
+    return out
+
+
+def read_shared_map():
+    """win32 corpus path -> the shared names it was imported under.
+
+    ``data/reports/win32-shared.tsv`` is the audit trail of the Win32 import
+    rule: each row is a name Windows CE documents, with the sdk-api pages that
+    were imported for it -- including the ``A``/``W`` spelling of the CE name
+    (``CreateFileW`` for the CE name ``CreateFile``).  Reading it back is how a
+    Win32 spelling page is linked to its CE base when the page itself prints no
+    "Unicode and ANSI" statement.
+    """
+    out = collections.defaultdict(set)
+    if not os.path.isfile(SHARED_MAP):
+        return out
+    with open(SHARED_MAP, encoding="utf-8") as fh:
+        next(fh, None)
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) == 4:
+                for page in parts[3].split(";"):
+                    if page:
+                        out[page].add(parts[0])
     return out
 
 
@@ -396,6 +445,9 @@ def entity_records(facts, declarations, requirements):
             "variants": [],
             "win32_pages_from_variants": [],
             "win32_documented": bool(win32_pages),
+            # Set by classify_surface(): ce-only / shared / win32-spelling /
+            # win32-only -- Windows CE is a part of Win32, not all of it.
+            "surface": None,
             "headers": values("header"),
             "modules": values("module"),
             "libraries": values("library"),
@@ -553,29 +605,59 @@ def add_relations(entities, requirements, declarations):
         entity["relations"].sort(key=lambda r: (r["type"], r["id"]))
 
 
-def fold_variants(entities):
+def fold_variants(entities, shared_map):
     """Link a variant spelling (``CreateSemaphoreW``) to its base name.
 
     Win32 reference pages are written per spelling while the Windows CE pages
-    document the base name, so one API lived in two entities.  The pages
-    themselves state the pair (``CreateSemaphoreW (Unicode) and
-    CreateSemaphoreA (ANSI)``), and ``add_relations`` already recorded that as
-    a ``unicode-ansi-base`` relation on the variant.  This pass uses exactly
-    that statement -- nothing is guessed, and a variant whose page states no
-    base stays on its own:
+    document the base name, so one API lived in two entities.  A link is made
+    only on evidence, and ``variants_of.basis`` says which evidence it was:
 
-    * the variant gets ``variants_of`` (base name, kind, evidence, page);
+    * ``page-statement`` -- the variant's own page prints the pair
+      (``CreateSemaphoreW (Unicode) and CreateSemaphoreA (ANSI)``), which
+      ``add_relations`` recorded as a ``unicode-ansi-base`` relation;
+    * ``import-rule`` -- the page was imported for the CE name because it is
+      that name's ``A``/``W`` spelling (``data/reports/win32-shared.tsv`` says
+      so), and the CE name is in the corpus.  Used only when the page itself
+      states no pair, and recorded with the report as its evidence.
+
+    Nothing else is paired: a variant that neither states a base nor was
+    imported under one stays on its own.
+
+    * the variant gets ``variants_of`` (base name, kind, basis, evidence, page);
     * the base gets the variant in ``variants``, the variant's Win32 pages in
       ``win32_pages_from_variants`` and ``win32_documented`` set, so the shared
       surface is visible under the name the CE reader knows.
     """
     by_id = {e["id"]: e for e in entities}
+
+    def fold(entity, base, kind, basis, evidence, page):
+        entity["variants_of"] = {
+            "name": base["name"], "id": base["id"], "kind": kind,
+            "basis": basis, "evidence": evidence, "page": page,
+        }
+        pages = sorted(set(entity["win32_pages"]))
+        base["variants"].append({
+            "name": entity["name"], "id": entity["id"], "kind": kind,
+            "basis": basis, "win32_pages": pages,
+            "evidence": evidence, "page": page,
+        })
+        base["win32_pages_from_variants"] += pages
+        if pages:
+            base["win32_documented"] = True
+            base["relations"].append({
+                "type": "unicode-ansi-variant",
+                "name": entity["name"], "id": entity["id"], "present": True,
+                "evidence": evidence, "page": pages[0],
+            })
+
     folded = 0
     for entity in entities:
         name = entity["name"]
         if entity["variants_of"] or len(name) < 2 or name[-1] not in "AW" \
-                or not name[:-1].isalnum():
+                or not NAME_SHAPE.match(name[:-1]):
             continue
+        kind = "unicode" if name[-1] == "W" else "ansi"
+        # (a) the page's own statement, recorded by add_relations()
         for relation in entity["relations"]:
             if relation["type"] != "unicode-ansi-base" \
                     or not relation["present"]:
@@ -584,32 +666,69 @@ def fold_variants(entities):
             if not base or base is entity \
                     or base["name"].lower() != name[:-1].lower():
                 continue
-            kind = "unicode" if name[-1] == "W" else "ansi"
-            entity["variants_of"] = {
-                "name": base["name"], "id": base["id"], "kind": kind,
-                "evidence": relation["evidence"], "page": relation["page"],
-            }
-            pages = sorted(set(entity["win32_pages"]))
-            base["variants"].append({
-                "name": name, "id": entity["id"], "kind": kind,
-                "win32_pages": pages,
-                "evidence": relation["evidence"], "page": relation["page"],
-            })
-            base["win32_pages_from_variants"] += pages
-            if pages:
-                base["win32_documented"] = True
-                base["relations"].append({
-                    "type": "unicode-ansi-variant",
-                    "name": name, "id": entity["id"], "present": True,
-                    "evidence": relation["evidence"], "page": pages[0],
-                })
+            fold(entity, base, kind, "page-statement", relation["evidence"],
+                 relation["page"])
             folded += 1
             break
+        if entity["variants_of"]:
+            continue
+        # (b) the import rule: this Win32 page was taken for a CE name because
+        #     it is that name's A/W spelling, and the CE name is documented.
+        for page in entity["win32_pages"]:
+            for shared in sorted(shared_map.get(page, ())):
+                if shared.lower() != name[:-1].lower():
+                    continue
+                base = by_id.get(shared.lower())
+                if not base or base is entity or not base["ce_pages"]:
+                    continue
+                fold(entity, base, kind, "import-rule",
+                     f"data/reports/win32-shared.tsv imports {page} under the "
+                     f"Windows CE name {base['name']}", page)
+                folded += 1
+                break
+            if entity["variants_of"]:
+                break
     for entity in entities:
         entity["win32_pages_from_variants"] = sorted(
             set(entity["win32_pages_from_variants"]))
         entity["variants"].sort(key=lambda v: v["name"])
     return folded
+
+
+def classify_surface(entities, shared_map, ce_names):
+    """``surface``: where a name belongs in the Windows CE / Win32 split.
+
+    Windows CE is **not** the whole Win32 API: it is the CE-specific surface
+    plus the part of Win32 the CE documents share.  This field makes that
+    explicit per name, so a generator never has to guess which side a record
+    came from:
+
+    * ``ce-only``      -- only Windows CE documents the name;
+    * ``shared``       -- Windows CE documents it and the Win32 reference does
+      too (directly or through an A/W spelling);
+    * ``win32-spelling`` -- the entity is a Win32 page for an A/W spelling of a
+      documented CE name (it carries ``variants_of``);
+    * ``catalog-only`` -- the official Windows CE catalog lists the name, but
+      no CE page for it is in the corpus yet: the Win32 page is the only
+      documentation held, so this is a collection lead, not a CE definition;
+    * ``win32-only``   -- a Win32 page the corpus holds that is not tied to a
+      Windows CE name at all; it is *not* part of the Windows CE surface.
+    """
+    counts = collections.Counter()
+    for entity in entities:
+        if entity["ce_pages"]:
+            surface = "shared" if entity["win32_documented"] else "ce-only"
+        elif entity["variants_of"]:
+            surface = "win32-spelling"
+        elif any(ce_names.get(shared.lower(), "").find("catalog") >= 0
+                 for page in entity["win32_pages"]
+                 for shared in shared_map.get(page, ())):
+            surface = "catalog-only"
+        else:
+            surface = "win32-only"
+        entity["surface"] = surface
+        counts[surface] += 1
+    return counts
 
 
 # ------------------------------------------------------------------- outputs
@@ -699,8 +818,14 @@ def build(rows, workers, report_only, plain=False):
     for entity in entities:
         entity["constraints"] = sorted(constraint_ids.get(entity["id"], []))
     add_relations(entities, requirements, declarations)
-    print(f"[kb] {fold_variants(entities):,} Unicode/ANSI variant spelling(s) "
-          "folded into their base name", flush=True)
+    folded = fold_variants(entities, read_shared_map())
+    print(f"[kb] {folded:,} Unicode/ANSI variant spelling(s) folded into their "
+          "base name", flush=True)
+    surfaces = classify_surface(entities, read_shared_map(),
+                                read_ce_api_names())
+    print("[kb] surface: " + ", ".join(f"{k} {v:,}"
+                                       for k, v in surfaces.most_common()),
+          flush=True)
 
     if report_only:
         return facts, entities, declarations, requirements, constraints
@@ -748,6 +873,16 @@ def build(rows, workers, report_only, plain=False):
                       sum(1 for e in entities if e["id"] in ids and e["libraries"]),
                       sum(1 for e in entities if e["id"] in ids and e["dlls"]))
                      for book, ids in entity_of_set.items()))
+
+    # ---- the Windows CE / Win32 split, one row per name
+    surface_rows = [(e["surface"], e["id"], e["name"], ";".join(e["kinds"]),
+                     ";".join(e["ce_sets"]), ";".join(e["headers"]),
+                     ";".join(e["libraries"] or e["dlls"]))
+                    for e in entities]
+    surface_rows.sort(key=lambda r: (r[0], r[2].lower()))
+    write_tsv(os.path.join(REPORTS, "surface.tsv"),
+              ["surface", "entity", "name", "kinds", "ce_sets", "headers",
+               "libraries"], surface_rows)
 
     # ---- requirement values that name no file (kept, but not in the maps)
     filtered = collections.defaultdict(collections.Counter)
@@ -853,8 +988,9 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         rolled[top(book)].update(counts)
     per_tree = rolled
     decs_c = sum(1 for r in declarations if r["layer"] != "dotnet")
-    ce_entities = [e for e in entities if e["layers"] == ["ce"]]
-    shared = [e for e in entities if e["win32_documented"] and e["ce_pages"]]
+    surface = collections.Counter(e["surface"] for e in entities)
+    with_variant_win32 = sum(
+        1 for e in entities if e["win32_pages_from_variants"])
 
     def pct(part, whole):
         return f"{part:,} ({100 * part // whole if whole else 0}%)"
@@ -874,10 +1010,14 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "## Totals",
         "",
         f"* pages parsed: **{len(facts):,}**",
-        f"* API entities: **{len(entities):,}** "
-        f"(CE-only {len(ce_entities):,}; the shared surface documents "
-        f"{len(shared):,} of them directly or through a Unicode/ANSI variant "
-        f"spelling)",
+        f"* API entities: **{len(entities):,}** -- CE-specific "
+        f"**{surface.get('ce-only', 0):,}**, documented by Windows CE and the "
+        f"Win32 reference alike **{surface.get('shared', 0):,}**, Win32 pages "
+        f"for a CE name's A/W spelling **{surface.get('win32-spelling', 0):,}**, "
+        f"named by the CE catalog only **{surface.get('catalog-only', 0):,}**, "
+        f"unclaimed Win32 pages **{surface.get('win32-only', 0):,}** "
+        f"(`reports/surface.tsv`; {with_variant_win32:,} names have a Win32 "
+        "page through a variant spelling)",
         f"* declarations extracted: **{len(declarations):,}** "
         f"(C/C++ {decs_c:,} in `kb/declarations.jsonl`, managed-code "
         f"signatures {len(declarations) - decs_c:,} in "

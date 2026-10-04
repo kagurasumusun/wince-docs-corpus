@@ -48,7 +48,7 @@ REQUIRED = {
                "libraries", "dlls", "modules", "relations", "generation_use",
                "declarations", "syntax_declarations", "requirements",
                "constraints", "noise", "variants_of", "variants",
-               "win32_pages_from_variants", "win32_documented"),
+               "win32_pages_from_variants", "win32_documented", "surface"),
     "declaration": ("id", "entity", "page_id", "layer", "kind", "role",
                     "language", "markup", "spacing", "calling_convention",
                     "text", "members", "source"),
@@ -57,6 +57,7 @@ REQUIRED = {
     "constraint": ("id", "entity", "page_id", "layer", "pattern", "text",
                    "source"),
 }
+SURFACES = ("ce-only", "shared", "win32-spelling", "catalog-only", "win32-only")
 ID_RE = {"entity": re.compile(r"^[a-z0-9_]+$"),
          "declaration": re.compile(r"^d[0-9a-f]{12}$"),
          "requirement": re.compile(r"^r[0-9a-f]{12}$"),
@@ -130,6 +131,24 @@ def main():
         if variant and variant.get("id") not in records["entity"]:
             problems.append(f"entity {entity['id']}: variants_of "
                             f"{variant.get('id')} is not an entity")
+        if variant and variant.get("basis") not in ("page-statement",
+                                                    "import-rule"):
+            problems.append(f"entity {entity['id']}: variants_of basis "
+                            f"{variant.get('basis')!r} is not a known basis")
+        surface = entity.get("surface")
+        if surface not in SURFACES:
+            problems.append(f"entity {entity['id']}: surface {surface!r}")
+        elif surface == "shared" and not (entity.get("win32_pages") or
+                                          entity.get("win32_pages_from_variants")):
+            problems.append(f"entity {entity['id']}: surface shared but no "
+                            "Win32 page")
+        elif surface in ("ce-only",) and entity.get("win32_documented"):
+            problems.append(f"entity {entity['id']}: surface ce-only but "
+                            "win32_documented")
+        elif surface in ("win32-spelling", "catalog-only", "win32-only") and \
+                entity.get("ce_pages"):
+            problems.append(f"entity {entity['id']}: surface {surface} but the "
+                            "entity has CE pages")
         for field, kind in (("declarations", "declaration"),
                             ("syntax_declarations", "declaration"),
                             ("requirements", "requirement"),
@@ -152,6 +171,12 @@ def main():
                     relation["id"] not in records["entity"]:
                 problems.append(f"entity {entity['id']}: relation to "
                                 f"{relation['id']} says present but is missing")
+
+    surfaces = collections.Counter(e.get("surface")
+                                   for e in records["entity"].values())
+    print("\nsurface (Windows CE is the CE-specific surface + the Win32 that "
+          "CE documents share, not all of Win32): " +
+          ", ".join(f"{name} {surfaces.get(name, 0):,}" for name in SURFACES))
 
     variants = {e["id"]: e for e in records["entity"].values()
                 if e.get("variants_of")}
