@@ -291,10 +291,13 @@ def parse_page(job):
                 fact["entity_evidence"] = "page-title"
     if not fact["entity"]:
         # ``ITimerService::CreateTimer Method`` prints the parent and the
-        # member.  ``strcpy, wcscpy`` prints both names.  Attach a name only
-        # when a syntax block on the page prints it.  A title that does not
-        # name the parent (``absoluteChildNumber Method``) is not in this
-        # list, and no interface is invented for it.
+        # member.  ``strcpy, wcscpy`` prints both names.
+        # ``MSMQMessage.Priority`` prints both, with a dot.
+        # ``IXRCollection<In_T, Out_T>::Insert`` prints both, including the
+        # template arguments.  Attach a name only when a syntax block on the
+        # page declares it.  A title that does not name the parent
+        # (``absoluteChildNumber Method``) is not in this list, and no
+        # interface is invented for it.
         named = [name for name in page_parse.documented_title_names(title)
                  if any(d["role"] == "syntax" and
                         page_parse.syntax_declares_name(name, d["text"])
@@ -771,8 +774,9 @@ def add_relations(entities, requirements, declarations):
     * ``unicode-ansi``  -- the page's own ``Unicode and ANSI`` requirement names
       the pair (``CreateFileW (Unicode) and CreateFileA (ANSI)``), so the two
       spellings are linked, not guessed;
-    * ``interface-method`` -- the name is printed as ``Interface::Method``, so
-      the method belongs to that interface's vtable;
+    * ``interface-method`` -- the name is printed as ``Interface::Method``
+      or ``MSMQMessage.Priority``, so the member belongs to the parent the
+      title printed;
     * ``layer`` -- the same name is documented both by Windows CE and by the
       Win32 reference (the pages are already listed in the record; this states
       the relation for a consumer that only reads ``relations``).
@@ -846,8 +850,10 @@ def add_relations(entities, requirements, declarations):
 
     for entity in entities:
         name = entity["name"]
-        if "::" in name:
-            interface = name.split("::", 1)[0]
+        # The title printed the parent.  A dot is the spelling
+        # ``MSMQMessage.Priority`` uses; it is not rewritten to ``::``.
+        interface = page_parse.printed_parent(name)
+        if interface:
             entity["relations"].append({
                 "type": "interface-method",
                 "name": interface,

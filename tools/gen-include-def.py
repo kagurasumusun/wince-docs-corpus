@@ -57,7 +57,10 @@ Honesty rules (the same ones the knowledge base keeps):
   ``coredll.dll`` in the DLL field) and the worklist file is named after the
   module both spellings refer to, with the spellings it was stated as printed
   at the top.  Only functions and callbacks become export lines -- a struct,
-  a typedef or a C++ method (``Interface::Method``) is not an export;
+  a typedef or a C++/COM member (``Interface::Method``,
+  ``MSMQMessage.Priority``) is not an export.  The page printed
+  ``get_Priority`` inside the quoted prototype; that quote is not split
+  into an export name the page did not print as one;
 * everything the documents do not state is left out and listed in
   ``report.md``: no header, no declaration, no library -> a gap to collect,
   never a guess;
@@ -628,11 +631,13 @@ def main():
         if unstated:
             skipped["library stated but naming no file"] += unstated
 
-        # A C++ method (``Interface::Method``) is not an export, and only the
-        # kinds a linker exports become EXPORTS lines.
+        # A C++/COM member (``Interface::Method``, ``MSMQMessage.Priority``)
+        # is not an export: the page did not print that spelling as a linker
+        # name.  Only the kinds a linker exports become EXPORTS lines.
         kinds = entity["kinds"] or []
         exportable = bool(kinds and kinds[0] in EXPORTABLE and
                           "::" not in entity["name"] and
+                          "." not in entity["name"] and
                           " " not in entity["name"])
         for module, stated in modules.items():
             worklist = by_module[module]

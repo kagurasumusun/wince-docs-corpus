@@ -1295,13 +1295,55 @@ def _title_core(title):
     return text
 
 
+# ``MSMQMessage.Priority`` prints the parent and the member with a dot, the
+# same fact as ``Interface::Member``.  ``winbase.h`` is a file name, not a
+# member, so a trailing extension is not this form.
+_DOTTED_MEMBER = re.compile(r"^([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)$")
+_DOTTED_EXTENSION = {
+    "h", "hpp", "hh", "hxx", "lib", "dll", "htm", "html", "txt", "idl",
+    "inc", "def",
+}
+# ``IXRCollection<In_T, Out_T>::Insert`` prints the parent, including the
+# template arguments, and the member.  The stored title may still have the
+# HTML escapes (``&lt;``); the page printed the brackets.
+_TEMPLATED_MEMBER = re.compile(
+    r"^([A-Za-z_][\w]*<[^<>]+>::[A-Za-z_][\w]*)$")
+
+
+def _declared_member(name):
+    """The member a qualified title names, or the name itself."""
+    text = name or ""
+    if "::" in text:
+        return text.rsplit("::", 1)[-1]
+    if _DOTTED_MEMBER.match(text):
+        return text.split(".", 1)[1]
+    return text
+
+
+def printed_parent(name):
+    """The parent a qualified name prints, or empty.
+
+    ``ITimerService::CreateTimer`` and ``MSMQMessage.Priority`` both print
+    one.  The spelling is kept (``::`` is not rewritten to a dot, or the
+    reverse).  A file name such as ``winbase.h`` is not a parent.
+    """
+    text = name or ""
+    if "::" in text:
+        return text.split("::", 1)[0]
+    if _DOTTED_MEMBER.match(text) and text.split(".", 1)[1].lower() not in _DOTTED_EXTENSION:
+        return text.split(".", 1)[0]
+    return ""
+
+
 def documented_title_names(title):
     """Names a title prints, when the title is itself the list of APIs.
 
     ``CreateFile`` and ``GPE::AllocSurface`` are one name.
     ``ITimerService::CreateTimer Method`` prints the parent and the member.
     ``abort Method (DOMDocument)`` does too.  ``strcpy, wcscpy`` prints both.
-    ``absoluteChildNumber Method`` does not name a parent, and
+    ``MSMQMessage.Priority`` prints the parent and the member with a dot.
+    ``IXRCollection<In_T, Out_T>::Insert`` prints both, template arguments
+    included.  ``absoluteChildNumber Method`` does not name a parent, and
     ``IContact Properties`` is not a list of identifiers, so both are empty.
     Nothing is completed or invented.
     """
@@ -1315,6 +1357,13 @@ def documented_title_names(title):
     qualified = interface_member_title(title)
     if qualified:
         return [qualified]
+    printed = _html.unescape(text)
+    templated = _TEMPLATED_MEMBER.match(printed)
+    if templated:
+        return [templated.group(1)]
+    dotted = _DOTTED_MEMBER.match(text)
+    if dotted and dotted.group(2).lower() not in _DOTTED_EXTENSION:
+        return [text]
     parts = [part.strip() for part in text.split(",")]
     if 2 <= len(parts) <= 4 and all(_IDENT.match(part) for part in parts):
         return parts
@@ -1336,7 +1385,7 @@ def syntax_declares_name(name, text):
         return True
     if re.match(r"(?m)\s*#\s*define\b", body):
         return True
-    member = name.split("::")[-1]
+    member = _declared_member(name)
     return re.search(
         r"(?i)(?<![A-Za-z0-9_])" + re.escape(member) + r"\s*;",
         body) is not None
@@ -1346,12 +1395,14 @@ def name_in_syntax(name, text):
     """True when ``text`` prints ``name`` (or, for a property, its get/put).
 
     ``IHTMLElement3::onactivate`` is documented as ``get_onactivate``.
-    A comma-list name has to be that identifier, not a substring of another.
+    ``MSMQMessage.Priority`` is documented as ``get_Priority``.  A
+    comma-list name has to be that identifier, not a substring of another.
     """
-    member = (name or "").split("::")[-1]
+    member = _declared_member(name)
     if not member:
         return False
-    if "::" in (name or ""):
+    qualified = member != (name or "")
+    if qualified:
         pattern = (r"(?i)(?<![A-Za-z0-9_])(?:get_|put_)?"
                    + re.escape(member) + r"(?![A-Za-z0-9_])")
     else:
