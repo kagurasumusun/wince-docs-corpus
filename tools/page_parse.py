@@ -150,6 +150,27 @@ def region(fragment, *headings, window=6000):
     return ""
 
 
+def regions(fragment, *headings, window=6000):
+    """Every block that follows one of ``headings``, not only the first.
+
+    A Learn page prints ``Requirements`` twice: the first heading is a note,
+    and the header is under the second.  ``region`` keeps the first block,
+    which is what a Syntax heading wants.  A requirements reader has to see
+    both, and ``Windows Mobile Requirements`` is a second requirements block
+    on the same page, not a different API.
+    """
+    wanted = {heading.lower() for heading in headings}
+    for match in HEADING.finditer(fragment):
+        title = text_of(match.group(0), keep_newlines=False).strip(": ")
+        if title.lower() not in wanted:
+            continue
+        rest = fragment[match.end():]
+        next_heading = HEADING.search(rest)
+        if next_heading and next_heading.start() < window:
+            rest = rest[:next_heading.start()]
+        yield rest[:window]
+
+
 # ``<p class="clsRef">Syntax</p>`` is the section label in the CE 5.0 MSHTML
 # and shdocvw CHM.  ``<p class=blue><b>At a Glance</b></p>`` is the 2000-04
 # ATL template; the class is often unquoted.  Neither is an ``<h1>``–``<h6>``,
@@ -247,6 +268,10 @@ def _file_list(value):
     residue = value or ""
     for name in files:
         residue = residue.replace(name, " ", 1)
+    # ``Rts.lib (for development workstation), PSPubSubCE.lib (for target
+    # device)`` is a file list.  The parenthetical says which machine, and
+    # it is not a second file.  It stays in the printed value.
+    residue = re.sub(r"\([^)]*\)", " ", residue)
     residue = re.sub(r"[,;/]|\bor\b|\band\b|[.]", " ", residue, flags=re.I)
     return not residue.strip()
 
@@ -299,6 +324,19 @@ def _plausible(field, value):
     if field in ("header", "library", "dll"):
         if _file_list(value):
             return True
+        # ``Uuid.lib. Not supported in Windows CE.`` and
+        # ``CEPubSub.h (for development workstation), CePubSub.idl.`` start
+        # with the file the label assigns.  The rest of the cell is kept as
+        # printed.  ``Add this macro to your class's header file`` does not
+        # start with a file, and stays prose.
+        # ``Uuid.lib. Not supported in Windows CE.`` names a file and then
+        # says the file is not a CE library.  The non-support sentence is
+        # the fact.  The file is not recorded as a header or a library.
+        if re.search(r"(?i)\bnot\s+supported\b", value or ""):
+            return False
+        if re.match(r"(?i)\s*[A-Za-z_][\w.+-]*\.(?:h|hpp|hh|hxx|lib|dll|idl|inc)\b",
+                    value or ""):
+            return True
         if len(value) > 120 or PROSE_WORDS.search(value):
             return len(value.split()) <= 2 and bool(FILEISH.search(value))
         if not FILEISH.search(value) and len(value.split()) > 2:
@@ -330,8 +368,14 @@ def _column_labels(cells):
     """
     labels = [re.sub(r"\s+", " ", c).strip().rstrip(":").lower()
               for c in cells]
+    # The usual row is ``Defined in | Include | Link to``.  DirectDraw and a
+    # few other components print ``Declared in`` instead of ``Defined in`` /
+    # ``Include``, and some of those tables have no ``Link to`` column.  Both
+    # are the same table.  Requiring ``Include`` dropped the header and the
+    # library together.
+    file_columns = {"include", "defined in", "declared in", "link to"}
     if len(labels) >= 3 and labels[0].startswith("runs on") \
-            and "include" in labels:
+            and file_columns.intersection(labels):
         return labels
     return None
 
@@ -381,6 +425,7 @@ def _requirements_from_columns(block, seen):
                         "value": value,
                         "evidence": f"Runs on: {runs}, Versions: {versions}"})
             for name, field in (("defined in", "header"),
+                                ("declared in", "header"),
                                 ("include", "header"),
                                 ("link to", "library")):
                 value = cell(values, name)
@@ -388,6 +433,7 @@ def _requirements_from_columns(block, seen):
                         and (field, value) not in seen:
                     seen.add((field, value))
                     label = {"defined in": "Defined in",
+                             "declared in": "Declared in",
                              "include": "Include",
                              "link to": "Link to"}[name]
                     out.append({"field": field, "label": label,
@@ -405,14 +451,22 @@ def requirements(fragment):
     # Script/C++ template.  A few pages print it without the space
     # (``C/C++Requirements``).  ``Script Syntax`` is not a C declaration
     # and is not a requirements heading.
-    for heading in ("requirements", "at a glance", "system requirements",
-                    "c/c++ requirements", "c/c++requirements"):
-        # The 2000-04 ATL template prints ``At a Glance`` as
-        # ``<p class=blue>``, not as a heading.  An ``<h*>`` still wins when
-        # the page has one.
-        block = region(fragment, heading) or labeled_region(fragment, heading)
-        if not block:
-            continue
+    # ``Windows Mobile Requirements`` is the same page's second requirements
+    # block (Pocket PC / Smartphone header and library).  It is not a
+    # hardware "system requirements" topic.  Every occurrence is read: the
+    # first ``Requirements`` heading is sometimes empty or a note, and the
+    # files are under the next one.
+    requirement_headings = (
+        "requirements", "windows mobile requirements", "at a glance",
+        "system requirements", "c/c++ requirements", "c/c++requirements")
+    blocks = list(regions(fragment, *requirement_headings))
+    if not blocks:
+        for heading in requirement_headings:
+            labeled = labeled_region(fragment, heading)
+            if labeled:
+                blocks.append(labeled)
+                break
+    for block in blocks:
         column_records, had_column_table = _requirements_from_columns(block,
                                                                       seen)
         out += column_records
@@ -428,8 +482,6 @@ def requirements(fragment):
                 seen.add((field, value))
                 out.append({"field": field, "label": label, "value": value,
                             "evidence": match.group(0).strip()})
-            if out:
-                break
             continue
         for row in ROW.finditer(block):
             cells = [text_of(c, keep_newlines=False) for c in CELL.findall(row.group(1))]
@@ -459,8 +511,6 @@ def requirements(fragment):
             seen.add((field, value))
             out.append({"field": field, "label": label, "value": value,
                         "evidence": match.group(0).strip()})
-        if out:
-            break
     # The CE 3.0 SDK marks the section with <p class="label">Requirements</p>,
     # not a heading, and a few pages split the word across tags
     # (<b>Requir</b>e<b>ments</b>) or omit it.  The column header itself
@@ -468,9 +518,16 @@ def requirements(fragment):
     # when the heading search did not already read that table, read it from
     # the article.  The header check is the whole guard: no other table in
     # the corpus starts with those columns.
-    if not got_columns and "Link to" in fragment \
-            and ("Runs on" in fragment or "Runs On" in fragment):
-        extra, _had = _requirements_from_columns(fragment, seen)
+    # A ``Declared in`` table has no ``Include`` column, and a few of them
+    # have no ``Link to`` either.  The heading search does not see a
+    # ``<b>Requirements</b>`` label, so the table is read from the article.
+    # ``seen`` drops a table the heading search already read.
+    if ("Runs on" in fragment or "Runs On" in fragment) and (
+            "Link to" in fragment or "Declared in" in fragment
+            or "Defined in" in fragment):
+        extra, had = _requirements_from_columns(fragment, seen)
+        if had:
+            got_columns = True
         out.extend(extra)
     # ``Header file | mshtmcid.h`` sits under ``C++ Information``, which is
     # not a requirements heading.  The row is the requirement.  The same
@@ -514,6 +571,13 @@ def requirements(fragment):
         ("dll", "exported by",
          re.compile(r"(?i)\bthis\s+(?:function|macro)\s+is\s+exported\s+"
                     r"(?:by|from)\s+([A-Za-z0-9_]+\.dll)\b")),
+        ("dll", "implemented in",
+         re.compile(r"(?i)\bthis\s+function\s+is\s+implemented\s+in\s+"
+                    r"(?:the\s+)?([A-Za-z0-9_]+\.dll)\b")),
+        ("dll", "exported by",
+         re.compile(r"(?i)\bthis\s+is\s+an\s+(?:application\s+programming\s+"
+                    r"interface\s+\(API\)|API)\s+exported\s+by\s+(?:the\s+)?"
+                    r"([A-Za-z0-9_]+\.dll)\b")),
     )
     for field, label, pattern in stated:
         for match in pattern.finditer(plain):
@@ -597,6 +661,45 @@ def listed_function_requirements(fragment):
                     out.append({"name": name, "field": "header",
                                 "label": "defined in", "value": header_value,
                                 "evidence": header_evidence})
+    # ``The following functions are implemented in Ws2.dll`` then a table of
+    # those names.  The DLL is assigned to each listed name, not to the page
+    # title.  A sentence that lists no names assigns nothing.
+    impl = re.compile(
+        r"(?i)the\s+following\s+functions\s+are\s+implemented\s+in\s+"
+        r"(?:the\s+)?([A-Za-z0-9_]+\.dll)\b")
+    start = 0
+    while True:
+        match = impl.search(low[start:])
+        if not match:
+            break
+        idx = start + match.start()
+        start = idx + len("the following")
+        sentence = text_of(fragment[idx:idx + 220], keep_newlines=False)
+        found = impl.search(sentence)
+        if not found:
+            continue
+        rest = fragment[idx:idx + 12000]
+        see = rest.lower().find("see also")
+        chunk = rest[:see] if see >= 0 else rest
+        table = re.search(r"(?is)<table\b[^>]*>(.*?)</table>", chunk)
+        if not table:
+            continue
+        names = []
+        for row in ROW.finditer(table.group(1)):
+            for cell in CELL.findall(row.group(1)):
+                name = text_of(cell, keep_newlines=False).strip()
+                if _LISTED_NAME.match(name) and name.lower() not in (
+                        "function", "functions", "description"):
+                    names.append(name)
+        dll_value = found.group(1)
+        evidence = re.sub(r"\s+", " ", found.group(0)).strip()
+        for name in names:
+            key = (name, "dll", dll_value)
+            if key in seen or not _plausible("dll", dll_value):
+                continue
+            seen.add(key)
+            out.append({"name": name, "field": "dll", "label": "implemented in",
+                        "value": dll_value, "evidence": evidence})
     return out
 
 
