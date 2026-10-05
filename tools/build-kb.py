@@ -270,6 +270,11 @@ def parse_page(job):
     fact["entity"] = ce_api_names.normalize(display) if display else None
     fact["entity_evidence"] = evidence
     fact["requirements"] = page_parse.requirements(fragment)
+    # A component page that lists functions and states their header and link
+    # library.  Attached to those function entities after they exist, not to
+    # the component title.  A misspelled cell is not rewritten.
+    fact["listed_requirements"] = page_parse.listed_function_requirements(
+        fragment)
     fact["declarations"] = page_parse.declarations(fragment, page_title=title)
     # ``abort Method (DOMDocument)`` is not a single identifier, so the title
     # parser leaves it without an entity.  When the page also prints a
@@ -423,6 +428,63 @@ def license_of(path):
         raise SystemExit(f"{path}: no rule in data/license-scopes.tsv governs "
                          "this page -- add one before building")
     return scope
+
+
+def attach_listed_functions(facts, entities, requirements):
+    """Attach a component page's stated header and library to the listed names.
+
+    The component title is not the function.  The assignment is stored only
+    when that printed name is already an entity (its own page).  A cell the
+    page misspelled is not corrected into a different entity, and it does not
+    become a new one.  The source stays the component page.
+    """
+    by_id = {entity["id"]: entity for entity in entities}
+    seen_ids = {record["id"] for record in requirements}
+    attached = 0
+    for fact in facts:
+        for item in fact.get("listed_requirements") or []:
+            entity_id = ce_api_names.entity_id(item["name"])
+            entity = by_id.get(entity_id)
+            if not entity:
+                continue
+            key = hashlib.sha1(
+                (fact["path"] + "\x00" + item["name"] + "\x00" +
+                 item["field"] + "\x00" + item["value"]).encode("utf-8")
+            ).hexdigest()[:12]
+            record = {
+                "id": "r" + key,
+                "entity": entity_id,
+                "page_id": fact["page_id"],
+                "layer": fact["layer"],
+                "field": item["field"],
+                "label": item["label"],
+                "value": item["value"],
+                "key": normalize_value(item["value"], item["field"]),
+                "evidence": item["evidence"],
+                "license": license_of(fact["path"]),
+                "source": source_of(fact),
+            }
+            if not record["key"] or record["id"] in seen_ids:
+                continue
+            seen_ids.add(record["id"])
+            requirements.append(record)
+            if record["id"] not in entity["requirements"]:
+                entity["requirements"].append(record["id"])
+            slot = {"header": "headers", "library": "libraries",
+                    "dll": "dlls"}.get(item["field"])
+            if slot and record["key"] not in entity[slot]:
+                entity[slot].append(record["key"])
+                entity[slot].sort()
+            # The component page is the requirement's source.  It is not added
+            # to ce_pages: that list is the pages whose title is this name,
+            # and inserting a component overview would reshuffle it.
+            attached += 1
+    if requirements:
+        requirements.sort(key=lambda r: (r["entity"] or "", r["field"],
+                                         r["source"]["path"], r["value"]))
+    for entity in entities:
+        entity["requirements"] = sorted(set(entity["requirements"]))
+    return attached
 
 
 def requirement_records(facts, entity_of):
@@ -1294,6 +1356,9 @@ def build(rows, workers, report_only, plain=False):
             abi["documented_offsets"] = offsets_by_entity.get(entity["id"], 0)
             abi["offset_pages"] = sorted(offset_pages.get(entity["id"], ()))
             abi["stated_size_bytes"] = sorted(sizes_by_entity.get(entity["id"], ()))
+    listed = attach_listed_functions(facts, entities, requirements)
+    print(f"[kb] {listed:,} function header/library assignment(s) from "
+          "component pages", flush=True)
     add_relations(entities, requirements, declarations)
     folded = fold_variants(entities, read_shared_map())
     print(f"[kb] {folded:,} Unicode/ANSI variant spelling(s) folded into their "

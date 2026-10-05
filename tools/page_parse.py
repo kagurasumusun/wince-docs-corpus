@@ -493,6 +493,110 @@ def requirements(fragment):
         seen.add(("header", value))
         out.append({"field": "header", "label": label, "value": value,
                     "evidence": f"{label}: {value}"})
+    # A sentence that assigns the header or the exporting DLL, not a mention
+    # of some other type.  ``The DISPID for this event is defined in
+    # mshtmdid.h`` is the event page's header.  ``This function is declared
+    # in the Serhw.h`` is that function's header.  ``This function is
+    # exported by Ppcload.dll`` is the DLL.  ``BT_ADDR is defined in
+    # Ws2bth.h`` and ``CGID_MSHTML (defined in mshtmhst.h)`` name a different
+    # thing, so they are not this page's requirement.  A sample ``#include``
+    # is not one either.
+    plain = text_of(fragment, keep_newlines=False)
+    stated = (
+        ("header", "defined in",
+         re.compile(r"(?i)the\s+DISPID\s+for\s+this\s+event\s+is\s+defined\s+"
+                    r"in\s+([A-Za-z0-9_]+\.h)\b")),
+        ("header", "declared in",
+         re.compile(r"(?i)\bthis\s+(?:function|macro|structure|struct|"
+                    r"message|control code|interface|callback|method)\s+"
+                    r"is\s+(?:declared|defined)\s+in\s+(?:the\s+)?"
+                    r"(?:header\s+(?:file\s+)?)?([A-Za-z0-9_]+\.h)\b")),
+        ("dll", "exported by",
+         re.compile(r"(?i)\bthis\s+(?:function|macro)\s+is\s+exported\s+"
+                    r"(?:by|from)\s+([A-Za-z0-9_]+\.dll)\b")),
+    )
+    for field, label, pattern in stated:
+        for match in pattern.finditer(plain):
+            value = match.group(1)
+            if (field, value) in seen or not _plausible(field, value):
+                continue
+            seen.add((field, value))
+            out.append({"field": field, "label": label, "value": value,
+                        "evidence": re.sub(r"\s+", " ", match.group(0)).strip()})
+    return out
+
+
+# ``To import these functions, you need to link to the fsdmgr.lib file.``
+# The header, when the same paragraph names one, is ``defined in the
+# Fsdmgr.h header file``.  The names are the identifier cells of the table
+# that follows.  A page that states the library and lists no names assigns
+# nothing: the component is not one of the functions.
+_IMPORT_LIB = re.compile(
+    r"(?i)to\s+import\s+(?:this|these)\s+functions?\s*,\s*you\s+"
+    r"(?:must|need\s+to)\s+link\s+to\s+the\s+([A-Za-z0-9_]+\.lib)\b")
+_DEFINED_HEADER_FILE = re.compile(
+    r"(?i)defined\s+in\s+(?:the\s+)?([A-Za-z0-9_]+\.h)\s+header\s+file")
+_LISTED_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def listed_function_requirements(fragment):
+    """Header and link library a component page assigns to the functions it lists.
+
+    The page says which file the following functions are defined in, and which
+    library imports them, then prints their names.  Each name is kept as
+    printed, including a misspelling.  Nothing is attached to the component
+    itself, and a sentence that lists no names is not guessed into one.
+    """
+    out = []
+    seen = set()
+    low = fragment.lower()
+    start = 0
+    while True:
+        idx = low.find("to import", start)
+        if idx < 0:
+            break
+        start = idx + len("to import")
+        sentence = text_of(fragment[idx:idx + 420], keep_newlines=False)
+        lib = _IMPORT_LIB.search(sentence)
+        if not lib:
+            continue
+        before = text_of(fragment[max(0, idx - 700):idx], keep_newlines=False)
+        headers = list(_DEFINED_HEADER_FILE.finditer(before))
+        header = headers[-1] if headers else None
+        rest = fragment[idx:idx + 8000]
+        see = rest.lower().find("see also")
+        chunk = rest[:see] if see >= 0 else rest
+        table = re.search(r"(?is)<table\b[^>]*>(.*?)</table>", chunk)
+        if not table:
+            continue
+        names = []
+        for row in ROW.finditer(table.group(1)):
+            for cell in CELL.findall(row.group(1)):
+                name = text_of(cell, keep_newlines=False).strip()
+                if _LISTED_NAME.match(name) and name.lower() not in (
+                        "function", "functions"):
+                    names.append(name)
+        if not names:
+            continue
+        lib_value = lib.group(1)
+        lib_evidence = re.sub(r"\s+", " ", lib.group(0)).strip()
+        header_value = header.group(1) if header else None
+        header_evidence = (re.sub(r"\s+", " ", header.group(0)).strip()
+                           if header else None)
+        for name in names:
+            key = (name, "library", lib_value)
+            if key not in seen and _plausible("library", lib_value):
+                seen.add(key)
+                out.append({"name": name, "field": "library",
+                            "label": "link to", "value": lib_value,
+                            "evidence": lib_evidence})
+            if header_value and _plausible("header", header_value):
+                key = (name, "header", header_value)
+                if key not in seen:
+                    seen.add(key)
+                    out.append({"name": name, "field": "header",
+                                "label": "defined in", "value": header_value,
+                                "evidence": header_evidence})
     return out
 
 
