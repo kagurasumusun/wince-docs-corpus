@@ -65,6 +65,17 @@ LABEL_MAP = {
     "windows embedded ce": "os_versions", "windows mobile": "os_versions",
     "namespace": "namespace", "assembly": "assembly", "class": "class",
     "requires": "requires", "requirement": "requires", "type": "type",
+    # ``Versions: 2.0 and later`` is the MFC template's OS-version line.
+    # ``Pocket PC`` / ``Smartphone`` print the platform version.  ``Module:
+    # Nk`` is the module the page names; it is not rewritten to ``nk.dll``.
+    # ``sysgen`` and ``Architecture`` are the catalog variable and the CPU
+    # list the page prints.  ``C++ Namespace: av_upnp.`` keeps the printed
+    # value; the trailing period is sentence punctuation, stripped only
+    # from the derived key, the same way ``Winbase.h.`` is.
+    "versions": "os_versions", "pocket pc": "os_versions",
+    "smartphone": "os_versions", "pocket": "os_versions",
+    "module": "module", "c++ namespace": "namespace",
+    "sysgen": "sysgen", "architecture": "architecture",
     "send feedback": None, "see also": None, "note": None, "notes": None,
     "reference": None, "applies to": "os_versions", "imports": "requires",
     "complete documentation": None, "online documentation": None,
@@ -135,7 +146,12 @@ def region(fragment, *headings, window=6000):
 
 ROW = re.compile(r"(?is)<tr\b[^>]*>(.*?)</tr>")
 CELL = re.compile(r"(?is)<t[dh]\b[^>]*>(.*?)</t[dh]>")
-LINE_LABEL = re.compile(r"([A-Za-z][A-Za-z /+.]{2,28}?)\s*:\s*([^\n]{1,200})")
+# The value has to be on the label's own line.  ``\s*`` used to cross the
+# newline, so an empty ``Platforms:`` cell became the value ``Versions:``
+# and an empty ``Header File:`` cell became ``Module:``.  The page printed
+# neither.  A value that really is on the next row is read from the table.
+LINE_LABEL = re.compile(
+    r"([A-Za-z][A-Za-z /+.]{2,28}?)[ \t]*:[ \t]*([^\n]{1,200})")
 
 
 FILEISH = re.compile(r"[A-Za-z0-9_.+\-]+\.(h|hpp|hh|hxx|lib|dll|hlp|inc)\b", re.I)
@@ -881,9 +897,14 @@ _NOT_PROTO_BEFORE = ("parameters", "return values", "return value", "remarks",
                      "general remarks", "script syntax", "script parameters",
                      "script return value", "example", "examples",
                      "code example", "sample", "samples", "example code")
+# A resource script states the keyword in uppercase (``IDD_ABOUT DIALOG``,
+# a line that starts with ``MENU``).  A C parameter named ``dialog`` is not
+# that statement; a case-insensitive match used to reject
+# ``showModalDialog``.
 _RESOURCE_GRAMMAR = re.compile(
-    r"(?i)\b(?:ACCELERATORS|DIALOGEX|DIALOG|STRINGTABLE|RCDATA|VERSIONINFO|"
-    r"POPUP|MENU)\b|\[\[")
+    r"(?m)^[ \t]*(?:[A-Za-z_][\w]*\s+)?"
+    r"(?:ACCELERATORS|DIALOGEX|DIALOG|STRINGTABLE|RCDATA|VERSIONINFO|MENU)\b"
+    r"|^\s*POPUP\b|\[\[")
 _VB_BLOCK = re.compile(
     r"(?i)^\s*(?:dim |sub |function |private |public |end |select )")
 # Compact Framework pages print JScript as ``protected abstract function
@@ -954,7 +975,10 @@ def _is_documented_prototype(text):
         return True
     lines = [line.strip() for line in body.splitlines()
              if line.strip() and not line.strip().startswith(("/*", "*", "//"))]
-    if len(lines) > 8:
+    # A long parameter list is still the declaration.  A long block with a
+    # brace is a body, not the prototype the page put in the slot.
+    if len(lines) > 8 and ("{" in body or not (
+            _SIGNATURE.match(body) and ";" in body)):
         return False
     return bool(_SIGNATURE.match(body)) and (";" in body or len(lines) <= 3)
 
@@ -1308,6 +1332,19 @@ _DOTTED_EXTENSION = {
 # HTML escapes (``&lt;``); the page printed the brackets.
 _TEMPLATED_MEMBER = re.compile(
     r"^([A-Za-z_][\w]*<[^<>]+>::[A-Za-z_][\w]*)$")
+# ``CComPtr::operator !`` and ``wstring::operator+=`` print the class and
+# the operator.  ``COleDateTime::operator ==, !=`` prints several; each
+# token is one operator, and only a syntax block that declares that token
+# is attached.  A conversion operator may contain spaces
+# (``operator const wchar_t*``).
+_OPERATOR_TITLE = re.compile(
+    r"^([A-Za-z_][\w]*)::\s*(operators?)\s*(.+)$", re.I)
+_DESTRUCTOR_TITLE = re.compile(
+    r"^([A-Za-z_][\w]*)::(~[A-Za-z_][\w]*)$")
+# ``COleControl:: OnMnemonic`` prints the parent and the member with a
+# space the template inserted.  The identifiers are those two words.
+_SPACED_QUALIFIED = re.compile(
+    r"^([A-Za-z_][\w]*)::[ \t]+([A-Za-z_][\w]*)$")
 
 
 def _declared_member(name):
@@ -1318,6 +1355,44 @@ def _declared_member(name):
     if _DOTTED_MEMBER.match(text):
         return text.split(".", 1)[1]
     return text
+
+
+def operator_token(name):
+    """The operator a title prints after ``operator``, or empty.
+
+    Spaces are kept here.  ``entity_id`` strips them so ``operator +=`` and
+    ``operator+=`` are one key.  A title that is not an operator is empty.
+    """
+    text = _html.unescape(name or "")
+    match = re.search(r"(?i)\boperators?\s*(.+)$", text)
+    if not match or "::" not in text:
+        return ""
+    return match.group(1).strip()
+
+
+def operator_title_names(title):
+    """``CComPtr::operator !`` and ``CTime::operators <<, >>``.
+
+    A comma list becomes one name per token the title prints.  Nothing is
+    added that the title does not print.  The caller still requires a
+    syntax block that declares that token.
+    """
+    text = _html.unescape(_title_core(title))
+    match = _OPERATOR_TITLE.match(text)
+    if not match:
+        return []
+    parent, rest = match.group(1), match.group(3).strip()
+    if not rest or len(rest) > 60:
+        return []
+    if "," not in rest:
+        return [text]
+    names = []
+    for part in rest.split(","):
+        part = part.strip()
+        if not part or len(part) > 12 or re.search(r"\s", part):
+            return []
+        names.append(f"{parent}::operator {part}")
+    return names
 
 
 def printed_parent(name):
@@ -1343,7 +1418,8 @@ def documented_title_names(title):
     ``abort Method (DOMDocument)`` does too.  ``strcpy, wcscpy`` prints both.
     ``MSMQMessage.Priority`` prints the parent and the member with a dot.
     ``IXRCollection<In_T, Out_T>::Insert`` prints both, template arguments
-    included.  ``absoluteChildNumber Method`` does not name a parent, and
+    included.  ``CComPtr::operator !`` prints the class and the operator.
+    ``absoluteChildNumber Method`` does not name a parent, and
     ``IContact Properties`` is not a list of identifiers, so both are empty.
     Nothing is completed or invented.
     """
@@ -1358,9 +1434,19 @@ def documented_title_names(title):
     if qualified:
         return [qualified]
     printed = _html.unescape(text)
-    templated = _TEMPLATED_MEMBER.match(printed)
+    printed_base = re.sub(r"\s*\([^()]*\)\s*$", "", printed)
+    templated = _TEMPLATED_MEMBER.match(printed_base)
     if templated:
         return [templated.group(1)]
+    operators = operator_title_names(title)
+    if operators:
+        return operators
+    destructor = _DESTRUCTOR_TITLE.match(printed)
+    if destructor:
+        return [printed]
+    spaced = _SPACED_QUALIFIED.match(printed)
+    if spaced:
+        return [f"{spaced.group(1)}::{spaced.group(2)}"]
     dotted = _DOTTED_MEMBER.match(text)
     if dotted and dotted.group(2).lower() not in _DOTTED_EXTENSION:
         return [text]
@@ -1370,12 +1456,46 @@ def documented_title_names(title):
     return []
 
 
+def _syntax_declares_operator(name, text):
+    """True when ``text`` declares the operator the title prints.
+
+    ``BOOL operator !( );`` declares ``operator !``.  ``operator !=`` does
+    not.  A mention with no semicolon is not a declaration.
+    """
+    token = operator_token(name)
+    body = text or ""
+    # Some pages omit the semicolon (``T** operator &( VOID )``).  A list of
+    # overloads has no brace.  A block with a brace is a body, not this
+    # declaration.
+    lines = [line for line in body.splitlines() if line.strip()]
+    if not token or "{" in body or len(lines) > 24:
+        return False
+    if ";" not in body and (len(lines) > 4 or "(" not in body):
+        return False
+    compact = re.sub(r"\s+", "", token)
+    for match in re.finditer(r"(?i)\boperator\s*([^\n;]+)", body):
+        found = match.group(1).strip()
+        found = re.split(r"\s*\(", found, maxsplit=1)[0].strip()
+        if re.sub(r"\s+", "", found) == compact:
+            return True
+    return False
+
+
 def syntax_declares_name(name, text):
     """True when ``text`` is a declaration of ``name``, not a mention of it.
 
     ``recordset.{MoveFirst | MoveNext}`` mentions the name and is not a
     declaration.  ``FILE *stdin;`` and ``HRESULT CreateTimer(...)`` are.
+    ``BOOL operator !( );`` declares ``CComPtr::operator !``.
+    ``~CBasePropertyPage(void);`` declares that destructor.
     """
+    if operator_token(name):
+        return _syntax_declares_operator(name, text)
+    if "::" in (name or "") and name.rsplit("::", 1)[-1].startswith("~"):
+        member = name.rsplit("::", 1)[-1]
+        return (";" in (text or "") and re.search(
+            r"(?<![A-Za-z0-9_])" + re.escape(member) + r"\s*\(",
+            text or "") is not None)
     if not name_in_syntax(name, text):
         return False
     body = (text or "").strip()

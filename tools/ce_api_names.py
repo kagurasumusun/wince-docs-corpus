@@ -117,6 +117,34 @@ def normalize(text):
     return re.sub(r"[^a-z0-9_]", "", text)
 
 
+def entity_id(name):
+    """Stable id of a documented name.
+
+    For an ordinary name this is ``normalize``.  ``CComPtr::operator !`` and
+    ``CComPtr::operator *`` would otherwise collapse to one id, because the
+    operator characters are not letters.  The suffix is those characters,
+    hex-encoded, so the two operators stay two records.  The display name
+    is still the spelling the page printed.  ``operator +=`` and
+    ``operator+=`` are the same operator, so the space is not part of the key.
+    """
+    base = normalize(name)
+    # ``CBasePropertyPage::CBasePropertyPage`` and
+    # ``CBasePropertyPage::~CBasePropertyPage`` both lose the punctuation
+    # under normalize.  The destructor keeps a key suffix; the display name
+    # still has the ``~`` the page printed.
+    if "::~" in (name or ""):
+        return base + "_dtor"
+    match = re.search(r"(?i)\boperators?\s*(.+)$", name or "")
+    if not match or "::" not in (name or ""):
+        return base
+    token = re.sub(r"\s+", "", match.group(1).strip())
+    if not token:
+        return base
+    suffix = "".join(ch.lower() if ch.isalnum() or ch == "_"
+                     else f"{ord(ch):02x}" for ch in token)
+    return f"{base}_{suffix}" if suffix else base
+
+
 def base_name(name):
     """``createfilew`` -> ``createfile`` (the A/W variant of a shared name)."""
     return name[:-1] if name.endswith(("a", "w")) else name

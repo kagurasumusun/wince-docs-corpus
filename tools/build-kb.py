@@ -294,8 +294,10 @@ def parse_page(job):
         # member.  ``strcpy, wcscpy`` prints both names.
         # ``MSMQMessage.Priority`` prints both, with a dot.
         # ``IXRCollection<In_T, Out_T>::Insert`` prints both, including the
-        # template arguments.  Attach a name only when a syntax block on the
-        # page declares it.  A title that does not name the parent
+        # template arguments.  ``CComPtr::operator !`` prints the class and
+        # the operator; the id keeps the operator, so ``!`` and ``*`` do not
+        # collapse.  Attach a name only when a syntax block on the page
+        # declares it.  A title that does not name the parent
         # (``absoluteChildNumber Method``) is not in this list, and no
         # interface is invented for it.
         named = [name for name in page_parse.documented_title_names(title)
@@ -304,10 +306,10 @@ def parse_page(job):
                         for d in fact["declarations"])]
         if named:
             fact["display"] = named[0]
-            fact["entity"] = ce_api_names.normalize(named[0])
+            fact["entity"] = ce_api_names.entity_id(named[0])
             fact["entity_evidence"] = "page-title"
             fact["also_documented"] = [
-                {"id": ce_api_names.normalize(name), "name": name}
+                {"id": ce_api_names.entity_id(name), "name": name}
                 for name in named]
     fact["constraints"] = [dict(item, kind="ce-restriction")
                            for item in page_parse.constraints(fragment)]
@@ -727,6 +729,9 @@ def entity_records(facts, declarations, requirements):
                 "typed_members": typed_members,
                 "bitfield_members": bitfield_members,
                 "flags": abi_flag_names,
+                # CPU list the page prints (``Architecture: ARM, MIPS, SH-4``).
+                # Not inferred from the name, and not a calling convention.
+                "architectures": values("architecture"),
                 # the ABI statements the pages make in prose (kind abi-note),
                 # attached below once the constraint ids are known
                 "notes": 0,
@@ -744,6 +749,9 @@ def entity_records(facts, declarations, requirements):
             "surface": None,
             "headers": values("header"),
             "modules": values("module"),
+            # Catalog variables the page prints (``sysgen: SYSGEN_XAML_RUNTIME``).
+            # Not a header and not a library.
+            "sysgens": values("sysgen"),
             "libraries": values("library"),
             "dlls": values("dll"),
             "unicode_ansi": values("unicode_ansi"),
@@ -848,6 +856,33 @@ def add_relations(entities, requirements, declarations):
         if record["entity"] and record["members"]:
             members[record["entity"]].add(record["id"])
 
+    # ``Related macro: MonthCal_GetSelRange`` and ``Related message:
+    # LVM_HITTEST`` name the other definition the page prints.  A
+    # space-separated list is kept token by token when every token is an
+    # identifier.  Prose is not split into names.
+    related_of = collections.defaultdict(list)
+    related_kind = {
+        "related macro": "related-macro",
+        "related macros": "related-macro",
+        "related message": "related-message",
+    }
+    related_ident = re.compile(r"^[A-Za-z_][\w]*$")
+    for record in requirements:
+        kind = related_kind.get((record.get("label") or "").strip().lower())
+        if not kind or not record.get("entity"):
+            continue
+        value = (record.get("value") or "").strip()
+        tokens = value.split()
+        if not tokens or not all(related_ident.match(token) for token in tokens):
+            one = value.rstrip(".,;")
+            tokens = [one] if related_ident.match(one) else []
+        if not tokens:
+            continue
+        page = (record.get("source") or {}).get("path") or ""
+        evidence = record.get("evidence") or f"{record.get('label')}: {value}"
+        for token in tokens:
+            related_of[record["entity"]].append((kind, token, evidence, page))
+
     for entity in entities:
         name = entity["name"]
         # The title printed the parent.  A dot is the spelling
@@ -861,6 +896,16 @@ def add_relations(entities, requirements, declarations):
                 "present": ce_api_names.normalize(interface) in by_id,
                 "evidence": name,
                 "page": entity["ce_pages"][0] if entity["ce_pages"] else "",
+            })
+        for kind, token, evidence, page in related_of.get(entity["id"], ()):
+            target = ce_api_names.normalize(token)
+            entity["relations"].append({
+                "type": kind,
+                "name": token,
+                "id": target,
+                "present": target in by_id,
+                "evidence": evidence,
+                "page": page,
             })
         layers = set(entity["layers"])
         if {"ce", "win32"} <= layers:
@@ -1316,7 +1361,8 @@ def build(rows, workers, report_only, plain=False):
             ";".join(entity["headers"]),
             ";".join(entity["modules"]),
             ";".join(entity["ce_sets"]),
-            ";".join(entity["licenses"])))
+            ";".join(entity["licenses"]),
+            ";".join(abi.get("architectures") or [])))
     abi_rows.sort(key=lambda r: r[1].lower())
     write_tsv(os.path.join(REPORTS, "abi.tsv"),
               ["entity", "name", "kinds", "surface", "calling_conventions",
@@ -1324,7 +1370,7 @@ def build(rows, workers, report_only, plain=False):
                "declared_members", "typed_members", "bitfield_members",
                "abi_flags", "abi_notes", "documented_offsets",
                "stated_size_bytes", "headers", "modules", "ce_sets",
-               "licenses"], abi_rows)
+               "licenses", "architectures"], abi_rows)
 
     # ---- the documented offsets, one row per layout-table row
     offset_rows = []
@@ -1630,6 +1676,12 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"signatures {len(declarations) - decs_c:,} in "
         f"`kb/declarations-dotnet.jsonl` -- the separated .NET layer)",
         f"* requirement statements: **{len(requirements):,}**",
+        f"* of those, a page's own `Module` (not an sdk-api UID): "
+        f"**{sum(1 for r in requirements if r.get('label') == 'Module'):,}**; "
+        f"a `sysgen` variable: "
+        f"**{sum(1 for r in requirements if r.get('field') == 'sysgen'):,}**; "
+        f"a CPU list (`Architecture`): "
+        f"**{sum(1 for r in requirements if r.get('field') == 'architecture'):,}**",
         f"* numbered constants: **{len(constants):,}** "
         f"(`kb/constants.jsonl`, {len(constant_pages):,} page(s))",
         f"* Windows CE constraint sentences: "
@@ -1649,7 +1701,8 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"**{sum(len(e['relations']) for e in entities):,}** "
         "(`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the "
         "page's own statement, `interface-method`, `layer`, `ce-name-lead` "
-        "for the spelling a CE page prints)",
+        "for the spelling a CE page prints, `related-macro` / "
+        "`related-message` for the identifier a page prints beside that label)",
         f"* catalog-only names (the CE TOC names it, no CE page for it is in "
         f"the corpus): **{surface.get('catalog-only', 0):,}** "
         "(`reports/catalog-leads.tsv` shows the CE page the name list points"
