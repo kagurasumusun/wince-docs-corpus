@@ -271,6 +271,22 @@ def parse_page(job):
     fact["entity_evidence"] = evidence
     fact["requirements"] = page_parse.requirements(fragment)
     fact["declarations"] = page_parse.declarations(fragment)
+    # ``abort Method (DOMDocument)`` is not a single identifier, so the title
+    # parser leaves it without an entity.  When the page also prints a
+    # C/C++ Syntax declaration, the title's own parent and member are the
+    # name.  A title that does not print the parent stays unattached: the
+    # declaration is quoted, and no interface is invented for it.
+    if not fact["entity"]:
+        qualified = page_parse.interface_member_title(title)
+        if qualified and any(
+                d["role"] == "syntax" for d in fact["declarations"]):
+            headings = [page_parse.text_of(m.group(0), keep_newlines=False)
+                        .strip().lower()
+                        for m in page_parse.HEADING.finditer(fragment)]
+            if any(h in ("c/c++ syntax", "c/c++syntax") for h in headings):
+                fact["display"] = qualified
+                fact["entity"] = ce_api_names.normalize(qualified)
+                fact["entity_evidence"] = "page-title"
     fact["constraints"] = [dict(item, kind="ce-restriction")
                            for item in page_parse.constraints(fragment)]
     fact["constraints"] += [dict(note, kind="abi-note")

@@ -252,7 +252,12 @@ def requirements(fragment):
     out = []
     seen = set()
     got_columns = False
-    for heading in ("requirements", "at a glance", "requirements", "system requirements"):
+    # ``C/C++ Requirements`` is the requirements heading on the dual
+    # Script/C++ template.  A few pages print it without the space
+    # (``C/C++Requirements``).  ``Script Syntax`` is not a C declaration
+    # and is not a requirements heading.
+    for heading in ("requirements", "at a glance", "system requirements",
+                    "c/c++ requirements", "c/c++requirements"):
         block = region(fragment, heading)
         if not block:
             continue
@@ -884,7 +889,12 @@ def _looks_like_declaration(text):
 def declarations(fragment):
     """Syntax blocks of one page, with their markup and the raw text."""
     out = []
-    syntax_region = region(fragment, "syntax", "declaration", "prototype")
+    # ``C/C++ Syntax`` is the declaration on the dual Script/C++ template.
+    # ``Script Syntax`` is Visual Basic and is not read as a C declaration.
+    # ``Syntax 1`` / command-line ``syntax`` headings are grammar or a tool
+    # invocation, not this heading, so they are not listed.
+    syntax_region = region(fragment, "syntax", "declaration", "prototype",
+                           "c/c++ syntax", "c/c++syntax")
     for match in PRE.finditer(fragment):
         attrs, inner = match.group(1), match.group(2)
         text = text_of(inner)
@@ -1111,6 +1121,34 @@ def markdown(text):
 
 _PAREN_SUFFIX = re.compile(r"\s*\([^()]*\)\s*$")
 _API_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)*$")
+
+
+_LEARN_SUFFIX = re.compile(r"\s*\|\s*Microsoft Learn\s*$", re.I)
+_WIN_SUFFIX = re.compile(r"\s*\(Windows[^)]*\)\s*$", re.I)
+# ``abort Method (DOMDocument)`` -- the title prints the member and the parent.
+# A title that is only ``abort Method`` does not name the parent, so it is not
+# this form.  The parent is taken as printed, not completed to a C++ interface.
+_MEMBER_TITLE = re.compile(
+    r"^([A-Za-z_][\w]*)\s+(?:Method|Property|Event)\s*"
+    r"\(([A-Za-z_][\w./]*)\)\s*$")
+
+
+def interface_member_title(title):
+    """``abort Method (DOMDocument) (Windows CE 5.0)`` -> ``DOMDocument::abort``.
+
+    None when the title does not print both.  Used only for a page whose
+    ``C/C++ Syntax`` heading holds the declaration, so a script-only page is
+    not turned into an entity.
+    """
+    if not title:
+        return None
+    text = _LEARN_SUFFIX.sub("", title).strip()
+    for _ in range(2):
+        text = _WIN_SUFFIX.sub("", text).strip()
+    match = _MEMBER_TITLE.match(text)
+    if not match:
+        return None
+    return f"{match.group(2)}::{match.group(1)}"
 
 
 def name_from_title(title):

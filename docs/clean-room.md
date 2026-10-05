@@ -67,10 +67,10 @@ Result on 2026-10-05, with `--all` (every quote, no sampling; the file is
 
 | Invariant | Checked | Violations |
 |-----------|--------:|-----------:|
-| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 373,410 | 0 |
-| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names (declaration texts, requirement values, constraint sentences, **layout-table rows, constant-table rows and open-source document quotations**) | 270,024 | 0 |
+| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 373,514 | 0 |
+| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names (declaration texts, requirement values, constraint sentences, **layout-table rows, constant-table rows and open-source document quotations**) | 270,042 | 0 |
 | documented members are on their page — every `documented_fields` name occurs in one of the pages that document the entity (an A/W pair documents one structure) | 5,204 | 0 |
-| sample code stays out of the declarations — no entity's `syntax_declarations` points at a `role: "example"` or `implementation` record | 54,843 | 0 |
+| sample code stays out of the declarations — no entity's `syntax_declarations` points at a `role: "example"` or `implementation` record | 54,929 | 0 |
 | syntax blocks are declarations — no `role: "syntax"` text is implementation code; code blocks kept as `role: "example"` and never emitted: 4,572 | all declarations | 0 |
 | the generator reads the specification only — a real `gen-include-def.py` run reports zero corpus reads | 0 reads | 0 |
 
