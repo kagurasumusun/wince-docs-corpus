@@ -324,6 +324,19 @@ def assigned_files(value):
     return out
 
 
+# ``Not applicable``, ``None``, ``N/A`` and ``Developer Implemented`` are
+# the whole cell: the page says this API has no header / no link library /
+# no DLL of its own.  A cell that also names a file is not one of these.
+_STATED_NONE = re.compile(
+    r"(?i)^\s*(?:not\s+applicable|none(?:\s+required)?|n/?a|"
+    r"developer\s+implemented|not\s+required)\s*[.]?\s*$")
+
+
+def stated_none(value):
+    """True when the cell says there is no such file, rather than naming one."""
+    return bool(_STATED_NONE.match(value or ""))
+
+
 def _plausible(field, value):
     """Reject prose that a template put into a requirement table cell.
 
@@ -341,6 +354,13 @@ def _plausible(field, value):
         return False
     if field in ("header", "library", "dll"):
         if _file_list(value):
+            return True
+        # ``Link Library: Not applicable.`` and ``DLL: None`` are the page
+        # saying there is no such file.  That is a statement, not a missing
+        # cell, and it is the difference between "the documents do not say"
+        # and "the documents say there is none".  It is kept as printed; it
+        # names no file, so it never enters the include/link map.
+        if stated_none(value):
             return True
         # ``Uuid.lib. Not supported in Windows CE.`` and
         # ``CEPubSub.h (for development workstation), CePubSub.idl.`` start
@@ -1397,6 +1417,68 @@ def _constants_in_cells(fragment, already):
     return out
 
 
+_ORDINAL_COLUMN = re.compile(r"(?i)^ordinals?$")
+_EXPORT_COLUMN = re.compile(r"(?i)^(?:export|export name|function|symbol|"
+                            r"entry point)s?$")
+# ``the floating point C run-time library, Fpcrt.dll`` -- the DLL the
+# exports on this page belong to.  Only a sentence on the same page counts.
+_EXPORTS_OF_DLL = re.compile(
+    r"(?i)exports?\s+(?:that\s+are\s+)?(?:required\s+)?for\s+[^.]{0,80}?"
+    r"\b([A-Za-z0-9_]+\.dll)\b")
+
+
+def export_ordinal_tables(fragment):
+    """``Export | Ordinal`` rows: the one place the documents print ordinals.
+
+    ``Exports from the Floating Point C Run-Time Library`` lists the exports
+    of ``Fpcrt.dll`` with the ordinal each one must use.  Every other page
+    of this corpus states no ordinal, and none is invented: only a table
+    with an ordinal column and an export column is read, the number is kept
+    as printed, and the DLL comes from a sentence on the same page (empty
+    when the page names none).
+    """
+    out = []
+    plain = text_of(fragment, keep_newlines=False)
+    dll_match = _EXPORTS_OF_DLL.search(plain)
+    dll = dll_match.group(1) if dll_match else ""
+    dll_evidence = (re.sub(r"\s+", " ", dll_match.group(0)).strip()
+                    if dll_match else "")
+    for table in TABLE.finditer(fragment):
+        rows = ROW.findall(table.group(1))
+        if len(rows) < 2:
+            continue
+        headers = [re.sub(r"\s+", " ", text_of(cell, keep_newlines=False))
+                   .strip() for cell in CELL.findall(rows[0])]
+        labels = [header.lower() for header in headers]
+        ordinal_i = next((i for i, label in enumerate(labels)
+                          if _ORDINAL_COLUMN.match(label)), None)
+        name_i = next((i for i, label in enumerate(labels)
+                       if _EXPORT_COLUMN.match(label)), None)
+        if ordinal_i is None or name_i is None or ordinal_i == name_i:
+            continue
+        header = " ".join(headers)
+        for row in rows[1:]:
+            cells = [re.sub(r"\s+", " ", text_of(cell, keep_newlines=False))
+                     .strip() for cell in CELL.findall(row)]
+            if len(cells) <= max(ordinal_i, name_i):
+                continue
+            name, printed = cells[name_i], cells[ordinal_i]
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_@?$]*", name):
+                continue
+            if not re.fullmatch(r"\d+", printed):
+                continue
+            out.append({
+                "name": name,
+                "ordinal": int(printed),
+                "ordinal_printed": printed,
+                "dll": dll,
+                "dll_evidence": dll_evidence,
+                "table": header,
+                "row": " ".join(cell for cell in cells if cell),
+            })
+    return out
+
+
 def offset_tables(fragment):
     """Layout tables: ``Offset | Field | Size | …`` rows, quoted as printed.
 
@@ -1487,8 +1569,43 @@ def is_implementation(text):
     return bool(IMPLEMENTATION_STATEMENT.search(text))
 
 
+def _is_build_script(text):
+    """True when a block is makefile/Sources-file variable assignments.
+
+    The Sources, Makefile and .bat pages print blocks like
+    ``TARGETLIBS=$(_COMMONOAKROOT)\\lib\\$(_CPUDEPPATH)\\blcommon.lib``.  They
+    contain ``(`` and ``)`` only because of ``$(...)`` expansion, so the
+    generic "has parentheses -> function" rule used to call them C functions
+    and gave the build variable an entity of kind ``function``.  A build
+    variable is not an exported symbol and must not reach a header or a .def,
+    so it is named for what it is.
+
+    A line of C (a ``;``, a brace, a type before the name) disqualifies the
+    block; the reader never rewrites it, it only labels it.
+    """
+    if "$(" not in text or "=" not in text:
+        return False
+    saw = False
+    for line in text.splitlines():
+        stripped = line.strip().rstrip("\\").strip()
+        if not stripped or stripped.startswith(("#", "!", "//", "rem ", "REM ")):
+            continue
+        if any(ch in stripped for ch in ";{}"):
+            return False
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*\s*=", stripped):
+            saw = True
+            continue
+        # a continuation line of a previous assignment: a bare path/token
+        if re.match(r"^[-$()A-Za-z0-9_.\\/:*]+$", stripped):
+            continue
+        return False
+    return saw
+
+
 def _kind_of(text):
     lowered = text.lower()
+    if _is_build_script(text):
+        return "build-variable"
     if re.search(r"\btypedef\s+struct\b|\bstruct\s+[A-Za-z_]", lowered):
         return "struct"
     if "typedef enum" in lowered or re.search(r"\benum\s+[A-Za-z_]", lowered):
@@ -2382,4 +2499,95 @@ def constraints(fragment):
         if not hit:
             continue
         out.append({"text": sentence, "pattern": hit})
+    return out
+
+
+# Topics that decide what a generated `.def` may contain.  Each key is the
+# topic recorded with the sentence; the values are the words that have to be
+# in the sentence for that topic to apply.  A sentence is kept verbatim --
+# the rule is the document's wording, never a paraphrase of it.
+DEF_RULE_TOPICS = (
+    ("module-definition-file", ("module-definition", "module definition file",
+                                ".def file", "def file syntax")),
+    ("exports-section", ("exports section", "exports statement",
+                         "exports keyword")),
+    ("name-decoration", ("decorated name", "name decoration",
+                         "undecorated", "decorating", "decorates")),
+    ("dllexport", ("__declspec(dllexport)", "declspec(dllexport)",
+                   "dllexport", "dllimport")),
+    ("export-ordinal", ("export ordinal", "ordinal value", "by ordinal",
+                        "ordinal number")),
+    ("extern-c", ('extern "c"',)),
+    # the ABI half of the same question: how the call is made, which the
+    # user asked for explicitly
+    ("calling-convention", ("calling convention", "__stdcall", "__cdecl",
+                            "__fastcall", "winapiv")),
+)
+# A period that ends a sentence is followed by a space; ``.def`` is not.
+_DEF_SENTENCE = re.compile(r"(?<=[.:;!?])\s+(?=[A-Z0-9\"(\u00b7])")
+# Without a verb the match is a run of headings or a table of contents.
+_DEF_RULE_VERB = re.compile(
+    r"\b(is|are|was|were|be|been|must|can|cannot|may|might|should|will|"
+    r"would|do|does|did|has|have|had|use|uses|used|requires?|required|"
+    r"specif(?:y|ies|ied)|causes?|contains?|exports?|prevents?|allows?|"
+    r"list(?:s|ed)?|appends?|adds?|returns?|creates?|calls?|needs?|"
+    r"support(?:s|ed)?|produces?|takes?|treats?)\b")
+# Cheap gate: a page without one of these strings cannot produce a rule, and
+# the corpus is 121,000 pages.
+_DEF_RULE_TRIGGERS = tuple(sorted(
+    {word for _topic, words in () for word in words} |
+    {".def", "module-definition", "module definition file", "exports section",
+     "exports statement", "exports keyword", "decorated", "decoration",
+     "dllexport", "dllimport", "by ordinal", "ordinal value",
+     "ordinal number", "export ordinal", 'extern "c"',
+     "calling convention", "__stdcall", "__cdecl", "__fastcall",
+     "winapiv"}))
+# Page furniture that happens to contain a topic word.
+_DEF_RULE_NOISE = ("see also", "send feedback", "in this article",
+                   "table of contents", "last updated on", "feedback faqs",
+                   "copy markdown", "ask learn")
+
+
+def def_rules(fragment):
+    """Sentences stating how an export, a .def file or a decorated name works.
+
+    These pages are the specification for the artefact this corpus exists to
+    produce: what a module-definition file may list, whether the name in it
+    is decorated, what ``__declspec(dllexport)`` does, when an export is
+    reached by ordinal.  The sentence is quoted as printed, with the topic it
+    matched; nothing is generalised into a rule the page does not state.
+
+    Sentences are cut on ``. `` (a period *and* a space), not on every
+    period, because the subject of these pages is spelled ``.def`` and a
+    naive split turns one rule into two halves of nonsense.  Block structure
+    is kept, so a heading does not run into the paragraph under it.
+    """
+    lowered_fragment = fragment.lower()
+    if not any(word in lowered_fragment for word in _DEF_RULE_TRIGGERS):
+        return []
+    out = []
+    seen = set()
+    for line in text_of(fragment, keep_newlines=True).splitlines():
+        line = re.sub(r"[ \t]+", " ", line).strip()
+        if not line:
+            continue
+        for sentence in _DEF_SENTENCE.split(line):
+            sentence = sentence.strip()
+            lowered = sentence.lower()
+            if not (20 <= len(sentence) <= 400):
+                continue
+            if any(noise in lowered for noise in _DEF_RULE_NOISE):
+                continue
+            if len(sentence.split()) < 8:
+                continue
+            if not _DEF_RULE_VERB.search(lowered):
+                continue
+            topics = [topic for topic, words in DEF_RULE_TOPICS
+                      if any(word in lowered for word in words)]
+            if not topics:
+                continue
+            if lowered in seen:
+                continue
+            seen.add(lowered)
+            out.append({"text": sentence, "topics": topics})
     return out

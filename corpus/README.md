@@ -134,7 +134,7 @@ keeps file names joinable with `data/catalogs/*.tsv`, `data/manifests/*` and
   is never unpacked into the corpus (see "What is collected" in the top-level
   `README.md`; `tools/check-corpus.py` reports a `source_files` count and
   `tools/check-policy.py` fails on one).
-* `kb/` — 257 Windows CE KnowledgeBase articles from
+* `kb/` — 260 Windows CE KnowledgeBase articles from
   <https://github.com/jeffpar/kbarchive>; see `kb/README.md`.
 * `mvb/windows-ce-2.0-sdk/` — 293 pages of the Microsoft Windows CE Platform
   SDK (H/PC) 2.0 disc (02/98, Internet Archive `MPLATSDK.20`): the CE debugger

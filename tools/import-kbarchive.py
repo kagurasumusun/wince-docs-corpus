@@ -9,8 +9,9 @@ Palm-size PC, Pocket PC and Windows CE Toolkit products, which the rest of
 this corpus (a documentation archive) does not cover at all.
 
 The tool works on the original ``txt/<prefix>/Q<id>.TXT`` files: an article is
-kept when its header block (the ``DOCUMENT``/``TITLE``/``PRODUCT`` lines and
-the "applies to" list) mentions a Windows CE family product.  Each article
+kept when its header block (the ``DOCUMENT``/``TITLE``/``PRODUCT`` lines, the
+``KEYWORDS`` line and the "applies to" list) names a Windows CE family product
+or carries Microsoft's own ``kbOSWinCE``/``kbWinCE`` taxonomy keyword.  Each article
 becomes one HTML page, ``corpus/kb/<prefix>/<id>.html``, with the original
 text preserved verbatim inside a ``<pre>`` block.
 
@@ -43,6 +44,13 @@ CE_PATTERNS = (
     r"CE Toolkit",
 )
 CE_RE = re.compile("|".join(CE_PATTERNS), re.I)
+
+# Microsoft's own taxonomy keyword for the CE operating system, on the
+# article's ``KEYWORDS:`` line.  A few articles (eMbedded Visual Basic ones,
+# for instance) name no CE product in words and are classified only here.
+# The trailing ``Technology :`` line is deliberately not used: in several
+# articles it is a grab-bag of unrelated search taxonomies.
+CE_KEYWORD_RE = re.compile(r"^KEYWORDS:.*\bkb(OS)?WinCE\w*", re.I | re.M)
 
 TITLE_RE = re.compile(r"^TITLE\s*:\s*(.*)$", re.M)
 DOC_RE = re.compile(r"^DOCUMENT:(\S+)", re.M)
@@ -99,7 +107,7 @@ def article_title(text, path):
 
 def is_ce_article(text):
     head = "\n".join(text.split("\n")[:60])
-    return bool(CE_RE.search(head))
+    return bool(CE_RE.search(head) or CE_KEYWORD_RE.search(head))
 
 
 def main():

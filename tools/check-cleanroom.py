@@ -179,6 +179,46 @@ def check_quotes(records, pages, every):
     return checked, not_found, details
 
 
+def check_tsv_quotes(pages, filename, columns):
+    """Each row of a generated TSV quotes the page it names.
+
+    The same two invariants as the jsonl records -- the page is in the
+    corpus, and the quoted cells are on it.
+    """
+    path = os.path.join(KB, filename)
+    checked = bad = 0
+    details = []
+    if not os.path.exists(path):
+        return checked, bad, details
+    with open(path, encoding="utf-8") as fh:
+        header = fh.readline().rstrip("\n").split("\t")
+        try:
+            indexes = [header.index(name) for name in columns]
+            page_column = header.index("page")
+        except ValueError:
+            return checked, 1, [f"{filename}: unexpected columns"]
+        for line in fh:
+            cells = line.rstrip("\n").split("\t")
+            if len(cells) <= max(indexes + [page_column]):
+                continue
+            text = pages.text(cells[page_column])
+            checked += 1
+            if text is None:
+                bad += 1
+                if len(details) < 10:
+                    details.append(f"{filename}: page {cells[page_column]} "
+                                   "is not in the repository")
+                continue
+            for index in indexes:
+                if cells[index] and flat(cells[index]) not in flat(text):
+                    bad += 1
+                    if len(details) < 10:
+                        details.append(f"{filename}: {cells[index][:50]!r} "
+                                       f"not on {cells[page_column]}")
+                    break
+    return checked, bad, details
+
+
 def check_module_rows(pages):
     """Each kb/modules-ce.tsv row quotes the module page it names.
 
@@ -342,6 +382,10 @@ def main():
     fields_checked, fields_bad, field_details = check_documented_fields(
         records, pages)
     modules_checked, modules_bad, module_details = check_module_rows(pages)
+    ordinals_checked, ordinals_bad, ordinal_details = check_tsv_quotes(
+        pages, "export-ordinals.tsv", ("name", "ordinal", "row"))
+    rules_checked, rules_bad, rule_details = check_tsv_quotes(
+        pages, "def-rules.tsv", ("statement",))
     bad_role, statement_details, quarantined = check_separation(records)
     reads, generator_problems = check_generator(not args.no_generator)
 
@@ -358,6 +402,11 @@ def main():
         ("module rows quote their module page", modules_checked, modules_bad,
          "each kb/modules-ce.tsv row names a page in corpus/ and its quoted "
          "row and value are on that page"),
+        ("export ordinals quote their page", ordinals_checked, ordinals_bad,
+         "each kb/export-ordinals.tsv row names a page in corpus/ and its "
+         "name, ordinal and quoted row are on that page"),
+        ("stated .def rules quote their page", rules_checked, rules_bad,
+         "each kb/def-rules.tsv statement is printed on the page it names"),
         ("sample code stays out of the declarations",
          sum(len(e.get("syntax_declarations", ()))
              for e in records["entity"]), len(bad_role),
@@ -388,6 +437,8 @@ def main():
     for label, details in (("source", missing), ("quote", quote_details),
                            ("member", field_details),
                            ("module", module_details),
+                           ("ordinal", ordinal_details),
+                           ("def-rule", rule_details),
                            ("role", bad_role[:args.list]),
                            ("statement", statement_details[:args.list]),
                            ("generator", generator_problems)):

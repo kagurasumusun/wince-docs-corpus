@@ -208,7 +208,8 @@ def parse_page(job):
             "display": None, "kind": None,
             "requirements": [], "declarations": [], "constraints": [],
             "documented_fields": [], "documented_fields_page": None,
-            "abi_offsets": [], "constants": [], "module_facts": []}
+            "abi_offsets": [], "constants": [], "module_facts": [],
+            "export_ordinals": [], "def_rules": []}
     # An open-source documentation page is evidence of what that project
     # printed about Windows CE.  It is not a CE API page: no entity is minted
     # from the title, and a code sample on the page is not a declaration.
@@ -341,6 +342,14 @@ def parse_page(job):
     # ``NAME (0x0001)`` is a numbered constant the page states.  Read only,
     # and only when the name is one identifier and the value one number.
     fact["constants"] = page_parse.constant_tables(fragment)
+    # The one page family that prints export ordinals: ``Export | Ordinal``
+    # for the floating point C run-time library.  A `.def` needs exactly
+    # this (`name @ordinal`), and it exists nowhere else in the corpus, so
+    # it is read where it does exist rather than assumed to be absent.
+    fact["export_ordinals"] = page_parse.export_ordinal_tables(fragment)
+    # What the documents state about .def files, EXPORTS, decoration and
+    # ordinals -- the rules the generator has to obey, quoted.
+    fact["def_rules"] = page_parse.def_rules(fragment)
     # A Windows CE *module* page states how the binary is composed: the
     # components of ``coredll``, the ``.lib`` each component is imported
     # from, and the header/library of the module's own functions.  This is
@@ -857,6 +866,16 @@ def entity_records(facts, declarations, requirements):
             "sysgens": values("sysgen"),
             "libraries": values("library"),
             "dlls": values("dll"),
+            # Fields for which a page states there is no such file
+            # (``Link Library: Not applicable.``, ``DLL: None``).  An empty
+            # list here and an empty ``libraries`` are different facts: the
+            # first is a page that said nothing, the second a page that said
+            # there is none.  The generator must not go looking for a file
+            # the documents deny.
+            "stated_none": sorted({r["field"] for r in reqs
+                                   if r["field"] in ("header", "library",
+                                                     "dll")
+                                   and page_parse.stated_none(r["value"])}),
             "unicode_ansi": values("unicode_ansi"),
             "doc_role": doc_role,
             "declarations": sorted({d["id"] for d in decl_by_entity[entity]}),
@@ -1527,6 +1546,40 @@ def build(rows, workers, report_only, plain=False):
     write_tsv(os.path.join(KB, "struct-fields.tsv"),
               ["entity", "field", "order", "page"], field_rows)
 
+    # ---- export ordinals: the only `name @ordinal` the documents print
+    ordinal_rows = []
+    for fact in facts:
+        for item in fact.get("export_ordinals") or []:
+            ordinal_rows.append((
+                item["name"], item["ordinal_printed"], item["dll"],
+                ce_api_names.entity_id(item["name"]),
+                fact["path"], fact["page_id"], fact["book"], fact["title"],
+                item["table"], item["row"], item["dll_evidence"],
+                license_of(fact["path"])))
+    ordinal_rows.sort(key=lambda r: (r[2].lower(), int(r[1])))
+    print(f"[kb] {len(ordinal_rows):,} export ordinal(s) from "
+          f"{len({row[4] for row in ordinal_rows}):,} page(s)", flush=True)
+    write_tsv(os.path.join(KB, "export-ordinals.tsv"),
+              ["name", "ordinal", "dll", "entity", "page", "page_id", "set",
+               "title", "table", "row", "dll_evidence", "license"],
+              ordinal_rows)
+
+    # ---- the stated rules for building a module-definition file
+    rule_rows = []
+    for fact in facts:
+        for item in fact.get("def_rules") or []:
+            rule_rows.append((
+                ";".join(item["topics"]), item["text"],
+                fact["path"], fact["page_id"], fact["book"], fact["title"],
+                license_of(fact["path"])))
+    rule_rows.sort(key=lambda r: (r[0], r[2], r[1]))
+    print(f"[kb] {len(rule_rows):,} stated .def/export rule(s) from "
+          f"{len({row[2] for row in rule_rows}):,} page(s)", flush=True)
+    write_tsv(os.path.join(KB, "def-rules.tsv"),
+              ["topics", "statement", "page", "page_id", "set", "title",
+               "license"],
+              rule_rows)
+
     # ---- Windows CE modules: what the module pages state about the binary
     module_rows = []
     for fact in facts:
@@ -1600,13 +1653,20 @@ def build(rows, workers, report_only, plain=False):
                len(entity["libraries"]), len(entity["dlls"]),
                len(entity["constraints"]))
         coverage_rows.append(row)
+        # ``no-*`` means the documents are silent.  A page that prints
+        # ``Link Library: Not applicable.`` has answered the question, so
+        # that entity is not a collection gap for the library; it is
+        # listed as ``library-stated-none`` instead.
+        stated = set(entity.get("stated_none") or ())
         missing = []
         if not entity["syntax_declarations"]:
             missing.append("no-declaration")
         if not entity["headers"]:
-            missing.append("no-header")
-        if not entity["libraries"]:
-            missing.append("no-library")
+            missing.append("header-stated-none" if "header" in stated
+                           else "no-header")
+        if not entity["libraries"] and not entity["dlls"]:
+            missing.append("library-stated-none"
+                           if stated & {"library", "dll"} else "no-library")
         if entity.get("noise"):
             continue
         if missing and entity["doc_role"] in ("api-definition", "api-page"):
@@ -1627,7 +1687,8 @@ def build(rows, workers, report_only, plain=False):
                "declaration_in_other_sets", "has_win32_page", "example_page"],
               gap_rows)
     write_summary(facts, entities, declarations, requirements, constraints,
-                  abi_offsets, constants, per_tree, gap_rows)
+                  abi_offsets, constants, per_tree, gap_rows, ordinal_rows,
+                  rule_rows)
     return (facts, entities, declarations, requirements, constraints,
             abi_offsets, constants)
 
@@ -1639,7 +1700,8 @@ def jst_today():
 
 
 def write_summary(facts, entities, declarations, requirements, constraints,
-                  abi_offsets, constants, per_tree, gap_rows):
+                  abi_offsets, constants, per_tree, gap_rows,
+                  ordinal_rows=(), rule_rows=()):
     def top(book):
         """learn/windows-ce-5.0/... -> learn/windows-ce-5.0 (the report unit)."""
         parts = book.split("/")
@@ -1919,9 +1981,29 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "a column the page heads as hexadecimal are stored as printed; "
         "`0x` is not added.  A scan code beside a virtual key, a code page "
         "beside a character set, and a locale beside an LCID are not "
-        "constant values, so those tables are not read.  Symbol decoration "
-        "(`_Name@N`) and export ordinals are not in these documents, so "
-        "none is recorded.",
+        "constant values, so those tables are not read.  No page prints the "
+        "decorated form (`_Name@N`) of a Windows CE export, so no decorated "
+        "symbol is recorded; the compiler's decoration *rules* are "
+        "documented, and those sentences are quoted in `kb/def-rules.tsv` "
+        "under the `name-decoration` topic.",
+        "",
+        f"**Export ordinals.**  One page family does print them: "
+        f"`Exports from the Floating Point C Run-Time Library` lists "
+        f"`Export | Ordinal` for `Fpcrt.dll`.  "
+        f"{len(ordinal_rows):,} ordinals over "
+        f"{len({row[4] for row in ordinal_rows}):,} page(s) are in "
+        f"`kb/export-ordinals.tsv`, the number as printed, with the "
+        f"sentence that names the DLL.  Every other page states none, and "
+        f"none is invented for them.",
+        "",
+        f"**The rules for the file itself.**  {len(rule_rows):,} sentence(s) "
+        f"on {len({row[2] for row in rule_rows}):,} page(s) state how a "
+        f"module-definition file, an `EXPORTS` section, `dllexport`, an "
+        f"ordinal or a decorated name behaves; they are quoted with their "
+        f"topic in `kb/def-rules.tsv`.  Among them the documents state that "
+        f"a 32-bit `.def` lists `__cdecl`, `__stdcall` and `__fastcall` "
+        f"functions undecorated -- a generator that writes `_Name@N` into "
+        f"`EXPORTS` would contradict the source.",
         "",
         "## The gaps",
         "",
@@ -1945,6 +2027,19 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"| `no-library` | {sum(1 for g in gap_rows if 'no-library' in g[4]):,} | "
         "the page has no `Link Library`/`Library` requirement -- expected for "
         "compiler intrinsics and macros, worth collecting for functions |",
+        f"| `header-stated-none` | "
+        f"{sum(1 for g in gap_rows if 'header-stated-none' in g[4]):,} | "
+        "nothing: the page prints `Header: Not applicable` / `None` / "
+        "`Developer Implemented`, so the documents have answered |",
+        f"| `library-stated-none` | "
+        f"{sum(1 for g in gap_rows if 'library-stated-none' in g[4]):,} | "
+        "nothing: the page prints `Link Library: Not applicable` / `None`, "
+        "so there is no library to collect |",
+        "",
+        "The `*-stated-none` rows are **not** a collection worklist: they are "
+        "the pages that answered the question.  They are listed so that the "
+        "silence of a page and the statement of a page are never counted as "
+        "the same thing.",
         "",
         "## Using it",
         "",
