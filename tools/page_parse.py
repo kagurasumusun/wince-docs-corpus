@@ -895,7 +895,8 @@ _JSCRIPT_FUNCTION = re.compile(
     r"sealed|static)\s+)*function\s+[A-Za-z_]")
 _SIGNATURE = re.compile(
     r"(?is)^(?:typedef\s+)?(?:enum\s+|struct\s+|union\s+)?"
-    r"[A-Za-z_][\w\s\*]*\s+[A-Za-z_][\w]*\s*\(")
+    r"[A-Za-z_][\w\s\*]*\s+[*&]*\s*"
+    r"[A-Za-z_][\w]*(?:::[A-Za-z_][\w]*)?\s*\(")
 
 
 def _prototype_name(text):
@@ -913,19 +914,16 @@ def _slot_belongs_to_title(text, page_title):
     so the quote stays unattached.  A title that names an API does not adopt
     a different function printed in the same slot (``CryptDuplicateHash`` on
     the ``CryptDuplicateKey`` page, ``WindowProc`` on ``WM_NCPAINT``).
+    A title that lists several names (``strcpy, wcscpy``) or prints
+    ``Interface::Member Method`` names those APIs; the slot has to print
+    one of them.
     """
-    display = name_from_title(page_title)
-    if not display:
+    names = documented_title_names(page_title)
+    if not names:
         return True
     cleaned = re.sub(r"/\*.*?\*/", " ", text or "", flags=re.S)
     cleaned = re.sub(r"//.*?$", " ", cleaned, flags=re.M)
-    keys = {re.sub(r"[^a-z0-9_]", "", part.lower())
-            for part in display.split("::")}
-    keys.discard("")
-    for ident in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", cleaned):
-        if re.sub(r"[^a-z0-9_]", "", ident.lower()) in keys:
-            return True
-    return False
+    return any(name_in_syntax(name, cleaned) for name in names)
 
 
 def _fragment_defines(fragment, name):
@@ -946,6 +944,9 @@ def _is_documented_prototype(text):
     if not body or _VB_BLOCK.match(body) or _RESOURCE_GRAMMAR.search(body):
         return False
     if _JSCRIPT_FUNCTION.search(body):
+        return False
+    if re.match(r"(?i)(?:if|for|while|switch|return|sizeof|do|else|case)\b",
+                body):
         return False
     lowered = body.lower()
     if lowered.startswith(("typedef enum", "typedef struct", "typedef union",
@@ -1276,6 +1277,87 @@ def interface_member_title(title):
     if not match:
         return None
     return f"{match.group(2)}::{match.group(1)}"
+
+
+_QUALIFIED_KIND = re.compile(
+    r"^([A-Za-z_][\w]*::[A-Za-z_][\w]*)\s+(?:Method|Property|Event)\s*$",
+    re.I)
+_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _title_core(title):
+    """Drop the Learn suffix and a trailing ``(Windows …)`` parenthetical."""
+    if not title:
+        return ""
+    text = _LEARN_SUFFIX.sub("", title).strip()
+    for _ in range(2):
+        text = _WIN_SUFFIX.sub("", text).strip()
+    return text
+
+
+def documented_title_names(title):
+    """Names a title prints, when the title is itself the list of APIs.
+
+    ``CreateFile`` and ``GPE::AllocSurface`` are one name.
+    ``ITimerService::CreateTimer Method`` prints the parent and the member.
+    ``abort Method (DOMDocument)`` does too.  ``strcpy, wcscpy`` prints both.
+    ``absoluteChildNumber Method`` does not name a parent, and
+    ``IContact Properties`` is not a list of identifiers, so both are empty.
+    Nothing is completed or invented.
+    """
+    single = name_from_title(title)
+    if single:
+        return [single]
+    text = _title_core(title)
+    match = _QUALIFIED_KIND.match(text)
+    if match:
+        return [match.group(1)]
+    qualified = interface_member_title(title)
+    if qualified:
+        return [qualified]
+    parts = [part.strip() for part in text.split(",")]
+    if 2 <= len(parts) <= 4 and all(_IDENT.match(part) for part in parts):
+        return parts
+    return []
+
+
+def syntax_declares_name(name, text):
+    """True when ``text`` is a declaration of ``name``, not a mention of it.
+
+    ``recordset.{MoveFirst | MoveNext}`` mentions the name and is not a
+    declaration.  ``FILE *stdin;`` and ``HRESULT CreateTimer(...)`` are.
+    """
+    if not name_in_syntax(name, text):
+        return False
+    body = (text or "").strip()
+    if _is_documented_prototype(body):
+        return True
+    if re.match(r"(?is)(?:typedef\s+)?(?:struct|enum|union)\b", body):
+        return True
+    if re.match(r"(?m)\s*#\s*define\b", body):
+        return True
+    member = name.split("::")[-1]
+    return re.search(
+        r"(?i)(?<![A-Za-z0-9_])" + re.escape(member) + r"\s*;",
+        body) is not None
+
+
+def name_in_syntax(name, text):
+    """True when ``text`` prints ``name`` (or, for a property, its get/put).
+
+    ``IHTMLElement3::onactivate`` is documented as ``get_onactivate``.
+    A comma-list name has to be that identifier, not a substring of another.
+    """
+    member = (name or "").split("::")[-1]
+    if not member:
+        return False
+    if "::" in (name or ""):
+        pattern = (r"(?i)(?<![A-Za-z0-9_])(?:get_|put_)?"
+                   + re.escape(member) + r"(?![A-Za-z0-9_])")
+    else:
+        pattern = (r"(?i)(?<![A-Za-z0-9_])" + re.escape(member)
+                   + r"(?![A-Za-z0-9_])")
+    return re.search(pattern, text or "") is not None
 
 
 def name_from_title(title):

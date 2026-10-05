@@ -277,6 +277,8 @@ def parse_page(job):
     # name.  A title that does not print the parent stays unattached: the
     # declaration is quoted, and no interface is invented for it.
     if not fact["entity"]:
+        # ``abort Method (DOMDocument)`` is attached only when a C/C++ Syntax
+        # heading holds the declaration: a script-only page is not an entity.
         qualified = page_parse.interface_member_title(title)
         if qualified and any(
                 d["role"] == "syntax" for d in fact["declarations"]):
@@ -287,6 +289,23 @@ def parse_page(job):
                 fact["display"] = qualified
                 fact["entity"] = ce_api_names.normalize(qualified)
                 fact["entity_evidence"] = "page-title"
+    if not fact["entity"]:
+        # ``ITimerService::CreateTimer Method`` prints the parent and the
+        # member.  ``strcpy, wcscpy`` prints both names.  Attach a name only
+        # when a syntax block on the page prints it.  A title that does not
+        # name the parent (``absoluteChildNumber Method``) is not in this
+        # list, and no interface is invented for it.
+        named = [name for name in page_parse.documented_title_names(title)
+                 if any(d["role"] == "syntax" and
+                        page_parse.syntax_declares_name(name, d["text"])
+                        for d in fact["declarations"])]
+        if named:
+            fact["display"] = named[0]
+            fact["entity"] = ce_api_names.normalize(named[0])
+            fact["entity_evidence"] = "page-title"
+            fact["also_documented"] = [
+                {"id": ce_api_names.normalize(name), "name": name}
+                for name in named]
     fact["constraints"] = [dict(item, kind="ce-restriction")
                            for item in page_parse.constraints(fragment)]
     fact["constraints"] += [dict(note, kind="abi-note")
@@ -541,18 +560,44 @@ def constant_records(facts, entity_of):
 
 def entity_records(facts, declarations, requirements):
     by_entity = collections.defaultdict(list)
+    # A title that prints several names (``strcpy, wcscpy``) documents each
+    # of them.  The declaration record is stored once, under the first name;
+    # the others share that quotation when the text prints their name, and
+    # they share the page's requirements.  No name is added that the title
+    # and a syntax block do not both print.
+    extras_of = {}
     for fact in facts:
-        if fact["entity"]:
-            by_entity[fact["entity"]].append(fact)
+        extras = fact.get("also_documented") or []
+        if extras:
+            extras_of[fact["path"]] = extras
+        ids = [item["id"] for item in extras]
+        if fact["entity"] and fact["entity"] not in ids:
+            ids.append(fact["entity"])
+        for entity in ids:
+            by_entity[entity].append(fact)
 
     decl_by_entity = collections.defaultdict(list)
     for record in declarations:
         if record["entity"]:
             decl_by_entity[record["entity"]].append(record)
+        extras = extras_of.get((record.get("source") or {}).get("path"))
+        if not extras or record.get("role") != "syntax":
+            continue
+        for item in extras:
+            if item["id"] == record.get("entity"):
+                continue
+            if page_parse.syntax_declares_name(item["name"], record.get("text")):
+                decl_by_entity[item["id"]].append(record)
     req_by_entity = collections.defaultdict(list)
     for record in requirements:
         if record["entity"]:
             req_by_entity[record["entity"]].append(record)
+        extras = extras_of.get((record.get("source") or {}).get("path"))
+        if not extras:
+            continue
+        for item in extras:
+            if item["id"] != record.get("entity"):
+                req_by_entity[item["id"]].append(record)
 
     out = []
     for entity in sorted(by_entity):
@@ -562,7 +607,17 @@ def entity_records(facts, declarations, requirements):
         win32_pages = sorted({f["path"] for f in pages if f["layer"] == "win32"})
         dotnet_pages = sorted({f["path"] for f in pages if f["layer"] == "dotnet"})
         sets = sorted({f["book"] for f in pages if f["layer"] == "ce"})
-        displays = collections.Counter(f["display"] for f in pages if f["display"])
+        displays = collections.Counter()
+        for fact_page in pages:
+            shown = None
+            for item in fact_page.get("also_documented") or []:
+                if item["id"] == entity:
+                    shown = item["name"]
+                    break
+            if not shown:
+                shown = fact_page.get("display")
+            if shown:
+                displays[shown] += 1
         kinds = collections.Counter()
         for f in pages:
             if f["kind"]:
