@@ -856,6 +856,108 @@ def _is_macro_block(text):
     return saw
 
 
+def _section_title_after(fragment, pos, window=800):
+    """The first heading or ``<p class=\"label\">`` after ``pos``, lower-cased."""
+    titles = []
+    for match in HEADING.finditer(fragment, pos, pos + window):
+        titles.append((match.start(),
+                       text_of(match.group(0), keep_newlines=False)
+                       .strip(": ").lower()))
+    for match in re.finditer(
+            r"(?is)<p\b[^>]*\bclass\s*=\s*[\"']label[\"'][^>]*>\s*"
+            r"(?:<[^>]+>\s*)*([^<]{2,40})",
+            fragment[pos:pos + window]):
+        titles.append((pos + match.start(),
+                       re.sub(r"\s+", " ", match.group(1)).strip(": ").lower()))
+    if not titles:
+        return ""
+    titles.sort()
+    return titles[0][1]
+
+
+_PROTO_AFTER = ("parameters", "members", "elements", "constants",
+                "c/c++ parameters", "return values", "return value")
+_NOT_PROTO_BEFORE = ("parameters", "return values", "return value", "remarks",
+                     "general remarks", "script syntax", "script parameters",
+                     "script return value", "example", "examples",
+                     "code example", "sample", "samples", "example code")
+_RESOURCE_GRAMMAR = re.compile(
+    r"(?i)\b(?:ACCELERATORS|DIALOGEX|DIALOG|STRINGTABLE|RCDATA|VERSIONINFO|"
+    r"POPUP|MENU)\b|\[\[")
+_VB_BLOCK = re.compile(
+    r"(?i)^\s*(?:dim |sub |function |private |public |end |select )")
+# Compact Framework pages print JScript as ``protected abstract function
+# Dispose( disposing : boolean )``.  That is not a C prototype.  A comment
+# that merely says "callback function" is not this form.
+_JSCRIPT_FUNCTION = re.compile(
+    r"(?im)^(?!\s*(?://|/\*|\*))\s*"
+    r"(?:(?:public|private|protected|internal|override|virtual|abstract|"
+    r"sealed|static)\s+)*function\s+[A-Za-z_]")
+_SIGNATURE = re.compile(
+    r"(?is)^(?:typedef\s+)?(?:enum\s+|struct\s+|union\s+)?"
+    r"[A-Za-z_][\w\s\*]*\s+[A-Za-z_][\w]*\s*\(")
+
+
+def _prototype_name(text):
+    """The identifier immediately before the first call parenthesis."""
+    cleaned = re.sub(r"/\*.*?\*/", " ", text or "", flags=re.S)
+    cleaned = re.sub(r"//.*?$", " ", cleaned, flags=re.M)
+    match = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\s*\(", cleaned)
+    return match.group(1) if match else ""
+
+
+def _slot_belongs_to_title(text, page_title):
+    """A prototype slot is this page's declaration only when the title names it.
+
+    A title that is not one API name (``IContact Properties``) has no entity,
+    so the quote stays unattached.  A title that names an API does not adopt
+    a different function printed in the same slot (``CryptDuplicateHash`` on
+    the ``CryptDuplicateKey`` page, ``WindowProc`` on ``WM_NCPAINT``).
+    """
+    display = name_from_title(page_title)
+    if not display:
+        return True
+    cleaned = re.sub(r"/\*.*?\*/", " ", text or "", flags=re.S)
+    cleaned = re.sub(r"//.*?$", " ", cleaned, flags=re.M)
+    keys = {re.sub(r"[^a-z0-9_]", "", part.lower())
+            for part in display.split("::")}
+    keys.discard("")
+    for ident in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", cleaned):
+        if re.sub(r"[^a-z0-9_]", "", ident.lower()) in keys:
+            return True
+    return False
+
+
+def _fragment_defines(fragment, name):
+    """True when this page prints ``#define <name>``."""
+    if not name:
+        return False
+    return re.search(r"#\s*define\s+" + re.escape(name) + r"\b",
+                     fragment or "") is not None
+
+
+def _is_documented_prototype(text):
+    """A block the page put in the declaration slot, not a call or a script.
+
+    Resource-compiler grammar (``DIALOG``, ``[[optional]]``) and Visual Basic
+    are not C prototypes.  A default argument (``tStart = 0``) still is.
+    """
+    body = (text or "").strip()
+    if not body or _VB_BLOCK.match(body) or _RESOURCE_GRAMMAR.search(body):
+        return False
+    if _JSCRIPT_FUNCTION.search(body):
+        return False
+    lowered = body.lower()
+    if lowered.startswith(("typedef enum", "typedef struct", "typedef union",
+                           "enum ", "struct ", "union ")):
+        return True
+    lines = [line.strip() for line in body.splitlines()
+             if line.strip() and not line.strip().startswith(("/*", "*", "//"))]
+    if len(lines) > 8:
+        return False
+    return bool(_SIGNATURE.match(body)) and (";" in body or len(lines) <= 3)
+
+
 def _section_title_before(fragment, pos):
     """The last heading or ``<p class="label">`` before ``pos``, lower-cased."""
     titles = []
@@ -886,7 +988,7 @@ def _looks_like_declaration(text):
     return ("(" in text and ")" in text) or ";" in text or "{" in text
 
 
-def declarations(fragment):
+def declarations(fragment, page_title=None):
     """Syntax blocks of one page, with their markup and the raw text."""
     out = []
     # ``C/C++ Syntax`` is the declaration on the dual Script/C++ template.
@@ -927,6 +1029,31 @@ def declarations(fragment):
                     tail and nxt in ("parameters", "return values", "remarks",
                                      "members", "see also", "requirements", ""):
                 role = "syntax"
+            # A page with an Example pre as well still prints the prototype
+            # immediately before Parameters / Members / Elements.  That slot
+            # is the declaration.  A block already under Example, or one that
+            # follows Parameters, is a call, not this slot.  Resource-compiler
+            # grammar and Visual Basic stay out.
+            if role == "example" and _is_documented_prototype(text):
+                prev = _section_title_before(fragment, match.start())
+                nxt_any = _section_title_after(fragment, match.end())
+                if nxt_any in _PROTO_AFTER and prev not in _NOT_PROTO_BEFORE \
+                        and not prev.startswith("example") \
+                        and not prev.startswith("sample"):
+                    role = "syntax"
+                    # A page that also prints ``#define Name`` is documenting a
+                    # macro.  The prototype-shaped line is the calling form,
+                    # not a second declaration that should replace the macro.
+                    # A prototype of a different name than the title is not
+                    # this page's declaration.
+                    body = text.lstrip().lower()
+                    if body.startswith(("typedef enum", "typedef struct",
+                                        "typedef union", "enum ", "struct ",
+                                        "union ")):
+                        pass
+                    elif not _slot_belongs_to_title(text, page_title) \
+                            or _fragment_defines(fragment, _prototype_name(text)):
+                        role = "example"
         out.append({
             "text": text,
             "markup": (re.search(r'class\s*=\s*"([^"]+)"', attrs, re.I) or

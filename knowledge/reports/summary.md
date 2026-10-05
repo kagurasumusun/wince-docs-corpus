@@ -6,8 +6,8 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 
 ## ABI
 
-* syntax declarations: **91,170**; of those **87,663** print no calling convention (none is guessed) and **3,507** print one (winapi 2,828, stdcall 409, cdecl 263, extern-c 6, fastcall 1)
-* member lines that print a type: **35,098** out of **40,278**; bitfields **126**, `#pragma pack` **4**, `__declspec(align` **5**
+* syntax declarations: **93,470**; of those **89,859** print no calling convention (none is guessed) and **3,611** print one (winapi 2,924, stdcall 416, cdecl 264, extern-c 6, fastcall 1)
+* member lines that print a type: **38,909** out of **46,854**; bitfields **126**, `#pragma pack` **4**, `__declspec(align` **5**
 * statements a page makes about alignment, byte order, pointer width or a structure size: **969** quoted sentences (`kind: "abi-note"` in `kb/constraints.jsonl`; the structure-size sentences are counted again on their own line below)
 * layout tables (`Offset | Field | Size | …`): **399** documented offset rows over **58** page(s), quoted row by row in `kb/abi-offsets.jsonl` (the flat view is `kb/abi-offsets.tsv`, with the page and its title). **18** of the rows name a member the same page declares in a syntax block; the others are rows whose field the page does not declare (wire/packet layouts, array spellings such as `dwIndex[0]` where the declaration says `dwOffset`, and string literals inside the table) -- each is kept as the page printed it, and the column is marked `matches_declared_member`
 * structure sizes stated in prose: **5** sentences (the number is a read of the quoted sentence, never a guess)
@@ -22,7 +22,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 * requirement statements: **168,092**
 * numbered constants: **18,746** (`kb/constants.jsonl`, 791 page(s))
 * Windows CE constraint sentences: **3,250** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
-* entities with a gap record: **14,618** (`reports/gaps.tsv`)
+* entities with a gap record: **14,557** (`reports/gaps.tsv`)
 * structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
 * relations between definitions: **23,781** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints)
 * catalog-only names (the CE TOC names it, no CE page for it is in the corpus): **3** (`reports/catalog-leads.tsv` shows the CE page the name list points at, what that page actually prints, and what the Win32 page documents -- a lead, not a CE definition)
@@ -351,12 +351,12 @@ A header or a `.def` for one Windows CE version can only be built from what *tha
 
 | set | entities | syntax | header | library | functions with all three | numbered constants |
 |-----|----------|--------|--------|---------|--------------------------|--------------------|
-| `learn/windows-ce-5.0` | 14,270 | 11,576 | 12,194 | 6,693 | 5,661 / 10,088 | 4,169 (3,054 names) |
-| `learn/windows-embedded-ce-6.0` | 16,186 | 14,856 | 13,921 | 7,328 | 6,984 / 12,052 | 4,353 (3,231 names) |
-| `learn/windows-ce-net-4x` | 6,480 | 5,119 | 5,972 | 3,572 | 3,143 / 4,480 | 1,031 (985 names) |
-| `chm/windows-ce-5.0` | 9,382 | 7,945 | 7,893 | 4,932 | 4,181 / 7,243 | 3,380 (2,339 names) |
-| `chm/windows-ce-3.0` | 6,746 | 5,942 | 4,415 | 1,804 | 1,649 / 5,317 | 2,480 (1,405 names) |
-| `chm/windows-ce-4.2` | 277 | 212 | 242 | 0 | 0 / 205 | 0 (0 names) |
+| `learn/windows-ce-5.0` | 14,270 | 12,365 | 12,194 | 6,693 | 5,999 / 10,160 | 4,169 (3,054 names) |
+| `learn/windows-embedded-ce-6.0` | 16,186 | 14,861 | 13,921 | 7,328 | 6,985 / 12,053 | 4,353 (3,231 names) |
+| `learn/windows-ce-net-4x` | 6,480 | 5,580 | 5,972 | 3,572 | 3,333 / 4,502 | 1,031 (985 names) |
+| `chm/windows-ce-5.0` | 9,382 | 8,521 | 7,893 | 4,932 | 4,457 / 7,246 | 3,380 (2,339 names) |
+| `chm/windows-ce-3.0` | 6,746 | 6,151 | 4,415 | 1,804 | 1,732 / 5,324 | 2,480 (1,405 names) |
+| `chm/windows-ce-4.2` | 277 | 235 | 242 | 0 | 0 / 227 | 0 (0 names) |
 | `mvb/windows-ce-1.0/PEGSDK` | 1,467 | 189 | 0 | 0 | 0 / 1,128 | 72 (72 names) |
 | `msdn-library/wcedevcon-99` | 4,466 | 4,138 | 3,125 | 0 | 0 / 3,612 | 2,268 (1,206 names) |
 | `msdn-library/techshelps` | 3,747 | 3,063 | 3,076 | 0 | 0 / 2,957 | 321 (178 names) |
@@ -371,9 +371,9 @@ Numbered constants are rows of a name/value table the page prints, or a cell it 
 
 | missing | entities | what to collect |
 |---------|----------|-----------------|
-| `no-declaration` | 3,239 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
-| `no-header` | 2,586 | the page has no `Header` requirement -- same approach |
-| `no-library` | 13,175 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
+| `no-declaration` | 3,097 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
+| `no-header` | 2,589 | the page has no `Header` requirement -- same approach |
+| `no-library` | 13,178 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
 
 ## Using it
 

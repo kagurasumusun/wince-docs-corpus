@@ -270,7 +270,7 @@ def parse_page(job):
     fact["entity"] = ce_api_names.normalize(display) if display else None
     fact["entity_evidence"] = evidence
     fact["requirements"] = page_parse.requirements(fragment)
-    fact["declarations"] = page_parse.declarations(fragment)
+    fact["declarations"] = page_parse.declarations(fragment, page_title=title)
     # ``abort Method (DOMDocument)`` is not a single identifier, so the title
     # parser leaves it without an entity.  When the page also prints a
     # C/C++ Syntax declaration, the title's own parent and member are the
