@@ -43,10 +43,13 @@ Honesty rules (the same ones the knowledge base keeps):
   header (``processthreadsapi.h``, ``windows.h``) is a marked fallback, never
   passed off as a Windows CE header.  Within the chosen statement, a page
   that names ``Wilhelm.h, Otto.h`` has the declaration written into each of
-  those files, because that is what the page says; a value that names no
-  file at all (``Library: Developer Implemented``) is *not* turned into a
-  file name, it is counted in ``report.md`` and stays visible in
-  ``knowledge/reports/filtered-values.tsv``;
+  those files, because that is what the page says.  A library cell that
+  names several files (``Ole32.lib, Uuid.lib``, ``A.lib or B.lib``) likewise
+  writes the export into each of those worklists.  ``Shell32.dll (version
+  4.0 or later)`` names one file; the ``or`` is version prose and is not a
+  second library.  A value that names no file at all (``Library: Developer
+  Implemented``) is *not* turned into a file name, it is counted in
+  ``report.md`` and stays visible in ``knowledge/reports/filtered-values.tsv``;
 * a numbered constant is a table row the page prints (``kb/constants.jsonl``).
   The ``*.h.constants`` file quotes that row and, below it, a ``#define``
   whose keyword the page did not print -- the comment says so.  Pages that
@@ -78,6 +81,11 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+# Splits a requirement *value* already stored in knowledge/.  It does not
+# read a corpus page.  The generator still refuses corpus paths below.
+import page_parse  # noqa: E402
+
 KB = os.path.join(ROOT, "knowledge", "kb")
 
 # The clean-room wall (docs/clean-room.md): this generator reads the
@@ -178,7 +186,9 @@ def grouped_keys(records, fields, target):
     CE set.  ``win32`` is the desktop reference.  The first set that stated a
     key is kept, so a borrow can be named.  A key is the file name the
     requirement record already derived; a value that names no file has an
-    empty key and never arrives here.
+    empty key and never arrives here.  A library/DLL value that names
+    several files contributes each of them: the derived key keeps only the
+    first, and dropping the rest would omit a library the page assigned.
     """
     groups = {"own": [], "ce": [], "win32": []}
     sets = {"own": "", "ce": "", "win32": ""}
@@ -194,10 +204,16 @@ def grouped_keys(records, fields, target):
             slot = "ce"
         else:
             continue
-        if record["key"].lower() not in [key.lower() for key in groups[slot]]:
-            groups[slot].append(record["key"])
-            if not sets[slot]:
-                sets[slot] = book
+        names = [record["key"]]
+        if record.get("field") in ("library", "dll"):
+            stated = page_parse.assigned_files(record.get("value") or "")
+            if stated:
+                names = stated
+        for name in names:
+            if name.lower() not in [key.lower() for key in groups[slot]]:
+                groups[slot].append(name)
+                if not sets[slot]:
+                    sets[slot] = book
     return groups, sets
 
 

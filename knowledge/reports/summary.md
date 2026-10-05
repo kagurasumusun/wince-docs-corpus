@@ -19,24 +19,25 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 * pages parsed: **121,050**
 * API entities: **26,861** -- CE-specific **21,350**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
 * declarations extracted: **109,912** (C/C++ 78,586 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
-* requirement statements: **166,390**
+* requirement statements: **166,593**
 * of those, a page's own `Module` (not an sdk-api UID): **145**; a `sysgen` variable: **961**; a CPU list (`Architecture`): **78**
 * numbered constants: **18,746** (`kb/constants.jsonl`, 791 page(s))
 * Windows CE constraint sentences: **3,250** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
-* entities with a gap record: **16,599** (`reports/gaps.tsv`)
+* entities with a gap record: **16,566** (`reports/gaps.tsv`)
 * structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
 * relations between definitions: **26,374** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints, `related-macro` / `related-message` for the identifier a page prints beside that label)
 * catalog-only names (the CE TOC names it, no CE page for it is in the corpus): **3** (`reports/catalog-leads.tsv` shows the CE page the name list points at, what that page actually prints, and what the Win32 page documents -- a lead, not a CE definition)
 * requirement values that name no file (a library statement like `Developer Implemented`) stay in `kb/requirements.jsonl` with an empty derived key and are listed in `reports/filtered-values.tsv`
+* a library/DLL cell that is only a list of file names (`Ole32.lib, Uuid.lib`, `A.lib or B.lib`) assigns each file.  The requirement record stays one statement and its derived key is the first file; `kb/libraries.tsv`, `kb/dlls.tsv` and `entity.libraries` / `entity.dlls` list every file the cell names.  A sentence that names one file (`Shell32.dll (version 4.0 or later)`) assigns that file only
 
 ## What each tree contributed
 
 | tree | pages | with entity | with requirements | with declaration | requirements | declarations |
 |------|-------|-------------|-------------------|------------------|--------------|--------------|
-| `learn/windows-ce-5.0` | 24,694 | 14,683 | 14,719 | 15,063 | 36,272 | 17,281 |
-| `learn/windows-embedded-ce-6.0` | 23,714 | 16,590 | 16,701 | 16,739 | 40,726 | 18,887 |
+| `learn/windows-ce-5.0` | 24,694 | 14,683 | 14,719 | 15,063 | 36,340 | 17,281 |
+| `learn/windows-embedded-ce-6.0` | 23,714 | 16,590 | 16,701 | 16,739 | 40,766 | 18,887 |
 | `chm/windows-ce-5.0` | 20,179 | 11,545 | 9,698 | 14,790 | 23,411 | 16,059 |
-| `learn/windows-ce-net-4x` | 8,969 | 6,535 | 6,512 | 6,327 | 16,626 | 7,164 |
+| `learn/windows-ce-net-4x` | 8,969 | 6,535 | 6,512 | 6,327 | 16,721 | 7,164 |
 | `chm/windows-ce-3.0` | 8,962 | 6,970 | 5,030 | 6,802 | 11,592 | 7,558 |
 | `msdn-library/wcedevcon-99` | 6,382 | 4,532 | 3,205 | 4,512 | 6,813 | 4,916 |
 | `dotnet/pos-for-net` | 5,793 | 0 | 0 | 5,067 | 0 | 23,157 |
@@ -352,9 +353,9 @@ A header or a `.def` for one Windows CE version can only be built from what *tha
 
 | set | entities | syntax | header | library | functions with all three | numbered constants |
 |-----|----------|--------|--------|---------|--------------------------|--------------------|
-| `learn/windows-ce-5.0` | 14,616 | 12,644 | 12,433 | 6,933 | 6,248 / 10,511 | 4,169 (3,054 names) |
-| `learn/windows-embedded-ce-6.0` | 16,420 | 15,084 | 14,121 | 7,505 | 7,162 / 12,284 | 4,353 (3,231 names) |
-| `learn/windows-ce-net-4x` | 6,503 | 5,621 | 5,995 | 3,595 | 3,374 / 4,527 | 1,031 (985 names) |
+| `learn/windows-ce-5.0` | 14,616 | 12,644 | 12,507 | 6,973 | 6,292 / 10,511 | 4,169 (3,054 names) |
+| `learn/windows-embedded-ce-6.0` | 16,420 | 15,084 | 14,121 | 7,545 | 7,202 / 12,284 | 4,353 (3,231 names) |
+| `learn/windows-ce-net-4x` | 6,503 | 5,621 | 6,063 | 3,622 | 3,401 / 4,527 | 1,031 (985 names) |
 | `chm/windows-ce-5.0` | 11,452 | 10,604 | 7,993 | 5,032 | 4,568 / 9,316 | 3,380 (2,339 names) |
 | `chm/windows-ce-3.0` | 6,767 | 6,183 | 4,415 | 1,804 | 1,735 / 5,345 | 2,480 (1,405 names) |
 | `chm/windows-ce-4.2` | 277 | 235 | 242 | 0 | 0 / 227 | 0 (0 names) |
@@ -373,8 +374,8 @@ Numbered constants are rows of a name/value table the page prints, or a cell it 
 | missing | entities | what to collect |
 |---------|----------|-----------------|
 | `no-declaration` | 3,087 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
-| `no-header` | 4,549 | the page has no `Header` requirement -- same approach |
-| `no-library` | 15,225 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
+| `no-header` | 4,542 | the page has no `Header` requirement -- same approach |
+| `no-library` | 15,198 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
 
 ## Using it
 

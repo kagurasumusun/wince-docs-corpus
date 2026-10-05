@@ -648,6 +648,22 @@ def entity_records(facts, declarations, requirements):
                                    for f in field_pages})
 
         def values(field):
+            # A library cell that names several files assigns each of them.
+            # The requirement's derived key stays the first file; the link
+            # map has to list the rest as well, or ``Uuid.lib`` never
+            # appears for a page that printed ``Ole32.lib, Uuid.lib``.
+            if field in ("library", "dll"):
+                found = []
+                for record in reqs:
+                    if record["field"] != field:
+                        continue
+                    names = page_parse.assigned_files(record.get("value") or "")
+                    if not names and record["key"]:
+                        names = [record["key"]]
+                    for name in names:
+                        if name not in found:
+                            found.append(name)
+                return sorted(found)
             return sorted({r["key"] for r in reqs
                            if r["field"] == field and r["key"]})
 
@@ -1208,13 +1224,20 @@ def aggregate(records, field):
         lambda: {"entities": set(), "sets": set(),
                  "printed": collections.Counter()})
     for record in records:
-        if record["field"] != field or not record["value"] or not record["key"]:
+        if record["field"] != field or not record["value"]:
             continue
-        entry = table[record["key"]]
-        if record["entity"]:
-            entry["entities"].add(record["entity"])
-        entry["sets"].add(record["source"]["set"])
-        entry["printed"][record["value"]] += 1
+        if field in ("library", "dll"):
+            keys = page_parse.assigned_files(record.get("value") or "")
+            if not keys and record["key"]:
+                keys = [record["key"]]
+        else:
+            keys = [record["key"]] if record["key"] else []
+        for key in keys:
+            entry = table[key]
+            if record["entity"]:
+                entry["entities"].add(record["entity"])
+            entry["sets"].add(record["source"]["set"])
+            entry["printed"][record["value"]] += 1
     return table
 
 
@@ -1711,6 +1734,13 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "* requirement values that name no file (a library statement like "
         "`Developer Implemented`) stay in `kb/requirements.jsonl` with an "
         "empty derived key and are listed in `reports/filtered-values.tsv`",
+        "* a library/DLL cell that is only a list of file names "
+        "(`Ole32.lib, Uuid.lib`, `A.lib or B.lib`) assigns each file.  "
+        "The requirement record stays one statement and its derived key is "
+        "the first file; `kb/libraries.tsv`, `kb/dlls.tsv` and "
+        "`entity.libraries` / `entity.dlls` list every file the cell names.  "
+        "A sentence that names one file (`Shell32.dll (version 4.0 or "
+        "later)`) assigns that file only",
         "",
         "## What each tree contributed",
         "",

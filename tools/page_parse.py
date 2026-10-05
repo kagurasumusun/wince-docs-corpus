@@ -73,7 +73,11 @@ LABEL_MAP = {
     # value; the trailing period is sentence punctuation, stripped only
     # from the derived key, the same way ``Winbase.h.`` is.
     "versions": "os_versions", "pocket pc": "os_versions",
-    "smartphone": "os_versions", "pocket": "os_versions",
+    # ``Smartphones: Windows Mobile 5.0 and later`` is the same fact as
+    # ``Smartphone``, plural.  ``Platforms`` is not mapped: its values are
+    # not a version.
+    "smartphone": "os_versions", "smartphones": "os_versions",
+    "pocket": "os_versions",
     "module": "module", "c++ namespace": "namespace",
     "sysgen": "sysgen", "architecture": "architecture",
     "send feedback": None, "see also": None, "note": None, "notes": None,
@@ -156,6 +160,60 @@ LINE_LABEL = re.compile(
 
 FILEISH = re.compile(r"[A-Za-z0-9_.+\-]+\.(h|hpp|hh|hxx|lib|dll|hlp|inc)\b", re.I)
 PROSE_WORDS = re.compile(r"\b(this|your|the|to|of|for|and|see|use|must|not)\b", re.I)
+# The same extensions ``build-kb.FILE_TOKEN`` treats as a library/DLL file.
+ASSIGNED_FILE = re.compile(
+    r"[\w.+-]+\.(?:lib|dll|drv|sys|ocx|tlb)\b", re.I)
+
+
+def _file_list(value):
+    """True when the value is only file names, commas, and ``or`` / ``and``.
+
+    A display-driver page prints eight ``.lib`` names joined by commas and
+    ``or``.  That is a list of files, not prose, even though it is longer
+    than 120 characters and contains ``or``.  ``Shell32.dll (version 4.0 or
+    later)`` is not a list: the ``or`` sits inside a version sentence, and
+    the parenthetical remains after the file name is removed.
+    """
+    # ``findall`` would return the extension group only (``lib``), and
+    # replacing that would eat the ``lib`` inside ``Ddi_ati_lib.lib``.
+    files = [match.group(0) for match in FILEISH.finditer(value or "")]
+    if not files:
+        return False
+    residue = value or ""
+    for name in files:
+        residue = residue.replace(name, " ", 1)
+    residue = re.sub(r"[,;/]|\bor\b|\band\b|[.]", " ", residue, flags=re.I)
+    return not residue.strip()
+
+
+def assigned_files(value):
+    """Every library/DLL file a requirement value assigns, in printed order.
+
+    ``Ole32.lib, Uuid.lib`` and ``OEMMain.lib or OEMMain_StaticKITL.lib``
+    assign each name.  ``Iphlpapi.dll on Windows Server 2008`` assigns the
+    one file the sentence names.  ``Shell32.dll (version 4.0 or later)``
+    assigns ``Shell32.dll`` only.  A value that names no file
+    (``Developer Implemented``) assigns nothing.  Nothing is invented: a
+    second file is kept only when removing the file names, commas and
+    ``or`` / ``and`` leaves nothing else.
+    """
+    files = ASSIGNED_FILE.findall(value or "")
+    if len(files) <= 1:
+        return files
+    residue = value or ""
+    for name in files:
+        residue = residue.replace(name, " ", 1)
+    residue = re.sub(r"[,;/]|\bor\b|\band\b|[.]", " ", residue, flags=re.I)
+    if residue.strip():
+        return files[:1]
+    out = []
+    seen = set()
+    for name in files:
+        if name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        out.append(name)
+    return out
 
 
 def _plausible(field, value):
@@ -163,9 +221,12 @@ def _plausible(field, value):
 
     ``Add this macro to your class's header file`` is a *description* of an
     MFC header requirement, not a header name; a header/library/DLL value has
-    to look like a file name (or be a short bare name).
+    to look like a file name (or be a short bare name).  A cell that is only
+    a list of file names is kept whole, however long.
     """
     if field in ("header", "library", "dll"):
+        if _file_list(value):
+            return True
         if len(value) > 120 or PROSE_WORDS.search(value):
             return len(value.split()) <= 2 and bool(FILEISH.search(value))
         if not FILEISH.search(value) and len(value.split()) > 2:
