@@ -251,6 +251,24 @@ ASSIGNED_FILE = re.compile(
     r"[\w.+-]+\.(?:lib|dll|drv|sys|ocx|tlb)\b", re.I)
 
 
+def _file_cell(value):
+    """True when ``value`` is only file names, commas, and parentheticals.
+
+    ``mshtml.h, mshtml.idl`` and ``Quartz.dll`` are file cells.
+    ``Default set to "\\\\windows\\\\mboxcht.dll"`` is a registry sentence,
+    even though a file name occurs in it.  ``None`` is not a file.
+    """
+    if not value:
+        return False
+    residue = re.sub(
+        r"(?i)[A-Za-z_][\w.+-]*\.(?:h|hpp|hh|hxx|idl|inc|lib|dll|drv|sys)\b",
+        " ", value)
+    residue = re.sub(r"\([^)]*\)", " ", residue)
+    residue = re.sub(r"[,;/]|\bor\b|\band\b|[.]", " ", residue, flags=re.I)
+    return not residue.strip() and bool(re.search(
+        r"(?i)\.(?:h|hpp|hh|hxx|idl|inc|lib|dll|drv|sys)\b", value))
+
+
 def _file_list(value):
     """True when the value is only file names, commas, and ``or`` / ``and``.
 
@@ -587,6 +605,85 @@ def requirements(fragment):
             seen.add((field, value))
             out.append({"field": field, "label": label, "value": value,
                         "evidence": re.sub(r"\s+", " ", match.group(0)).strip()})
+    # MSHTML prints the header and the implementing DLL under
+    # ``Interface Information``, not under Requirements:
+    # ``Header and IDL files | mshtml.h, mshtml.idl``,
+    # ``Stock Implementation | Mshtml.dll``,
+    # ``Import library | mshtml.dll``.  A DirectShow filter page prints
+    # ``Executable | Quartz.dll``.  ``None`` is not a DLL.  A registry
+    # sentence that mentions a DLL is not this table.  ``Minimum operating
+    # systems`` is kept only when the cell names Windows CE; the desktop
+    # names in the same cell stay as printed.
+    out.extend(_information_rows(fragment, seen))
+    # ``To use this API, include the shellcb.h header file and link with
+    # shellcb.lib.``  The subject is this API.  A sentence about some other
+    # API is not matched.
+    use = re.compile(
+        r"(?i)(?:to\s+use\s+this\s+API|implementing\s+this\s+function)"
+        r".{0,80}?include\s+(?:the\s+)?([A-Za-z0-9_]+\.h)\s+header\s+file"
+        r"\s+and\s+link\s+with\s+(?:the\s+)?([A-Za-z0-9_]+\.lib)\b")
+    for match in use.finditer(plain):
+        evidence = re.sub(r"\s+", " ", match.group(0)).strip()
+        for field, label, value in (("header", "include", match.group(1)),
+                                    ("library", "link with", match.group(2))):
+            if (field, value) in seen or not _plausible(field, value):
+                continue
+            seen.add((field, value))
+            out.append({"field": field, "label": label, "value": value,
+                        "evidence": evidence})
+    return out
+
+
+def _information_rows(fragment, seen):
+    """File rows of an Interface Information or filter table.
+
+    These labels are not Requirements headings, so the heading search never
+    sees them.  The row itself is the statement.  The field follows the file
+    the cell names: ``Import library | mshtml.dll`` is a DLL, not a ``.lib``.
+    """
+    out = []
+    header_labels = {"header", "header and idl files", "idl file", "idl files"}
+    dll_labels = {"stock implementation", "executable"}
+    for row in ROW.finditer(fragment):
+        cells = [text_of(cell, keep_newlines=False).strip()
+                 for cell in CELL.findall(row.group(1))]
+        if len(cells) < 2 or not cells[0]:
+            continue
+        label = cells[0].rstrip(":").strip()
+        key = re.sub(r"\s+", " ", label).lower()
+        value = re.sub(r"\s+", " ",
+                       " ".join(cell for cell in cells[1:] if cell)).strip()
+        if not value or len(value) > 200:
+            continue
+        field = None
+        if key == "minimum operating systems":
+            if PROSE_WORDS.search(value):
+                continue
+            if not re.search(r"(?i)windows\s+(?:embedded\s+)?ce\b|"
+                             r"pocket\s+pc|windows\s+mobile", value):
+                continue
+            field = "os_versions"
+        elif key == "import library":
+            if not _file_cell(value):
+                continue
+            if re.search(r"(?i)\.dll\b", value) and not re.search(
+                    r"(?i)\.lib\b", value):
+                field = "dll"
+            elif re.search(r"(?i)\.lib\b", value):
+                field = "library"
+        elif key in header_labels:
+            if _file_cell(value) and re.search(
+                    r"(?i)\.(?:h|hpp|hh|hxx|idl|inc)\b", value):
+                field = "header"
+        elif key in dll_labels:
+            if _file_cell(value) and re.search(
+                    r"(?i)\.(?:dll|drv|sys)\b", value):
+                field = "dll"
+        if not field or (field, value) in seen:
+            continue
+        seen.add((field, value))
+        out.append({"field": field, "label": label, "value": value,
+                    "evidence": f"{label}: {value}"})
     return out
 
 
@@ -700,7 +797,202 @@ def listed_function_requirements(fragment):
             seen.add(key)
             out.append({"name": name, "field": "dll", "label": "implemented in",
                         "value": dll_value, "evidence": evidence})
+    # ``The following table shows the functions that are exported by
+    # Setup.dll`` then a Function column.  The DLL is assigned to each
+    # listed name.  ``exported by the client driver`` names no DLL, so it
+    # assigns nothing.  The page title is not given the DLL.
+    exported = re.compile(
+        r"(?i)following\s+(?:table\s+shows\s+the\s+)?functions\s+"
+        r"(?:that\s+are\s+)?exported\s+by\s+(?:the\s+)?"
+        r"([A-Za-z0-9_]+\.dll)\b")
+    start = 0
+    while True:
+        match = exported.search(low[start:])
+        if not match:
+            break
+        idx = start + match.start()
+        start = idx + len("following")
+        sentence = text_of(fragment[idx:idx + 240], keep_newlines=False)
+        found = exported.search(sentence)
+        if not found:
+            continue
+        names = _names_in_next_table(fragment, idx)
+        dll_value = found.group(1)
+        evidence = re.sub(r"\s+", " ", found.group(0)).strip()
+        for name in names:
+            key = (name, "dll", dll_value)
+            if key in seen or not _plausible("dll", dll_value):
+                continue
+            seen.add(key)
+            out.append({"name": name, "field": "dll",
+                        "label": "exported by", "value": dll_value,
+                        "evidence": evidence})
+    # ``The Install_Exit function prototype is part of Setup.dll, an
+    # ISV-created file``.  The named function gets the DLL.  The page says
+    # the DLL is ISV-created when it says so; that clause stays in the
+    # evidence.  It is not rewritten into a system DLL.
+    part_of = re.compile(
+        r"(?i)the\s+([A-Za-z_][A-Za-z0-9_]*)\s+function\s+prototype\s+is\s+"
+        r"part\s+of\s+([A-Za-z0-9_]+\.dll)\b"
+        r"(?:\s*,\s*an\s+ISV-created\s+file)?")
+    for match in part_of.finditer(text_of(fragment, keep_newlines=False)):
+        name, dll_value = match.group(1), match.group(2)
+        key = (name, "dll", dll_value)
+        if key in seen or not _plausible("dll", dll_value):
+            continue
+        seen.add(key)
+        out.append({"name": name, "field": "dll", "label": "part of",
+                    "value": dll_value,
+                    "evidence": re.sub(r"\s+", " ", match.group(0)).strip()})
     return out
+
+
+_MODULE_TITLE = re.compile(
+    r"(?i)^([A-Za-z_][A-Za-z0-9_]*)\s+(?:Module|Components)$")
+# ``The coredll module contains the following components.`` and
+# ``The msmqrt module includes functions for application developers, which
+# are defined in the Mq.h header file.``
+_MODULE_COMPONENTS = re.compile(
+    r"(?i)the\s+([A-Za-z_][A-Za-z0-9_]*)\s+module\s+contains\s+the\s+"
+    r"following\s+components")
+_MODULE_FUNCTIONS = re.compile(
+    r"(?i)the\s+([A-Za-z_][A-Za-z0-9_]*)\s+module\s+(?:contains|includes)\s+"
+    r"(?:the\s+following\s+)?functions[^.]{0,120}?defined\s+in\s+(?:the\s+)?"
+    r"([A-Za-z0-9_]+\.h)\b")
+_MODULE_IMPORT_LIB = re.compile(
+    r"(?i)to\s+import\s+(?:this|these)\s+functions?\s*,\s*you\s+"
+    r"(?:must|need\s+to)\s+link\s+to\s+the\s+([A-Za-z0-9_]+\.lib)\b")
+
+
+def module_facts(fragment, page_title=None):
+    """What a Windows CE *module* page states about the module's build.
+
+    A CE module page is the one place the documents describe the binary
+    rather than the API: ``The coredll module contains the following
+    components`` with a ``Component | Description | Notes | Library`` table,
+    and ``defined in the Mq.h header file`` / ``link to the Msmqapix.lib
+    file`` for the module itself.  Each row is kept as printed; the ``Notes``
+    cell (``Exposes no public functions.``, ``Required``) is the page's own
+    words and is not interpreted into a flag.  A module is never turned into
+    a DLL name: the pages name ``coredll`` the module, and
+    ``Coredll.dll`` only where they print it.
+    """
+    out = []
+    plain = text_of(fragment, keep_newlines=False)
+    title_module = None
+    if page_title:
+        match = _MODULE_TITLE.match(_title_core(page_title))
+        if match:
+            title_module = match.group(1)
+
+    def add(record):
+        if record not in out:
+            out.append(record)
+
+    for match in _MODULE_FUNCTIONS.finditer(plain):
+        add({"module": match.group(1), "component": "", "field": "header",
+             "value": match.group(2),
+             "evidence": re.sub(r"\s+", " ", match.group(0)).strip()})
+        tail = plain[match.end():match.end() + 400]
+        lib = _MODULE_IMPORT_LIB.search(tail)
+        if lib:
+            add({"module": match.group(1), "component": "", "field": "library",
+                 "value": lib.group(1),
+                 "evidence": re.sub(r"\s+", " ", lib.group(0)).strip()})
+
+    for match in _MODULE_COMPONENTS.finditer(plain):
+        module = match.group(1)
+        index = fragment.lower().find("following components")
+        if index < 0:
+            continue
+        rows = _component_rows(fragment, index)
+        for component, library, notes, quote in rows:
+            add({"module": module, "component": component,
+                 "field": "library" if library else "component",
+                 "value": library or component, "notes": notes,
+                 "evidence": quote})
+    # A page titled ``winsock Module`` whose sentence names no module still
+    # states the module: the title does.  Only the file facts are kept, and
+    # only when the sentence that states them names no other module.
+    if title_module and not any(r["module"] for r in out):
+        for pattern, field in ((_MODULE_IMPORT_LIB, "library"),):
+            found = pattern.search(plain)
+            if found:
+                add({"module": title_module, "component": "", "field": field,
+                     "value": found.group(1),
+                     "evidence": re.sub(r"\s+", " ", found.group(0)).strip()})
+    for record in out:
+        record.setdefault("notes", "")
+    return out
+
+
+def _component_rows(fragment, index):
+    """``Component | Description | Notes | Library`` rows of the next table."""
+    rest = fragment[index:index + 30000]
+    table = re.search(r"(?is)<table\b[^>]*>(.*?)</table>", rest)
+    if not table:
+        return []
+    rows = ROW.findall(table.group(1))
+    if not rows:
+        return []
+    header = [re.sub(r"\s+", " ", text_of(cell, keep_newlines=False))
+              .strip().lower() for cell in CELL.findall(rows[0])]
+    if "component" not in header:
+        return []
+    file_column = None
+    for name in ("library", "import file", "import library", "library file"):
+        if name in header:
+            file_column = header.index(name)
+            break
+    notes_column = header.index("notes") if "notes" in header else None
+    component_column = header.index("component")
+    out = []
+    for body in rows[1:]:
+        cells = [re.sub(r"\s+", " ", text_of(cell, keep_newlines=False)).strip()
+                 for cell in CELL.findall(body)]
+        if len(cells) <= component_column:
+            continue
+        # The quote is the row as the page prints it, so it stays a
+        # verbatim substring of the page (a joined-with-bars string would
+        # not be).
+        quote = re.sub(r"\s+", " ", text_of(body, keep_newlines=False)).strip()
+        component = cells[component_column]
+        # The CE 3.0 table prints the link text twice in one cell
+        # (``Accel_c Accel_c``).  One repeated identifier is that
+        # identifier; two different words are not a component name.
+        words = component.split()
+        if len(words) == 2 and words[0] == words[1]:
+            component = words[0]
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", component):
+            continue
+        library = ""
+        if file_column is not None and file_column < len(cells):
+            value = cells[file_column]
+            if re.fullmatch(r"(?i)[A-Za-z_][\w.+-]*\.lib", value):
+                library = value
+        notes = ""
+        if notes_column is not None and notes_column < len(cells):
+            notes = cells[notes_column]
+        out.append((component, library, notes, quote))
+    return out
+
+
+def _names_in_next_table(fragment, start, limit=12000):
+    """Identifier cells of the first table after ``start``, before See Also."""
+    rest = fragment[start:start + limit]
+    see = rest.lower().find("see also")
+    chunk = rest[:see] if see >= 0 else rest
+    table = re.search(r"(?is)<table\b[^>]*>(.*?)</table>", chunk)
+    if not table:
+        return []
+    names = []
+    for row in ROW.finditer(table.group(1)):
+        for cell in CELL.findall(row.group(1)):
+            name = text_of(cell, keep_newlines=False).strip()
+            if _LISTED_NAME.match(name) and name.lower() not in (
+                    "function", "functions", "description"):
+                names.append(name)
+    return names
 
 
 # ------------------------------------------------------------- declarations
@@ -1949,6 +2241,50 @@ def name_in_syntax(name, text):
         pattern = (r"(?i)(?<![A-Za-z0-9_])" + re.escape(member)
                    + r"(?![A-Za-z0-9_])")
     return re.search(pattern, text or "") is not None
+
+
+_KIND_TITLE = re.compile(
+    r"(?i)^([A-Za-z_][A-Za-z0-9_]*)\s+"
+    r"(interface|dispinterface|structure|function|prototype|"
+    r"enumerated\s+type)$")
+
+
+def _api_shaped(name):
+    """True when a kind-suffixed title is an API name, not an English word.
+
+    ``IElementBehaviorSubmit Interface`` and ``HTML_PAINTER_INFO Structure``
+    name an API.  ``Message Function``, ``User Interface`` and ``COM
+    Interface`` do not: one English word, or all-caps shorter than a type.
+    """
+    if re.match(r"I[A-Z][A-Za-z0-9_]+$", name):
+        return True
+    if "_" in name and re.match(r"[A-Z][A-Za-z0-9_]+$", name):
+        return True
+    if re.fullmatch(r"[A-Z][A-Z0-9]{7,}", name):
+        return True
+    # ``HTMLInputTextElementEvents`` and ``DWebBrowserEvents2`` have an
+    # acronym and then a capital.  ``COM``, ``User`` and ``Message`` do not.
+    if (re.match(r"[A-Z]", name) and re.search(r"[a-z]", name)
+            and len(re.findall(r"[A-Z]", name)) >= 2 and len(name) >= 6):
+        return True
+    return False
+
+
+def kind_title_name(title):
+    """``IHTMLTableRowMetrics Interface`` -> ``IHTMLTableRowMetrics``.
+
+    The kind word is part of the title template, not part of the name.
+    A title that is not one API-shaped identifier is left alone.
+    """
+    text = _title_core(title)
+    text = re.sub(r"\s*\([^)]*\)\s*$", "", text).strip()
+    match = _KIND_TITLE.match(text)
+    if not match:
+        return None
+    name = match.group(1)
+    if not _api_shaped(name):
+        return None
+    return name
 
 
 def name_from_title(title):

@@ -1,6 +1,6 @@
 # Knowledge base coverage
 
-Generated 2026-10-05 by `python3 tools/build-kb.py`.
+Generated 2026-10-06 by `python3 tools/build-kb.py`.
 
 The knowledge base is built from the pages in `corpus/` only: every declaration, requirement and constraint record quotes the page it came from. This report says how much of the corpus is *structured* so far, and what is missing -- it is the collection worklist, not a quality judgement of a document.
 
@@ -17,13 +17,13 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 ## Totals
 
 * pages parsed: **121,050**
-* API entities: **29,633** -- CE-specific **24,122**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
+* API entities: **30,076** -- CE-specific **24,565**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
 * declarations extracted: **110,302** (C/C++ 78,976 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
-* requirement statements: **172,628**
+* requirement statements: **173,692**
 * of those, a page's own `Module` (not an sdk-api UID): **145**; a `sysgen` variable: **961**; a CPU list (`Architecture`): **78**; a catalog `Component`: **28**
 * numbered constants: **18,746** (`kb/constants.jsonl`, 791 page(s))
 * Windows CE constraint sentences: **3,250** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
-* entities with a gap record: **19,422** (`reports/gaps.tsv`)
+* entities with a gap record: **19,849** (`reports/gaps.tsv`)
 * structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
 * relations between definitions: **29,146** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints, `related-macro` / `related-message` for the identifier a page prints beside that label)
 * catalog-only names (the CE TOC names it, no CE page for it is in the corpus): **3** (`reports/catalog-leads.tsv` shows the CE page the name list points at, what that page actually prints, and what the Win32 page documents -- a lead, not a CE definition)
@@ -34,25 +34,25 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 
 | tree | pages | with entity | with requirements | with declaration | requirements | declarations |
 |------|-------|-------------|-------------------|------------------|--------------|--------------|
-| `learn/windows-ce-5.0` | 24,694 | 14,683 | 14,721 | 15,063 | 36,404 | 17,281 |
-| `learn/windows-embedded-ce-6.0` | 23,714 | 16,590 | 16,701 | 16,739 | 40,795 | 18,887 |
-| `chm/windows-ce-5.0` | 20,179 | 14,338 | 12,516 | 14,981 | 26,231 | 16,381 |
-| `learn/windows-ce-net-4x` | 8,969 | 6,535 | 6,513 | 6,327 | 16,724 | 7,164 |
-| `chm/windows-ce-3.0` | 8,962 | 6,970 | 5,162 | 6,802 | 11,979 | 7,558 |
+| `learn/windows-ce-5.0` | 24,694 | 14,746 | 14,746 | 15,063 | 36,430 | 17,281 |
+| `learn/windows-embedded-ce-6.0` | 23,714 | 16,593 | 16,726 | 16,739 | 40,821 | 18,887 |
+| `chm/windows-ce-5.0` | 20,179 | 14,767 | 12,901 | 14,981 | 27,219 | 16,381 |
+| `learn/windows-ce-net-4x` | 8,969 | 6,536 | 6,514 | 6,327 | 16,726 | 7,164 |
+| `chm/windows-ce-3.0` | 8,962 | 7,026 | 5,164 | 6,802 | 11,983 | 7,558 |
 | `msdn-library/wcedevcon-99` | 6,382 | 4,532 | 3,319 | 4,512 | 6,922 | 4,916 |
 | `dotnet/pos-for-net` | 5,793 | 0 | 0 | 5,067 | 0 | 23,157 |
-| `msdn-library/techshelps` | 5,165 | 3,876 | 3,235 | 3,269 | 7,095 | 3,358 |
+| `msdn-library/techshelps` | 5,165 | 3,877 | 3,235 | 3,269 | 7,095 | 3,358 |
 | `dotnet/dotnet-micro-framework` | 4,012 | 0 | 0 | 1,835 | 0 | 6,535 |
-| `msdn-library/datadungeon-2000-04` | 2,931 | 1,329 | 237 | 737 | 478 | 818 |
-| `mvb/windows-ce-1.0/PEGSDK` | 1,918 | 1,470 | 7 | 268 | 7 | 429 |
+| `msdn-library/datadungeon-2000-04` | 2,931 | 1,330 | 237 | 737 | 478 | 818 |
+| `mvb/windows-ce-1.0/PEGSDK` | 1,918 | 1,473 | 7 | 268 | 7 | 429 |
 | `dotnet/dotnet-compact-framework` | 852 | 0 | 0 | 636 | 0 | 2,135 |
 | `chm/windows-ce-4.2` | 566 | 278 | 257 | 254 | 514 | 278 |
-| `learn/unclassified` | 413 | 325 | 304 | 280 | 657 | 293 |
+| `learn/unclassified` | 413 | 328 | 304 | 280 | 657 | 293 |
 | `win32/api/winuser` | 378 | 378 | 378 | 20 | 2,046 | 26 |
 | `win32/api/commctrl` | 336 | 336 | 336 | 215 | 970 | 217 |
 | `mvb/windows-ce-2.0-sdk/WINDBG` | 291 | 29 | 0 | 13 | 0 | 18 |
 | `win32/api/strmif` | 271 | 271 | 271 | 2 | 1,059 | 2 |
-| `learn/windows-embedded-compact-7` | 256 | 0 | 0 | 165 | 0 | 495 |
+| `learn/windows-embedded-compact-7` | 256 | 6 | 0 | 165 | 0 | 495 |
 | `win32/api/oleauto` | 226 | 226 | 226 | 9 | 904 | 10 |
 | `win32/api/objidl` | 222 | 222 | 222 | 1 | 601 | 1 |
 | `win32/api/winldap` | 212 | 212 | 212 | 14 | 1,023 | 17 |
@@ -61,7 +61,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `win32/api/wingdi` | 185 | 185 | 185 | 21 | 1,005 | 26 |
 | `mvb/windows-ce-1.0/PEGDDK` | 181 | 42 | 0 | 20 | 0 | 29 |
 | `win32/api/wininet` | 169 | 169 | 169 | 0 | 835 | 0 |
-| `msdn-library/2010-05` | 161 | 101 | 101 | 157 | 263 | 329 |
+| `msdn-library/2010-05` | 161 | 102 | 101 | 157 | 263 | 329 |
 | `win32/api/oaidl` | 156 | 156 | 156 | 9 | 347 | 10 |
 | `win32/api/control` | 102 | 102 | 102 | 3 | 408 | 3 |
 | `win32/api/winsock2` | 94 | 94 | 94 | 28 | 455 | 39 |
@@ -353,15 +353,15 @@ A header or a `.def` for one Windows CE version can only be built from what *tha
 
 | set | entities | syntax | header | library | functions with all three | numbered constants |
 |-----|----------|--------|--------|---------|--------------------------|--------------------|
-| `learn/windows-ce-5.0` | 14,616 | 12,649 | 12,521 | 6,990 | 6,301 / 10,511 | 4,169 (3,054 names) |
-| `learn/windows-embedded-ce-6.0` | 16,420 | 15,084 | 14,121 | 7,546 | 7,202 / 12,284 | 4,353 (3,231 names) |
-| `learn/windows-ce-net-4x` | 6,503 | 5,622 | 6,064 | 3,622 | 3,401 / 4,527 | 1,031 (985 names) |
-| `chm/windows-ce-5.0` | 14,245 | 13,399 | 10,724 | 5,032 | 4,569 / 12,109 | 3,380 (2,339 names) |
-| `chm/windows-ce-3.0` | 6,767 | 6,188 | 4,560 | 2,062 | 1,981 / 5,345 | 2,480 (1,405 names) |
+| `learn/windows-ce-5.0` | 14,678 | 12,649 | 12,527 | 6,991 | 6,301 / 10,511 | 4,169 (3,054 names) |
+| `learn/windows-embedded-ce-6.0` | 16,422 | 15,084 | 14,121 | 7,546 | 7,202 / 12,284 | 4,353 (3,231 names) |
+| `learn/windows-ce-net-4x` | 6,504 | 5,622 | 6,064 | 3,622 | 3,401 / 4,527 | 1,031 (985 names) |
+| `chm/windows-ce-5.0` | 14,672 | 13,448 | 11,084 | 5,278 | 4,577 / 12,119 | 3,380 (2,339 names) |
+| `chm/windows-ce-3.0` | 6,820 | 6,188 | 4,560 | 2,066 | 1,983 / 5,345 | 2,480 (1,405 names) |
 | `chm/windows-ce-4.2` | 277 | 235 | 254 | 0 | 0 / 227 | 0 (0 names) |
-| `mvb/windows-ce-1.0/PEGSDK` | 1,467 | 189 | 0 | 7 | 0 / 1,128 | 72 (72 names) |
-| `msdn-library/wcedevcon-99` | 4,466 | 4,140 | 3,241 | 1 | 1 / 3,612 | 2,268 (1,206 names) |
-| `msdn-library/techshelps` | 3,820 | 3,144 | 3,155 | 1 | 1 / 3,030 | 321 (178 names) |
+| `mvb/windows-ce-1.0/PEGSDK` | 1,470 | 189 | 0 | 7 | 0 / 1,128 | 72 (72 names) |
+| `msdn-library/wcedevcon-99` | 4,466 | 4,140 | 3,241 | 3 | 1 / 3,612 | 2,268 (1,206 names) |
+| `msdn-library/techshelps` | 3,821 | 3,145 | 3,155 | 5 | 1 / 3,031 | 321 (178 names) |
 
 Numbered constants are rows of a name/value table the page prints, or a cell it prints as `NAME = 0x0001` / `NAME (0x0001)` (`kb/constants.jsonl`).  A heading such as `Value (Hex)`, `Control code`, `Message identifier`, `Hex code` or `Weight` is read when the cells are one identifier and one number.  Digits in a column the page heads as hexadecimal are stored as printed; `0x` is not added.  A scan code beside a virtual key, a code page beside a character set, and a locale beside an LCID are not constant values, so those tables are not read.  Symbol decoration (`_Name@N`) and export ordinals are not in these documents, so none is recorded.
 
@@ -373,9 +373,9 @@ Numbered constants are rows of a name/value table the page prints, or a cell it 
 
 | missing | entities | what to collect |
 |---------|----------|-----------------|
-| `no-declaration` | 3,176 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
-| `no-header` | 4,588 | the page has no `Header` requirement -- same approach |
-| `no-library` | 18,046 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
+| `no-declaration` | 3,555 | the page prints no syntax block -- look for the same topic in another collected set (another medium often has it), or add the SDK/DOC medium that does |
+| `no-header` | 4,656 | the page has no `Header` requirement -- same approach |
+| `no-library` | 18,472 | the page has no `Link Library`/`Library` requirement -- expected for compiler intrinsics and macros, worth collecting for functions |
 
 ## Using it
 
@@ -383,6 +383,7 @@ Numbered constants are rows of a name/value table the page prints, or a cell it 
 * `kb/entities.jsonl` `relations` -- the links between definitions (the page's own Unicode/ANSI pair, `Interface::Method`, the CE<->Win32 layer match, `ce-name-lead` for a name the CE page prints under a different spelling), each with its page and the printed text; `present` says whether the target exists in this file.
 * `kb/entities.jsonl` `generation_use` -- the derived, rule-based list of generator steps the record can feed (`include-declaration`, `type-definition`, `link-library`, `def-export`, `abi-layout`, `abi-members` when only the documented member list exists, `abi-note` when the declarations or pages state ABI facts, `unicode-mapping`, `version-scope`, `ce-restriction`). It says what the record *can* be used for, with the fields that justify it.
 * `kb/modules.tsv` -- sdk-api module -> entities (the Win32-side grouping; the module comes from each page's UID).
+* `kb/modules-ce.tsv` -- what a Windows CE *module* page states about the binary: the components of `coredll`, `gwe`, `nk`, ..., the `.lib` each component is imported from, and the header and link library of the module's own functions. The `notes` cell (`Required`, `Exposes no public functions.`) is the page's own words. A module name is not a DLL name: only a page that prints `Coredll.dll` states one.
 * `kb/declarations.jsonl` -- the raw C/C++ declarations. Nothing is normalised: an include generator reads the text and the `spacing` flag.
 * `kb/declarations-dotnet.jsonl` -- the signature blocks of the separated .NET layer (`language: managed`), kept out of the C declaration file on purpose.
 * `kb/requirements.jsonl` -- Header/Library/DLL/OS-version statements with both the mapped `field` and the page's own `label`.

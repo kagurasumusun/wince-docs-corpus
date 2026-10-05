@@ -208,7 +208,7 @@ def parse_page(job):
             "display": None, "kind": None,
             "requirements": [], "declarations": [], "constraints": [],
             "documented_fields": [], "documented_fields_page": None,
-            "abi_offsets": [], "constants": []}
+            "abi_offsets": [], "constants": [], "module_facts": []}
     # An open-source documentation page is evidence of what that project
     # printed about Windows CE.  It is not a CE API page: no entity is minted
     # from the title, and a code sample on the page is not a declaration.
@@ -316,6 +316,15 @@ def parse_page(job):
             fact["also_documented"] = [
                 {"id": ce_api_names.entity_id(name), "name": name}
                 for name in named]
+    if not fact["entity"] and fact.get("layer") == "ce":
+        # ``IHTMLTableRowMetrics Interface`` is that interface.  The kind
+        # word is the title template.  ``User Interface`` and ``Message
+        # Function`` are not given an entity.  A .NET page is not a C name.
+        kind_name = page_parse.kind_title_name(title)
+        if kind_name:
+            fact["display"] = kind_name
+            fact["entity"] = ce_api_names.normalize(kind_name)
+            fact["entity_evidence"] = "page-title"
     fact["constraints"] = [dict(item, kind="ce-restriction")
                            for item in page_parse.constraints(fragment)]
     fact["constraints"] += [dict(note, kind="abi-note")
@@ -332,6 +341,15 @@ def parse_page(job):
     # ``NAME (0x0001)`` is a numbered constant the page states.  Read only,
     # and only when the name is one identifier and the value one number.
     fact["constants"] = page_parse.constant_tables(fragment)
+    # A Windows CE *module* page states how the binary is composed: the
+    # components of ``coredll``, the ``.lib`` each component is imported
+    # from, and the header/library of the module's own functions.  This is
+    # the only place the documents describe the module rather than the API,
+    # so it is kept as its own table (kb/modules-ce.tsv), not folded into a
+    # name's requirements.  Nothing is turned into a DLL name.
+    if fact["layer"] == "ce":
+        fact["module_facts"] = page_parse.module_facts(fragment,
+                                                       page_title=title)
     kinds = collections.Counter(d["kind"] for d in fact["declarations"]
                                 if d["role"] == "syntax" and d["kind"])
     if kinds:
@@ -1509,6 +1527,23 @@ def build(rows, workers, report_only, plain=False):
     write_tsv(os.path.join(KB, "struct-fields.tsv"),
               ["entity", "field", "order", "page"], field_rows)
 
+    # ---- Windows CE modules: what the module pages state about the binary
+    module_rows = []
+    for fact in facts:
+        for item in fact.get("module_facts") or []:
+            module_rows.append((
+                item["module"], item.get("component") or "", item["field"],
+                item["value"], item.get("notes") or "",
+                fact["path"], fact["page_id"], fact["book"], fact["title"],
+                item["evidence"], license_of(fact["path"])))
+    module_rows.sort(key=lambda r: (r[0].lower(), r[1].lower(), r[2], r[3]))
+    print(f"[kb] {len(module_rows):,} module statement(s) from "
+          f"{len({row[5] for row in module_rows}):,} Windows CE module page(s)",
+          flush=True)
+    write_tsv(os.path.join(KB, "modules-ce.tsv"),
+              ["module", "component", "field", "value", "notes", "page",
+               "page_id", "set", "title", "quote", "license"], module_rows)
+
     # ---- catalog-only names: what Windows CE actually prints for them
     write_tsv(os.path.join(REPORTS, "catalog-leads.tsv"),
               ["name", "entity", "ce_page_id", "ce_page", "ce_page_title",
@@ -1930,6 +1965,13 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         "the record *can* be used for, with the fields that justify it.",
         "* `kb/modules.tsv` -- sdk-api module -> entities (the Win32-side "
         "grouping; the module comes from each page's UID).",
+        "* `kb/modules-ce.tsv` -- what a Windows CE *module* page states "
+        "about the binary: the components of `coredll`, `gwe`, `nk`, ..., "
+        "the `.lib` each component is imported from, and the header and "
+        "link library of the module's own functions. The `notes` cell "
+        "(`Required`, `Exposes no public functions.`) is the page's own "
+        "words. A module name is not a DLL name: only a page that prints "
+        "`Coredll.dll` states one.",
         "* `kb/declarations.jsonl` -- the raw C/C++ declarations. Nothing is "
         "normalised: an include generator reads the text and the `spacing` flag.",
         "* `kb/declarations-dotnet.jsonl` -- the signature blocks of the "

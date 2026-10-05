@@ -179,6 +179,49 @@ def check_quotes(records, pages, every):
     return checked, not_found, details
 
 
+def check_module_rows(pages):
+    """Each kb/modules-ce.tsv row quotes the module page it names.
+
+    The module table is a TSV, so it is not in ``load_records``; the same
+    two invariants apply to it -- the page exists, and the quoted row is on
+    that page.
+    """
+    path = os.path.join(KB, "modules-ce.tsv")
+    checked = bad = 0
+    details = []
+    if not os.path.exists(path):
+        return checked, bad, details
+    with open(path, encoding="utf-8") as fh:
+        header = fh.readline().rstrip("\n").split("\t")
+        try:
+            page_column = header.index("page")
+            quote_column = header.index("quote")
+            value_column = header.index("value")
+        except ValueError:
+            return checked, 1, ["modules-ce.tsv: unexpected columns"]
+        for line in fh:
+            cells = line.rstrip("\n").split("\t")
+            if len(cells) <= max(page_column, quote_column, value_column):
+                continue
+            page_path = cells[page_column]
+            text = pages.text(page_path)
+            checked += 1
+            if text is None:
+                bad += 1
+                if len(details) < 10:
+                    details.append(f"modules-ce.tsv: page {page_path} is not "
+                                   "in the repository")
+                continue
+            for field in (quote_column, value_column):
+                if cells[field] and flat(cells[field]) not in flat(text):
+                    bad += 1
+                    if len(details) < 10:
+                        details.append(f"modules-ce.tsv: {cells[field][:50]!r} "
+                                       f"not on {page_path}")
+                    break
+    return checked, bad, details
+
+
 def check_documented_fields(records, pages):
     """A documented member name is on one of the pages that documents it."""
     checked = not_found = 0
@@ -298,6 +341,7 @@ def main():
                                                              every)
     fields_checked, fields_bad, field_details = check_documented_fields(
         records, pages)
+    modules_checked, modules_bad, module_details = check_module_rows(pages)
     bad_role, statement_details, quarantined = check_separation(records)
     reads, generator_problems = check_generator(not args.no_generator)
 
@@ -311,6 +355,9 @@ def main():
         ("documented members are on their page", fields_checked, fields_bad,
          "each documented_fields name occurs in one of the pages that "
          "document the entity (an A/W pair documents one structure)"),
+        ("module rows quote their module page", modules_checked, modules_bad,
+         "each kb/modules-ce.tsv row names a page in corpus/ and its quoted "
+         "row and value are on that page"),
         ("sample code stays out of the declarations",
          sum(len(e.get("syntax_declarations", ()))
              for e in records["entity"]), len(bad_role),
@@ -340,6 +387,7 @@ def main():
         problems += violations
     for label, details in (("source", missing), ("quote", quote_details),
                            ("member", field_details),
+                           ("module", module_details),
                            ("role", bad_role[:args.list]),
                            ("statement", statement_details[:args.list]),
                            ("generator", generator_problems)):
