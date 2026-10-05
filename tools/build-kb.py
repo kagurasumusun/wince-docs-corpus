@@ -209,7 +209,7 @@ def parse_page(job):
             "requirements": [], "declarations": [], "constraints": [],
             "documented_fields": [], "documented_fields_page": None,
             "abi_offsets": [], "constants": [], "module_facts": [],
-            "export_ordinals": [], "def_rules": []}
+            "export_ordinals": [], "def_rules": [], "unicode_only": []}
     # An open-source documentation page is evidence of what that project
     # printed about Windows CE.  It is not a CE API page: no entity is minted
     # from the title, and a code sample on the page is not a declaration.
@@ -328,6 +328,11 @@ def parse_page(job):
             fact["entity_evidence"] = "page-title"
     fact["constraints"] = [dict(item, kind="ce-restriction")
                            for item in page_parse.constraints(fragment)]
+    # The CE 1.0 Books Online put the platform difference in one labelled
+    # paragraph; most of it states no restriction *word*, so the
+    # restriction-word reader never saw it.
+    fact["constraints"] += [dict(note, kind="ce-note")
+                            for note in page_parse.ce_notes(fragment)]
     fact["constraints"] += [dict(note, kind="abi-note")
                             for note in page_parse.abi_notes(
                                 page_parse.text_of(fragment,
@@ -350,6 +355,9 @@ def parse_page(job):
     # What the documents state about .def files, EXPORTS, decoration and
     # ordinals -- the rules the generator has to obey, quoted.
     fact["def_rules"] = page_parse.def_rules(fragment)
+    # "Windows CE supports only the Unicode version of this function."
+    fact["unicode_only"] = (page_parse.unicode_support(fragment)
+                            if fact["layer"] == "ce" else [])
     # A Windows CE *module* page states how the binary is composed: the
     # components of ``coredll``, the ``.lib`` each component is imported
     # from, and the header/library of the module's own functions.  This is
@@ -877,6 +885,18 @@ def entity_records(facts, declarations, requirements):
                                                      "dll")
                                    and page_parse.stated_none(r["value"])}),
             "unicode_ansi": values("unicode_ansi"),
+            # Pages of this entity that state only the Unicode form exists
+            # on the device.  The Win32 reference page for the same name
+            # documents an ANSI spelling; that is the desktop.  Nothing is
+            # deleted here -- the contradiction is recorded with both
+            # quotations so a generator can obey the CE page.
+            "unicode_only": [
+                {"text": item["text"], "subject": item["subject"],
+                 "scope": item.get("scope", "system"),
+                 "page": fact["path"], "page_id": fact["page_id"],
+                 "set": fact["book"], "license": license_of(fact["path"])}
+                for fact in by_entity[entity]
+                for item in (fact.get("unicode_only") or [])],
             "doc_role": doc_role,
             "declarations": sorted({d["id"] for d in decl_by_entity[entity]}),
             "syntax_declarations": syntax_decls,
@@ -1057,6 +1077,13 @@ def add_relations(entities, requirements, declarations):
             use.append("link-library")
         if kinds & {"function", "callback"} and entity["dlls"]:
             use.append("def-export")
+        if any(item.get("scope") == "this-api"
+               for item in entity.get("unicode_only") or ()):
+            # the device has the W form of *this* API only: no A export,
+            # no A macro.  A sentence about the system in general
+            # ("Windows CE supports only Unicode strings") is kept as
+            # evidence but does not make this claim about the name.
+            use.append("unicode-only")
         if kinds & {"struct", "union"} and entity["id"] in members:
             use.append("abi-layout")
         if entity["documented_fields"] and "abi-layout" not in use:
@@ -1564,6 +1591,26 @@ def build(rows, workers, report_only, plain=False):
                "title", "table", "row", "dll_evidence", "license"],
               ordinal_rows)
 
+    # ---- "Windows CE supports only the Unicode version of this function"
+    unicode_rows = []
+    for entity in entities:
+        for item in entity.get("unicode_only") or []:
+            unicode_rows.append((
+                entity["id"], entity["name"],
+                ";".join(entity["kinds"]), item["subject"],
+                item.get("scope", "system"), item["text"],
+                ";".join(variant["name"] for variant in entity["variants"]
+                         if variant["kind"] == "ansi"),
+                item["page"], item["page_id"], item["set"], item["license"]))
+    unicode_rows.sort(key=lambda r: (r[1].lower(), r[6]))
+    print(f"[kb] {len(unicode_rows):,} Unicode-only statement(s) over "
+          f"{len({row[0] for row in unicode_rows}):,} name(s)", flush=True)
+    write_tsv(os.path.join(KB, "unicode-only.tsv"),
+              ["entity", "name", "kinds", "subject", "scope", "statement",
+               "ansi_variant_documented_by_win32", "page", "page_id", "set",
+               "license"],
+              unicode_rows)
+
     # ---- the stated rules for building a module-definition file
     rule_rows = []
     for fact in facts:
@@ -1688,7 +1735,7 @@ def build(rows, workers, report_only, plain=False):
               gap_rows)
     write_summary(facts, entities, declarations, requirements, constraints,
                   abi_offsets, constants, per_tree, gap_rows, ordinal_rows,
-                  rule_rows)
+                  rule_rows, unicode_rows)
     return (facts, entities, declarations, requirements, constraints,
             abi_offsets, constants)
 
@@ -1701,7 +1748,7 @@ def jst_today():
 
 def write_summary(facts, entities, declarations, requirements, constraints,
                   abi_offsets, constants, per_tree, gap_rows,
-                  ordinal_rows=(), rule_rows=()):
+                  ordinal_rows=(), rule_rows=(), unicode_rows=()):
     def top(book):
         """learn/windows-ce-5.0/... -> learn/windows-ce-5.0 (the report unit)."""
         parts = book.split("/")
@@ -1995,6 +2042,16 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"`kb/export-ordinals.tsv`, the number as printed, with the "
         f"sentence that names the DLL.  Every other page states none, and "
         f"none is invented for them.",
+        "",
+        f"**Unicode only.**  {len(unicode_rows):,} statement(s) say that "
+        f"Windows CE supports only Unicode "
+        f"({sum(1 for row in unicode_rows if row[4] == 'this-api'):,} of "
+        f"them about the API the page documents, the rest about the system) "
+        f"-- `kb/unicode-only.tsv`.  Where the Win32 reference "
+        f"documents an `A` spelling of the same name, the two documents "
+        f"disagree about two different systems: the CE page governs the "
+        f"device, and a generated header or `.def` must not carry the ANSI "
+        f"spelling for it.  Both quotations are kept.",
         "",
         f"**The rules for the file itself.**  {len(rule_rows):,} sentence(s) "
         f"on {len({row[2] for row in rule_rows}):,} page(s) state how a "

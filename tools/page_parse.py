@@ -2591,3 +2591,81 @@ def def_rules(fragment):
             seen.add(lowered)
             out.append({"text": sentence, "topics": topics})
     return out
+
+
+# "Windows CE supports only the Unicode version of this function."  The A
+# spelling of that function is not on the device, so a generated header or
+# .def must not carry one.  The Win32 reference page for the same name does
+# document the ANSI spelling -- that is the desktop, and this sentence is the
+# document saying so.
+_UNICODE_ONLY = re.compile(
+    r"(?i)supports only (?:the )?unicode(?: version| strings)?")
+_UNICODE_ONLY_SUBJECT = re.compile(
+    r"(?i)\b(windows ce|windows embedded ce|windows mobile|pocket pc|"
+    r"handheld pc|ce \.net|\.net)\b")
+
+
+def unicode_support(fragment):
+    """Sentences stating that only the Unicode form of this API exists.
+
+    Returned verbatim, with the subject the sentence names.  The caller is
+    expected to use this only on a Windows CE page: a sentence whose subject
+    is a desktop Windows version says nothing about the device.
+    """
+    if "upports only" not in fragment:
+        return []
+    out = []
+    seen = set()
+    for line in text_of(fragment, keep_newlines=True).splitlines():
+        line = re.sub(r"[ \t]+", " ", line).strip()
+        if not line:
+            continue
+        for sentence in re.split(r"(?<=[.:;!?])\s+(?=[A-Z0-9\"(])", line):
+            sentence = sentence.strip()
+            if not (20 <= len(sentence) <= 400):
+                continue
+            if not _UNICODE_ONLY.search(sentence):
+                continue
+            subject = _UNICODE_ONLY_SUBJECT.search(sentence)
+            if sentence.lower() in seen:
+                continue
+            seen.add(sentence.lower())
+            # "...only the Unicode version of this function" is about the
+            # API the page documents; "Windows CE supports only Unicode
+            # strings" is about the system.  Only the first one says that
+            # this name has no ANSI form, so the two are not merged.
+            scope = ("this-api"
+                     if re.search(r"(?i)version of (?:this|the )"
+                                  r"(?: \w+)? ?"
+                                  r"(function|structure|macro|message|"
+                                  r"method|interface|api)", sentence)
+                     or re.search(r"(?i)supports only the unicode version "
+                                  r"of [A-Z_][A-Za-z0-9_]*", sentence)
+                     else "system")
+            out.append({"text": sentence,
+                        "subject": subject.group(1) if subject else "",
+                        "scope": scope,
+                        "pattern": "supports only Unicode"})
+    return out
+
+
+# The CE 1.0 Books Online print the platform difference as one paragraph
+# that starts with the label: "<p>Windows CE Notes   Cannot be used with the
+# uObjectType flag OBJ_PAL.</p>".  The whole paragraph is the statement, and
+# most of it is not caught by the restriction-word reader ("The only
+# supported raster operations are SRCCOPY and SRCINVERT", "The file excpt.h
+# has to be explicitly included in order to use this function").
+_CE_NOTES = re.compile(
+    r"(?is)<p>\s*Windows\s+CE\s+Notes\b[:\s]*(.*?)</p>")
+
+
+def ce_notes(fragment):
+    """The page's own ``Windows CE Notes`` paragraph, quoted as printed."""
+    out = []
+    for match in _CE_NOTES.finditer(fragment):
+        text = re.sub(r"\s+", " ",
+                      text_of(match.group(1), keep_newlines=False)).strip()
+        if len(text) < 3:
+            continue
+        out.append({"text": text, "pattern": "Windows CE Notes"})
+    return out

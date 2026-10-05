@@ -386,6 +386,8 @@ def main():
         pages, "export-ordinals.tsv", ("name", "ordinal", "row"))
     rules_checked, rules_bad, rule_details = check_tsv_quotes(
         pages, "def-rules.tsv", ("statement",))
+    uni_checked, uni_bad, uni_details = check_tsv_quotes(
+        pages, "unicode-only.tsv", ("statement",))
     bad_role, statement_details, quarantined = check_separation(records)
     reads, generator_problems = check_generator(not args.no_generator)
 
@@ -407,6 +409,9 @@ def main():
          "name, ordinal and quoted row are on that page"),
         ("stated .def rules quote their page", rules_checked, rules_bad,
          "each kb/def-rules.tsv statement is printed on the page it names"),
+        ("Unicode-only statements quote their page", uni_checked, uni_bad,
+         "each kb/unicode-only.tsv row quotes a sentence printed on the CE "
+         "page it names"),
         ("sample code stays out of the declarations",
          sum(len(e.get("syntax_declarations", ()))
              for e in records["entity"]), len(bad_role),
@@ -439,6 +444,7 @@ def main():
                            ("module", module_details),
                            ("ordinal", ordinal_details),
                            ("def-rule", rule_details),
+                           ("unicode-only", uni_details),
                            ("role", bad_role[:args.list]),
                            ("statement", statement_details[:args.list]),
                            ("generator", generator_problems)):

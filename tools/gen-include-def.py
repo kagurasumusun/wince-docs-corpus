@@ -339,6 +339,10 @@ def write_includes(out, by_header, generated):
                 f" * library: {libs}",
                 f" * source: {declaration['source']['path']}",
             ]
+            for item in (item for item in entity.get("unicode_only") or []
+                         if item.get("scope") == "this-api"):
+                # quoted, because this is the sentence that forbids an A form
+                lines.append(f" * {item['text']}  [{item['page']}]")
             if header_from.startswith("win32"):
                 lines.append(
                     " * header borrowed from: the Win32 reference -- NOT a "
@@ -688,8 +692,26 @@ def main():
     borrowed = collections.Counter()
     pages = set()
     exports = 0
+    # Names whose CE page states that only the Unicode form exists.  The A
+    # spelling of such a name is documented by the Win32 reference only,
+    # i.e. by the desktop, so it is not emitted for the device.  The CE
+    # page's own sentence is the authority and is quoted in the output.
+    unicode_only = {}
+    for record in load(ENTITIES):
+        stated = [item for item in record.get("unicode_only") or ()
+                  if item.get("scope") == "this-api"]
+        if stated:
+            unicode_only[record["name"].lower()] = (stated[0]["text"],
+                                                    stated[0]["page"])
+    denied_ansi = 0
 
     for entity in sorted(entities, key=lambda e: e["name"].lower()):
+        base = (entity.get("variants_of") or {}).get("name", "")
+        if (entity.get("variants_of") or {}).get("kind") == "ansi" and \
+                base.lower() in unicode_only:
+            skipped["ANSI spelling denied by a CE page (Unicode only)"] += 1
+            denied_ansi += 1
+            continue
         CODE_SKIPPED.clear()
         chosen, alternatives, borrowed_from = choose_declarations(
             entity, declarations_of, args.target, not args.no_borrow)
@@ -814,6 +836,10 @@ def main():
         f"* declarations written: "
         f"**{sum(len(v) for v in by_header.values()):,}** in "
         f"{len(by_header):,} header fragment(s) ({include_dir})",
+        f"* ANSI spellings left out because a CE page states the device "
+        f"supports only the Unicode version: **{denied_ansi:,}** "
+        f"(`knowledge/kb/unicode-only.tsv` has the sentence; the Win32 "
+        f"reference documents those `A` names for the desktop)",
         f"* export tables printed by this set's own pages: "
         f"**{ordinal_files:,}** DLL(s), **{ordinal_names:,}** name(s) with the "
         f"ordinal the page prints (`link/*.ordinals.def`).  Every other "

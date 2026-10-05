@@ -22,7 +22,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 * requirement statements: **173,831**
 * of those, a page's own `Module` (not an sdk-api UID): **145**; a `sysgen` variable: **961**; a CPU list (`Architecture`): **78**; a catalog `Component`: **28**
 * numbered constants: **18,746** (`kb/constants.jsonl`, 791 page(s))
-* Windows CE constraint sentences: **3,250** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
+* Windows CE constraint sentences: **3,456** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
 * entities with a gap record: **19,713** (`reports/gaps.tsv`)
 * structures whose members a page documents without printing a declaration body: **801** (842 page(s) carry a member list, 840 of them print no declaration at all; `kb/struct-fields.tsv` has the member names and order, one row per field -- the pages state no offsets, so none are recorded)
 * relations between definitions: **29,146** (`unicode-ansi`/`unicode-ansi-base`/`unicode-ansi-variant` from the page's own statement, `interface-method`, `layer`, `ce-name-lead` for the spelling a CE page prints, `related-macro` / `related-message` for the identifier a page prints beside that label)
@@ -367,6 +367,8 @@ A header or a `.def` for one Windows CE version can only be built from what *tha
 Numbered constants are rows of a name/value table the page prints, or a cell it prints as `NAME = 0x0001` / `NAME (0x0001)` (`kb/constants.jsonl`).  A heading such as `Value (Hex)`, `Control code`, `Message identifier`, `Hex code` or `Weight` is read when the cells are one identifier and one number.  Digits in a column the page heads as hexadecimal are stored as printed; `0x` is not added.  A scan code beside a virtual key, a code page beside a character set, and a locale beside an LCID are not constant values, so those tables are not read.  No page prints the decorated form (`_Name@N`) of a Windows CE export, so no decorated symbol is recorded; the compiler's decoration *rules* are documented, and those sentences are quoted in `kb/def-rules.tsv` under the `name-decoration` topic.
 
 **Export ordinals.**  One page family does print them: `Exports from the Floating Point C Run-Time Library` lists `Export | Ordinal` for `Fpcrt.dll`.  94 ordinals over 1 page(s) are in `kb/export-ordinals.tsv`, the number as printed, with the sentence that names the DLL.  Every other page states none, and none is invented for them.
+
+**Unicode only.**  165 statement(s) say that Windows CE supports only Unicode (133 of them about the API the page documents, the rest about the system) -- `kb/unicode-only.tsv`.  Where the Win32 reference documents an `A` spelling of the same name, the two documents disagree about two different systems: the CE page governs the device, and a generated header or `.def` must not carry the ANSI spelling for it.  Both quotations are kept.
 
 **The rules for the file itself.**  533 sentence(s) on 309 page(s) state how a module-definition file, an `EXPORTS` section, `dllexport`, an ordinal or a decorated name behaves; they are quoted with their topic in `kb/def-rules.tsv`.  Among them the documents state that a 32-bit `.def` lists `__cdecl`, `__stdcall` and `__fastcall` functions undecorated -- a generator that writes `_Name@N` into `EXPORTS` would contradict the source.
 

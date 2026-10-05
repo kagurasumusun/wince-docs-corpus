@@ -184,7 +184,8 @@ def main():
                 if not str(record.get("row") or "").strip():
                     problems.append(f"constant {rid}: no row text")
             if kind == "constraint" and record.get("kind") not in (
-                    "ce-restriction", "abi-note", "oss-statement"):
+                    "ce-restriction", "ce-note", "abi-note",
+                    "oss-statement"):
                 problems.append(f"constraint {rid}: kind "
                                 f"{record.get('kind')!r} is not known")
             seen[rid] = record
