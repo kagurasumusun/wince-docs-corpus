@@ -98,6 +98,9 @@ KB = os.path.join(ROOT, "knowledge", "kb")
 # build of a generated header cannot depend on a page a reader may not take.
 CORPUS_READS = []
 
+# Constants a Windows CE page states are not supported; filled in main().
+UNSUPPORTED = {}
+
 
 def is_corpus(path):
     rel = os.path.relpath(path, ROOT)
@@ -511,6 +514,30 @@ def in_set(book, target):
     return book == target or book.startswith(target + "/")
 
 
+def load_unsupported():
+    """``kb/unsupported-constants.tsv`` -> {name: [row, ...]}.
+
+    A constant a CE page lists as not supported is still *documented* -- the
+    number is on another page -- so it is written with the sentence that
+    takes it away rather than silently dropped.  Which CE version said it
+    matters, so the set is kept: a statement by the version being built
+    comments the ``#define`` out, a statement by another CE version is
+    printed as a note above a line that stays.
+    """
+    path = os.path.join(KB, "unsupported-constants.tsv")
+    out = collections.defaultdict(list)
+    if not os.path.exists(path):
+        return out
+    with open(path, encoding="utf-8") as fh:
+        header = fh.readline().rstrip("\n").split("\t")
+        for line in fh:
+            row = dict(zip(header, line.rstrip("\n").split("\t")))
+            if row.get("status") != "not-supported":
+                continue
+            out[row["name"]].append(row)
+    return out
+
+
 def write_constants(out, constants, target, borrow):
     """The numbers a page prints, grouped by the header that same page names.
 
@@ -549,6 +576,7 @@ def write_constants(out, constants, target, borrow):
 
     conflicts = 0
     written = 0
+    unsupported_written = 0
     include_dir = os.path.join(out, "include")
     os.makedirs(include_dir, exist_ok=True)
     by_header = collections.defaultdict(list)
@@ -584,6 +612,26 @@ def write_constants(out, constants, target, borrow):
                              "number -- no #define is written")
                 lines.append(" */")
                 continue
+            taken_away = UNSUPPORTED.get(name) or []
+            here = [row for row in taken_away if in_set(row["set"], target)]
+            elsewhere = [row for row in taken_away if row not in here]
+            for row in here:
+                lines.append(f" * NOT SUPPORTED: {row['statement']}")
+                lines.append(f" * source: {row['page']}")
+            for row in elsewhere:
+                lines.append(f" * not supported in {row['set']}: "
+                             f"{row['statement']}")
+                lines.append(f" * source: {row['page']}")
+            if here:
+                # this version's own page takes the value away: both facts
+                # are printed and the #define is commented out rather than
+                # quietly emitted
+                lines.append(" */")
+                record = rows[0][0]
+                lines.append(f"/* #define {record['name']} "
+                             f"{record['value']} */")
+                unsupported_written += 1
+                continue
             lines.append(" * derived: the #define keyword is not on the page")
             lines.append(" */")
             record = rows[0][0]
@@ -612,6 +660,7 @@ def write_constants(out, constants, target, borrow):
                 "", origin, record["source"]["path"], record["row"],
                 "")) + "\n")
     return {
+        "unsupported": unsupported_written,
         "rows": len(selected),
         "defines": written,
         "conflicts": conflicts,
@@ -799,6 +848,7 @@ def main():
     include_dir = write_includes(out, by_header, generated)
     link_dir = write_defs(out, by_module, generated, load_ordinals())
     ordinal_files, ordinal_names = write_ordinal_defs(out, args.target)
+    UNSUPPORTED.update(load_unsupported())
     constant_report = write_constants(out, constants, args.target,
                                       not args.no_borrow)
 
@@ -877,6 +927,9 @@ def main():
         "page; the row is quoted above each line.  "
         f"**{constant_report['conflicts']:,}** name(s) whose pages disagree "
         "on the number were not turned into a `#define`.  "
+        f"**{constant_report['unsupported']:,}** `#define` line(s) are "
+        f"commented out because a CE page lists the name as not supported "
+        f"(the sentence is quoted above the line); "
         f"**{constant_report['no_header']:,}** rows name no header, so they "
         "stay in `constants.tsv` only.  A number stated only by the Win32 "
         "reference is not borrowed",

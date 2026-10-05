@@ -209,7 +209,8 @@ def parse_page(job):
             "requirements": [], "declarations": [], "constraints": [],
             "documented_fields": [], "documented_fields_page": None,
             "abi_offsets": [], "constants": [], "module_facts": [],
-            "export_ordinals": [], "def_rules": [], "unicode_only": []}
+            "export_ordinals": [], "def_rules": [], "unicode_only": [],
+            "unsupported_constants": []}
     # An open-source documentation page is evidence of what that project
     # printed about Windows CE.  It is not a CE API page: no entity is minted
     # from the title, and a code sample on the page is not a declaration.
@@ -358,6 +359,9 @@ def parse_page(job):
     # "Windows CE supports only the Unicode version of this function."
     fact["unicode_only"] = (page_parse.unicode_support(fragment)
                             if fact["layer"] == "ce" else [])
+    # "Windows CE does not support the following nIndex values: SM_ARRANGE..."
+    fact["unsupported_constants"] = (page_parse.unsupported_constants(fragment)
+                                     if fact["layer"] == "ce" else [])
     # A Windows CE *module* page states how the binary is composed: the
     # components of ``coredll``, the ``.lib`` each component is imported
     # from, and the header/library of the module's own functions.  This is
@@ -1591,6 +1595,25 @@ def build(rows, workers, report_only, plain=False):
                "title", "table", "row", "dll_evidence", "license"],
               ordinal_rows)
 
+    # ---- constants a CE page lists as not supported (or as the only ones)
+    unsupported_rows = []
+    for fact in facts:
+        for item in fact.get("unsupported_constants") or []:
+            status = "not-supported" if item["negated"] else "only-supported"
+            for name in item["names"]:
+                unsupported_rows.append((
+                    name, status, fact["entity"] or "", item["intro"],
+                    fact["path"], fact["page_id"], fact["book"],
+                    fact["title"], license_of(fact["path"])))
+    unsupported_rows.sort(key=lambda r: (r[0], r[4]))
+    print(f"[kb] {len(unsupported_rows):,} stated-unsupported constant(s) "
+          f"over {len({row[4] for row in unsupported_rows}):,} page(s)",
+          flush=True)
+    write_tsv(os.path.join(KB, "unsupported-constants.tsv"),
+              ["name", "status", "page_entity", "statement", "page",
+               "page_id", "set", "title", "license"],
+              unsupported_rows)
+
     # ---- "Windows CE supports only the Unicode version of this function"
     unicode_rows = []
     for entity in entities:
@@ -1735,7 +1758,7 @@ def build(rows, workers, report_only, plain=False):
               gap_rows)
     write_summary(facts, entities, declarations, requirements, constraints,
                   abi_offsets, constants, per_tree, gap_rows, ordinal_rows,
-                  rule_rows, unicode_rows)
+                  rule_rows, unicode_rows, unsupported_rows)
     return (facts, entities, declarations, requirements, constraints,
             abi_offsets, constants)
 
@@ -1748,7 +1771,8 @@ def jst_today():
 
 def write_summary(facts, entities, declarations, requirements, constraints,
                   abi_offsets, constants, per_tree, gap_rows,
-                  ordinal_rows=(), rule_rows=(), unicode_rows=()):
+                  ordinal_rows=(), rule_rows=(), unicode_rows=(),
+                  unsupported_rows=()):
     def top(book):
         """learn/windows-ce-5.0/... -> learn/windows-ce-5.0 (the report unit)."""
         parts = book.split("/")
@@ -2042,6 +2066,15 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"`kb/export-ordinals.tsv`, the number as printed, with the "
         f"sentence that names the DLL.  Every other page states none, and "
         f"none is invented for them.",
+        "",
+        f"**Constants the pages take away.**  {len(unsupported_rows):,} "
+        f"name(s) are listed by a CE page after \"does not support the "
+        f"following ...\" (or, for a few, as the only values it does "
+        f"support): `kb/unsupported-constants.tsv`, with the sentence that "
+        f"introduces the list.  `GetSystemMetrics` alone loses 47 `SM_` "
+        f"values.  A header generated from the Win32 reference would define "
+        f"all of them; this file is the document saying which are not on "
+        f"the device.",
         "",
         f"**Unicode only.**  {len(unicode_rows):,} statement(s) say that "
         f"Windows CE supports only Unicode "

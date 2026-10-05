@@ -388,6 +388,8 @@ def main():
         pages, "def-rules.tsv", ("statement",))
     uni_checked, uni_bad, uni_details = check_tsv_quotes(
         pages, "unicode-only.tsv", ("statement",))
+    unsup_checked, unsup_bad, unsup_details = check_tsv_quotes(
+        pages, "unsupported-constants.tsv", ("name", "statement"))
     bad_role, statement_details, quarantined = check_separation(records)
     reads, generator_problems = check_generator(not args.no_generator)
 
@@ -412,6 +414,10 @@ def main():
         ("Unicode-only statements quote their page", uni_checked, uni_bad,
          "each kb/unicode-only.tsv row quotes a sentence printed on the CE "
          "page it names"),
+        ("stated-unsupported constants quote their page",
+         unsup_checked, unsup_bad,
+         "each kb/unsupported-constants.tsv name and its introducing "
+         "sentence are printed on the page it names"),
         ("sample code stays out of the declarations",
          sum(len(e.get("syntax_declarations", ()))
              for e in records["entity"]), len(bad_role),
@@ -445,6 +451,7 @@ def main():
                            ("ordinal", ordinal_details),
                            ("def-rule", rule_details),
                            ("unicode-only", uni_details),
+                           ("unsupported", unsup_details),
                            ("role", bad_role[:args.list]),
                            ("statement", statement_details[:args.list]),
                            ("generator", generator_problems)):

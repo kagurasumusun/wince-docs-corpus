@@ -191,6 +191,9 @@ _P_CLASS_TITLES = {
     "members", "elements", "constants",
     "example", "examples", "code example", "sample", "samples",
     "see also", "enumerator values", "enumerators",
+    # the CE-difference section of the CHM/MSDN reference pages; a label
+    # like any other, and a boundary for the readers that scan forward
+    "windows ce remarks", "windows ce notes",
 }
 
 
@@ -2657,15 +2660,90 @@ def unicode_support(fragment):
 # has to be explicitly included in order to use this function").
 _CE_NOTES = re.compile(
     r"(?is)<p>\s*Windows\s+CE\s+Notes\b[:\s]*(.*?)</p>")
+# The CHM 3.0 / MSDN reference pages print it as a section label instead:
+# ``<P class="label"><B>Windows CE Remarks</B></P>`` followed by the
+# paragraphs that state the difference.
+_CE_SECTION_LABEL = re.compile(
+    r"(?is)<(p|div|h[1-6])\b[^>]*>\s*(?:<[^>]+>\s*)*"
+    r"(Windows\s+CE\s+(?:Remarks|Notes))\s*(?:</[^>]+>\s*)*</\1>")
+_CE_SECTION_END = re.compile(
+    r"(?is)<p\b[^>]*class\s*=\s*[\"\']?(?:label|clsRef|blue)|<h[1-6]\b|"
+    r"<p>\s*(?:<[^>]+>\s*)*(?:See Also|Requirements|Return Values?|"
+    r"Parameters|Remarks|Syntax)\s*(?:</[^>]+>)*\s*</p>")
 
 
 def ce_notes(fragment):
-    """The page's own ``Windows CE Notes`` paragraph, quoted as printed."""
+    """The page's own ``Windows CE Notes``/``Windows CE Remarks`` block.
+
+    Two shapes: the CE 1.0 Books Online print the label and the text in one
+    paragraph; the CHM 3.0 and MSDN reference pages print the label as a
+    section and the text in the paragraphs under it.  Both are quoted as
+    printed and neither is summarised.
+    """
     out = []
+    for match in _CE_SECTION_LABEL.finditer(fragment):
+        rest = fragment[match.end():match.end() + 4000]
+        stop = _CE_SECTION_END.search(rest)
+        block = rest[:stop.start()] if stop else rest
+        text = re.sub(r"\s+", " ",
+                      text_of(block, keep_newlines=False)).strip()
+        if len(text) < 3:
+            continue
+        out.append({"text": text[:1200], "pattern": match.group(2)})
     for match in _CE_NOTES.finditer(fragment):
         text = re.sub(r"\s+", " ",
                       text_of(match.group(1), keep_newlines=False)).strip()
         if len(text) < 3:
             continue
         out.append({"text": text, "pattern": "Windows CE Notes"})
+    return out
+
+
+# "Windows CE does not support the following nIndex values: SM_ARRANGE
+# SM_CXMINIMIZED ...".  The names after the colon are a printed list of
+# constants that the device does not accept.  A generator that emits a
+# header from the Win32 reference would define them all; the CE page says
+# which ones are not there.
+_UNSUPPORTED_INTRO = re.compile(
+    r"(?is)(Windows (?:Embedded )?CE[^.<>]{0,60}?)?\b"
+    r"(does not support|do not support|are not supported(?: by)?|"
+    r"supports only)\b([^.:<>]{0,60}?)\s*:")
+# A constant is an all-caps identifier with an underscore or a digit in it.
+# A bare all-caps word (NULL, TRUE, GDI) is not taken: too many of them are
+# prose.  Nothing here is renamed, completed or expanded.
+_CONSTANT_TOKEN = re.compile(r"^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$")
+_TOKEN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def unsupported_constants(fragment):
+    """Constant names a page lists after "does not support the following ...".
+
+    Returns one record per list, with the sentence that introduces it and
+    the names as printed.  The list ends at the first word that is not a
+    constant: these pages print the names as a run of list items, so the
+    first ordinary word is the end of the list.
+    """
+    plain = re.sub(r"\s+", " ", text_of(fragment, keep_newlines=False))
+    out = []
+    for match in _UNSUPPORTED_INTRO.finditer(plain):
+        # the sentence the list hangs off, so that "For Windows CE versions
+        # 2.10 and later, SHGetFileInfo does not support ..." counts as a
+        # Windows CE statement even though the subject is the function
+        begin = plain.rfind(". ", max(0, match.start() - 300), match.start())
+        begin = begin + 2 if begin != -1 else max(0, match.start() - 300)
+        intro = re.sub(r"\s+", " ", plain[begin:match.end()]).strip()
+        if not re.search(r"(?i)windows (?:embedded )?ce", intro):
+            continue
+        names = []
+        for token in _TOKEN.finditer(plain, match.end(),
+                                     min(len(plain), match.end() + 1500)):
+            if _CONSTANT_TOKEN.match(token.group(0)):
+                if token.group(0) not in names:
+                    names.append(token.group(0))
+                continue
+            break
+        if len(names) < 2:
+            continue
+        out.append({"intro": intro[:300], "names": names,
+                    "negated": match.group(2).lower() != "supports only"})
     return out
