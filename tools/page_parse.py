@@ -79,7 +79,11 @@ LABEL_MAP = {
     "smartphone": "os_versions", "smartphones": "os_versions",
     "pocket": "os_versions",
     "module": "module", "c++ namespace": "namespace",
+    # ``Component: fsdbase`` is the catalog component the page names.  It is
+    # not a DLL, and the template sentence ``Windows CE component that
+    # includes this API element.`` is not a component name (empty key).
     "sysgen": "sysgen", "architecture": "architecture",
+    "component": "component",
     "send feedback": None, "see also": None, "note": None, "notes": None,
     "reference": None, "applies to": "os_versions", "imports": "requires",
     "complete documentation": None, "online documentation": None,
@@ -154,8 +158,14 @@ CELL = re.compile(r"(?is)<t[dh]\b[^>]*>(.*?)</t[dh]>")
 # newline, so an empty ``Platforms:`` cell became the value ``Versions:``
 # and an empty ``Header File:`` cell became ``Module:``.  The page printed
 # neither.  A value that really is on the next row is read from the table.
+# The colon that separates a label from its value is not the second colon
+# of ``::``.  ``IReplStore::FindNextItem`` is a C++ name, not a requirement
+# whose value is ``:FindNextItem``.  ``C++ Namespace: av_upnp::DIDL_Lite``
+# still matches: only the label's own colon is the separator, and that
+# colon is not followed by another colon.
 LINE_LABEL = re.compile(
-    r"([A-Za-z][A-Za-z /+.]{2,28}?)[ \t]*:[ \t]*([^\n]{1,200})")
+    r"(?<![:A-Za-z])([A-Za-z][A-Za-z /+.]{2,28}?)[ \t]*:(?!:)"
+    r"[ \t]*([^\n]{1,200})")
 
 
 FILEISH = re.compile(r"[A-Za-z0-9_.+\-]+\.(h|hpp|hh|hxx|lib|dll|hlp|inc)\b", re.I)
@@ -362,6 +372,11 @@ def requirements(fragment):
                 continue
             label = cells[0].rstrip(":").strip()
             value = " ".join(c for c in cells[1:] if c).strip()
+            # ``IUnknown::QueryInterface | Returns pointers...`` is a method
+            # row, not a requirement label.  A real label does not contain
+            # ``::``.
+            if "::" in label:
+                continue
             field = _field(label)
             if not field or not value or (field, value) in seen \
                     or not _plausible(field, value):

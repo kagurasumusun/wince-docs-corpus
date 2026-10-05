@@ -53,7 +53,7 @@ FILES = {
 REQUIRED = {
     "entity": ("id", "name", "layers", "doc_role", "kinds", "ce_sets",
                "ce_pages", "win32_pages", "dotnet_pages", "headers",
-               "libraries", "dlls", "modules", "sysgens", "relations", "generation_use",
+               "libraries", "dlls", "modules", "components", "sysgens", "relations", "generation_use",
                "declarations", "syntax_declarations", "requirements",
                "constraints", "noise", "variants_of", "variants",
                "win32_pages_from_variants", "win32_documented", "surface",

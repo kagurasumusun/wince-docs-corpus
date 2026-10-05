@@ -19,8 +19,8 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 * pages parsed: **121,050**
 * API entities: **26,861** -- CE-specific **21,350**, documented by Windows CE and the Win32 reference alike **4,353**, Win32 pages for a CE name's A/W spelling **1,155**, named by the CE catalog only **3**, unclaimed Win32 pages **0** (`reports/surface.tsv`; 585 names have a Win32 page through a variant spelling)
 * declarations extracted: **109,912** (C/C++ 78,586 in `kb/declarations.jsonl`, managed-code signatures 31,326 in `kb/declarations-dotnet.jsonl` -- the separated .NET layer)
-* requirement statements: **166,593**
-* of those, a page's own `Module` (not an sdk-api UID): **145**; a `sysgen` variable: **961**; a CPU list (`Architecture`): **78**
+* requirement statements: **166,425**
+* of those, a page's own `Module` (not an sdk-api UID): **145**; a `sysgen` variable: **961**; a CPU list (`Architecture`): **78**; a catalog `Component`: **28**
 * numbered constants: **18,746** (`kb/constants.jsonl`, 791 page(s))
 * Windows CE constraint sentences: **3,250** and ABI statements quoted from the pages (**969**, `kind: "abi-note"`)
 * entities with a gap record: **16,566** (`reports/gaps.tsv`)
@@ -39,9 +39,9 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 | `chm/windows-ce-5.0` | 20,179 | 11,545 | 9,698 | 14,790 | 23,411 | 16,059 |
 | `learn/windows-ce-net-4x` | 8,969 | 6,535 | 6,512 | 6,327 | 16,721 | 7,164 |
 | `chm/windows-ce-3.0` | 8,962 | 6,970 | 5,030 | 6,802 | 11,592 | 7,558 |
-| `msdn-library/wcedevcon-99` | 6,382 | 4,532 | 3,205 | 4,512 | 6,813 | 4,916 |
+| `msdn-library/wcedevcon-99` | 6,382 | 4,532 | 3,205 | 4,512 | 6,806 | 4,916 |
 | `dotnet/pos-for-net` | 5,793 | 0 | 0 | 5,067 | 0 | 23,157 |
-| `msdn-library/techshelps` | 5,165 | 3,876 | 3,229 | 3,261 | 7,250 | 3,350 |
+| `msdn-library/techshelps` | 5,165 | 3,876 | 3,229 | 3,261 | 7,089 | 3,350 |
 | `dotnet/dotnet-micro-framework` | 4,012 | 0 | 0 | 1,835 | 0 | 6,535 |
 | `msdn-library/datadungeon-2000-04` | 2,931 | 1,328 | 0 | 677 | 0 | 758 |
 | `mvb/windows-ce-1.0/PEGSDK` | 1,918 | 1,470 | 0 | 268 | 0 | 429 |

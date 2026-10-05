@@ -42,6 +42,8 @@ published (git-tracked) files by redistribution: yes 5,291, no 115,943, unclear 
 | `sdl-wiki-cc-by-4.0` | the SDL wiki WinCE page + its notice | "All wiki content is licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)." Attribution, the licence link and the modification note are on the page | yes |
 | `openssl-1.0.2` | OpenSSL 1.0.2u `INSTALL.WCE` + the notice | "The SSL documentation included with this distribution is covered by the same copyright terms except that the holder is Tim Hudson (tjh@cryptsoft.com)." The acknowledgment the licence requires is on the page. The library source was not collected | yes |
 | `wx-docs-licendoc` | wxWidgets 3.0.5 `docs/msw/wince/readme.txt` + `licendoc.txt` | "Permission is granted to make and distribute verbatim copies of this manual or piece of documentation provided any copyright notice and this permission notice are preserved on all copies." | yes |
+| `sdl-1.2-lgpl-2.1` | the SDL 1.2 LGPL notice excerpt | "Activities other than copying, distribution and modification are not covered by this License; they are outside its scope." The source was not stored. The excerpt is not a verbatim copy of COPYING, so it is not offered as one | no |
+| `qt-4.8-wince-lgpl` | the licence notice in Qt 4.8 `qfunctions_wince.h` | "this file may be used under the terms of the GNU Lesser" (LGPL 2.1 or 3, also GPL 3 or commercial, in the same notice). The header and the implementation were not stored | no |
 | `derived-from-sources` | `knowledge/`, `data/` | No separate statement: each record names its page, and that page's terms govern the record | per record |
 | `project-own` | `tools/`, `docs/`, `queues/`, `.github/`, the READMEs | **The repository publishes no LICENSE file** — its own licence is undecided | undecided |
 
@@ -51,7 +53,7 @@ whitespace aside). A summary is never used in place of the wording.
 
 ## What this means
 
-* As a **public** repository, 115,943 of the 121,371 files it carries are not
+* As a **public** repository, 115,945 of the 121,374 files it carries are not
   licensed for redistribution. The Learn terms forbid copying the pages onto a
   network computer; the CE 3.0 notice grants internal reference use only; for
   the CHM/MVB media no permission statement was located at all. The Qt

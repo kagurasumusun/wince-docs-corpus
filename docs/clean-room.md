@@ -67,8 +67,8 @@ Result on 2026-10-05, with `--all` (every quote, no sampling; the file is
 
 | Invariant | Checked | Violations |
 |-----------|--------:|-----------:|
-| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 374,582 | 0 |
-| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names (declaration texts, requirement values, constraint sentences, **layout-table rows, constant-table rows and open-source document quotations**) | 268,340 | 0 |
+| no fact without a document — every record's `source.path` (an entity: every page it lists) exists in `corpus/` | 374,617 | 0 |
+| quotes are faithful — the record's characters, in order, whitespace aside, are on the page it names (declaration texts, requirement values, constraint sentences, **layout-table rows, constant-table rows and open-source document quotations**) | 268,375 | 0 |
 | documented members are on their page — every `documented_fields` name occurs in one of the pages that document the entity (an A/W pair documents one structure) | 5,204 | 0 |
 | sample code stays out of the declarations — no entity's `syntax_declarations` points at a `role: "example"` or `implementation` record | 59,926 | 0 |
 | syntax blocks are declarations — no `role: "syntax"` text is implementation code; code blocks kept as `role: "example"` and never emitted: 4,572 | all declarations | 0 |
@@ -111,3 +111,11 @@ of having it:
   code samples. Those are quarantined as `role: "example"` /
   `implementation: true` and never take part in the generated include/def
   material.
+* An implementation may be *read* to see which Windows CE names it uses.
+  GNU LGPL 2.1 puts activities other than copying, distribution and
+  modification outside the licence, so the reading is not a licensed copy.
+  The source is not stored, and nothing it prints is turned into a
+  declaration or a constant. Qt 4.8's Windows CE header says its stand-in
+  numbers are not the real values; those numbers are not recorded.
+  `knowledge/reports/oss-surface.tsv` is that observation. The generator
+  does not read it.

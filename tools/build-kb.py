@@ -367,6 +367,10 @@ def normalize_value(value, field=None):
         return match.group(0) if match else ""
     if field == "header" and not HEADER_TOKEN.search(value):
         return ""
+    # ``Component: fsdbase`` is one identifier.  A template sentence in the
+    # same cell is a statement, not a component name, and gets an empty key.
+    if field == "component":
+        return value if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", value) else ""
     return value
 
 
@@ -765,6 +769,9 @@ def entity_records(facts, declarations, requirements):
             "surface": None,
             "headers": values("header"),
             "modules": values("module"),
+            # Catalog component the page prints (``Component: fsdbase``).
+            # Not a DLL name, and not rewritten to one.
+            "components": values("component"),
             # Catalog variables the page prints (``sysgen: SYSGEN_XAML_RUNTIME``).
             # Not a header and not a library.
             "sysgens": values("sysgen"),
@@ -1447,7 +1454,7 @@ def build(rows, workers, report_only, plain=False):
     # ---- requirement values that name no file (kept, but not in the maps)
     filtered = collections.defaultdict(collections.Counter)
     for record in requirements:
-        if record["field"] in ("library", "dll", "header") \
+        if record["field"] in ("library", "dll", "header", "component") \
                 and not record["key"]:
             filtered[record["field"]][record["value"]] += 1
     write_tsv(os.path.join(REPORTS, "filtered-values.tsv"),
@@ -1704,7 +1711,9 @@ def write_summary(facts, entities, declarations, requirements, constraints,
         f"a `sysgen` variable: "
         f"**{sum(1 for r in requirements if r.get('field') == 'sysgen'):,}**; "
         f"a CPU list (`Architecture`): "
-        f"**{sum(1 for r in requirements if r.get('field') == 'architecture'):,}**",
+        f"**{sum(1 for r in requirements if r.get('field') == 'architecture'):,}**; "
+        f"a catalog `Component`: "
+        f"**{sum(1 for r in requirements if r.get('field') == 'component' and r.get('key')):,}**",
         f"* numbered constants: **{len(constants):,}** "
         f"(`kb/constants.jsonl`, {len(constant_pages):,} page(s))",
         f"* Windows CE constraint sentences: "
