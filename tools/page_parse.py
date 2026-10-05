@@ -150,6 +150,61 @@ def region(fragment, *headings, window=6000):
     return ""
 
 
+# ``<p class="clsRef">Syntax</p>`` is the section label in the CE 5.0 MSHTML
+# and shdocvw CHM.  ``<p class=blue><b>At a Glance</b></p>`` is the 2000-04
+# ATL template; the class is often unquoted.  Neither is an ``<h1>``–``<h6>``,
+# so ``region`` does not see it.  A blue paragraph that is a procedure step
+# (``To import a desktop computer database``) is not a heading — only the
+# titles listed here are.  ``<p class="label">`` stays on its own path: the
+# CE 3.0 requirements table is read from its column headers, and cutting
+# every label paragraph would shorten regions that reader already handles.
+_P_CLASS_SECTION = re.compile(
+    r"(?is)<p\b[^>]*\bclass\s*=\s*[\"']?(clsRef|blue)(?=[\"'\s>])"
+    r"[^>]*>\s*(?:<[^>]+>\s*)*([^<]{2,40})")
+_P_CLASS_TITLES = {
+    "syntax", "c/c++ syntax", "c/c++syntax", "declaration", "prototype",
+    "parameters", "parameter", "c/c++ parameters",
+    "return value", "return values", "remarks", "general remarks",
+    "requirements", "at a glance", "system requirements",
+    "c/c++ requirements", "c/c++requirements",
+    "members", "elements", "constants",
+    "example", "examples", "code example", "sample", "samples",
+    "see also", "enumerator values", "enumerators",
+}
+
+
+def _p_class_sections(fragment, start, end):
+    """``(pos, end, title)`` of clsRef/blue section labels in ``[start, end)``."""
+    out = []
+    for match in _P_CLASS_SECTION.finditer(fragment, start, end):
+        title = text_of(match.group(2), keep_newlines=False).strip(": ").lower()
+        if title not in _P_CLASS_TITLES:
+            continue
+        out.append((match.start(), match.end(), title))
+    return out
+
+
+def labeled_region(fragment, *headings, window=6000):
+    """The block after a clsRef/blue label, until the next heading.
+
+    An ``<h1>``–``<h6>`` is a boundary only.  It is not a start: ``region``
+    already returns those, and a page that has one is not this template.
+    """
+    wanted = {heading.lower() for heading in headings}
+    marks = [(match.start(), match.end(), None)
+             for match in HEADING.finditer(fragment)]
+    marks.extend(_p_class_sections(fragment, 0, len(fragment)))
+    marks.sort()
+    for index, (_start, end, title) in enumerate(marks):
+        if title not in wanted:
+            continue
+        stop = end + window
+        if index + 1 < len(marks) and marks[index + 1][0] < stop:
+            stop = marks[index + 1][0]
+        return fragment[end:stop]
+    return ""
+
+
 # ------------------------------------------------------------- requirements
 
 ROW = re.compile(r"(?is)<tr\b[^>]*>(.*?)</tr>")
@@ -233,7 +288,14 @@ def _plausible(field, value):
     MFC header requirement, not a header name; a header/library/DLL value has
     to look like a file name (or be a short bare name).  A cell that is only
     a list of file names is kept whole, however long.
+    ``Windows CE versions that include this API element.`` is the blank
+    template's own instruction, not a version the page assigns.
     """
+    # The blank ATL template prints ``that include this API element``
+    # (no ``s``).  A real version line does not.
+    if field == "os_versions" and re.search(
+            r"(?i)that includes? this API element", value or ""):
+        return False
     if field in ("header", "library", "dll"):
         if _file_list(value):
             return True
@@ -345,7 +407,10 @@ def requirements(fragment):
     # and is not a requirements heading.
     for heading in ("requirements", "at a glance", "system requirements",
                     "c/c++ requirements", "c/c++requirements"):
-        block = region(fragment, heading)
+        # The 2000-04 ATL template prints ``At a Glance`` as
+        # ``<p class=blue>``, not as a heading.  An ``<h*>`` still wins when
+        # the page has one.
+        block = region(fragment, heading) or labeled_region(fragment, heading)
         if not block:
             continue
         column_records, had_column_table = _requirements_from_columns(block,
@@ -407,6 +472,27 @@ def requirements(fragment):
             and ("Runs on" in fragment or "Runs On" in fragment):
         extra, _had = _requirements_from_columns(fragment, seen)
         out.extend(extra)
+    # ``Header file | mshtmcid.h`` sits under ``C++ Information``, which is
+    # not a requirements heading.  The row is the requirement.  The same
+    # table's ``Applies to`` cell is not a version and is not read.  A cell
+    # that does not name a header file (a column title, a sentence) is not
+    # a requirement either.
+    for row in ROW.finditer(fragment):
+        cells = [text_of(cell, keep_newlines=False).strip()
+                 for cell in CELL.findall(row.group(1))]
+        if len(cells) < 2 or not cells[0]:
+            continue
+        label = cells[0].rstrip(":").strip()
+        if label.lower() not in ("header file", "header files"):
+            continue
+        value = re.sub(r"\s+", " ", " ".join(cell for cell in cells[1:] if cell)).strip()
+        if not value or ("header", value) in seen:
+            continue
+        if not FILEISH.search(value) or not _plausible("header", value):
+            continue
+        seen.add(("header", value))
+        out.append({"field": "header", "label": label, "value": value,
+                    "evidence": f"{label}: {value}"})
     return out
 
 
@@ -949,7 +1035,7 @@ def _is_macro_block(text):
 
 
 def _section_title_after(fragment, pos, window=800):
-    """The first heading or ``<p class=\"label\">`` after ``pos``, lower-cased."""
+    """The first heading or section label after ``pos``, lower-cased."""
     titles = []
     for match in HEADING.finditer(fragment, pos, pos + window):
         titles.append((match.start(),
@@ -961,14 +1047,17 @@ def _section_title_after(fragment, pos, window=800):
             fragment[pos:pos + window]):
         titles.append((pos + match.start(),
                        re.sub(r"\s+", " ", match.group(1)).strip(": ").lower()))
+    for start, _end, title in _p_class_sections(fragment, pos, pos + window):
+        titles.append((start, title))
     if not titles:
         return ""
     titles.sort()
     return titles[0][1]
 
 
-_PROTO_AFTER = ("parameters", "members", "elements", "constants",
-                "c/c++ parameters", "return values", "return value")
+_PROTO_AFTER = ("parameters", "parameter", "members", "elements", "constants",
+                "c/c++ parameters", "return values", "return value",
+                "enumerators", "enumerator values")
 _NOT_PROTO_BEFORE = ("parameters", "return values", "return value", "remarks",
                      "general remarks", "script syntax", "script parameters",
                      "script return value", "example", "examples",
@@ -994,6 +1083,11 @@ _SIGNATURE = re.compile(
     r"(?is)^(?:typedef\s+)?(?:enum\s+|struct\s+|union\s+)?"
     r"[A-Za-z_][\w\s\*]*\s+[*&]*\s*"
     r"[A-Za-z_][\w]*(?:::[A-Za-z_][\w]*)?\s*\(")
+# ``typedef CComAutoCriticalSection AutoCriticalSection`` is the declaration.
+# The page omitted the semicolon.  A sentence that starts with typedef is not
+# this form: the whole paragraph has to be the two identifiers.
+_TYPEDEF_ALIAS = re.compile(
+    r"(?i)^typedef\s+[A-Za-z_][\w:<>]*\s+[A-Za-z_][\w:]*\s*;?\s*$")
 
 
 def _prototype_name(text):
@@ -1060,7 +1154,7 @@ def _is_documented_prototype(text):
 
 
 def _section_title_before(fragment, pos):
-    """The last heading or ``<p class="label">`` before ``pos``, lower-cased."""
+    """The last heading or section label before ``pos``, lower-cased."""
     titles = []
     for match in HEADING.finditer(fragment, 0, pos):
         titles.append((match.start(),
@@ -1071,6 +1165,8 @@ def _section_title_before(fragment, pos):
             r"(?:<[^>]+>\s*)*([^<]{2,40})", fragment[:pos]):
         titles.append((match.start(),
                        re.sub(r"\s+", " ", match.group(1)).strip(": ").lower()))
+    for start, _end, title in _p_class_sections(fragment, 0, pos):
+        titles.append((start, title))
     if not titles:
         return ""
     titles.sort()
@@ -1087,6 +1183,32 @@ def _looks_like_declaration(text):
     if len(text) < 8 or len(text) > 4000:
         return False
     return ("(" in text and ")" in text) or ";" in text or "{" in text
+
+
+def _syntax_paragraph(inner, strict):
+    """The declaration text of a Syntax paragraph, or None.
+
+    An unclosed ``<p>`` runs into the member ``<dl>``.  The declaration is
+    the text before that list, when that text is itself a prototype.  A
+    clsRef/blue Syntax paragraph (``strict``) is kept only when it is a C
+    prototype or a typedef alias.  ``SINK_ENTRY(id, dispid, fn)`` and
+    ``Len(<string>)`` are calling forms the page did not print as C, and
+    they are not turned into one.
+    """
+    cut_html = re.split(
+        r"(?i)<(?:dl|table|h[1-6]|ul|ol|pre)\b", inner, maxsplit=1)[0]
+    cut = text_of(cut_html).strip()
+    full = text_of(inner).strip()
+    if _TYPEDEF_ALIAS.match(cut):
+        return cut, False
+    if _is_documented_prototype(cut) and not is_implementation(cut) \
+            and (strict or cut != full):
+        return cut, False
+    if strict:
+        return None
+    if _looks_like_declaration(full) and re.search(r"[;{()]", full):
+        return full, is_implementation(full)
+    return None
 
 
 def declarations(fragment, page_title=None):
@@ -1169,23 +1291,38 @@ def declarations(fragment, page_title=None):
             "implementation": implementation,
         })
     if not any(d["role"] == "syntax" for d in out):
-        block = syntax_region or ""
-        for para in PARA.finditer(block):
-            text = text_of(para.group(1))
-            if _looks_like_declaration(text) and re.search(r"[;{()]", text):
-                implementation = is_implementation(text)
-                out.insert(0, {
-                    "text": text, "markup": "paragraph",
-                    "spacing": _spacing(text),
-                    "calling_convention": _calling_convention(text),
-                    "role": "example" if implementation else "syntax",
-                    "kind": _kind_of(text), "members": _members(text),
-                    "member_types": [member_type(line)
-                                     for line in _members(text)],
-                    "abi_flags": abi_flags(text),
-                    "implementation": implementation,
-                })
-                break
+        # An ``<h*>`` Syntax region keeps the looser paragraph rule.  A
+        # clsRef/blue Syntax region is used only when there is no heading,
+        # and only a C prototype or a typedef alias is the declaration.
+        blocks = []
+        if syntax_region:
+            blocks.append((syntax_region, False))
+        labeled = labeled_region(
+            fragment, "syntax", "declaration", "prototype",
+            "c/c++ syntax", "c/c++syntax")
+        if labeled:
+            blocks.append((labeled, True))
+        for block, strict in blocks:
+            taken = None
+            for para in PARA.finditer(block):
+                taken = _syntax_paragraph(para.group(1), strict)
+                if taken:
+                    break
+            if not taken:
+                continue
+            text, implementation = taken
+            out.insert(0, {
+                "text": text, "markup": "paragraph",
+                "spacing": _spacing(text),
+                "calling_convention": _calling_convention(text),
+                "role": "example" if implementation else "syntax",
+                "kind": _kind_of(text), "members": _members(text),
+                "member_types": [member_type(line)
+                                 for line in _members(text)],
+                "abi_flags": abi_flags(text),
+                "implementation": implementation,
+            })
+            break
     return out
 
 
