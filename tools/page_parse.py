@@ -55,14 +55,22 @@ HEADING = re.compile(
 # Requirement labels of the templates in the corpus, mapped to a stable field.
 LABEL_MAP = {
     "header": "header", "headers": "header", "header file": "header",
-    "header files": "header", "include file": "header",
+    "header files": "header", "include file": "header", "include file(s)": "header",
+    "header file(s)": "header", "header and idl files": "header",
+    "include header file": "header", "resulting headers": "header",
+    "c++ header": "header", "header/idl": "header", "idl/header": "header",
     "link library": "library", "library": "library", "link libraries": "library",
     "library file": "library", "import library": "library", "libraries": "library",
+    "import libraries": "library", "import lib": "library",
+    "link library(ies)": "library", "import library(ies)": "library",
+    "library(ies)": "library",
     "dll": "dll", "dlls": "dll", "dll file": "dll", "dynamic link library": "dll",
+    "dllfile": "dll", "dll file(s)": "dll", "dll(s)": "dll",
     "os versions": "os_versions", "os version": "os_versions",
     "windows ce versions": "os_versions", "windows ce version": "os_versions",
     "operating system": "os_versions", "platform": "os_versions",
     "windows embedded ce": "os_versions", "windows mobile": "os_versions",
+    "os": "os_versions", "target os": "os_versions", "target platform": "os_versions",
     "namespace": "namespace", "assembly": "assembly", "class": "class",
     "requires": "requires", "requirement": "requires", "type": "type",
     # ``Versions: 2.0 and later`` is the MFC template's OS-version line.
@@ -78,12 +86,13 @@ LABEL_MAP = {
     # not a version.
     "smartphone": "os_versions", "smartphones": "os_versions",
     "pocket": "os_versions",
-    "module": "module", "c++ namespace": "namespace",
+    "module": "module", "module name": "module", "c++ namespace": "namespace",
     # ``Component: fsdbase`` is the catalog component the page names.  It is
     # not a DLL, and the template sentence ``Windows CE component that
     # includes this API element.`` is not a component name (empty key).
-    "sysgen": "sysgen", "architecture": "architecture",
-    "component": "component",
+    "sysgen": "sysgen", "sysgen variable": "sysgen", "sysgen variables": "sysgen",
+    "cesysgen": "sysgen", "architecture": "architecture",
+    "component": "component", "hardware component": "component",
     "send feedback": None, "see also": None, "note": None, "notes": None,
     "reference": None, "applies to": "os_versions", "imports": "requires",
     "complete documentation": None, "online documentation": None,
@@ -499,7 +508,10 @@ def requirements(fragment):
     # files are under the next one.
     requirement_headings = (
         "requirements", "windows mobile requirements", "at a glance",
-        "system requirements", "c/c++ requirements", "c/c++requirements")
+        "system requirements", "c/c++ requirements", "c/c++requirements",
+        "c++ information", "interface information", "file information",
+        "location", "header and library", "header and import library",
+        "requirements / header", "requirements and location")
     blocks = list(regions(fragment, *requirement_headings))
     if not blocks:
         for heading in requirement_headings:
@@ -1262,7 +1274,8 @@ def _cell_int(text):
 CONSTANT_NAME_COLUMNS = {
     "flag", "name", "constant", "symbolic constant", "resource identifier",
     "notification flag", "error code", "return code", "identifier",
-    "message", "macro", "symbol", "symbolic name",
+    "message", "macro", "symbol", "symbolic name", "flag name",
+    "constant name", "macro name", "event name", "message name",
     # The same shape under a more specific heading.  Each label was checked
     # against the tables that use it: the name cell is the symbol and the
     # other cell is the number the page assigns to it.  A correspondence
@@ -1270,12 +1283,17 @@ CONSTANT_NAME_COLUMNS = {
     # a locale beside an LCID, a buffer index beside a type name) is not in
     # this set -- those numbers are not the symbol's value.
     "symbolic constant name", "screen identifier", "control code",
-    "message identifier", "virtual key code", "status identifier",
+    "message identifier", "virtual key code", "virtual key", "status identifier",
     "hresult name", "version identifier", "escape code", "dwmessage",
     "power notification type", "device generating notification",
     "propvariant type", "message text", "visual basic constant",
     "constant (button)", "constant (shift)", "system color",
-    "ioctl call", "event", "element", "error",
+    "ioctl call", "event", "element", "error", "property", "attribute",
+}
+
+CONSTANT_NAME_COLUMNS_SECONDARY = {
+    "setting", "option", "parameter", "value name", "registry value",
+    "item", "member", "field", "command", "subcommand", "state", "mode",
 }
 CONSTANT_HEX_COLUMNS = {
     "hexadecimal", "hexadecimal value", "hex value", "hex",
@@ -1315,10 +1333,15 @@ def constant_tables(fragment):
                   for header in headers]
         if any(OFFSET_COLUMN.search(label) for label in labels):
             continue
-        name_i = _column(labels, CONSTANT_NAME_COLUMNS)
         hex_i = _column(labels, CONSTANT_HEX_COLUMNS)
         dec_i = _column(labels, CONSTANT_DECIMAL_COLUMNS)
         val_i = _column(labels, CONSTANT_VALUE_COLUMNS)
+        value_cols = {i for i in (hex_i, val_i, dec_i) if i is not None}
+
+        name_i = _column(labels, CONSTANT_NAME_COLUMNS)
+        if name_i is None or name_i in value_cols:
+            name_i = _column(labels, CONSTANT_NAME_COLUMNS_SECONDARY)
+
         # LOGFONT weight tables print the constant in the column headed
         # ``Value`` and the number in the column headed ``Weight``
         # (``FW_THIN | 100``).  ``Value`` is not a name column anywhere else;
@@ -1327,6 +1350,7 @@ def constant_tables(fragment):
             name_i = labels.index("value")
             val_i = labels.index("weight")
             hex_i = dec_i = None
+
         value_is = [i for i in (hex_i, val_i, dec_i) if i is not None]
         if name_i is None or not value_is or name_i in value_is:
             continue
@@ -1569,7 +1593,10 @@ def is_implementation(text):
         return True             # an #ifdef/#if-fenced block is code
     if not re.search(r"[;{}]", text):
         return False            # prose, a field list, a documentation header
-    return bool(IMPLEMENTATION_STATEMENT.search(text))
+    # Strip single-line and multi-line comments before checking for implementation statement keywords
+    clean_text = re.sub(r"//.*?$", "", text, flags=re.M)
+    clean_text = re.sub(r"/\*.*?\*/", "", clean_text, flags=re.S)
+    return bool(IMPLEMENTATION_STATEMENT.search(clean_text))
 
 
 def _is_build_script(text):
@@ -1676,7 +1703,8 @@ def _section_title_after(fragment, pos, window=800):
 
 _PROTO_AFTER = ("parameters", "parameter", "members", "elements", "constants",
                 "c/c++ parameters", "return values", "return value",
-                "enumerators", "enumerator values")
+                "enumerators", "enumerator values", "remarks", "requirements",
+                "see also", "description", "notes", "")
 _NOT_PROTO_BEFORE = ("parameters", "return values", "return value", "remarks",
                      "general remarks", "script syntax", "script parameters",
                      "script return value", "example", "examples",
@@ -1837,8 +1865,10 @@ def declarations(fragment, page_title=None):
     # ``Script Syntax`` is Visual Basic and is not read as a C declaration.
     # ``Syntax 1`` / command-line ``syntax`` headings are grammar or a tool
     # invocation, not this heading, so they are not listed.
-    syntax_region = region(fragment, "syntax", "declaration", "prototype",
-                           "c/c++ syntax", "c/c++syntax")
+    syntax_region = (region(fragment, "syntax", "declaration", "prototype",
+                            "c/c++ syntax", "c/c++syntax") or
+                     labeled_region(fragment, "syntax", "declaration", "prototype",
+                                    "c/c++ syntax", "c/c++syntax"))
     for match in PRE.finditer(fragment):
         attrs, inner = match.group(1), match.group(2)
         text = text_of(inner)
@@ -1846,9 +1876,19 @@ def declarations(fragment, page_title=None):
             continue
         implementation = is_implementation(text)
         macro_block = _is_macro_block(text)
-        role = "example" if implementation else (
-            "syntax" if (syntax_region and
-                         syntax_region.find(inner[:200]) != -1) else "example")
+        has_syntax_markup = bool(re.search(r'class\s*=\s*["\']?syntax\b', attrs, re.I))
+        if implementation:
+            role = "example"
+        elif has_syntax_markup:
+            title_before = _section_title_before(fragment, match.start())
+            if title_before in _EXAMPLE_SECTION or title_before.startswith("example"):
+                role = "example"
+            else:
+                role = "syntax"
+        elif syntax_region and syntax_region.find(inner[:200]) != -1:
+            role = "syntax"
+        else:
+            role = "example"
         # A block that is only #define/#pragma lines is the declaration of
         # those macros, unless the page put it under an Example heading.
         # Templates without a Syntax heading were leaving these as examples,
