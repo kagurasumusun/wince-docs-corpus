@@ -582,27 +582,26 @@ def requirements(fragment):
         if had:
             got_columns = True
         out.extend(extra)
-    # ``Header file | mshtmcid.h`` sits under ``C++ Information``, which is
-    # not a requirements heading.  The row is the requirement.  The same
-    # table's ``Applies to`` cell is not a version and is not read.  A cell
-    # that does not name a header file (a column title, a sentence) is not
-    # a requirement either.
+    # Requirement table rows (Header, Library, DLL, Sysgen, Architecture) outside
+    # a Requirements heading (e.g. under C++ Information or at page top).
     for row in ROW.finditer(fragment):
         cells = [text_of(cell, keep_newlines=False).strip()
                  for cell in CELL.findall(row.group(1))]
         if len(cells) < 2 or not cells[0]:
             continue
         label = cells[0].rstrip(":").strip()
-        if label.lower() not in ("header file", "header files"):
+        if "::" in label:
             continue
-        value = re.sub(r"\s+", " ", " ".join(cell for cell in cells[1:] if cell)).strip()
-        if not value or ("header", value) in seen:
-            continue
-        if not FILEISH.search(value) or not _plausible("header", value):
-            continue
-        seen.add(("header", value))
-        out.append({"field": "header", "label": label, "value": value,
-                    "evidence": f"{label}: {value}"})
+        field = _field(label)
+        if field in ("header", "library", "dll", "sysgen", "architecture"):
+            value = re.sub(r"\s+", " ", " ".join(cell for cell in cells[1:] if cell)).strip()
+            if not value or (field, value) in seen:
+                continue
+            if not _plausible(field, value):
+                continue
+            seen.add((field, value))
+            out.append({"field": field, "label": label, "value": value,
+                        "evidence": f"{label}: {value}"})
     # A sentence that assigns the header or the exporting DLL, not a mention
     # of some other type.  ``The DISPID for this event is defined in
     # mshtmdid.h`` is the event page's header.  ``This function is declared
