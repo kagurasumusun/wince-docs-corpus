@@ -1,0 +1,82 @@
+# Refresh the Win32-common material in corpus/win32/ and the reports.
+#
+# What it does (one HTTPS request, no crawling):
+#   1. download the pinned MicrosoftDocs/sdk-api commit
+#   2. re-extract corpus/win32/api/ - every sdk-api page whose API name
+#      Windows CE documents (tools/ce_api_names.py; no module context, no
+#      desktop guides - see docs/COLLECTION-POLICY.md)
+#   3. refresh data/reports/{ce-api-names,win32-shared,win32-imported}.tsv
+#      and the indexes
+#   4. re-run the integrity check and the collection-policy check
+#
+# Update UPSTREAM in tools/fetch-upstream.py to move to a newer commit; the
+# new snapshot tarball has to be committed too (sources/microsoftdocs/).
+#
+# Note that this import never *deletes*: it writes the pages it selects and
+# leaves the rest of corpus/win32/ alone.  If the rule gets stricter, remove
+# the pages it no longer selects (tools/check-policy.py names every one of
+# them) in the same commit.
+
+name: Refresh Win32-common documentation
+
+on:
+  workflow_dispatch:
+    inputs:
+      pack:
+        description: 'Also rebuild the sdk-api snapshot tarball in sources/microsoftdocs/'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GIT_PAT || secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Import the CE-shared sdk-api pages
+        run: python3 tools/fetch-upstream.py subset --source sdk-api
+
+      - name: Rebuild the snapshot tarball
+        if: ${{ github.event.inputs.pack == 'true' }}
+        run: python3 tools/fetch-upstream.py pack --source sdk-api
+
+      - name: Refresh reports and indexes
+        run: |
+          python3 tools/build-ce-api-names.py
+          python3 tools/build-win32-map.py
+          # the alias table has to stay intact (a collapsed page must not
+          # come back, its keeper must not change) and the knowledge base has
+          # to be rebuilt from the pages this run changed
+          python3 tools/dedupe-corpus.py --check
+          python3 tools/build-kb.py --workers 4
+          python3 tools/check-kb.py
+          python3 tools/build-win32-coverage.py
+          python3 tools/build-index.py
+          python3 tools/build-index-sql.py
+          python3 tools/check-corpus.py --report || true
+          python3 tools/check-policy.py
+
+      - name: Commit
+        if: ${{ github.event.inputs.push == 'true' }}
+        run: |
+          git config user.name "wince-docs-corpus importer"
+          git config user.email "wince-corpus-harvester@users.noreply.github.com"
+          git add corpus/win32 data/reports data/index sources/microsoftdocs knowledge
+
+          if git diff --staged --quiet; then
+            echo "nothing to commit"
+            exit 0
+          fi
+          git commit -m "corpus: refresh Win32-common material"
+          git pull --rebase
+          git push
