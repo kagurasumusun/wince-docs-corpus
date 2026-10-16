@@ -10,6 +10,13 @@ the page it was read from.
 `tools/build-kb.py`, and it is deliberately **not** a set of include or def
 files: it is the material those files will be generated from.
 
+The **quote store** is `kb/*.jsonl.gz` (every printed statement, with its
+page).  The **consumer view** is `unified/` — one identifier, one chosen
+Windows CE fact (value, header, declaration) for `tools/gen-include-def.py`.
+Rebuild that view with `python3 tools/build-unified-kb.py` without re-parsing
+the corpus.  A Win32 number is used only when no CE page numbers the name.
+Charset/code-page correspondence columns are not constant values.
+
 ```
 sources/     the media and upstream snapshots (the origin)
 corpus/      the documentation pages themselves (the material)
@@ -22,6 +29,7 @@ tools/       the pipeline that produces all of the above
 
 | Path | Contents |
 |------|----------|
+| `unified/` | **Consumer KB** (catalog.json, constants.jsonl, declarations.jsonl, macros.jsonl, headers.jsonl, modules.jsonl, names.tsv). One name → one CE-preferred fact. |
 | `kb/entities.jsonl.gz` | One record per API name (**30,076** names): kinds, layers, `surface` (where the name sits in the Windows CE / Win32 split), `ce_sets` (the version scope), the CE and Win32 pages, the header/library/DLL/module names the pages state, the ids of its evidence records, its `relations` to other definitions, its `variants` (Unicode/ANSI spellings), and `generation_use`. |
 | `kb/declarations.jsonl.gz` | Every C/C++ declaration, prototype and struct/enum body found in a CE or Win32 page (**78,993**; of 110,319 records in both declaration files, **96,775** are `role: "syntax"` interface declarations and **13,544** are `role: "example"` blocks; **46,972** member lines are recovered, **38,938** of them with the type the line prints -- a page that lost its line breaks and spaces still yields its members, quoted as printed), **quoted from its page**. A `#define` / `#pragma` / `#undef` block with no parentheses is kept too, unless the heading above it is an example. A `<pre>` with no Syntax heading is `role: "syntax"` when it is a documented prototype immediately before Parameters, Parameter, Members, Elements, Constants, Return Values, Enumerators or Enumerator Values, and the heading above it is not an example or a parameter list. `<p class="clsRef">` (the CE 5.0 MSHTML/shdocvw CHM) and `<p class="blue">` (the 2000-04 ATL template) are section labels, not prose. A prototype under that Syntax label is the declaration. A paragraph in a blue Syntax section is kept only when it is a C prototype or a `typedef` alias; `SINK_ENTRY(id, dispid, fn)` and `Len(<string>)` are not turned into one. A call after Parameters, resource-compiler grammar, Visual Basic, and a JScript `function` stay examples. A `*` or `&` glued to the name (`void *malloc`) and a `Class::Method` name are still that prototype. A prototype of a different name than the page title stays an example, as does a prototype on a page that also prints `#define` of that name. A title that prints `Interface::Member Method`, `MSMQMessage.Priority`, `IXRCollection<In_T, Out_T>::Insert`, `CComPtr::operator !` or `strcpy, wcscpy` names those APIs; each name is an entity only when a syntax block declares it. `operator !` and `operator *` stay separate records. A parameter list longer than eight lines is still the declaration; a parameter named `dialog` is not a resource script. A property page that prints `get_Priority` declares the title's `Priority`. The dotted spelling is not rewritten to `::`. Whitespace is normalised and `spacing: "collapsed"` says the archived page itself had already lost the spaces between tokens. `implementation: true` (**4,581** records; the checker counts 4,570 of them as quarantined example blocks, the rest are `#define` blocks) marks a block that is sample code: kept as evidence, never emitted. Each record carries `member_types` (the type each member line prints), `abi_flags` (bitfield / pack / align) and the `license` scope of its page. |
 | `kb/declarations-dotnet.jsonl.gz` | The signature blocks of the separated .NET layer (**31,326**, `language: "managed"`), kept as evidence of that layer and out of the C declaration file. |

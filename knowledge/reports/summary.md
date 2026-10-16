@@ -1,6 +1,6 @@
 # Knowledge base coverage
 
-Generated 2026-10-15 by `python3 tools/build-kb.py`.
+Generated 2026-10-16 by `python3 tools/build-kb.py`.
 
 The knowledge base is built from the pages in `corpus/` only: every declaration, requirement and constraint record quotes the page it came from. This report says how much of the corpus is *structured* so far, and what is missing -- it is the collection worklist, not a quality judgement of a document.
 
@@ -22,7 +22,7 @@ The knowledge base is built from the pages in `corpus/` only: every declaration,
 * requirement statements: **193,726**
 * of those, a page's own `Module` (not an sdk-api UID): **146**; a `sysgen` variable: **980**; a CPU list (`Architecture`): **78**; a catalog `Component`: **28**
 * numbered constants: **31,363** (`kb/constants.jsonl`, 2,315 page(s))
-* constant -> header linkage: **9,228** rows over **7,471** names (`kb/constant-headers.tsv`; ranks: `own-page` 4,466, `entity-page` 1,366, `constant-entity` 63, `win32-reference` 1,636, `reference-header` 1,632, `co-mention` 20, `pinvoke-weak` 45); **2,005** name(s) wait in `reports/constant-header-gaps.tsv` (needs-sdk-verification 1,692, vb-language-constant 302, ole-automation-constant 11)
+* constant -> header linkage: **9,324** rows over **7,567** names (`kb/constant-headers.tsv`; ranks: `own-page` 4,466, `entity-page` 1,366, `constant-entity` 63, `win32-reference` 1,636, `reference-header` 1,632, `co-mention` 20, `heuristic-prefix` 123, `pinvoke-weak` 18); **1,909** name(s) wait in `reports/constant-header-gaps.tsv` (needs-sdk-verification 1,596, vb-language-constant 302, ole-automation-constant 11)
 * value disagreements examined: **33** name(s) whose pages print more than one number and cannot be a version branch (`kb/constant-conflicts.tsv`; categories: same-page 23, same-set 10)
 * Windows CE constraint sentences: **3,555** and ABI statements quoted from the pages (**970**, `kind: "abi-note"`)
 * entities with a gap record: **19,946** (`reports/gaps.tsv`)

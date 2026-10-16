@@ -58,6 +58,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import ce_api_names  # noqa: E402
+import header_map  # noqa: E402
 import license_scopes  # noqa: E402
 import page_parse  # noqa: E402
 
@@ -983,7 +984,7 @@ def pinvoke_records(facts):
 LINK_RANKS = ("own-page", "entity-page", "constant-entity",
               "win32-reference",
               "reference-header",
-              "co-mention", "pinvoke-weak")
+              "co-mention", "heuristic-prefix", "pinvoke-weak")
 LINK_RANK_INDEX = {rank: index for index, rank in enumerate(LINK_RANKS)}
 
 
@@ -1387,6 +1388,19 @@ def constant_header_links(constants, requirements, pinvoke_records_pair,
             continue
         for header, page, book in rows:
             offer(name, "co-mention", [header], page, book)
+
+    # rank: heuristic-prefix -- well-known constant name prefixes that
+    # reliably map to specific headers.  This is a fallback for constants
+    # with no other linkage, based on Windows API naming conventions.
+    # Only used when no stronger rank applies.
+    for name in by_name:
+        if name in best and best[name]["rank"] is not None:
+            continue  # already has stronger linkage
+        header = header_map.header_for_constant(name)
+        if header:
+            first = by_name[name][0]
+            offer(name, "heuristic-prefix", [header],
+                  first["source"]["path"], first["source"]["set"])
 
     # last rank: the pinvoke.net weak auxiliary hint.  It may only file a
     # name the CE (or CE-shared Win32) documentation actually numbers:
@@ -3240,6 +3254,19 @@ def main():
           flush=True)
     if not args.report:
         print(f"[kb] written to knowledge/ (see knowledge/reports/summary.md)")
+        # Consumer view: one name, one CE-preferred fact.
+        import importlib.util
+        unify_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "build-unified-kb.py")
+        spec = importlib.util.spec_from_file_location("build_unified_kb",
+                                                      unify_path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.build()
+        print("[kb] unified view written to knowledge/unified/", flush=True)
+        print("[kb] after extractor changes also run "
+              "python3 tools/harvest-corpus-kb.py && "
+              "python3 tools/build-unified-kb.py", flush=True)
     return 0
 
 

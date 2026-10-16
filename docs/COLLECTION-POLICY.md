@@ -178,11 +178,12 @@ than left to habit.  It has two accept paths, both equally isolated:
     constant from it; its facts are written to `knowledge/aux/`, a separate
     layer beside (never inside) the specification the include/def surface is
     generated from — see `knowledge/aux/README.md`;
-  * the generator (`tools/gen-include-def.py`) consumes it only at the
-    weakest linkage rank (`pinvoke-weak` in `kb/constant-headers.tsv`), lets
-    any official statement — and even the Win32 desktop reference — outrank
-    it, never takes a *value* from it, and marks every use loudly in the
-    output;
+    * the generator (`tools/gen-include-def.py`) consumes it at the
+      weakest rank: header *linkage* as `pinvoke-weak` in
+      `kb/constant-headers.tsv`, and — only for a constant a CE page
+      **names** but no CE page, Win32 CC-BY page, or public-domain CeGCC
+      w32api **numbers** — a last-rank MIT *value* (`tools/pinvoke_gaps.py`).
+      Official numbers always outrank it.  No C header is copied.
   * `data/license-scopes.tsv` stamps the wiki tree `pinvoke-user-wiki`,
     redistribution **no**, and the tarball `dotnet-pinvoke-mit` (MIT):
     either way it is evidence for review, never publishable documentation
@@ -203,6 +204,9 @@ the files themselves, usage decision, all recorded in the source's
   Windows CE is a 32-bit target; this is the right frame.  The package
   is public domain with named permissive notices (its `README.w32api`),
   and the per-file tally is reproducible by `tools/xcheck_references.py`.
+  **No header file is copied.**  The generator may take a single
+  `#define NAME value` when a CE page names the constant and no
+  documentation page numbers it (`tools/w32api_gaps.py`).
 * **Standing prohibition (2026-10, user order): Wine, ReactOS and
   MinGW-w64 are NOT Windows CE — their material must never be used as a
   reference here.**  Their snapshots and every report derived from them

@@ -1,0 +1,292 @@
+/* D3dmddk.h -- Windows CE unified surface
+ *
+ * ONE tree for every CE generation.  Version differences use
+ * #if defined(_WIN32_WCE) && (_WIN32_WCE >= NNN) branches.
+ * Win32-shared entries are marked 'win32-ref'.
+ * Generated from wince-docs-corpus knowledge/ by
+ * tools/gen-include-def.py --unified.
+ * 0 constants, 63 declarations, 0 outlines, 0 base types, 0 extra macros, 0 extra decls
+ */
+#ifndef _D3DMDDK_
+#define _D3DMDDK_
+
+
+/* ==================================================================
+ * types -- structures, enumerations and typedefs; the member
+ * outlines marked DERIVED below document a structure whose
+ * declaration body no page prints
+ * ================================================================ */
+
+/* D3DM_CLEAR  [struct; ce-only] */
+typedef struct _D3DM_CLEAR {
+ DWORD Flags; 
+ DWORD FillColor;
+ float FillDepth;
+ DWORD FillStencil;
+ DWORD NumRects;
+ RECT Rects[1];
+} D3DM_CLEAR, * LPD3DM_CLEAR;
+
+/* D3DM_COMMAND  [struct; ce-only] */
+typedef struct _D3DM_COMMAND {
+ BYTE nCommand;
+ BYTE nReserved;
+ WORD nCount;
+} D3DM_COMMAND, *LPD3DM_COMMAND;
+
+/* D3DM_COPYRECT  [struct; ce-only] */
+typedef struct _D3DM_COPYRECT {
+ ULONG SourceSurf;
+ RECT SourceRect;
+ ULONG DestSurf;
+ POINT DestPoint;
+} D3DM_COPYRECT, * LPD3DM_COPYRECT;
+
+/* D3DM_CREATECONTEXT_DATA  [struct; ce-only] */
+typedef struct _D3DM_CREATECONTEXT_DATA {
+ ULONG nContextId;
+ HRESULT rval;
+} D3DM_CREATECONTEXT_DATA;
+typedef D3DM_CREATECONTEXT_DATA *PD3DM_CREATECONTEXT_DATA, *LPD3DM_CREATECONTEXT_DATA;
+
+/* D3DM_CREATELIGHT  [struct; ce-only] */
+typedef struct _D3DM_CREATELIGHT {
+ DWORD Index;
+} D3DM_CREATELIGHT, * LPD3DM_CREATELIGHT;
+
+/* D3DM_CREATEPALETTE  [struct; ce-only] */
+typedef struct _D3DM_CREATEPALETTE {
+ DWORD Index;
+} D3DM_CREATEPALETTE, * LPD3DM_CREATEPALETTE;
+
+/* D3DM_DESTROYCONTEXT_DATA  [struct; ce-only] */
+typedef struct _D3DM_DESTROYCONTEXT_DATA {
+ ULONG nContextId;
+ HRESULT rval;
+} D3DM_DESTROYCONTEXT_DATA;
+typedef D3DM_DESTROYCONTEXT_DATA *PD3DM_DESTROYCONTEXT_DATA, *LPD3DM_DESTROYCONTEXT_DATA;
+
+/* D3DM_DESTROYSURFACE_DATA  [struct; ce-only] */
+typedef struct _D3DM_DESTROYSURFACE_DATA {
+ ULONG nSurfaceId;
+ HRESULT rval;
+} D3DM_DESTROYSURFACE_DATA;
+typedef D3DM_DESTROYSURFACE_DATA *PD3DM_DESTROYSURFACE_DATA, *LPD3DM_DESTROYSURFACE_DATA;
+
+/* D3DM_DRAWPRIMITIVE_DATA  [struct; ce-only] */
+typedef struct _D3DM_DRAWPRIMITIVE_DATA {
+ ULONG nContextId;
+ LPVOID pCommands;
+ ULONG nStartOffset;
+ ULONG nEndOffset;
+ HRESULT rval;
+} D3DM_DRAWPRIMITIVE_DATA;
+typedef D3DM_DRAWPRIMITIVE_DATA *PD3DM_DRAWPRIMITIVE_DATA, *LPD3DM_DRAWPRIMITIVE_DATA;
+
+/* D3DM_GETINFO_DATA  [struct; ce-only] */
+typedef struct _D3DM_GETINFO_DATA {
+ ULONG nContextId;
+ DWORD DevInfoId;
+ void* pDevInfoStruct;
+ DWORD DevInfoStructSize;
+ HRESULT rval;
+} D3DM_GETINFO_DATA;
+typedef D3DM_GETINFO_DATA *PD3DM_GETINFO_DATA, *LPD3DM_GETINFO_DATA;
+
+/* D3DM_INDEXBUFFER  [struct; ce-only] */
+typedef struct _D3DM_INDEXBUFFER {
+ ULONG BufferId;
+ DWORD Stride;
+} D3DM_INDEXBUFFER, * LPD3DM_INDEXBUFFER;
+
+/* D3DM_OPERATION  [enum; ce-only] */
+typedef enum _D3DM_OPERATION {
+ D3DMOP_BEGINSCENE,
+ D3DMOP_ENDSCENE,
+ D3DMOP_PRESENT,
+ D3DMOP_COPYRECT,
+ D3DMOP_CLEAR,
+ D3DMOP_RENDERTARGET,
+ D3DMOP_RENDERSTATE,
+ D3DMOP_TRANSFORM,
+ D3DMOP_VIEWPORT,
+ D3DMOP_MATERIAL,
+ D3DMOP_CREATELIGHT,
+ D3DMOP_SETLIGHT,
+ D3DMOP_TEXTURESTAGESTATE,
+ D3DMOP_CREATEPALETTE,
+ D3DMOP_SETPALETTE,
+ D3DMOP_PROCESSVERTICES,
+ D3DMOP_DRAWPRIMITIVE,
+ D3DMOP_DRAWINDEXEDPRIMITIVE,
+ D3DMOP_VERTEXBUFFER,
+ D3DMOP_INDEXBUFFER,
+ D3DMOP_COLORFILL,
+ D3DMOP_STRETCHRECT
+} D3DM_OPERATION;
+typedef D3DM_OPERATION *PD3DM_OPERATION, *LPD3DM_OPERATION;
+
+/* D3DM_PRESENT  [struct; ce-only] */
+typedef struct _D3DM_PRESENT {
+ ULONG PresentSurface;
+ RECT SourceRect;
+ RECT DestinationRect;
+ DWORD NumClippingRects;
+ RECT ClippingRects[1];
+} D3DM_PRESENT, * LPD3DM_PRESENT;
+
+/* D3DM_PROCESSVERTICES  [struct; ce-only] */
+typedef struct _D3DM_PROCESSVERTICES {
+ DWORD SrcStartIndex;
+ DWORD DestIndex;
+ DWORD VertexCount;
+ ULONG DestBufferId;
+ DWORD Flags;
+} D3DM_PROCESSVERTICES, * LPD3DM_PROCESSVERTICES;
+
+/* D3DM_RENDERTARGET  [struct; ce-only] */
+typedef struct _D3DM_RENDERTARGET {
+ ULONG RenderTarget;
+ ULONG ZBuffer;
+} D3DM_RENDERTARGET, * LPD3DM_RENDERTARGET;
+
+/* D3DM_RESOURCEMANAGER_ACTION  [enum; ce-only] */
+typedef enum _D3DM_RESOURCEMANAGER_ACTION {
+ D3DM_RESACTION_DISCARD_BYTES = 0,
+ D3DM_RESACTION_SET_PRIORITY = 1,
+ D3DM_RESACTION_PRELOAD = 2,
+ D3DM_RESACTION_FORCE_ULONG = 0xFFFFFFFF, // force 32-bit size enum
+} D3DM_RESOURCEMANAGER_ACTION;
+typedef D3DM_RESOURCEMANAGER_ACTION *PD3DM_RESOURCEMANAGER_ACTION, *LPD3DM_RESOURCEMANAGER_ACTION;
+
+/* D3DM_RESOURCEMANAGER_DATA  [struct; ce-only] */
+typedef struct _D3DM_RESOURCEMANAGER_DATA {
+ D3DM_RESOURCEMANAGER_ACTION Action;
+ ULONG nContextId;
+ ULONG nDiscardBytes;
+ ULONG nSurfaceId;
+ ULONG nNewPriority;
+ HRESULT rval;
+} D3DM_RESOURCEMANAGER_DATA;
+typedef D3DM_RESOURCEMANAGER_DATA *PD3DM_RESOURCEMANAGER_DATA, *LPD3DM_RESOURCEMANAGER_DATA;
+
+/* D3DM_SETLIGHT_DATATYPE  [enum; ce-only] */
+typedef enum _D3DM_SETLIGHT_DATATYPE {
+ D3DM_SETLIGHT_ENABLE = 0,
+ D3DM_SETLIGHT_DISABLE = 1,
+ D3DM_SETLIGHT_DATA_ENABLE = 2,
+ D3DM_SETLIGHT_DATA_DISABLE = 3,
+} D3DM_SETLIGHT_DATATYPE;
+typedef D3DM_SETLIGHT_DATATYPE *PD3DM_SETLIGHT_DATATYPE, *LPD3DM_SETLIGHT_DATATYPE;
+
+/* D3DM_SETPALETTE_DATATYPE  [enum; ce-only] */
+typedef enum _D3DM_SETPALETTE_DATATYPE {
+ D3DM_SETPALETTE_SETACTIVE = 0,
+ D3DM_SETPALETTE_SETENTRIES = 1,
+} D3DM_SETPALETTE_DATATYPE;
+typedef D3DM_SETPALETTE_DATATYPE *PD3DM_SETPALETTE_DATATYPE, *LPD3DM_SETPALETTE_DATATYPE;
+
+/* D3DM_SETPALETTE_WITHENTRIES  [struct; ce-only] */
+typedef struct _D3DM_SETPALETTE_WITHENTRIES {
+ DWORD Index;
+ D3DM_SETPALETTE_DATATYPE DataType;
+ PALETTEENTRY Entries[256];
+} D3DM_SETPALETTE_WITHENTRIES, *LPD3DM_SETPALETTE_WITHENTRIES;
+
+/* D3DM_TEXTURESTAGESTATE  [struct; ce-only] */
+typedef struct _D3DM_TEXTURESTAGESTATE {
+ WORD Stage;
+ WORD State;
+ DWORD Value;
+} D3DM_TEXTURESTAGESTATE, * LPD3DM_TEXTURESTAGESTATE;
+
+/* D3DM_UNLOCKSURFACE_DATA  [struct; ce-only] */
+typedef struct _D3DM_UNLOCKSURFACE_DATA {
+ ULONG nSurfaceId;
+ HRESULT rval;
+} D3DM_UNLOCKSURFACE_DATA;
+typedef D3DM_UNLOCKSURFACE_DATA *PD3DM_UNLOCKSURFACE_DATA, *LPD3DM_UNLOCKSURFACE_DATA;
+
+/* D3DM_VALIDATEDEVICE_DATA  [struct; ce-only] */
+typedef struct _D3DM_VALIDATEDEVICE_DATA {
+ ULONG nContextId;
+ DWORD NumPasses;
+ HRESULT rval;
+} D3DM_VALIDATEDEVICE_DATA;
+typedef D3DM_VALIDATEDEVICE_DATA *PD3DM_VALIDATEDEVICE_DATA, *LPD3DM_VALIDATEDEVICE_DATA;
+
+/* D3DM_VERTEXBUFFER  [struct; ce-only] */
+typedef struct _D3DM_VERTEXBUFFER {
+ DWORD StreamIndex;
+ ULONG BufferId;
+ DWORD Stride;
+} D3DM_VERTEXBUFFER, * LPD3DM_VERTEXBUFFER;
+
+#if defined(_WIN32_WCE) && ((_WIN32_WCE >= 0x500 && _WIN32_WCE < 0x700)) /* CE 5.0..699 */
+
+/* D3DM_CREATECONTEXT_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_CREATECONTEXT_PTR)(D3DM_CREATECONTEXT_DATA *);
+
+/* D3DM_DESTROYCONTEXT_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_DESTROYCONTEXT_PTR)(D3DM_DESTROYCONTEXT_DATA *);
+
+/* D3DM_DESTROYSURFACE_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_DESTROYSURFACE_PTR)(D3DM_DESTROYSURFACE_DATA *);
+
+/* D3DM_DRAWPRIMITIVE_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_DRAWPRIMITIVE_PTR)(D3DM_DRAWPRIMITIVE_DATA *);
+
+/* D3DM_GETINFO_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_GETINFO_PTR)(D3DM_GETINFO_DATA *);
+
+/* D3DM_RESOURCEMANAGER_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_RESOURCEMANAGER_PTR)(D3DM_RESOURCEMANAGER_DATA *);
+
+/* D3DM_UNLOCKSURFACE_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_UNLOCKSURFACE_PTR)(D3DM_UNLOCKSURFACE_DATA *);
+
+/* D3DM_VALIDATEDEVICE_PTR  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_VALIDATEDEVICE_PTR)(D3DM_VALIDATEDEVICE_DATA *);
+#endif /* _WIN32_WCE */
+
+
+/* D3DM_DrawPrimitive  [callback, struct; ce-only] */
+typedef DWORD (*D3DM_DRAWPRIMITIVE_PTR)(D3DM_DRAWPRIMITIVE_DATA *);
+
+/* D3DM_SETLIGHT  [struct; ce-only] */
+typedef struct _D3DM_SETLIGHT {
+ DWORD Index;
+ D3DM_SETLIGHT_DATATYPE DataType;
+} D3DM_SETLIGHT, * LPD3DM_SETLIGHT;
+
+/* D3DM_SETPALETTE  [struct; ce-only] */
+typedef struct _D3DM_SETPALETTE {
+ DWORD Index;
+ D3DM_SETPALETTE_DATATYPE DataType;
+} D3DM_SETPALETTE, *LPD3DM_SETPALETTE;
+
+#if defined(_WIN32_WCE) && ((_WIN32_WCE >= 0x500 && _WIN32_WCE < 0x700)) /* CE 5.0..699 */
+
+/* D3DM_CreateContext  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_CREATECONTEXT_PTR)(D3DM_CREATECONTEXT_DATA *);
+
+/* D3DM_DestroyContext  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_DESTROYCONTEXT_PTR)(D3DM_DESTROYCONTEXT_DATA *);
+
+/* D3DM_DestroySurface  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_DESTROYSURFACE_PTR)(D3DM_DESTROYSURFACE_DATA *);
+
+/* D3DM_GetInfo  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_GETINFO_PTR)(D3DM_GETINFO_DATA *);
+
+/* D3DM_ResourceManager  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_RESOURCEMANAGER_PTR)(D3DM_RESOURCEMANAGER_DATA *);
+
+/* D3DM_UnlockSurface  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_UNLOCKSURFACE_PTR)(D3DM_UNLOCKSURFACE_DATA *);
+
+/* D3DM_ValidateDevice  [callback; ce-only; CE 5.0..699] */
+typedef DWORD (*D3DM_VALIDATEDEVICE_PTR)(D3DM_VALIDATEDEVICE_DATA *);
+#endif /* _WIN32_WCE */
+
+#endif /* _D3DMDDK_ */

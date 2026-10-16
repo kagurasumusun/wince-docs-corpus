@@ -77,16 +77,13 @@ corpus source.
 - **Parsing scope:** every file of `include/`, plus `lib/*.def` and
   `libce/*.def` — all public domain or short permissive notices, all
   quoted with header:line attribution in the reports.
-- **USE IS REVIEW-ONLY.**  The cross-check generates *reports* in
-  `knowledge/reports/` that a human reads.  NOTHING from this tree is
-  input to `tools/gen-include-def.py` or any other generator, and no
-  `#define` taken from here is ever emitted into `winsur/` (the project
-  rule: emitted values come only from official CE/Win32 documentation
-  pages).  A name listed as "absent from the CE surface" is a lead for
-  further documentation searching, not a value to adopt.  Where this
-  adapted reference prints a desktop value CE does not document, that
-  is exactly the kind of mismatch a human must weigh — the report shows
-  it, it does not resolve it.
+- **Cross-check reports** in `knowledge/reports/` remain review-only
+  (a listed name is a lead, not a value to adopt).
+- **Generator gap-fill (not a copy):** `tools/w32api_gaps.py` may emit
+  a `#define` into `winsur/` only when a CE page *names* the constant
+  and no CE/Win32 documentation page numbers it.  Whole headers are
+  never copied.  `MAX_PATH` is never taken (CE prints 128).  winsock/gl
+  files stay out of parse scope.
 - Candidates evaluated and NOT taken (recorded so the search is
   reproducible): vanilla mingw.org w32api mirrors on GitHub
   (`onixie/w32api`, `crossbuild/w32api`) — same public-domain package

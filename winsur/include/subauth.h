@@ -1,0 +1,79 @@
+/* subauth.h -- Windows CE unified surface
+ *
+ * ONE tree for every CE generation.  Version differences use
+ * #if defined(_WIN32_WCE) && (_WIN32_WCE >= NNN) branches.
+ * Win32-shared entries are marked 'win32-ref'.
+ * Generated from wince-docs-corpus knowledge/ by
+ * tools/gen-include-def.py --unified.
+ * 58 constants, 0 declarations, 0 outlines, 0 base types, 0 extra macros, 0 extra decls
+ */
+#ifndef _SUBAUTH_
+#define _SUBAUTH_
+
+
+/* ==================================================================
+ * constants (one evidence comment per #define; the
+ * #if of a batch covers every #define in it; values
+ * that differ per generation pool into #if/#elif
+ * chains with the evidence after the #endif)
+ * ================================================================ */
+#define CLEAR_BLOCK_LENGTH 8
+#define CYPHER_BLOCK_LENGTH 8
+#define MSV1_0_GUEST_LOGON 2
+#define MSV1_0_PASSTHRU 1
+#define MSV1_0_SUBAUTH_ACCOUNT_DISABLED 1
+#define MSV1_0_SUBAUTH_ACCOUNT_EXPIRY 16
+#define MSV1_0_SUBAUTH_ACCOUNT_TYPE 64
+#define MSV1_0_SUBAUTH_LOCKOUT 128
+#define MSV1_0_SUBAUTH_LOGON_HOURS 8
+#define MSV1_0_SUBAUTH_PASSWORD 2
+#define MSV1_0_SUBAUTH_PASSWORD_EXPIRY 32
+#define MSV1_0_SUBAUTH_WORKSTATIONS 4
+#define MSV1_0_VALIDATION_KICKOFF_TIME 2
+#define MSV1_0_VALIDATION_LOGOFF_TIME 1
+#define MSV1_0_VALIDATION_LOGON_DOMAIN 8
+#define MSV1_0_VALIDATION_LOGON_SERVER 4
+#define MSV1_0_VALIDATION_SESSION_KEY 16
+#define MSV1_0_VALIDATION_USER_FLAGS 32
+#define MSV1_0_VALIDATION_USER_ID 64
+#define NEXT_FREE_ACCOUNT_CONTROL_BIT 131072
+#define SAM_DAYS_PER_WEEK 7
+#define SAM_HOURS_PER_WEEK 168
+#define SAM_MINUTES_PER_WEEK 10080
+#define STATUS_ACCOUNT_DISABLED 0xC0000072L
+#define STATUS_ACCOUNT_EXPIRED 0xC0000193L
+#define STATUS_ACCOUNT_LOCKED_OUT 0xC0000234L
+#define STATUS_ACCOUNT_RESTRICTION 0xC000006EL
+#define STATUS_INSUFFICIENT_RESOURCES 0xC000009AL
+#define STATUS_INVALID_INFO_CLASS 0xC0000003L
+#define STATUS_INVALID_LOGON_HOURS 0xC000006FL
+#define STATUS_INVALID_WORKSTATION 0xC0000070L
+#define STATUS_LOGON_FAILURE 0xC000006DL
+#define STATUS_NO_SUCH_USER 0xC0000064L
+#define STATUS_PASSWORD_EXPIRED 0xC0000071L
+#define STATUS_PASSWORD_MUST_CHANGE 0xC0000224L
+#define STATUS_PASSWORD_RESTRICTION 0xC000006CL
+#define STATUS_WRONG_PASSWORD 0xC000006AL
+#define USER_ACCOUNT_AUTO_LOCKED 1024
+#define USER_ACCOUNT_DISABLED 1
+#define USER_ACCOUNT_TYPE_MASK 472
+#define USER_ALL_PARAMETERS 2097152
+#define USER_DONT_EXPIRE_PASSWORD 512
+#define USER_DONT_REQUIRE_PREAUTH 65536
+#define USER_ENCRYPTED_TEXT_PASSWORD_ALLOWED 2048
+#define USER_HOME_DIRECTORY_REQUIRED 2
+#define USER_INTERDOMAIN_TRUST_ACCOUNT 64
+#define USER_MACHINE_ACCOUNT_MASK 448
+#define USER_MNS_LOGON_ACCOUNT 32
+#define USER_NORMAL_ACCOUNT 16
+#define USER_NOT_DELEGATED 16384
+#define USER_PASSWORD_NOT_REQUIRED 4
+#define USER_SERVER_TRUST_ACCOUNT 256
+#define USER_SESSION_KEY_LENGTH (CYPHER_BLOCK_LENGTH*2)
+#define USER_SMARTCARD_REQUIRED 4096
+#define USER_TEMP_DUPLICATE_ACCOUNT 8
+#define USER_TRUSTED_FOR_DELEGATION 8192
+#define USER_USE_DES_KEY_ONLY 32768
+#define USER_WORKSTATION_TRUST_ACCOUNT 128
+
+#endif /* _SUBAUTH_ */

@@ -1349,6 +1349,27 @@ CONSTANT_VALUE_COLUMNS = {
     # the MicrosoftDocs/win32 style tables head it "Constant value"
     "constant value",
 }
+# Columns that number a *different* thing sitting next to the symbol
+# (charset -> ANSI code page, VK -> OEM scan code, locale -> LCID).
+# Those numbers are not the constant's value and must not become #define.
+CORRESPONDENCE_VALUE_COLUMNS = {
+    "code page", "code pages", "codepage", "ansi code page", "oem code page",
+    "scan code", "scan codes", "scancode", "oem scan",
+    "lcid", "locale id", "locale identifier",
+}
+_CORRESPONDENCE_LABEL = re.compile(
+    r"code\s*pages?|scan\s*codes?|\blcid\b|locale\s+id", re.I)
+
+
+def _is_correspondence_label(label):
+    lab = re.sub(r"\s+", " ", (label or "").strip().rstrip(":").lower())
+    if lab in CORRESPONDENCE_VALUE_COLUMNS:
+        return True
+    return bool(_CORRESPONDENCE_LABEL.search(lab))
+
+
+def _correspondence_indices(labels):
+    return {i for i, lab in enumerate(labels) if _is_correspondence_label(lab)}
 CONSTANT_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 # A printed number is more than ``0x..`` or ``digits``: the Data Type
 # Constants page prints ``-32768`` (typed with a dash that is not
@@ -1423,6 +1444,7 @@ def constant_tables(fragment, raw_row=False):
         hex_i = _column(labels, CONSTANT_HEX_COLUMNS)
         dec_i = _column(labels, CONSTANT_DECIMAL_COLUMNS)
         val_i = _column(labels, CONSTANT_VALUE_COLUMNS)
+        corr_is = _correspondence_indices(labels)
         # LOGFONT weight tables print the constant in the column headed
         # ``Value`` and the number in the column headed ``Weight``
         # (``FW_THIN | 100``).  ``Value`` is not a name column anywhere else;
@@ -1431,6 +1453,12 @@ def constant_tables(fragment, raw_row=False):
             name_i = labels.index("value")
             val_i = labels.index("weight")
             hex_i = dec_i = None
+        if hex_i in corr_is:
+            hex_i = None
+        if val_i in corr_is:
+            val_i = None
+        if dec_i in corr_is:
+            dec_i = None
         value_is = [i for i in (hex_i, val_i, dec_i) if i is not None]
         header = " ".join(headers)
         body = list(ROW.finditer(table.group(1)))[1:]
@@ -1459,6 +1487,9 @@ def constant_tables(fragment, raw_row=False):
                 return seen >= 2
 
             def value_column(i):
+                if i in corr_is or (i < len(labels)
+                                    and _is_correspondence_label(labels[i])):
+                    return False
                 seen = 0
                 for cells in body_cells:
                     if i >= len(cells):
@@ -1613,12 +1644,18 @@ def define_line_constants(text, quote_stripped=False):
             # macro body, not a constant; RASBASE+127 is kept whole.
             # Table-row residue after the value ("0x4 | ") is not part
             # of the head.
-            head = re.split(r"[\s;|]", value, 1)[0].strip()
-            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*\s*\(", value):
-                continue
-            if not (_DEFINE_NUMERIC.match(head) or _EXPR_VALUE.match(head)
-                    or _DEFINE_ALIAS.match(head)):
-                continue
+            ctor = re.match(
+                r"^([A-Z][A-Z0-9_]{2,60})\s*\(\s*(0[xX][0-9A-Fa-f]+|-?\d+)\s*\)\s*;?$",
+                value)
+            if ctor:
+                head = re.sub(r"\s+", "", value).rstrip(";")
+            else:
+                if re.match(r"^[A-Za-z_][A-Za-z0-9_]*\s*\(", value):
+                    continue
+                head = re.split(r"[\s;|]", value, 1)[0].strip()
+                if not (_DEFINE_NUMERIC.match(head) or _EXPR_VALUE.match(head)
+                        or _DEFINE_ALIAS.match(head)):
+                    continue
             if _EXAMPLE_LOOKBEHIND.search(clean[:match.start()]):
                 continue
             out.append({
@@ -1903,10 +1940,17 @@ def constant_tables_text(text):
         hex_i = _column(labels, CONSTANT_HEX_COLUMNS)
         dec_i = _column(labels, CONSTANT_DECIMAL_COLUMNS)
         val_i = _column(labels, CONSTANT_VALUE_COLUMNS)
+        corr_is = _correspondence_indices(labels)
         if name_i is None and "value" in labels and "weight" in labels:
             name_i = labels.index("value")
             val_i = labels.index("weight")
             hex_i = dec_i = None
+        if hex_i in corr_is:
+            hex_i = None
+        if val_i in corr_is:
+            val_i = None
+        if dec_i in corr_is:
+            dec_i = None
         header = " ".join(header_cells)
         for raw, cells in rows:
             row_quote = re.sub(r"\s+", " ", raw).strip()
@@ -2278,16 +2322,28 @@ def listed_type_rows_text(text):
 # given syntax declarations and prose only, by build-kb.py).           #
 # ------------------------------------------------------------------ #
 
-# ``#define NAME (0x0400) /* comment */`` -- a complete single-line
-# numeric macro definition.  The C suffix (``0x0001L``) and the outer
-# parentheses are part of the printing, not of the number, so the stored
-# value is the bare number while ``row`` keeps the whole line.  A
-# function-like macro (``#define SIZEOF(x)``), an expression or a
-# continuation line is not a numbered constant and is skipped.
+# ``#define NAME (0x0400)`` / ``#define NAME MAKE_D3DMHRESULT(2158)`` /
+# ``#define NAME (WM_USER + 255)``.  The value is quoted as printed --
+# never computed.  A function-like macro (``#define SIZEOF(x)``) is not
+# a numbered constant.  Collapsed pages glue several #define tokens on
+# one line, so the reader is not line-anchored.
+_DEFINE_VALUE = (
+    r"(?:"
+    r"\(?\s*(?:0[xX][0-9A-Fa-f]+|-?\d+)\s*[uUlL]*\s*\)?"
+    r"|[A-Z][A-Z0-9_]{1,60}\s*[+-]\s*(?:0[xX][0-9A-Fa-f]+|\d+)[uUlL]*"
+    r"|\(\s*[A-Z][A-Z0-9_]{1,60}\s*[+-]\s*(?:0[xX][0-9A-Fa-f]+|\d+)[uUlL]*\s*\)"
+    r"|[A-Z][A-Z0-9_]{2,60}\s*\(\s*(?:0[xX][0-9A-Fa-f]+|-?\d+)\s*\)"
+    r")"
+)
 _DEFINE_ROW = re.compile(
     r"^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s+"
-    r"\(?\s*(0[xX][0-9A-Fa-f]+|-?\d+)\s*[uUlL]*\)?\s*"
-    r"(?:(?:/\*[^*]*\*/|//[^\n]*)\s*)?$")
+    + _DEFINE_VALUE +
+    r"\s*(?:(?:/\*[^*]*\*/|//[^\n]*)\s*)?$")
+_DEFINE_ANY = re.compile(
+    r"#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?!\s*\()\s+" + _DEFINE_VALUE)
+_ENUM_MEMBER_ANY = re.compile(
+    r"\b([A-Z][A-Z0-9_]{2,})\s*=\s*"
+    r"\(?\s*(0[xX][0-9A-Fa-f]+|-?\d+)\s*[uUlL]*\s*\)?")
 
 # ``NAME = 0x01,`` -- an enum member that carries its value.  Applied
 # only inside a declaration that has an ``enum`` and a ``{`` (the
@@ -2303,35 +2359,57 @@ _ENUM_MEMBER_ROW = re.compile(
 
 
 def define_value_rows(text):
-    """``#define NAME <number>`` lines of a syntax declaration.
+    """``#define NAME <number-or-printed-expression>`` in a syntax block.
 
-    One dict per line: ``name``, ``value`` (the bare number), ``table``
-    (``#define``, the quoting construct) and ``row`` (the line itself,
-    including a trailing comment).  Empty when the declaration has none.
+    Collapsed pages (several ``#define`` tokens on one line) are split with
+    finditer.  ``MAKE_D3DMHRESULT(2158)`` and ``WM_USER+255`` stay as
+    printed -- never computed.  ``#define FOO(x)`` is skipped.
     """
     out = []
-    for line in (text or "").splitlines():
-        match = _DEFINE_ROW.match(line)
-        if match:
-            out.append({"name": match.group(1), "value": match.group(2),
-                        "table": "#define", "origin": "define",
-                        "row": line.strip()})
+    seen = set()
+    blob = text or ""
+    for match in _DEFINE_ANY.finditer(blob):
+        name = match.group(1)
+        value = match.group(0)
+        # value is the RHS of this match
+        rhs = blob[match.start():match.end()]
+        parts = re.split(r"#\s*define\s+" + re.escape(name) + r"\s+", rhs, 1)
+        rhs_text = parts[-1] if parts else match.group(2)
+        rhs_text = re.split(r"//|/\*", rhs_text, 1)[0].strip()
+        rhs_text = re.sub(r"\s+", " ", rhs_text).strip()
+        # prefer a compact form for ctor / sum expressions
+        if re.match(r"^[A-Z]", rhs_text) or rhs_text.startswith("("):
+            compact = re.sub(r"\s+", "", rhs_text)
+        else:
+            compact = rhs_text
+        key = (name, compact)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"name": name, "value": compact,
+                    "table": "#define", "origin": "define",
+                    "row": match.group(0).strip()[:240]})
     return out
 
 
 def enum_value_rows(text):
-    """``NAME = <number>`` members of an enum body a syntax block quotes."""
+    """``NAME = <number>`` members of an enum body a syntax block quotes.
+
+    Collapsed ``typedef enum { A = 1, B = 2 }`` on one line is split with
+    finditer.  The number is quoted as printed.
+    """
     if not text or "{" not in text or "enum" not in text.lower():
         return []
     out = []
-    for line in text.splitlines():
-        match = _ENUM_MEMBER_ROW.match(line)
-        if not match:
+    seen = set()
+    for match in _ENUM_MEMBER_ANY.finditer(text):
+        name, value = match.group(1), match.group(2)
+        key = (name, value)
+        if key in seen:
             continue
-        name, value = (match.group(1), match.group(2)) if match.group(1) \
-            else (match.group(3), match.group(4))
+        seen.add(key)
         out.append({"name": name, "value": value, "table": "enum member",
-                    "origin": "enum", "row": line.strip()})
+                    "origin": "enum", "row": match.group(0).strip()[:240]})
     return out
 
 

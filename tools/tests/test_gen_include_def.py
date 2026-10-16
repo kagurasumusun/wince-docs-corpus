@@ -104,6 +104,48 @@ class GeneratorApiTests(unittest.TestCase):
                                 name)
                 self.assertTrue(member.endswith(".def"), member)
 
+    def test_pick_constant_prefers_name_map_over_win32_ref(self):
+        gen = self._load()
+        targets = gen.pick_constant_targets("ERROR_FILE_NOT_FOUND", [
+            {"header": "wincrypt.h", "strength": "win32-reference",
+             "statements": 4},
+        ])
+        self.assertEqual(len(targets), 1)
+        self.assertEqual(targets[0]["header"].lower(), "winerror.h")
+
+    def test_pick_constant_keeps_reference_header_ras(self):
+        gen = self._load()
+        targets = gen.pick_constant_targets("ERROR_ACCT_DISABLED", [
+            {"header": "raserror.h", "strength": "reference-header",
+             "statements": 1},
+        ])
+        self.assertEqual(targets[0]["header"].lower(), "raserror.h")
+
+    def test_header_preference_ce_over_umbrella(self):
+        gen = self._load()
+        self.assertLess(gen.header_preference("winuser.h"),
+                        gen.header_preference("windows.h"))
+        self.assertLess(gen.header_preference("windef.h"),
+                        gen.header_preference("gdiplustypes.h"))
+
+    def test_pick_constant_prefers_h_over_hpp(self):
+        gen = self._load()
+        targets = gen.pick_constant_targets("ANSI_CHARSET", [
+            {"header": "Gdi.hpp", "strength": "own-page", "statements": 4},
+            {"header": "Wingdi.h", "strength": "own-page", "statements": 5},
+        ])
+        self.assertEqual(len(targets), 1)
+        self.assertEqual(targets[0]["header"], "Wingdi.h")
+
+    def test_lpuint_is_not_known_just_because_uint_is(self):
+        gen = self._load()
+        self.assertTrue(gen.type_mentions_unknown(
+            "BOOL ImmGetVirtualKey(LPUINT lpuVKey, LPHKL lphKL);",
+            set(), "ImmGetVirtualKey"))
+        self.assertFalse(gen.type_mentions_unknown(
+            "HPALETTE SelectPalette(HDC hdc, HPALETTE hpal, BOOL b);",
+            set(), "SelectPalette"))
+
 
 if __name__ == "__main__":
     unittest.main()

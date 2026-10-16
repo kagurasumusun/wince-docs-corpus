@@ -1,0 +1,171 @@
+/* D3dhal.h -- Windows CE unified surface
+ *
+ * ONE tree for every CE generation.  Version differences use
+ * #if defined(_WIN32_WCE) && (_WIN32_WCE >= NNN) branches.
+ * Win32-shared entries are marked 'win32-ref'.
+ * Generated from wince-docs-corpus knowledge/ by
+ * tools/gen-include-def.py --unified.
+ * 0 constants, 45 declarations, 0 outlines, 0 base types, 0 extra macros, 0 extra decls
+ */
+#ifndef _D3DHAL_
+#define _D3DHAL_
+
+
+/* ==================================================================
+ * types -- structures, enumerations and typedefs; the member
+ * outlines marked DERIVED below document a structure whose
+ * declaration body no page prints
+ * ================================================================ */
+
+/* D3DHAL_CLIPPEDTRIANGLEFAN  [struct; ce-only] */
+typedef struct _D3DHAL_CLIPPEDTRIANGLEFAN {
+ DWORD FirstVertexOffset;
+ DWORD dwEdgeFlags;
+ DWORD PrimitiveCount;
+} D3DHAL_CLIPPEDTRIANGLEFAN, *LPD3DHAL_CLIPPEDTRIANGLEFAN;
+
+/* D3DHAL_CONTEXTDESTROYDATA  [struct; ce-only] */
+typedef struct _D3DHAL_CONTEXTDESTROYDATA {
+ ULONG_PTR dwhContext;
+ HRESULT ddrval;
+} D3DHAL_CONTEXTDESTROYDATA, *LPD3DHAL_CONTEXTDESTROYDATA;
+
+/* D3DHAL_DP2COMMAND  [struct; ce-only] */
+typedef struct _D3DHAL_DP2COMMAND {
+ BYTE bCommand;
+ BYTE bReserved;
+ union{
+ WORD wPrimitiveCount;
+ WORD wStateCount;
+ };
+} D3DHAL_DP2COMMAND, *LPD3DHAL_DP2COMMAND;
+
+/* D3DHAL_DP2CREATELIGHT  [struct; ce-only] */
+typedef struct _D3DHAL_DP2CREATELIGHT {
+ DWORD dwIndex;
+} D3DHAL_DP2CREATELIGHT, *LPD3DHAL_DP2CREATELIGHT;
+
+/* D3DHAL_DP2EXT  [struct; ce-only] */
+typedef struct _D3DHAL_DP2EXT {
+ DWORD dwExtToken;
+ DWORD dwSize;
+} D3DHAL_DP2EXT, *LPD3DHAL_DP2EXT;
+
+/* D3DHAL_DP2INDEXEDLINESTRIP  [struct; ce-only] */
+typedef struct _D3DHAL_DP2INDEXEDLINESTRIP {
+ WORD wV[2];
+} D3DHAL_DP2INDEXEDLINESTRIP;
+typedef D3DHAL_DP2INDEXEDLINESTRIP *PD3DHAL_DP2INDEXEDLINESTRIP, *LPD3DHAL_DP2INDEXEDLINESTRIP;
+
+/* D3DHAL_DP2INDEXEDTRIANGLEFAN  [struct; ce-only] */
+typedef struct _D3DHAL_DP2INDEXEDTRIANGLEFAN {
+ WORD wV[3];
+} D3DHAL_DP2INDEXEDTRIANGLEFAN;
+typedef D3DHAL_DP2INDEXEDTRIANGLEFAN *PD3DHAL_DP2INDEXEDTRIANGLEFAN, *LPD3DHAL_DP2INDEXEDTRIANGLEFAN;
+
+/* D3DHAL_DP2INDEXEDTRIANGLELIST  [struct; ce-only] */
+typedef struct _D3DHAL_DP2INDEXEDTRIANGLELIST {
+ WORD wV1;
+ WORD wV2;
+ WORD wV3;
+ WORD wFlags;
+} D3DHAL_DP2INDEXEDTRIANGLELIST;
+typedef D3DHAL_DP2INDEXEDTRIANGLELIST *PD3DHAL_DP2INDEXEDTRIANGLELIST, *LPD3DHAL_DP2INDEXEDTRIANGLELIST;
+
+/* D3DHAL_DP2INDEXEDTRIANGLELIST2  [struct; ce-only] */
+typedef struct _D3DHAL_DP2INDEXEDTRIANGLELIST2 {
+ WORD wV1;
+ WORD wV2;
+ WORD wV3;
+} D3DHAL_DP2INDEXEDTRIANGLELIST2, *LPD3DHAL_DP2INDEXEDTRIANGLELIST2;
+
+/* D3DHAL_DP2INDEXEDTRIANGLESTRIP  [struct; ce-only] */
+typedef struct _D3DHAL_DP2INDEXEDTRIANGLESTRIP {
+ WORD wV[3];
+} D3DHAL_DP2INDEXEDTRIANGLESTRIP;
+typedef D3DHAL_DP2INDEXEDTRIANGLESTRIP *PD3DHAL_DP2INDEXEDTRIANGLESTRIP, *LPD3DHAL_DP2INDEXEDTRIANGLESTRIP;
+
+/* D3DHAL_DP2PIXELSHADER  [struct; ce-only] */
+typedef struct _D3DHAL_DP2PIXELSHADER {
+ DWORD dwHandle;
+} D3DHAL_DP2PIXELSHADER, *LPD3DHAL_DP2PIXELSHADER;
+
+/* D3DHAL_DP2SETINDICES  [struct; ce-only] */
+typedef struct _D3DHAL_DP2SETINDICES {
+ DWORD dwVBHandle; 
+ DWORD dwStride; 
+} D3DHAL_DP2SETINDICES, *LPD3DHAL_DP2SETINDICES;
+
+/* D3DHAL_DP2SETLIGHT  [struct; ce-only] */
+typedef struct _D3DHAL_DP2SETLIGHT {
+ DWORD dwIndex;
+ DWORD dwDataType;
+} D3DHAL_DP2SETLIGHT, *LPD3DHAL_DP2SETLIGHT;
+
+/* D3DHAL_DP2SETPALETTE  [struct; ce-only] */
+typedef struct _D3DHAL_DP2SETPALETTE {
+ DWORD dwPaletteHandle;
+ DWORD dwPaletteFlags;
+ DWORD dwSurfaceHandle;
+} D3DHAL_DP2SETPALETTE, *LPD3DHAL_DP2SETPALETTE;
+
+/* D3DHAL_DP2SETPRIORITY  [struct; ce-only] */
+typedef struct _D3DHAL_DP2SETPRIORITY {
+ DWORD dwDDDestSurface;
+ DWORD dwPriority;
+} D3DHAL_DP2SETPRIORITY, *LPD3DHAL_DP2SETPRIORITY;
+
+/* D3DHAL_DP2SETRENDERTARGET  [struct; ce-only] */
+typedef struct _D3DHAL_DP2SETRENDERTARGET {
+ DWORD hRenderTarget;
+ DWORD hZBuffer;
+} D3DHAL_DP2SETRENDERTARGET, *LPD3DHAL_DP2SETRENDERTARGET;
+
+/* D3DHAL_DP2SETSTREAMSOURCE  [struct; ce-only] */
+typedef struct _D3DHAL_DP2SETSTREAMSOURCE {
+ DWORD dwStream; 
+ DWORD dwVBHandle; 
+ DWORD dwStride; 
+} D3DHAL_DP2SETSTREAMSOURCE, *LPD3DHAL_DP2SETSTREAMSOURCE;
+
+/* D3DHAL_DP2SETTEXLOD  [struct; ce-only] */
+typedef struct _D3DHAL_DP2SETTEXLOD {
+ DWORD dwDDSurface;
+ DWORD dwLOD;
+} D3DHAL_DP2SETTEXLOD, *LPD3DHAL_DP2SETTEXLOD;
+
+/* D3DHAL_DP2STARTVERTEX  [struct; ce-only] */
+typedef struct _D3DHAL_DP2STARTVERTEX {
+ WORD wVStart;
+} D3DHAL_DP2STARTVERTEX, *LPD3DHAL_DP2STARTVERTEX;
+
+/* D3DHAL_DP2UPDATEPALETTE  [struct; ce-only] */
+typedef struct _D3DHAL_DP2UPDATEPALETTE {
+ DWORD dwPaletteHandle;
+ WORD wStartIndex;
+ WORD wNumEntries;
+} D3DHAL_DP2UPDATEPALETTE, *LPD3DHAL_DP2UPDATEPALETTE;
+
+/* D3DHAL_DP2VERTEXSHADER  [struct; ce-only] */
+typedef struct _D3DHAL_DP2VERTEXSHADER {
+ DWORD dwHandle;
+} D3DHAL_DP2VERTEXSHADER, *LPD3DHAL_DP2VERTEXSHADER;
+
+/* D3DHAL_DP2VIEWPORTINFO  [struct; ce-only] */
+typedef struct _D3DHAL_DP2VIEWPORTINFO {
+ DWORD dwX;
+ DWORD dwY;
+ DWORD dwWidth;
+ DWORD dwHeight;
+} D3DHAL_DP2VIEWPORTINFO, *LPD3DHAL_DP2VIEWPORTINFO;
+
+/* D3DHAL_VALIDATETEXTURESTAGESTATEDATA  [struct; ce-only] */
+typedef struct _D3DHAL_VALIDATETEXTURESTAGESTATEDATA {
+ ULONG_PTR dwhContext;
+ DWORD dwFlags;
+ ULONG_PTR dwReserved;
+ DWORD dwNumPasses;
+ HRESULT ddrval;
+} D3DHAL_VALIDATETEXTURESTAGESTATEDATA, FAR* LPD3DHAL_VALIDATETEXTURESTAGESTATEDATA;
+
+#endif /* _D3DHAL_ */

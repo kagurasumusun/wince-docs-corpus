@@ -11,20 +11,20 @@ the SAME tree, marked 'Win32 reference' -- never a second tree.
 ## What was generated
 
 * entities in scope: **29,161** (by surface: `ce-only` 24,666, `shared` 4,495)
-* header fragments: **596** under `include/`, each
+* header fragments: **650** under `include/`, each
   with its documented constants first, then the macros, the types
   and the functions; quoted text is verbatim, the `#define`
   keyword and the header/constant filing are derived and say so
-* derived `#define` lines written: **11,128**
+* derived `#define` lines written: **28,747**
 * derived member outlines (structures whose body no page prints):
-  **2** -- marked DERIVED in the fragment
+  **564** -- marked DERIVED in the fragment
 * constants whose pages disagree / overlap: **33** name(s) examined in `kb/constant-conflicts.tsv`
-  (50 of them reach a header fragment in this build;
-  **5** resolved by the review in
+  (2 of them reach a header fragment in this build;
+  **0** resolved by the review in
   `data/constant-value-review.tsv` to a print the pages themselves
   state, the rest get no `#define` -- every one keeps its
   CONFLICT block with the verdict)
-* constants with no header linkage at all: **2,005**
+* constants with no header linkage at all: **1,986**
   (worklist only -- they stay in `constants.tsv`)
 * module `.def` worklists: **266** under `link/`
   (per-line version range is a comment; `.def` has no
@@ -32,7 +32,7 @@ the SAME tree, marked 'Win32 reference' -- never a second tree.
 * printed export ordinals: 1 file(s),
   94 name(s)
 * declarations taken from the Win32 reference because no CE page
-  prints one: **124** -- every
+  prints one: **111** -- every
   one marked in the fragment and the manifest; CE and desktop
   values are never assumed equal
 * constants numbered only by the Win32 shared reference (and only
@@ -40,7 +40,7 @@ the SAME tree, marked 'Win32 reference' -- never a second tree.
   tree, every one marked 'verify against the CE SDK'; a number a
   CE page prints always wins
 * spacing-only repairs across CE generations: **0**
-* pages behind this output: 25,361
+* pages behind this output: 8,325
 
 ## Constant/header linkage (kb/constant-headers.tsv)
 
@@ -58,7 +58,8 @@ hint):
 | win32-reference | 1,636 |
 | co-mention | 20 |
 | reference-header | 1,632 |
-| pinvoke-weak | 45 |
+| heuristic-prefix | 123 |
+| pinvoke-weak | 18 |
 
 The reference-header ranks come from the pinned, licence-vetted
 public references under `sources/`: their header files *define*
@@ -76,7 +77,7 @@ every `#define` number above is a CE documentation quotation.
 * what they are used for: ONLY the weakest constant/header
   linkage rank above, consumed so that the gap between official
   documentation and community reference is reviewable;
-  **45** linkage rows rest on
+  **18** linkage rows rest on
   them directly, each loudly marked in its header comment, and
   `reports/constant-pinvoke-review.tsv` compares every such
   community value with the documented CE value
@@ -96,8 +97,9 @@ every `#define` number above is a CE documentation quotation.
 
 | reason | entities |
 |--------|----------|
-| no header stated | 5,914 |
-| no declaration in the corpus | 3,589 |
+| no declaration in the corpus | 20,583 |
+| declaration is not a C declaration | 17,071 |
+| no header stated | 5,510 |
 | no CE version evidence | 1,504 |
 
 The skipped entities are the collection worklist, same as in the

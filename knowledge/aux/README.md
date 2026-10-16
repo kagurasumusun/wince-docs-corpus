@@ -9,10 +9,12 @@ pages state nothing about a constant's header, a pinvoke statement may
 *hint* at the linkage (`strength: "pinvoke-weak"` in
 `kb/constant-headers.tsv`) so the gap is visible and decisions can be
 reviewed; it never overrides a documented statement, it is always labelled,
-and the rules are in `data/license-scopes.tsv`.  A pinvoke value is never
-treated as a Windows CE value and never written into a generated header:
-the review report `reports/constant-pinvoke-review.tsv` compares each
-community value with the documented CE one.
+and the rules are in `data/license-scopes.tsv`.  A pinvoke value is not
+treated as a Windows CE fact.  `tools/pinvoke_gaps.py` may emit one
+integer `#define` at last rank when a CE page names the constant and
+no CE, Win32 CC-BY, or w32api public-domain number exists (MIT).  The
+review report `reports/constant-pinvoke-review.tsv` still compares
+community values with documented CE ones.
 
 Two accept paths feed this directory, both isolated:
 
